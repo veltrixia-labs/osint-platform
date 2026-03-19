@@ -24,7 +24,7 @@ def upgrade() -> None:
     # 1. Items
     op.create_table(
         'items',
-        sa.Column('id', sa.String(), primary_key=True),
+        sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column('title', sa.String()),
         sa.Column('content', sa.String()),
         sa.Column('url', sa.String(), unique=True),
@@ -33,7 +33,7 @@ def upgrade() -> None:
         sa.Column('normalized_content', sa.String()),
         sa.Column('entities', sa.JSON()), # Will be JSONB in Postgres
         sa.Column('category', sa.String()),
-        sa.Column('cluster_id', sa.String()),
+        sa.Column('cluster_id', postgresql.UUID(as_uuid=True)),
         sa.Column('intensity_score', sa.Float()),
         sa.Column('risk_score', sa.Float()),
         sa.Column('processed_at', sa.DateTime(timezone=True), server_default=sa.func.now())
