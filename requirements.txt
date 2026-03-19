@@ -39,3 +39,5 @@ pytest-asyncio
 stripe
 
 python-jose[cryptography]
+
+argon2-cffi
