@@ -1,0 +1,39 @@
+# Framework
+fastapi
+uvicorn
+
+# Database
+sqlalchemy
+sqlalchemy[asyncio]
+asyncpg
+psycopg2
+alembic
+
+# Config & Validation
+pydantic
+pydantic-settings
+
+# LLM
+openai
+google-generativeai
+
+# OSINT & Scraping
+httpx
+beautifulsoup4
+python-dateutil
+feedparser
+
+# Markdown & PDF
+Markdown
+jinja2
+weasyprint
+
+# Job Schedulers
+schedule
+
+# Testing
+pytest
+pytest-asyncio
+
+# Payments
+stripe

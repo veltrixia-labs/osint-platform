@@ -1,0 +1,22 @@
+global:
+  cooldown_minutes: 120
+  score_threshold: 0.1
+topics:
+  ai_semiconductor_intelligence:
+    cooldown_minutes: 90
+    score_threshold: 0.1
+  crypto_geopolitics:
+    cooldown_minutes: 60
+    score_threshold: 0.1
+  defense_technology:
+    cooldown_minutes: 90
+    score_threshold: 0.1
+  energy_resource_risk:
+    cooldown_minutes: 90
+    score_threshold: 0.1
+  global_market_intelligence:
+    cooldown_minutes: 90
+    score_threshold: 0.1
+  supply_chain_intelligence:
+    cooldown_minutes: 90
+    score_threshold: 0.1

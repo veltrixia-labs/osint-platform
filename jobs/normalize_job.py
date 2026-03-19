@@ -1,0 +1,90 @@
+import asyncio
+import hashlib
+import logging
+import re
+from datetime import datetime, timezone
+from dateutil import parser as dt_parser
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from db.database import AsyncSessionLocal
+from db.models import RawItem, Item
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def normalize_text(text: str) -> str:
+    """Removes non-alphanumeric chars and lowercases."""
+    return re.sub(r'[^a-zA-Z0-9]', '', text).lower()
+
+async def run_normalize(db: AsyncSession):
+    logger.info("Starting High-Efficiency Normalize Job")
+    
+    stmt = select(RawItem).order_by(RawItem.created_at.desc()).limit(1000)
+    result = await db.execute(stmt)
+    raw_items = result.scalars().all()
+    
+    metrics = {"normalized": 0, "noise_filtered": 0, "deduped": 0}
+    
+    for raw in raw_items:
+        payload = raw.payload_json
+        url = payload.get("link", "")
+        title = payload.get("title", "")
+        summary = payload.get("summary", "")
+        
+        if not url or not title:
+            continue
+            
+        # 1. Noise Filter
+        if len(title) < 15 or len(summary) < 20: 
+            metrics["noise_filtered"] += 1
+            continue
+            
+        # 2. Advanced Dedupe (URL + Normalized Title Hash)
+        url_hash = hashlib.sha256(url.encode('utf-8')).hexdigest()
+        title_norm = normalize_text(title)
+        title_hash = hashlib.sha256(title_norm.encode('utf-8')).hexdigest()
+        
+        # We can use either or both. We'll use URL as primary dedup_key but check title too.
+        check_stmt = select(Item).where((Item.dedup_key == url_hash) | (Item.dedup_key == title_hash))
+        item_exists = (await db.execute(check_stmt)).scalar_one_or_none()
+        
+        if not item_exists:
+            pub_date_str = payload.get("published", "")
+            pub_date = raw.fetched_at
+            if pub_date_str:
+                try:
+                    parsed_date = dt_parser.parse(pub_date_str)
+                    if parsed_date.tzinfo is None:
+                        parsed_date = parsed_date.replace(tzinfo=timezone.utc)
+                    pub_date = parsed_date
+                except Exception:
+                    pass
+            
+            new_item = Item(
+                type="article",
+                dedup_key=url_hash, # Keep URL as primary ID mapping
+                published_at=pub_date,
+                title=title,
+                summary=summary,
+                source_name=raw.source_system,
+                source_url=url,
+                source_id=raw.source_id,
+                source_group=raw.source_group,
+                reliability_weight=raw.reliability_weight,
+                category="news",
+                geo={},
+                tags={}
+            )
+            db.add(new_item)
+            metrics["normalized"] += 1
+        else:
+            metrics["deduped"] += 1
+            
+    await db.commit()
+    logger.info(f"Normalize finished. Metrics: {metrics}")
+
+if __name__ == "__main__":
+    async def main():
+        async with AsyncSessionLocal() as session:
+            await run_normalize(session)
+    asyncio.run(main())

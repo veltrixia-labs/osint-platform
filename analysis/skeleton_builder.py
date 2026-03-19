@@ -1,0 +1,321 @@
+import logging
+import re
+from typing import List, Dict
+
+logger = logging.getLogger(__name__)
+
+THREADS_CTA = [
+    "Read the full briefing on Substack:",
+    "Full forecast and scenarios available here:",
+    "Deep dive into this intelligence note:"
+]
+
+def normalize_title(title: str) -> str:
+    """Normalizes news titles for professional event headlines."""
+    if not title:
+        return ""
+    
+    # 1. Remove source suffixes (- BBC, | Reuters, etc.)
+    title = re.split(r' - | \| | : ', title)[0]
+    
+    # 2. Remove clickbait/noise prefixes
+    noise_patterns = [
+        r'^(Live updates|Breaking News|Exclusive|Watch|Fact Check|Opinion|Editorial): ',
+        r'^VIDEO: ',
+        r'^\d+ (Ways|Things|Reasons) ',
+    ]
+    for pattern in noise_patterns:
+        title = re.sub(pattern, '', title, flags=re.IGNORECASE)
+    
+    # 3. Suppress Question forms / Explainers
+    if title.endswith('?') or title.lower().startswith(('why ', 'how ', 'what ')):
+        # Heuristic: Convert question-like header to a topical statement
+        title = "Developments regarding " + title.rstrip('?')
+    
+    # 4. Clean quotes and extra spacing
+    title = title.strip(' "\'')
+    
+    # 5. Length limit (110 for safety in L1)
+    if len(title) > 110:
+        title = title[:107].rsplit(' ', 1)[0] + "..."
+        
+    return title
+
+# Risk Headline Templates (Sector-Specific)
+RISK_HEADLINE_TEMPLATES = {
+    "geopolitics": [
+        "{theme} Risk Rises Following {event}",
+        "{theme} Strategic Friction Builds Amid {event}",
+        "{theme} Chokepoint Alerts Intensify as {event}",
+        "Naval Pressure Expands in {theme} Context"
+    ],
+    "cyber": [
+        "{theme} Digital Vulnerability Mounts",
+        "Attribution Risk Rises for {theme} Incidents",
+        "{theme} Integrity Under Pressure",
+        "Digital Surface Expansion Signals {theme} Alerts"
+    ],
+    "economy": [
+        "{theme} Liquidity Strain Intensifies",
+        "Pricing Volatility Rises Following {event}",
+        "{theme} Sensitivity Signals Heightened Pressure",
+        "Rate Pressure Expands Across {theme} Hubs"
+    ],
+    "supply_chain": [
+        "{theme} Bottleneck Alerts Intensify",
+        "Resource Flow Disrupted as {event} Expands",
+        "{theme} Constraints Signal Disruptive Pressure",
+        "Port Congestion Risks Mount Following {event}"
+    ],
+    "shared": [
+        "{theme} Risk Alerts Intensify Following {event}",
+        "{theme} Stability Under Pressure Amid {event}",
+        "{theme} Focus Intensifies as Pressure Mounts",
+        "Structural Friction Builds in {theme} Context"
+    ]
+}
+
+WHY_IT_MATTERS_TEMPLATES = {
+    "geopolitics": "Regional spillover and sanction risks remain high as geopolitical chokepoints face sustained pressure.",
+    "cyber": "Critical infrastructure stability and attribution risks are intensifying following recent digital asset incidents.",
+    "economy": "Market liquidity and policy sensitivity are driving volatility across global resource and tech hubs.",
+    "supply_chain": "Logistics bottlenecks and maritime shipping constraints are signaling potential delivery disruptions.",
+    "defense": "Defense procurement and readiness shifts are indicating a significant transformation in regional security posture.",
+    "energy": "Global energy security and resource flow stability are coming under renewed pressure from supply-side risks.",
+    "default": "The observed cluster activity indicates shifting risk profiles with potential cross-sector transmission."
+}
+
+# Monitorable Watch-Points (L3)
+WHAT_TO_WATCH_TEMPLATES = {
+    "geopolitics": "Monitor troop movements, naval deployments, and high-level diplomatic signaling across key corridors.",
+    "cyber": "Watch for patch releases, attribution statements from security agencies, and further service status reports.",
+    "economy": "Track liquidity indicators, interest rate signaling from central banks, and energy futures volatility.",
+    "supply_chain": "Observe shipping insurance rates, port congestion data, and inventory level shifts in affected hubs.",
+    "defense": "Monitor procurement contracts, joint military exercises, and weapon system deployment status.",
+    "energy": "Track daily output levels, storage capacity shifts, and spot price movements for critical energy resources.",
+    "default": "Watch for further institutional responses and multi-source confirmation of ongoing risk trends."
+}
+
+# State tracking for rotation (simple process-level cache)
+_LAST_USED_TEMPLATE = {}
+_LAST_USED_KEYWORDS = set()
+
+def build_threads_teaser(
+    top_event_title: str, 
+    top_theme: str, 
+    category: str, 
+    substack_url: str
+) -> str:
+    """
+    Builds a 4-line authoritative Risk-focused Threads teaser.
+    Evolved for Phase 14: Category-aware templates + Keyword rotation.
+    """
+    global _LAST_USED_TEMPLATE, _LAST_USED_KEYWORDS
+    
+    norm_event = normalize_title(top_event_title)
+    
+    # Subject Extraction (Prioritize Risk Nouns from clustering)
+    from analysis.clustering import NORMALIZATION_MAP
+    risk_nouns = set(NORMALIZATION_MAP.values())
+    
+    event_words = norm_event.lower().split()
+    event_core = norm_event
+    
+    # Try to find a "Risk Noun" to anchor the headline
+    found_risk_noun = None
+    for w in event_words:
+        if w in risk_nouns:
+            found_risk_noun = w.capitalize()
+            break
+            
+    if found_risk_noun and len(norm_event) > 60:
+        event_core = found_risk_noun # Use the noun as the core if the title is too long
+    elif ':' in norm_event:
+        event_core = norm_event.split(':', 1)[1].strip()
+    
+    words = event_core.split()
+    if len(words) > 7:
+        event_core = " ".join(words[:7]) + "..."
+
+    # Determine templates for this sector
+    cat_fixed = category.lower() if category else "default"
+    templates = RISK_HEADLINE_TEMPLATES.get(cat_fixed, RISK_HEADLINE_TEMPLATES["shared"])
+    
+    # Rotation logic
+    title_hash = hash(norm_event + top_theme)
+    tpl_idx = title_hash % len(templates)
+    
+    # Avoid same template as last category if possible
+    if _LAST_USED_TEMPLATE.get(cat_fixed) == tpl_idx:
+        tpl_idx = (tpl_idx + 1) % len(templates)
+    
+    _LAST_USED_TEMPLATE[cat_fixed] = tpl_idx
+    template = templates[tpl_idx]
+    
+    theme_val = top_theme or (category.capitalize() if category else "Regional")
+    
+    # Keyword Suppression (Avoid repeating theme in consecutive runs)
+    if theme_val in _LAST_USED_KEYWORDS:
+        # Subtle tweak to avoid anchor word repetition
+        theme_val = f"Extended {theme_val}"
+    
+    _LAST_USED_KEYWORDS.add(theme_val)
+    if len(_LAST_USED_KEYWORDS) > 5:
+        _LAST_USED_KEYWORDS.pop() # Keep small window
+
+    l1 = template.format(
+        theme=theme_val,
+        event=event_core
+    )
+    
+    # Final cleanup
+    l1 = l1.replace("  ", " ").strip()
+    if len(l1) > 120:
+        l1 = l1[:117] + "..."
+
+    # Determine context key for L2/L3 (Semantic Role separation remains)
+    search_text = (category or "") + " " + (top_event_title or "")
+    search_text = search_text.lower()
+    
+    cat_key = "default"
+    mapping_order = ["geopolitics", "energy", "economy", "cyber", "supply_chain", "defense"]
+    for k in mapping_order:
+        if k in search_text or (k == "economy" and "market" in search_text):
+            cat_key = k
+            break
+            
+    l2 = WHY_IT_MATTERS_TEMPLATES.get(cat_key, WHY_IT_MATTERS_TEMPLATES["default"])
+    l3 = WHAT_TO_WATCH_TEMPLATES.get(cat_key, WHAT_TO_WATCH_TEMPLATES["default"])
+    l4 = f"{THREADS_CTA[0]}\n{substack_url}"
+    
+    return f"{l1}\n\n{l2}\n\n{l3}\n\n{l4}"
+
+def build_substack_skeleton(
+    themes: List[str], 
+    developments: List[str], 
+    forecasts: List[Dict], 
+    scenarios: Dict, 
+    sources: List[str],
+    trends: Dict[str, List[str]] = None,
+    visuals: List[str] = None
+) -> str:
+    """
+    Builds the full 6-section skeleton report for Substack.
+    Uses more granular analyst tone for sections.
+    """
+    sections = []
+    
+    # 1. Summary of Themes
+    sections.append("# Summary of Themes\n" + " / ".join(themes)) # Use slash for more professional separation
+    
+    # 2. Key Developments
+    dev_str = "\n".join([f"- {d}" for d in developments[:5]])
+    sections.append("# Key Developments\n" + dev_str)
+
+    # 2.5 Trend Analysis (New Phase 19/19.1/19.2)
+    trend_blocks = []
+    if trends:
+        # High-level Risk Patterns (Phase 19.1/19.2)
+        if trends.get("patterns"):
+            pattern_str = ""
+            for p in trends["patterns"]:
+                pattern_str += f"### Pattern: {p['label']} (Intensity: {p['intensity']}/10.0)\n"
+                pattern_str += f"{p['description']}\n"
+                if p.get("supporting"):
+                    pattern_str += "**Supporting Developments:**\n"
+                    # Strict limit to 3 supporting events for Phase 19.2
+                    pattern_str += "\n".join([f"- {ev}" for ev in p["supporting"][:3]]) + "\n"
+                pattern_str += "\n"
+            trend_blocks.append(pattern_str)
+
+        # Individual Signals (Fallback only if no patterns)
+        if not trends.get("patterns"):
+            if trends.get("persistent"):
+                trend_blocks.append("## Persistent Signals\n" + "\n".join([f"- {t}" for t in trends["persistent"]]))
+            if trends.get("surges"):
+                trend_blocks.append("## Emerging Surges\n" + "\n".join([f"- {t}" for t in trends["surges"]]))
+            if trends.get("changes"):
+                trend_blocks.append("## What Changed vs Baseline\n" + "\n".join([f"- {t}" for t in trends["changes"]]))
+    
+    if trend_blocks:
+        visual_md = ""
+        if visuals:
+            # Use absolute-ish path for markdown (relative to root for now, or just filename if uploaded)
+            # Embedding with a clear caption
+            for v in visuals:
+                visual_md += f"![Analyst Visualization](visuals/{v})\n\n"
+        
+        sections.append("# Trend Analysis\n" + visual_md + "\n\n".join(trend_blocks))
+    else:
+        sections.append("# Trend Analysis\nNo significant persistent or emerging risk patterns detected for this period.")
+    
+    # 3. Potential Implications (Impact Analysis)
+    imp_str = "\n".join([f"- {f['implication']} (Confidence: {f['confidence']} - {f['evidence']})" for f in forecasts])
+    sections.append("# Potential Implications\n" + imp_str)
+    
+    # 4. Monitoring Points (Actionable Intel)
+    mon_str = "\n".join([f"- Watch for: {f['implication'].split(' ')[0]} indicators" for f in forecasts])
+    sections.append("# Monitoring Points\n" + mon_str)
+    
+    # 5. Scenarios (Conditional Forecasting)
+    sc_str = f"## Base Case (Confidence: {scenarios['base']['confidence']})\n{scenarios['base']['text']}\n\n"
+    sc_str += f"## Escalation Case (Confidence: {scenarios['escalation']['confidence']})\n{scenarios['escalation']['text']}\n\n"
+    sc_str += f"## Containment Case (Confidence: {scenarios['containment']['confidence']})\n{scenarios['containment']['text']}"
+    sections.append("# Scenarios\n" + sc_str)
+    
+    # 6. Sources (Evidence Base)
+    src_str = "\n".join([f"- {s}" for s in sorted(list(set(sources)))])
+    sections.append("# Sources\n" + src_str)
+    
+    return "\n\n".join(sections)
+
+def validate_skeleton(content: str) -> bool:
+    """Validates if the content has all 6 mandatory sections with robust parsing."""
+    if not content:
+        return False
+        
+    mandatory = [
+        "Summary of Themes",
+        "Key Developments",
+        "Trend Analysis",
+        "Potential Implications",
+        "Monitoring Points",
+        "Scenarios",
+        "Sources"
+    ]
+    
+    # 1. Check for presence of all headers
+    for section in mandatory:
+        header = f"# {section}"
+        if header not in content:
+            logger.warning(f"Skeleton validation failed: Missing section {header}")
+            return False
+            
+    # 2. Substantiality check with explicit boundaries
+    for i, section in enumerate(mandatory):
+        header = f"# {section}"
+        start_idx = content.find(header) + len(header)
+        
+        if i + 1 < len(mandatory):
+            next_header = f"# {mandatory[i+1]}"
+            end_idx = content.find(next_header)
+        else:
+            end_idx = len(content)
+            
+        if end_idx < start_idx:
+            end_idx = len(content)
+            
+        body = content[start_idx:end_idx].strip()
+        if len(body) < 10:
+            logger.warning(f"Skeleton validation failure: Section {header} is too thin. (Len: {len(body)})")
+            return False
+            
+    # 3. Banned Phrase Check (Phase 19.4)
+    BANNED_PHRASES = ["escalating regional risks", "general escalation", "regional risk", "mixed signals"]
+    content_lower = content.lower()
+    for phrase in BANNED_PHRASES:
+        if phrase in content_lower:
+            logger.warning(f"Skeleton validation failure: Banned phrase '{phrase}' detected.")
+            return False
+                 
+    return True

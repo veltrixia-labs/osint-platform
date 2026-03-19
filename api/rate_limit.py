@@ -1,0 +1,79 @@
+import time
+import logging
+from typing import Dict, Tuple
+from fastapi import HTTPException, Request, Depends
+from api.auth import blacklist_manager
+from api.gating import get_effective_tier, TIER_FREE, TIER_PRO, TIER_ENTERPRISE
+from api.auth import get_current_user_from_access
+
+logger = logging.getLogger(__name__)
+
+# Limits: (count, period_seconds)
+# Default limits if not specified
+DEFAULT_LIMITS = {
+    TIER_FREE: (100, 3600), # 100/hr
+    TIER_PRO: (1000, 3600), # 1000/hr
+    TIER_ENTERPRISE: (10000, 3600) 
+}
+
+# Endpoint specific limits
+ENDPOINT_LIMITS: Dict[str, Dict[str, Tuple[int, int]]] = {
+    "/api/alerts": {
+        TIER_FREE: (20, 60), # 20/min
+        TIER_PRO: (100, 60),
+        TIER_ENTERPRISE: (500, 60)
+    },
+    "/api/system/health": {
+        TIER_FREE: (5, 60),
+        TIER_PRO: (20, 60),
+        TIER_ENTERPRISE: (100, 60)
+    }
+}
+
+class RateLimiter:
+    def __init__(self, redis_client):
+        self.redis = redis_client
+
+    async def is_over_limit(self, user_id: str, endpoint: str, tier: str) -> bool:
+        """Check if user is over their rate limit for a specific endpoint/tier."""
+        if not await blacklist_manager._is_redis_available():
+            return False # Fail open in dev/memory mode or if Redis is down
+            
+        limit, period = ENDPOINT_LIMITS.get(endpoint, {}).get(tier, DEFAULT_LIMITS[tier])
+        
+        key = f"rl:{user_id}:{endpoint}"
+        try:
+            current = await self.redis.get(key)
+            if current and int(current) >= limit:
+                return True
+                
+            # Increment and set TTL if new
+            pipe = self.redis.pipeline()
+            await pipe.incr(key)
+            await pipe.expire(key, period)
+            await pipe.execute()
+            return False
+        except Exception as e:
+            logger.error(f"Rate limiter error: {e}")
+            return False
+
+limiter = RateLimiter(blacklist_manager.redis_client)
+
+def rate_limit(endpoint: str = None):
+    """FastAPI decorator for tiered rate limiting."""
+    async def rate_limit_checker(
+        request: Request,
+        current_user: tuple = Depends(get_current_user_from_access)
+    ):
+        user, _, _ = current_user
+        user_id = str(user.id)
+        tier = await get_effective_tier(user)
+        path = endpoint or request.url.path
+        
+        if await limiter.is_over_limit(user_id, path, tier):
+            raise HTTPException(
+                status_code=429, 
+                detail="Rate limit exceeded for your subscription tier."
+            )
+        return user
+    return rate_limit_checker
