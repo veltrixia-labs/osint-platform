@@ -41,3 +41,5 @@ stripe
 python-jose[cryptography]
 
 argon2-cffi
+
+redis
