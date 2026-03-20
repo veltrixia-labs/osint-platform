@@ -169,7 +169,7 @@ async function initDashboard() {
         const state = new DashboardState()
         state.subscribe((s: DashboardState) => {
             renderAlerts(s.alerts, alertsContainer)
-            renderHealth(s.health, healthContainer)
+            if (s.health) renderHealth(s.health, healthContainer)
             renderSidebar(s.analysts, sidebarContainer)
             renderTopicFilters(alertsContainer, s)
         })

@@ -1,7 +1,7 @@
 import { submitFeedback, updateWatchlist } from './api';
-import { renderLockedFeature } from './subscription';
+import type { Alert, AnalystProfile, HealthData } from './api';
 
-export function renderHealth(data, container) {
+export function renderHealth(data: HealthData, container: HTMLElement) {
     container.innerHTML = `
         <div class="health-grid">
             <div class="health-stat">
@@ -20,7 +20,7 @@ export function renderHealth(data, container) {
     `;
 }
 
-export function renderAlerts(alerts, container) {
+export function renderAlerts(alerts: Alert[], container: HTMLElement) {
     container.innerHTML = alerts.map(alert => {
         const severityClass = alert.severity.toLowerCase();
         return `
@@ -51,20 +51,21 @@ export function renderAlerts(alerts, container) {
     // Attach feedback events
     container.querySelectorAll('.btn-fb').forEach(btn => {
         btn.addEventListener('click', async (e) => {
-            const card = e.target.closest('.alert-card');
-            const alertId = card.dataset.id;
-            const score = parseInt(e.target.dataset.score);
+            const target = e.currentTarget as HTMLButtonElement;
+            const card = target.closest('.alert-card') as HTMLElement;
+            const alertId = card.dataset.id!;
+            const score = parseInt(target.dataset.score!);
             
             await submitFeedback(alertId, score);
             
             // Optimistic UI update
             card.querySelectorAll('.btn-fb').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
+            target.classList.add('active');
         });
     });
 }
 
-export function renderSidebar(analysts, container) {
+export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement) {
     if (!analysts || analysts.length === 0) {
         container.innerHTML = '<h2>Analysts</h2><p>No active profiles.</p>';
         return;
@@ -73,7 +74,6 @@ export function renderSidebar(analysts, container) {
     // For simplicity in v1, show the first analyst's watchlist
     const a = analysts[0];
     const usage = (window as any).getCurrentUsage();
-    const canAdd = usage ? usage.keywords.used < usage.keywords.limit : true;
     const limitReached = usage && usage.keywords.used >= usage.keywords.limit;
 
     container.innerHTML = `
@@ -112,8 +112,8 @@ export function renderSidebar(analysts, container) {
     `;
 
     // Event handlers for keyword management
-    const addBtn = container.querySelector('#add-keyword-btn');
-    const input = container.querySelector<HTMLInputElement>('#new-keyword');
+    const addBtn = container.querySelector('#add-keyword-btn') as HTMLButtonElement | null;
+    const input = container.querySelector('#new-keyword') as HTMLInputElement | null;
     const upgradeLink = container.querySelector('#watchlist-upgrade-link');
 
     if (addBtn && input) {
@@ -127,10 +127,7 @@ export function renderSidebar(analysts, container) {
             try {
                 addBtn.textContent = "...";
                 await updateWatchlist(a.id, [...currentKws, val]);
-                // Refresh usage and trigger local state update if possible
-                // For simplicity, we trigger a global refresh via any polling state
                 if ((window as any).refreshUsage) (window as any).refreshUsage();
-                // Note: The parent renderSidebar will be re-called by polling loop
             } catch (err: any) {
                 alert(err.message);
             } finally {
@@ -148,7 +145,8 @@ export function renderSidebar(analysts, container) {
 
     container.querySelectorAll('.remove-kw').forEach(btn => {
         btn.addEventListener('click', async (e) => {
-            const kw = (e.target as HTMLElement).dataset.keyword;
+            const target = e.currentTarget as HTMLElement;
+            const kw = target.dataset.keyword;
             const currentKws = a.watch_keywords || [];
             try {
                 await updateWatchlist(a.id, currentKws.filter(k => k !== kw));

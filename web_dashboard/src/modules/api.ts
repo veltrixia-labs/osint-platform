@@ -21,6 +21,39 @@ export interface CheckoutResponse {
     plan?: string;
 }
 
+export interface Alert {
+    id: string;
+    severity: string;
+    triggered_at: string;
+    intelligence_score: number;
+    target_label: string;
+    feedback_score?: number;
+    delivery?: {
+        analyst_id: string;
+        relevance_score: number;
+    };
+}
+
+export interface AnalystProfile {
+    id: string;
+    telegram_chat_id: string;
+    user_role: string;
+    subscription_tier: string;
+    watch_keywords: string[];
+    watch_sectors: string[];
+}
+
+export interface TriggerStat {
+    type: string;
+    avg_feedback: number;
+}
+
+export interface HealthData {
+    review_rate: number;
+    suppression_ratio: number;
+    top_performing_triggers: TriggerStat[];
+}
+
 export async function login(telegram_chat_id: string, password: string): Promise<AuthResponse> {
     const resp = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
@@ -86,7 +119,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
     return resp;
 }
 
-export async function fetchAlerts(params: Record<string, string> = {}) {
+export async function fetchAlerts(params: Record<string, string> = {}): Promise<Alert[]> {
     const query = new URLSearchParams(params).toString();
     const resp = await fetchWithAuth(`${API_BASE}/alerts?${query}`);
     return await resp.json();
@@ -101,12 +134,12 @@ export async function submitFeedback(alertId: string, score: number) {
     return await resp.json();
 }
 
-export async function fetchAnalysts() {
+export async function fetchAnalysts(): Promise<AnalystProfile[]> {
     const resp = await fetchWithAuth(`${API_BASE}/analysts`);
     return await resp.json();
 }
 
-export async function updateWatchlist(analystId: string, watchlist: any) {
+export async function updateWatchlist(analystId: string, watchlist: string[]): Promise<any> {
     const resp = await fetchWithAuth(`${API_BASE}/analysts/${analystId}/watchlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -132,7 +165,7 @@ export async function fetchUsage(): Promise<UsageResponse> {
     return await resp.json();
 }
 
-export async function fetchHealth() {
+export async function fetchHealth(): Promise<HealthData> {
     const resp = await fetchWithAuth(`${API_BASE}/system/health`);
     return await resp.json();
 }

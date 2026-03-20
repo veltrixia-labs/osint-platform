@@ -1,9 +1,10 @@
 import { fetchAlerts, fetchHealth, fetchAnalysts } from './api';
+import type { Alert, HealthData, AnalystProfile } from './api';
 
 export class DashboardState {
-    alerts: any[];
-    health: any;
-    analysts: any[];
+    alerts: Alert[];
+    health: HealthData | null;
+    analysts: AnalystProfile[];
     isPolling: boolean;
     subscribers: ((state: DashboardState) => void)[];
     topic: string | null;
