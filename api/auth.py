@@ -90,6 +90,25 @@ async def get_current_user_from_access(token: str = Depends(oauth2_scheme), db: 
     except JWTError:
         raise credentials_exception
 
+async def get_optional_current_user(token: Optional[str] = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> Optional[AnalystProfile]:
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        session_id: str = payload.get("session_id")
+        version: int = payload.get("v")
+        if not user_id or not session_id:
+            return None
+            
+        if await session_manager.validate_session(db, uuid.UUID(session_id), version) is False:
+            return None
+
+        stmt = select(AnalystProfile).where(AnalystProfile.id == uuid.UUID(user_id))
+        return (await db.execute(stmt)).scalar_one_or_none()
+    except:
+        return None
+
 async def refresh_tokens(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:

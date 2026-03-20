@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Query, HTTPException, Depends, Request, Response, status
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.future import select
 from sqlalchemy import desc, func
-from db.models import AlertLog, AlertDelivery, AnalystProfile, Report
+from db.models import AlertLog, AlertDelivery, AnalystProfile, Report, AnalyticsEvent
 from db.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
@@ -15,6 +16,7 @@ import json
 from api.auth import (
     get_password_hash, verify_password, create_access_token, 
     create_refresh_token, get_current_user_from_access, refresh_tokens,
+    get_optional_current_user,
     session_manager, blacklist_manager, SecurityLogger
 )
 
@@ -71,6 +73,11 @@ async def login(response: Response, request: Request, data: dict, db: AsyncSessi
     
     await SecurityLogger.log_event(db, "login_success", user_id=user.id, session_id=session_id, client_ip=request.client.host)
     return {"access_token": access_token, "token_type": "bearer"}
+
+class AnalyticsEventCreate(BaseModel):
+    event_type: str
+    report_id: Optional[uuid.UUID] = None
+    metadata_json: Optional[dict] = None
 
 @app.post("/api/auth/refresh")
 async def refresh(auth_data: dict = Depends(refresh_tokens)):
@@ -305,6 +312,38 @@ async def get_public_report_preview(
         "is_preview": True,
         "created_at": report.created_at.isoformat() if report.created_at else None
     }
+
+@app.post("/api/analytics/event")
+async def log_analytics_event(
+    event: AnalyticsEventCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[AnalystProfile] = Depends(get_optional_current_user)
+):
+    """Log an analytics event (preview_view, cta_click, full_view, etc.)"""
+    # Permission check: unauthenticated can only log preview_view and cta_click
+    allowed_unauth = ["preview_view", "cta_click"]
+    if not current_user and event.event_type not in allowed_unauth:
+        raise HTTPException(status_code=403, detail="Unauthenticated users can only log preview and CTA events")
+
+    # If auth exists but the dependency returned a tuple (AnalystProfile, session_id, version), extract profile
+    user_obj = None
+    if current_user:
+        # Check if it's a tuple (from some dependencies) or a direct profile
+        if isinstance(current_user, tuple):
+             user_obj = current_user[0]
+        else:
+             user_obj = current_user
+
+    new_event = AnalyticsEvent(
+        event_type=event.event_type,
+        report_id=event.report_id,
+        user_id=user_obj.id if user_obj else None,
+        metadata_json=event.metadata_json
+    )
+    db.add(new_event)
+    await db.commit()
+    return {"status": "ok", "event_id": str(new_event.id)}
+
 
 # ── Usage Endpoint (Phase 33) ─────────────────────────────────────────────────
 

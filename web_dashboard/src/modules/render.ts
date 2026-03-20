@@ -1,4 +1,4 @@
-import { submitFeedback, updateWatchlist } from './api';
+import { submitFeedback, updateWatchlist, logAnalyticsEvent } from './api';
 import type { Alert, AnalystProfile, HealthData } from './api';
 
 export function renderHealth(data: HealthData, container: HTMLElement) {
@@ -172,7 +172,7 @@ function simpleMarkdown(md: string): string {
         .replace(/\n/g, '<br>');
 }
 
-export function renderReportDetail(report: any, container: HTMLElement) {
+export function renderReportDetail(report: any, container: HTMLElement, onLoginRequested?: () => void) {
     const isPreview = report.is_preview === true;
     const date = new Date(report.created_at).toLocaleDateString();
     const typeLabel = (report.report_type || "").replace(/_/g, ' ').toUpperCase();
@@ -230,8 +230,9 @@ export function renderReportDetail(report: any, container: HTMLElement) {
 
     if (isPreview) {
         document.querySelector('#cta-login-btn')?.addEventListener('click', () => {
-            // Force reload to trigger login screen since we are currently "unauthenticated"
-            window.location.reload();
+            logAnalyticsEvent('cta_click', report.id);
+            if (onLoginRequested) onLoginRequested();
+            else window.location.reload();
         });
     }
 }

@@ -215,3 +215,25 @@ export async function fetchPublicReport(reportId: string): Promise<any> {
     if (!resp.ok) throw new Error(`Failed to fetch public report (HTTP ${resp.status})`);
     return await resp.json();
 }
+
+export async function logAnalyticsEvent(type: string, reportId?: string, metadata: any = {}): Promise<void> {
+    try {
+        const vid = localStorage.getItem('osint_visitor_id');
+        const enrichedMetadata = {
+            ...metadata,
+            visitor_id: vid || 'unknown',
+            url: window.location.href
+        };
+
+        await fetchWithAuth(`${API_BASE}/analytics/event`, {
+            method: 'POST',
+            body: JSON.stringify({
+                event_type: type,
+                report_id: reportId,
+                metadata_json: enrichedMetadata
+            })
+        });
+    } catch (err) {
+        console.warn('Analytics logging failed:', err);
+    }
+}

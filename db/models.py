@@ -262,4 +262,13 @@ class SecurityLog(Base):
     client_ip = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+class AnalyticsEvent(Base):
+    __tablename__ = "analytics_events"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_type = Column(String, nullable=False, index=True) # preview_view, cta_click, full_view, login_success
+    report_id = Column(UUID(as_uuid=True), ForeignKey("reports.id", ondelete="SET NULL"), nullable=True, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("analyst_profiles.id", ondelete="SET NULL"), nullable=True, index=True)
+    metadata_json = Column(JSON) # {utm_source, utm_medium, utm_campaign, visitor_id, etc.}
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
 

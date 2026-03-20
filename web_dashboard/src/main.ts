@@ -1,7 +1,7 @@
 import './style.css'
 import { DashboardState } from './modules/poll'
 import { renderAlerts, renderHealth, renderSidebar, renderReportDetail } from './modules/render'
-import { login, fetchMe, logout, fetchUsage, fetchReport, fetchPublicReport } from './modules/api'
+import { login, fetchMe, logout, fetchUsage, fetchReport, fetchPublicReport, logAnalyticsEvent } from './modules/api'
 import type { UsageResponse } from './modules/api'
 import {
     renderTierBadge,
@@ -24,7 +24,10 @@ const TOPICS = [
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 
-async function renderLogin() {
+export async function renderLogin() {
+    // Stop any active polling from guest dashboard to avoid redundant UI renders
+    (window as any).stopPolling?.();
+    
     app.innerHTML = `
     <div class="login-container">
         <div class="login-card">
@@ -51,6 +54,25 @@ async function renderLogin() {
             errorDiv.textContent = "Authentication failed. Please check credentials."
         }
     })
+}
+
+function getVisitorId(): string {
+    let vid = localStorage.getItem('osint_visitor_id');
+    if (!vid) {
+        vid = crypto.randomUUID();
+        localStorage.setItem('osint_visitor_id', vid);
+    }
+    return vid || 'unknown';
+}
+
+function captureUtms(params: URLSearchParams) {
+    return {
+        utm_source: params.get('utm_source'),
+        utm_medium: params.get('utm_medium'),
+        utm_campaign: params.get('utm_campaign'),
+        source: params.get('source'),
+        visitor_id: getVisitorId()
+    };
 }
 
 type TabId = 'feed' | 'plans' | 'reports'
@@ -127,6 +149,9 @@ async function initDashboard() {
     function stopPolling() {
         if (polling) { polling.stopPolling(); polling = null; }
     }
+    
+    // Expose stopPolling to allow other modules/functions to clean up UI before login
+    (window as any).stopPolling = stopPolling;
 
     function renderTopicFilters(container: HTMLElement, state: DashboardState) {
         const wrap = document.createElement('div');
@@ -345,15 +370,20 @@ async function initDashboard() {
         alertsContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:#8b949e;">Loading report details...</div>';
         
         try {
+            const utms = captureUtms(urlParams);
             const report = user 
                 ? await fetchReport(reportId) 
                 : await fetchPublicReport(reportId);
-            renderReportDetail(report, alertsContainer);
+            
+            // Log analytics event
+            logAnalyticsEvent(user ? 'full_view' : 'preview_view', reportId, utms);
+
+            renderReportDetail(report, alertsContainer, renderLogin);
             
             // Clean URL for clean experience only if logged in 
-            // If NOT logged in, we might want to keep it to allow login redirect back? 
-            // But the user didn't ask for full return path yet.
-            if (user) window.history.replaceState({}, '', window.location.pathname);
+            if (user) {
+                window.history.replaceState({}, '', window.location.pathname);
+            }
         } catch (err: any) {
             alertsContainer.innerHTML = `
                 <div style="padding:4rem; text-align:center;">
