@@ -1,4 +1,4 @@
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://osint-platform-xs7p.onrender.com/api";
 
 let accessToken: string | null = localStorage.getItem('access_token');
 
