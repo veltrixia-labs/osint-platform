@@ -252,6 +252,60 @@ async def update_watchlist(
     await db.commit()
     return {"status": "success"}
 
+@app.get("/api/reports/{report_id}")
+async def get_report_detail(
+    report_id: uuid.UUID,
+    current_user: tuple = Depends(get_current_user_from_access),
+    db: AsyncSession = Depends(get_db)
+):
+    """Retrieve a specific report by ID (Phase 34 Routing)."""
+    stmt = select(Report).where(Report.id == report_id)
+    report = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+        
+    return {
+        "id": str(report.id),
+        "report_type": report.report_type,
+        "topic_code": report.topic_code,
+        "content_markdown": report.content_markdown,
+        "created_at": report.created_at.isoformat() if report.created_at else None,
+        "substack_url": report.substack_draft_url,
+        "period_days": report.period_days
+    }
+
+@app.get("/api/public/reports/{report_id}")
+async def get_public_report_preview(
+    report_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """Retrieve a public truncated preview of a report (no auth required)."""
+    stmt = select(Report).where(Report.id == report_id)
+    report = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    # Generate Preview: First 3 paragraphs or max 1000 characters
+    content = report.content_markdown or ""
+    paragraphs = [p for p in content.split('\n\n') if p.strip()]
+    preview_parts = paragraphs[:3]
+    preview_text = "\n\n".join(preview_parts)
+    
+    # Apply char limit safety (1000 chars)
+    if len(preview_text) > 1000:
+        preview_text = preview_text[:1000] + "..."
+        
+    return {
+        "id": str(report.id),
+        "report_type": report.report_type,
+        "topic_code": report.topic_code,
+        "content_preview": preview_text,
+        "is_preview": True,
+        "created_at": report.created_at.isoformat() if report.created_at else None
+    }
+
 # ── Usage Endpoint (Phase 33) ─────────────────────────────────────────────────
 
 @app.get("/api/system/usage")

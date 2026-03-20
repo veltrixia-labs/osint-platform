@@ -199,8 +199,19 @@ export async function fetchCheckoutSession(tier: string): Promise<CheckoutRespon
  * Currently surfaces the Plans & Billing tab for user awareness.
  */
 export async function cancelSubscription(): Promise<{ message: string }> {
-    // When backend portal-session endpoint is ready, swap this for:
-    // const resp = await fetchWithAuth(`${API_BASE}/payments/portal-session`, { method: 'POST' });
-    // if (resp.ok) { window.location.href = (await resp.json()).url; return; }
     return { message: 'cancel_pending' };
+}
+
+export async function fetchReport(reportId: string): Promise<any> {
+    const resp = await fetchWithAuth(`${API_BASE}/reports/${reportId}`);
+    if (resp.status === 404) throw new Error("Report not found");
+    if (!resp.ok) throw new Error(`Failed to fetch report (HTTP ${resp.status})`);
+    return await resp.json();
+}
+
+export async function fetchPublicReport(reportId: string): Promise<any> {
+    const resp = await fetch(`${API_BASE}/public/reports/${reportId}`);
+    if (resp.status === 404) throw new Error("Report not found");
+    if (!resp.ok) throw new Error(`Failed to fetch public report (HTTP ${resp.status})`);
+    return await resp.json();
 }

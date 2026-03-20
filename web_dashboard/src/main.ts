@@ -1,7 +1,7 @@
 import './style.css'
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderHealth, renderSidebar } from './modules/render'
-import { login, fetchMe, logout, fetchUsage } from './modules/api'
+import { renderAlerts, renderHealth, renderSidebar, renderReportDetail } from './modules/render'
+import { login, fetchMe, logout, fetchUsage, fetchReport, fetchPublicReport } from './modules/api'
 import type { UsageResponse } from './modules/api'
 import {
     renderTierBadge,
@@ -56,24 +56,28 @@ async function renderLogin() {
 type TabId = 'feed' | 'plans' | 'reports'
 
 async function initDashboard() {
-    const user = await fetchMe()
-    if (!user) {
-        renderLogin()
-        return
+    const urlParams = new URLSearchParams(window.location.search);
+    const reportId = urlParams.get('report_id');
+    
+    let user = await fetchMe();
+    
+    if (!user && !reportId) {
+        renderLogin();
+        return;
     }
 
-    const graceBannerHtml = renderGracePeriodBanner(user)
-    const tierBadgeHtml = renderTierBadge(user)
+    const graceBannerHtml = user ? renderGracePeriodBanner(user) : '';
+    const tierBadgeHtml = user ? renderTierBadge(user) : '<span class="tier-badge-free">GUEST</span>';
 
     app.innerHTML = `
       <aside class="sidebar" id="sidebar">
           <div class="user-info">
               <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                <span class="role-badge">${user.role}</span>
+                <span class="role-badge">${user ? user.role : 'Guest'}</span>
                 ${tierBadgeHtml}
               </div>
-              <span class="chat-id">${user.chat_id}</span>
-              <button id="logout-btn" class="logout-btn">Logout</button>
+              <span class="chat-id">${user ? user.chat_id : 'Not Logged In'}</span>
+              ${user ? '<button id="logout-btn" class="logout-btn">Logout</button>' : '<button id="login-goto-btn" class="logout-btn" style="background:var(--tier-grace);">Log In</button>'}
           </div>
 
           <!-- Navigation -->
@@ -108,6 +112,7 @@ async function initDashboard() {
     `
 
     document.querySelector('#logout-btn')?.addEventListener('click', logout)
+    document.querySelector('#login-goto-btn')?.addEventListener('click', () => renderLogin())
 
     const alertsContainer = document.querySelector<HTMLDivElement>('#alerts-container')!
     const healthContainer = document.querySelector<HTMLDivElement>('#health-container')!
@@ -162,6 +167,12 @@ async function initDashboard() {
 
     function startFeedTab() {
         stopPolling()
+        if (!user) {
+            alertsContainer.innerHTML = renderLockedFeature('Intelligence Feed', 'free');
+            mainTitle.textContent = 'Analyst Intelligence'
+            healthContainer.innerHTML = ''
+            return;
+        }
         mainTitle.textContent = 'Analyst Intelligence'
         alertsContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:#8b949e;">Loading feed…</div>'
         healthContainer.innerHTML = ''
@@ -322,7 +333,37 @@ async function initDashboard() {
 
     // ── Initial render ────────────────────────────────────────────────────────
     startFeedTab()
-    refreshUsage()
+    // ── Phase 34: Report ID Direct Access Routing ─────────────────────────────
+    if (reportId) {
+        // Switch to reports tab UI state
+        activeTab = 'reports';
+        setNavActive('reports');
+        stopPolling();
+        mainTitle.textContent = 'Intelligence Report';
+        healthContainer.innerHTML = '';
+        sidebarContainer.innerHTML = '';
+        alertsContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:#8b949e;">Loading report details...</div>';
+        
+        try {
+            const report = user 
+                ? await fetchReport(reportId) 
+                : await fetchPublicReport(reportId);
+            renderReportDetail(report, alertsContainer);
+            
+            // Clean URL for clean experience only if logged in 
+            // If NOT logged in, we might want to keep it to allow login redirect back? 
+            // But the user didn't ask for full return path yet.
+            if (user) window.history.replaceState({}, '', window.location.pathname);
+        } catch (err: any) {
+            alertsContainer.innerHTML = `
+                <div style="padding:4rem; text-align:center;">
+                    <h2 style="color:#f85149;">Report Unavailable</h2>
+                    <p style="color:#8b949e; margin-bottom:2rem;">${err.message || 'The specified report could not be found or access is restricted.'}</p>
+                    <button class="btn-fb active" onclick="location.href='/'">Return to Dashboard</button>
+                </div>
+            `;
+        }
+    }
 }
 
 // Entry Point

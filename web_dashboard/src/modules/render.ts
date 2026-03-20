@@ -157,3 +157,81 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
         });
     });
 }
+
+function simpleMarkdown(md: string): string {
+    if (!md) return "";
+    return md
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // Escape HTML
+        .replace(/^### (.*$)/gm, '<h4>$1</h4>')
+        .replace(/^## (.*$)/gm, '<h3>$1</h3>')
+        .replace(/^# (.*$)/gm, '<h2>$1</h2>')
+        .replace(/^\* (.*$)/gm, '<li>$1</li>')
+        .replace(/^\- (.*$)/gm, '<li>$1</li>')
+        .replace(/\*\*(.*)\*\*/g, '<b>$1</b>')
+        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:var(--tier-grace);">$1</a>')
+        .replace(/\n/g, '<br>');
+}
+
+export function renderReportDetail(report: any, container: HTMLElement) {
+    const isPreview = report.is_preview === true;
+    const date = new Date(report.created_at).toLocaleDateString();
+    const typeLabel = (report.report_type || "").replace(/_/g, ' ').toUpperCase();
+    const topicLabel = report.topic_code ? report.topic_code.toUpperCase() : 'GLOBAL';
+
+    const content = isPreview ? report.content_preview : report.content_markdown;
+
+    container.innerHTML = `
+        <div class="report-detail">
+            <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
+                <button class="btn-fb active" id="back-to-feed-btn">← Back to Feed</button>
+                <div style="color: #8b949e; font-size: 0.9rem;">
+                    ${topicLabel} Intelligence Briefing | ${date}
+                    ${isPreview ? ' | <span style="color:#d29922;">PREVIEW</span>' : ''}
+                </div>
+            </div>
+            
+            <div class="report-content-card" style="background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 12px; border: 1px solid var(--border); line-height: 1.6; position: relative;">
+                <h1 style="margin-top: 0; color: #58a6ff;">${typeLabel}: ${topicLabel}</h1>
+                <div class="markdown-body" style="color: #c9d1d9; ${isPreview ? 'mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);' : ''}">
+                    ${simpleMarkdown(content || "")}
+                </div>
+
+                ${isPreview ? `
+                    <div class="preview-cta" style="margin-top: 2rem; padding: 2.5rem; background: rgba(88, 166, 255, 0.05); border: 1px dashed #58a6ff; border-radius: 8px; text-align: center;">
+                        <h2 style="color: #58a6ff; margin-top: 0;">Ready to see the full analysis?</h2>
+                        <p style="color: #8b949e; margin-bottom: 2rem; max-width: 500px; margin-inline: auto;">
+                            Join our community of elite analysts to unlock the complete report, real-time alerts, and deep-dive technical intelligence.
+                        </p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 400px; margin: 0 auto 2rem auto; text-align: left; font-size: 0.9rem; color: #c9d1d9;">
+                            <div>✅ Full Intelligence Reports</div>
+                            <div>✅ Real-Time Signal Alerts</div>
+                            <div>✅ Deep-Dive Technical Detail</div>
+                            <div>✅ Ongoing Market Intelligence</div>
+                        </div>
+                        <button id="cta-login-btn" class="plan-cta-btn" style="padding: 1rem 2.5rem; font-size: 1.1rem;">Sign Up / Log In to Read More</button>
+                    </div>
+                ` : ''}
+            </div>
+
+            ${!isPreview && report.substack_url ? `
+                <div style="margin-top: 2rem; text-align: center;">
+                    <a href="${report.substack_url}" target="_blank" class="plan-cta-btn" style="text-decoration: none; display: inline-block;">
+                        Read original on Substack
+                    </a>
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    document.querySelector('#back-to-feed-btn')?.addEventListener('click', () => {
+        const feedNav = document.querySelector<HTMLElement>('#nav-feed');
+        if (feedNav) feedNav.click();
+    });
+
+    if (isPreview) {
+        document.querySelector('#cta-login-btn')?.addEventListener('click', () => {
+            // Force reload to trigger login screen since we are currently "unauthenticated"
+            window.location.reload();
+        });
+    }
+}
