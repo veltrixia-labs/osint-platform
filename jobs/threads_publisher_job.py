@@ -2,22 +2,68 @@ import asyncio
 import logging
 import os
 import httpx
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from db.database import AsyncSessionLocal
 from db.models import ExternalPost, Report
+from sqlalchemy import func
+from db.database import AsyncSessionLocal
+from db.models import ExternalPost, Report
 from integrations.threads_client import ThreadsClient
-from integrations.substack_client import get_final_url
 
 logger = logging.getLogger(__name__)
 
+async def check_threads_guardrails(db: AsyncSession) -> tuple[bool, str]:
+    """
+    Checks for Quiet Hours, Cooldown, and Daily Cap.
+    Returns (True, "ok") if allowed, (False, reason) otherwise.
+    """
+    now = datetime.now(timezone.utc)
+    
+    # 1. Quiet Hours (UTC 01:00 - 05:00)
+    if 1 <= now.hour < 5:
+        return False, f"Quiet hours (UTC {now.hour:02d}:00)"
+
+    # 2. Cooldown (60 minutes)
+    # Status used in code is 'success'
+    stmt_last = select(ExternalPost).where(
+        ExternalPost.platform == "threads",
+        ExternalPost.status == "success"
+    ).order_by(ExternalPost.published_at.desc()).limit(1)
+    
+    last_post = (await db.execute(stmt_last)).scalar_one_or_none()
+    if last_post and last_post.published_at:
+        elapsed = now - last_post.published_at
+        if elapsed < timedelta(minutes=60):
+            wait_min = 60 - int(elapsed.total_seconds() / 60)
+            return False, f"Cooldown active ({wait_min}m remaining)"
+
+    # 3. Daily Cap (5 per day UTC)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    stmt_today = select(func.count(ExternalPost.id)).where(
+        ExternalPost.platform == "threads",
+        ExternalPost.status == "success",
+        ExternalPost.published_at >= today_start
+    )
+    
+    today_count = (await db.execute(stmt_today)).scalar_one() or 0
+    if today_count >= 5:
+        return False, f"Daily cap reached ({today_count}/5 posted today UTC)"
+
+    return True, "ok"
+
 async def run_threads_publisher(db: AsyncSession):
     """
-    Polls for 'pending' Threads posts, verifies that the target Substack 
-    article is actually live (HTTP 200), and then posts to Threads.
+    Polls for 'pending' Threads posts and executes them if guardrails pass.
     """
+    # Check Guardrails First
+    is_allowed, reason = await check_threads_guardrails(db)
+    if not is_allowed:
+        logger.info(f"Threads publisher skipped: {reason}")
+        return
+
     logger.info("Starting Threads Substack-Confirmation Polling Job...")
     
     stmt = select(ExternalPost).where(
@@ -40,26 +86,10 @@ async def run_threads_publisher(db: AsyncSession):
         for post in pending_posts:
             # 1. Retrieve associated Report
             report = (await db.execute(select(Report).where(Report.id == post.report_id))).scalar_one_or_none()
-            if not report or not report.substack_slug:
-                logger.error(f"Cannot publish Threads post {post.id} - Invalid or missing Report metadata.")
-                post.status = "failure"
-                post.error_message = "Missing report metadata"
-                continue
-                
-            # 2. Check if Substack article is live (HTTP 200)
-            target_url = get_final_url(report.substack_slug)
-            try:
-                response = await client.head(target_url, timeout=5.0)
-                if response.status_code == 405 or response.status_code == 403:
-                    # Substack might block HEAD. Fallback to GET.
-                    response = await client.get(target_url, timeout=5.0)
-                
-                if response.status_code != 200:
-                    logger.info(f"Substack article not live yet (Status {response.status_code}) for '{report.substack_slug}'. Keeping pending.")
-                    continue
-            except Exception as e:
-                logger.warning(f"Failed to ping Substack url '{target_url}': {e}. Keeping pending.")
-                continue
+            # 2. Skip Substack live-check (Phase 34 Decoupling)
+            # The internal platform is live as soon as the report exists.
+            target_url = f"{os.getenv('PLATFORM_BASE_URL', 'https://osint-web-1oev.onrender.com')}/?report_id={report.id}"
+            logger.info(f"Target Platform URL: {target_url}")
                 
             # 3. If live, reconstruct the teaser file path
             topic_str = report.topic_code if report.topic_code else "global"

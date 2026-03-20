@@ -5,7 +5,7 @@ from typing import List, Dict
 logger = logging.getLogger(__name__)
 
 THREADS_CTA = [
-    "Read the full briefing on Substack:",
+    "Read the full briefing on our platform:",
     "Full forecast and scenarios available here:",
     "Deep dive into this intelligence note:"
 ]
@@ -104,7 +104,7 @@ def build_threads_teaser(
     top_event_title: str, 
     top_theme: str, 
     category: str, 
-    substack_url: str
+    target_url: str
 ) -> str:
     """
     Builds a 4-line authoritative Risk-focused Threads teaser.
@@ -186,7 +186,7 @@ def build_threads_teaser(
             
     l2 = WHY_IT_MATTERS_TEMPLATES.get(cat_key, WHY_IT_MATTERS_TEMPLATES["default"])
     l3 = WHAT_TO_WATCH_TEMPLATES.get(cat_key, WHAT_TO_WATCH_TEMPLATES["default"])
-    l4 = f"{THREADS_CTA[0]}\n{substack_url}"
+    l4 = f"{THREADS_CTA[0]}\n{target_url}"
     
     return f"{l1}\n\n{l2}\n\n{l3}\n\n{l4}"
 

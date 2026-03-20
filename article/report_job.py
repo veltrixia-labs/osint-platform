@@ -121,9 +121,6 @@ async def handle_threads_autopost(db: AsyncSession, report_id: uuid.UUID, teaser
     if len(normalized_text) < 10 or len(normalized_text) > 500:
         logger.error(f"Threads validation failed: Text length {len(normalized_text)} outside [10, 500]")
         return
-    if "substack" not in normalized_text.lower():
-        logger.error("Threads validation failed: Substack CTA missing.")
-        return
 
     # 7. Execution (Guarded)
     if dry_run:
@@ -484,36 +481,44 @@ async def run_report_generation(
         db.add(repo)
         await db.flush() # Get report_id
         
-        logger.info(f"Creating Substack draft for {topic_str}...")
-        substack_meta = await create_draft(repo)
-        
-        repo.substack_slug = substack_meta.get("substack_slug")
-        repo.substack_draft_url = substack_meta.get("substack_draft_url")
-        repo.substack_post_id = substack_meta.get("substack_post_id")
-        repo.substack_post_status = substack_meta.get("substack_post_status")
+        # Substack Draft (Optional Side-effect)
+        try:
+            logger.info(f"Creating Substack draft for {topic_str}...")
+            substack_meta = await create_draft(repo)
+            repo.substack_slug = substack_meta.get("substack_slug")
+            repo.substack_draft_url = substack_meta.get("substack_draft_url")
+            repo.substack_post_id = substack_meta.get("substack_post_id")
+            repo.substack_post_status = substack_meta.get("substack_post_status")
+        except Exception as e:
+            logger.warning(f"Substack draft creation failed (Non-blocking): {e}")
+
     else:
         logger.info(f"Report already exists for {topic_str} today. Updating content and draft.")
         repo.content_markdown = final_content
-        substack_meta = await update_draft(repo, final_content)
-        repo.substack_draft_url = substack_meta.get("substack_draft_url")
-        repo.substack_post_status = substack_meta.get("substack_post_status")
+        try:
+            substack_meta = await update_draft(repo, final_content)
+            repo.substack_draft_url = substack_meta.get("substack_draft_url")
+            repo.substack_post_status = substack_meta.get("substack_post_status")
+        except Exception as e:
+            logger.warning(f"Substack draft update failed (Non-blocking): {e}")
 
     report_id = repo.id
     await db.commit()
 
-    
-    # 7. Build Teaser (Threads)
+    # 7. Build Teaser (Internal Platform Focus)
     top_cluster_event = items[0].title if items else "No significant developments identified."
     top_theme = themes[0] if themes else (topic.capitalize() if topic else "Global")
     
-    substack_url = get_final_url(repo.substack_slug)
-    teaser_md = build_threads_teaser(top_cluster_event, top_theme, topic_str, substack_url)
+    platform_base = os.getenv("PLATFORM_BASE_URL", "https://osint-web-1oev.onrender.com")
+    platform_url = f"{platform_base}/?report_id={report_id}"
+    
+    teaser_md = build_threads_teaser(top_cluster_event, top_theme, topic_str, platform_url)
 
     with open(os.path.join(out_dir, f"teaser_{base_name}.md"), "w", encoding='utf-8') as f:
         f.write(teaser_md)
     
     # 8. Queue Threads Auto-Post
-    # (Off-loaded to the polling job to ensure Substack is live first)
+    # (Off-loaded to the polling job - now independent of Substack status)
     if auto_post_threads:
         stmt_pending = select(ExternalPost).where(
             ExternalPost.report_id == report_id,
