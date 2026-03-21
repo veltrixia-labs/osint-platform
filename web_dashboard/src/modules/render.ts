@@ -41,11 +41,11 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
                 </div>
                 <h3 style="margin: 0 0 0.5rem 0;">${alert.target_label}</h3>
                 <div style="font-size: 0.9rem; color: #c9d1d9; opacity: 0.8;">
-                    ${alert.delivery ? `Matched Analyst: ${alert.delivery.analyst_id.slice(0,8)}... (P-Score: ${alert.delivery.relevance_score.toFixed(2)})` : 'Master System Alert'}
+                    ${alert.delivery ? `Matched Analyst: ${alert.delivery.analyst_id.slice(0, 8)}... (P-Score: ${alert.delivery.relevance_score.toFixed(2)})` : 'Master System Alert'}
                 </div>
                 
                 <div class="feedback-controls">
-                    ${[1,2,3,4,5].map(s => `
+                    ${[1, 2, 3, 4, 5].map(s => `
                         <button class="btn-fb ${alert.feedback_score === s ? 'active' : ''}" data-score="${s}">${s}</button>
                     `).join('')}
                 </div>
@@ -60,9 +60,9 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
             const card = target.closest('.alert-card') as HTMLElement;
             const alertId = card.dataset.id!;
             const score = parseInt(target.dataset.score!);
-            
+
             await submitFeedback(alertId, score);
-            
+
             // Optimistic UI update
             card.querySelectorAll('.btn-fb').forEach(b => b.classList.remove('active'));
             target.classList.add('active');
@@ -75,7 +75,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
         container.innerHTML = '<h2>Analysts</h2><p>No active profiles.</p>';
         return;
     }
-    
+
     // For simplicity in v1, show the first analyst's watchlist
     const a = analysts[0];
     const usage = (window as any).getCurrentUsage();
@@ -107,7 +107,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
             ` : ''}
         </div>
         <div style="margin-top: auto; font-size: 0.75rem; color: #8b949e; padding-top: 1rem; border-top: 1px solid #30363d;">
-            Analyst ID: ${a.id.slice(0,8)}...
+            Analyst ID: ${a.id.slice(0, 8)}...
         </div>
     `;
 
@@ -120,7 +120,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
         addBtn.addEventListener('click', async () => {
             const val = input.value.trim();
             if (!val) return;
-            
+
             const currentKws = a.watch_keywords || [];
             if (currentKws.includes(val)) return;
 
@@ -180,24 +180,24 @@ export function renderReportDetail(report: any, container: HTMLElement, onAction
     const typeLabel = (report.report_type || "").replace(/_/g, ' ').toUpperCase();
     const topicLabel = report.topic_code ? report.topic_code.toUpperCase() : 'GLOBAL';
 
-    
+
     let md = isPreview ? (report.content_preview || "") : (report.content_markdown || "");
-    
+
     let evidenceData: any[] = [];
     const evidenceMatch = md.match(/<!--\s*EVIDENCE_JSON:\s*([\s\S]*?)\s*-->/);
     if (evidenceMatch) {
         try {
             evidenceData = JSON.parse(evidenceMatch[1]);
             md = md.replace(evidenceMatch[0], ''); // Hide the raw JSON comment
-        } catch(e) { console.error("Evidence parse error", e); }
+        } catch (e) { console.error("Evidence parse error", e); }
     }
-    
+
     // Fallback: Try to extract from # Sources if EVIDENCE_JSON is missing
     if (evidenceData.length === 0 && md.includes('# Sources')) {
         const sourcesSection = md.split('# Sources')[1] || "";
         const links = sourcesSection.match(/\[(.*?)\]\((.*?)\)/g);
         if (links) {
-            evidenceData = links.map(l => {
+            evidenceData = links.map((l: string) => {
                 const parts = l.match(/\[(.*?)\]\((.*?)\)/);
                 return {
                     title: parts ? parts[1] : "Verified Source",
@@ -208,7 +208,7 @@ export function renderReportDetail(report: any, container: HTMLElement, onAction
             });
         }
     }
-    
+
 
     container.innerHTML = `
         <div class="report-detail">
@@ -313,12 +313,12 @@ export function renderReportDetail(report: any, container: HTMLElement, onAction
         if (feedNav) feedNav.click();
     });
 
-    
+
     // Confidence Panel Interaction
     const trigger = container.querySelector('.confidence-trigger');
     const panel = container.querySelector('.evidence-panel') as HTMLElement;
     const chevron = container.querySelector('.chevron-icon') as HTMLElement;
-    
+
     if (trigger && panel) {
         trigger.addEventListener('click', () => {
             const isHidden = panel.style.display === 'none';
