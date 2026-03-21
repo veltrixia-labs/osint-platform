@@ -451,6 +451,52 @@ async def run_report_generation(
     else:
         logger.warning("LLM Polish failed or invalid. Using Skeleton directly.")
 
+
+    # --- ADD EVIDENCE JSON ---
+    import json
+    evidence_payload = []
+    
+    # URL Validation Patterns
+    BANNED_DOMAINS = ["example.com", "localhost", "127.0.0.1", "test.com", "dummy.org", "maritime-intel-example.org"]
+    
+    for it in items:
+        url = (it.source_url or "").lower()
+        
+        # 1. Strict Validation: Must be http(s) and not a common placeholder
+        is_valid_url = (
+            url.startswith("http") and 
+            not any(d in url for d in BANNED_DOMAINS) and
+            len(url) > 12 # Minimum length for a real URL (e.g. http://a.com)
+        )
+        
+        # 2. Data Integrity Safeguard: Skip records with mock/test keywords in title or summary
+        is_mock_data = any(kw in (it.title or "").lower() or kw in (it.summary or "").lower() for kw in ["mock item", "test report", "dummy article"])
+        
+        if not is_valid_url or is_mock_data:
+            # Still allow the entry but mark it as restricted for the UI to handle
+            final_url = "#" if not is_valid_url else url
+        else:
+            final_url = url
+            
+        expl = (it.summary or "Observed data node matching cluster parameters.")
+        if len(expl) > 150: expl = expl[:147] + "..."
+        
+        evidence_payload.append({
+            "title": (it.title or "Unknown Source")[:100],
+            "type": it.source_name or "Intelligence Node",
+            "explanation": expl,
+            "link": final_url
+        })
+        if len(evidence_payload) >= 10: break
+
+    try:
+        evi_str = json.dumps(evidence_payload)
+        final_content += f"\n\n<!-- EVIDENCE_JSON: {evi_str} -->\n"
+    except Exception as e:
+        logger.error(f"Failed to serialize evidence JSON: {e}")
+    # -------------------------
+    # -------------------------
+
     # 6. Output Persistence & Idempotency Flow
     topic_str = topic if topic else "global"
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -460,7 +506,8 @@ async def run_report_generation(
     date_str = now.strftime('%Y%m%d')
     base_name = f"{topic_str}_{report_type}_{date_str}_en"
     
-    with open(os.path.join(out_dir, f"analysis_{base_name}.md"), "w", encoding='utf-8') as f:
+    md_path = os.path.join(out_dir, f"analysis_{base_name}.md")
+    with open(md_path, "w", encoding='utf-8') as f:
         f.write(final_content)
 
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)

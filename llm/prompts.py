@@ -37,4 +37,5 @@ STRICT RULES:
 2. MANDATORY SECTIONS: # Summary of Themes, # Key Developments, # Trend Analysis, # Potential Implications, # Monitoring Points, # Scenarios, # Sources.
 3. If TREND ANALYSIS CONTEXT is provided, use it to flesh out the '# Trend Analysis' section sections (Persistent, Emerging, What Changed).
 4. Do not change the overall structure. Output ONLY the polished markdown.
+5. FINAL CLIFFHANGER RULE: Paragraph 3 of the '# Summary of Themes' section MUST end with a specific entity or concrete metric AND MUST imply financial or operational impact. DO NOT end with a neutral description. Focus on the actionable risk that impacts user positioning.
 """

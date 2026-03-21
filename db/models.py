@@ -1,7 +1,6 @@
 import uuid
-from sqlalchemy import Column, String, Float, Integer, Boolean, DateTime, ForeignKey, JSON, Enum
+from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, JSON, Text, Enum, select, func, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.sql import func
 from db.database import Base
 
 class RawItem(Base):
@@ -75,6 +74,11 @@ class Report(Base):
     substack_published_url = Column(String)
     substack_post_status = Column(String, default="draft") # draft, published
     substack_post_id = Column(String)
+    
+    # Gating & Trust Metrics (Phase 35)
+    is_premium = Column(Boolean, default=False)
+    source_count = Column(Integer, default=0)
+    confidence_level = Column(String, default="Low") # High, Medium, Low
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -271,4 +275,13 @@ class AnalyticsEvent(Base):
     metadata_json = Column(JSON) # {utm_source, utm_medium, utm_campaign, visitor_id, etc.}
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
+class StripeEvent(Base):
+    __tablename__ = "stripe_events"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_id = Column(String, nullable=False, index=True) # Stripe Event ID
+    event_type = Column(String)
+    processed_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    __table_args__ = (
+        UniqueConstraint("event_id", name="uq_stripe_event_id"),
+    )

@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://osint-platform-xs7p.onrender.com/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
 let accessToken: string | null = localStorage.getItem('access_token');
 
@@ -184,8 +184,12 @@ export async function fetchMe(): Promise<UserMe | null> {
  * Fetches a Stripe checkout URL for the given tier and redirects the browser.
  * Falls back gracefully if the API is unreachable.
  */
-export async function fetchCheckoutSession(tier: string): Promise<CheckoutResponse> {
-    const resp = await fetchWithAuth(`${API_BASE}/payments/checkout-session?tier=${tier}`);
+export async function fetchCheckoutSession(tier: string, reportId?: string): Promise<CheckoutResponse> {
+    const returnUrl = encodeURIComponent(window.location.origin);
+    let url = `${API_BASE}/payments/checkout-session?tier=${tier}&return_url=${returnUrl}`;
+    if (reportId) url += `&report_id=${reportId}`;
+    
+    const resp = await fetchWithAuth(url);
     if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.detail || `Failed to start checkout (HTTP ${resp.status})`);
@@ -194,19 +198,51 @@ export async function fetchCheckoutSession(tier: string): Promise<CheckoutRespon
 }
 
 /**
- * Placeholder for the cancel/manage subscription action.
- * In production this will call a Stripe portal-session endpoint.
- * Currently surfaces the Plans & Billing tab for user awareness.
+ * Validates a Stripe session on the backend to trigger immediate fulfillment.
  */
-export async function cancelSubscription(): Promise<{ message: string }> {
-    return { message: 'cancel_pending' };
+export async function confirmCheckoutSession(sessionId: string): Promise<any> {
+    const resp = await fetchWithAuth(`${API_BASE}/payments/confirm-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId })
+    });
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || 'Fulfillment failed');
+    }
+    return await resp.json();
+}
+
+/**
+ * Creates a Stripe portal session for the user to manage their subscription.
+ */
+export async function cancelSubscription(): Promise<{ url: string }> {
+    const resp = await fetchWithAuth(`${API_BASE}/payments/portal-session`, {
+        method: 'POST'
+    });
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to open management portal');
+    }
+    return await resp.json();
+}
+
+export async function fetchReports(limit: number = 10, topic?: string): Promise<any[]> {
+    let url = `${API_BASE}/reports?limit=${limit}`;
+    if (topic) url += `&topic=${topic}`;
+    const resp = await fetchWithAuth(url);
+    if (!resp.ok) throw new Error(`Failed to fetch reports (HTTP ${resp.status})`);
+    return await resp.json();
 }
 
 export async function fetchReport(reportId: string): Promise<any> {
     const resp = await fetchWithAuth(`${API_BASE}/reports/${reportId}`);
     if (resp.status === 404) throw new Error("Report not found");
     if (!resp.ok) throw new Error(`Failed to fetch report (HTTP ${resp.status})`);
-    return await resp.json();
+    
+    const data = await resp.json();
+    // Return the full data (which may include 'locked: true')
+    return data;
 }
 
 export async function fetchPublicReport(reportId: string): Promise<any> {
@@ -227,6 +263,7 @@ export async function logAnalyticsEvent(type: string, reportId?: string, metadat
 
         await fetchWithAuth(`${API_BASE}/analytics/event`, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 event_type: type,
                 report_id: reportId,

@@ -11,14 +11,14 @@ import {
 } from './modules/subscription'
 
 const TOPICS = [
-    { code: 'global', label: '🌍 Global', restricted: false },
-    { code: 'market', label: '📈 Market', restricted: false },
-    { code: 'community', label: '🤝 Community', restricted: false },
-    { code: 'energy_resource_risk', label: '⚡ Energy', restricted: true },
-    { code: 'global_market_intelligence', label: '💰 Finance', restricted: true },
-    { code: 'ai_semiconductor_intelligence', label: '🤖 AI/Semi', restricted: true },
-    { code: 'crypto_geopolitics', label: '₿ Crypto', restricted: true },
-    { code: 'defense_technology', label: '🛡️ Defense', restricted: true },
+    { code: 'global', label: '🌍 Global Briefing', restricted: false },
+    { code: 'market', label: '📈 Market Pulse', restricted: false },
+    { code: 'community', label: '🤝 Network Activity', restricted: false },
+    { code: 'energy_resource_risk', label: '⚡ Energy Risk', restricted: true },
+    { code: 'global_market_intelligence', label: '💰 Financial Intel', restricted: true },
+    { code: 'ai_semiconductor_intelligence', label: '🤖 AI/Semi Intel', restricted: true },
+    { code: 'crypto_geopolitics', label: '₿ Crypto Risk', restricted: true },
+    { code: 'defense_technology', label: '🛡️ Defense Tech', restricted: true },
     { code: 'supply_chain_intelligence', label: '📦 Supply Chain', restricted: true },
 ];
 
@@ -88,6 +88,65 @@ async function initDashboard() {
         return;
     }
 
+    // Handle Payment Success Confirmation Synchronously 
+    const paymentStatus = urlParams.get('payment');
+    const sessionId = urlParams.get('session_id');
+
+    if (sessionId && user) {
+        try {
+            const { confirmCheckoutSession } = await import('./modules/api');
+            await confirmCheckoutSession(sessionId);
+            // Refresh user state immediately to reflect Pro tier before fetching report
+            user = await fetchMe();
+        } catch (err) {
+            console.error("Fulfillment Error:", err);
+        }
+    }
+
+    if (paymentStatus === 'success' && sessionId && !user) {
+        app.innerHTML = `
+            <div style="padding: 4rem; text-align: center; max-width: 600px; margin: 0 auto;">
+                <h2 style="color:#3fb950; display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+                    <span>✨</span> Payment Received
+                </h2>
+                <p style="color:#8b949e; margin-bottom:2rem; line-height:1.6;">Your subscription payment was successfully processed by Stripe, but your browser session has expired or you are on a different device.</p>
+                <div style="background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.2); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                    <p style="margin:0; color:#c9d1d9;">Please log in again to instantly unlock your report.</p>
+                </div>
+                <button class="plan-cta-btn" id="relogin-btn" style="width: 100%;">Log In Now</button>
+            </div>
+        `;
+        document.querySelector('#relogin-btn')?.addEventListener('click', () => renderLogin());
+        return; // Halt render, keeping URL params intact
+    }
+
+    if (paymentStatus) {
+        const notify = document.createElement('div');
+        notify.className = `payment-notification ${paymentStatus}`;
+        
+        if (paymentStatus === 'success') {
+            notify.innerHTML = `
+                <div style="background: rgba(63, 185, 80, 0.15); border: 1px solid #3fb950; color: #3fb950; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    ✨ <span id="payment-msg"><b>Payment Successful!</b> Welcome to Founding Member Access. Your Pro features are now active.</span>
+                </div>
+            `;
+            setTimeout(() => notify.remove(), 8000);
+        } else if (paymentStatus === 'cancel') {
+            notify.innerHTML = `
+                <div style="background: rgba(248, 81, 73, 0.1); border: 1px solid #f85149; color: #8b949e; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    Payment canceled. You are still on the Free plan.
+                </div>
+            `;
+            setTimeout(() => notify.remove(), 5000);
+        }
+
+        // Wait for DOM to be ready to prepend to .main-content
+        requestAnimationFrame(() => {
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) mainContent.prepend(notify);
+        });
+    }
+
     const graceBannerHtml = user ? renderGracePeriodBanner(user) : '';
     const tierBadgeHtml = user ? renderTierBadge(user) : '<span class="tier-badge-free">GUEST</span>';
 
@@ -153,7 +212,8 @@ async function initDashboard() {
     // Expose stopPolling to allow other modules/functions to clean up UI before login
     (window as any).stopPolling = stopPolling;
 
-    function renderTopicFilters(container: HTMLElement, state: DashboardState) {
+    function renderTopicFilters(container: HTMLElement, currentTopic: string | null) {
+        container.innerHTML = '';
         const wrap = document.createElement('div');
         wrap.className = 'topic-filter-bar';
         wrap.style.display = 'flex';
@@ -164,56 +224,150 @@ async function initDashboard() {
         wrap.style.borderBottom = '1px solid var(--border)';
 
         const allBtn = document.createElement('button');
-        allBtn.className = `topic-btn ${state.topic === null ? 'topic-btn--active' : ''}`;
+        allBtn.className = `topic-btn ${currentTopic === null ? 'topic-btn--active' : ''}`;
         allBtn.textContent = 'All Topics';
-        allBtn.onclick = () => state.setTopic(null);
+        allBtn.onclick = () => startFeedTab(null);
         wrap.appendChild(allBtn);
 
         TOPICS.forEach(t => {
             const btn = document.createElement('button');
             const isRestricted = usage?.topics.restricted.includes(t.code);
-            btn.className = `topic-btn ${state.topic === t.code ? 'topic-btn--active' : ''} ${isRestricted ? 'topic-btn--locked' : ''}`;
+            btn.className = `topic-btn ${currentTopic === t.code ? 'topic-btn--active' : ''} ${isRestricted ? 'topic-btn--locked' : ''}`;
             btn.innerHTML = `${t.label}${isRestricted ? ' 🔒' : ''}`;
             
             btn.onclick = () => {
                 if (isRestricted) {
-                    alertsContainer.innerHTML = renderLockedFeature(t.label, 'pro');
-                    state.stopPolling();
+                    const alertsContainer = document.querySelector<HTMLDivElement>('#alerts-container');
+                    if (alertsContainer) alertsContainer.innerHTML = renderLockedFeature(t.label, 'pro');
+                    stopPolling();
                 } else {
-                    state.setTopic(t.code);
-                    if (!state.isPolling) state.startPolling(5000);
+                    startFeedTab(t.code);
                 }
             };
             wrap.appendChild(btn);
         });
 
-        container.prepend(wrap);
+        container.appendChild(wrap);
     }
-
-    function startFeedTab() {
+    
+    function startFeedTab(topic: string | null = null) {
         stopPolling()
         if (!user) {
-            alertsContainer.innerHTML = renderLockedFeature('Intelligence Feed', 'free');
-            mainTitle.textContent = 'Analyst Intelligence'
+            alertsContainer.innerHTML = renderLockedFeature('Intelligence Dashboard', 'free');
+            mainTitle.innerHTML = 'Analyst Intelligence'
             healthContainer.innerHTML = ''
             return;
         }
-        mainTitle.textContent = 'Analyst Intelligence'
-        alertsContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:#8b949e;">Loading feed…</div>'
+
+        const proBadgeHtml = user.tier === 'pro' ? '<span style="font-size: 0.9rem; margin-left:1rem; padding: 4px 12px; background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.3); color: #c9d1d9; border-radius: 20px; vertical-align:middle; box-shadow: 0 0 10px rgba(88,166,255,0.2);">💎 PRO: Full Access Active</span>' : '';
+        mainTitle.innerHTML = `Dashboard ${proBadgeHtml}`;
         healthContainer.innerHTML = ''
 
+        alertsContainer.innerHTML = `
+            <div id="topic-filters-container"></div>
+            <div id="featured-reports-container" style="display:flex; gap:1.5rem; margin-bottom:2rem; flex-wrap:wrap;"></div>
+            <div id="topic-reports-grid" class="reports-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom:1rem;"></div>
+            <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem;">Live Alert Stream</h3>
+            <div id="feed-alerts-inner"><div style="color:#8b949e;text-align:center;padding:2rem;">Fetching Intelligence Feed...</div></div>
+        `;
+
+        const filtersContainer = alertsContainer.querySelector('#topic-filters-container') as HTMLElement;
+        const featuredContainer = alertsContainer.querySelector('#featured-reports-container') as HTMLElement;
+        const reportsGrid = alertsContainer.querySelector('#topic-reports-grid') as HTMLElement;
+        const feedAlertsInner = alertsContainer.querySelector('#feed-alerts-inner') as HTMLElement;
+
+        renderTopicFilters(filtersContainer, topic);
+
+        // Fetch and render the static reports section
+        import('./modules/api').then(async m => {
+            try {
+                const reports = await m.fetchReports(20, topic ? topic : undefined);
+                let gridReports = reports;
+
+                if (!topic) {
+                    const latestPremium = reports.find((r: any) => r.is_premium);
+                    const latestFree = reports.find((r: any) => !r.is_premium);
+                    
+                    if (latestPremium) {
+                        featuredContainer.innerHTML += `
+                            <div class="report-card report-card--premium" style="flex:1; min-width:300px; border: 2px solid var(--tier-pro);">
+                                <div class="premium-lock-badge" style="margin-bottom:0.5rem; display:inline-block; font-size:0.75rem;">💎 Featured Premium Intelligence</div>
+                                <h2 style="margin: 0 0 1rem 0; font-size: 1.4rem;">${latestPremium.content_markdown.split('\n')[0].replace('# ', '')}</h2>
+                                <div style="color:#8b949e; font-size:0.9rem; margin-bottom: 1.5rem;">Comprehensive analysis encompassing multiple verified events.</div>
+                                <button class="btn-fb active view-report-btn" data-id="${latestPremium.id}">Unlock Full Analysis</button>
+                            </div>
+                        `;
+                    }
+                    if (latestFree) {
+                        featuredContainer.innerHTML += `
+                            <div class="report-card" style="flex:1; min-width:300px; border: 1px solid var(--tier-grace); background: rgba(255,255,255,0.03);">
+                                <div class="role-badge" style="margin-bottom:0.5rem; display:inline-block; font-size:0.75rem; background:rgba(255,255,255,0.1);">🌍 Daily Free Briefing</div>
+                                <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem;">${latestFree.content_markdown.split('\n')[0].replace('# ', '')}</h3>
+                                <div style="color:#8b949e; font-size:0.9rem; margin-bottom: 1.5rem;">Publicly accessible strategic overview and risk analysis.</div>
+                                <button class="btn-fb active view-report-btn" data-id="${latestFree.id}">Read Briefing</button>
+                            </div>
+                        `;
+                    }
+                    
+                    // Filter featured ones out of the grid
+                    gridReports = reports.filter((r: any) => r.id !== latestPremium?.id && r.id !== latestFree?.id);
+                } else {
+                    featuredContainer.style.display = 'none';
+                }
+
+                if (gridReports.length > 0) {
+                    reportsGrid.innerHTML = gridReports.map((r: any) => `
+                        <div class="report-card ${r.is_premium ? 'report-card--premium' : ''}" data-id="${r.id}">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+                                <span class="report-topic-badge">${r.topic_code}</span>
+                                ${r.is_premium ? '<span class="premium-lock-badge">🔒 Premium</span>' : ''}
+                            </div>
+                            <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">${r.content_markdown.split('\n')[0].replace('# ', '')}</h3>
+                            <button class="btn-fb active view-report-btn" style="width:100%; margin-top: auto;" data-id="${r.id}">View Intelligence</button>
+                        </div>
+                    `).join('');
+                } else if (topic) {
+                    reportsGrid.innerHTML = '<div style="color:#8b949e; text-align:center; grid-column: 1 / -1; padding: 1rem 0;">No reports available for this topic yet. Generate one via alerts to see it here.</div>';
+                }
+
+                // Bind clicks for all generated reports
+                alertsContainer.querySelectorAll('.view-report-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const id = (e.currentTarget as HTMLElement).dataset.id!;
+                        try {
+                            const fullReport = await m.fetchReport(id);
+                            renderReportDetail(fullReport, alertsContainer, async (actionType) => {
+                                 if (actionType === 'upgrade') {
+                                     try {
+                                         const response = await m.fetchCheckoutSession('pro', id);
+                                         if (response.url) window.location.href = response.url;
+                                     } catch (err) {
+                                         document.querySelector<HTMLElement>('#nav-plans')?.click();
+                                     }
+                                 }
+                            });
+                        } catch (err) {
+                            alert("Failed to load report detail (Missing auth?): " + err);
+                        }
+                    });
+                });
+            } catch (err) {
+                console.error("Dashboard reports error:", err);
+            }
+        });
+
         const state = new DashboardState()
+        state.topic = topic; // So alert feed matches topic
         state.subscribe((s: DashboardState) => {
-            renderAlerts(s.alerts, alertsContainer)
+            if (feedAlertsInner) renderAlerts(s.alerts, feedAlertsInner)
             if (s.health) renderHealth(s.health, healthContainer)
             renderSidebar(s.analysts, sidebarContainer)
-            renderTopicFilters(alertsContainer, s)
         })
         state.startPolling(5000)
         polling = state
     }
-
-    function renderReportsTab() {
+    
+    async function renderReportsTab() {
         if (activeTab === 'reports') return
         activeTab = 'reports'
         setNavActive('reports')
@@ -222,35 +376,64 @@ async function initDashboard() {
         healthContainer.innerHTML = ''
         sidebarContainer.innerHTML = ''
 
-        const isLocked = usage?.reports.monthly === false;
+        alertsContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:#8b949e;">Loading reports…</div>'
+        
+        try {
+            const reports = await import('./modules/api').then(m => m.fetchReports(20));
+            
+            if (reports.length === 0) {
+                alertsContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:#8b949e;">No reports found. Generate one to see it here.</div>';
+                return;
+            }
 
-        alertsContainer.innerHTML = `
-            <div class="reports-container" style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                <div class="report-card">
-                    <h3>📅 Daily Intelligence Briefing</h3>
-                    <p>Comprehensive summary of the last 24 hours of detected signals.</p>
-                    <button class="btn-fb active">View Latest</button>
+            alertsContainer.innerHTML = `
+                <div class="reports-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                    ${reports.map(r => `
+                        <div class="report-card ${r.is_premium ? 'report-card--premium' : ''}" data-id="${r.id}">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+                                <span class="report-topic-badge">${r.topic_code}</span>
+                                ${r.is_premium ? '<span class="premium-lock-badge">🔒 Premium</span>' : ''}
+                            </div>
+                            <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">${r.content_markdown.split('\n')[0].replace('# ', '')}</h3>
+                            <div class="report-meta" style="font-size: 0.8rem; color: #8b949e; margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+                                <span>🔍 ${r.source_count} Sources</span>
+                                <span>⚖️ ${r.confidence_level}</span>
+                            </div>
+                            <button class="btn-fb active view-report-btn" data-id="${r.id}">View Intelligence</button>
+                        </div>
+                    `).join('')}
                 </div>
-                <div class="report-card ${isLocked ? 'report-card--locked' : ''}">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h3>📊 Monthly Risk Outlook</h3>
-                        ${isLocked ? '<span style="color:var(--tier-grace);">🔒 Pro Preferred</span>' : ''}
-                    </div>
-                    <p>Macro-scale trend analysis and long-term risk projections.</p>
-                    ${isLocked 
-                        ? `<button class="plan-cta-btn" id="locked-monthly-btn">Unlock with Pro</button>`
-                        : `<button class="btn-fb active">View Latest</button>`
+            `;
+
+            // Attach click events
+            alertsContainer.querySelectorAll('.view-report-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = (e.currentTarget as HTMLElement).dataset.id!;
+                    try {
+                        const { fetchReport: getFullReport } = await import('./modules/api');
+                        const fullReport = await getFullReport(id);
+                        renderReportDetail(fullReport, alertsContainer, async (actionType) => {
+                            if (actionType === 'upgrade') {
+                                try {
+                                    const { fetchCheckoutSession } = await import('./modules/api');
+                                    const response = await fetchCheckoutSession('pro', id);
+                                    if (response.url) window.location.href = response.url;
+                                } catch (err) {
+                                    document.querySelector<HTMLElement>('#nav-plans')?.click();
+                                }
+                            }
+                        });
+                    } catch (err) {
+                        alert("Failed to load report detail: " + err);
                     }
-                </div>
-            </div>
-        `;
-
-        if (isLocked) {
-            document.querySelector('#locked-monthly-btn')?.addEventListener('click', () => {
-                alertsContainer.innerHTML = renderLockedFeature('Monthly Risk Outlook', 'pro');
+                });
             });
+
+        } catch (err) {
+            alertsContainer.innerHTML = `<div style="padding:2rem;text-align:center;color:#f85149;">Error loading reports: ${err}</div>`;
         }
     }
+
 
     function navigateToPlans() {
         if (activeTab === 'plans') return
@@ -270,9 +453,6 @@ async function initDashboard() {
         startFeedTab()
     }
 
-    function navigateToReports() {
-        renderReportsTab()
-    }
 
     function setNavActive(tab: TabId) {
         document.querySelectorAll('.sidebar-nav-link').forEach(el => {
@@ -282,7 +462,7 @@ async function initDashboard() {
 
     // ── Nav click handlers ────────────────────────────────────────────────────
     document.querySelector('#nav-feed')?.addEventListener('click', navigateToFeed)
-    document.querySelector('#nav-reports')?.addEventListener('click', navigateToReports)
+    document.querySelector('#nav-reports')?.addEventListener('click', renderReportsTab)
     document.querySelector('#nav-plans')?.addEventListener('click', navigateToPlans)
 
     // Grace period banner → Plans tab
@@ -378,7 +558,27 @@ async function initDashboard() {
             // Log analytics event
             logAnalyticsEvent(user ? 'full_view' : 'preview_view', reportId, utms);
 
-            renderReportDetail(report, alertsContainer, renderLogin);
+            renderReportDetail(report, alertsContainer, async (actionType) => {
+                logAnalyticsEvent('cta_click', reportId, { action: actionType, ...utms });
+                if (!user) {
+                    renderLogin();
+                } else {
+                    // Direct to Pro checkout for Founding Member Access
+                    try {
+                        const { fetchCheckoutSession } = await import('./modules/api');
+                        const response = await fetchCheckoutSession('pro', reportId);
+                        if (response.url) {
+                            window.location.href = response.url;
+                        } else {
+                            throw new Error("No checkout URL returned");
+                        }
+                    } catch (err) {
+                        console.error("Checkout redirect failed:", err);
+                        // Fallback to plans tab if direct checkout fails
+                        (document.querySelector('#nav-plans') as HTMLElement)?.click();
+                    }
+                }
+            });
             
             // Clean URL for clean experience only if logged in 
             if (user) {

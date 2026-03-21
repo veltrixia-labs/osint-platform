@@ -23,6 +23,7 @@ interface PlanConfig {
     name: string;
     subtitle: string;
     price: string;
+    originalPrice?: string;
     priceNote: string;
     color: string;
     /** true = Stripe Checkout, false = contact-sales redirect */
@@ -52,19 +53,20 @@ const PLANS: PlanConfig[] = [
     {
         id: 'pro',
         name: 'Pro',
-        subtitle: 'For active intelligence analysts',
-        price: '$49',
+        subtitle: 'Founding Member Access',
+        price: '$19',
+        originalPrice: '$49',
         priceNote: 'per month',
         color: '#58a6ff',
         directCheckout: true,  // → Stripe Checkout
         contactUrl: '',
         features: [
+            'Entity-level intelligence',
+            'Analytical confidence metrics',
+            'Full source traceability',
             '100 alerts/day',
             'Daily + Monthly reports',
             '20 watchlist keywords',
-            'All 6 specialized topics',
-            'Threads auto-posting',
-            'Priority support',
         ],
     },
     {
@@ -96,11 +98,10 @@ const FEATURE_COMPARISON: [string, string, string, string][] = [
     ['Alerts per day',      '5',         '100',         'Unlimited'],
     ['Daily reports',       '✓',         '✓',           '✓'],
     ['Monthly reports',     '✗',         '✓',           '✓'],
-    ['Specialized topics',  '✗',         '✓ (all 6)',   '✓ (custom)'],
+    ['Specialized topics',  '✗',         '✓ (Unlimited)', '✓ (Custom)'],
     ['Watchlist keywords',  '3',         '20',          '100'],
-    ['Threads auto-post',   '✗',         '✓',           '✓'],
-    ['Report archive (PDF)','✗',         '✓',           '✓'],
-    ['API access',          '✗',         'Read-only',   'Full'],
+    ['Source Traceability', '✗',         '✓ (Full)',    '✓ (Full)'],
+    ['Confidence Metrics',  '✗',         '✓ (Detailed)', '✓ (Detailed)'],
     ['Support',             'Community', 'Priority',    'Dedicated SLA'],
 ];
 
@@ -213,7 +214,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         if (isCurrent) {
             ctaHtml = `<div class="plan-current-label">✓ Current Plan</div>`;
             if (plan.id !== 'free') {
-                ctaHtml += `<button class="plan-cancel-btn" data-plan="${plan.id}">Cancel at end of billing cycle</button>`;
+                ctaHtml += `<button class="plan-cancel-btn" data-plan="${plan.id}">Manage Subscription</button>`;
             }
         } else if (plan.id === 'free') {
             // Free plan — users can't "downgrade" via button; show info only
@@ -227,11 +228,13 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
 
         return `
         <div class="plan-card ${isCurrent ? 'plan-card--active' : ''}" style="--plan-color: ${plan.color}">
+            ${plan.id === 'pro' ? '<div class="plan-badge-top">FOUNDING MEMBER</div>' : ''}
             <div class="plan-header">
                 <h2 class="plan-name" style="color: ${plan.color}">${plan.name}</h2>
                 <p class="plan-subtitle">${plan.subtitle}</p>
                 <div class="plan-price">
-                    <span class="plan-price-amount">${plan.price}</span>
+                    ${plan.originalPrice ? `<span class="plan-price-old">${plan.originalPrice}</span>` : ''}
+                    <span class="plan-price-amount" style="${plan.originalPrice ? 'color: var(--tier-grace);' : ''}">${plan.price}</span>
                     <span class="plan-price-note">/${plan.priceNote}</span>
                 </div>
             </div>
@@ -299,7 +302,9 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
             btn.textContent = 'Redirecting…';
 
             try {
-                const response = await fetchCheckoutSession(tier);
+                const urlParams = new URLSearchParams(window.location.search);
+                const reportId = urlParams.get('report_id');
+                const response = await fetchCheckoutSession(tier, reportId || undefined);
                 if (response.success) {
                     btn.textContent = 'Success! Updating...';
                     setTimeout(() => window.location.reload(), 800);
@@ -321,19 +326,26 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         });
     });
 
-    // Cancel buttons
+    // Manage Subscription (Stripe Portal)
     container.querySelectorAll<HTMLButtonElement>('.plan-cancel-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
-            if (!confirm('Cancel your subscription? You will retain access until the end of your current billing cycle, then be downgraded to Free.')) return;
+            const originalText = btn.textContent;
             btn.disabled = true;
-            btn.textContent = 'Processing…';
+            btn.textContent = 'Opening Portal…';
             try {
                 const result = await cancelSubscription();
-                if (result.message === 'cancel_pending') {
-                    btn.textContent = 'Cancellation requested — see confirmation email';
+                if (result.url) {
+                    window.location.href = result.url;
                 }
-            } catch {
-                btn.textContent = 'Error — please contact support';
+            } catch (err: any) {
+                btn.textContent = 'Portal unavailable';
+                btn.classList.add('plan-cta-btn--error');
+                console.error('Portal error:', err.message);
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    btn.classList.remove('plan-cta-btn--error');
+                }, 3000);
             }
         });
     });

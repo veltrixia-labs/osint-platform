@@ -265,22 +265,95 @@ async def get_report_detail(
     current_user: tuple = Depends(get_current_user_from_access),
     db: AsyncSession = Depends(get_db)
 ):
-    """Retrieve a specific report by ID (Phase 34 Routing)."""
+    """Retrieve a specific report by ID (Phase 34 Routing + Phase 35 Gating)."""
     stmt = select(Report).where(Report.id == report_id)
     report = (await db.execute(stmt)).scalar_one_or_none()
     
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
         
+    user, _, _ = current_user
+    tier = await get_effective_tier(user)
+    
+    # Gating Logic
+    is_pro = tier in [TIER_PRO, TIER_ENTERPRISE]
+    is_premium = report.is_premium
+    
+    if is_premium and not is_pro and user.user_role != "admin":
+        # Return LOCKED response shape
+        content = report.content_markdown or ""
+        paragraphs = [p for p in content.split('\n\n') if p.strip()]
+        preview_text = "\n\n".join(paragraphs[:3])
+        if len(preview_text) > 1000:
+            preview_text = preview_text[:1000] + "..."
+
+        return {
+            "id": str(report.id),
+            "report_type": report.report_type,
+            "topic_code": report.topic_code,
+            "content_preview": preview_text,
+            "locked": True,
+            "is_premium": True,
+            "source_count": report.source_count,
+            "confidence_level": report.confidence_level,
+            "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
+        }
+
     return {
         "id": str(report.id),
         "report_type": report.report_type,
         "topic_code": report.topic_code,
         "content_markdown": report.content_markdown,
-        "created_at": report.created_at.isoformat() if report.created_at else None,
-        "substack_url": report.substack_draft_url,
-        "period_days": report.period_days
+        "locked": False,
+        "is_premium": is_premium,
+        "source_count": report.source_count,
+        "confidence_level": report.confidence_level,
+        "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
+        "substack_url": report.substack_published_url or report.substack_draft_url,
     }
+
+@app.get("/api/reports")
+async def list_reports(
+    db: AsyncSession = Depends(get_db),
+    limit: int = 10,
+    topic: Optional[str] = None
+):
+    from sqlalchemy import text
+    try:
+        # Fetch as strings to avoid SQLAlchemy driver parsing errors on mixed date formats in SQLite
+        query_str = """
+            SELECT id, report_type, topic_code, is_premium, source_count, confidence_level, CAST(created_at AS TEXT), content_markdown 
+            FROM reports 
+        """
+        params = {"limit": limit}
+        if topic:
+            query_str += " WHERE topic_code = :topic"
+            params["topic"] = topic
+            
+        query_str += " ORDER BY created_at DESC LIMIT :limit"
+        
+        query = text(query_str)
+        result = await db.execute(query, params)
+        rows = result.fetchall()
+        
+        return [
+            {
+                "id": str(row[0]),
+                "report_type": row[1] or "unknown",
+                "topic_code": row[2] or "global",
+                "is_premium": bool(row[3]),
+                "source_count": row[4] or 0,
+                "confidence_level": row[5] or "Low",
+                "created_at": row[6],
+                "content_markdown": (row[7] or "")[:300] + "..."
+            } for row in rows
+        ]
+    except Exception as e:
+        import traceback
+        with open("tmp/api_error.log", "a") as f:
+            f.write(f"\n--- ERROR at {datetime.now()} ---\n")
+            f.write(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/public/reports/{report_id}")
 async def get_public_report_preview(
@@ -310,7 +383,10 @@ async def get_public_report_preview(
         "topic_code": report.topic_code,
         "content_preview": preview_text,
         "is_preview": True,
-        "created_at": report.created_at.isoformat() if report.created_at else None
+        "is_premium": report.is_premium,
+        "source_count": report.source_count,
+        "confidence_level": report.confidence_level,
+        "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at
     }
 
 @app.post("/api/analytics/event")
@@ -321,7 +397,7 @@ async def log_analytics_event(
 ):
     """Log an analytics event (preview_view, cta_click, full_view, etc.)"""
     # Permission check: unauthenticated can only log preview_view and cta_click
-    allowed_unauth = ["preview_view", "cta_click"]
+    allowed_unauth = ["preview_view", "cta_click", "checkout_flow"]
     if not current_user and event.event_type not in allowed_unauth:
         raise HTTPException(status_code=403, detail="Unauthenticated users can only log preview and CTA events")
 
