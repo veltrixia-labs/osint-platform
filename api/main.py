@@ -68,13 +68,7 @@ from fastapi.staticfiles import StaticFiles
 
 app.include_router(payments_router, prefix="/api/payments", tags=["payments"])
 
-# --- Static File Serving (Landing Page & SPA) ---
-# NOTE: In production on Render, these should be served from the 'web_dashboard/dist' folder.
-dist_path = os.path.join(os.getcwd(), "web_dashboard", "dist")
-if os.path.exists(dist_path):
-    app.mount("/", StaticFiles(directory=dist_path, html=True), name="static")
-else:
-    logger.warning(f"Static files directory not found: {dist_path}")
+# --- Static File Serving (Moved to bottom) ---
 
 # --- Auth Endpoints ---
 
@@ -210,6 +204,7 @@ async def get_alerts(
             "suppressed": log.suppressed,
             "related_report_id": str(log.related_report_id) if log.related_report_id else None,
             "domain_count": log.metadata_json.get("domain_count", 0) if log.metadata_json else 0,
+            "evidence_list": log.metadata_json.get("evidence_list", []),
             "spike_delta": log.metadata_json.get("spike_delta", 0.0) if log.metadata_json else 0.0,
             "metadata": log.metadata_json
         } for log in results
@@ -619,6 +614,14 @@ async def get_system_diagnostics(
             "created_at": r.created_at.isoformat() if hasattr(r.created_at, 'isoformat') else r.created_at
         } for r in results
     ]
+
+# --- Static File Serving (Landing Page & SPA) ---
+# NOTE: In production on Render, these should be served from the 'web_dashboard/dist' folder.
+dist_path = os.path.join(os.getcwd(), "web_dashboard", "dist")
+if os.path.exists(dist_path):
+    app.mount("/", StaticFiles(directory=dist_path, html=True), name="static")
+else:
+    logger.warning(f"Static files directory not found: {dist_path}")
 
 if __name__ == "__main__":
     import uvicorn

@@ -30,6 +30,11 @@ export interface Alert {
     trigger_type: string;
     target_label: string;
     domain_count: number;
+    evidence_list?: {
+        title: string;
+        domain: string;
+        url: string;
+    }[];
     spike_delta: number;
     related_report_id?: string;
     feedback_score?: number;

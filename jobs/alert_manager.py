@@ -38,8 +38,14 @@ class AlertManager:
                 continue
 
             # 1. Gather Metrics for Severity
+            domain_count, evidence_list = await cls._get_evidence_metrics(db, sig)
+            
+            # CRITICAL: Suppress alerts with zero evidence (Requirement #1)
+            if domain_count == 0:
+                logger.info(f"Alert for {sig.target_label} suppressed: Zero evidence sources.")
+                continue
+
             spike_delta = await cls._get_spike_delta(db, sig)
-            domain_count = await cls._get_domain_count(db, sig)
             
             # 2. Determine Severity (Priority: Critical > Elevated > Watch)
             severity = cls._determine_severity(sig.intensity_score, spike_delta, domain_count)
@@ -77,6 +83,7 @@ class AlertManager:
                 metadata_json={
                     "spike_delta": round(float(spike_delta), 2),
                     "domain_count": domain_count,
+                    "evidence_list": evidence_list, # Requirement #2
                     "scoring_breakdown": breakdown
                 }
             )
@@ -123,13 +130,32 @@ class AlertManager:
         return sig.intensity_score - baseline_sig.intensity_score
 
     @classmethod
-    async def _get_domain_count(cls, db, sig: TrendSignal) -> int:
-        """Counts unique media domains in supporting clusters."""
+    async def _get_evidence_metrics(cls, db, sig: TrendSignal) -> Tuple[int, List[Dict[str, str]]]:
+        """Counts unique media domains and returns list of source metadata."""
         titles = sig.metrics_json.get("supporting_events", [])
-        if not titles: return 0
-        stmt = select(Item.source_url).where(Item.title.in_(titles))
-        urls = (await db.execute(stmt)).scalars().all()
-        return len({urlparse(u).netloc for u in urls if u})
+        if not titles: 
+            return 0, []
+        
+        stmt = select(Item).where(Item.title.in_(titles))
+        items = (await db.execute(stmt)).scalars().all()
+        
+        evidence_list = []
+        seen_urls = set()
+        
+        for item in items:
+            if not item.source_url or item.source_url in seen_urls:
+                continue
+            
+            seen_urls.add(item.source_url)
+            domain = urlparse(item.source_url).netloc
+            evidence_list.append({
+                "title": item.title or "Verified Signal Source",
+                "domain": domain,
+                "url": item.source_url
+            })
+            
+        domain_count = len({e["domain"] for e in evidence_list})
+        return domain_count, evidence_list
 
     @classmethod
     async def _is_suppressed(cls, db, target_label: str, new_severity: str) -> bool:

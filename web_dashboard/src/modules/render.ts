@@ -61,7 +61,9 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
                     </div>
                     <div>
                         <div style="font-size:0.7rem; color:#8b949e; text-transform:uppercase; letter-spacing:0.05em;">Evidence</div>
-                        <div style="font-size:0.95rem; color:#c9d1d9;">🔍 ${alert.domain_count || 0} Domains</div>
+                        <div class="evidence-trigger-btn" style="font-size:0.95rem; color:#58a6ff; background:rgba(88,166,255,0.05); padding:2px 8px; border-radius:4px; margin-top:2px; display:inline-block; border:1px solid rgba(88,166,255,0.1);">
+                            🔍 ${alert.domain_count || 0} Domains
+                        </div>
                     </div>
                     <div>
                         <div style="font-size:0.7rem; color:#8b949e; text-transform:uppercase; letter-spacing:0.05em;">Change</div>
@@ -116,19 +118,77 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
             const target = e.currentTarget as HTMLButtonElement;
             const reportId = target.dataset.reportId;
             if (reportId) {
-                // We need to trigger the report view. 
-                // Since this is inside render.ts, we'll dispatch a custom event or use a global handler.
-                // In main.ts, we already have a mechanism to handle report views.
-                // Better approach: main.ts should handle the click delegation for .view-report-btn
-                // Or we can just find the reports nav and click it with a parameter, 
-                // but the current SPA doesn't have a clean URL router yet for individual reports unless we reload.
-                // Wait, main.ts HAS a fetchReport and renderReportDetail.
-                // It's easier if we let main.ts handle it.
                 const event = new CustomEvent('view-report', { detail: { reportId } });
                 window.dispatchEvent(event);
             }
         });
     });
+
+    // Attach Evidence Modal events (Phase 36)
+    container.querySelectorAll('.evidence-trigger-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const card = (e.currentTarget as HTMLElement).closest('.alert-card') as HTMLElement;
+            const alertId = card.dataset.id;
+            const alert = alerts.find(a => a.id === alertId);
+            if (alert && alert.evidence_list && alert.evidence_list.length > 0) {
+                showEvidenceModal(alert.target_label, alert.evidence_list);
+            }
+        });
+    });
+}
+
+/**
+ * Renders a modal showing the detailed evidence list (Requirement #2, #3, #4)
+ */
+function showEvidenceModal(title: string, evidenceList: any[]) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    
+    overlay.innerHTML = `
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>Evidence: ${title}</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                ${evidenceList.map(item => `
+                    <div class="evidence-item">
+                        <h4>${item.title}</h4>
+                        <div class="evidence-meta">
+                            <span class="evidence-domain">${item.domain}</span>
+                        </div>
+                        <a href="${item.url}" target="_blank" class="evidence-link">
+                            🔗 View Original Source
+                        </a>
+                    </div>
+                `).join('')}
+                ${evidenceList.length === 0 ? '<p style="color:#8b949e; text-align:center; padding:2rem;">No supporting sources available.</p>' : ''}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Close on &times; click
+    overlay.querySelector('.modal-close')?.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+    });
+
+    // Close on background click
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+        }
+    });
+
+    // Close on Escape key
+    const onEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            document.body.removeChild(overlay);
+            window.removeEventListener('keydown', onEsc);
+        }
+    };
+    window.addEventListener('keydown', onEsc);
 }
 
 export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement) {
