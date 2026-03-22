@@ -235,6 +235,8 @@ async def run_report_generation(
 
     # 1.1 Noise Filter for Global Report (Phase 19.3)
     topic_str = topic if topic else "global"
+    logger.info(f"Candidates fetched: {len(items)} items found.")
+    
     if topic_str == "global":
         RISK_STOPWORDS = {"f1", "grandprix", "entertainment", "sports", "celebrity", "lifestyle", "fashion", "hollywood"}
         filtered_items = []
@@ -243,6 +245,7 @@ async def run_report_generation(
             if not any(stop in content_lower for stop in RISK_STOPWORDS):
                 filtered_items.append(it)
         items = filtered_items[:10] # Keep top 10 after filtering
+        logger.info(f"After global noise filter: {len(items)} items remaining.")
     
     if not items:
         return "", "failed", "No items found for report window."
@@ -604,7 +607,55 @@ async def run_report_generation(
         "substack_articles_generated": 1
     }))
 
+    # 6. Save Report to DB
+    try:
+        new_report = Report(
+            title=title,
+            teaser_md=teaser_md,
+            full_content_md=final_content,
+            report_type=report_type,
+            topic_code=topic_str if topic_str != "global" else None,
+            is_premium=(report_type == "specialized"),
+            source_count=len(items),
+            confidence_level=0.85 # Heuristic for rule-based
+        )
+        db.add(new_report)
+        await db.commit()
+        await db.refresh(new_report)
+        logger.info(f"Report saved to DB: ID={new_report.id} | Title={title}")
+
+        # 7. Post to Threads (Guarded)
+        if auto_post_threads:
+            await handle_threads_autopost(db, new_report.id, teaser_md, topic_str)
+
+    except Exception as save_err:
+        logger.error(f"Failed to save report to database: {save_err}")
+        return teaser_md, "failed", f"DB Save Error: {save_err}"
+
+    # Record Metrics
+    logger.info(f"Report process complete for {topic_str}.")
     return teaser_md, status, "OK"
+
+async def create_startup_debug_report(db: AsyncSession):
+    """Generates a dummy 'System Startup' report to verify DB write capability."""
+    logger.info("Generating STARTUP DEBUG DUMMY REPORT...")
+    try:
+        now = datetime.now(timezone.utc)
+        dummy = Report(
+            title=f"System Startup Diagnostic: {now.strftime('%Y-%m-%d %H:%M:%S')}",
+            teaser_md="This is a diagnostic report generated automatically at system startup to verify database write capabilities and API connectivity.",
+            full_content_md="# Diagnostic Report\n\nDatabase: PostgreSQL (Render)\nStatus: RUNNING\n\nIf you see this report, the DB write pipeline is functional.",
+            report_type="system_diagnostic",
+            topic_code="system",
+            is_premium=False,
+            source_count=0,
+            confidence_level=1.0
+        )
+        db.add(dummy)
+        await db.commit()
+        logger.info("STARTUP DEBUG DUMMY REPORT SAVED SUCCESSFULLY.")
+    except Exception as e:
+        logger.error(f"FAILED to generate startup debug report: {e}")
 
 async def report_worker(queue: asyncio.Queue, results_collector: Dict[str, str]):
     while True:

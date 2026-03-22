@@ -9,7 +9,7 @@ from jobs.normalize_job import run_normalize
 from jobs.classify_job import run_classify
 from jobs.signal_job import run_signal
 from jobs.health_check_job import run_health_check
-from article.report_job import run_all_reports
+from article.report_job import run_all_reports, create_startup_debug_report
 from jobs.trigger_detector_job import run_trigger_check
 from jobs.trend_analyze_job import run_trend_analysis
 from jobs.alert_manager import run_alert_manager
@@ -105,8 +105,24 @@ def register_jobs():
     schedule.every().monday.at("08:00").do(lambda: run_async(weekly_reports()))
     schedule.every().day.at("09:00").do(run_monthly_if_first)
 
+async def run_startup_checks():
+    """Execute immediate tests to verify environment health on startup."""
+    logger.info("Triggering IMMEDIATE startup checks...")
+    async with AsyncSessionLocal() as session:
+        # 1. Verify DB writes
+        await create_startup_debug_report(session)
+        # 2. Force an immediate pipeline run
+        await pipeline_full_processing()
+        # 3. Force an immediate daily report generation
+        await run_all_reports(session, "daily_global", 1, auto_post_threads=True)
+
 if __name__ == "__main__":
+    # 1. Run startup checks
+    run_async(run_startup_checks())
+    
+    # 2. Register regular schedules
     register_jobs()
+    
     logger.info("Scheduler started. Running pending tasks continually...")
     while True:
         schedule.run_pending()
