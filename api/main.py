@@ -294,6 +294,8 @@ async def get_report_detail(
             "content_preview": preview_text,
             "locked": True,
             "is_premium": True,
+            "title": report.title or f"{report.topic_code} Briefing",
+            "teaser_md": report.teaser_md or report.content_preview,
             "source_count": report.source_count or 0,
             "confidence_level": str(report.confidence_level or "Low"),
             "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
@@ -304,6 +306,8 @@ async def get_report_detail(
         "report_type": report.report_type,
         "topic_code": report.topic_code,
         "content_markdown": report.content_markdown,
+        "title": report.title or f"{report.topic_code} Briefing",
+        "teaser_md": report.teaser_md,
         "locked": False,
         "is_premium": is_premium,
         "source_count": report.source_count or 0,
@@ -325,7 +329,8 @@ async def list_reports(
             SELECT id, report_type, topic_code, is_premium, 
                    COALESCE(source_count, 0), 
                    CAST(COALESCE(confidence_level, 'Low') AS TEXT), 
-                   CAST(created_at AS TEXT), content_markdown 
+                   CAST(created_at AS TEXT), content_markdown,
+                   title, teaser_md
             FROM reports 
         """
         params = {"limit": limit}
@@ -348,7 +353,9 @@ async def list_reports(
                 "source_count": row[4] or 0,
                 "confidence_level": row[5] or "Low",
                 "created_at": row[6],
-                "content_markdown": (row[7] or "")[:300] + "..."
+                "content_markdown": (row[7] or "")[:300] + "...",
+                "title": row[8] or f"{row[2]} Briefing",
+                "teaser_md": row[9]
             } for row in rows
         ]
     except Exception as e:

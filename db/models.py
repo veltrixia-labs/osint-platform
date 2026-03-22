@@ -65,6 +65,9 @@ class Report(Base):
     lang = Column(String)
     model_name = Column(String)
     input_items_hash = Column(String)
+    # Content & Identification
+    title = Column(String)
+    teaser_md = Column(Text)
     content_markdown = Column(String)
     archive_pdf_path = Column(String)
     
