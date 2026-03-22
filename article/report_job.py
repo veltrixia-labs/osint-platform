@@ -538,8 +538,22 @@ async def run_report_generation(
     with open(md_path, "w", encoding='utf-8') as f:
         f.write(final_content)
 
+    # 6. Calculate Confidence and Source Metrics (Canonical Source of Truth)
+    count = len(items)
+    # Scoring Logic:
+    # - High: >= 8 sources AND LLM Success
+    # - Medium: >= 3 sources OR LLM Success
+    # - Low: < 3 sources AND LLM Failure
+    if count >= 8 and llm_successVal:
+        conf = "High"
+    elif count >= 3 or llm_successVal:
+        conf = "Medium"
+    else:
+        conf = "Low"
+
+    logger.info(f"Persisting report with metrics -> source_count: {count}, confidence: {conf}")
+
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    # Correctly handle NULL topic_code in existence check
     if topic is None:
         stmt = select(Report).where(
             Report.topic_code.is_(None),
@@ -553,16 +567,8 @@ async def run_report_generation(
             Report.created_at >= today_start
         )
     repo = (await db.execute(stmt)).scalars().first()
-    if not repo:
-        # Calculate confidence level more intelligently
-        count = len(items)
-        if count >= 8 and llm_successVal:
-            conf = "High"
-        elif count >= 3 or llm_successVal:
-            conf = "Medium"
-        else:
-            conf = "Low"
 
+    if not repo:
         repo = Report(
             title=title,
             report_type=report_type, 
@@ -589,14 +595,6 @@ async def run_report_generation(
 
     else:
         logger.info(f"Report already exists for {topic_str} today. Updating content and metadata.")
-        count = len(items)
-        if count >= 8 and llm_successVal:
-            conf = "High"
-        elif count >= 3 or llm_successVal:
-            conf = "Medium"
-        else:
-            conf = "Low"
-
         repo.title = title
         repo.content_markdown = final_content
         repo.source_count = count

@@ -294,8 +294,8 @@ async def get_report_detail(
             "content_preview": preview_text,
             "locked": True,
             "is_premium": True,
-            "source_count": report.source_count,
-            "confidence_level": report.confidence_level,
+            "source_count": report.source_count or 0,
+            "confidence_level": str(report.confidence_level or "Low"),
             "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
         }
 
@@ -306,8 +306,8 @@ async def get_report_detail(
         "content_markdown": report.content_markdown,
         "locked": False,
         "is_premium": is_premium,
-        "source_count": report.source_count,
-        "confidence_level": report.confidence_level,
+        "source_count": report.source_count or 0,
+        "confidence_level": str(report.confidence_level or "Low"),
         "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
         "substack_url": report.substack_published_url or report.substack_draft_url,
     }
@@ -322,7 +322,10 @@ async def list_reports(
     try:
         # Fetch as strings to avoid SQLAlchemy driver parsing errors on mixed date formats in SQLite
         query_str = """
-            SELECT id, report_type, topic_code, is_premium, source_count, confidence_level, CAST(created_at AS TEXT), content_markdown 
+            SELECT id, report_type, topic_code, is_premium, 
+                   COALESCE(source_count, 0), 
+                   CAST(COALESCE(confidence_level, 'Low') AS TEXT), 
+                   CAST(created_at AS TEXT), content_markdown 
             FROM reports 
         """
         params = {"limit": limit}
