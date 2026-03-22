@@ -16,7 +16,16 @@ from llm.client import generate_analysis, get_metrics_summary
 TREND_LOOKBACK_DAYS = 7
 from render.markdown_builder import build_publish_markdown, build_teaser_markdown, build_degraded_markdown
 from render.safety_checker import check_safety
-from analysis.visual_engine import generate_intensity_chart, generate_diversity_chart
+
+# Visualization is optional in production to avoid heavy matplotlib dependency issues
+try:
+    from analysis.visual_engine import generate_intensity_chart, generate_diversity_chart
+    HAS_VISUAL_ENGINE = True
+except ImportError:
+    logger.warning("Visual engine (matplotlib) not found. Skipping chart generation.")
+    HAS_VISUAL_ENGINE = False
+    generate_intensity_chart = None
+    generate_diversity_chart = None
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -402,17 +411,21 @@ async def run_report_generation(
     date_str = now.strftime('%Y%m%d')
     topic_str = topic if topic else "global"
     
-    # Visual 1: Intensity Chart for MAX Intensity Risk Pattern
-    if patterns:
-        max_p = max(patterns, key=lambda x: x.intensity_score)
-        v1 = await generate_intensity_chart(db, max_p.target_label, topic_str, date_str)
-        if v1: visual_files.append(v1)
-        
-    # Visual 2: Source Diversity Chart for MAX Supported Cluster
-    if clusters and len(visual_files) < 2:
-        max_c = max(clusters, key=lambda x: x.article_count)
-        v2 = await generate_diversity_chart(db, max_c.id, topic_str, date_str)
-        if v2: visual_files.append(v2)
+    if HAS_VISUAL_ENGINE:
+        try:
+            # Visual 1: Intensity Chart for MAX Intensity Risk Pattern
+            if patterns:
+                max_p = max(patterns, key=lambda x: x.intensity_score)
+                v1 = await generate_intensity_chart(db, max_p.target_label, topic_str, date_str)
+                if v1: visual_files.append(v1)
+                
+            # Visual 2: Source Diversity Chart for MAX Supported Cluster
+            if clusters and len(visual_files) < 2:
+                max_c = max(clusters, key=lambda x: x.article_count)
+                v2 = await generate_diversity_chart(db, max_c.id, topic_str, date_str)
+                if v2: visual_files.append(v2)
+        except Exception as ve:
+            logger.error(f"Error during visual generation: {ve}")
 
     # 3. Build Skeleton Report
     skeleton_content = build_substack_skeleton(
