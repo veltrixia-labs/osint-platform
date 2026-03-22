@@ -39,7 +39,12 @@ async def get_version():
         "commit": COMMIT_HASH,
         "deployed_at": DEPLOY_TIMESTAMP,
         "status": "V1_CLEANUP_ACTIVE",
-        "diagnostic_filter": "STRICT_ORM_V1"
+        "diagnostic_filter": "STRICT_ORM_V1",
+        "debug_info": {
+            "cwd": os.getcwd(),
+            "base_dir": os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "dist_exists": os.path.exists(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web_dashboard", "dist"))
+        }
     }
 
 @app.get("/api/reports/sample")
@@ -621,13 +626,19 @@ async def get_system_diagnostics(
         } for r in results
     ]
 
-# --- Static File Serving (Landing Page & SPA) ---
+# --- Static File Serving (Moved to bottom) ---
 # NOTE: In production on Render, these should be served from the 'web_dashboard/dist' folder.
-dist_path = os.path.join(os.getcwd(), "web_dashboard", "dist")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+dist_path = os.path.join(BASE_DIR, "web_dashboard", "dist")
+
+logger.info(f"Looking for static files at: {dist_path}")
 if os.path.exists(dist_path):
     app.mount("/", StaticFiles(directory=dist_path, html=True), name="static")
 else:
     logger.warning(f"Static files directory not found: {dist_path}")
+    logger.warning(f"Contents of {BASE_DIR}: {os.listdir(BASE_DIR) if os.path.exists(BASE_DIR) else 'N/A'}")
+    web_dashboard_dir = os.path.join(BASE_DIR, "web_dashboard")
+    logger.warning(f"Contents of {web_dashboard_dir}: {os.listdir(web_dashboard_dir) if os.path.exists(web_dashboard_dir) else 'N/A'}")
 
 if __name__ == "__main__":
     import uvicorn
