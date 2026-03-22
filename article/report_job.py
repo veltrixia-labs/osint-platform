@@ -229,9 +229,22 @@ async def run_report_generation(
             seen_urls.add(item.source_url)
     
     if not items:
-        # Fallback to latest items
-        stmt_fallback = select(Item).where(Item.published_at >= start_time).limit(10)
+        # Fallback to latest items (Ideally topic-specific)
+        if topic:
+            # Try to get items matching this topic from ItemTopic
+            stmt_fallback = (
+                select(Item)
+                .join(ItemTopic, ItemTopic.item_id == Item.id)
+                .where(ItemTopic.topic_code == topic)
+                .where(Item.published_at >= start_time)
+                .order_by(Item.published_at.desc())
+                .limit(10)
+            )
+        else:
+            stmt_fallback = select(Item).where(Item.published_at >= start_time).order_by(Item.published_at.desc()).limit(10)
+        
         items = (await db.execute(stmt_fallback)).scalars().all()
+        items = list(items)
 
     # 1.1 Noise Filter for Global Report (Phase 19.3)
     topic_str = topic if topic else "global"
@@ -540,8 +553,16 @@ async def run_report_generation(
             Report.created_at >= today_start
         )
     repo = (await db.execute(stmt)).scalars().first()
-
     if not repo:
+        # Calculate confidence level more intelligently
+        count = len(items)
+        if count >= 8 and llm_successVal:
+            conf = "High"
+        elif count >= 3 or llm_successVal:
+            conf = "Medium"
+        else:
+            conf = "Low"
+
         repo = Report(
             title=title,
             report_type=report_type, 
@@ -549,8 +570,8 @@ async def run_report_generation(
             lang="en", 
             content_markdown=final_content,
             is_premium=(report_type == "specialized"),
-            source_count=len(items),
-            confidence_level="High" if llm_successVal else "Medium"
+            source_count=count,
+            confidence_level=conf
         )
         db.add(repo)
         await db.flush() # Get report_id
@@ -568,10 +589,18 @@ async def run_report_generation(
 
     else:
         logger.info(f"Report already exists for {topic_str} today. Updating content and metadata.")
+        count = len(items)
+        if count >= 8 and llm_successVal:
+            conf = "High"
+        elif count >= 3 or llm_successVal:
+            conf = "Medium"
+        else:
+            conf = "Low"
+
         repo.title = title
         repo.content_markdown = final_content
-        repo.source_count = len(items)
-        repo.confidence_level = "High" if llm_successVal else "Medium"
+        repo.source_count = count
+        repo.confidence_level = conf
         try:
             substack_meta = await update_draft(repo, final_content)
             repo.substack_draft_url = substack_meta.get("substack_draft_url")

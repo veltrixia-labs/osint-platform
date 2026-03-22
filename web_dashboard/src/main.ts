@@ -22,6 +22,18 @@ const TOPICS = [
     { code: 'supply_chain_intelligence', label: '📦 Supply Chain', restricted: true },
 ];
 
+function getTopicLabel(code: string | null): string {
+    if (!code) return '🌍 Global Briefing';
+    const t = TOPICS.find(x => x.code === code);
+    return t ? t.label : code.toUpperCase();
+}
+
+function getMarkdownPreview(md: string): string {
+    if (!md) return "";
+    const lines = md.split('\n').filter(l => l.trim().length > 0 && !l.startsWith('#'));
+    return lines.slice(0, 2).join(' ') + (lines.length > 2 ? '...' : '');
+}
+
 const app = document.querySelector<HTMLDivElement>('#app')!
 
 export async function renderLogin() {
@@ -293,7 +305,9 @@ async function initDashboard() {
                             <div class="report-card report-card--premium" style="flex:1; min-width:300px; border: 2px solid var(--tier-pro);">
                                 <div class="premium-lock-badge" style="margin-bottom:0.5rem; display:inline-block; font-size:0.75rem;">💎 Featured Premium Intelligence</div>
                                 <h2 style="margin: 0 0 1rem 0; font-size: 1.4rem;">${latestPremium.content_markdown.split('\n')[0].replace('# ', '')}</h2>
-                                <div style="color:#8b949e; font-size:0.9rem; margin-bottom: 1.5rem;">Comprehensive analysis encompassing multiple verified events.</div>
+                                <div style="color:#8b949e; font-size:0.9rem; margin-bottom: 1.5rem;">
+                                    ${getMarkdownPreview(latestPremium.content_markdown)}
+                                </div>
                                 <button class="btn-fb active view-report-btn" data-id="${latestPremium.id}">Unlock Full Analysis</button>
                             </div>
                         `;
@@ -303,7 +317,9 @@ async function initDashboard() {
                             <div class="report-card" style="flex:1; min-width:300px; border: 1px solid var(--tier-grace); background: rgba(255,255,255,0.03);">
                                 <div class="role-badge" style="margin-bottom:0.5rem; display:inline-block; font-size:0.75rem; background:rgba(255,255,255,0.1);">🌍 Daily Free Briefing</div>
                                 <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem;">${latestFree.content_markdown.split('\n')[0].replace('# ', '')}</h3>
-                                <div style="color:#8b949e; font-size:0.9rem; margin-bottom: 1.5rem;">Publicly accessible strategic overview and risk analysis.</div>
+                                <div style="color:#8b949e; font-size:0.9rem; margin-bottom: 1.5rem;">
+                                    ${getMarkdownPreview(latestFree.content_markdown)}
+                                </div>
                                 <button class="btn-fb active view-report-btn" data-id="${latestFree.id}">Read Briefing</button>
                             </div>
                         `;
@@ -319,10 +335,17 @@ async function initDashboard() {
                     reportsGrid.innerHTML = gridReports.map((r: any) => `
                         <div class="report-card ${r.is_premium ? 'report-card--premium' : ''}" data-id="${r.id}">
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
-                                <span class="report-topic-badge">${r.topic_code}</span>
+                                <span class="report-topic-badge">${getTopicLabel(r.topic_code)}</span>
                                 ${r.is_premium ? '<span class="premium-lock-badge">🔒 Premium</span>' : ''}
                             </div>
-                            <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">${r.content_markdown.split('\n')[0].replace('# ', '')}</h3>
+                            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${r.content_markdown.split('\n')[0].replace('# ', '')}</h3>
+                            <p style="font-size: 0.85rem; color: #8b949e; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4rem;">
+                                ${getMarkdownPreview(r.content_markdown)}
+                            </p>
+                            <div class="report-meta" style="font-size: 0.75rem; color: #8b949e; margin-bottom: 1rem; display: flex; gap: 0.8rem;">
+                                <span>🔍 ${r.source_count || 0}</span>
+                                <span>⚖️ ${r.confidence_level || 'Medium'}</span>
+                            </div>
                             <button class="btn-fb active view-report-btn" style="width:100%; margin-top: auto;" data-id="${r.id}">View Intelligence</button>
                         </div>
                     `).join('');
@@ -391,13 +414,16 @@ async function initDashboard() {
                     ${reports.map(r => `
                         <div class="report-card ${r.is_premium ? 'report-card--premium' : ''}" data-id="${r.id}">
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
-                                <span class="report-topic-badge">${r.topic_code}</span>
+                                <span class="report-topic-badge">${getTopicLabel(r.topic_code)}</span>
                                 ${r.is_premium ? '<span class="premium-lock-badge">🔒 Premium</span>' : ''}
                             </div>
-                            <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">${r.content_markdown.split('\n')[0].replace('# ', '')}</h3>
+                            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${r.content_markdown.split('\n')[0].replace('# ', '')}</h3>
+                            <p style="font-size: 0.85rem; color: #8b949e; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4rem;">
+                                ${getMarkdownPreview(r.content_markdown)}
+                            </p>
                             <div class="report-meta" style="font-size: 0.8rem; color: #8b949e; margin-bottom: 1.5rem; display: flex; gap: 1rem;">
-                                <span>🔍 ${r.source_count} Sources</span>
-                                <span>⚖️ ${r.confidence_level}</span>
+                                <span>🔍 ${r.source_count || 0} Sources</span>
+                                <span>⚖️ ${r.confidence_level || 'Medium'}</span>
                             </div>
                             <button class="btn-fb active view-report-btn" data-id="${r.id}">View Intelligence</button>
                         </div>

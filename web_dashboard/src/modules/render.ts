@@ -178,7 +178,17 @@ export function renderReportDetail(report: any, container: HTMLElement, onAction
     const cleanDate = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
     const date = new Date(cleanDate).toLocaleDateString();
     const typeLabel = (report.report_type || "").replace(/_/g, ' ').toUpperCase();
-    const topicLabel = report.topic_code ? report.topic_code.toUpperCase() : 'GLOBAL';
+    
+    const TOPICS = [
+        { code: 'energy_resource_risk', label: '⚡ Energy Risk' },
+        { code: 'global_market_intelligence', label: '💰 Financial Intel' },
+        { code: 'ai_semiconductor_intelligence', label: '🤖 AI/Semi Intel' },
+        { code: 'crypto_geopolitics', label: '₿ Crypto Risk' },
+        { code: 'defense_technology', label: '🛡️ Defense Tech' },
+        { code: 'supply_chain_intelligence', label: '📦 Supply Chain' },
+    ];
+    const topicObj = TOPICS.find(t => t.code === report.topic_code);
+    const topicLabel = topicObj ? topicObj.label : (report.topic_code ? report.topic_code.toUpperCase() : '🌍 GLOBAL BRIEFING');
 
 
     let md = isPreview ? (report.content_preview || "") : (report.content_markdown || "");
@@ -221,7 +231,9 @@ export function renderReportDetail(report: any, container: HTMLElement, onAction
             </div>
             
             <div class="report-content-card" style="background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 12px; border: 1px solid var(--border); line-height: 1.6; position: relative;">
-                <h1 style="margin-top: 0; color: #58a6ff;">${typeLabel}: ${topicLabel}</h1>
+                <h1 style="margin-top: 0; color: #58a6ff; font-size: 1.8rem; border-bottom: 2px solid rgba(88,166,255,0.1); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                    ${report.title || (topicLabel + ' ' + typeLabel)}
+                </h1>
                 <div style="margin-bottom: 2rem; margin-top: 1rem; text-align: left;">
                     <div class="confidence-trigger" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px; background: rgba(88,166,255,0.1); color: #58a6ff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(88,166,255,0.3); transition: all 0.2s; user-select: none;">
                         <span style="font-size: 1.1rem;">📊</span> 
