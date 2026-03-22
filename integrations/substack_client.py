@@ -71,3 +71,18 @@ async def update_draft(report, new_content: str) -> dict:
 def get_final_url(slug: str) -> str:
     """Constructs the final published URL for a slug."""
     return f"https://yourintelligence.substack.com/p/{slug}"
+
+def get_substack_url(slug: str, **utm_params) -> str:
+    """
+    Constructs a Substack URL with optional UTM parameters.
+    Used by alert manager and other integrations.
+    """
+    if not slug:
+        return SUBSTACK_BASE_URL
+    
+    base = get_final_url(slug)
+    if not utm_params:
+        return base
+        
+    query = "&".join([f"{k}={v}" for k, v in utm_params.items()])
+    return f"{base}?{query}"
