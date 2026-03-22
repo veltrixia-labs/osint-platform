@@ -526,19 +526,31 @@ async def run_report_generation(
         f.write(final_content)
 
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    stmt = select(Report).where(
-        Report.topic_code == topic,
-        Report.report_type == report_type,
-        Report.created_at >= today_start
-    )
+    # Correctly handle NULL topic_code in existence check
+    if topic is None:
+        stmt = select(Report).where(
+            Report.topic_code.is_(None),
+            Report.report_type == report_type,
+            Report.created_at >= today_start
+        )
+    else:
+        stmt = select(Report).where(
+            Report.topic_code == topic,
+            Report.report_type == report_type,
+            Report.created_at >= today_start
+        )
     repo = (await db.execute(stmt)).scalars().first()
 
     if not repo:
         repo = Report(
+            title=title,
             report_type=report_type, 
             topic_code=topic, 
             lang="en", 
-            content_markdown=final_content
+            content_markdown=final_content,
+            is_premium=(report_type == "specialized"),
+            source_count=len(items),
+            confidence_level="High" if llm_successVal else "Medium"
         )
         db.add(repo)
         await db.flush() # Get report_id
@@ -555,8 +567,11 @@ async def run_report_generation(
             logger.warning(f"Substack draft creation failed (Non-blocking): {e}")
 
     else:
-        logger.info(f"Report already exists for {topic_str} today. Updating content and draft.")
+        logger.info(f"Report already exists for {topic_str} today. Updating content and metadata.")
+        repo.title = title
         repo.content_markdown = final_content
+        repo.source_count = len(items)
+        repo.confidence_level = "High" if llm_successVal else "Medium"
         try:
             substack_meta = await update_draft(repo, final_content)
             repo.substack_draft_url = substack_meta.get("substack_draft_url")
@@ -594,7 +609,7 @@ async def run_report_generation(
         else:
             logger.info("Threads post is already queued/processed.")
 
-    # 9. Log Metrics for Phase 11
+    # Record Metrics
     logger.info(f"Phase 11 Metrics [{topic_str}]: " + json.dumps({
         "cluster_count": clustering_metrics["clusters_created"],
         "theme_count": len(themes),
@@ -607,32 +622,6 @@ async def run_report_generation(
         "substack_articles_generated": 1
     }))
 
-    # 6. Save Report to DB
-    try:
-        new_report = Report(
-            title=title,
-            teaser_md=teaser_md,
-            full_content_md=final_content,
-            report_type=report_type,
-            topic_code=topic_str if topic_str != "global" else None,
-            is_premium=(report_type == "specialized"),
-            source_count=len(items),
-            confidence_level=0.85 # Heuristic for rule-based
-        )
-        db.add(new_report)
-        await db.commit()
-        await db.refresh(new_report)
-        logger.info(f"Report saved to DB: ID={new_report.id} | Title={title}")
-
-        # 7. Post to Threads (Guarded)
-        if auto_post_threads:
-            await handle_threads_autopost(db, new_report.id, teaser_md, topic_str)
-
-    except Exception as save_err:
-        logger.error(f"Failed to save report to database: {save_err}")
-        return teaser_md, "failed", f"DB Save Error: {save_err}"
-
-    # Record Metrics
     logger.info(f"Report process complete for {topic_str}.")
     return teaser_md, status, "OK"
 
@@ -641,15 +630,25 @@ async def create_startup_debug_report(db: AsyncSession):
     logger.info("Generating STARTUP DEBUG DUMMY REPORT...")
     try:
         now = datetime.now(timezone.utc)
+        title = f"System Startup Diagnostic: {now.strftime('%Y-%m-%d %H:%M:%S')}"
+        
+        # Check if a startup report already exists for this exact minute (prevent double inserts on fast restart)
+        stmt = select(Report).where(Report.report_type == "system_diagnostic").order_by(Report.created_at.desc()).limit(1)
+        existing = (await db.execute(stmt)).scalars().first()
+        
+        if existing and (now - existing.created_at).total_seconds() < 60:
+            logger.info("Startup diagnostic report already exists. Skipping.")
+            return
+
         dummy = Report(
-            title=f"System Startup Diagnostic: {now.strftime('%Y-%m-%d %H:%M:%S')}",
-            teaser_md="This is a diagnostic report generated automatically at system startup to verify database write capabilities and API connectivity.",
-            full_content_md="# Diagnostic Report\n\nDatabase: PostgreSQL (Render)\nStatus: RUNNING\n\nIf you see this report, the DB write pipeline is functional.",
+            title=title,
+            teaser_md="This is a diagnostic report generated automatically at system startup to verify database write capabilities.",
+            content_markdown="# Diagnostic Report\n\nDatabase: PostgreSQL (Render)\nStatus: RUNNING",
             report_type="system_diagnostic",
             topic_code="system",
             is_premium=False,
             source_count=0,
-            confidence_level=1.0
+            confidence_level="High"
         )
         db.add(dummy)
         await db.commit()

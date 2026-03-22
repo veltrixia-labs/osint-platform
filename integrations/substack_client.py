@@ -11,12 +11,18 @@ SUBSTACK_BASE_URL = "https://substack.com" # Fallback
 
 def generate_slug(report) -> str:
     """
-    Generates a deterministic, URL-safe slug for a Substack report.
-    Format: {topic}-{year}-{month}-{day}
+    Generates a URL-safe slug for a Substack report.
+    Adds a short timestamp suffix to avoid collisions in unique constraint.
     """
-    date_str = report.created_at.strftime("%Y-%m-%d") if report.created_at else datetime.now().strftime("%Y-%m-%d")
-    clean_topic = report.topic_code.lower().replace("_", "-")
-    slug = f"{clean_topic}-{date_str}"
+    now = datetime.now()
+    date_str = report.created_at.strftime("%Y-%m-%d") if report.created_at else now.strftime("%Y-%m-%d")
+    time_suffix = now.strftime("%H%M") # Add HHMM to make it unique per run
+    
+    # topic_code can be None for global reports
+    topic_label = report.topic_code or "global"
+    clean_topic = topic_label.lower().replace("_", "-")
+    
+    slug = f"{clean_topic}-{date_str}-{time_suffix}"
     
     slug = re.sub(r'[^a-z0-9-]', '', slug)
     return slug
