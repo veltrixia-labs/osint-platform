@@ -19,10 +19,11 @@ from api.auth import (
     get_optional_current_user,
     session_manager, blacklist_manager, SecurityLogger
 )
+from api.payments import router as payments_router
 
 # Production Traceability
-COMMIT_HASH = "88c805b4217340ad109e492d92d92d92d20cd7eae"
-DEPLOY_TIMESTAMP = "2026-03-22T08:00:00Z"
+COMMIT_HASH = "802cdad-V1-FIX-V3"
+DEPLOY_TIMESTAMP = "2026-03-22T17:45:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)
