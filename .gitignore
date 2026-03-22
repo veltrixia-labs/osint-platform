@@ -19,7 +19,6 @@ web_dashboard/dist/
 
 # Build / outputs
 outputs/
-render/
 
 # OS / editor
 .DS_Store
