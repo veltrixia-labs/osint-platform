@@ -25,11 +25,14 @@ async def backfill_reports(db: AsyncSession):
         logger.info(f"Checking {len(reports)} reports...")
         
         updated_count = 0
+        GENERIC_HEADERS = ["# summary of themes", "# executive summary", "# daily briefing", "# briefing", "summary of themes"]
+        
         for r in reports:
             md = r.content_markdown or ""
-            count = 0
+            lines = md.split('\n')
             
-            # 1. Try to parse EVIDENCE_JSON (more robust regex)
+            # --- Source Count ---
+            count = 0
             evidence_match = re.search(r'<!--\s*EVIDENCE_JSON:\s*([\s\S]*?)\s*-->', md, re.IGNORECASE)
             if evidence_match:
                 try:
@@ -37,24 +40,17 @@ async def backfill_reports(db: AsyncSession):
                     count = len(data)
                 except: pass
             
-            # 2. Fallback to counting links in ANY Sources section (any level of header)
             if count == 0:
-                # Matches ## Sources, # Sources, ### Sources etc.
                 sources_match = re.search(r'(?i)#{1,6}\s*Sources\b([\s\S]*)', md)
                 if sources_match:
                     sources_part = sources_match.group(1)
-                    # Stop at next header if present
                     next_header_match = re.search(r'\n#{1,6}\s+', sources_part)
                     if next_header_match:
                         sources_part = sources_part[:next_header_match.start()]
-                    
                     links = re.findall(r'\[.*?\]\(.*?\)', sources_part)
                     count = len(links)
             
-            # 3. Recalculate Confidence (Canonical Logic)
-            # High: 8+ sources
-            # Medium: 3-7 sources
-            # Low: 0-2 sources
+            # --- Confidence ---
             if count >= 8:
                 new_conf = "High"
             elif count >= 3:
@@ -62,18 +58,46 @@ async def backfill_reports(db: AsyncSession):
             else:
                 new_conf = "Low"
             
-            # 4. Extract Title if missing
-            if not r.title:
-                title_match = re.search(r'^#\s*(.*)', md)
-                if title_match:
-                    r.title = title_match.group(1).strip()
-                    updated_count += 1
+            # --- Title ---
+            new_title = r.title
+            if not r.title or r.title.lower() in GENERIC_HEADERS:
+                for line in lines:
+                    stripped = line.strip().lower()
+                    if line.startswith('# ') and stripped not in GENERIC_HEADERS:
+                        new_title = line[2:].strip()
+                        break
+            
+            # --- Teaser ---
+            new_teaser = r.teaser_md
+            if not r.teaser_md:
+                teaser_lines = []
+                for line in lines:
+                    clean = line.strip()
+                    if clean and not clean.startswith('#') and not clean.startswith('!') and not clean.startswith('[') and not clean.startswith('<!--'):
+                        teaser_lines.append(clean)
+                        if len(teaser_lines) >= 3:
+                            break
+                new_teaser = " ".join(teaser_lines)
+                if len(new_teaser) > 280:
+                    new_teaser = new_teaser[:277] + "..."
 
             # Optimization: only update if changed
-            if r.source_count != count or r.confidence_level != new_conf:
-                logger.debug(f"Queuing Fix Report [{r.id}]: {r.source_count}->{count}, {r.confidence_level}->{new_conf}")
+            changed = False
+            if r.source_count != count:
                 r.source_count = count
+                changed = True
+            if r.confidence_level != new_conf:
                 r.confidence_level = new_conf
+                changed = True
+            if r.title != new_title:
+                r.title = new_title
+                changed = True
+            if r.teaser_md != new_teaser:
+                r.teaser_md = new_teaser
+                changed = True
+                
+            if changed:
+                logger.debug(f"Queuing Fix Report [{r.id}]: {r.title}")
                 updated_count += 1
                 
         if updated_count > 0:

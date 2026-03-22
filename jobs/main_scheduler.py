@@ -1,4 +1,5 @@
 import asyncio
+import os
 import schedule
 import time
 import logging
@@ -113,8 +114,9 @@ async def run_startup_checks():
         # 0. Backfill Metadata (Phase 14.2 Decoupling/Fix)
         await backfill_reports(session)
         
-        # 1. Verify DB writes
-        await create_startup_debug_report(session)
+        # 1. Verify DB writes (Permanently Disabled for Production)
+        if False: # Hardcoded False
+            await create_startup_debug_report(session)
         # 2. Force an immediate pipeline run
         await pipeline_full_processing()
         # 3. Force an immediate daily report generation

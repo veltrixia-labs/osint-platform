@@ -20,14 +20,36 @@ from api.auth import (
     session_manager, blacklist_manager, SecurityLogger
 )
 
-from api.payments import router as payments_router
+# Production Traceability
+COMMIT_HASH = "88c805b4217340ad109e492d92d92d92d20cd7eae"
+DEPLOY_TIMESTAMP = "2026-03-22T08:00:00Z"
+
+app = FastAPI(title="OSINT Risk Analytics API")
+logger = logging.getLogger(__name__)
+logger.info(f"--- OSINT API BOOTING [Version: {COMMIT_HASH}] ---")
+
+@app.get("/api/version")
+async def get_version():
+    """Definitive production version check."""
+    return {
+        "commit": COMMIT_HASH,
+        "deployed_at": DEPLOY_TIMESTAMP,
+        "status": "V1_CLEANUP_ACTIVE",
+        "diagnostic_filter": "STRICT_ORM_V1"
+    }
+
+@app.get("/api/reports/sample")
+async def get_reports_sample(db: AsyncSession = Depends(get_db)):
+    """Internal debug endpoint to verify raw report presence."""
+    stmt = select(Report).order_by(Report.created_at.desc()).limit(3)
+    result = await db.execute(stmt)
+    reports = result.scalars().all()
+    return [{"id": str(r.id), "type": r.report_type, "topic": r.topic_code, "title": r.title} for r in reports]
 
 # Config
 API_PORT = int(os.getenv("API_PORT", 8000))
 WEB_PORT = int(os.getenv("WEB_PORT", 5173))
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", f"http://localhost:{WEB_PORT}").split(",")
-
-app = FastAPI(title="OSINT Risk Analytics API")
 
 # CORS
 app.add_middleware(
@@ -38,7 +60,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.staticfiles import StaticFiles
+
 app.include_router(payments_router, prefix="/api/payments", tags=["payments"])
+
+# --- Static File Serving (Landing Page & SPA) ---
+# NOTE: In production on Render, these should be served from the 'web_dashboard/dist' folder.
+dist_path = os.path.join(os.getcwd(), "web_dashboard", "dist")
+if os.path.exists(dist_path):
+    app.mount("/", StaticFiles(directory=dist_path, html=True), name="static")
+else:
+    logger.warning(f"Static files directory not found: {dist_path}")
 
 # --- Auth Endpoints ---
 
@@ -318,45 +350,54 @@ async def get_report_detail(
 
 @app.get("/api/reports")
 async def list_reports(
+    response: Response,  # Added to set debug header
     db: AsyncSession = Depends(get_db),
     limit: int = 10,
     topic: Optional[str] = None
 ):
-    from sqlalchemy import text
+    response.headers["X-API-Version"] = "2026-03-22-ORM-FIX-V1" # Debug Header
     try:
-        # Fetch as strings to avoid SQLAlchemy driver parsing errors on mixed date formats in SQLite
-        query_str = """
-            SELECT id, report_type, topic_code, is_premium, 
-                   COALESCE(source_count, 0), 
-                   CAST(COALESCE(confidence_level, 'Low') AS TEXT), 
-                   CAST(created_at AS TEXT), content_markdown,
-                   title, teaser_md
-            FROM reports 
-        """
-        params = {"limit": limit}
+        # Detect engine for dialect-specific optimizations if needed
+        # engine_name = db.bind.dialect.name
+        
+        # 1. SQLAlchemy ORM Filter (Strict)
+        stmt = select(Report).where(
+            (Report.report_type != "system_diagnostic") &
+            (Report.report_type != "system") &
+            (Report.topic_code != "system")
+        )
+        
         if topic:
-            query_str += " WHERE topic_code = :topic"
-            params["topic"] = topic
+            stmt = stmt.where(Report.topic_code == topic)
             
-        query_str += " ORDER BY created_at DESC LIMIT :limit"
+        stmt = stmt.order_by(Report.created_at.desc()).limit(limit)
         
-        query = text(query_str)
-        result = await db.execute(query, params)
-        rows = result.fetchall()
+        result = await db.execute(stmt)
+        reports = result.scalars().all()
         
+        # 2. Python-side Failsafe (Case-insensitive)
+        filtered_reports = []
+        for r in reports:
+            r_type = (r.report_type or "").lower()
+            t_code = (r.topic_code or "").lower()
+            
+            if "system" in r_type or "diagnostic" in r_type or t_code == "system":
+                continue
+            filtered_reports.append(r)
+
         return [
             {
-                "id": str(row[0]),
-                "report_type": row[1] or "unknown",
-                "topic_code": row[2] or "global",
-                "is_premium": bool(row[3]),
-                "source_count": row[4] or 0,
-                "confidence_level": row[5] or "Low",
-                "created_at": row[6],
-                "content_markdown": (row[7] or "")[:300] + "...",
-                "title": row[8] or f"{row[2]} Briefing",
-                "teaser_md": row[9]
-            } for row in rows
+                "id": str(r.id),
+                "report_type": r.report_type or "unknown",
+                "topic_code": r.topic_code or "global",
+                "is_premium": bool(r.is_premium),
+                "source_count": r.source_count or 0,
+                "confidence_level": r.confidence_level or "Low",
+                "created_at": r.created_at.isoformat() if hasattr(r.created_at, 'isoformat') else str(r.created_at),
+                "content_markdown": (r.content_markdown or "")[:300] + "...",
+                "title": r.title or f"{r.topic_code} Briefing",
+                "teaser_md": r.teaser_md
+            } for r in filtered_reports
         ]
     except Exception as e:
         import traceback
@@ -546,6 +587,28 @@ async def get_system_metrics(
             pass
 
     return health_data
+    
+@app.get("/api/system/diagnostics")
+async def get_system_diagnostics(
+    current_user: tuple = Depends(get_current_user_from_access),
+    db: AsyncSession = Depends(get_db)
+):
+    """Retrieve diagnostic reports for internal debugging (Admin only)."""
+    user, _, _ = current_user
+    if user.user_role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+        
+    stmt = select(Report).where(Report.report_type == "system_diagnostic").order_by(Report.created_at.desc()).limit(10)
+    results = (await db.execute(stmt)).scalars().all()
+    
+    return [
+        {
+            "id": str(r.id),
+            "title": r.title,
+            "content": r.content_markdown,
+            "created_at": r.created_at.isoformat() if hasattr(r.created_at, 'isoformat') else r.created_at
+        } for r in results
+    ]
 
 if __name__ == "__main__":
     import uvicorn

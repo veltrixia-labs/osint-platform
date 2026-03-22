@@ -1,13 +1,247 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web_dashboard</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT Analytics Platform | AI-Powered Intelligence Insights</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 2rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 1rem;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 4rem 0;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-card h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .pricing {
+            text-align: center;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 4rem 2rem;
+            border-radius: 2rem;
+            border: 1px solid var(--primary);
+            margin: 4rem 1rem;
+        }
+
+        .price-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .price-period {
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2.5rem;
+            border-radius: 9999px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s;
+            margin-top: 1.5rem;
+        }
+
+        .cta-button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .info-section {
+            margin: 4rem 0;
+            padding: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+        }
+
+        footer a {
+            color: var(--text-muted);
+            margin: 0 1rem;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: var(--primary);
+        }
+
+        .badges {
+            margin-top: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--border);
+            padding: 0.2rem 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            margin: 0.2rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="badges">
+            <span class="badge">AI-Powered Intelligence</span>
+            <span class="badge">Next-Gen OSINT</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <section class="hero">
+            <h1>OSINT Analytics Platform</h1>
+            <p>
+                AIを活用して地政学リスク、市場動向、技術トレンドを分析。
+                公開情報から信頼性の高いインテリジェンスを抽出し、迅速な意思決定を支援します。
+            </p>
+            <a href="/app.html" class="cta-button">View Plans</a>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <h3>AI生成レポート</h3>
+                <p>最新のシグナルから深い洞察を抽出し、日本語・英語でナラティブなレポートを生成します。</p>
+            </div>
+            <div class="feature-card">
+                <h3>トレンド分析</h3>
+                <p>特定トピック（防衛・エネルギー・半導体等）の時間軸での推移を可視化。予兆を捉えます。</p>
+            </div>
+            <div class="feature-card">
+                <h3>リアルタイムアラート</h3>
+                <p>重要な地政学的イベントや急激な市場変化を検知し、即座に通知を送信します。</p>
+            </div>
+        </section>
+
+        <section id="pricing" class="pricing">
+            <h2>Pricing Plan</h2>
+            <div class="price-value">$19 <span class="price-period">/ month (Pro)</span></div>
+            <p>すべての機能へのアクセス、優先的なレポート生成、API利用が含まれます。</p>
+            <div style="margin-top: 2rem;">
+                <p><strong>Payment Methods:</strong> Credit Cards (via Stripe)</p>
+                <p><strong>Cancellation:</strong> 管理画面からいつでも解約可能。解約後の追加料金は発生しません。</p>
+            </div>
+            <a href="/app.html" class="cta-button">Sign Up / Early Access</a>
+        </section>
+
+        <section class="info-section">
+            <div class="info-grid">
+                <div>
+                    <h3>特定商取引法に基づく表示</h3>
+                    <p><strong>販売業者:</strong> OSINT Analytics Platform Project</p>
+                    <p><strong>所在地:</strong> 〒183-0034 東京都府中市住吉町2-30-40 ラヴィラ府中多摩川446</p>
+                    <p><strong>電話番号:</strong> 請求があった場合に遅延なく開示します</p>
+                    <p><strong>お問い合わせ先:</strong> max.miyazaki1020CSA@gmail.com</p>
+                    <p><strong>販売価格:</strong> $19 / 月（税込）</p>
+                    <p><strong>商品代金以外の必要料金:</strong> なし（インターネット接続にかかる費用は除く）</p>
+                    <p><strong>引き渡し時期:</strong> 決済完了後、即時利用可能</p>
+                    <p><strong>返品・キャンセル:</strong> デジタルコンテンツの性質上、決済後の返金は受け付けておりません。次月以降の解約はいつでも可能です。</p>
+                </div>
+                <div>
+                    <h3>Customer Support</h3>
+                    <p>
+                        プロダクトや決済に関するお問い合わせは、上記メールアドレスまでご連絡ください。
+                        通常24時間以内に回答いたします。
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 OSINT Analytics Platform Project.</p>
+        <p>
+            <a href="terms.html">Terms of Service</a> |
+            <a href="privacy.html">Privacy Policy</a>
+        </p>
+        <p style="font-size: 0.8rem; margin-top: 1rem;">
+            Powered by Stripe. Secure payment processing and data protection.
+        </p>
+    </footer>
+
+</body>
+
 </html>

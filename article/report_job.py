@@ -525,7 +525,38 @@ async def run_report_generation(
     # -------------------------
     # -------------------------
 
-    # 6. Output Persistence & Idempotency Flow
+    # 6. Improved Title & Teaser Extraction (Final UX Strategy)
+    # --- Title Generation ---
+    lines = final_content.split('\n')
+    extracted_title = ""
+    GENERIC_HEADERS = ["# summary of themes", "# executive summary", "# daily briefing", "# briefing"]
+    
+    for line in lines:
+        stripped = line.strip().lower()
+        if line.startswith('# ') and stripped not in GENERIC_HEADERS:
+            extracted_title = line[2:].strip()
+            break
+    
+    if not extracted_title:
+        # Fallback to topic label
+        topic_label = TOPIC_CONFIG.get(topic, {}).get("label", "Global Intelligence")
+        extracted_title = f"{topic_label} Report: {now.strftime('%B %d, %Y')}"
+
+    # --- Teaser Generation ---
+    # Extract 2-3 meaningful lines starting from the first non-header, non-empty line
+    teaser_lines = []
+    for line in lines:
+        clean = line.strip()
+        if clean and not clean.startswith('#') and not clean.startswith('!') and not clean.startswith('[') and not clean.startswith('<!--'):
+            teaser_lines.append(clean)
+            if len(teaser_lines) >= 3:
+                break
+    
+    teaser_md = " ".join(teaser_lines)
+    if len(teaser_md) > 280:
+        teaser_md = teaser_md[:277] + "..."
+
+    # 7. Output Persistence & Idempotency Flow
     topic_str = topic if topic else "global"
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     out_dir = os.path.join(base_dir, "outputs")
@@ -538,12 +569,32 @@ async def run_report_generation(
     with open(md_path, "w", encoding='utf-8') as f:
         f.write(final_content)
 
-    # 6. Calculate Confidence and Source Metrics (Canonical Source of Truth)
+    # 8. Calculate Metrics & Better Metadata (Canonical Source of Truth)
     count = len(items)
-    # Scoring Logic:
-    # - High: >= 8 sources AND LLM Success
-    # - Medium: >= 3 sources OR LLM Success
-    # - Low: < 3 sources AND LLM Failure
+    
+    # Deriving a better title if it's currently generic
+    derived_title = title
+    if "Summary of Themes" in title or title == "Theme Summary":
+        # Extract the first H1 or first strong line from final_content
+        lines = final_content.split("\n")
+        for line in lines:
+            clean_line = line.strip().lstrip('#').strip()
+            if clean_line and len(clean_line) > 10:
+                derived_title = clean_line
+                break
+    
+    # Refined teaser (avoid null, ensure meaningful start)
+    if not teaser_md:
+        # Re-derive teaser from content if missing
+        teaser_lines = []
+        for line in final_content.split('\n'):
+            clean = line.strip()
+            if clean and not any(clean.startswith(x) for x in ['#', '!', '[', '<!--', 'Date:']):
+                teaser_lines.append(clean)
+                if len(teaser_lines) >= 3: break
+        teaser_md = " ".join(teaser_lines)[:277] + "..." if teaser_lines else "Latest OSINT analysis and risk intelligence briefing."
+
+    # Scoring Logic
     if count >= 8 and llm_successVal:
         conf = "High"
     elif count >= 3 or llm_successVal:
@@ -551,7 +602,7 @@ async def run_report_generation(
     else:
         conf = "Low"
 
-    logger.info(f"Persisting report with metrics -> source_count: {count}, confidence: {conf}")
+    logger.info(f"Persisting report with metrics -> source_count: {count}, confidence: {conf}, title: {derived_title[:30]}")
 
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     if topic is None:
@@ -570,43 +621,27 @@ async def run_report_generation(
 
     if not repo:
         repo = Report(
-            title=title,
-            report_type=report_type, 
-            topic_code=topic, 
-            lang="en", 
+            report_type=report_type,
+            topic_code=topic,
+            period_start=now - timedelta(days=period_days),
+            period_end=now,
+            title=derived_title,
+            teaser_md=teaser_md,
             content_markdown=final_content,
-            is_premium=(report_type == "specialized"),
+            is_premium=False,
             source_count=count,
             confidence_level=conf
         )
         db.add(repo)
-        await db.flush() # Get report_id
-        
-        # Substack Draft (Disabled - Phase 14 Decoupling)
-        # try:
-        #     logger.info(f"Creating Substack draft for {topic_str}...")
-        #     substack_meta = await create_draft(repo)
-        #     repo.substack_slug = substack_meta.get("substack_slug")
-        #     repo.substack_draft_url = substack_meta.get("substack_draft_url")
-        #     repo.substack_post_id = substack_meta.get("substack_post_id")
-        #     repo.substack_post_status = substack_meta.get("substack_post_status")
-        # except Exception as e:
-        #     logger.warning(f"Substack draft creation failed (Non-blocking): {e}")
-
     else:
         logger.info(f"Report already exists for {topic_str} today. Updating content and metadata.")
-        repo.title = title
+        repo.title = derived_title
+        repo.teaser_md = teaser_md
         repo.content_markdown = final_content
         repo.source_count = count
         repo.confidence_level = conf
-        # Substack Draft (Disabled - Phase 14 Decoupling)
-        # try:
-        #     substack_meta = await update_draft(repo, final_content)
-        #     repo.substack_draft_url = substack_meta.get("substack_draft_url")
-        #     repo.substack_post_status = substack_meta.get("substack_post_status")
-        # except Exception as e:
-        #     logger.warning(f"Substack draft update failed (Non-blocking): {e}")
 
+    await db.flush()
     report_id = repo.id
     await db.commit()
 
@@ -655,6 +690,9 @@ async def run_report_generation(
 
 async def create_startup_debug_report(db: AsyncSession):
     """Generates a dummy 'System Startup' report to verify DB write capability."""
+    # HARD-DISABLED for Production Stability
+    return
+
     logger.info("Generating STARTUP DEBUG DUMMY REPORT...")
     try:
         now = datetime.now(timezone.utc)
