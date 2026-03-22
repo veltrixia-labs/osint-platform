@@ -12,6 +12,9 @@ import os
 import uuid
 import logging
 import json
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from api.auth import (
     get_password_hash, verify_password, create_access_token, 
@@ -198,10 +201,16 @@ async def get_alerts(
         {
             "id": str(log.id),
             "severity": log.severity,
+            "target_label": log.target_label,
             "topic": log.topic,
+            "trigger_type": log.trigger_type,
             "intelligence_score": log.intelligence_score,
-            "created_at": log.triggered_at.isoformat(),
+            "intensity": log.intensity,
+            "triggered_at": log.triggered_at.isoformat(),
             "suppressed": log.suppressed,
+            "related_report_id": str(log.related_report_id) if log.related_report_id else None,
+            "domain_count": log.metadata_json.get("domain_count", 0) if log.metadata_json else 0,
+            "spike_delta": log.metadata_json.get("spike_delta", 0.0) if log.metadata_json else 0.0,
             "metadata": log.metadata_json
         } for log in results
     ]

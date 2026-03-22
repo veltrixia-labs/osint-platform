@@ -26,7 +26,12 @@ export interface Alert {
     severity: string;
     triggered_at: string;
     intelligence_score: number;
+    intensity: number;
+    trigger_type: string;
     target_label: string;
+    domain_count: number;
+    spike_delta: number;
+    related_report_id?: string;
     feedback_score?: number;
     delivery?: {
         analyst_id: string;

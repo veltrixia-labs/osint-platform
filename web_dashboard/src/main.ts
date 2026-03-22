@@ -663,6 +663,31 @@ async function initDashboard() {
             `;
         }
     }
+    // ── Alert Report Navigation (Phase 36) ──────────────────────────────────
+    window.addEventListener('view-report', async (e: any) => {
+        const { reportId } = e.detail;
+        if (!reportId) return;
+
+        try {
+            const { fetchReport: getFullReport } = await import('./modules/api');
+            const fullReport = await getFullReport(reportId);
+            
+            // Note: We don't necessarily have a 'lastFeedHTML' or 'lastReportsHTML' 
+            // if we are jumping directly from the alert stream, so we'll just 
+            // set a default back behavior.
+            renderReportDetail(fullReport, alertsContainer, 'feed', () => {
+                startFeedTab(); // Return to feed dashboard
+            }, async (actionType) => {
+                if (actionType === 'upgrade') {
+                    const { fetchCheckoutSession } = await import('./modules/api');
+                    const response = await fetchCheckoutSession('pro', reportId);
+                    if (response.url) window.location.href = response.url;
+                }
+            });
+        } catch (err) {
+            console.error("Failed to jump to report from alert:", err);
+        }
+    });
 }
 
 // Entry Point

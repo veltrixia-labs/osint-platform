@@ -28,33 +28,74 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
     }
     container.innerHTML = alerts.map(alert => {
         const severityClass = alert.severity.toLowerCase();
+        const date = new Date(alert.triggered_at);
+        const displayDate = isNaN(date.getTime()) ? 'Recent' : date.toLocaleString(undefined, {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        
+        const triggerLabel = (alert.trigger_type || 'Pattern').replace(/_/g, ' ').toUpperCase();
+        const hasReport = !!alert.related_report_id;
+
         return `
             <div class="alert-card ${severityClass}" data-id="${alert.id}">
                 <div class="alert-header">
-                    <div>
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
                         <span class="severity-badge">${alert.severity}</span>
-                        <span style="margin-left: 10px; color: #8b949e; font-size: 0.8rem;">
-                            ${new Date(alert.triggered_at).toLocaleTimeString()}
+                        <span class="watchlist-tag" style="background:rgba(255,255,255,0.05); font-size:0.65rem; padding: 2px 6px; border: 1px solid rgba(255,255,255,0.1); color:#8b949e;">
+                            ${triggerLabel}
                         </span>
+                        <span style="color: #8b949e; font-size: 0.8rem;">${displayDate}</span>
                     </div>
-                    <div class="intel-score">${alert.intelligence_score.toFixed(2)}</div>
-                </div>
-                <h3 style="margin: 0 0 0.5rem 0;">${alert.target_label}</h3>
-                <div style="font-size: 0.9rem; color: #c9d1d9; opacity: 0.8;">
-                    ${alert.delivery ? `Matched Analyst: ${alert.delivery.analyst_id.slice(0, 8)}... (P-Score: ${alert.delivery.relevance_score.toFixed(2)})` : 'Master System Alert'}
+                    <div style="text-align:right;">
+                        <div style="font-size:0.65rem; color:#8b949e; margin-bottom:2px;">Intelligence Priority</div>
+                        <div class="intel-score" style="font-size:1.1rem; line-height:1;">${alert.intelligence_score.toFixed(2)}</div>
+                    </div>
                 </div>
                 
-                <div class="feedback-controls">
-                    ${[1, 2, 3, 4, 5].map(s => `
-                        <button class="btn-fb ${alert.feedback_score === s ? 'active' : ''}" data-score="${s}">${s}</button>
-                    `).join('')}
+                <h3 style="margin: 0.8rem 0 0.5rem 0; font-size: 1.15rem; color: #58a6ff;">${alert.target_label || 'Unknown Signal'}</h3>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom: 1rem; background:rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 6px; border:1px solid rgba(255,255,255,0.05);">
+                    <div>
+                        <div style="font-size:0.7rem; color:#8b949e; text-transform:uppercase; letter-spacing:0.05em;">Risk Momentum</div>
+                        <div style="font-size:0.95rem; color:#c9d1d9; font-weight:600;">${alert.intensity?.toFixed(2) || '0.00'}/10.0</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:#8b949e; text-transform:uppercase; letter-spacing:0.05em;">Evidence</div>
+                        <div style="font-size:0.95rem; color:#c9d1d9;">🔍 ${alert.domain_count || 0} Domains</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:#8b949e; text-transform:uppercase; letter-spacing:0.05em;">Change</div>
+                        <div style="font-size:0.95rem; color:${(alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
+                            ${(alert.spike_delta || 0) > 0 ? '↑' : ''}${(alert.spike_delta || 0).toFixed(2)}
+                        </div>
+                    </div>
+                    ${hasReport ? `
+                    <div style="display:flex; align-items:flex-end;">
+                        <button class="btn-fb active view-report-btn" data-report-id="${alert.related_report_id}" style="font-size:0.75rem; padding: 4px 10px; width:100%;">View Report</button>
+                    </div>
+                    ` : `
+                    <div style="font-size:0.7rem; color:#8b949e; display:flex; align-items:flex-end; opacity:0.6 italic;">
+                        Analysis Pending...
+                    </div>
+                    `}
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size: 0.8rem; color: #8b949e;">
+                        ${alert.delivery ? `Targeted: ${alert.delivery.analyst_id.slice(0, 8)}...` : 'Broadcast Alert'}
+                    </div>
+                    <div class="feedback-controls" style="margin-top:0;">
+                        ${[1, 2, 3, 4, 5].map(s => `
+                            <button class="btn-fb ${alert.feedback_score === s ? 'active' : ''}" data-score="${s}" style="padding: 2px 8px; font-size:0.8rem;">${s}</button>
+                        `).join('')}
+                    </div>
                 </div>
             </div>
         `;
     }).join('');
 
     // Attach feedback events
-    container.querySelectorAll('.btn-fb').forEach(btn => {
+    container.querySelectorAll('.btn-fb[data-score]').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const target = e.currentTarget as HTMLButtonElement;
             const card = target.closest('.alert-card') as HTMLElement;
@@ -64,8 +105,28 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
             await submitFeedback(alertId, score);
 
             // Optimistic UI update
-            card.querySelectorAll('.btn-fb').forEach(b => b.classList.remove('active'));
+            card.querySelectorAll('.btn-fb[data-score]').forEach(b => b.classList.remove('active'));
             target.classList.add('active');
+        });
+    });
+
+    // Attach View Report events
+    container.querySelectorAll('.view-report-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const target = e.currentTarget as HTMLButtonElement;
+            const reportId = target.dataset.reportId;
+            if (reportId) {
+                // We need to trigger the report view. 
+                // Since this is inside render.ts, we'll dispatch a custom event or use a global handler.
+                // In main.ts, we already have a mechanism to handle report views.
+                // Better approach: main.ts should handle the click delegation for .view-report-btn
+                // Or we can just find the reports nav and click it with a parameter, 
+                // but the current SPA doesn't have a clean URL router yet for individual reports unless we reload.
+                // Wait, main.ts HAS a fetchReport and renderReportDetail.
+                // It's easier if we let main.ts handle it.
+                const event = new CustomEvent('view-report', { detail: { reportId } });
+                window.dispatchEvent(event);
+            }
         });
     });
 }
