@@ -309,7 +309,7 @@ async def get_report_detail(
         "source_count": report.source_count or 0,
         "confidence_level": str(report.confidence_level or "Low"),
         "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
-        "substack_url": report.substack_published_url or report.substack_draft_url,
+        "substack_url": None, # Disabled - Phase 14 Decoupling
     }
 
 @app.get("/api/reports")

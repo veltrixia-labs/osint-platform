@@ -62,6 +62,5 @@ def build_degraded_markdown(title: str, items: list, topic_code: str | None = No
 def build_teaser_markdown(title: str, llm_content: str) -> str:
     md = f"# {title} - Insight\n\n"
     md += f"{llm_content[:500]}...\n\n"
-    md += "## CTA\n"
-    md += "Read the full report on Substack: https://example-substack-url.com\n"
+    md += "Read the full report on the OSINT Platform.\n"
     return md

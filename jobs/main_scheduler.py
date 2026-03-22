@@ -89,7 +89,7 @@ async def run_threads_publisher_wrapper():
 
 
 def register_jobs():
-    logger.info("Registering job schedules (Threads/Substack workflow)...")
+    logger.info("Registering job schedules (Threads flow)...")
     # Run the full pipeline every 30 minutes
     schedule.every(30).minutes.do(lambda: run_async(pipeline_full_processing()))
 

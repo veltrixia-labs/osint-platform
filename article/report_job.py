@@ -582,16 +582,16 @@ async def run_report_generation(
         db.add(repo)
         await db.flush() # Get report_id
         
-        # Substack Draft (Optional Side-effect)
-        try:
-            logger.info(f"Creating Substack draft for {topic_str}...")
-            substack_meta = await create_draft(repo)
-            repo.substack_slug = substack_meta.get("substack_slug")
-            repo.substack_draft_url = substack_meta.get("substack_draft_url")
-            repo.substack_post_id = substack_meta.get("substack_post_id")
-            repo.substack_post_status = substack_meta.get("substack_post_status")
-        except Exception as e:
-            logger.warning(f"Substack draft creation failed (Non-blocking): {e}")
+        # Substack Draft (Disabled - Phase 14 Decoupling)
+        # try:
+        #     logger.info(f"Creating Substack draft for {topic_str}...")
+        #     substack_meta = await create_draft(repo)
+        #     repo.substack_slug = substack_meta.get("substack_slug")
+        #     repo.substack_draft_url = substack_meta.get("substack_draft_url")
+        #     repo.substack_post_id = substack_meta.get("substack_post_id")
+        #     repo.substack_post_status = substack_meta.get("substack_post_status")
+        # except Exception as e:
+        #     logger.warning(f"Substack draft creation failed (Non-blocking): {e}")
 
     else:
         logger.info(f"Report already exists for {topic_str} today. Updating content and metadata.")
@@ -599,12 +599,13 @@ async def run_report_generation(
         repo.content_markdown = final_content
         repo.source_count = count
         repo.confidence_level = conf
-        try:
-            substack_meta = await update_draft(repo, final_content)
-            repo.substack_draft_url = substack_meta.get("substack_draft_url")
-            repo.substack_post_status = substack_meta.get("substack_post_status")
-        except Exception as e:
-            logger.warning(f"Substack draft update failed (Non-blocking): {e}")
+        # Substack Draft (Disabled - Phase 14 Decoupling)
+        # try:
+        #     substack_meta = await update_draft(repo, final_content)
+        #     repo.substack_draft_url = substack_meta.get("substack_draft_url")
+        #     repo.substack_post_status = substack_meta.get("substack_post_status")
+        # except Exception as e:
+        #     logger.warning(f"Substack draft update failed (Non-blocking): {e}")
 
     report_id = repo.id
     await db.commit()

@@ -64,7 +64,7 @@ async def run_threads_publisher(db: AsyncSession):
         logger.info(f"Threads publisher skipped: {reason}")
         return
 
-    logger.info("Starting Threads Substack-Confirmation Polling Job...")
+    logger.info("Starting Threads Platform Polling Job...")
     
     stmt = select(ExternalPost).where(
         ExternalPost.platform == "threads",
@@ -118,7 +118,7 @@ async def run_threads_publisher(db: AsyncSession):
                 continue
                 
             # 5. Execute Thread Post
-            logger.info(f"Substack article is LIVE! Attempting Threads post for Report {report.id}...")
+            logger.info(f"Report is LIVE! Attempting Threads post for Report {report.id}...")
             
             if dry_run:
                 logger.info(f"[DRY RUN] Would post to Threads: {normalized_text[:50]}...")

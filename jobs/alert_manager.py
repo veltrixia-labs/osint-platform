@@ -189,19 +189,20 @@ class AlertManager:
         msg += f"<b>System Intensity</b>: {sig.intensity_score}/10.0\n"
         msg += f"<b>Evidence</b>: {source_count} signals\n\n"
         
-        if alert_log.related_report_id:
-            try:
-                from integrations.substack_client import get_substack_url
-                stmt = select(Report).where(Report.id == alert_log.related_report_id)
-                report = (await db.execute(stmt)).scalar_one_or_none()
-                
-                if report and report.substack_slug:
-                    direct_url = get_substack_url(report.substack_slug, utm_source="telegram_alert", utm_medium="alert")
-                    msg += f"<b>Deep Link</b>: <a href='{direct_url}{alert_log.section_anchor}'>View in Report</a>\n\n"
-            except (ImportError, AttributeError):
-                logger.warning("Substack client or get_substack_url not available for deep linking.")
-            except Exception as e:
-                logger.error(f"Error generating deep link: {e}")
+        # Substack Deep Link (Disabled - Phase 14 Decoupling)
+        # if alert_log.related_report_id:
+        #     try:
+        #         from integrations.substack_client import get_substack_url
+        #         stmt = select(Report).where(Report.id == alert_log.related_report_id)
+        #         report = (await db.execute(stmt)).scalar_one_or_none()
+        #         
+        #         if report and report.substack_slug:
+        #             direct_url = get_substack_url(report.substack_slug, utm_source="telegram_alert", utm_medium="alert")
+        #             msg += f"<b>Deep Link</b>: <a href='{direct_url}{alert_log.section_anchor}'>View in Report</a>\n\n"
+        #     except (ImportError, AttributeError):
+        #         logger.warning("Substack client or get_substack_url not available for deep linking.")
+        #     except Exception as e:
+        #         logger.error(f"Error generating deep link: {e}")
             
         msg += f"<b>Key Signals</b>:\n{signals_md}\n\n"
         msg += f"#OSINT #RiskIntel #{sig.target_label.replace(' ', '')} #{severity}"
