@@ -14,6 +14,8 @@ from llm.prompts import SYSTEM_PROMPT, NEUTRAL_ANALYSIS_PROMPT, LLM_POLISH_PROMP
 from llm.client import generate_analysis, get_metrics_summary
 
 TREND_LOOKBACK_DAYS = 7
+logger = logging.getLogger(__name__)
+
 from render.markdown_builder import build_publish_markdown, build_teaser_markdown, build_degraded_markdown
 from render.safety_checker import check_safety
 
@@ -26,9 +28,6 @@ except ImportError:
     HAS_VISUAL_ENGINE = False
     generate_intensity_chart = None
     generate_diversity_chart = None
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # Config
 NUM_WORKERS = 3
