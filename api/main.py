@@ -25,8 +25,8 @@ from api.auth import (
 from api.payments import router as payments_router
 
 # Production Traceability
-COMMIT_HASH = "802cdad-V1-FIX-V3"
-DEPLOY_TIMESTAMP = "2026-03-22T17:45:00Z"
+COMMIT_HASH = "f978acd-V1-EVIDENCE-FIX"
+DEPLOY_TIMESTAMP = "2026-03-22T23:00:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)
@@ -191,6 +191,12 @@ async def get_alerts(
     stmt = stmt.order_by(desc(AlertLog.triggered_at)).limit(limit)
     results = (await db.execute(stmt)).scalars().all()
 
+    # Filter out legacy 0-evidence alerts that were generated before the suppression fix
+    filtered_results = [
+        log for log in results 
+        if log.metadata_json and log.metadata_json.get("domain_count", 0) > 0
+    ]
+
     formatted = [
         {
             "id": str(log.id),
@@ -207,7 +213,7 @@ async def get_alerts(
             "evidence_list": log.metadata_json.get("evidence_list", []),
             "spike_delta": log.metadata_json.get("spike_delta", 0.0) if log.metadata_json else 0.0,
             "metadata": log.metadata_json
-        } for log in results
+        } for log in filtered_results
     ]
 
     # Store in Cache (60s TTL)
