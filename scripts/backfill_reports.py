@@ -4,14 +4,18 @@ import json
 import logging
 import re
 from sqlalchemy.future import select
-from db.database import SessionLocal
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.database import AsyncSessionLocal
 from db.models import Report
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def backfill_reports():
-    db = SessionLocal()
+async def backfill_reports(db: AsyncSession):
+    """
+    Parses existing reports to fix source_count and confidence_level.
+    Idempotent by checking for changes before commit.
+    """
     try:
         logger.info("📡 Starting production backfill for report metadata...")
         stmt = select(Report)
@@ -40,7 +44,6 @@ async def backfill_reports():
                 count = len(links)
             
             # 3. Determine Confidence
-            # If we had LLM success info we'd use it, otherwise use source density
             if count >= 8:
                 new_conf = "High"
             elif count >= 3:
@@ -52,7 +55,7 @@ async def backfill_reports():
             
             # Optimization: only update if changed
             if r.source_count != count or r.confidence_level != new_conf:
-                logger.info(f"Fixed Report [{r.id}]: {r.source_count}->{count}, {r.confidence_level}->{new_conf}")
+                logger.debug(f"Queuing Fix Report [{r.id}]: {r.source_count}->{count}, {r.confidence_level}->{new_conf}")
                 r.source_count = count
                 r.confidence_level = new_conf
                 updated_count += 1
@@ -65,8 +68,9 @@ async def backfill_reports():
 
     except Exception as e:
         logger.error(f"Backfill failed: {e}")
-    finally:
-        await db.close()
 
 if __name__ == "__main__":
-    asyncio.run(backfill_reports())
+    async def run_standalone():
+        async with AsyncSessionLocal() as db:
+            await backfill_reports(db)
+    asyncio.run(run_standalone())

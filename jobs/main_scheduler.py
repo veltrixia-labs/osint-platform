@@ -14,6 +14,7 @@ from jobs.trigger_detector_job import run_trigger_check
 from jobs.trend_analyze_job import run_trend_analysis
 from jobs.alert_manager import run_alert_manager
 from jobs.threads_publisher_job import run_threads_publisher
+from scripts.backfill_reports import backfill_reports
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -109,6 +110,9 @@ async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""
     logger.info("Triggering IMMEDIATE startup checks...")
     async with AsyncSessionLocal() as session:
+        # 0. Backfill Metadata (Phase 14.2 Decoupling/Fix)
+        await backfill_reports(session)
+        
         # 1. Verify DB writes
         await create_startup_debug_report(session)
         # 2. Force an immediate pipeline run
