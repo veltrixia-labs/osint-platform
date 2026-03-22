@@ -172,7 +172,7 @@ function simpleMarkdown(md: string): string {
         .replace(/\n/g, '<br>');
 }
 
-export function renderReportDetail(report: any, container: HTMLElement, onActionRequested?: (actionType: string) => void) {
+export function renderReportDetail(report: any, container: HTMLElement, origin: string = 'feed', onBack?: () => void, onActionRequested?: (actionType: string) => void) {
     const isPreview = report.is_preview === true || report.locked === true;
     const dateStr = report.created_at || "";
     const cleanDate = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
@@ -219,11 +219,17 @@ export function renderReportDetail(report: any, container: HTMLElement, onAction
         }
     }
 
+    // Clean up Redundant Sources Section (Bottom of Markdown)
+    // We remove the '# Sources' section completely if we have evidenceLog ready
+    if (md.includes('# Sources')) {
+        md = md.split('# Sources')[0].trim();
+    }
+
 
     container.innerHTML = `
         <div class="report-detail">
             <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
-                <button class="btn-fb active" id="back-to-feed-btn">← Back to Feed</button>
+                <button class="btn-fb active" id="back-to-feed-btn">← ${origin === 'reports' ? 'Back to Reports' : 'Back to Feed'}</button>
                 <div style="color: #8b949e; font-size: 0.9rem;">
                     ${topicLabel} Intelligence Briefing | ${date}
                     ${isPreview ? ' | <span style="color:#d29922;">PREVIEW</span>' : ''}
@@ -272,7 +278,7 @@ export function renderReportDetail(report: any, container: HTMLElement, onAction
                         ` : `
                             <div style="color: #8b949e; font-size: 0.9rem; text-align: center; padding: 1rem;">
                                 ℹ️ Detailed supporting evidence is not yet structured for this report.
-                            </div>
+                              </div>
                         `}
                     </div>
                 </div>
@@ -320,10 +326,18 @@ export function renderReportDetail(report: any, container: HTMLElement, onAction
         </div>
     `;
 
-    document.querySelector('#back-to-feed-btn')?.addEventListener('click', () => {
-        const feedNav = document.querySelector<HTMLElement>('#nav-feed');
-        if (feedNav) feedNav.click();
-    });
+    // Fix click handler: use onBack callback if provided, fallback to default behavior
+    const backBtn = container.querySelector('#back-to-feed-btn');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+             if (onBack) {
+                 onBack();
+             } else {
+                 const feedNav = document.querySelector<HTMLElement>('#nav-feed');
+                 if (feedNav) feedNav.click();
+             }
+        });
+    }
 
 
     // Confidence Panel Interaction

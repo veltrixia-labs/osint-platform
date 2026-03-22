@@ -224,6 +224,10 @@ async function initDashboard() {
     // Expose stopPolling to allow other modules/functions to clean up UI before login
     (window as any).stopPolling = stopPolling;
 
+    // ── State Preservation ──────────────────────────────────────────────────
+    let lastFeedHTML: string | null = null;
+    let lastReportsHTML: string | null = null;
+
     function renderTopicFilters(container: HTMLElement, currentTopic: string | null) {
         container.innerHTML = '';
         const wrap = document.createElement('div');
@@ -262,7 +266,7 @@ async function initDashboard() {
         container.appendChild(wrap);
     }
     
-    function startFeedTab(topic: string | null = null) {
+    function startFeedTab(topic: string | null = null, restoreOnly: boolean = false) {
         stopPolling()
         if (!user) {
             alertsContainer.innerHTML = renderLockedFeature('Intelligence Dashboard', 'free');
@@ -275,110 +279,96 @@ async function initDashboard() {
         mainTitle.innerHTML = `Dashboard ${proBadgeHtml}`;
         healthContainer.innerHTML = ''
 
-        alertsContainer.innerHTML = `
-            <div id="topic-filters-container"></div>
-            <div id="featured-reports-container" style="display:flex; gap:1.5rem; margin-bottom:2rem; flex-wrap:wrap;"></div>
-            <div id="topic-reports-grid" class="reports-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom:1rem;"></div>
-            <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem;">Live Alert Stream</h3>
-            <div id="feed-alerts-inner"><div style="color:#8b949e;text-align:center;padding:2rem;">Fetching Intelligence Feed...</div></div>
-        `;
+        if (restoreOnly && lastFeedHTML) {
+            // Restore cached HTML and re-bind handlers
+            alertsContainer.innerHTML = lastFeedHTML;
+            attachFeedClicks(topic);
+        } else {
+            alertsContainer.innerHTML = `
+                <div id="topic-filters-container"></div>
+                <div id="featured-reports-container" style="display:flex; gap:1.5rem; margin-bottom:2rem; flex-wrap:wrap;"></div>
+                <div id="topic-reports-grid" class="reports-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom:1rem;"></div>
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem;">Live Alert Stream</h3>
+                <div id="feed-alerts-inner"><div style="color:#8b949e;text-align:center;padding:2rem;">Fetching Intelligence Feed...</div></div>
+            `;
 
-        const filtersContainer = alertsContainer.querySelector('#topic-filters-container') as HTMLElement;
-        const featuredContainer = alertsContainer.querySelector('#featured-reports-container') as HTMLElement;
-        const reportsGrid = alertsContainer.querySelector('#topic-reports-grid') as HTMLElement;
-        const feedAlertsInner = alertsContainer.querySelector('#feed-alerts-inner') as HTMLElement;
+            const filtersContainer = alertsContainer.querySelector('#topic-filters-container') as HTMLElement;
+            const featuredContainer = alertsContainer.querySelector('#featured-reports-container') as HTMLElement;
+            const reportsGrid = alertsContainer.querySelector('#topic-reports-grid') as HTMLElement;
 
-        renderTopicFilters(filtersContainer, topic);
+            renderTopicFilters(filtersContainer, topic);
 
-        // Fetch and render the static reports section
-        import('./modules/api').then(async m => {
-            try {
-                const reports = await m.fetchReports(20, topic ? topic : undefined);
-                let gridReports = reports;
+            // Fetch and render the static reports section
+            import('./modules/api').then(async m => {
+                try {
+                    const reports = await m.fetchReports(20, topic ? topic : undefined);
+                    let gridReports = reports;
 
-                if (!topic) {
-                    const latestPremium = reports.find((r: any) => r.is_premium);
-                    const latestFree = reports.find((r: any) => !r.is_premium);
-                    
-                    if (latestPremium) {
-                        featuredContainer.innerHTML += `
-                            <div class="report-card report-card--premium" style="flex:1; min-width:300px; border: 2px solid var(--tier-pro);">
-                                <div class="premium-lock-badge" style="margin-bottom:0.5rem; display:inline-block; font-size:0.75rem;">💎 Featured Premium Intelligence</div>
-                                <h2 style="margin: 0 0 1rem 0; font-size: 1.4rem;">${latestPremium.content_markdown.split('\n')[0].replace('# ', '')}</h2>
-                                <div style="color:#8b949e; font-size:0.9rem; margin-bottom: 1.5rem;">
-                                    ${getMarkdownPreview(latestPremium.content_markdown)}
+                    if (!topic) {
+                        const latestPremium = reports.find((r: any) => r.is_premium);
+                        const latestFree = reports.find((r: any) => !r.is_premium);
+                        
+                        if (latestPremium) {
+                            featuredContainer.innerHTML += `
+                                <div class="report-card report-card--premium" style="flex:1; min-width:300px; border: 2px solid var(--tier-pro);">
+                                    <div class="premium-lock-badge" style="margin-bottom:0.5rem; display:inline-block; font-size:0.75rem;">💎 Featured Premium Intelligence</div>
+                                    <h2 style="margin: 0 0 1rem 0; font-size: 1.4rem;">${latestPremium.content_markdown.split('\n')[0].replace('# ', '')}</h2>
+                                    <div style="color:#8b949e; font-size:0.9rem; margin-bottom: 1.5rem;">
+                                        ${getMarkdownPreview(latestPremium.content_markdown)}
+                                    </div>
+                                    <button class="btn-fb active view-report-btn" data-id="${latestPremium.id}">Unlock Full Analysis</button>
                                 </div>
-                                <button class="btn-fb active view-report-btn" data-id="${latestPremium.id}">Unlock Full Analysis</button>
-                            </div>
-                        `;
-                    }
-                    if (latestFree) {
-                        featuredContainer.innerHTML += `
-                            <div class="report-card" style="flex:1; min-width:300px; border: 1px solid var(--tier-grace); background: rgba(255,255,255,0.03);">
-                                <div class="role-badge" style="margin-bottom:0.5rem; display:inline-block; font-size:0.75rem; background:rgba(255,255,255,0.1);">🌍 Daily Free Briefing</div>
-                                <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem;">${latestFree.content_markdown.split('\n')[0].replace('# ', '')}</h3>
-                                <div style="color:#8b949e; font-size:0.9rem; margin-bottom: 1.5rem;">
-                                    ${getMarkdownPreview(latestFree.content_markdown)}
-                                </div>
-                                <button class="btn-fb active view-report-btn" data-id="${latestFree.id}">Read Briefing</button>
-                            </div>
-                        `;
-                    }
-                    
-                    // Filter featured ones out of the grid
-                    gridReports = reports.filter((r: any) => r.id !== latestPremium?.id && r.id !== latestFree?.id);
-                } else {
-                    featuredContainer.style.display = 'none';
-                }
-
-                if (gridReports.length > 0) {
-                    reportsGrid.innerHTML = gridReports.map((r: any) => `
-                        <div class="report-card ${r.is_premium ? 'report-card--premium' : ''}" data-id="${r.id}">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
-                                <span class="report-topic-badge">${getTopicLabel(r.topic_code)}</span>
-                                ${r.is_premium ? '<span class="premium-lock-badge">🔒 Premium</span>' : ''}
-                            </div>
-                            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${r.content_markdown.split('\n')[0].replace('# ', '')}</h3>
-                            <p style="font-size: 0.85rem; color: #8b949e; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4rem;">
-                                ${getMarkdownPreview(r.content_markdown)}
-                            </p>
-                            <div class="report-meta" style="font-size: 0.75rem; color: #8b949e; margin-bottom: 1rem; display: flex; gap: 0.8rem;">
-                                <span>🔍 ${r.source_count || 0}</span>
-                                <span>⚖️ ${r.confidence_level || 'Medium'}</span>
-                            </div>
-                            <button class="btn-fb active view-report-btn" style="width:100%; margin-top: auto;" data-id="${r.id}">View Intelligence</button>
-                        </div>
-                    `).join('');
-                } else if (topic) {
-                    reportsGrid.innerHTML = '<div style="color:#8b949e; text-align:center; grid-column: 1 / -1; padding: 1rem 0;">No reports available for this topic yet. Generate one via alerts to see it here.</div>';
-                }
-
-                // Bind clicks for all generated reports
-                alertsContainer.querySelectorAll('.view-report-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        const id = (e.currentTarget as HTMLElement).dataset.id!;
-                        try {
-                            const fullReport = await m.fetchReport(id);
-                            renderReportDetail(fullReport, alertsContainer, async (actionType) => {
-                                 if (actionType === 'upgrade') {
-                                     try {
-                                         const response = await m.fetchCheckoutSession('pro', id);
-                                         if (response.url) window.location.href = response.url;
-                                     } catch (err) {
-                                         document.querySelector<HTMLElement>('#nav-plans')?.click();
-                                     }
-                                 }
-                            });
-                        } catch (err) {
-                            alert("Failed to load report detail (Missing auth?): " + err);
+                            `;
                         }
-                    });
-                });
-            } catch (err) {
-                console.error("Dashboard reports error:", err);
-            }
-        });
+                        if (latestFree) {
+                            featuredContainer.innerHTML += `
+                                <div class="report-card" style="flex:1; min-width:300px; border: 1px solid var(--tier-grace); background: rgba(255,255,255,0.03);">
+                                    <div class="role-badge" style="margin-bottom:0.5rem; display:inline-block; font-size:0.75rem; background:rgba(255,255,255,0.1);">🌍 Daily Free Briefing</div>
+                                    <h3 style="margin: 0 0 1rem 0; font-size: 1.25rem;">${latestFree.content_markdown.split('\n')[0].replace('# ', '')}</h3>
+                                    <div style="color:#8b949e; font-size:0.9rem; margin-bottom: 1.5rem;">
+                                        ${getMarkdownPreview(latestFree.content_markdown)}
+                                    </div>
+                                    <button class="btn-fb active view-report-btn" data-id="${latestFree.id}">Read Briefing</button>
+                                </div>
+                            `;
+                        }
+                        
+                        // Filter featured ones out of the grid
+                        gridReports = reports.filter((r: any) => r.id !== latestPremium?.id && r.id !== latestFree?.id);
+                    } else {
+                        featuredContainer.style.display = 'none';
+                    }
 
+                    if (gridReports.length > 0) {
+                        reportsGrid.innerHTML = gridReports.map((r: any) => `
+                            <div class="report-card ${r.is_premium ? 'report-card--premium' : ''}" data-id="${r.id}">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+                                    <span class="report-topic-badge">${getTopicLabel(r.topic_code)}</span>
+                                    ${r.is_premium ? '<span class="premium-lock-badge">🔒 Premium</span>' : ''}
+                                </div>
+                                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${r.content_markdown.split('\n')[0].replace('# ', '')}</h3>
+                                <p style="font-size: 0.85rem; color: #8b949e; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4rem;">
+                                    ${getMarkdownPreview(r.content_markdown)}
+                                </p>
+                                <div class="report-meta" style="font-size: 0.75rem; color: #8b949e; margin-bottom: 1rem; display: flex; gap: 0.8rem;">
+                                    <span>🔍 ${r.source_count || 0}</span>
+                                    <span>⚖️ ${r.confidence_level || 'Medium'}</span>
+                                </div>
+                                <button class="btn-fb active view-report-btn" style="width:100%; margin-top: auto;" data-id="${r.id}">View Intelligence</button>
+                            </div>
+                        `).join('');
+                    } else if (topic) {
+                        reportsGrid.innerHTML = '<div style="color:#8b949e; text-align:center; grid-column: 1 / -1; padding: 1rem 0;">No reports available for this topic yet. Generate one via alerts to see it here.</div>';
+                    }
+
+                    attachFeedClicks(topic);
+                } catch (err) {
+                    console.error("Dashboard reports error:", err);
+                }
+            });
+        }
+
+        const feedAlertsInner = alertsContainer.querySelector('#feed-alerts-inner') as HTMLElement;
         const state = new DashboardState()
         state.topic = topic; // So alert feed matches topic
         state.subscribe((s: DashboardState) => {
@@ -389,15 +379,55 @@ async function initDashboard() {
         state.startPolling(5000)
         polling = state
     }
+
+    function attachFeedClicks(topic: string | null) {
+        import('./modules/api').then(m => {
+            alertsContainer.querySelectorAll('.view-report-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = (e.currentTarget as HTMLElement).dataset.id!;
+                    try {
+                        const fullReport = await m.fetchReport(id);
+                        // Preserve current list HTML before rendering detail
+                        lastFeedHTML = alertsContainer.innerHTML;
+                        renderReportDetail(fullReport, alertsContainer, 'feed', () => {
+                             // Context-aware Back navigation with state preservation
+                             if (lastFeedHTML) {
+                                 startFeedTab(topic, true); // Use the restoreOnly flag
+                             } else {
+                                 startFeedTab(topic);
+                             }
+                        }, async (actionType) => {
+                             if (actionType === 'upgrade') {
+                                 try {
+                                     const response = await m.fetchCheckoutSession('pro', id);
+                                     if (response.url) window.location.href = response.url;
+                                 } catch (err) {
+                                     document.querySelector<HTMLElement>('#nav-plans')?.click();
+                                 }
+                             }
+                        });
+                    } catch (err) {
+                        alert("Failed to load report detail (Missing auth?): " + err);
+                    }
+                });
+            });
+        });
+    }
     
-    async function renderReportsTab() {
-        if (activeTab === 'reports') return
+    async function renderReportsTab(restoreOnly: boolean = false) {
+        if (activeTab === 'reports' && !restoreOnly) return
         activeTab = 'reports'
         setNavActive('reports')
         stopPolling()
         mainTitle.textContent = 'Intelligence Reports'
         healthContainer.innerHTML = ''
         sidebarContainer.innerHTML = ''
+
+        if (restoreOnly && lastReportsHTML) {
+            // HTML already set, just re-bind handlers
+            attachReportGridClicks();
+            return;
+        }
 
         alertsContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:#8b949e;">Loading reports…</div>'
         
@@ -411,7 +441,7 @@ async function initDashboard() {
 
             alertsContainer.innerHTML = `
                 <div class="reports-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
-                    ${reports.map(r => `
+                    ${reports.map((r: any) => `
                         <div class="report-card ${r.is_premium ? 'report-card--premium' : ''}" data-id="${r.id}">
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
                                 <span class="report-topic-badge">${getTopicLabel(r.topic_code)}</span>
@@ -431,33 +461,44 @@ async function initDashboard() {
                 </div>
             `;
 
-            // Attach click events
-            alertsContainer.querySelectorAll('.view-report-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = (e.currentTarget as HTMLElement).dataset.id!;
-                    try {
-                        const { fetchReport: getFullReport } = await import('./modules/api');
-                        const fullReport = await getFullReport(id);
-                        renderReportDetail(fullReport, alertsContainer, async (actionType) => {
-                            if (actionType === 'upgrade') {
-                                try {
-                                    const { fetchCheckoutSession } = await import('./modules/api');
-                                    const response = await fetchCheckoutSession('pro', id);
-                                    if (response.url) window.location.href = response.url;
-                                } catch (err) {
-                                    document.querySelector<HTMLElement>('#nav-plans')?.click();
-                                }
-                            }
-                        });
-                    } catch (err) {
-                        alert("Failed to load report detail: " + err);
-                    }
-                });
-            });
+            attachReportGridClicks();
 
         } catch (err) {
             alertsContainer.innerHTML = `<div style="padding:2rem;text-align:center;color:#f85149;">Error loading reports: ${err}</div>`;
         }
+    }
+
+    function attachReportGridClicks() {
+        alertsContainer.querySelectorAll('.view-report-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = (e.currentTarget as HTMLElement).dataset.id!;
+                try {
+                    const { fetchReport: getFullReport } = await import('./modules/api');
+                    const fullReport = await getFullReport(id);
+                    lastReportsHTML = alertsContainer.innerHTML;
+                    renderReportDetail(fullReport, alertsContainer, 'reports', () => {
+                        if (lastReportsHTML) {
+                            alertsContainer.innerHTML = lastReportsHTML;
+                            renderReportsTab(true);
+                        } else {
+                            renderReportsTab();
+                        }
+                    }, async (actionType) => {
+                         if (actionType === 'upgrade') {
+                             try {
+                                 const { fetchCheckoutSession } = await import('./modules/api');
+                                 const response = await fetchCheckoutSession('pro', id);
+                                 if (response.url) window.location.href = response.url;
+                             } catch (err) {
+                                 document.querySelector<HTMLElement>('#nav-plans')?.click();
+                             }
+                         }
+                    });
+                } catch (err) {
+                    alert("Failed to load report detail: " + err);
+                }
+            });
+        });
     }
 
 
@@ -488,7 +529,7 @@ async function initDashboard() {
 
     // ── Nav click handlers ────────────────────────────────────────────────────
     document.querySelector('#nav-feed')?.addEventListener('click', navigateToFeed)
-    document.querySelector('#nav-reports')?.addEventListener('click', renderReportsTab)
+    document.querySelector('#nav-reports')?.addEventListener('click', () => renderReportsTab())
     document.querySelector('#nav-plans')?.addEventListener('click', navigateToPlans)
 
     // Grace period banner → Plans tab
@@ -584,11 +625,13 @@ async function initDashboard() {
             // Log analytics event
             logAnalyticsEvent(user ? 'full_view' : 'preview_view', reportId, utms);
 
-            renderReportDetail(report, alertsContainer, async (actionType) => {
-                logAnalyticsEvent('cta_click', reportId, { action: actionType, ...utms });
+            renderReportDetail(report, alertsContainer, 'reports', () => {
+                // Return to reports tab
+                renderReportsTab();
+            }, async (actionType) => {
                 if (!user) {
                     renderLogin();
-                } else {
+                } else if (actionType === 'upgrade') {
                     // Direct to Pro checkout for Founding Member Access
                     try {
                         const { fetchCheckoutSession } = await import('./modules/api');
