@@ -40,5 +40,5 @@ LABEL maintainer="Antigravity OSINT Team"
 LABEL version="MVP-v28-Unified"
 
 # Default command
-# Use shell form of CMD to allow environment variable expansion
-CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Use shell form of CMD to allow environment variable expansion and guarantee python path
+CMD python3 -m uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8000}

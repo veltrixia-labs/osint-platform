@@ -10,6 +10,11 @@ class Settings(BaseSettings):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
         elif url.startswith("postgresql://") and "+asyncpg" not in url:
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        
+        # Render Postgres requires SSL
+        if "render.com" in url and "sslmode" not in url:
+            connector = "&" if "?" in url else "?"
+            url += f"{connector}sslmode=require"
         return url
 
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
