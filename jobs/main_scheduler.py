@@ -5,6 +5,7 @@ import time
 import logging
 from datetime import datetime, timezone
 from db.database import AsyncSessionLocal, engine, Base
+from db.seeding import seed_admin
 from jobs.ingest_job import run_ingest
 from jobs.normalize_job import run_normalize
 from jobs.classify_job import run_classify
@@ -173,6 +174,7 @@ if __name__ == "__main__":
             logger.warning(f"Metadata create_all on scheduler startup failed (non-critical): {e}")
 
         async with AsyncSessionLocal() as session:
+            await seed_admin(session)
             await run_startup_checks()
             await update_system_metric(session, "scheduler_status", "running")
 

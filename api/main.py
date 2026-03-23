@@ -33,15 +33,26 @@ logger = logging.getLogger(__name__)
 
 # [Robustness] Ensure all tables exist at startup (fallback for migrations)
 try:
-    from db.database import get_engine_args, Base
+    from db.database import get_engine_args, Base, AsyncSessionLocal
+    from db.seeding import seed_admin
     import sqlalchemy
-    # Synchronous engine for metadata operations
+    import asyncio
+    
+    # 1. Sync check/create tables
     db_url, connect_args, _ = get_engine_args(use_asyncpg=False)
     sync_engine = sqlalchemy.create_engine(db_url, connect_args=connect_args)
     Base.metadata.create_all(bind=sync_engine)
     logger.info("Database schema verification/creation completed (API sync check).")
+
+    # 2. Seed Admin User (Async)
+    async def run_seed():
+        async with AsyncSessionLocal() as session:
+            await seed_admin(session)
+    
+    asyncio.create_task(run_seed())
+
 except Exception as e:
-    logger.warning(f"Metadata create_all on API startup failed (non-critical): {e}")
+    logger.warning(f"Error during API startup initialization: {e}")
 
 logger.info(f"--- OSINT API BOOTING [Version: {COMMIT_HASH}] ---")
 
@@ -145,11 +156,18 @@ async def login(response: Response, request: Request, data: dict, db: AsyncSessi
     chat_id = data.get("telegram_chat_id")
     password = data.get("password")
     
+    logger.info(f"Login attempt for chat_id: {chat_id}")
     stmt = select(AnalystProfile).where(AnalystProfile.telegram_chat_id == chat_id)
     user = (await db.execute(stmt)).scalar_one_or_none()
     
-    if not user or not verify_password(password, user.hashed_password):
-        await SecurityLogger.log_event(db, "login_failed", details={"chat_id": chat_id}, client_ip=request.client.host)
+    if not user:
+        logger.warning(f"Login failed: User not found for chat_id: {chat_id}")
+        await SecurityLogger.log_event(db, "login_failed", details={"chat_id": chat_id, "reason": "user_not_found"}, client_ip=request.client.host)
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+    if not verify_password(password, user.hashed_password):
+        logger.warning(f"Login failed: Password mismatch for chat_id: {chat_id}")
+        await SecurityLogger.log_event(db, "login_failed", details={"chat_id": chat_id, "reason": "password_mismatch"}, client_ip=request.client.host)
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     session_id = await session_manager.create_session(db, user.id)
