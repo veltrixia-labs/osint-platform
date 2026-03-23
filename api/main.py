@@ -56,7 +56,7 @@ async def get_reports_sample(db: AsyncSession = Depends(get_db)):
     return [{"id": str(r.id), "type": r.report_type, "topic": r.topic_code, "title": r.title} for r in reports]
 
 # Config
-API_PORT = int(os.getenv("API_PORT", 8000))
+API_PORT = int(os.getenv("PORT", os.getenv("API_PORT", 8000)))
 WEB_PORT = int(os.getenv("WEB_PORT", 5173))
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", f"http://localhost:{WEB_PORT}").split(",")
 

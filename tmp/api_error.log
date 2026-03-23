@@ -1,0 +1,61 @@
+
+--- ERROR at 2026-03-23 14:51:59.054057 ---
+Traceback (most recent call last):
+  File "C:\RDTP project\Development\OSINT_analytics\api\main.py", line 391, in list_reports
+    result = await db.execute(stmt)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\RDTP project\Development\OSINT_analytics\.venv\Lib\site-packages\sqlalchemy\ext\asyncio\session.py", line 449, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+    )
+    ^
+  File "C:\RDTP project\Development\OSINT_analytics\.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+  File "C:\RDTP project\Development\OSINT_analytics\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ~~~~~~~~~~~~~~~~~~~~~~^
+        statement,
+        ^^^^^^^^^^
+    ...<4 lines>...
+        _add_event=_add_event,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\RDTP project\Development\OSINT_analytics\.venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<4 lines>...
+        conn,
+        ^^^^^
+    )
+    ^
+  File "C:\RDTP project\Development\OSINT_analytics\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 309, in orm_execute_statement
+    return cls.orm_setup_cursor_result(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        session,
+        ^^^^^^^^
+    ...<4 lines>...
+        result,
+        ^^^^^^^
+    )
+    ^
+  File "C:\RDTP project\Development\OSINT_analytics\.venv\Lib\site-packages\sqlalchemy\orm\context.py", line 616, in orm_setup_cursor_result
+    return loading.instances(result, querycontext)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\RDTP project\Development\OSINT_analytics\.venv\Lib\site-packages\sqlalchemy\orm\loading.py", line 262, in instances
+    _prebuffered = list(chunks(None))
+  File "C:\RDTP project\Development\OSINT_analytics\.venv\Lib\site-packages\sqlalchemy\orm\loading.py", line 220, in chunks
+    fetch = cursor._raw_all_rows()
+  File "C:\RDTP project\Development\OSINT_analytics\.venv\Lib\site-packages\sqlalchemy\engine\result.py", line 553, in _raw_all_rows
+    return [make_row(row) for row in rows]
+            ~~~~~~~~^^^^^
+  File "lib/sqlalchemy/cyextension/resultproxy.pyx", line 22, in sqlalchemy.cyextension.resultproxy.BaseRow.__init__
+  File "lib/sqlalchemy/cyextension/resultproxy.pyx", line 79, in sqlalchemy.cyextension.resultproxy._apply_processors
+  File "C:\RDTP project\Development\OSINT_analytics\.venv\Lib\site-packages\sqlalchemy\sql\sqltypes.py", line 3759, in process
+    value = _python_UUID(value)
+  File "C:\Users\Owner\AppData\Local\Programs\Python\Python313\Lib\uuid.py", line 181, in __init__
+    raise ValueError('badly formed hexadecimal UUID string')
+ValueError: badly formed hexadecimal UUID string

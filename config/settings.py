@@ -35,4 +35,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
 
 settings = Settings()
-settings.validate_stripe()
+# Note: In production, we log missing keys but don't crash on startup 
+# to allow diagnostic endpoints like /api/version to work.
+try:
+    settings.validate_stripe()
+except RuntimeError as e:
+    import logging
+    logging.getLogger(__name__).warning(f"STRIPE CONFIG INCOMPLETE: {e}")
