@@ -25,12 +25,20 @@ from api.auth import (
 from api.payments import router as payments_router
 
 # Production Traceability
-COMMIT_HASH = "f978acd-V1-EVIDENCE-FIX"
+COMMIT_HASH = "6479d4a-V1-PROD-FIX-v2"
 DEPLOY_TIMESTAMP = "2026-03-22T23:00:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)
 logger.info(f"--- OSINT API BOOTING [Version: {COMMIT_HASH}] ---")
+
+@app.get("/")
+async def root():
+    return {"status": "ok", "message": "OSINT API is running", "version": COMMIT_HASH}
+
+@app.get("/healthz")
+async def healthz():
+    return {"status": "healthy"}
 
 @app.get("/api/version")
 async def get_version():

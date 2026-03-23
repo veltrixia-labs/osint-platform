@@ -1,0 +1,9 @@
+.git
+.venv
+__pycache__
+*.pyc
+.env
+web_dashboard/node_modules
+web_dashboard/dist
+tmp
+*.db
