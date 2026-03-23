@@ -26,6 +26,7 @@ DOMAIN_URL = settings.domain_url
 # Price-to-Tier Mapping (Source of Truth)
 PRICE_TO_TIER = {
     settings.stripe_price_id_pro: "pro",
+    settings.stripe_price_id_experts: "experts",
 }
 TIER_TO_PRICE = {v: k for k, v in PRICE_TO_TIER.items()}
 

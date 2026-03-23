@@ -9,40 +9,48 @@ from api.auth import get_current_user_from_access
 
 logger = logging.getLogger(__name__)
 
+from db.enums import PlanTier, ReportType, TIER_ORDER, is_tier_sufficient
+
 # ──────────────────────────────────────────────────────────────────────────────
-# Tier Constants
+# Tier Constants (Aliased for backward-compat where needed)
 # ──────────────────────────────────────────────────────────────────────────────
 
-TIER_FREE = "free"
-TIER_PRO = "pro"
-TIER_ENTERPRISE = "enterprise"
-
-TIER_ORDER = [TIER_FREE, TIER_PRO, TIER_ENTERPRISE]
+TIER_FREE = PlanTier.FREE.value
+TIER_PRO = PlanTier.PRO.value
+TIER_EXPERTS = PlanTier.EXPERTS.value
+TIER_ENTERPRISE = PlanTier.ENTERPRISE.value
 
 GRACE_PERIOD_DAYS = 3
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Centralized Plan Limits  (single source of truth)
+# Centralized Plan Limits (single source of truth)
 # ──────────────────────────────────────────────────────────────────────────────
 
 PLAN_LIMITS: Dict[str, Dict[str, Any]] = {
-    TIER_FREE: {
+    PlanTier.FREE.value: {
         "alerts_per_day": 5,
         "watchlist_keywords": 3,
         "allowed_topics": ["global", "market", "community"],
-        "reports": ["daily"],
+        "reports": [ReportType.DAILY.value],
     },
-    TIER_PRO: {
+    PlanTier.PRO.value: {
         "alerts_per_day": 100,
         "watchlist_keywords": 20,
         "allowed_topics": "all",
-        "reports": ["daily", "monthly"],
+        "reports": [ReportType.DAILY.value, ReportType.WEEKLY.value],
     },
-    TIER_ENTERPRISE: {
+    PlanTier.EXPERTS.value: {
         "alerts_per_day": "unlimited",
         "watchlist_keywords": 100,
         "allowed_topics": "all",
+        "reports": "all",  # Includes Monthly
+    },
+    PlanTier.ENTERPRISE.value: {
+        "alerts_per_day": "unlimited",
+        "watchlist_keywords": "unlimited",
+        "allowed_topics": "all",
         "reports": "all",
+        "custom_topics": True, # Marker for enterprise-only custom logic
     },
 }
 

@@ -23,6 +23,11 @@ from api.auth import (
     session_manager, blacklist_manager, SecurityLogger
 )
 from api.payments import router as payments_router
+from api.gating import (
+    get_effective_tier, get_watchlist_limit, can_add_watchlist_keywords,
+    TIER_PRO, TIER_EXPERTS, TIER_ORDER, is_tier_sufficient
+)
+from db.enums import ReportType
 
 # Production Traceability
 COMMIT_HASH = "8b2d3c1-V1-CONSISTENCY-v1"
@@ -394,7 +399,7 @@ async def get_report_detail(
     current_user: tuple = Depends(get_current_user_from_access),
     db: AsyncSession = Depends(get_db)
 ):
-    """Retrieve a specific report by ID (Phase 34 Routing + Phase 35 Gating)."""
+    """Retrieve a specific report by ID (Strict Plan Gating)."""
     stmt = select(Report).where(Report.id == report_id)
     report = (await db.execute(stmt)).scalar_one_or_none()
     
@@ -404,31 +409,14 @@ async def get_report_detail(
     user, _, _ = current_user
     tier = await get_effective_tier(user)
     
-    # Gating Logic
-    is_pro = tier in [TIER_PRO, TIER_ENTERPRISE]
-    is_premium = report.is_premium
-    
-    if is_premium and not is_pro and user.user_role != "admin":
-        # Return LOCKED response shape
-        content = report.content_markdown or ""
-        paragraphs = [p for p in content.split('\n\n') if p.strip()]
-        preview_text = "\n\n".join(paragraphs[:3])
-        if len(preview_text) > 1000:
-            preview_text = preview_text[:1000] + "..."
-
-        return {
-            "id": str(report.id),
-            "report_type": report.report_type,
-            "topic_code": report.topic_code,
-            "content_preview": preview_text,
-            "locked": True,
-            "is_premium": True,
-            "title": report.title or f"{report.topic_code} Briefing",
-            "teaser_md": report.teaser_md or report.content_preview,
-            "source_count": report.source_count or 0,
-            "confidence_level": str(report.confidence_level or "Low"),
-            "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
-        }
+    # ── Strict Plan Gating ────────────────────────────────────────────────
+    plan_required = report.plan_required or "free"
+    if not is_tier_sufficient(tier, plan_required) and user.user_role != "admin":
+        raise HTTPException(
+            status_code=403, 
+            detail=f"Subscription upgrade required. This report requires the '{plan_required}' plan."
+        )
+    # ──────────────────────────────────────────────────────────────────────
 
     return {
         "id": str(report.id),
@@ -438,28 +426,29 @@ async def get_report_detail(
         "title": report.title or f"{report.topic_code} Briefing",
         "teaser_md": report.teaser_md,
         "locked": False,
-        "is_premium": is_premium,
+        "is_premium": report.is_premium,
         "source_count": report.source_count or 0,
         "confidence_level": str(report.confidence_level or "Low"),
         "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
-        "substack_url": None, # Disabled - Phase 14 Decoupling
+        "plan_required": plan_required
     }
 
 @app.get("/api/reports")
 async def list_reports(
-    response: Response,  # Added to set debug header
+    response: Response,
     db: AsyncSession = Depends(get_db),
+    current_user: tuple = Depends(get_current_user_from_access),
     limit: int = 10,
     topic: Optional[str] = None
 ):
-    response.headers["X-API-Version"] = "2026-03-22-ORM-FIX-V1" # Debug Header
+    response.headers["X-API-Version"] = "2026-03-24-REBRAND-V1"
+    user, _, _ = current_user
+    tier = await get_effective_tier(user)
+
     try:
-        # Detect engine for dialect-specific optimizations if needed
-        # engine_name = db.bind.dialect.name
-        
         # 1. SQLAlchemy ORM Filter (Strict)
         stmt = select(Report).where(
-            (Report.report_type != "system_diagnostic") &
+            (Report.report_type != ReportType.SYSTEM_DIAGNOSTIC.value) &
             (Report.report_type != "system") &
             (Report.topic_code != "system")
         )
@@ -467,20 +456,30 @@ async def list_reports(
         if topic:
             stmt = stmt.where(Report.topic_code == topic)
             
-        stmt = stmt.order_by(Report.created_at.desc()).limit(limit)
+        stmt = stmt.order_by(Report.created_at.desc()).limit(limit * 2) # Overfetch to allow Python-side tier filtering
         
         result = await db.execute(stmt)
         reports = result.scalars().all()
         
-        # 2. Python-side Failsafe (Case-insensitive)
+        # 2. Python-side Failsafe & Tier Filtering
         filtered_reports = []
         for r in reports:
             r_type = (r.report_type or "").lower()
             t_code = (r.topic_code or "").lower()
+            r_plan = r.plan_required or "free"
             
+            # Filter system reports
             if "system" in r_type or "diagnostic" in r_type or t_code == "system":
                 continue
+                
+            # Tier Gating (Strict)
+            if not is_tier_sufficient(tier, r_plan) and user.user_role != "admin":
+                continue
+
             filtered_reports.append(r)
+
+        # Final limit application after tier filtering
+        final_reports = filtered_reports[:limit]
 
         return [
             {
@@ -488,13 +487,14 @@ async def list_reports(
                 "report_type": r.report_type or "unknown",
                 "topic_code": r.topic_code or "global",
                 "is_premium": bool(r.is_premium),
+                "plan_required": r.plan_required or "free",
                 "source_count": r.source_count or 0,
                 "confidence_level": r.confidence_level or "Low",
                 "created_at": r.created_at.isoformat() if hasattr(r.created_at, 'isoformat') else str(r.created_at),
                 "content_markdown": (r.content_markdown or "")[:300] + "...",
                 "title": r.title or f"{r.topic_code} Briefing",
                 "teaser_md": r.teaser_md
-            } for r in filtered_reports
+            } for r in final_reports
         ]
     except Exception as e:
         import traceback

@@ -441,23 +441,36 @@ async function initDashboard() {
 
             alertsContainer.innerHTML = `
                 <div class="reports-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
-                    ${reports.map((r: any) => `
-                        <div class="report-card ${r.is_premium ? 'report-card--premium' : ''}" data-id="${r.id}">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
-                                <span class="report-topic-badge">${getTopicLabel(r.topic_code)}</span>
-                                ${r.is_premium ? '<span class="premium-lock-badge">🔒 Premium</span>' : ''}
+                    ${reports.map((r: any) => {
+                        const planLabel = (r.plan_required || 'free').toUpperCase();
+                        const typeLabel = (r.report_type || 'daily').toUpperCase();
+                        const isPremium = r.is_premium || r.plan_required !== 'free';
+
+                        return `
+                            <div class="report-card ${isPremium ? 'report-card--premium' : ''}" data-id="${r.id}">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+                                    <div style="display:flex; flex-direction:column; gap:4px;">
+                                        <span class="report-topic-badge">${getTopicLabel(r.topic_code)}</span>
+                                        <span style="font-size:0.65rem; color:#8b949e; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; border:1px solid rgba(255,255,255,0.1); width:fit-content;">
+                                            ${typeLabel}
+                                        </span>
+                                    </div>
+                                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                                        ${isPremium ? `<span class="premium-lock-badge" style="background:rgba(210,153,34,0.1); color:#d29922; border:1px solid rgba(210,153,34,0.3);">🔒 ${planLabel}</span>` : '<span class="premium-lock-badge" style="background:rgba(63,185,80,0.1); color:#3fb950; border:1px solid rgba(63,185,80,0.3);">✓ FREE</span>'}
+                                    </div>
+                                </div>
+                                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; line-height: 1.4; color: #c9d1d9;">${r.title}</h3>
+                                <p style="font-size: 0.85rem; color: #8b949e; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; height: 3.6rem; min-height: 3.6rem;">
+                                    ${r.teaser_md || 'Detailed OSINT intelligence analysis and trend forecasting regarding identified signals.'}
+                                </p>
+                                <div class="report-meta" style="font-size: 0.8rem; color: #8b949e; margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+                                    <span>🔍 ${r.source_count || 0} Sources</span>
+                                    <span>⚖️ ${r.confidence_level || 'Medium'}</span>
+                                </div>
+                                <button class="btn-fb active view-report-btn" data-id="${r.id}" style="width:100%;">View Intelligence</button>
                             </div>
-                            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${r.content_markdown.split('\n')[0].replace('# ', '')}</h3>
-                            <p style="font-size: 0.85rem; color: #8b949e; margin-bottom: 1.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4rem;">
-                                ${getMarkdownPreview(r.content_markdown)}
-                            </p>
-                            <div class="report-meta" style="font-size: 0.8rem; color: #8b949e; margin-bottom: 1.5rem; display: flex; gap: 1rem;">
-                                <span>🔍 ${r.source_count || 0} Sources</span>
-                                <span>⚖️ ${r.confidence_level || 'Medium'}</span>
-                            </div>
-                            <button class="btn-fb active view-report-btn" data-id="${r.id}">View Intelligence</button>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `;
 

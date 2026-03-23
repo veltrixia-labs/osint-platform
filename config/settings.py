@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     # Stripe Configuration
     stripe_secret_key: str = os.getenv("STRIPE_SECRET_KEY", "")
     stripe_price_id_pro: str = os.getenv("STRIPE_PRICE_ID_PRO", "")
+    stripe_price_id_experts: str = os.getenv("STRIPE_PRICE_ID_EXPERTS", "")
     stripe_webhook_secret: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     domain_url: str = os.getenv("DOMAIN_URL", "http://localhost:8000")
 
@@ -48,6 +49,8 @@ class Settings(BaseSettings):
             raise RuntimeError("STRIPE_WEBHOOK_SECRET is required for secure webhook processing.")
         if not self.stripe_price_id_pro:
             raise RuntimeError("STRIPE_PRICE_ID_PRO is required for Pro subscriptions.")
+        if not self.stripe_price_id_experts:
+            raise RuntimeError("STRIPE_PRICE_ID_EXPERTS is required for Experts subscriptions.")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
 

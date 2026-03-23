@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from db.database import AsyncSessionLocal
 from db.models import SignalRanking, Item, Report, EventCluster, TrendSignal, ExternalPost, ItemTopic
+from db.enums import PlanTier, ReportType
 from llm.prompts import SYSTEM_PROMPT, NEUTRAL_ANALYSIS_PROMPT, LLM_POLISH_PROMPT
 from llm.client import generate_analysis, get_metrics_summary
 
@@ -18,6 +19,47 @@ logger = logging.getLogger(__name__)
 
 from render.markdown_builder import build_publish_markdown, build_teaser_markdown, build_degraded_markdown
 from render.safety_checker import check_safety
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Tiered Analysis Prompts
+# ──────────────────────────────────────────────────────────────────────────────
+
+WEEKLY_ANALYSIS_PROMPT = """
+Analyze the following OSINT findings for a WEEKLY summary.
+Focus on identifying major themes and shifts over the past 7 days.
+Provide a lightweight analysis that connects major developments without deep forecasting.
+Maintain a professional, intelligence-grade tone.
+"""
+
+MONTHLY_EXPERTS_PROMPT = """
+You are a Senior Intelligence Analyst performing a MONTHLY decision-support analysis.
+Analyze the trends and developments provided to generate a comprehensive strategic report.
+
+REQUIRED STRUCTURE:
+# Monthly Intelligence Report
+
+## 1. Macro Overview
+(Summary of the overall landscape and major trends)
+
+## 2. Key Structural Shifts
+(Deep dive into major changes in the status quo)
+
+## 3. Scenario Analysis
+- **Best Case**: [Optimistic projection]
+- **Base Case**: [Most likely projection]
+- **Worst Case**: [Pessimistic projection]
+
+## 4. Risk Forecast
+(Quantitative and qualitative risk assessment)
+
+## 5. Cross-Domain Impact
+(How developments in this field affect other sectors like geopolitics, economy, or technology)
+
+## 6. Forward Outlook (30–60 days)
+(Concrete expectations for the next 2 months)
+
+TONE: Objective, analytical, and forward-looking.
+"""
 
 # Visualization is optional in production to avoid heavy matplotlib dependency issues
 try:
@@ -457,27 +499,63 @@ async def run_report_generation(
     if not validate_skeleton(skeleton_content):
         return "", "failed", "Skeleton structure validation failed."
 
-    # 5. LLM Polish (Optional)
+    # 5. Tiered Content Generation (Phase 36 Redesign)
+    plan_required = PlanTier.FREE.value
     status = "rule_based"
     final_content = skeleton_content
-    
-    logger.info(f"Attempting LLM Polish for {topic or 'global'}...")
-    polish_input = (
-        f"ENRICHED CLUSTER CONTEXT:\n{cluster_context_str}\n\n"
-        f"TREND ANALYSIS CONTEXT:\n{trend_context_str}\n\n"
-        f"DRAFT REPORT:\n{skeleton_content}"
-    )
-    polished = await generate_analysis(LLM_POLISH_PROMPT, polish_input)
-    
-    llm_attempts = 1
+    llm_attempts = 0
     llm_successVal = 0
-    if polished and polished != "__DEGRADED_MODE__" and validate_skeleton(polished):
-        logger.info("LLM Polish successful.")
-        final_content = polished
-        status = "success"
-        llm_successVal = 1
-    else:
-        logger.warning("LLM Polish failed or invalid. Using Skeleton directly.")
+    
+    # Standardize report type for generation logic
+    current_type = (report_type or "daily").lower()
+    if "event_driven" in current_type: # Legacy compatibility
+        current_type = ReportType.DAILY.value
+
+    if current_type == ReportType.DAILY.value:
+        # ABSOLUTE LLM ISOLATION: No generate_analysis call
+        logger.info(f"Generating DAILY report: 100% Rule-based (LLM bypassed).")
+        plan_required = PlanTier.FREE.value
+        status = "success" # Rule-based is considered success for Daily
+        
+    elif current_type == ReportType.WEEKLY.value:
+        logger.info(f"Generating WEEKLY report: Lightweight LLM analysis (Pro+).")
+        plan_required = PlanTier.PRO.value
+        analysis_input = f"SKELETON DATA:\n{skeleton_content}\n\nCONTEXT:\n{cluster_context_str}"
+        polished = await generate_analysis(WEEKLY_ANALYSIS_PROMPT, analysis_input)
+        if polished and polished != "__DEGRADED_MODE__":
+            final_content = polished
+            status = "success"
+        else:
+            logger.warning("Weekly LLM analysis failed. Falling back to rule-based.")
+
+    elif current_type == ReportType.MONTHLY.value:
+        logger.info(f"Generating MONTHLY report: Full Expert Analysis (Experts only).")
+        plan_required = PlanTier.EXPERTS.value
+        analysis_input = f"MONTHLY RAW DATA & TRENDS:\n{skeleton_content}\n\nBROADER CONTEXT:\n{trend_context_str}"
+        expert_analysis = await generate_analysis(MONTHLY_EXPERTS_PROMPT, analysis_input)
+        
+        if expert_analysis and expert_analysis != "__DEGRADED_MODE__" and "Scenario Analysis" in expert_analysis:
+            final_content = expert_analysis
+            status = "success"
+        else:
+            logger.warning("Monthly Expert LLM failed. Using Degraded Monthly Skeleton.")
+            # Mandatory Fallback structure for Monthly
+            final_content = (
+                "# Monthly Intelligence Report (Degraded Mode)\n\n"
+                "## 1. Macro Overview\nRule-based summary of developments is available below.\n\n"
+                "## 2. Key Structural Shifts\nStructural automated detection active.\n\n"
+                "## 3. Scenario Analysis\n[LLM UNAVAILABLE: Strategic scenarios suspended]\n\n"
+                "## 4. Risk Forecast\nRisk metrics derived from rule-based thresholds.\n\n"
+                "## 5. Cross-Domain Impact\nCross-domain synthesis requires LLM assistance.\n\n"
+                "## 6. Forward Outlook (30–60 days)\nMaintain monitoring based on current rule-based signals.\n\n"
+                "---\n"
+                + skeleton_content
+            )
+            status = "rule_based_fallback"
+    
+    if current_type != ReportType.DAILY.value:
+        llm_attempts = 1
+        llm_successVal = 1 if status == "success" else 0
 
 
     # --- ADD EVIDENCE JSON ---
@@ -525,40 +603,22 @@ async def run_report_generation(
     # -------------------------
     # -------------------------
 
-    # 6. Improved Title & Teaser Extraction (Final UX Strategy)
+    # 6. Title and Metadata Generation (Phase 36 Redesign)
+    
     # --- Title Generation ---
+    # Major Theme Logic: Use themes[0] (Top confidence/sorted)
+    major_theme = "Unknown"
+    if themes and len(themes) > 0:
+        major_theme = themes[0].source_label if hasattr(themes[0], 'source_label') else str(themes[0])
+        if ":" in major_theme: major_theme = major_theme.split(":")[0].strip()
+    
+    topic_label = TOPIC_CONFIG.get(topic, {}).get("label") if topic else "Global"
+    
+    # Standardized Format: Themes: [Major Theme] | [Topic Label] Intelligence
+    derived_title = f"Themes: {major_theme} | {topic_label} Intelligence"
+    
+    # --- Teaser Generation ---
     lines = final_content.split('\n')
-    extracted_title = ""
-    GENERIC_HEADERS = ["# summary of themes", "# executive summary", "# daily briefing", "# briefing", "# theme summary", "# report summary"]
-    TITLE_PREFIXES = ["# ", "title:", "actual title:", "report title:"]
-    
-    for line in lines:
-        stripped = line.strip().lower()
-        # Look for meaningful title indicators
-        if any(stripped.startswith(p) for p in TITLE_PREFIXES) and not any(h in stripped for h in GENERIC_HEADERS):
-            # Extract content after any prefix
-            clean_title = line.strip()
-            for p in TITLE_PREFIXES:
-                if clean_title.lower().startswith(p):
-                    clean_title = clean_title[len(p):].strip()
-                    break
-            
-            if len(clean_title) > 5:
-                extracted_title = clean_title
-                break
-    
-    is_fallback_title = False
-    if not extracted_title:
-        is_fallback_title = True
-        # Fallback to topic label or report type
-        topic_label = TOPIC_CONFIG.get(topic, {}).get("label") if topic else None
-        if not topic_label:
-            if report_type == "event_driven_global":
-                topic_label = "Urgent Intelligence Alert"
-            else:
-                topic_label = "Global Intelligence"
-        
-        extracted_title = f"{topic_label} Report: {now.strftime('%B %d, %Y')}"
 
     # --- Teaser Generation ---
     # Extract 2-3 meaningful lines starting from the first non-header, non-empty line
@@ -587,28 +647,12 @@ async def run_report_generation(
     with open(md_path, "w", encoding='utf-8') as f:
         f.write(final_content)
 
-    # 8. Calculate Metrics & Better Metadata (Canonical Source of Truth)
+    # 8. Calculate Metrics & Better Metadata
     count = len(items)
     
-    # Deriving a better title if it's currently generic or a fallback
-    derived_title = extracted_title
-    CLEAN_GENERIC = ["summary of themes", "executive summary", "daily briefing", "briefing", "theme summary", "report summary", "substack skeleton", "intelligence briefing"]
-    is_generic = any(h in derived_title.lower() for h in CLEAN_GENERIC)
-    
-    if is_fallback_title or is_generic or len(derived_title) < 5:
-        # Aggressively try to find a better H1 or first strong line from final_content
-        for line in final_content.split("\n"):
-            clean_line = line.strip().lstrip('#').lstrip('*').strip()
-            # Ignore lines that are just dates or known generic headers
-            if clean_line and len(clean_line) > 20:
-                is_line_generic = any(h in clean_line.lower() for h in CLEAN_GENERIC)
-                if not is_line_generic and "date:" not in clean_line.lower():
-                    derived_title = clean_line
-                    break
-    
-    # Final Safety Check for Title
-    if not derived_title or len(derived_title) < 5:
-        derived_title = extracted_title or f"OSINT Intelligence Report ({report_type})"
+    # Confirmed Title
+    if not derived_title or "Summary of Themes" in derived_title:
+        derived_title = f"Themes: {major_theme} | {topic_label} Intelligence"
     
     # Refined teaser (avoid null, ensure meaningful start)
     if not teaser_md:
@@ -646,25 +690,31 @@ async def run_report_generation(
         )
     repo = (await db.execute(stmt)).scalars().first()
 
+    is_premium = (current_type != ReportType.DAILY.value)
+
     if not repo:
         repo = Report(
-            report_type=report_type,
+            report_type=current_type,
             topic_code=topic,
             period_start=now - timedelta(days=period_days),
             period_end=now,
             title=derived_title,
             teaser_md=teaser_md,
             content_markdown=final_content,
-            is_premium=False,
+            is_premium=is_premium,
+            plan_required=plan_required,
             source_count=count,
             confidence_level=conf
         )
         db.add(repo)
     else:
         logger.info(f"Report already exists for {topic_str} today. Updating content and metadata.")
+        repo.report_type = current_type
         repo.title = derived_title
         repo.teaser_md = teaser_md
         repo.content_markdown = final_content
+        repo.is_premium = is_premium
+        repo.plan_required = plan_required
         repo.source_count = count
         repo.confidence_level = conf
 

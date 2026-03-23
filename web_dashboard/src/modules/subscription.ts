@@ -65,8 +65,26 @@ const PLANS: PlanConfig[] = [
             'Analytical confidence metrics',
             'Full source traceability',
             '100 alerts/day',
-            'Daily + Monthly reports',
+            'Daily + Weekly reports',
             '20 watchlist keywords',
+        ],
+    },
+    {
+        id: 'experts',
+        name: 'Experts',
+        subtitle: 'Advanced Strategic Intelligence',
+        price: '$49',
+        priceNote: 'per month',
+        color: '#3fb950', // Emerald/Green
+        directCheckout: true,
+        contactUrl: '',
+        features: [
+            'Monthly full LLM analysis',
+            'Scenario analysis (Best/Base/Worst)',
+            'Risk forecasting (30-60 days)',
+            'Cross-domain impact intelligence',
+            'High self-serve limits',
+            'Unlimited alerts',
         ],
     },
     {
@@ -76,33 +94,33 @@ const PLANS: PlanConfig[] = [
         price: 'Custom',
         priceNote: 'contact us',
         color: '#bc8cff',
-        // ✦ Switchable: set directCheckout=true + price ID when ready for direct checkout
         directCheckout: false,
         contactUrl: 'mailto:sales@osint-platform.com?subject=Enterprise%20Plan%20Inquiry',
         features: [
-            'Unlimited alerts',
-            'All report types (incl. specialized)',
-            '100 watchlist keywords',
+            'All Expert features',
             'Custom topic configuration',
-            'Dedicated account manager',
+            'Team/Organization support',
             'SLA guarantee',
+            'Dedicated account manager',
+            'Custom intelligence workflows',
         ],
     },
 ];
 
 /**
  * Feature comparison table rows.
- * Each row: [featureName, free, pro, enterprise]
+ * Each row: [featureName, free, pro, experts, enterprise]
  */
-const FEATURE_COMPARISON: [string, string, string, string][] = [
-    ['Alerts per day',      '5',         '100',         'Unlimited'],
-    ['Daily reports',       '✓',         '✓',           '✓'],
-    ['Monthly reports',     '✗',         '✓',           '✓'],
-    ['Specialized topics',  '✗',         '✓ (Unlimited)', '✓ (Custom)'],
-    ['Watchlist keywords',  '3',         '20',          '100'],
-    ['Source Traceability', '✗',         '✓ (Full)',    '✓ (Full)'],
-    ['Confidence Metrics',  '✗',         '✓ (Detailed)', '✓ (Detailed)'],
-    ['Support',             'Community', 'Priority',    'Dedicated SLA'],
+const FEATURE_COMPARISON: [string, string, string, string, string][] = [
+    ['Alerts per day',      '5',         '100',         'Unlimited',   'Unlimited'],
+    ['Daily reports',       '✓',         '✓',           '✓',           '✓'],
+    ['Weekly reports',      '✗',         '✓',           '✓',           '✓'],
+    ['Monthly reports',     '✗',         '✗',           '✓ (Full LLM)', '✓ (Full LLM)'],
+    ['Scenario Analysis',   '✗',         '✗',           '✓',           '✓'],
+    ['Risk Forecasting',    '✗',         '✗',           '✓',           '✓'],
+    ['Custom topics',       '✗',         '✗',           '✗',           '✓'],
+    ['Watchlist keywords',  '3',         '20',          '100',         'Unlimited'],
+    ['Support',             'Community', 'Priority',    'Priority',    'Dedicated SLA'],
 ];
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -129,6 +147,7 @@ export function renderTierBadge(user: UserMe): string {
     const colors: Record<string, string> = {
         free: '#8b949e',
         pro: '#58a6ff',
+        experts: '#3fb950',
         enterprise: '#bc8cff',
     };
     const col = colors[user.tier] ?? '#8b949e';
@@ -244,13 +263,14 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
     }).join('');
 
     // Build feature comparison table
-    const tableRows = FEATURE_COMPARISON.map(([feat, free, pro, ent]) => {
+    const tableRows = FEATURE_COMPARISON.map(([feat, free, pro, exp, ent]) => {
         const highlight = (val: string, tier: string) =>
             `<td class="${user.tier === tier ? 'cmp-current' : ''}">${val}</td>`;
         return `<tr>
             <td class="cmp-feature">${feat}</td>
             ${highlight(free, 'free')}
             ${highlight(pro, 'pro')}
+            ${highlight(exp, 'experts')}
             ${highlight(ent, 'enterprise')}
         </tr>`;
     }).join('');
@@ -282,6 +302,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                             <th>Feature</th>
                             <th class="${user.tier === 'free' ? 'cmp-current' : ''}">Free</th>
                             <th class="${user.tier === 'pro' ? 'cmp-current' : ''}">Pro</th>
+                            <th class="${user.tier === 'experts' ? 'cmp-current' : ''}">Experts</th>
                             <th class="${user.tier === 'enterprise' ? 'cmp-current' : ''}">Enterprise</th>
                         </tr>
                     </thead>

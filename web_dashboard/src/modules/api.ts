@@ -54,6 +54,21 @@ export interface Alert {
     };
 }
 
+export interface Report {
+    id: string;
+    report_type: string;
+    topic_code: string;
+    title: string;
+    teaser_md: string;
+    content_markdown: string;
+    is_premium: boolean;
+    plan_required: string;
+    source_count: number;
+    confidence_level: string;
+    created_at: string;
+    locked?: boolean;
+}
+
 export interface AnalystProfile {
     id: string;
     telegram_chat_id: string;
@@ -291,25 +306,27 @@ export async function cancelSubscription(): Promise<{ url: string }> {
     return await resp.json();
 }
 
-export async function fetchReports(limit: number = 10, topic?: string): Promise<any[]> {
-    let url = `${API_BASE}/reports?limit=${limit}`;
-    if (topic) url += `&topic=${topic}`;
-    const resp = await fetchWithAuth(url);
-    if (!resp.ok) throw new Error(`Failed to fetch reports (HTTP ${resp.status})`);
+
+export async function fetchReports(limit: number = 10, topic?: string): Promise<Report[]> {
+    const url = new URL(`${API_BASE}/reports`);
+    url.searchParams.append('limit', limit.toString());
+    if (topic) url.searchParams.append('topic', topic);
+    
+    const resp = await fetchWithAuth(url.toString());
+    if (!resp.ok) throw new Error("Failed to fetch reports");
     return await resp.json();
 }
 
-export async function fetchReport(reportId: string): Promise<any> {
+export async function fetchReport(reportId: string): Promise<Report> {
     const resp = await fetchWithAuth(`${API_BASE}/reports/${reportId}`);
     if (resp.status === 404) throw new Error("Report not found");
     if (!resp.ok) throw new Error(`Failed to fetch report (HTTP ${resp.status})`);
     
     const data = await resp.json();
-    // Return the full data (which may include 'locked: true')
     return data;
 }
 
-export async function fetchPublicReport(reportId: string): Promise<any> {
+export async function fetchPublicReport(reportId: string): Promise<Report> {
     const resp = await fetch(`${API_BASE}/public/reports/${reportId}`);
     if (resp.status === 404) throw new Error("Report not found");
     if (!resp.ok) throw new Error(`Failed to fetch public report (HTTP ${resp.status})`);

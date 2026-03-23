@@ -58,7 +58,8 @@ class ItemTopic(Base):
 class Report(Base):
     __tablename__ = "reports"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    report_type = Column(String)
+    report_type = Column(String)                     # daily, weekly, monthly
+    plan_required = Column(String, default="free")  # free, pro, experts
     topic_code = Column(String)
     period_start = Column(DateTime(timezone=True))
     period_end = Column(DateTime(timezone=True))

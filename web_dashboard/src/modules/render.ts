@@ -298,7 +298,8 @@ export function renderReportDetail(report: any, container: HTMLElement, origin: 
     const dateStr = report.created_at || "";
     const cleanDate = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
     const date = new Date(cleanDate).toLocaleDateString();
-    const typeLabel = (report.report_type || "").replace(/_/g, ' ').toUpperCase();
+    const typeLabel = (report.report_type || "daily").toUpperCase();
+    const planRequired = (report.plan_required || "free").toUpperCase();
     
     const TOPICS = [
         { code: 'energy_resource_risk', label: '⚡ Energy Risk' },
@@ -309,7 +310,7 @@ export function renderReportDetail(report: any, container: HTMLElement, origin: 
         { code: 'supply_chain_intelligence', label: '📦 Supply Chain' },
     ];
     const topicObj = TOPICS.find(t => t.code === report.topic_code);
-    const topicLabel = topicObj ? topicObj.label : (report.topic_code ? report.topic_code.toUpperCase() : '🌍 GLOBAL BRIEFING');
+    const topicLabel = topicObj ? topicObj.label : (report.topic_code ? report.topic_code.toUpperCase() : 'GLOBAL INTEL');
 
 
     let md = isPreview ? (report.content_preview || "") : (report.content_markdown || "");
@@ -349,17 +350,25 @@ export function renderReportDetail(report: any, container: HTMLElement, origin: 
 
     container.innerHTML = `
         <div class="report-detail">
-            <div style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem;">
-                <button class="btn-fb active" id="back-to-feed-btn">← ${origin === 'reports' ? 'Back to Reports' : 'Back to Feed'}</button>
-                <div style="color: #8b949e; font-size: 0.9rem;">
-                    ${topicLabel} Intelligence Briefing | ${date}
-                    ${isPreview ? ' | <span style="color:#d29922;">PREVIEW</span>' : ''}
+            <div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button class="btn-fb active" id="back-to-feed-btn">← Back</button>
+                    <div style="color: #8b949e; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-weight: 600; color: #c9d1d9;">${topicLabel}</span>
+                        <span style="opacity: 0.5;">|</span>
+                        <span>${typeLabel}</span>
+                        <span style="opacity: 0.5;">|</span>
+                        <span style="color: ${planRequired === 'FREE' ? '#3fb950' : '#d29922'}; font-weight: 500;">${planRequired} Plan</span>
+                        <span style="opacity: 0.5;">|</span>
+                        <span>${date}</span>
+                    </div>
                 </div>
+                ${isPreview ? '<span style="background: rgba(210,153,34,0.1); color: #d29922; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(210,153,34,0.3);">PREVIEW MODE</span>' : ''}
             </div>
             
-            <div class="report-content-card" style="background: rgba(255,255,255,0.03); padding: 2rem; border-radius: 12px; border: 1px solid var(--border); line-height: 1.6; position: relative;">
-                <h1 style="margin-top: 0; color: #58a6ff; font-size: 1.8rem; border-bottom: 2px solid rgba(88,166,255,0.1); padding-bottom: 1rem; margin-bottom: 1.5rem;">
-                    ${report.title || (topicLabel + ' ' + typeLabel)}
+            <div class="report-content-card" style="background: rgba(255,255,255,0.02); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border); line-height: 1.7; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <h1 style="margin-top: 0; color: #58a6ff; font-size: 2rem; border-bottom: 1px solid rgba(88,166,255,0.15); padding-bottom: 1.5rem; margin-bottom: 2rem; line-height: 1.3;">
+                    ${report.title}
                 </h1>
                 <div style="margin-bottom: 2rem; margin-top: 1rem; text-align: left;">
                     <div class="confidence-trigger" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px; background: rgba(88,166,255,0.1); color: #58a6ff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(88,166,255,0.3); transition: all 0.2s; user-select: none;">
