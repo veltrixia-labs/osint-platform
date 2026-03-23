@@ -691,6 +691,13 @@ async def run_report_generation(
     repo = (await db.execute(stmt)).scalars().first()
 
     is_premium = (current_type != ReportType.DAILY.value)
+    
+    # Tier mapping for reports (Gating logic alignment)
+    plan_required = "free"
+    if current_type == ReportType.WEEKLY.value:
+        plan_required = "pro"
+    elif current_type == ReportType.MONTHLY.value:
+        plan_required = "experts"
 
     if not repo:
         repo = Report(
