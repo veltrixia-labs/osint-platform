@@ -68,13 +68,17 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = settings.database_url.replace("postgresql+asyncpg", "postgresql+psycopg2").replace("sqlite+aiosqlite", "sqlite")
+    from db.database import get_engine_args
+    db_url, connect_args, ssl_mode = get_engine_args(use_asyncpg=False)
     
-    connectable = engine_from_config(
-        configuration,
-        prefix="sqlalchemy.",
+    print(f"Alembic Init: Mode={ssl_mode}")
+    
+    # We use engine_from_config indirectly or just create_engine
+    from sqlalchemy import create_engine
+    connectable = create_engine(
+        db_url,
         poolclass=pool.NullPool,
+        connect_args=connect_args
     )
 
     with connectable.connect() as connection:

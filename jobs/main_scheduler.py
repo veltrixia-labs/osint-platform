@@ -16,6 +16,7 @@ from jobs.trend_analyze_job import run_trend_analysis
 from jobs.alert_manager import run_alert_manager
 from jobs.threads_publisher_job import run_threads_publisher
 from scripts.backfill_reports import backfill_reports
+from jobs.cleanup_job import run_alert_cleanup, run_retention_cleanup, run_db_size_check, enforce_metadata_limits, audit_metadata_sizes, update_system_metric, run_retention_audit
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -89,6 +90,27 @@ async def run_threads_publisher_wrapper():
     async with AsyncSessionLocal() as session:
         await run_threads_publisher(session)
 
+async def run_alert_cleanup_wrapper():
+    async with AsyncSessionLocal() as session:
+        await run_alert_cleanup(session)
+
+async def run_retention_cleanup_wrapper():
+    async with AsyncSessionLocal() as session:
+        await run_retention_cleanup(session)
+
+async def run_db_size_check_wrapper():
+    async with AsyncSessionLocal() as session:
+        await run_db_size_check(session)
+
+async def run_metadata_audit_wrapper():
+    async with AsyncSessionLocal() as session:
+        await enforce_metadata_limits(session)
+        await audit_metadata_sizes(session)
+
+async def run_retention_audit_wrapper():
+    async with AsyncSessionLocal() as session:
+        await run_retention_audit(session)
+
 
 def register_jobs():
     logger.info("Registering job schedules (Threads flow)...")
@@ -107,6 +129,15 @@ def register_jobs():
     schedule.every().monday.at("08:00").do(lambda: run_async(weekly_reports()))
     schedule.every().day.at("09:00").do(run_monthly_if_first)
 
+    # Data Lifecycle & Retention (Cleanup AFTER summaries)
+    schedule.every().hour.do(lambda: run_async(run_alert_cleanup_wrapper()))
+    schedule.every().day.at("11:00").do(lambda: run_async(run_retention_cleanup_wrapper()))
+
+    # Operational Monitoring
+    schedule.every().day.at("00:00").do(lambda: run_async(run_db_size_check_wrapper()))
+    schedule.every().day.at("12:00").do(lambda: run_async(run_metadata_audit_wrapper()))
+    schedule.every().day.at("23:00").do(lambda: run_async(run_retention_audit_wrapper()))
+
 async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""
     logger.info("Triggering IMMEDIATE startup checks...")
@@ -121,15 +152,34 @@ async def run_startup_checks():
         await pipeline_full_processing()
         # 3. Force an immediate daily report generation
         await run_all_reports(session, "daily_global", 1, auto_post_threads=True)
+        
+        # 4. Immediate Operational Audit
+        await run_db_size_check(session)
+        await enforce_metadata_limits(session)
+        await audit_metadata_sizes(session)
 
 if __name__ == "__main__":
+    async def startup():
+        async with AsyncSessionLocal() as session:
+            await run_startup_checks()
+            await update_system_metric(session, "scheduler_status", "running")
+
     # 1. Run startup checks
-    run_async(run_startup_checks())
+    run_async(startup())
     
     # 2. Register regular schedules
     register_jobs()
     
-    logger.info("Scheduler started. Running pending tasks continually...")
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
+    # 3. Main scheduler loop
+    async def main_loop():
+        logger.info("Scheduler loop active. Monitoring heartbeat every 60s.")
+        while True:
+            schedule.run_pending()
+            try:
+                async with AsyncSessionLocal() as session:
+                    await update_system_metric(session, "scheduler_heartbeat", datetime.now(timezone.utc).isoformat())
+            except Exception as e:
+                logger.error(f"Heartbeat failed: {e}")
+            await asyncio.sleep(60)
+
+    run_async(main_loop())

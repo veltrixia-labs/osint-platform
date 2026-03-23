@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.future import select
 from sqlalchemy import desc, func
-from db.models import AlertLog, AlertDelivery, AnalystProfile, Report, AnalyticsEvent
+from db.models import AlertLog, AlertDelivery, AnalystProfile, Report, AnalyticsEvent, SystemMetric
 from db.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
@@ -25,7 +25,7 @@ from api.auth import (
 from api.payments import router as payments_router
 
 # Production Traceability
-COMMIT_HASH = "8ad5666-V5-FINAL-DB-FIX"
+COMMIT_HASH = "6479d4a-V1-PROD-FIX-v2"
 DEPLOY_TIMESTAMP = "2026-03-22T23:00:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
@@ -39,6 +39,48 @@ async def root():
 @app.get("/healthz")
 async def healthz():
     return {"status": "healthy"}
+
+@app.get("/api/health")
+async def get_system_health(db: AsyncSession = Depends(get_db)):
+    """Comprehensive health check for monitoring tools."""
+    # 1. DB Ping
+    try:
+        await db.execute(select(1))
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"unhealthy: {e}"
+
+    # 2. Scheduler Heartbeat Check
+    stmt = select(SystemMetric).where(SystemMetric.metric_key == "scheduler_heartbeat")
+    res = await db.execute(stmt)
+    heartbeat = res.scalar_one_or_none()
+    
+    scheduler_status = "unknown"
+    if heartbeat:
+        last_run = datetime.fromisoformat(heartbeat.metric_value)
+        if datetime.now(timezone.utc) - last_run < timedelta(minutes=10):
+            scheduler_status = "active"
+        else:
+            scheduler_status = f"stale (Last: {heartbeat.metric_value})"
+
+    is_healthy = db_status == "connected" and scheduler_status == "active"
+    
+    return {
+        "status": "healthy" if is_healthy else "unhealthy",
+        "database": db_status,
+        "scheduler": scheduler_status,
+        "version": COMMIT_HASH,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+@app.get("/api/metrics")
+async def get_all_metrics(db: AsyncSession = Depends(get_db)):
+    """Expose system metrics for dashboard/monitoring."""
+    stmt = select(SystemMetric)
+    result = await db.execute(stmt)
+    metrics = result.scalars().all()
+    
+    return {m.metric_key: m.metric_value for m in metrics}
 
 @app.get("/api/version")
 async def get_version():

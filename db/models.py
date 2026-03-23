@@ -278,6 +278,7 @@ class AnalyticsEvent(Base):
     metadata_json = Column(JSON) # {utm_source, utm_medium, utm_campaign, visitor_id, etc.}
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
+
 class StripeEvent(Base):
     __tablename__ = "stripe_events"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -288,3 +289,9 @@ class StripeEvent(Base):
     __table_args__ = (
         UniqueConstraint("event_id", name="uq_stripe_event_id"),
     )
+
+class SystemMetric(Base):
+    __tablename__ = "system_metrics"
+    metric_key = Column(String, primary_key=True)
+    metric_value = Column(String)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

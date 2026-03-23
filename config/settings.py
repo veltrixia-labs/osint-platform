@@ -1,5 +1,6 @@
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Optional
 
 class Settings(BaseSettings):
     database_url: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///osint_platform.db")
@@ -21,6 +22,22 @@ class Settings(BaseSettings):
     stripe_price_id_pro: str = os.getenv("STRIPE_PRICE_ID_PRO", "")
     stripe_webhook_secret: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     domain_url: str = os.getenv("DOMAIN_URL", "http://localhost:8000")
+
+    # Data Retention Policy (Hours/Days)
+    alert_retention_hours: int = int(os.getenv("ALERT_RETENTION_HOURS", 24))
+    raw_retention_days: int = int(os.getenv("RAW_RETENTION_DAYS", 30))
+    report_retention_days: int = int(os.getenv("REPORT_RETENTION_DAYS", 30))
+    retention_dry_run: bool = os.getenv("RETENTION_DRY_RUN", "false").lower() == "true"
+
+    # DB Pressure Monitoring (MB)
+    db_size_warning_mb: int = int(os.getenv("DB_SIZE_WARNING_MB", 400)) # ~78% of 512MB
+    db_size_critical_mb: int = int(os.getenv("DB_SIZE_CRITICAL_MB", 440)) # ~86% of 512MB
+    
+    # Metadata Safeguards
+    metadata_max_size_chars: int = int(os.getenv("METADATA_MAX_SIZE_CHARS", 50000))
+    
+    # External Monitoring
+    monitoring_webhook_url: Optional[str] = os.getenv("MONITORING_WEBHOOK_URL")
 
     def validate_stripe(self):
         """Stripe の必須設定が欠落していないか検証します。"""
