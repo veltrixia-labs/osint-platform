@@ -3,8 +3,8 @@ import os
 import schedule
 import time
 import logging
-from datetime import datetime
-from db.database import AsyncSessionLocal
+from datetime import datetime, timezone
+from db.database import AsyncSessionLocal, engine, Base
 from jobs.ingest_job import run_ingest
 from jobs.normalize_job import run_normalize
 from jobs.classify_job import run_classify
@@ -83,7 +83,7 @@ async def monthly_reports():
         await run_all_reports(session, "monthly_global", 30, auto_post_threads=True)
 
 def run_monthly_if_first():
-    if datetime.now().day == 1:
+    if datetime.now(timezone.utc).day == 1:
         run_async(monthly_reports())
 
 async def run_threads_publisher_wrapper():
@@ -160,6 +160,18 @@ async def run_startup_checks():
 
 if __name__ == "__main__":
     async def startup():
+        # [Robustness] Ensure all tables exist at startup (fallback for migrations)
+        try:
+            from db.database import get_engine_args
+            import sqlalchemy
+            # Sync engine for metadata operations
+            db_url, connect_args, _ = get_engine_args(use_asyncpg=False)
+            sync_engine = sqlalchemy.create_engine(db_url, connect_args=connect_args)
+            Base.metadata.create_all(bind=sync_engine)
+            logger.info("Database schema verification/creation completed (Scheduler sync check).")
+        except Exception as e:
+            logger.warning(f"Metadata create_all on scheduler startup failed (non-critical): {e}")
+
         async with AsyncSessionLocal() as session:
             await run_startup_checks()
             await update_system_metric(session, "scheduler_status", "running")

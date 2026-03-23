@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Any, Dict, Set
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from db.database import AsyncSessionLocal
-from db.models import SignalRanking, Item, Report, EventCluster, TrendSignal, ExternalPost
+from db.models import SignalRanking, Item, Report, EventCluster, TrendSignal, ExternalPost, ItemTopic
 from llm.prompts import SYSTEM_PROMPT, NEUTRAL_ANALYSIS_PROMPT, LLM_POLISH_PROMPT
 from llm.client import generate_analysis, get_metrics_summary
 

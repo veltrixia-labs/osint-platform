@@ -25,11 +25,24 @@ from api.auth import (
 from api.payments import router as payments_router
 
 # Production Traceability
-COMMIT_HASH = "6479d4a-V1-PROD-FIX-v2"
-DEPLOY_TIMESTAMP = "2026-03-22T23:00:00Z"
+COMMIT_HASH = "8b2d3c1-V1-CONSISTENCY-v1"
+DEPLOY_TIMESTAMP = "2026-03-23T21:40:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)
+
+# [Robustness] Ensure all tables exist at startup (fallback for migrations)
+try:
+    from db.database import get_engine_args, Base
+    import sqlalchemy
+    # Synchronous engine for metadata operations
+    db_url, connect_args, _ = get_engine_args(use_asyncpg=False)
+    sync_engine = sqlalchemy.create_engine(db_url, connect_args=connect_args)
+    Base.metadata.create_all(bind=sync_engine)
+    logger.info("Database schema verification/creation completed (API sync check).")
+except Exception as e:
+    logger.warning(f"Metadata create_all on API startup failed (non-critical): {e}")
+
 logger.info(f"--- OSINT API BOOTING [Version: {COMMIT_HASH}] ---")
 
 @app.get("/")
@@ -468,7 +481,7 @@ async def list_reports(
     except Exception as e:
         import traceback
         with open("tmp/api_error.log", "a") as f:
-            f.write(f"\n--- ERROR at {datetime.now()} ---\n")
+            f.write(f"\n--- ERROR at {datetime.now(timezone.utc)} ---\n")
             f.write(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 

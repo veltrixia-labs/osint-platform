@@ -1,6 +1,6 @@
 import re
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ def generate_slug(report) -> str:
     Generates a URL-safe slug for a Substack report.
     Adds a short timestamp suffix to avoid collisions in unique constraint.
     """
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     date_str = report.created_at.strftime("%Y-%m-%d") if report.created_at else now.strftime("%Y-%m-%d")
     time_suffix = now.strftime("%H%M") # Add HHMM to make it unique per run
     
