@@ -12,8 +12,10 @@ import os
 import uuid
 import logging
 import json
+import sys
 # Add basicConfig at the top level to catch early errors
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+print(f"--- PROCESS STARTING: {sys.argv} ---", file=sys.stderr)
 load_dotenv()
 
 from api.auth import (
@@ -25,7 +27,7 @@ from api.auth import (
 from api.payments import router as payments_router
 
 # Production Traceability
-COMMIT_HASH = "8ad5666-V1-PROD-FIX-v3"
+COMMIT_HASH = "8ad5666-V1-PROD-FIX-v4"
 DEPLOY_TIMESTAMP = "2026-03-22T23:00:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
