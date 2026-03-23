@@ -293,7 +293,7 @@ function simpleMarkdown(md: string): string {
         .replace(/\n/g, '<br>');
 }
 
-export function renderReportDetail(report: any, container: HTMLElement, origin: string = 'feed', onBack?: () => void, onActionRequested?: (actionType: string) => void) {
+export function renderReportDetail(report: any, container: HTMLElement, onBack?: () => void, onActionRequested?: (actionType: string) => void) {
     const isPreview = report.is_preview === true || report.locked === true;
     const dateStr = report.created_at || "";
     const cleanDate = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');

@@ -389,7 +389,7 @@ async function initDashboard() {
                         const fullReport = await m.fetchReport(id);
                         // Preserve current list HTML before rendering detail
                         lastFeedHTML = alertsContainer.innerHTML;
-                        renderReportDetail(fullReport, alertsContainer, 'feed', () => {
+                        renderReportDetail(fullReport, alertsContainer, () => {
                              // Context-aware Back navigation with state preservation
                              if (lastFeedHTML) {
                                  startFeedTab(topic, true); // Use the restoreOnly flag
@@ -489,7 +489,7 @@ async function initDashboard() {
                     const { fetchReport: getFullReport } = await import('./modules/api');
                     const fullReport = await getFullReport(id);
                     lastReportsHTML = alertsContainer.innerHTML;
-                    renderReportDetail(fullReport, alertsContainer, 'reports', () => {
+                    renderReportDetail(fullReport, alertsContainer, () => {
                         if (lastReportsHTML) {
                             alertsContainer.innerHTML = lastReportsHTML;
                             renderReportsTab(true);
@@ -638,7 +638,7 @@ async function initDashboard() {
             // Log analytics event
             logAnalyticsEvent(user ? 'full_view' : 'preview_view', reportId, utms);
 
-            renderReportDetail(report, alertsContainer, 'reports', () => {
+            renderReportDetail(report, alertsContainer, () => {
                 // Return to reports tab
                 renderReportsTab();
             }, async (actionType) => {
@@ -688,9 +688,9 @@ async function initDashboard() {
             // Note: We don't necessarily have a 'lastFeedHTML' or 'lastReportsHTML' 
             // if we are jumping directly from the alert stream, so we'll just 
             // set a default back behavior.
-            renderReportDetail(fullReport, alertsContainer, 'feed', () => {
+            renderReportDetail(fullReport, alertsContainer, () => {
                 startFeedTab(); // Return to feed dashboard
-            }, async (actionType) => {
+            }, async (actionType: string) => {
                 if (actionType === 'upgrade') {
                     const { fetchCheckoutSession } = await import('./modules/api');
                     const response = await fetchCheckoutSession('pro', reportId);
