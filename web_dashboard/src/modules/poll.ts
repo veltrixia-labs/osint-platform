@@ -32,6 +32,7 @@ export class DashboardState {
     }
 
     async updateOnce() {
+        if (!this.isPolling) return;
         try {
             const params: any = { limit: 15 };
             if (this.topic) params.topic = this.topic;

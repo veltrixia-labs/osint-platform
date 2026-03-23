@@ -2,6 +2,16 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api
 
 let accessToken: string | null = localStorage.getItem('access_token');
 
+/**
+ * Global Logout Flag
+ * Uses sessionStorage to persist across reloads while logging out.
+ */
+const getLoggingOut = () => sessionStorage.getItem("isLoggingOut") === "true";
+const setLoggingOut = (val: boolean) => {
+    if (val) sessionStorage.setItem("isLoggingOut", "true");
+    else sessionStorage.removeItem("isLoggingOut");
+};
+
 export interface AuthResponse {
     access_token: string;
     token_type: string;
@@ -76,21 +86,47 @@ export async function login(telegram_chat_id: string, password: string): Promise
     const data: AuthResponse = await resp.json();
     accessToken = data.access_token;
     localStorage.setItem('access_token', accessToken);
+    
+    // Clear logout flag on successful login
+    setLoggingOut(false);
+    
     return data;
 }
 
 export async function logout() {
-    try {
-        await fetchWithAuth(`${API_BASE}/auth/logout`, { method: 'POST' });
-    } catch (e) {
-        console.warn("Logout request failed, clearing local state anyway.");
-    }
+    // 1. Set global logout flag
+    setLoggingOut(true);
+
+    // 2. Stop any active polling in the window
+    (window as any).stopPolling?.();
+
+    // 3. Clear local tokens immediately (Before network call)
     accessToken = null;
     localStorage.removeItem('access_token');
+
+    try {
+        // 4. Call /auth/logout using RAW fetch (bypass fetchWithAuth noise)
+        await fetch(`${API_BASE}/auth/logout`, { 
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch (e) {
+        // Ignore failures during logout
+    }
+
+    // 5. Small delay for stability
+    await new Promise(r => setTimeout(r, 100));
+
+    // 6. Reload 
     window.location.reload();
 }
 
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+    // A. Early Exit if logging out
+    if (getLoggingOut()) {
+        return new Response(null, { status: 401 });
+    }
+
     const headers = new Headers(options.headers || {});
     if (accessToken) {
         headers.set('Authorization', `Bearer ${accessToken}`);
@@ -104,25 +140,43 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 
     let resp = await fetch(url, authOptions);
 
-    // 401? Try Refresh
+    // B. 401 Handling
     if (resp.status === 401 && !url.includes('/auth/refresh')) {
-        const refreshResp = await fetch(`${API_BASE}/auth/refresh`, {
-            method: 'POST',
-            credentials: 'include'
-        });
+        // If logging out, ignore any 401 errors
+        if (getLoggingOut()) {
+            return resp;
+        }
 
-        if (refreshResp.ok) {
-            const data: AuthResponse = await refreshResp.json();
-            accessToken = data.access_token;
-            localStorage.setItem('access_token', accessToken!);
-            
-            // Retry original request
-            headers.set('Authorization', `Bearer ${accessToken}`);
-            resp = await fetch(url, { ...authOptions, headers });
-        } else {
-            accessToken = null;
-            localStorage.removeItem('access_token');
-            throw new Error("Session expired");
+        try {
+            const refreshResp = await fetch(`${API_BASE}/auth/refresh`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (refreshResp.ok) {
+                const data: AuthResponse = await refreshResp.json();
+                accessToken = data.access_token;
+                localStorage.setItem('access_token', accessToken!);
+                
+                // Retry original request
+                headers.set('Authorization', `Bearer ${accessToken}`);
+                resp = await fetch(url, { ...authOptions, headers });
+            } else {
+                // If refresh fails during logout, ignore silently
+                if (getLoggingOut()) {
+                    return resp;
+                }
+                
+                accessToken = null;
+                localStorage.removeItem('access_token');
+                throw new Error("Session expired");
+            }
+        } catch (err) {
+            // C. Silent failure on refresh if logging out
+            if (getLoggingOut()) {
+                return resp;
+            }
+            throw err;
         }
     }
 
