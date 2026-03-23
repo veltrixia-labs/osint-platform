@@ -529,17 +529,35 @@ async def run_report_generation(
     # --- Title Generation ---
     lines = final_content.split('\n')
     extracted_title = ""
-    GENERIC_HEADERS = ["# summary of themes", "# executive summary", "# daily briefing", "# briefing"]
+    GENERIC_HEADERS = ["# summary of themes", "# executive summary", "# daily briefing", "# briefing", "# theme summary", "# report summary"]
+    TITLE_PREFIXES = ["# ", "title:", "actual title:", "report title:"]
     
     for line in lines:
         stripped = line.strip().lower()
-        if line.startswith('# ') and stripped not in GENERIC_HEADERS:
-            extracted_title = line[2:].strip()
-            break
+        # Look for meaningful title indicators
+        if any(stripped.startswith(p) for p in TITLE_PREFIXES) and not any(h in stripped for h in GENERIC_HEADERS):
+            # Extract content after any prefix
+            clean_title = line.strip()
+            for p in TITLE_PREFIXES:
+                if clean_title.lower().startswith(p):
+                    clean_title = clean_title[len(p):].strip()
+                    break
+            
+            if len(clean_title) > 5:
+                extracted_title = clean_title
+                break
     
+    is_fallback_title = False
     if not extracted_title:
-        # Fallback to topic label
-        topic_label = TOPIC_CONFIG.get(topic, {}).get("label", "Global Intelligence")
+        is_fallback_title = True
+        # Fallback to topic label or report type
+        topic_label = TOPIC_CONFIG.get(topic, {}).get("label") if topic else None
+        if not topic_label:
+            if report_type == "event_driven_global":
+                topic_label = "Urgent Intelligence Alert"
+            else:
+                topic_label = "Global Intelligence"
+        
         extracted_title = f"{topic_label} Report: {now.strftime('%B %d, %Y')}"
 
     # --- Teaser Generation ---
@@ -572,16 +590,25 @@ async def run_report_generation(
     # 8. Calculate Metrics & Better Metadata (Canonical Source of Truth)
     count = len(items)
     
-    # Deriving a better title if it's currently generic
-    derived_title = title
-    if "Summary of Themes" in title or title == "Theme Summary":
-        # Extract the first H1 or first strong line from final_content
-        lines = final_content.split("\n")
-        for line in lines:
-            clean_line = line.strip().lstrip('#').strip()
-            if clean_line and len(clean_line) > 10:
-                derived_title = clean_line
-                break
+    # Deriving a better title if it's currently generic or a fallback
+    derived_title = extracted_title
+    CLEAN_GENERIC = ["summary of themes", "executive summary", "daily briefing", "briefing", "theme summary", "report summary", "substack skeleton", "intelligence briefing"]
+    is_generic = any(h in derived_title.lower() for h in CLEAN_GENERIC)
+    
+    if is_fallback_title or is_generic or len(derived_title) < 5:
+        # Aggressively try to find a better H1 or first strong line from final_content
+        for line in final_content.split("\n"):
+            clean_line = line.strip().lstrip('#').lstrip('*').strip()
+            # Ignore lines that are just dates or known generic headers
+            if clean_line and len(clean_line) > 20:
+                is_line_generic = any(h in clean_line.lower() for h in CLEAN_GENERIC)
+                if not is_line_generic and "date:" not in clean_line.lower():
+                    derived_title = clean_line
+                    break
+    
+    # Final Safety Check for Title
+    if not derived_title or len(derived_title) < 5:
+        derived_title = extracted_title or f"OSINT Intelligence Report ({report_type})"
     
     # Refined teaser (avoid null, ensure meaningful start)
     if not teaser_md:
