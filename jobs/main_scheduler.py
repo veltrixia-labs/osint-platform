@@ -161,17 +161,13 @@ async def run_startup_checks():
 
 if __name__ == "__main__":
     async def startup():
-        # [Robustness] Ensure all tables exist at startup (fallback for migrations)
+        # [Robustness] Ensure all tables exist at startup (Alembic Migration Runner)
         try:
-            from db.database import get_engine_args
-            import sqlalchemy
-            # Sync engine for metadata operations
-            db_url, connect_args, _ = get_engine_args(use_asyncpg=False)
-            sync_engine = sqlalchemy.create_engine(db_url, connect_args=connect_args)
-            Base.metadata.create_all(bind=sync_engine)
-            logger.info("Database schema verification/creation completed (Scheduler sync check).")
+            from db.database import run_migrations
+            run_migrations()
+            logger.info("Database migration/verification completed (Scheduler).")
         except Exception as e:
-            logger.warning(f"Metadata create_all on scheduler startup failed (non-critical): {e}")
+            logger.error(f"Database migration output (Scheduler): {e}")
 
         async with AsyncSessionLocal() as session:
             await seed_admin(session)

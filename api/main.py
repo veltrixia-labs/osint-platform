@@ -38,54 +38,11 @@ logger = logging.getLogger(__name__)
 
 # [Robustness] Ensure all tables exist at startup (Alembic Migration Runner)
 try:
-    from db.database import get_engine_args, Base, AsyncSessionLocal
+    from db.database import Base, AsyncSessionLocal, run_migrations
     from db.seeding import seed_admin
-    import sqlalchemy
     import asyncio
-    from alembic.config import Config
-    from alembic import command
     
     # 1. Run Alembic Migrations
-    def run_migrations():
-        logger.info("--- DATABASE MIGRATION START ---")
-        try:
-            alembic_cfg = Config("alembic.ini")
-            db_url = os.getenv("DATABASE_URL")
-            if db_url:
-                if db_url.startswith("postgresql+asyncpg://"):
-                    db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
-                alembic_cfg.set_main_option("sqlalchemy.url", db_url)
-            
-            # Detailed Logging: Current and Target Revisions
-            from alembic.script import ScriptDirectory
-            from alembic.runtime.migration import MigrationContext
-            
-            # Use sync engine to check current revision
-            db_url_sync, connect_args_sync, _ = get_engine_args(use_asyncpg=False)
-            sync_engine = sqlalchemy.create_engine(db_url_sync, connect_args=connect_args_sync)
-            
-            with sync_engine.connect() as conn:
-                context = MigrationContext.configure(conn)
-                current_rev = context.get_current_revision()
-                script = ScriptDirectory.from_config(alembic_cfg)
-                target_rev = script.get_current_head()
-                
-                logger.info(f"Current Revision: {current_rev}")
-                logger.info(f"Target Revision (Head): {target_rev}")
-                
-                if current_rev != target_rev:
-                    logger.info(f"Applying migrations: {current_rev} -> {target_rev}")
-                    command.upgrade(alembic_cfg, "head")
-                    logger.info("DATABASE MIGRATION SUCCESS")
-                else:
-                    logger.info("Database is already at latest revision.")
-        except Exception as mig_e:
-            import traceback
-            logger.error("DATABASE MIGRATION FAILURE")
-            logger.error(f"Error: {mig_e}")
-            logger.error(traceback.format_exc())
-            raise mig_e
-
     run_migrations()
 
     # 2. Seed Admin User (Async)
@@ -97,14 +54,6 @@ try:
 
 except Exception as e:
     logger.error(f"Error during API startup initialization: {e}")
-    # Fallback to sync create_all if alembic fails or isn't configured
-    try:
-        db_url, connect_args, _ = get_engine_args(use_asyncpg=False)
-        sync_engine = sqlalchemy.create_engine(db_url, connect_args=connect_args)
-        Base.metadata.create_all(bind=sync_engine)
-        logger.info("Fallback: Database schema creation completed via metadata.create_all.")
-    except Exception as e2:
-        logger.error(f"Critical failure: Both migration and fallback failed: {e2}")
 
 logger.info(f"--- OSINT API BOOTING [Version: {COMMIT_HASH}] ---")
 

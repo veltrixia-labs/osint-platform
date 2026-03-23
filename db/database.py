@@ -1,6 +1,10 @@
 import ssl
 import logging
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
+import os
+import sqlalchemy
+from alembic.config import Config
+from alembic import command
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import declarative_base
 from config.settings import settings
@@ -85,3 +89,44 @@ Base = declarative_base()
 async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
+
+def run_migrations():
+    """Run Alembic migrations to 'head'."""
+    logger.info("--- DATABASE MIGRATION START ---")
+    try:
+        alembic_cfg = Config("alembic.ini")
+        # Use sync URL and connect_args from get_engine_args
+        db_url, connect_args, ssl_mode = get_engine_args(use_asyncpg=False)
+        
+        # Ensure we don't have asyncpg driver in the URL for Alembic
+        if db_url.startswith("postgresql+asyncpg://"):
+            db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+        
+        alembic_cfg.set_main_option("sqlalchemy.url", db_url)
+        
+        # Logging: Current and Target Revisions
+        from alembic.script import ScriptDirectory
+        from alembic.runtime.migration import MigrationContext
+        
+        sync_engine = sqlalchemy.create_engine(db_url, connect_args=connect_args)
+        with sync_engine.connect() as conn:
+            context = MigrationContext.configure(conn)
+            current_rev = context.get_current_revision()
+            script = ScriptDirectory.from_config(alembic_cfg)
+            target_rev = script.get_current_head()
+            
+            logger.info(f"Current Revision: {current_rev}")
+            logger.info(f"Target Revision (Head): {target_rev}")
+            
+            if current_rev != target_rev:
+                logger.info(f"Applying migrations: {current_rev} -> {target_rev}")
+                command.upgrade(alembic_cfg, "head")
+                logger.info("DATABASE MIGRATION SUCCESS")
+            else:
+                logger.info("Database is already at latest revision.")
+    except Exception as mig_e:
+        import traceback
+        logger.error("DATABASE MIGRATION FAILURE")
+        logger.error(f"Error: {mig_e}")
+        logger.error(traceback.format_exc())
+        raise mig_e
