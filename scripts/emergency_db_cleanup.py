@@ -11,11 +11,13 @@ logger = logging.getLogger("emergency_cleanup")
 
 async def emergency_cleanup():
     logger.info("--- EMERGENCY DATABASE CLEANUP START ---")
+    results = {"success": False, "counts": {}, "size_before": 0, "size_after": 0, "error": None}
     
     async with AsyncSessionLocal() as db:
         try:
             # Log DB size before
             size_before = await get_db_size_mb(db)
+            results["size_before"] = size_before
             logger.info(f"DB Size BEFORE cleanup: {size_before} MB")
             
             now = datetime.now(timezone.utc)
@@ -25,6 +27,7 @@ async def emergency_cleanup():
             logger.info(f"[P1] Targeting RawItem older than {raw_threshold}")
             raw_stmt = delete(RawItem).where(RawItem.created_at < raw_threshold)
             res = await db.execute(raw_stmt)
+            results["counts"]["raw_items"] = res.rowcount
             logger.info(f"[P1] Deleted {res.rowcount} raw_items")
             
             # --- PRIORITY 2: Event Clusters (Aggressive - 3 days) ---
@@ -44,6 +47,7 @@ async def emergency_cleanup():
             # Delete clusters
             cluster_del_stmt = delete(EventCluster).where(EventCluster.created_at < cluster_threshold)
             res_cl = await db.execute(cluster_del_stmt)
+            results["counts"]["event_clusters"] = res_cl.rowcount
             logger.info(f"[P2] Deleted {res_cl.rowcount} event_clusters")
 
             # --- PRIORITY 3: Alert Logs & Deliveries (3 days) ---
@@ -52,10 +56,12 @@ async def emergency_cleanup():
             # Deliveries first
             del_stmt = delete(AlertDelivery).where(AlertDelivery.delivered_at < alert_threshold)
             res = await db.execute(del_stmt)
+            results["counts"]["alert_deliveries"] = res.rowcount
             logger.info(f"[P3] Deleted {res.rowcount} alert_deliveries")
             
             log_stmt = delete(AlertLog).where(AlertLog.triggered_at < alert_threshold)
             res = await db.execute(log_stmt)
+            results["counts"]["alert_logs"] = res.rowcount
             logger.info(f"[P3] Deleted {res.rowcount} alert_logs")
 
             # --- PRIORITY 4: Items & Cache (14 days, Protect Strategic Summaries) ---
@@ -99,22 +105,18 @@ async def emergency_cleanup():
             
             # Log DB size after
             size_after = await get_db_size_mb(db)
+            results["size_after"] = size_after
+            results["success"] = True
+            
             logger.info(f"DB Size AFTER cleanup: {size_after} MB")
             logger.info(f"Space recovered: {round(size_before - size_after, 2)} MB")
-            
-            # 6. Maintenance
-            # Note: PostgreSQL requires VACUUM to actually reclaim OS-level disk space quickly in some cases,
-            # but on managed DBs like Render, the space is usually marked as reusable immediately.
-            try:
-                await db.execute(text("VACUUM ANALYZE"))
-                logger.info("Maintenance (VACUUM ANALYZE) requested.")
-            except Exception as maintenance_e:
-                logger.warning(f"Maintenance task failed (often expected on shared PG): {maintenance_e}")
+            return results
 
         except Exception as e:
             await db.rollback()
+            results["error"] = str(e)
             logger.error(f"EMERGENCY CLEANUP FAILED: {e}")
-            raise
+            return results
 
 if __name__ == "__main__":
     asyncio.run(emergency_cleanup())

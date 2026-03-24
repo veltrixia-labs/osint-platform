@@ -22,21 +22,27 @@ if os.getenv("EMERGENCY_RECOVERY_RUN") == "true":
     from scripts.emergency_db_cleanup import emergency_cleanup
     
     print("!!! [EMERGENCY] RECOVERY TRIGGERED !!!")
-    logging.info("--- EMERGENCY CLEANUP START ---")
+    rec_logger = logging.getLogger("emergency_recovery")
+    rec_logger.info("--- EMERGENCY CLEANUP START ---")
     try:
         # Run cleanup synchronously to block startup until space is recovered
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            # If for some reason loop is running, we might need a different approach, 
-            # but usually at this point it's not.
-            logger.warning("Event loop already running, cleanup might be deferred")
+            rec_logger.warning("Event loop already running, cleanup might be deferred")
         else:
-            loop.run_until_complete(emergency_cleanup())
-        logging.info("--- EMERGENCY CLEANUP DONE ---")
+            results = loop.run_until_complete(emergency_cleanup())
+            
+            if results.get("success"):
+                rec_logger.info("--- EMERGENCY CLEANUP SUCCESS ---")
+                rec_logger.info(f"DB Size BEFORE: {results.get('size_before')} MB")
+                rec_logger.info(f"DB Size AFTER: {results.get('size_after')} MB")
+                rec_logger.info(f"Deleted counts: {results.get('counts')}")
+            else:
+                rec_logger.error(f"--- EMERGENCY CLEANUP FAILED: {results.get('error')} ---")
     except Exception as e:
         import traceback
-        logging.error(f"--- EMERGENCY CLEANUP FAILED: {e} ---")
-        logging.error(traceback.format_exc())
+        rec_logger.error(f"--- EMERGENCY RECOVERY UNCAUGHT EXCEPTION: {e} ---")
+        rec_logger.error(traceback.format_exc())
     print("!!! [EMERGENCY] RECOVERY ATTEMPT FINISHED !!!")
 
 from api.auth import (

@@ -35,33 +35,49 @@ def run_async(coro):
 
 async def pipeline_full_processing():
     """Unified pipeline from ingest to trigger detection."""
-    logger.info("--- Starting Full Processing Pipeline ---")
-    async with AsyncSessionLocal() as session:
-        # 1. Fetch & Normalize
-        logger.info("[INGEST/NORMALIZE]")
-        await run_ingest(session)
-        await run_normalize(session)
-        
-        # 2. Classify
-        logger.info("[CLASSIFY]")
-        await run_classify(session)
-        
-        # 3. Signal Generation
-        logger.info("[SIGNAL]")
-        await run_signal(session)
+    # Check for Pause Signal
+    if os.getenv("SCHEDULER_PAUSED") == "true":
+        logger.warning("SCHEDULER IS PAUSED (via SCHEDULER_PAUSED env var). Skipping pipeline.")
+        return
 
-        # 3.1 Trend Analysis (Phase 19)
-        logger.info("[TREND ANALYSIS]")
-        await run_trend_analysis(session)
-        
-        # 3.2 Real-time Alerting (Phase 21)
-        logger.info("[ALERT CHECK]")
-        await run_alert_manager(session)
-        
-        # 4. Trigger Detection (Event-driven Reports)
-        logger.info("[TRIGGER CHECK]")
-        await run_trigger_check(session)
-    logger.info("--- Pipeline Completed ---")
+    logger.info("--- Starting Full Processing Pipeline ---")
+    try:
+        async with AsyncSessionLocal() as session:
+            # 1. Fetch & Normalize
+            logger.info("[INGEST/NORMALIZE]")
+            await run_ingest(session)
+            await run_normalize(session)
+            
+            # 2. Classify
+            logger.info("[CLASSIFY]")
+            await run_classify(session)
+            
+            # 3. Signal Generation
+            logger.info("[SIGNAL]")
+            await run_signal(session)
+
+            # 3.1 Trend Analysis (Phase 19)
+            logger.info("[TREND ANALYSIS]")
+            await run_trend_analysis(session)
+            
+            # 3.2 Real-time Alerting (Phase 21)
+            logger.info("[ALERT CHECK]")
+            await run_alert_manager(session)
+            
+            # 4. Trigger Detection (Event-driven Reports)
+            logger.info("[TRIGGER CHECK]")
+            await run_trigger_check(session)
+        logger.info("--- Pipeline Completed ---")
+    except Exception as e:
+        err_msg = str(e)
+        if "DiskFullError" in err_msg or "No space left on device" in err_msg:
+            logger.critical(f"FATAL STORAGE ERROR during pipeline: {e}. EMERGENCY PAUSE TRIGGERED.")
+            # We don't raise here, we just log and exit the function to prevent immediate retry
+        elif "PendingRollbackError" in err_msg:
+            logger.warning(f"Database session in pending rollback state: {e}. Skipping this cycle.")
+        else:
+            logger.error(f"Error in processing pipeline: {e}")
+            raise
 
 async def pipeline_health_check():
     logger.info("Running RSS Health Check...")
@@ -184,12 +200,22 @@ if __name__ == "__main__":
     async def main_loop():
         logger.info("Scheduler loop active. Monitoring heartbeat every 60s.")
         while True:
+            # Check for global pause
+            if os.getenv("SCHEDULER_PAUSED") == "true":
+                await asyncio.sleep(60)
+                continue
+
             schedule.run_pending()
             try:
                 async with AsyncSessionLocal() as session:
                     await update_system_metric(session, "scheduler_heartbeat", datetime.now(timezone.utc).isoformat())
             except Exception as e:
-                logger.error(f"Heartbeat failed: {e}")
+                err_msg = str(e).lower()
+                if "diskfullerror" in err_msg or "no space left" in err_msg:
+                    logger.critical(f"HEARTBEAT FAILED: DB IS FULL. Scheduler essentially dead until space is cleared. {e}")
+                    await asyncio.sleep(300) # Wait longer if full
+                else:
+                    logger.error(f"Heartbeat failed: {e}")
             await asyncio.sleep(60)
 
     run_async(main_loop())
