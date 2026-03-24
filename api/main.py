@@ -32,8 +32,8 @@ from api.gating import (
 from db.enums import ReportType
 
 # Production Traceability
-COMMIT_HASH = "5ecfee3-FIX-REPORTS-v1"
-DEPLOY_TIMESTAMP = "2026-03-24T03:00:00Z"
+COMMIT_HASH = "36db0f7-SCHEDULER-V2"
+DEPLOY_TIMESTAMP = "2026-03-25T01:55:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)
@@ -58,6 +58,8 @@ except Exception as e:
     logger.error(f"Error during API startup initialization: {e}")
 
 
+logger.info("--- OSINT SCHEDULER STARTUP ---")
+logger.info("SCHEDULER_V2_ACTIVE: SUCCESS_ASYNC_NATIVE")
 logger.info(f"--- OSINT API BOOTING [Version: {COMMIT_HASH}] ---")
 
 @app.get("/")

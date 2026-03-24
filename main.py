@@ -1,7 +1,4 @@
-import asyncio
-import logging
-from db.database import engine, Base
-from jobs.main_scheduler import register_jobs, run_async, pipeline_full_processing
+from jobs.main_scheduler import main as scheduler_main
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,9 +11,8 @@ async def init_db():
 
 async def run_one_off_pipeline():
     logger.info("Running one-off full pipeline simulation...")
+    from jobs.main_scheduler import pipeline_full_processing
     await pipeline_full_processing()
-    from jobs.main_scheduler import weekly_reports
-    await weekly_reports()
     logger.info("Completed one-off pipeline simulation.")
 
 if __name__ == "__main__":
@@ -29,16 +25,8 @@ if __name__ == "__main__":
     
     if args.init_db:
         asyncio.run(init_db())
-        
-    if args.run_once:
+    elif args.run_once:
         asyncio.run(run_one_off_pipeline())
-    elif not args.init_db:
-        # start scheduler
-        import time
-        import schedule
-        from jobs.main_scheduler import register_jobs
-        register_jobs()
-        logger.info("Scheduler started...")
-        while True:
-            schedule.run_pending()
-            time.sleep(60)
+    else:
+        # Start the async-native scheduler
+        asyncio.run(scheduler_main())
