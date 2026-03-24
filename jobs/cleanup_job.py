@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 from sqlalchemy import delete, func, Text, cast, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db_size_mb
-from db.models import AlertLog, AlertDelivery, Report, RawItem, Item, ItemTopic, AnalyticsEvent, SecurityLog, SystemMetric
+from db.models import AlertLog, AlertDelivery, Report, RawItem, Item, ItemTopic, AnalyticsEvent, SecurityLog, SystemMetric, EventCluster, AnalysisCache
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -126,18 +126,37 @@ async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None):
         # --- 3. Raw Data (Dependency Aware) ---
         if await _is_monthly_summary_ready(db):
             logger.info(f"{mode}Monthly summary check passed. Proceeding with raw data purge...")
+            
+            # --- Event Clusters (31 days) ---
+            cluster_threshold = now - timedelta(days=31)
+            cluster_sub = select(EventCluster.id).where(EventCluster.created_at < cluster_threshold)
+            
+            # Nullify Item.cluster_id
+            null_stmt = update(Item).where(Item.cluster_id.in_(cluster_sub)).values(cluster_id=None)
+            
+            # Prune Cache
+            cache_stmt = delete(AnalysisCache).where(AnalysisCache.created_at < threshold)
+            
             it_stmt = delete(ItemTopic).where(ItemTopic.created_at < threshold)
             item_stmt = delete(Item).where(Item.created_at < threshold)
             raw_stmt = delete(RawItem).where(RawItem.created_at < threshold)
             
             if dry_run:
-                logger.info(f"{mode}Would purge raw data older than {threshold}")
+                logger.info(f"{mode}Would purge raw data older than {threshold} and clusters older than {cluster_threshold}")
             else:
+                await db.execute(null_stmt)
+                await db.execute(cache_stmt)
                 it_res = await db.execute(it_stmt)
                 item_res = await db.execute(item_stmt)
                 raw_res = await db.execute(raw_stmt)
+                
+                # Finally delete clusters
+                cluster_del_stmt = delete(EventCluster).where(EventCluster.id.in_(cluster_sub))
+                cl_res = await db.execute(cluster_del_stmt)
+                
                 logger.info(f"Purged {raw_res.rowcount} raw items")
                 logger.info(f"Purged {item_res.rowcount} items")
+                logger.info(f"Purged {cl_res.rowcount} event_clusters")
         else:
             logger.warning("Skipped raw cleanup because monthly summary not found")
             await send_webhook_notification("Raw data cleanup skipped: Monthly summary missing", level="warning")

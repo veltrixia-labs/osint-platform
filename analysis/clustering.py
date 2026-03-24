@@ -237,9 +237,24 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
 
     metrics["cluster_confidence_avg"] = conf_sum / len([c for c in clusters if len(c) > 1]) if any(len(c) > 1 for c in clusters) else 0
 
-    # 3. Persist to DB
+    # 3. Filter and Persist to DB
+    # Phase 27: Emergency Write Reduction
+    # - Only keep clusters with at least 2 articles (reduces noise/volume)
+    # - Hard cap at Top 50 clusters by avg_signal_score per run
+    
+    valid_clusters = []
     for cluster in clusters:
+        if len(cluster) >= 2:
+            avg_score = sum(it.lightweight_score for it in cluster) / len(cluster)
+            valid_clusters.append((avg_score, cluster))
+            
+    # Sort and Cap
+    valid_clusters.sort(key=lambda x: x[0], reverse=True)
+    top_clusters = valid_clusters[:50]
+    
+    for avg_score, cluster in top_clusters:
         rep_item = cluster[0]
+        # ... (rest of the persistence logic stays same, using avg_score)
         
         # 3.1 Calculate Temporal Span
         publish_times = []
@@ -276,12 +291,12 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
             category=rep_item.category or rep_item.rough_category,
             article_count=len(cluster),
             source_count=source_count,
-            avg_signal_score=sum(it.lightweight_score for it in cluster) / len(cluster),
+            avg_signal_score=avg_score,
             metrics_json={
                 "cluster_size": len(cluster),
                 "source_diversity": round(diversity_score, 2),
                 "time_span_hours": round(time_span_hours, 1),
-                "purity_hint": "agreement_bonus_v16"
+                "purity_hint": "top_n_cap_v27"
             },
             summary_data={
                 "keywords": list(tokenize(rep_item.title))[:10],
@@ -296,5 +311,7 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
             item.cluster_id = ec.id
             
     await db.commit()
+    logger.info(f"Clustering complete: {metrics}. Persisted {len(top_clusters)} clusters.")
+    return metrics
     logger.info(f"Clustering complete: {metrics}")
     return metrics

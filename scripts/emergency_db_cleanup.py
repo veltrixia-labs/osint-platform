@@ -16,31 +16,47 @@ async def emergency_cleanup():
         try:
             now = datetime.now(timezone.utc)
             
-            # --- PRIORITY 1: Raw Items (Aggressive - 2 days) ---
-            raw_threshold = now - timedelta(days=2)
+            # --- PRIORITY 1: Raw Items (Aggressive - 1 day) ---
+            raw_threshold = now - timedelta(days=1)
             logger.info(f"[P1] Targeting RawItem older than {raw_threshold}")
             raw_stmt = delete(RawItem).where(RawItem.created_at < raw_threshold)
             res = await db.execute(raw_stmt)
             logger.info(f"[P1] Deleted {res.rowcount} raw_items")
             
-            # --- PRIORITY 2: Alert Logs & Deliveries (3 days) ---
+            # --- PRIORITY 2: Event Clusters (Aggressive - 3 days) ---
+            # We must NULLify cluster_id in Item first because of ForeignKey
+            cluster_threshold = now - timedelta(days=3)
+            logger.info(f"[P2] Targeting EventCluster older than {cluster_threshold}")
+            
+            # Subquery for clusters to delete
+            old_clusters_sub = select(EventCluster.id).where(EventCluster.created_at < cluster_threshold)
+            
+            # NULLify items
+            from sqlalchemy import update
+            null_stmt = update(Item).where(Item.cluster_id.in_(old_clusters_sub)).values(cluster_id=None)
+            res_null = await db.execute(null_stmt)
+            logger.info(f"[P2] Nullified cluster_id for {res_null.rowcount} items")
+            
+            # Delete clusters
+            cluster_del_stmt = delete(EventCluster).where(EventCluster.created_at < cluster_threshold)
+            res_cl = await db.execute(cluster_del_stmt)
+            logger.info(f"[P2] Deleted {res_cl.rowcount} event_clusters")
+
+            # --- PRIORITY 3: Alert Logs & Deliveries (3 days) ---
             alert_threshold = now - timedelta(days=3)
-            logger.info(f"[P2] Targeting AlertLog/Delivery older than {alert_threshold}")
+            logger.info(f"[P3] Targeting AlertLog/Delivery older than {alert_threshold}")
             # Deliveries first
             del_stmt = delete(AlertDelivery).where(AlertDelivery.delivered_at < alert_threshold)
             res = await db.execute(del_stmt)
-            logger.info(f"[P2] Deleted {res.rowcount} alert_deliveries")
+            logger.info(f"[P3] Deleted {res.rowcount} alert_deliveries")
             
             log_stmt = delete(AlertLog).where(AlertLog.triggered_at < alert_threshold)
             res = await db.execute(log_stmt)
-            logger.info(f"[P2] Deleted {res.rowcount} alert_logs")
+            logger.info(f"[P3] Deleted {res.rowcount} alert_logs")
 
-            # --- PRIORITY 3: Items & Cache (7 days, Protect Summary-needed items) ---
-            # We PROTECT items that might be needed for monthly/weekly summaries (e.g., last 40 days)
-            # But for emergency, we prune anything older than 14 days if really necessary.
-            # Here we follow "7 days" as requested but ensure we don't wipe out the whole month's context if we can.
-            item_threshold = now - timedelta(days=7)
-            logger.info(f"[P3] Targeting Items older than {item_threshold}")
+            # --- PRIORITY 4: Items & Cache (14 days, Protect Strategic Summaries) ---
+            item_threshold = now - timedelta(days=14)
+            logger.info(f"[P4] Targeting Items older than {item_threshold}")
             
             # Cascade-like manual cleanup
             cache_stmt = delete(AnalysisCache).where(AnalysisCache.created_at < item_threshold)
