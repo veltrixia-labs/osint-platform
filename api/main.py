@@ -68,12 +68,28 @@ async def startup_emergency_recovery():
             
             if results.get("success"):
                 rec_logger.warning("--- EMERGENCY CLEANUP SUCCESS ---")
+                
+                # Diagnostics Before
+                rec_logger.info("--- TABLE DIAGNOSTICS (BEFORE) ---")
+                for table in results.get("diagnostics_before", []):
+                    rec_logger.info(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
+                
                 rec_logger.warning(f"DB Size BEFORE: {results.get('size_before')} MB")
                 rec_logger.warning(f"DB Size AFTER: {results.get('size_after')} MB")
                 rec_logger.warning(f"Deleted counts: {results.get('counts')}")
+                
+                # Diagnostics After
+                rec_logger.info("--- TABLE DIAGNOSTICS (AFTER) ---")
+                for table in results.get("diagnostics_after", []):
+                    rec_logger.info(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
             else:
                 rec_logger.error("--- EMERGENCY CLEANUP FAILED ---")
                 rec_logger.error(f"Error: {results.get('error')}")
+                # Still show diagnostics if available
+                if results.get("diagnostics_before"):
+                    rec_logger.info("--- TABLE DIAGNOSTICS (BEFORE) ---")
+                    for table in results.get("diagnostics_before", []):
+                        rec_logger.info(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
         except Exception as e:
             import traceback
             rec_logger.error("--- EMERGENCY RECOVERY UNCAUGHT EXCEPTION ---")
