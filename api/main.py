@@ -57,50 +57,6 @@ try:
 except Exception as e:
     logger.error(f"Error during API startup initialization: {e}")
 
-@app.on_event("startup")
-async def startup_emergency_recovery():
-    if os.getenv("EMERGENCY_RECOVERY_RUN") == "true":
-        from scripts.emergency_db_cleanup import emergency_cleanup
-        rec_logger = logging.getLogger("emergency_recovery")
-        rec_logger.warning("!!! [EMERGENCY] RECOVERY TRIGGERED (FastAPI Startup Event) !!!")
-        try:
-            results = await emergency_cleanup()
-            
-            if results.get("success"):
-                rec_logger.warning("--- EMERGENCY CLEANUP SUCCESS ---")
-                
-                # Diagnostics Before
-                rec_logger.warning("--- TABLE DIAGNOSTICS (BEFORE) ---")
-                for table in results.get("diagnostics_before", []):
-                    rec_logger.warning(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
-                
-                # Index Diagnostics for trend_signals
-                indices = results.get("trend_signals_indices", [])
-                if indices:
-                    rec_logger.warning("--- trend_signals INDEX SIZES ---")
-                    for idx in indices:
-                        rec_logger.warning(f"Index: {idx['index_name']}, Size: {idx['index_size']}")
-
-                rec_logger.warning(f"DB Size BEFORE: {results.get('size_before')} MB")
-                
-                if results.get("counts", {}).get("trend_signals_truncated"):
-                    rec_logger.warning("[P0] trend_signals TRUNCATED SUCCESS")
-                
-                rec_logger.warning(f"Deleted counts: {results.get('counts')}")
-                rec_logger.warning(f"DB Size AFTER: {results.get('size_after')} MB")
-                
-                # Diagnostics After
-                rec_logger.warning("--- TABLE DIAGNOSTICS (AFTER) ---")
-                for table in results.get("diagnostics_after", []):
-                    rec_logger.warning(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
-            else:
-                rec_logger.error("--- EMERGENCY CLEANUP FAILED ---")
-                rec_logger.error(f"Error: {results.get('error')}")
-        except Exception as e:
-            import traceback
-            rec_logger.error("--- EMERGENCY RECOVERY UNCAUGHT EXCEPTION ---")
-            rec_logger.error(f"Reason: {e}")
-            rec_logger.error(traceback.format_exc())
 
 logger.info(f"--- OSINT API BOOTING [Version: {COMMIT_HASH}] ---")
 

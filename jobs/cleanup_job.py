@@ -4,10 +4,10 @@ import logging
 import httpx
 from datetime import datetime, timezone, timedelta
 from sqlalchemy.future import select
-from sqlalchemy import delete, func, Text, cast, update
+from sqlalchemy import delete, func, Text, cast, update, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db_size_mb
-from db.models import AlertLog, AlertDelivery, Report, RawItem, Item, ItemTopic, AnalyticsEvent, SecurityLog, SystemMetric, EventCluster, AnalysisCache
+from db.models import AlertLog, AlertDelivery, Report, RawItem, Item, ItemTopic, AnalyticsEvent, SecurityLog, SystemMetric, EventCluster, AnalysisCache, TrendSignal
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -90,6 +90,51 @@ async def run_alert_cleanup(db: AsyncSession, dry_run: bool | None = None):
         logger.error(f"Alert cleanup failed: {e}")
         await send_webhook_notification(f"Alert cleanup failed: {e}", level="error")
         raise
+
+async def run_trend_cleanup(db: AsyncSession):
+    """
+    Permanent cleanup for trend_signals.
+    1. TTL: Delete entries older than 72 hours.
+    2. Row Cap: Keep only the latest 20,000 records (NULL-safe).
+    """
+    logger.info("Trend signals cleanup started")
+    start_time = time.time()
+    
+    try:
+        # 1. TTL Cleanup (72h)
+        ttl_stmt = text("""
+            DELETE FROM trend_signals 
+            WHERE created_at < NOW() - INTERVAL '72 hours';
+        """)
+        ttl_res = await db.execute(ttl_stmt)
+        logger.info(f"TTL Purged trend signals: {ttl_res.rowcount}")
+
+        # 2. Row Cap (20,000) - NULL-safe and index-optimized
+        cap_stmt = text("""
+            DELETE FROM trend_signals
+            WHERE created_at < (
+              SELECT created_at FROM trend_signals
+              ORDER BY created_at DESC OFFSET 20000 LIMIT 1
+            )
+            AND (
+              SELECT COUNT(*) FROM trend_signals
+            ) > 20000;
+        """)
+        cap_res = await db.execute(cap_stmt)
+        if cap_res.rowcount > 0:
+            logger.info(f"Row Cap Purged trend signals: {cap_res.rowcount}")
+
+        await db.commit()
+        await update_system_metric(db, "last_trend_cleanup_at", datetime.now(timezone.utc).isoformat())
+        
+        elapsed = time.time() - start_time
+        logger.info(f"Trend signals cleanup completed (Time: {elapsed:.2f}s)")
+        
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Trend signals cleanup failed: {e}")
+        await send_webhook_notification(f"Trend signals cleanup failed: {e}", level="error")
+        # Don't raise, allowing other jobs to continue if called in sequence
 
 async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None):
     """
