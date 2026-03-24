@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 from sqlalchemy.future import select
 from sqlalchemy import delete, func, Text, cast, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from db.database import get_db_size_mb
 from db.models import AlertLog, AlertDelivery, Report, RawItem, Item, ItemTopic, AnalyticsEvent, SecurityLog, SystemMetric
 from config.settings import settings
 
@@ -159,11 +160,8 @@ async def run_db_size_check(db: AsyncSession):
     Monitor database file size and log occupancy status.
     """
     logger.info("Starting DB pressure monitoring check...")
-    db_path = "osint_platform.db"
-    if not os.path.exists(db_path):
-        return
-
-    size_mb = os.path.getsize(db_path) / (1024 * 1024)
+    
+    size_mb = await get_db_size_mb(db)
     await update_system_metric(db, "db_size_mb", f"{size_mb:.2f}")
     
     if size_mb >= settings.db_size_critical_mb:

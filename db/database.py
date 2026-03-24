@@ -130,3 +130,22 @@ def run_migrations():
         logger.error(f"Error: {mig_e}")
         logger.error(traceback.format_exc())
         raise mig_e
+
+async def get_db_size_mb(db: AsyncSession) -> float:
+    """Get database size in MB for both PostgreSQL and SQLite."""
+    try:
+        url = settings.database_url
+        if "postgresql" in url:
+            # PostgreSQL specific size query
+            res = await db.execute(sqlalchemy.text("SELECT pg_database_size(current_database())"))
+            size_bytes = res.scalar()
+            return size_bytes / (1024 * 1024)
+        else:
+            # SQLite specific path
+            db_path = "osint_platform.db"
+            if os.path.exists(db_path):
+                return os.path.getsize(db_path) / (1024 * 1024)
+            return 0.0
+    except Exception as e:
+        logger.error(f"Failed to get DB size: {e}")
+        return 0.0

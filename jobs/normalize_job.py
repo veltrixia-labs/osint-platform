@@ -19,7 +19,11 @@ def normalize_text(text: str) -> str:
 async def run_normalize(db: AsyncSession):
     logger.info("Starting High-Efficiency Normalize Job")
     
-    stmt = select(RawItem).order_by(RawItem.created_at.desc()).limit(1000)
+    from datetime import datetime, timezone, timedelta
+    lookback = datetime.now(timezone.utc) - timedelta(hours=12)
+    
+    # Efficient selection: Filter by recent created_at AND limit to avoid massive sorts
+    stmt = select(RawItem).where(RawItem.created_at > lookback).order_by(RawItem.created_at.desc()).limit(500)
     result = await db.execute(stmt)
     raw_items = result.scalars().all()
     
