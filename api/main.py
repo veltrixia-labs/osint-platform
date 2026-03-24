@@ -16,34 +16,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# TEMPORARY EMERGENCY RECOVERY HOOK (DiskFullError)
-if os.getenv("EMERGENCY_RECOVERY_RUN") == "true":
-    import asyncio
-    from scripts.emergency_db_cleanup import emergency_cleanup
-    
-    print("!!! [EMERGENCY] RECOVERY TRIGGERED !!!")
-    rec_logger = logging.getLogger("emergency_recovery")
-    rec_logger.info("--- EMERGENCY CLEANUP START ---")
-    try:
-        # Run cleanup synchronously to block startup until space is recovered
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            rec_logger.warning("Event loop already running, cleanup might be deferred")
-        else:
-            results = loop.run_until_complete(emergency_cleanup())
-            
-            if results.get("success"):
-                rec_logger.info("--- EMERGENCY CLEANUP SUCCESS ---")
-                rec_logger.info(f"DB Size BEFORE: {results.get('size_before')} MB")
-                rec_logger.info(f"DB Size AFTER: {results.get('size_after')} MB")
-                rec_logger.info(f"Deleted counts: {results.get('counts')}")
-            else:
-                rec_logger.error(f"--- EMERGENCY CLEANUP FAILED: {results.get('error')} ---")
-    except Exception as e:
-        import traceback
-        rec_logger.error(f"--- EMERGENCY RECOVERY UNCAUGHT EXCEPTION: {e} ---")
-        rec_logger.error(traceback.format_exc())
-    print("!!! [EMERGENCY] RECOVERY ATTEMPT FINISHED !!!")
+# OSINT RISK INTELLIGENCE API
 
 from api.auth import (
     get_password_hash, verify_password, create_access_token, 
@@ -83,6 +56,29 @@ try:
 
 except Exception as e:
     logger.error(f"Error during API startup initialization: {e}")
+
+@app.on_event("startup")
+async def startup_emergency_recovery():
+    if os.getenv("EMERGENCY_RECOVERY_RUN") == "true":
+        from scripts.emergency_db_cleanup import emergency_cleanup
+        rec_logger = logging.getLogger("emergency_recovery")
+        rec_logger.warning("!!! [EMERGENCY] RECOVERY TRIGGERED (FastAPI Startup Event) !!!")
+        try:
+            results = await emergency_cleanup()
+            
+            if results.get("success"):
+                rec_logger.warning("--- EMERGENCY CLEANUP SUCCESS ---")
+                rec_logger.warning(f"DB Size BEFORE: {results.get('size_before')} MB")
+                rec_logger.warning(f"DB Size AFTER: {results.get('size_after')} MB")
+                rec_logger.warning(f"Deleted counts: {results.get('counts')}")
+            else:
+                rec_logger.error("--- EMERGENCY CLEANUP FAILED ---")
+                rec_logger.error(f"Error: {results.get('error')}")
+        except Exception as e:
+            import traceback
+            rec_logger.error("--- EMERGENCY RECOVERY UNCAUGHT EXCEPTION ---")
+            rec_logger.error(f"Reason: {e}")
+            rec_logger.error(traceback.format_exc())
 
 logger.info(f"--- OSINT API BOOTING [Version: {COMMIT_HASH}] ---")
 
