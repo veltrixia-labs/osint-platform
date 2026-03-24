@@ -20,7 +20,19 @@ async def get_table_diagnostics(db):
             n_live_tup AS estimate_rows
         FROM pg_stat_user_tables
         ORDER BY pg_total_relation_size(relid) DESC
-        LIMIT 10;
+        LIMIT 15;
+    """)
+    res = await db.execute(query)
+    return [dict(row) for row in res.mappings()]
+
+async def get_index_diagnostics(db, table_name):
+    """Query PostgreSQL for specific index sizes of a table."""
+    query = text(f"""
+        SELECT
+            indexrelname AS index_name,
+            pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
+        FROM pg_stat_user_indexes
+        WHERE relname = '{table_name}';
     """)
     res = await db.execute(query)
     return [dict(row) for row in res.mappings()]
@@ -34,91 +46,90 @@ async def emergency_cleanup():
         "size_after": 0, 
         "diagnostics_before": [],
         "diagnostics_after": [],
+        "trend_signals_indices": [],
         "error": None
     }
     
     async with AsyncSessionLocal() as db:
         try:
-            # 0. Table Diagnostics Before
+            # --- 0. PRE-DIAGNOSTICS ---
             diag_before = await get_table_diagnostics(db)
             results["diagnostics_before"] = diag_before
-            logger.info("--- TABLE DIAGNOSTICS (BEFORE) ---")
-            for table in diag_before:
-                logger.info(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
-
-            # Log DB size before
+            results["trend_signals_indices"] = await get_index_diagnostics(db, "trend_signals")
+            
             size_before = await get_db_size_mb(db)
             results["size_before"] = size_before
-            logger.info(f"DB Size BEFORE cleanup: {size_before} MB")
             
+            logger.info(f"DB Size BEFORE cleanup: {size_before} MB")
+            for table in diag_before:
+                if table['table_name'] == 'trend_signals':
+                    logger.info(f"!!! CRITICAL BLOAT: trend_signals is {table['total_size']} with {table['estimate_rows']} rows")
+
+            # --- 1. PRIORITY ZERO: TRUNCATE trend_signals ---
+            # This is the primary target for 762MB bloat
+            logger.info("[P0] Executing TRUNCATE trend_signals CASCADE...")
+            try:
+                await db.execute(text("TRUNCATE TABLE trend_signals CASCADE;"))
+                await db.commit()
+                results["counts"]["trend_signals_truncated"] = True
+                logger.info("[P0] TRUNCATE trend_signals SUCCESS")
+            except Exception as te:
+                await db.rollback()
+                logger.error(f"[P0] TRUNCATE trend_signals FAILED: {te}")
+                # Continue other cleanups if possible
+
+            # --- 2. PRIORITY 1: Aggressive Deletions ---
             now = datetime.now(timezone.utc)
             
-            # --- PRIORITY 1: Raw Items (High Aggression - 4 hours) ---
-            raw_threshold = now - timedelta(hours=4)
-            logger.info(f"[P1] Targeting RawItem older than {raw_threshold}")
-            raw_stmt = delete(RawItem).where(RawItem.created_at < raw_threshold)
-            res = await db.execute(raw_stmt)
-            results["counts"]["raw_items"] = res.rowcount
-            logger.info(f"[P1] Deleted {res.rowcount} raw_items")
-            
-            # --- PRIORITY 2: Event Clusters (High Aggression - 12 hours) ---
-            cluster_threshold = now - timedelta(hours=12)
-            logger.info(f"[P2] Targeting EventCluster older than {cluster_threshold}")
-            
-            old_clusters_sub = select(EventCluster.id).where(EventCluster.created_at < cluster_threshold)
-            null_stmt = update(Item).where(Item.cluster_id.in_(old_clusters_sub)).values(cluster_id=None)
-            res_null = await db.execute(null_stmt)
-            logger.info(f"[P2] Nullified cluster_id for {res_null.rowcount} items")
-            
-            cluster_del_stmt = delete(EventCluster).where(EventCluster.created_at < cluster_threshold)
-            res_cl = await db.execute(cluster_del_stmt)
-            results["counts"]["event_clusters"] = res_cl.rowcount
-            logger.info(f"[P2] Deleted {res_cl.rowcount} event_clusters")
+            # Use individual commits to avoid bulk transaction failure
+            async def run_step(name, stmt):
+                try:
+                    res = await db.execute(stmt)
+                    await db.commit()
+                    results["counts"][name] = res.rowcount
+                    logger.info(f"Step {name}: Deleted {res.rowcount}")
+                except Exception as e:
+                    await db.rollback()
+                    logger.warning(f"Step {name} failed: {e}")
 
-            # --- PRIORITY 3: Alert Logs & Deliveries (24 hours) ---
-            alert_threshold = now - timedelta(hours=24)
-            logger.info(f"[P3] Targeting AlertLog/Delivery older than {alert_threshold}")
-            del_stmt = delete(AlertDelivery).where(AlertDelivery.delivered_at < alert_threshold)
-            res = await db.execute(del_stmt)
-            results["counts"]["alert_deliveries"] = res.rowcount
+            # RawItem (4h)
+            await run_step("raw_items", delete(RawItem).where(RawItem.created_at < (now - timedelta(hours=4))))
             
-            log_stmt = delete(AlertLog).where(AlertLog.triggered_at < alert_threshold)
-            res = await db.execute(log_stmt)
-            results["counts"]["alert_logs"] = res.rowcount
-            logger.info(f"[P3] Deleted {res.rowcount} alert entries")
-
-            # --- PRIORITY 4: Cache & Topics (24 hours) ---
-            cache_threshold = now - timedelta(hours=24)
-            logger.info(f"[P4] Targeting Cache older than {cache_threshold}")
-            
-            cache_stmt = delete(AnalysisCache).where(AnalysisCache.created_at < cache_threshold)
-            res = await db.execute(cache_stmt)
-            results["counts"]["analysis_cache"] = res.rowcount
-            logger.info(f"[P4] Deleted {res.rowcount} cache entries")
-
-            # --- COMMIT ---
-            await db.commit()
-            logger.info("--- EMERGENCY CLEANUP COMMITTED ---")
-
-            # --- VACUUM ANALYZE ---
-            # Trigger internal space reuse without blocking
-            logger.info("--- TRIGGERING VACUUM ANALYZE ---")
+            # EventCluster (12h)
+            # Nullify first
             try:
-                # We do them one by one
-                for table in ["raw_items", "event_clusters", "items", "analysis_cache", "alert_logs"]:
-                    await db.execute(text(f"VACUUM ANALYZE {table}"))
-                logger.info("--- VACUUM ANALYZE COMPLETED ---")
-            except Exception as ve:
-                logger.warning(f"VACUUM ANALYZE encountered an issue (non-fatal): {ve}")
+                cluster_threshold = now - timedelta(hours=12)
+                old_clusters_sub = select(EventCluster.id).where(EventCluster.created_at < cluster_threshold)
+                null_stmt = update(Item).where(Item.cluster_id.in_(old_clusters_sub)).values(cluster_id=None)
+                await db.execute(null_stmt)
+                await db.commit()
+            except Exception as ne:
+                await db.rollback()
+                logger.warning(f"Cluster nullify failed: {ne}")
             
-            # 0. Table Diagnostics After
+            await run_step("event_clusters", delete(EventCluster).where(EventCluster.created_at < (now - timedelta(hours=12))))
+            
+            # AlertLog (24h)
+            await run_step("alert_deliveries", delete(AlertDelivery).where(AlertDelivery.delivered_at < (now - timedelta(hours=24))))
+            await run_step("alert_logs", delete(AlertLog).where(AlertLog.triggered_at < (now - timedelta(hours=24))))
+            
+            # Cache (24h)
+            await run_step("analysis_cache", delete(AnalysisCache).where(AnalysisCache.created_at < (now - timedelta(hours=24))))
+
+            # --- 3. VACUUM ANALYZE ---
+            logger.info("--- TRIGGERING VACUUM ANALYZE ---")
+            for table in ["trend_signals", "raw_items", "event_clusters", "analysis_cache"]:
+                try:
+                    # VACUUM cannot run inside a transaction block in some drivers, 
+                    # but with SQLAlchemy text() and autocommit-like behavior it usually works if we commit first.
+                    await db.execute(text(f"VACUUM ANALYZE {table}"))
+                    logger.info(f"VACUUM ANALYZE {table} DONE")
+                except Exception as ve:
+                    logger.warning(f"VACUUM ANALYZE {table} skipped: {ve}")
+            
+            # --- 4. POST-DIAGNOSTICS ---
             diag_after = await get_table_diagnostics(db)
             results["diagnostics_after"] = diag_after
-            logger.info("--- TABLE DIAGNOSTICS (AFTER) ---")
-            for table in diag_after:
-                logger.info(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
-
-            # Log DB size after
             size_after = await get_db_size_mb(db)
             results["size_after"] = size_after
             results["success"] = True
@@ -130,7 +141,7 @@ async def emergency_cleanup():
         except Exception as e:
             await db.rollback()
             results["error"] = str(e)
-            logger.error(f"EMERGENCY CLEANUP FAILED: {e}")
+            logger.error(f"EMERGENCY CLEANUP FATAL ERROR: {e}")
             import traceback
             logger.error(traceback.format_exc())
             return results

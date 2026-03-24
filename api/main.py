@@ -70,26 +70,32 @@ async def startup_emergency_recovery():
                 rec_logger.warning("--- EMERGENCY CLEANUP SUCCESS ---")
                 
                 # Diagnostics Before
-                rec_logger.info("--- TABLE DIAGNOSTICS (BEFORE) ---")
+                rec_logger.warning("--- TABLE DIAGNOSTICS (BEFORE) ---")
                 for table in results.get("diagnostics_before", []):
-                    rec_logger.info(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
+                    rec_logger.warning(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
                 
+                # Index Diagnostics for trend_signals
+                indices = results.get("trend_signals_indices", [])
+                if indices:
+                    rec_logger.warning("--- trend_signals INDEX SIZES ---")
+                    for idx in indices:
+                        rec_logger.warning(f"Index: {idx['index_name']}, Size: {idx['index_size']}")
+
                 rec_logger.warning(f"DB Size BEFORE: {results.get('size_before')} MB")
-                rec_logger.warning(f"DB Size AFTER: {results.get('size_after')} MB")
+                
+                if results.get("counts", {}).get("trend_signals_truncated"):
+                    rec_logger.warning("[P0] trend_signals TRUNCATED SUCCESS")
+                
                 rec_logger.warning(f"Deleted counts: {results.get('counts')}")
+                rec_logger.warning(f"DB Size AFTER: {results.get('size_after')} MB")
                 
                 # Diagnostics After
-                rec_logger.info("--- TABLE DIAGNOSTICS (AFTER) ---")
+                rec_logger.warning("--- TABLE DIAGNOSTICS (AFTER) ---")
                 for table in results.get("diagnostics_after", []):
-                    rec_logger.info(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
+                    rec_logger.warning(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
             else:
                 rec_logger.error("--- EMERGENCY CLEANUP FAILED ---")
                 rec_logger.error(f"Error: {results.get('error')}")
-                # Still show diagnostics if available
-                if results.get("diagnostics_before"):
-                    rec_logger.info("--- TABLE DIAGNOSTICS (BEFORE) ---")
-                    for table in results.get("diagnostics_before", []):
-                        rec_logger.info(f"Table: {table['table_name']}, Total: {table['total_size']}, Rows: {table['estimate_rows']}")
         except Exception as e:
             import traceback
             rec_logger.error("--- EMERGENCY RECOVERY UNCAUGHT EXCEPTION ---")
