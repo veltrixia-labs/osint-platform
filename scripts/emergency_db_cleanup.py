@@ -3,8 +3,8 @@ import os
 import logging
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import delete, func, text
-from db.database import AsyncSessionLocal
-from db.models import RawItem, Item, ItemTopic, AlertLog, AlertDelivery, AnalyticsEvent, SecurityLog, AnalysisCache, Report
+from db.database import AsyncSessionLocal, get_db_size_mb
+from db.models import RawItem, Item, ItemTopic, AlertLog, AlertDelivery, AnalyticsEvent, SecurityLog, AnalysisCache, Report, EventCluster
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("emergency_cleanup")
@@ -14,6 +14,10 @@ async def emergency_cleanup():
     
     async with AsyncSessionLocal() as db:
         try:
+            # Log DB size before
+            size_before = await get_db_size_mb(db)
+            logger.info(f"DB Size BEFORE cleanup: {size_before} MB")
+            
             now = datetime.now(timezone.utc)
             
             # --- PRIORITY 1: Raw Items (Aggressive - 1 day) ---
@@ -92,6 +96,11 @@ async def emergency_cleanup():
 
             await db.commit()
             logger.info("--- EMERGENCY CLEANUP COMMITTED ---")
+            
+            # Log DB size after
+            size_after = await get_db_size_mb(db)
+            logger.info(f"DB Size AFTER cleanup: {size_after} MB")
+            logger.info(f"Space recovered: {round(size_before - size_after, 2)} MB")
             
             # 6. Maintenance
             # Note: PostgreSQL requires VACUUM to actually reclaim OS-level disk space quickly in some cases,

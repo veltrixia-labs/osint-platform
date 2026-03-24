@@ -16,6 +16,29 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# TEMPORARY EMERGENCY RECOVERY HOOK (DiskFullError)
+if os.getenv("EMERGENCY_RECOVERY_RUN") == "true":
+    import asyncio
+    from scripts.emergency_db_cleanup import emergency_cleanup
+    
+    print("!!! [EMERGENCY] RECOVERY TRIGGERED !!!")
+    logging.info("--- EMERGENCY CLEANUP START ---")
+    try:
+        # Run cleanup synchronously to block startup until space is recovered
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # If for some reason loop is running, we might need a different approach, 
+            # but usually at this point it's not.
+            logger.warning("Event loop already running, cleanup might be deferred")
+        else:
+            loop.run_until_complete(emergency_cleanup())
+        logging.info("--- EMERGENCY CLEANUP DONE ---")
+    except Exception as e:
+        import traceback
+        logging.error(f"--- EMERGENCY CLEANUP FAILED: {e} ---")
+        logging.error(traceback.format_exc())
+    print("!!! [EMERGENCY] RECOVERY ATTEMPT FINISHED !!!")
+
 from api.auth import (
     get_password_hash, verify_password, create_access_token, 
     create_refresh_token, get_current_user_from_access, refresh_tokens,
