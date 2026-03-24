@@ -2,7 +2,7 @@ import asyncio
 import os
 import logging
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import delete, func, text
+from sqlalchemy import delete, func, text, select, update
 from db.database import AsyncSessionLocal, get_db_size_mb
 from db.models import RawItem, Item, ItemTopic, AlertLog, AlertDelivery, AnalyticsEvent, SecurityLog, AnalysisCache, Report, EventCluster
 
@@ -39,7 +39,6 @@ async def emergency_cleanup():
             old_clusters_sub = select(EventCluster.id).where(EventCluster.created_at < cluster_threshold)
             
             # NULLify items
-            from sqlalchemy import update
             null_stmt = update(Item).where(Item.cluster_id.in_(old_clusters_sub)).values(cluster_id=None)
             res_null = await db.execute(null_stmt)
             logger.info(f"[P2] Nullified cluster_id for {res_null.rowcount} items")
