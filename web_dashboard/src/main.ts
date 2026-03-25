@@ -1,8 +1,8 @@
 import './style.css'
 import { DashboardState } from './modules/poll'
 import { renderAlerts, renderHealth, renderSidebar, renderReportDetail } from './modules/render'
-import { login, fetchMe, logout, fetchUsage, fetchReport, logAnalyticsEvent } from './modules/api'
-import type { UserMe, AnalystProfile } from './modules/api'
+import { login, fetchMe, logout, fetchUsage, fetchReports, fetchReport } from './modules/api'
+import type { UserMe, AnalystProfile, Report } from './modules/api'
 import {
     renderTierBadge,
     renderGracePeriodBanner,
@@ -27,11 +27,6 @@ function getTopicLabel(code: string | null): string {
     return t ? t.label : code.toUpperCase();
 }
 
-function getMarkdownPreview(md: string): string {
-    if (!md) return "";
-    const lines = md.split('\n').filter(l => l.trim().length > 0 && !l.startsWith('#'));
-    return lines.slice(0, 2).join(' ') + (lines.length > 2 ? '...' : '');
-}
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 
@@ -68,24 +63,7 @@ export async function renderLogin() {
     })
 }
 
-function getVisitorId(): string {
-    let vid = localStorage.getItem('osint_visitor_id');
-    if (!vid) {
-        vid = crypto.randomUUID();
-        localStorage.setItem('osint_visitor_id', vid);
-    }
-    return vid || 'unknown';
-}
 
-function captureUtms(params: URLSearchParams) {
-    return {
-        utm_source: params.get('utm_source'),
-        utm_medium: params.get('utm_medium'),
-        utm_campaign: params.get('utm_campaign'),
-        source: params.get('source'),
-        visitor_id: getVisitorId()
-    };
-}
 
 type TabId = 'feed' | 'plans' | 'reports'
 
@@ -93,7 +71,7 @@ async function initDashboard() {
     const urlParams = new URLSearchParams(window.location.search);
     const reportId = urlParams.get('report_id');
     
-    let user = await fetchMe();
+    let user: UserMe | null = await fetchMe();
     
     if (!user && !reportId) {
         renderLogin();
@@ -270,7 +248,7 @@ async function initDashboard() {
         healthContainer.innerHTML = '';
         alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Loading expertise catalog...</div>';
         try {
-            const reports = await fetchReport('all') as any[];
+            const reports: Report[] = await fetchReports();
             alertsContainer.innerHTML = `
                 <div class="reports-grid u-m-top-1">
                     ${reports.map(r => `
