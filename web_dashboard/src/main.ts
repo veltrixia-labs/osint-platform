@@ -671,9 +671,13 @@ async function initDashboard() {
                 <div style="padding:4rem; text-align:center;">
                     <h2 style="color:#f85149;">Report Unavailable</h2>
                     <p style="color:#8b949e; margin-bottom:2rem;">${err.message || 'The specified report could not be found or access is restricted.'}</p>
-                    <button class="btn-fb active" onclick="location.href='/'">Return to Dashboard</button>
+                    <button class="btn-fb active" id="error-back-btn">Return to Dashboard</button>
                 </div>
             `;
+            document.querySelector('#error-back-btn')?.addEventListener('click', () => {
+                window.history.replaceState({}, '', window.location.pathname);
+                initDashboard();
+            });
         }
     }
     // ── Alert Report Navigation (Phase 36) ──────────────────────────────────

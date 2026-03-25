@@ -196,11 +196,10 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
                 headers.set('Authorization', `Bearer ${accessToken}`);
                 resp = await fetch(url, { ...authOptions, headers });
             } else {
-                // If refresh fails, clear token and logout
+                // If refresh fails, clear token and return original error
                 if (!getLoggingOut()) {
                     accessToken = null;
                     localStorage.removeItem('access_token');
-                    window.location.href = '/'; 
                 }
                 return resp;
             }
