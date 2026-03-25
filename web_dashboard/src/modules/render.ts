@@ -15,7 +15,7 @@ export function renderHealth(data: HealthData, container: HTMLElement) {
         </div>
         <div class="trigger-stats u-m-top-1">
             <h4>Top Triggers</h4>
-            <div class="u-flex u-m-top-1" style="flex-wrap: wrap;">
+            <div class="u-flex u-m-top-1" style="flex-wrap: wrap; row-gap: 0.5rem;">
                 ${(data.top_performing_triggers || []).map(t => `<div class="watchlist-tag">${t.type} (${t.avg_feedback})</div>`).join('')}
             </div>
         </div>
@@ -41,9 +41,9 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
         return `
             <div class="alert-card ${severityClass}" data-id="${alert.id}">
                 <div class="alert-header u-flex-between">
-                    <div class="u-flex" style="flex-wrap: wrap;">
+                    <div class="u-flex" style="flex-wrap: wrap; row-gap: 0.5rem;">
                         <span class="severity-badge">${alert.severity}</span>
-                        <span class="watchlist-tag" style="background:rgba(255,255,255,0.05);">
+                        <span class="watchlist-tag">
                             ${triggerLabel}
                         </span>
                         <span style="color: #8b949e; font-size: var(--font-xs);">${displayDate}</span>
@@ -54,16 +54,16 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
                     </div>
                 </div>
                 
-                <h3 style="color: #58a6ff;">${alert.target_label || 'Unknown Signal'}</h3>
+                <h3 style="color: #58a6ff; line-height: 1.4;">${alert.target_label || 'Unknown Signal'}</h3>
                 
-                <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(0,0,0,0.2); border-radius: 6px; border:1px solid rgba(255,255,255,0.05);">
+                <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
                     <div>
                         <h4>Risk Momentum</h4>
                         <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${alert.intensity?.toFixed(2) || '0.00'}/10.0</div>
                     </div>
                     <div>
                         <h4>Evidence</h4>
-                        <div class="evidence-trigger-btn u-m-top-1" style="color:#58a6ff; background:rgba(88,166,255,0.05); padding:2px 8px; border-radius:4px; display:inline-block; border:1px solid rgba(88,166,255,0.1); font-size: var(--font-s); cursor: pointer;">
+                        <div class="evidence-trigger-btn u-tier-1 u-m-top-1" style="color:#58a6ff; background:var(--accent-soft); padding:4px 12px; border-radius:6px; display:inline-block; border:1px solid var(--border-active); font-size: var(--font-s); cursor: pointer;">
                             🔍 ${alert.domain_count || 0} Domains
                         </div>
                     </div>
@@ -75,7 +75,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
                     </div>
                     ${hasReport ? `
                     <div style="display:flex; align-items:flex-end;">
-                        <button class="btn-fb active view-report-btn u-w-full">View Report</button>
+                        <button class="btn-fb active view-report-btn u-w-full u-tier-1">View Report</button>
                     </div>
                     ` : `
                     <div style="font-size:var(--font-xs); color:#8b949e; display:flex; align-items:flex-end; opacity:0.6; font-style: italic;">
@@ -90,7 +90,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
                     </div>
                     <div class="feedback-controls" style="margin-top:0;">
                         ${[1, 2, 3, 4, 5].map(s => `
-                            <button class="btn-fb ${alert.feedback_score === s ? 'active' : ''}" data-score="${s}">${s}</button>
+                            <button class="btn-fb u-tier-1 ${alert.feedback_score === s ? 'active' : ''}" data-score="${s}">${s}</button>
                         `).join('')}
                     </div>
                 </div>
@@ -201,22 +201,22 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
     const limitReached = usage && usage.keywords.used >= usage.keywords.limit;
 
     container.innerHTML = `
-        <h2>Intelligence Watchlist</h2>
+        <h2>Watchlist</h2>
         <div class="watchlist-group">
-            <h4 class="u-m-top-1">Entity Watchlist</h4>
-            <p style="margin-bottom: 1rem;">Add specific companies, assets, or executives to prioritize them in your intelligence stream.</p>
-            <div class="watchlist-tags" id="keyword-tags">
+            <h4 class="u-m-top-1">Key Entities</h4>
+            <p style="margin-bottom: 1.5rem;">Add specific companies, assets, or executives to prioritize them in your intelligence stream.</p>
+            <div class="watchlist-tags" id="keyword-tags" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                 ${(a.watch_keywords || []).map(k => `
                     <span class="watchlist-tag keyword-tag" data-keyword="${k}">
                         ${k}
-                        <button class="remove-kw" data-keyword="${k}">&times;</button>
+                        <button class="remove-kw u-tier-1" data-keyword="${k}">&times;</button>
                     </span>
                 `).join('')}
             </div>
             
             <div class="watchlist-add-row u-m-top-1">
                 <input type="text" id="new-keyword" placeholder="Add entity..." ${limitReached ? 'disabled' : ''} />
-                <button id="add-keyword-btn" class="btn-primary" ${limitReached ? 'disabled' : ''}>Add</button>
+                <button id="add-keyword-btn" class="btn-primary u-tier-1" ${limitReached ? 'disabled' : ''}>Add</button>
             </div>
             ${limitReached ? `
                 <div class="limit-warning u-m-top-1" style="color:#d29922; font-size:var(--font-xs);">
@@ -225,7 +225,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
                 </div>
             ` : ''}
         </div>
-        <div style="margin-top: auto; font-size: var(--font-xs); color: #8b949e; padding-top: 1rem; border-top: 1px solid #30363d;">
+        <div style="margin-top: auto; font-size: var(--font-xs); color: #8b949e; padding-top: 1.5rem; border-top: 1px solid var(--border);">
             Analyst ID: ${a.id.slice(0, 8)}...
         </div>
     `;
@@ -338,8 +338,8 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
     container.innerHTML = `
         <div class="report-detail">
             <div class="u-flex-between u-m-top-1" style="margin-bottom: var(--space-m); flex-wrap: wrap; gap: 1rem;">
-                <div class="u-flex" style="flex-wrap: wrap;">
-                    <button class="btn-fb active" id="back-to-feed-btn">← Back</button>
+                <div class="u-flex" style="flex-wrap: wrap; row-gap: 0.5rem;">
+                    <button class="btn-fb active u-tier-1" id="back-to-feed-btn">← Back</button>
                     <div style="color: #8b949e; font-size: var(--font-s); display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap;">
                         <span style="font-weight: 600; color: #c9d1d9;">${topicLabel}</span>
                         <span style="opacity: 0.5;">|</span>
@@ -354,37 +354,37 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
             </div>
             
             <div class="report-content-card u-m-top-1">
-                <h1>${report.title}</h1>
-                <div class="u-m-top-1 u-text-center" style="text-align: left;">
-                    <div class="confidence-trigger u-flex" style="display: inline-flex; background: rgba(88,166,255,0.1); color: #58a6ff; padding: 6px 14px; border-radius: 20px; font-size: var(--font-s); border: 1px solid rgba(88,166,255,0.3); transition: all 0.2s; cursor: pointer; user-select: none;">
-                        <span style="font-size: 1.1rem;">📊</span> 
+                <h1 style="margin-bottom: 1.5rem;">${report.title}</h1>
+                <div class="u-m-top-1" style="text-align: left; margin-bottom: 2rem;">
+                    <div class="confidence-trigger u-flex u-tier-2" style="display: inline-flex; background: var(--accent-soft); color: #58a6ff; padding: 8px 16px; border-radius: 20px; font-size: var(--font-m); border: 1px solid var(--border-active); cursor: pointer; user-select: none;">
+                        <span style="font-size: 1.1rem; margin-right: 0.5rem;">📊</span> 
                         <span style="font-weight: 600;">Confidence: ${report.confidence_level || 'High'}</span>
-                        <span style="opacity: 0.8;">(${report.source_count || 0} sources)</span>
-                        <span class="chevron-icon" style="transition: transform 0.3s;">▾</span>
+                        <span style="opacity: 0.8; margin-left: 0.5rem;">(${report.source_count || 0} sources)</span>
+                        <span class="chevron-icon" style="transition: transform 0.3s; margin-left: 0.5rem;">▾</span>
                     </div>
 
-                    <div class="evidence-panel u-m-top-1" style="display: none; background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(88,166,255,0.2); border-radius: 12px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); max-width: 650px;">
-                        <div class="u-flex-between" style="font-size: var(--font-xs); color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
+                    <div class="evidence-panel u-m-top-1" style="display: none; background: rgba(13, 17, 23, 0.95); border: 1px solid var(--border-active); border-radius: 16px; padding: 2rem; box-shadow: 0 12px 48px rgba(0,0,0,0.6); backdrop-filter: blur(12px); max-width: 700px; margin-top: 1rem;">
+                        <div class="u-flex-between" style="font-size: var(--font-xs); color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
                             <span>Source Transparency & Evidence Log</span>
-                            <span style="color: #58a6ff;">Verified</span>
+                            <span style="color: #58a6ff;">Verified Signal</span>
                         </div>
                         
                         ${evidenceData.length > 0 ? `
-                            <div class="u-flex" style="flex-direction: column; gap: 1.5rem;">
+                            <div class="u-flex" style="flex-direction: column; gap: 2rem;">
                                 ${evidenceData.map(e => `
-                                    <div style="border-left: 2px solid rgba(88,166,255,0.3); padding-left: 1rem;">
-                                        <div class="u-flex-between" style="margin-bottom: 0.5rem; align-items: flex-start;">
-                                            <div style="font-weight: 600; color: #c9d1d9; font-size: var(--font-s);">${e.title}</div>
-                                            <span style="font-size: var(--font-xs); background: rgba(88,166,255,0.15); color: #58a6ff; padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(88,166,255,0.2); white-space: nowrap;">${e.type}</span>
+                                    <div style="border-left: 3px solid var(--accent); padding-left: 1.25rem;">
+                                        <div class="u-flex-between" style="margin-bottom: 0.75rem; align-items: flex-start;">
+                                            <div style="font-weight: 600; color: #c9d1d9; font-size: var(--font-m);">${e.title}</div>
+                                            <span style="font-size: var(--font-xs); background: var(--accent-soft); color: #58a6ff; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border-active); white-space: nowrap;">${e.type}</span>
                                         </div>
-                                        <div style="font-size: var(--font-s); color: #8b949e; line-height: 1.6; margin-bottom: 0.8rem;">${e.explanation}</div>
+                                        <div style="font-size: var(--font-s); color: #8b949e; line-height: 1.7; margin-bottom: 1rem;">${e.explanation}</div>
                                         ${e.link && e.link !== '#' ? `
-                                            <a href="${e.link}" target="_blank" class="btn-fb u-flex" style="text-decoration: none; font-size: var(--font-xs); display: inline-flex;">🔗 View Source</a>
-                                        ` : '<div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.6;">🔒 Private Source</div>'}
+                                            <a href="${e.link}" target="_blank" class="btn-fb u-flex u-tier-1" style="text-decoration: none; font-size: var(--font-xs); display: inline-flex;">🔗 View Source</a>
+                                        ` : '<div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.6; font-style: italic;">🔒 Private Intel Source</div>'}
                                     </div>
                                 `).join('')}
                             </div>
-                        ` : '<div class="u-p-2 u-text-center">ℹ️ Detailed evidence list pending...</div>'}
+                        ` : '<div class="u-p-2 u-text-center">ℹ️ Detailed evidence list pending enrichment...</div>'}
                     </div>
                 </div>
 
@@ -393,14 +393,14 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
                 </div>
 
                 ${isPreview ? `
-                    <div class="paywall-v2 u-m-top-1 u-p-2" style="background: rgba(88, 166, 255, 0.03); border: 1px solid rgba(88, 166, 255, 0.2); border-radius: 12px; text-align: center; backdrop-filter: blur(4px);">
-                        <h2 style="color: #c9d1d9; margin-top: 0;">Verified Intelligence</h2>
+                    <div class="paywall-v2 u-m-top-1 u-p-2" style="background: var(--accent-soft); border: 1px solid var(--border-active); border-radius: 16px; text-align: center; backdrop-filter: blur(8px); margin-top: 3rem;">
+                        <h2 style="color: #c9d1d9; margin-top: 0;">Verified Intelligence Access</h2>
                         <div style="color: #8b949e; margin-bottom: 2rem; max-width: 500px; margin-inline: auto;">
-                            <ul style="list-style: none; padding: 0; margin-bottom: 1rem; color: #c9d1d9; text-align: center;">
-                                <li>• Targeted Entity Risk Profiles</li>
-                                <li>• Supply Chain Vulnerability Nodes</li>
+                            <ul style="list-style: none; padding: 0; margin-bottom: 1.5rem; color: #c9d1d9; text-align: center; display: flex; flex-direction: column; gap: 0.5rem;">
+                                <li>• Comprehensive Risk Exposure Analysis</li>
+                                <li>• Direct Entity & Asset Targeting Logs</li>
                             </ul>
-                            <button id="cta-main-btn" class="plan-cta-btn u-w-full u-m-top-1">Access Detailed Intelligence (Pro)</button>
+                            <button id="cta-main-btn" class="btn-primary u-w-full u-tier-1">Upgrade to Pro for Full Intelligence</button>
                         </div>
                     </div>
                 ` : ''}
