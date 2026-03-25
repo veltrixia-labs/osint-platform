@@ -32,8 +32,8 @@ from api.gating import (
 from db.enums import ReportType
 
 # Production Traceability
-COMMIT_HASH = "36db0f7-SCHEDULER-V2"
-DEPLOY_TIMESTAMP = "2026-03-25T01:55:00Z"
+COMMIT_HASH = "caee003"
+DEPLOY_TIMESTAMP = "2026-03-25T09:55:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)
