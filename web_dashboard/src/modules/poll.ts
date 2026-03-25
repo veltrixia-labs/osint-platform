@@ -50,7 +50,11 @@ export class DashboardState {
                 analystsResp.json()
             ]);
 
-            this.alerts = alerts;
+            const unique = new Map();
+            (alerts || []).forEach((a: Alert) => {
+                if (!unique.has(a.id)) unique.set(a.id, a);
+            });
+            this.alerts = Array.from(unique.values());
             this.health = health;
             this.analysts = analysts;
             this.notify();

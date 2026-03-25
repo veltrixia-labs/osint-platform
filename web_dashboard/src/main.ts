@@ -167,6 +167,7 @@ async function initDashboard() {
     const logoutBtn = document.querySelector<HTMLElement>('#logout-btn')!
 
     logoutBtn.addEventListener('click', () => {
+        (window as any).stopPolling?.();
         logout();
         renderLogin();
     });
@@ -191,25 +192,35 @@ async function initDashboard() {
     document.querySelector('#nav-plans')?.addEventListener('click', () => handleTabSwitch('plans'));
     document.querySelector('#nav-reports')?.addEventListener('click', () => handleTabSwitch('reports'));
 
-    window.addEventListener('view-report', (e: any) => renderSingleReport(e.detail.reportId));
+    window.addEventListener('view-report', (e: any) => {
+        // Track the tab we're leaving
+        const originTab = currentTab;
+        renderSingleReport(e.detail.reportId, originTab);
+    });
 
     const renderIntelligenceFeed = async () => {
         if (!user) { renderLogin(); return; }
+        (window as any).stopPolling?.();
         const proBadge = user.tier === 'pro' ? '<span class="tier-badge u-m-top-1" style="background:var(--accent-soft); border:1px solid var(--accent); color:var(--accent);">💎 PRO Active</span>' : '';
         mainTitle.innerHTML = `Dashboard ${proBadge}`;
         
         const state = new DashboardState();
         state.subscribe((data) => {
-            if (currentTab !== 'feed') return;
-            alertsContainer.innerHTML = `
+            const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
+            if (currentTab !== 'feed' || !feedContainer) return;
+            
+            feedContainer.innerHTML = `
                 <div id="topic-filters-container"></div>
                 <div id="featured-reports-container" class="u-flex" style="margin-bottom:2rem; flex-wrap:wrap; gap:var(--space-m);"></div>
                 <h3 class="u-m-top-1" style="margin-bottom: 1.5rem; color: #c9d1d9; border-bottom: 2px solid #30363d; padding-bottom: 0.5rem;">Live Alert Stream</h3>
                 <div id="feed-alerts-inner"><div class="u-p-2 u-text-center">Fetching Intelligence Feed...</div></div>
             `;
             if (data.health) renderHealth(data.health, healthContainer);
-            renderAlerts(data.alerts, document.querySelector<HTMLElement>('#feed-alerts-inner')!);
-            renderTopicFilters(document.querySelector<HTMLElement>('#topic-filters-container')!, state);
+            const feedInner = document.querySelector<HTMLElement>('#feed-alerts-inner');
+            if (feedInner) {
+                renderAlerts(data.alerts, feedInner);
+                renderTopicFilters(document.querySelector<HTMLElement>('#topic-filters-container')!, state);
+            }
         });
         
         (window as any).stopPolling = () => state.stopPolling();
@@ -269,13 +280,13 @@ async function initDashboard() {
         } catch (e) { alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Unable to load reports.</div>'; }
     };
 
-    const renderSingleReport = async (id: string) => {
+    const renderSingleReport = async (id: string, origin: TabId = 'feed') => {
         (window as any).stopPolling?.();
         mainTitle.textContent = 'Situation Report';
         healthContainer.innerHTML = '';
         try {
             const report = await fetchReport(id);
-            renderReportDetail(report, alertsContainer, () => handleTabSwitch('feed'), (action) => {
+            renderReportDetail(report, alertsContainer, () => handleTabSwitch(origin), (action) => {
                 if (action === 'upgrade') handleTabSwitch('plans');
             });
         } catch (e) { alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Decryption failed.</div>'; }
