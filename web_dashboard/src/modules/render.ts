@@ -205,7 +205,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
         <div class="watchlist-group">
             <h4 class="u-m-top-1">Key Entities</h4>
             <p style="margin-bottom: 1.5rem;">Add specific companies, assets, or executives to prioritize them in your intelligence stream.</p>
-            <div class="watchlist-tags" id="keyword-tags" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            <div class="watchlist-tags" id="keyword-tags">
                 ${(a.watch_keywords || []).map(k => `
                     <span class="watchlist-tag keyword-tag" data-keyword="${k}">
                         ${k}
@@ -225,7 +225,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
                 </div>
             ` : ''}
         </div>
-        <div style="margin-top: auto; font-size: var(--font-xs); color: #8b949e; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+        <div class="sidebar-analyst-id">
             Analyst ID: ${a.id.slice(0, 8)}...
         </div>
     `;

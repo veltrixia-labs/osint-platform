@@ -35,6 +35,18 @@ async def seed_admin(db):
             subscription_tier="enterprise"
         )
         db.add(new_admin)
+
+        # Create testuser
+        test_pw = get_password_hash("testuser")
+        new_test = AnalystProfile(
+            telegram_chat_id="testuser",
+            hashed_password=test_pw,
+            user_role="analyst",
+            is_active=True,
+            subscription_tier="enterprise"
+        )
+        db.add(new_test)
+
         await db.commit()
         logger.info("ADMIN_SEED: Created admin user 'admin' successfully.")
 

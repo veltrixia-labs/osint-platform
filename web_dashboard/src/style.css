@@ -486,6 +486,26 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   width: 100%;
 }
 
+#sidebar-watchlist {
+  overflow-x: hidden !important;
+}
+
+.watchlist-tags {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.sidebar-analyst-id {
+  margin-top: auto;
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  word-break: break-all;
+}
+
 /* ==============================
    Reports
    ============================== */

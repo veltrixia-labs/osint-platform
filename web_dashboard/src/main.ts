@@ -124,7 +124,7 @@ async function initDashboard() {
           <div class="sidebar-nav-link" id="nav-plans">Subscription Plans</div>
         </nav>
 
-        <div id="sidebar-watchlist" class="u-m-top-1" style="flex:1; overflow-y:auto; margin-bottom:1rem;"></div>
+        <div id="sidebar-watchlist" class="u-m-top-1" style="flex:1; overflow-y:auto; overflow-x:hidden; margin-bottom:1rem;"></div>
 
         <div class="sidebar-footer u-m-top-1">
           <div class="u-flex u-m-bottom-1">
@@ -206,8 +206,9 @@ async function initDashboard() {
         
         const state = new DashboardState();
         state.subscribe((data) => {
+            if (currentTab !== 'feed') return;
             const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
-            if (currentTab !== 'feed' || !feedContainer) return;
+            if (!feedContainer) return;
             
             feedContainer.innerHTML = `
                 <div id="topic-filters-container"></div>
@@ -215,11 +216,15 @@ async function initDashboard() {
                 <h3 class="u-m-top-1" style="margin-bottom: 1.5rem; color: #c9d1d9; border-bottom: 2px solid #30363d; padding-bottom: 0.5rem;">Live Alert Stream</h3>
                 <div id="feed-alerts-inner"><div class="u-p-2 u-text-center">Fetching Intelligence Feed...</div></div>
             `;
-            if (data.health) renderHealth(data.health, healthContainer);
+
+            const healthDiv = document.querySelector<HTMLElement>('#health-container');
+            if (data.health && healthDiv) renderHealth(data.health, healthDiv);
+
             const feedInner = document.querySelector<HTMLElement>('#feed-alerts-inner');
             if (feedInner) {
-                renderAlerts(data.alerts, feedInner);
-                renderTopicFilters(document.querySelector<HTMLElement>('#topic-filters-container')!, state);
+                renderAlerts(data.alerts || [], feedInner);
+                const topicContainer = document.querySelector<HTMLElement>('#topic-filters-container');
+                if (topicContainer) renderTopicFilters(topicContainer, state);
             }
         });
         
