@@ -13,9 +13,11 @@ export function renderHealth(data: HealthData, container: HTMLElement) {
                 <span class="health-label">Suppression</span>
             </div>
         </div>
-        <div class="trigger-stats">
+        <div class="trigger-stats u-m-top-1">
             <h4>Top Triggers</h4>
-            ${(data.top_performing_triggers || []).map(t => `<div class="watchlist-tag">${t.type} (${t.avg_feedback})</div>`).join('')}
+            <div class="u-flex u-m-top-1" style="flex-wrap: wrap;">
+                ${(data.top_performing_triggers || []).map(t => `<div class="watchlist-tag">${t.type} (${t.avg_feedback})</div>`).join('')}
+            </div>
         </div>
     `;
 }
@@ -23,7 +25,7 @@ export function renderHealth(data: HealthData, container: HTMLElement) {
 export function renderAlerts(alerts: Alert[], container: HTMLElement) {
     if (!Array.isArray(alerts)) {
         console.error("renderAlerts expected an array, got:", alerts);
-        container.innerHTML = '<div style="padding:2rem;text-align:center;color:#f85149;">Technical error: invalid alerts data.</div>';
+        container.innerHTML = '<div class="u-p-2 u-text-center" style="color:#f85149;">Technical error: invalid alerts data.</div>';
         return;
     }
     container.innerHTML = alerts.map(alert => {
@@ -38,57 +40,57 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
 
         return `
             <div class="alert-card ${severityClass}" data-id="${alert.id}">
-                <div class="alert-header">
-                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                <div class="alert-header u-flex-between">
+                    <div class="u-flex" style="flex-wrap: wrap;">
                         <span class="severity-badge">${alert.severity}</span>
-                        <span class="watchlist-tag" style="background:rgba(255,255,255,0.05); font-size:0.65rem; padding: 2px 6px; border: 1px solid rgba(255,255,255,0.1); color:#8b949e;">
+                        <span class="watchlist-tag" style="background:rgba(255,255,255,0.05);">
                             ${triggerLabel}
                         </span>
-                        <span style="color: #8b949e; font-size: 0.8rem;">${displayDate}</span>
+                        <span style="color: #8b949e; font-size: var(--font-xs);">${displayDate}</span>
                     </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:0.65rem; color:#8b949e; margin-bottom:2px;">Intelligence Priority</div>
-                        <div class="intel-score" style="font-size:1.1rem; line-height:1;">${alert.intelligence_score.toFixed(2)}</div>
+                    <div class="u-text-right">
+                        <div style="font-size: var(--font-xs); color:#8b949e;">Intelligence Priority</div>
+                        <div class="intel-score">${alert.intelligence_score.toFixed(2)}</div>
                     </div>
                 </div>
                 
-                <h3 style="margin: 0.8rem 0 0.5rem 0; font-size: 1.15rem; color: #58a6ff;">${alert.target_label || 'Unknown Signal'}</h3>
+                <h3 style="color: #58a6ff;">${alert.target_label || 'Unknown Signal'}</h3>
                 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom: 1rem; background:rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 6px; border:1px solid rgba(255,255,255,0.05);">
+                <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(0,0,0,0.2); border-radius: 6px; border:1px solid rgba(255,255,255,0.05);">
                     <div>
-                        <div style="font-size:0.7rem; color:#8b949e; text-transform:uppercase; letter-spacing:0.05em;">Risk Momentum</div>
-                        <div style="font-size:0.95rem; color:#c9d1d9; font-weight:600;">${alert.intensity?.toFixed(2) || '0.00'}/10.0</div>
+                        <h4>Risk Momentum</h4>
+                        <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${alert.intensity?.toFixed(2) || '0.00'}/10.0</div>
                     </div>
                     <div>
-                        <div style="font-size:0.7rem; color:#8b949e; text-transform:uppercase; letter-spacing:0.05em;">Evidence</div>
-                        <div class="evidence-trigger-btn" style="font-size:0.95rem; color:#58a6ff; background:rgba(88,166,255,0.05); padding:2px 8px; border-radius:4px; margin-top:2px; display:inline-block; border:1px solid rgba(88,166,255,0.1);">
+                        <h4>Evidence</h4>
+                        <div class="evidence-trigger-btn u-m-top-1" style="color:#58a6ff; background:rgba(88,166,255,0.05); padding:2px 8px; border-radius:4px; display:inline-block; border:1px solid rgba(88,166,255,0.1); font-size: var(--font-s); cursor: pointer;">
                             🔍 ${alert.domain_count || 0} Domains
                         </div>
                     </div>
                     <div>
-                        <div style="font-size:0.7rem; color:#8b949e; text-transform:uppercase; letter-spacing:0.05em;">Change</div>
-                        <div style="font-size:0.95rem; color:${(alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
+                        <h4>Change</h4>
+                        <div style="font-size:var(--font-m); color:${(alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
                             ${(alert.spike_delta || 0) > 0 ? '↑' : ''}${(alert.spike_delta || 0).toFixed(2)}
                         </div>
                     </div>
                     ${hasReport ? `
                     <div style="display:flex; align-items:flex-end;">
-                        <button class="btn-fb active view-report-btn" data-report-id="${alert.related_report_id}" style="font-size:0.75rem; padding: 4px 10px; width:100%;">View Report</button>
+                        <button class="btn-fb active view-report-btn u-w-full">View Report</button>
                     </div>
                     ` : `
-                    <div style="font-size:0.7rem; color:#8b949e; display:flex; align-items:flex-end; opacity:0.6 italic;">
+                    <div style="font-size:var(--font-xs); color:#8b949e; display:flex; align-items:flex-end; opacity:0.6; font-style: italic;">
                         Analysis Pending...
                     </div>
                     `}
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-size: 0.8rem; color: #8b949e;">
-                        ${alert.delivery ? `Targeted: ${alert.delivery.analyst_id.slice(0, 8)}...` : 'Broadcast Alert'}
+                <div class="u-flex-between u-m-top-1">
+                    <div style="font-size: var(--font-xs); color: #8b949e;">
+                        ${alert.delivery ? `Targeted Alert` : 'Broadcast Alert'}
                     </div>
                     <div class="feedback-controls" style="margin-top:0;">
                         ${[1, 2, 3, 4, 5].map(s => `
-                            <button class="btn-fb ${alert.feedback_score === s ? 'active' : ''}" data-score="${s}" style="padding: 2px 8px; font-size:0.8rem;">${s}</button>
+                            <button class="btn-fb ${alert.feedback_score === s ? 'active' : ''}" data-score="${s}">${s}</button>
                         `).join('')}
                     </div>
                 </div>
@@ -116,7 +118,10 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
     container.querySelectorAll('.view-report-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const target = e.currentTarget as HTMLButtonElement;
-            const reportId = target.dataset.reportId;
+            const card = target.closest('.alert-card') as HTMLElement;
+            const alertId = card.dataset.id!;
+            const alert = alerts.find(a => a.id === alertId);
+            const reportId = alert?.related_report_id;
             if (reportId) {
                 const event = new CustomEvent('view-report', { detail: { reportId } });
                 window.dispatchEvent(event);
@@ -124,7 +129,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
         });
     });
 
-    // Attach Evidence Modal events (Phase 36)
+    // Attach Evidence Modal events
     container.querySelectorAll('.evidence-trigger-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const card = (e.currentTarget as HTMLElement).closest('.alert-card') as HTMLElement;
@@ -137,56 +142,50 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
     });
 }
 
-/**
- * Renders a modal showing the detailed evidence list (Requirement #2, #3, #4)
- */
 function showEvidenceModal(title: string, evidenceList: any[]) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
+    overlay.id = 'modal-overlay';
     
     overlay.innerHTML = `
         <div class="modal-card">
             <div class="modal-header">
                 <h2>Evidence: ${title}</h2>
-                <button class="modal-close">&times;</button>
+                <button class="modal-close" style="font-size:1.5rem; cursor:pointer; background:none; border:none; color:var(--text-secondary);">&times;</button>
             </div>
             <div class="modal-body">
                 ${evidenceList.map(item => `
                     <div class="evidence-item">
                         <h4>${item.title}</h4>
-                        <div class="evidence-meta">
+                        <div class="evidence-meta u-m-top-1">
                             <span class="evidence-domain">${item.domain}</span>
                         </div>
-                        <a href="${item.url}" target="_blank" class="evidence-link">
+                        <a href="${item.url}" target="_blank" class="evidence-link u-m-top-1">
                             🔗 View Original Source
                         </a>
                     </div>
                 `).join('')}
-                ${evidenceList.length === 0 ? '<p style="color:#8b949e; text-align:center; padding:2rem;">No supporting sources available.</p>' : ''}
+                ${evidenceList.length === 0 ? '<p class="u-p-2 u-text-center">No supporting sources available.</p>' : ''}
             </div>
         </div>
     `;
 
     document.body.appendChild(overlay);
+    document.body.classList.add('no-scroll');
 
-    // Close on &times; click
-    overlay.querySelector('.modal-close')?.addEventListener('click', () => {
+    const close = () => {
         document.body.removeChild(overlay);
-    });
+        document.body.classList.remove('no-scroll');
+        window.removeEventListener('keydown', onEsc);
+    };
 
-    // Close on background click
+    overlay.querySelector('.modal-close')?.addEventListener('click', close);
     overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            document.body.removeChild(overlay);
-        }
+        if (e.target === overlay) close();
     });
 
-    // Close on Escape key
     const onEsc = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-            document.body.removeChild(overlay);
-            window.removeEventListener('keydown', onEsc);
-        }
+        if (e.key === 'Escape') close();
     };
     window.addEventListener('keydown', onEsc);
 }
@@ -197,7 +196,6 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
         return;
     }
 
-    // For simplicity in v1, show the first analyst's watchlist
     const a = analysts[0];
     const usage = (window as any).getCurrentUsage();
     const limitReached = usage && usage.keywords.used >= usage.keywords.limit;
@@ -205,8 +203,8 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
     container.innerHTML = `
         <h2>Intelligence Watchlist</h2>
         <div class="watchlist-group">
-            <h4>Entity Watchlist</h4>
-            <p style="font-size: 0.8rem; color: #8b949e; margin-top: -0.5rem; margin-bottom: 1rem;">Add specific companies, assets, or executives to prioritize them in your intelligence stream. Matches receive boosted relevance scores.</p>
+            <h4 class="u-m-top-1">Entity Watchlist</h4>
+            <p style="margin-bottom: 1rem;">Add specific companies, assets, or executives to prioritize them in your intelligence stream.</p>
             <div class="watchlist-tags" id="keyword-tags">
                 ${(a.watch_keywords || []).map(k => `
                     <span class="watchlist-tag keyword-tag" data-keyword="${k}">
@@ -216,23 +214,22 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
                 `).join('')}
             </div>
             
-            <div class="watchlist-add-row" style="margin-top: 1rem;">
-                <input type="text" id="new-keyword" placeholder="Add entity/topic..." ${limitReached ? 'disabled' : ''} />
+            <div class="watchlist-add-row u-m-top-1">
+                <input type="text" id="new-keyword" placeholder="Add entity..." ${limitReached ? 'disabled' : ''} />
                 <button id="add-keyword-btn" class="btn-primary" ${limitReached ? 'disabled' : ''}>Add</button>
             </div>
             ${limitReached ? `
-                <div class="limit-warning" style="margin-top:0.5rem; color:#d29922; font-size:0.8rem;">
+                <div class="limit-warning u-m-top-1" style="color:#d29922; font-size:var(--font-xs);">
                     Keyword limit reached (${usage.keywords.limit}/${usage.keywords.limit}). 
                     <a href="#" id="watchlist-upgrade-link" style="color:#58a6ff; text-decoration:none;">Upgrade to Pro</a>
                 </div>
             ` : ''}
         </div>
-        <div style="margin-top: auto; font-size: 0.75rem; color: #8b949e; padding-top: 1rem; border-top: 1px solid #30363d;">
+        <div style="margin-top: auto; font-size: var(--font-xs); color: #8b949e; padding-top: 1rem; border-top: 1px solid #30363d;">
             Analyst ID: ${a.id.slice(0, 8)}...
         </div>
     `;
 
-    // Event handlers for keyword management
     const addBtn = container.querySelector('#add-keyword-btn') as HTMLButtonElement | null;
     const input = container.querySelector('#new-keyword') as HTMLInputElement | null;
     const upgradeLink = container.querySelector('#watchlist-upgrade-link');
@@ -241,10 +238,8 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
         addBtn.addEventListener('click', async () => {
             const val = input.value.trim();
             if (!val) return;
-
             const currentKws = a.watch_keywords || [];
             if (currentKws.includes(val)) return;
-
             try {
                 addBtn.textContent = "...";
                 await updateWatchlist(a.id, [...currentKws, val]);
@@ -298,10 +293,8 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
     const dateStr = report.created_at || "";
     const cleanDate = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
     const date = new Date(cleanDate).toLocaleDateString();
-    const typeLabel = (report.report_type || "daily").toUpperCase();
-    const planRequired = (report.plan_required || "free").toUpperCase();
     
-    const TOPICS = [
+    const TOPICS_INTERNAL = [
         { code: 'energy_resource_risk', label: '⚡ Energy Risk' },
         { code: 'global_market_intelligence', label: '💰 Financial Intel' },
         { code: 'ai_semiconductor_intelligence', label: '🤖 AI/Semi Intel' },
@@ -309,22 +302,19 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
         { code: 'defense_technology', label: '🛡️ Defense Tech' },
         { code: 'supply_chain_intelligence', label: '📦 Supply Chain' },
     ];
-    const topicObj = TOPICS.find(t => t.code === report.topic_code);
+    const topicObj = TOPICS_INTERNAL.find(t => t.code === report.topic_code);
     const topicLabel = topicObj ? topicObj.label : (report.topic_code ? report.topic_code.toUpperCase() : 'GLOBAL INTEL');
 
-
     let md = isPreview ? (report.content_preview || "") : (report.content_markdown || "");
-
     let evidenceData: any[] = [];
     const evidenceMatch = md.match(/<!--\s*EVIDENCE_JSON:\s*([\s\S]*?)\s*-->/);
     if (evidenceMatch) {
         try {
             evidenceData = JSON.parse(evidenceMatch[1]);
-            md = md.replace(evidenceMatch[0], ''); // Hide the raw JSON comment
+            md = md.replace(evidenceMatch[0], '');
         } catch (e) { console.error("Evidence parse error", e); }
     }
 
-    // Fallback: Try to extract from # Sources if EVIDENCE_JSON is missing
     if (evidenceData.length === 0 && md.includes('# Sources')) {
         const sourcesSection = md.split('# Sources')[1] || "";
         const links = sourcesSection.match(/\[(.*?)\]\((.*?)\)/g);
@@ -341,136 +331,91 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
         }
     }
 
-    // Clean up Redundant Sources Section (Bottom of Markdown)
-    // We remove the '# Sources' section completely if we have evidenceLog ready
     if (md.includes('# Sources')) {
         md = md.split('# Sources')[0].trim();
     }
 
-
     container.innerHTML = `
         <div class="report-detail">
-            <div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="u-flex-between u-m-top-1" style="margin-bottom: var(--space-m); flex-wrap: wrap; gap: 1rem;">
+                <div class="u-flex" style="flex-wrap: wrap;">
                     <button class="btn-fb active" id="back-to-feed-btn">← Back</button>
-                    <div style="color: #8b949e; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                    <div style="color: #8b949e; font-size: var(--font-s); display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap;">
                         <span style="font-weight: 600; color: #c9d1d9;">${topicLabel}</span>
                         <span style="opacity: 0.5;">|</span>
-                        <span>${typeLabel}</span>
+                        <span>${(report.report_type || "daily").toUpperCase()}</span>
                         <span style="opacity: 0.5;">|</span>
-                        <span style="color: ${planRequired === 'FREE' ? '#3fb950' : '#d29922'}; font-weight: 500;">${planRequired} Plan</span>
+                        <span style="color: #d29922; font-weight: 500;">${(report.plan_required || "free").toUpperCase()} Plan</span>
                         <span style="opacity: 0.5;">|</span>
                         <span>${date}</span>
                     </div>
                 </div>
-                ${isPreview ? '<span style="background: rgba(210,153,34,0.1); color: #d29922; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(210,153,34,0.3);">PREVIEW MODE</span>' : ''}
+                ${isPreview ? '<span class="tier-badge" style="background: rgba(210,153,34,0.1); color: #d29922; border: 1px solid rgba(210,153,34,0.3);">PREVIEW</span>' : ''}
             </div>
             
-            <div class="report-content-card" style="background: rgba(255,255,255,0.02); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border); line-height: 1.7; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-                <h1 style="margin-top: 0; color: #58a6ff; font-size: 2rem; border-bottom: 1px solid rgba(88,166,255,0.15); padding-bottom: 1.5rem; margin-bottom: 2rem; line-height: 1.3;">
-                    ${report.title}
-                </h1>
-                <div style="margin-bottom: 2rem; margin-top: 1rem; text-align: left;">
-                    <div class="confidence-trigger" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px; background: rgba(88,166,255,0.1); color: #58a6ff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(88,166,255,0.3); transition: all 0.2s; user-select: none;">
+            <div class="report-content-card u-m-top-1">
+                <h1>${report.title}</h1>
+                <div class="u-m-top-1 u-text-center" style="text-align: left;">
+                    <div class="confidence-trigger u-flex" style="display: inline-flex; background: rgba(88,166,255,0.1); color: #58a6ff; padding: 6px 14px; border-radius: 20px; font-size: var(--font-s); border: 1px solid rgba(88,166,255,0.3); transition: all 0.2s; cursor: pointer; user-select: none;">
                         <span style="font-size: 1.1rem;">📊</span> 
                         <span style="font-weight: 600;">Confidence: ${report.confidence_level || 'High'}</span>
                         <span style="opacity: 0.8;">(${report.source_count || 0} sources)</span>
                         <span class="chevron-icon" style="transition: transform 0.3s;">▾</span>
                     </div>
 
-                    <div class="evidence-panel" style="display: none; margin-top: 1rem; background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(88,166,255,0.2); border-radius: 12px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); max-width: 650px;">
-                        <div style="font-size: 0.7rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                    <div class="evidence-panel u-m-top-1" style="display: none; background: rgba(13, 17, 23, 0.9); border: 1px solid rgba(88,166,255,0.2); border-radius: 12px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); max-width: 650px;">
+                        <div class="u-flex-between" style="font-size: var(--font-xs); color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">
                             <span>Source Transparency & Evidence Log</span>
                             <span style="color: #58a6ff;">Verified</span>
                         </div>
                         
                         ${evidenceData.length > 0 ? `
-                            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                            <div class="u-flex" style="flex-direction: column; gap: 1.5rem;">
                                 ${evidenceData.map(e => `
-                                    <div style="border-left: 2px solid rgba(88,166,255,0.3); padding-left: 1rem; position: relative;">
-                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                                            <div style="font-weight: 600; color: #c9d1d9; font-size: 0.95rem;">${e.title}</div>
-                                            <span style="font-size: 0.65rem; background: rgba(88,166,255,0.15); color: #58a6ff; padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(88,166,255,0.2); white-space: nowrap;">${e.type}</span>
+                                    <div style="border-left: 2px solid rgba(88,166,255,0.3); padding-left: 1rem;">
+                                        <div class="u-flex-between" style="margin-bottom: 0.5rem; align-items: flex-start;">
+                                            <div style="font-weight: 600; color: #c9d1d9; font-size: var(--font-s);">${e.title}</div>
+                                            <span style="font-size: var(--font-xs); background: rgba(88,166,255,0.15); color: #58a6ff; padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(88,166,255,0.2); white-space: nowrap;">${e.type}</span>
                                         </div>
-                                        <div style="font-size: 0.85rem; color: #8b949e; line-height: 1.6; margin-bottom: 0.8rem;">${e.explanation}</div>
+                                        <div style="font-size: var(--font-s); color: #8b949e; line-height: 1.6; margin-bottom: 0.8rem;">${e.explanation}</div>
                                         ${e.link && e.link !== '#' ? `
-                                            <a href="${e.link}" target="_blank" style="font-size: 0.8rem; color: #58a6ff; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: rgba(88,166,255,0.05); border-radius: 4px; border: 1px solid rgba(88,166,255,0.1); transition: background 0.2s;">
-                                                🔗 View Original Source
-                                            </a>
-                                        ` : `
-                                            <div style="font-size: 0.8rem; color: #8b949e; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.03); border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); cursor: default;">
-                                                🔒 Source Content Restricted
-                                            </div>
-                                        `}
+                                            <a href="${e.link}" target="_blank" class="btn-fb u-flex" style="text-decoration: none; font-size: var(--font-xs); display: inline-flex;">🔗 View Source</a>
+                                        ` : '<div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.6;">🔒 Private Source</div>'}
                                     </div>
                                 `).join('')}
                             </div>
-                        ` : `
-                            <div style="color: #8b949e; font-size: 0.9rem; text-align: center; padding: 1rem;">
-                                ℹ️ Detailed supporting evidence is not yet structured for this report.
-                              </div>
-                        `}
+                        ` : '<div class="u-p-2 u-text-center">ℹ️ Detailed evidence list pending...</div>'}
                     </div>
                 </div>
 
-                <div class="markdown-body" style="color: #c9d1d9; ${isPreview ? 'mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);' : ''}">
+                <div class="markdown-body u-m-top-1" style="${isPreview ? 'mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);' : ''}">
                     ${simpleMarkdown(md)}
                 </div>
 
                 ${isPreview ? `
-                    <div class="paywall-v2" style="margin-top: 2rem; padding: 2.5rem; background: rgba(88, 166, 255, 0.03); border: 1px solid rgba(88, 166, 255, 0.2); border-radius: 12px; text-align: center; backdrop-filter: blur(4px);">
-                        
-                        
-                        <h2 style="color: #c9d1d9; margin-top: 0; font-size: 1.4rem;">Verified Intelligence</h2>
-                        <div style="color: #8b949e; margin-bottom: 2rem; max-width: 500px; margin-inline: auto; font-size: 0.95rem;">
+                    <div class="paywall-v2 u-m-top-1 u-p-2" style="background: rgba(88, 166, 255, 0.03); border: 1px solid rgba(88, 166, 255, 0.2); border-radius: 12px; text-align: center; backdrop-filter: blur(4px);">
+                        <h2 style="color: #c9d1d9; margin-top: 0;">Verified Intelligence</h2>
+                        <div style="color: #8b949e; margin-bottom: 2rem; max-width: 500px; margin-inline: auto;">
                             <ul style="list-style: none; padding: 0; margin-bottom: 1rem; color: #c9d1d9; text-align: center;">
-                                <li>• 3 supply chain nodes identified</li>
-                                <li>• 14-day disruption window</li>
+                                <li>• Targeted Entity Risk Profiles</li>
+                                <li>• Supply Chain Vulnerability Nodes</li>
                             </ul>
-                            <div style="margin-bottom: 1rem; text-align: center; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
-                                <div style="color: #c9d1d9; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Who this impacts:</div>
-                                <div style="font-size: 0.9rem; color: #8b949e;">Semiconductor Investors • Hardware OEMs • Logistics Operators</div>
-                            </div>
-                            <p style="font-weight: 500; color: #58a6ff; margin: 0;">See which suppliers and positions are exposed before the market re-prices.</p>
-                        </div>
-                        
-                        <div class="cta-hierarchy" style="display: flex; flex-direction: column; gap: 0.75rem; max-width: 360px; margin: 0 auto;">
-                            <button id="cta-main-btn" class="plan-cta-btn" style="width: 100%; padding: 0.8rem; font-size: 1rem; font-weight: 600;">
-                                Access Detailed Entity Risk List
-                            </button>
-                            <button class="plan-cta-btn minimal" style="width: 100%; padding: 0.5rem; font-size: 0.8rem; background: transparent; border: none; color: #58a6ff; cursor: pointer;" onclick="document.querySelector('#cta-main-btn').click()">
-                                Secure Founding Member Access ($19/mo)
-                            </button>
+                            <button id="cta-main-btn" class="plan-cta-btn u-w-full u-m-top-1">Access Detailed Intelligence (Pro)</button>
                         </div>
                     </div>
                 ` : ''}
             </div>
-
-            ${!isPreview && report.substack_url ? `
-                <div style="margin-top: 2rem; text-align: center;">
-                    <a href="${report.substack_url}" target="_blank" class="plan-cta-btn" style="text-decoration: none; display: inline-block;">
-                        Read original on Substack
-                    </a>
-                </div>
-            ` : ''}
         </div>
     `;
 
-    // Fix click handler: use onBack callback if provided, fallback to default behavior
     const backBtn = container.querySelector('#back-to-feed-btn');
     if (backBtn) {
         backBtn.addEventListener('click', () => {
-             if (onBack) {
-                 onBack();
-             } else {
-                 const feedNav = document.querySelector<HTMLElement>('#nav-feed');
-                 if (feedNav) feedNav.click();
-             }
+             if (onBack) onBack();
+             else document.querySelector<HTMLElement>('#nav-feed')?.click();
         });
     }
 
-
-    // Confidence Panel Interaction
     const trigger = container.querySelector('.confidence-trigger');
     const panel = container.querySelector('.evidence-panel') as HTMLElement;
     const chevron = container.querySelector('.chevron-icon') as HTMLElement;
@@ -479,21 +424,11 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
         trigger.addEventListener('click', () => {
             const isHidden = panel.style.display === 'none';
             panel.style.display = isHidden ? 'block' : 'none';
-            if (chevron) {
-                chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-            }
-            if (isHidden) {
-                (trigger as HTMLElement).style.borderColor = 'rgba(88,166,255,0.8)';
-                (trigger as HTMLElement).style.background = 'rgba(88,166,255,0.2)';
-            } else {
-                (trigger as HTMLElement).style.borderColor = 'rgba(88,166,255,0.3)';
-                (trigger as HTMLElement).style.background = 'rgba(88,166,255,0.1)';
-            }
+            if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
         });
     }
 
     if (isPreview) {
-
         container.querySelector('#cta-main-btn')?.addEventListener('click', () => {
             if (onActionRequested) onActionRequested('upgrade');
             else window.location.reload();

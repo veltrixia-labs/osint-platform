@@ -163,9 +163,18 @@ async function initDashboard() {
     const tierBadgeHtml = user ? renderTierBadge(user) : '<span class="tier-badge-free">GUEST</span>';
 
     app.innerHTML = `
+      <div class="mobile-header">
+          <div class="u-flex">
+              <button class="hamburger" id="hamburger-btn">☰</button>
+              <h2 style="font-size: 1.1rem; margin:0;">OSINT Intel</h2>
+          </div>
+          ${tierBadgeHtml}
+      </div>
+      <div class="mobile-overlay" id="mobile-overlay"></div>
+
       <aside class="sidebar" id="sidebar">
           <div class="user-info">
-              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+              <div class="u-flex" style="flex-wrap:wrap;">
                 <span class="role-badge">${user ? user.role : 'Guest'}</span>
                 ${tierBadgeHtml}
               </div>
@@ -173,8 +182,7 @@ async function initDashboard() {
               ${user ? '<button id="logout-btn" class="logout-btn">Logout</button>' : '<button id="login-goto-btn" class="logout-btn" style="background:var(--tier-grace);">Log In</button>'}
           </div>
 
-          <!-- Navigation -->
-          <nav id="sidebar-nav" style="margin-bottom:1rem;">
+          <nav id="sidebar-nav">
               <div class="sidebar-nav-link sidebar-nav-link--active" data-tab="feed" id="nav-feed">
                   📡 Intelligence Feed
               </div>
@@ -186,9 +194,7 @@ async function initDashboard() {
               </div>
           </nav>
 
-          <!-- Usage Widget (Phase 33) -->
           <div id="usage-widget"></div>
-
           <div id="sidebar-content"></div>
       </aside>
 
@@ -199,10 +205,42 @@ async function initDashboard() {
           <div id="health-container"></div>
         </div>
         <div class="main-feed" id="alerts-container">
-          <div style="padding: 2rem; text-align: center; color: #8b949e;">Initializing intelligence feed...</div>
+          <div class="u-p-2 u-text-center">Initializing intelligence feed...</div>
         </div>
       </main>
     `
+
+    // Mobile Sidebar Logic
+    const sidebar = document.querySelector('#sidebar') as HTMLElement;
+    const overlay = document.querySelector('#mobile-overlay') as HTMLElement;
+    const hamburger = document.querySelector('#hamburger-btn') as HTMLElement;
+
+    const toggleSidebar = (forceClose = false) => {
+        const isActive = forceClose ? true : sidebar.classList.contains('active');
+        if (isActive) {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.classList.remove('no-scroll');
+        } else {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+            document.body.classList.add('no-scroll');
+        }
+    };
+
+    hamburger?.addEventListener('click', () => toggleSidebar());
+    overlay?.addEventListener('click', () => toggleSidebar(true));
+    
+    // Close sidebar on nav click (mobile)
+    document.querySelectorAll('.sidebar-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 768) toggleSidebar(true);
+        });
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') toggleSidebar(true);
+    });
 
     document.querySelector('#logout-btn')?.addEventListener('click', logout)
     document.querySelector('#login-goto-btn')?.addEventListener('click', () => renderLogin())
@@ -232,12 +270,6 @@ async function initDashboard() {
         container.innerHTML = '';
         const wrap = document.createElement('div');
         wrap.className = 'topic-filter-bar';
-        wrap.style.display = 'flex';
-        wrap.style.gap = '0.5rem';
-        wrap.style.overflowX = 'auto';
-        wrap.style.paddingBottom = '1rem';
-        wrap.style.marginBottom = '1rem';
-        wrap.style.borderBottom = '1px solid var(--border)';
 
         const allBtn = document.createElement('button');
         allBtn.className = `topic-btn ${currentTopic === null ? 'topic-btn--active' : ''}`;
@@ -286,10 +318,10 @@ async function initDashboard() {
         } else {
             alertsContainer.innerHTML = `
                 <div id="topic-filters-container"></div>
-                <div id="featured-reports-container" style="display:flex; gap:1.5rem; margin-bottom:2rem; flex-wrap:wrap;"></div>
-                <div id="topic-reports-grid" class="reports-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom:1rem;"></div>
-                <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem;">Live Alert Stream</h3>
-                <div id="feed-alerts-inner"><div style="color:#8b949e;text-align:center;padding:2rem;">Fetching Intelligence Feed...</div></div>
+                <div id="featured-reports-container" class="u-flex" style="margin-bottom:2rem; flex-wrap:wrap; gap:var(--space-m);"></div>
+                <div id="topic-reports-grid" class="reports-grid" style="margin-bottom:1rem;"></div>
+                <h3 class="u-m-top-1" style="margin-bottom: 1rem; color: #c9d1d9; border-bottom: 1px solid #30363d; padding-bottom: 0.5rem;">Live Alert Stream</h3>
+                <div id="feed-alerts-inner"><div class="u-p-2 u-text-center">Fetching Intelligence Feed...</div></div>
             `;
 
             const filtersContainer = alertsContainer.querySelector('#topic-filters-container') as HTMLElement;
