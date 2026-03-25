@@ -158,6 +158,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   flex-direction: column;
   gap: var(--space-m);
   width: 100%;
+  min-width: 0; /* Prevents grid blowout */
 }
 
 .header-row {
@@ -462,7 +463,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   font-size: var(--font-s);
   cursor: pointer;
   white-space: nowrap;
-  min-height: 40px;
+  min-height: 44px; /* Accessible touch target */
 }
 
 .reports-grid {
