@@ -18,6 +18,14 @@ import { fetchCheckoutSession, cancelSubscription } from './api';
 
 const GRACE_PERIOD_DAYS = 3;
 
+/** Mapping internal tier IDs to user-facing display names */
+const PLAN_NAME_MAP: Record<string, string> = {
+    free: 'Free',
+    pro: 'Pro',
+    experts: 'Expert',
+    enterprise: 'Enterprise',
+};
+
 interface PlanConfig {
     id: string;
     name: string;
@@ -35,7 +43,7 @@ interface PlanConfig {
 const PLANS: PlanConfig[] = [
     {
         id: 'free',
-        name: 'Free',
+        name: PLAN_NAME_MAP.free,
         subtitle: 'Get started with the basics',
         price: '$0',
         priceNote: 'forever',
@@ -52,10 +60,9 @@ const PLANS: PlanConfig[] = [
     },
     {
         id: 'pro',
-        name: 'Pro',
+        name: PLAN_NAME_MAP.pro,
         subtitle: 'Founding Member Access',
         price: '$19',
-        originalPrice: '$49',
         priceNote: 'per month',
         color: '#58a6ff',
         directCheckout: true,  // → Stripe Checkout
@@ -71,7 +78,7 @@ const PLANS: PlanConfig[] = [
     },
     {
         id: 'experts',
-        name: 'Experts',
+        name: PLAN_NAME_MAP.experts,
         subtitle: 'Advanced Strategic Intelligence',
         price: '$49',
         priceNote: 'per month',
@@ -81,7 +88,7 @@ const PLANS: PlanConfig[] = [
         features: [
             'Monthly full LLM analysis',
             'Scenario analysis (Best/Base/Worst)',
-            'Risk forecasting (30-60 days)',
+            'Risk forecasting (30–60 days)',
             'Cross-domain impact intelligence',
             'High self-serve limits',
             'Unlimited alerts',
@@ -89,7 +96,7 @@ const PLANS: PlanConfig[] = [
     },
     {
         id: 'enterprise',
-        name: 'Enterprise',
+        name: PLAN_NAME_MAP.enterprise,
         subtitle: 'Custom intelligence at scale',
         price: 'Custom',
         priceNote: 'contact us',
@@ -109,18 +116,27 @@ const PLANS: PlanConfig[] = [
 
 /**
  * Feature comparison table rows.
- * Each row: [featureName, free, pro, experts, enterprise]
+ * Each row: [featureName, free, pro, expert, enterprise]
  */
 const FEATURE_COMPARISON: [string, string, string, string, string][] = [
-    ['Alerts per day',      '5',         '100',         'Unlimited',   'Unlimited'],
-    ['Daily reports',       '✓',         '✓',           '✓',           '✓'],
-    ['Weekly reports',      '✗',         '✓',           '✓',           '✓'],
-    ['Monthly reports',     '✗',         '✗',           '✓ (Full LLM)', '✓ (Full LLM)'],
-    ['Scenario Analysis',   '✗',         '✗',           '✓',           '✓'],
-    ['Risk Forecasting',    '✗',         '✗',           '✓',           '✓'],
-    ['Custom topics',       '✗',         '✗',           '✗',           '✓'],
-    ['Watchlist keywords',  '3',         '20',          '100',         'Unlimited'],
-    ['Support',             'Community', 'Priority',    'Priority',    'Dedicated SLA'],
+    ['Alerts per day',              '5',         '100',         'Unlimited',   'Unlimited'],
+    ['Daily reports',               '✓',         '✓',           '✓',           '✓'],
+    ['Weekly reports',              '✗',         '✓',           '✓',           '✓'],
+    ['Monthly reports',             '✗',         '✗',           '✓ (Full LLM)', '✓ (Full LLM)'],
+    ['Scenario analysis',           '✗',         '✗',           '✓',           '✓'],
+    ['Risk forecasting',            '✗',         '✗',           '✓',           '✓'],
+    ['Custom topics',               '✗',         '✗',           '✗',           '✓'],
+    ['Watchlist keywords',          '3',         '20',          '100',         'Unlimited'],
+    ['Support',                     'Community', 'Priority',    'Priority',    'Dedicated SLA'],
+    ['Community topics only',       '✓',         '✓',           '✓',           '✓'],
+    ['Entity-level intelligence',   '✗',         '✓',           '✓',           '✓'],
+    ['Confidence metrics',          '✗',         '✓',           '✓',           '✓'],
+    ['Source traceability',         '✗',         '✓',           '✓',           '✓'],
+    ['Cross-domain impact',         '✗',         '✗',           '✓',           '✓'],
+    ['Self-serve limits',           'Low',       'Medium',      'High',        'Custom'],
+    ['Team/Org support',            '✗',         '✗',           '✗',           '✓'],
+    ['Dedicated Account Manager',   '✗',         '✗',           '✗',           '✓'],
+    ['Custom Workflows',            '✗',         '✗',           '✗',           '✓'],
 ];
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -152,7 +168,8 @@ export function renderTierBadge(user: UserMe): string {
     };
     const col = colors[user.tier] ?? '#8b949e';
     const grace = isInGracePeriod(user) ? ' tier-badge--grace' : '';
-    return `<span class="tier-badge${grace}" style="background: ${col}22; color: ${col}; border-color: ${col}55;">${user.tier.toUpperCase()}</span>`;
+    const displayName = PLAN_NAME_MAP[user.tier] || user.tier.toUpperCase();
+    return `<span class="tier-badge${grace}" style="background: ${col}22; color: ${col}; border-color: ${col}55;">${displayName.toUpperCase()}</span>`;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -190,12 +207,13 @@ export function renderGracePeriodBanner(user: UserMe): string {
  * CTA always routes to the Plans & Billing tab (unified navigation).
  */
 export function renderLockedFeature(label: string, minTier: string): string {
+    const minTierDisplay = PLAN_NAME_MAP[minTier] || minTier.charAt(0).toUpperCase() + minTier.slice(1);
     return `
     <div class="locked-feature-overlay">
         <div class="locked-feature-inner">
             <div class="locked-icon">🔒</div>
             <h3>${label}</h3>
-            <p>This feature requires a <strong>${minTier.charAt(0).toUpperCase() + minTier.slice(1)}</strong> subscription or higher.</p>
+            <p>This feature requires an <strong>${minTierDisplay}</strong> subscription or higher.</p>
             <button class="plan-cta-btn" id="locked-goto-plans" data-target-tab="plans">
                 View Plans & Billing
             </button>
@@ -245,6 +263,21 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
             ctaHtml = `<a class="plan-cta-btn plan-cta-btn--contact" href="${plan.contactUrl}" target="_blank" rel="noopener">Contact Sales</a>`;
         }
 
+        // Pricing Display Logic
+        let priceHtml = '';
+        if (plan.id === 'pro') {
+            priceHtml = `
+                <span class="plan-price-amount pro-price-highlight">${plan.price}</span>
+                <span class="plan-price-note">/${plan.priceNote}</span>
+            `;
+        } else {
+            priceHtml = `
+                ${plan.originalPrice ? `<span class="plan-price-old">${plan.originalPrice}</span>` : ''}
+                <span class="plan-price-amount">${plan.price}</span>
+                <span class="plan-price-note">/${plan.priceNote}</span>
+            `;
+        }
+
         return `
         <div class="plan-card ${isCurrent ? 'plan-card--active' : ''}" style="--plan-color: ${plan.color}">
             ${plan.id === 'pro' ? '<div class="plan-badge-top">FOUNDING MEMBER</div>' : ''}
@@ -252,9 +285,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                 <h2 class="plan-name" style="color: ${plan.color}">${plan.name}</h2>
                 <p class="plan-subtitle">${plan.subtitle}</p>
                 <div class="plan-price">
-                    ${plan.originalPrice ? `<span class="plan-price-old">${plan.originalPrice}</span>` : ''}
-                    <span class="plan-price-amount" style="${plan.originalPrice ? 'color: var(--tier-grace);' : ''}">${plan.price}</span>
-                    <span class="plan-price-note">/${plan.priceNote}</span>
+                    ${priceHtml}
                 </div>
             </div>
             <ul class="plan-features">${featureList}</ul>
@@ -300,10 +331,10 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                     <thead>
                         <tr>
                             <th>Feature</th>
-                            <th class="${user.tier === 'free' ? 'cmp-current' : ''}">Free</th>
-                            <th class="${user.tier === 'pro' ? 'cmp-current' : ''}">Pro</th>
-                            <th class="${user.tier === 'experts' ? 'cmp-current' : ''}">Experts</th>
-                            <th class="${user.tier === 'enterprise' ? 'cmp-current' : ''}">Enterprise</th>
+                            <th class="${user.tier === 'free' ? 'cmp-current' : ''}">${PLAN_NAME_MAP.free}</th>
+                            <th class="${user.tier === 'pro' ? 'cmp-current' : ''}">${PLAN_NAME_MAP.pro}</th>
+                            <th class="${user.tier === 'experts' ? 'cmp-current' : ''}">${PLAN_NAME_MAP.experts}</th>
+                            <th class="${user.tier === 'enterprise' ? 'cmp-current' : ''}">${PLAN_NAME_MAP.enterprise}</th>
                         </tr>
                     </thead>
                     <tbody>${tableRows}</tbody>

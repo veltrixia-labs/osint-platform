@@ -426,6 +426,10 @@ body {
 .plan-price { margin-top: 0.5rem; }
 .plan-price-amount { font-size: 2rem; font-weight: 800; color: var(--text-primary); }
 .plan-price-note { font-size: 0.8rem; color: var(--text-secondary); margin-left: 4px; }
+.pro-price-highlight {
+  color: #d29922;
+  font-weight: 700;
+}
 
 .plan-features {
   list-style: none;
