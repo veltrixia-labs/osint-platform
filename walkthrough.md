@@ -10,6 +10,8 @@ I have successfully restored the Live Alert Stream functionality by relaxing str
   - `is_system_wide`: Boolean flag for alerts not tied to a specific analyst.
   - `supporting_events_count`: Explicit count for filtering.
 - Applied Alembic migration: `4f1a2e3b4c5d_add_alert_quality_fields.py` (which also merged previously branched heads).
+- [x] Relaxed API Filtering in `api/main.py`
+- [x] Fixed Frontend Authentication for Alerts API (Introduced `apiClient`)
 
 ### 2. Core Logic Enhancements
 - **Fallback Evidence Matching**: In `alert_manager.py`, if an exact title match between a signal and articles fails, the system now falls back to keyword overlap and label containment checks.
@@ -21,6 +23,24 @@ I have successfully restored the Live Alert Stream functionality by relaxing str
   - Verified evidence (domain_count > 0)
   - High Intensity (intensity >= 8.0)
   - Supporting events present (supporting_events_count > 0)
+
+### Frontend Authentication Fix
+
+- **Problem:** `/api/alerts` requests were intermittently failing with `401 Unauthorized` due to missing `Authorization` headers.
+- **Solution:** Introduced a centralized `apiClient` in `web_dashboard/src/modules/api.ts` to ensure consistent header injection and token management.
+- **Changes:**
+  - Added `apiClient` with `get` and `post` helper methods.
+  - Refactored `fetchWithAuth` to retrieve tokens directly from `localStorage` to avoid stale state.
+  - Updated `poll.ts` and all `api.ts` functions to use the new `apiClient`.
+
+```typescript
+// Example of the new apiClient usage in poll.ts
+const [alertsResp, healthResp, analystsResp] = await Promise.all([
+    apiClient.get(`/alerts?${query}`),
+    apiClient.get(`/system/health`),
+    apiClient.get(`/analysts`)
+]);
+```
 
 ## Verification Results
 

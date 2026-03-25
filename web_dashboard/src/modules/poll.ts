@@ -1,4 +1,4 @@
-import { fetchAlerts, fetchHealth, fetchAnalysts } from './api';
+import { apiClient } from './api';
 import type { Alert, HealthData, AnalystProfile } from './api';
 
 export class DashboardState {
@@ -37,11 +37,19 @@ export class DashboardState {
             const params: any = { limit: 15 };
             if (this.topic) params.topic = this.topic;
 
-            const [alerts, health, analysts] = await Promise.all([
-                fetchAlerts(params),
-                fetchHealth(),
-                fetchAnalysts()
+            const query = new URLSearchParams(params).toString();
+            const [alertsResp, healthResp, analystsResp] = await Promise.all([
+                apiClient.get(`/alerts?${query}`),
+                apiClient.get(`/system/health`),
+                apiClient.get(`/analysts`)
             ]);
+
+            const [alerts, health, analysts] = await Promise.all([
+                alertsResp.json(),
+                healthResp.json(),
+                analystsResp.json()
+            ]);
+
             this.alerts = alerts;
             this.health = health;
             this.analysts = analysts;

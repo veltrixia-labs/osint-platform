@@ -136,6 +136,23 @@ export async function logout() {
     window.location.reload();
 }
 
+/**
+ * apiClient - Unified authenticated request wrapper
+ */
+export const apiClient = {
+    async get(path: string, options: RequestInit = {}) {
+        return fetchWithAuth(`${API_BASE}${path}`, { ...options, method: 'GET' });
+    },
+    async post(path: string, body?: any, options: RequestInit = {}) {
+        return fetchWithAuth(`${API_BASE}${path}`, {
+            ...options,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...options.headers },
+            body: body ? JSON.stringify(body) : undefined
+        });
+    }
+};
+
 async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
     // A. Early Exit if logging out
     if (getLoggingOut()) {
@@ -143,8 +160,10 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
     }
 
     const headers = new Headers(options.headers || {});
-    if (accessToken) {
-        headers.set('Authorization', `Bearer ${accessToken}`);
+    const currentToken = localStorage.getItem('access_token');
+    
+    if (currentToken) {
+        headers.set('Authorization', `Bearer ${currentToken}`);
     }
     
     const authOptions: RequestInit = {
@@ -155,8 +174,8 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 
     let resp = await fetch(url, authOptions);
 
-    // B. 401 Handling
-    if (resp.status === 401 && !url.includes('/auth/refresh')) {
+    // B. Refresh Logic (401 Handling)
+    if (resp.status === 401 && !url.includes('/auth/refresh') && !url.includes('/auth/login')) {
         // If logging out, ignore any 401 errors
         if (getLoggingOut()) {
             return resp;
@@ -177,21 +196,17 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
                 headers.set('Authorization', `Bearer ${accessToken}`);
                 resp = await fetch(url, { ...authOptions, headers });
             } else {
-                // If refresh fails during logout, ignore silently
-                if (getLoggingOut()) {
-                    return resp;
+                // If refresh fails, clear token and logout
+                if (!getLoggingOut()) {
+                    accessToken = null;
+                    localStorage.removeItem('access_token');
+                    window.location.href = '/'; 
                 }
-                
-                accessToken = null;
-                localStorage.removeItem('access_token');
-                throw new Error("Session expired");
-            }
-        } catch (err) {
-            // C. Silent failure on refresh if logging out
-            if (getLoggingOut()) {
                 return resp;
             }
-            throw err;
+        } catch (err) {
+            console.error("Auth refresh failed:", err);
+            return resp;
         }
     }
 
@@ -200,30 +215,22 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 
 export async function fetchAlerts(params: Record<string, string> = {}): Promise<Alert[]> {
     const query = new URLSearchParams(params).toString();
-    const resp = await fetchWithAuth(`${API_BASE}/alerts?${query}`);
+    const resp = await apiClient.get(`/alerts?${query}`);
     return await resp.json();
 }
 
 export async function submitFeedback(alertId: string, score: number) {
-    const resp = await fetchWithAuth(`${API_BASE}/alerts/${alertId}/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ score })
-    });
+    const resp = await apiClient.post(`/alerts/${alertId}/feedback`, { score });
     return await resp.json();
 }
 
 export async function fetchAnalysts(): Promise<AnalystProfile[]> {
-    const resp = await fetchWithAuth(`${API_BASE}/analysts`);
+    const resp = await apiClient.get(`/analysts`);
     return await resp.json();
 }
 
 export async function updateWatchlist(analystId: string, watchlist: string[]): Promise<any> {
-    const resp = await fetchWithAuth(`${API_BASE}/analysts/${analystId}/watchlist`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(watchlist)
-    });
+    const resp = await apiClient.post(`/analysts/${analystId}/watchlist`, watchlist);
     if (resp.status === 403) {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.detail || 'Plan limit reached');
@@ -240,18 +247,18 @@ export interface UsageResponse {
 }
 
 export async function fetchUsage(): Promise<UsageResponse> {
-    const resp = await fetchWithAuth(`${API_BASE}/system/usage`);
+    const resp = await apiClient.get(`/system/usage`);
     return await resp.json();
 }
 
 export async function fetchHealth(): Promise<HealthData> {
-    const resp = await fetchWithAuth(`${API_BASE}/system/health`);
+    const resp = await apiClient.get(`/system/health`);
     return await resp.json();
 }
 
 export async function fetchMe(): Promise<UserMe | null> {
     try {
-        const resp = await fetchWithAuth(`${API_BASE}/auth/me`);
+        const resp = await apiClient.get(`/auth/me`);
         if (!resp.ok) return null;
         return await resp.json();
     } catch {
@@ -265,10 +272,10 @@ export async function fetchMe(): Promise<UserMe | null> {
  */
 export async function fetchCheckoutSession(tier: string, reportId?: string): Promise<CheckoutResponse> {
     const returnUrl = encodeURIComponent(window.location.origin);
-    let url = `${API_BASE}/payments/checkout-session?tier=${tier}&return_url=${returnUrl}`;
-    if (reportId) url += `&report_id=${reportId}`;
+    let path = `/payments/checkout-session?tier=${tier}&return_url=${returnUrl}`;
+    if (reportId) path += `&report_id=${reportId}`;
     
-    const resp = await fetchWithAuth(url);
+    const resp = await apiClient.get(path);
     if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.detail || `Failed to start checkout (HTTP ${resp.status})`);
@@ -280,11 +287,7 @@ export async function fetchCheckoutSession(tier: string, reportId?: string): Pro
  * Validates a Stripe session on the backend to trigger immediate fulfillment.
  */
 export async function confirmCheckoutSession(sessionId: string): Promise<any> {
-    const resp = await fetchWithAuth(`${API_BASE}/payments/confirm-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId })
-    });
+    const resp = await apiClient.post(`/payments/confirm-session`, { session_id: sessionId });
     if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.detail || 'Fulfillment failed');
@@ -296,9 +299,7 @@ export async function confirmCheckoutSession(sessionId: string): Promise<any> {
  * Creates a Stripe portal session for the user to manage their subscription.
  */
 export async function cancelSubscription(): Promise<{ url: string }> {
-    const resp = await fetchWithAuth(`${API_BASE}/payments/portal-session`, {
-        method: 'POST'
-    });
+    const resp = await apiClient.post(`/payments/portal-session`, {});
     if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.detail || 'Failed to open management portal');
@@ -308,17 +309,16 @@ export async function cancelSubscription(): Promise<{ url: string }> {
 
 
 export async function fetchReports(limit: number = 10, topic?: string): Promise<Report[]> {
-    const url = new URL(`${API_BASE}/reports`);
-    url.searchParams.append('limit', limit.toString());
-    if (topic) url.searchParams.append('topic', topic);
+    let path = `/reports?limit=${limit}`;
+    if (topic) path += `&topic=${topic}`;
     
-    const resp = await fetchWithAuth(url.toString());
+    const resp = await apiClient.get(path);
     if (!resp.ok) throw new Error("Failed to fetch reports");
     return await resp.json();
 }
 
 export async function fetchReport(reportId: string): Promise<Report> {
-    const resp = await fetchWithAuth(`${API_BASE}/reports/${reportId}`);
+    const resp = await apiClient.get(`/reports/${reportId}`);
     if (resp.status === 404) throw new Error("Report not found");
     if (!resp.ok) throw new Error(`Failed to fetch report (HTTP ${resp.status})`);
     
@@ -342,14 +342,10 @@ export async function logAnalyticsEvent(type: string, reportId?: string, metadat
             url: window.location.href
         };
 
-        await fetchWithAuth(`${API_BASE}/analytics/event`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                event_type: type,
-                report_id: reportId,
-                metadata_json: enrichedMetadata
-            })
+        await apiClient.post(`/analytics/event`, {
+            event_type: type,
+            report_id: reportId,
+            metadata_json: enrichedMetadata
         });
     } catch (err) {
         console.warn('Analytics logging failed:', err);
