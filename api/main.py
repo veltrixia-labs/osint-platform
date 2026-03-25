@@ -283,11 +283,20 @@ async def get_alerts(
     stmt = stmt.order_by(desc(AlertLog.triggered_at)).limit(limit)
     results = (await db.execute(stmt)).scalars().all()
 
-    # Filter out legacy 0-evidence alerts that were generated before the suppression fix
-    filtered_results = [
-        log for log in results 
-        if log.metadata_json and log.metadata_json.get("domain_count", 0) > 0
-    ]
+    # Filter: Allow if has verified domains OR High Intensity OR has supporting events
+    # (Requirement: Prevent high-signal alerts from being suppressed by strict evidence checks)
+    filtered_results = []
+    for log in results:
+        metadata = log.metadata_json or {}
+        domain_count = metadata.get("domain_count", 0)
+        
+        # New multi-tier filtering logic
+        if domain_count > 0:
+            filtered_results.append(log)
+        elif log.intensity >= 8.0:
+            filtered_results.append(log)
+        elif getattr(log, "supporting_events_count", 0) > 0:
+            filtered_results.append(log)
 
     formatted = [
         {

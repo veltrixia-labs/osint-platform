@@ -40,9 +40,10 @@ class AlertManager:
             # 1. Gather Metrics for Severity
             domain_count, evidence_list = await cls._get_evidence_metrics(db, sig)
             
-            # CRITICAL: Suppress alerts with zero evidence (Requirement #1)
-            if domain_count == 0:
-                logger.info(f"Alert for {sig.target_label} suppressed: Zero evidence sources.")
+            # CRITICAL: Suppress alerts ONLY if zero evidence AND intensity is low
+            # (User Requirement: Relaxed filtering for high-signal alerts)
+            if domain_count == 0 and sig.intensity_score < 8.0:
+                logger.info(f"Alert for {sig.target_label} suppressed: Zero evidence sources and low intensity ({sig.intensity_score}).")
                 continue
 
             spike_delta = await cls._get_spike_delta(db, sig)
@@ -62,15 +63,15 @@ class AlertManager:
             from jobs.personalization_service import get_target_analysts
             targets = await get_target_analysts(db, sig.target_label, intel_score, severity, breakdown)
             
-            if not targets:
-                logger.info(f"Alert for {sig.target_label} suppressed: No analysts matched criteria (Score: {intel_score:.2f})")
-                continue
-
             # 6. Fetch additional context for linking
             report_id, anchor = await cls._get_latest_report_link(db, sig)
             
             # 7. Create Master Alert Log Entry
-            # (We still log the master entry for search/reference)
+            # (We now log even if targets is empty to populate the Live Alert Stream)
+            is_system_wide = len(targets) == 0
+            # Mark as confirmed if we found evidence domains, otherwise pending
+            status = "confirmed" if domain_count > 0 else "pending_evidence"
+            
             alert_log = AlertLog(
                 target_label=sig.target_label,
                 topic=sig.topic,
@@ -80,6 +81,9 @@ class AlertManager:
                 intelligence_score=intel_score,
                 section_anchor=anchor,
                 related_report_id=report_id,
+                status=status,
+                is_system_wide=is_system_wide,
+                supporting_events_count=len(evidence_list),
                 metadata_json={
                     "spike_delta": round(float(spike_delta), 2),
                     "domain_count": domain_count,
@@ -90,9 +94,12 @@ class AlertManager:
             db.add(alert_log)
             await db.flush() # Need actual ID for delivery logs
 
-            # 8. Route to Targeted Analysts
-            for profile, personal_score, is_broadcast in targets:
-                await cls._send_personalized_alert(db, profile, alert_log, sig, personal_score, is_broadcast)
+            if not targets:
+                logger.info(f"Alert for {sig.target_label} logged as system-wide (No matched analysts).")
+            else:
+                # 8. Route to Targeted Analysts
+                for profile, personal_score, is_broadcast in targets:
+                    await cls._send_personalized_alert(db, profile, alert_log, sig, personal_score, is_broadcast)
 
     @classmethod
     def _determine_severity(cls, intensity: float, spike: float, domains: int) -> Optional[str]:
@@ -131,14 +138,33 @@ class AlertManager:
 
     @classmethod
     async def _get_evidence_metrics(cls, db, sig: TrendSignal) -> Tuple[int, List[Dict[str, str]]]:
-        """Counts unique media domains and returns list of source metadata."""
+        """Counts unique media domains and returns list of source metadata with fallback matching."""
         titles = sig.metrics_json.get("supporting_events", [])
         if not titles: 
             return 0, []
         
+        # 1. Exact Match Strategy
         stmt = select(Item).where(Item.title.in_(titles))
         items = (await db.execute(stmt)).scalars().all()
         
+        # 2. Fallback: Keyword Overlap / Label Containment
+        if not items:
+            logger.info(f"No exact title matches for {sig.target_label}, attempting fallback...")
+            # Try to match items whose titles contain the target_label (useful for entity heat)
+            fallback_stmt = select(Item).where(Item.title.ilike(f"%{sig.target_label}%")).limit(5)
+            items = (await db.execute(fallback_stmt)).scalars().all()
+            
+            if not items:
+                # Further fallback: check if any supporting titles match partially
+                # This handles cases where TrendSignal target_label is fragmented
+                for title_fragment in titles[:3]:
+                    if len(title_fragment) < 5: continue
+                    f_stmt = select(Item).where(Item.title.ilike(f"%{title_fragment}%")).limit(3)
+                    f_items = (await db.execute(f_stmt)).scalars().all()
+                    if f_items:
+                        items.extend(f_items)
+                        break
+
         evidence_list = []
         seen_urls = set()
         

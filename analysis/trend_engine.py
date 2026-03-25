@@ -223,6 +223,7 @@ def _compress_trends(signals: List[TrendSignal], start: datetime, end: datetime,
             "recent": round(sum(i["signal"].metrics_json.get("recent", 0) for i in g["items"]) / len(g["items"]), 2),
             "delta": round(sum(i["signal"].metrics_json.get("delta", 0) for i in g["items"]) / len(g["items"]), 2),
             "supporting_events": unique_supporting,
+            "supporting_events_count": len(unique_supporting),
             "supporting_cluster_count": int(sum(i["signal"].metrics_json.get("supporting_cluster_count", 0) for i in g["items"]))
         }
         

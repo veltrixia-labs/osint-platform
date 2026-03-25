@@ -222,6 +222,9 @@ class AlertLog(Base):
     related_report_id = Column(UUID(as_uuid=True), ForeignKey("reports.id", ondelete="SET NULL"), nullable=True)
     intelligence_score = Column(Float) # 0.0-1.0 prioritization score
     suppressed = Column(Boolean, default=False)
+    status = Column(String, default="pending_evidence") # confirmed, pending_evidence
+    is_system_wide = Column(Boolean, default=True)
+    supporting_events_count = Column(Integer, default=0)
     metadata_json = Column(JSONB) # {delta, source_count, domain_count, visual_path, scoring_breakdown}
 
 class AnalystProfile(Base):
