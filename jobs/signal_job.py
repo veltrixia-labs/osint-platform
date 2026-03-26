@@ -67,9 +67,13 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
             select(Item.cluster_id).where(Item.id.in_(candidate_ids))
         )
     )
-    clusters = (await db.execute(cluster_stmt)).scalars().all()
+    raw_clusters = (await db.execute(cluster_stmt)).scalars().all()
     
-    logger.info(f"Processing {len(clusters)} topic-scoped clusters for {signal_type}")
+    # [SECONDARY GUARD] String-based keyword filter to prevent contamination
+    from article.topic_map import matches_topic
+    clusters = [c for c in raw_clusters if matches_topic(c.title or "", filter_topic)]
+    
+    logger.info(f"Processing {len(clusters)} topic-scoped clusters (of {len(raw_clusters)} raw) for {signal_type}")
 
     final_scored_pool = []
     for cluster in clusters:
