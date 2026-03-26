@@ -175,7 +175,25 @@ async def run_startup_checks():
         # [VERIFICATION] Force immediate report generation to verify isolation fix
         logger.info("[STARTUP] Triggering report generation for production verification...")
         from article.report_job import run_all_reports
-        await run_all_reports(session, "daily_global", 1, auto_post_threads=False)
+        reports = await run_all_reports(session, "daily_global", 1, auto_post_threads=False)
+        
+        # [VERIFICATION] Store results in diagnostic report for production audit
+        diag_content = f"# Topic Isolation Audit: {COMMIT_HASH}\n\nGenerated {len(reports)} reports.\n\n"
+        for r in reports:
+            diag_content += f"- **Topic**: {r.topic_code}\n  - **Title**: {r.title}\n"
+        
+        from db.models import Report
+        diag_report = Report(
+            id=uuid.uuid4(),
+            report_type="system_diagnostic",
+            topic_code="system",
+            title=f"Isolation Verification: {COMMIT_HASH}",
+            content_markdown=diag_content,
+            created_at=datetime.now(timezone.utc),
+            plan_required="admin"
+        )
+        session.add(diag_report)
+        await session.commit()
         
         # Immediate Operational Audit
         await run_db_size_check(session)
