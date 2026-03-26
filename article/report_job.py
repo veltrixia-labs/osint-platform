@@ -13,6 +13,7 @@ from db.models import SignalRanking, Item, Report, EventCluster, TrendSignal, Ex
 from db.enums import PlanTier, ReportType
 from llm.prompts import SYSTEM_PROMPT, NEUTRAL_ANALYSIS_PROMPT, LLM_POLISH_PROMPT
 from llm.client import generate_analysis, get_metrics_summary
+from article.topic_map import TOPIC_VOCABULARY, matches_topic
 
 TREND_LOOKBACK_DAYS = 7
 logger = logging.getLogger(__name__)
@@ -248,6 +249,7 @@ async def run_report_generation(
         
     now = datetime.now(timezone.utc)
     start_time = now - timedelta(days=period_days)
+    topic_str = topic if topic else "global"
 
     if topic and topic in TOPIC_CONFIG:
         signal_type = TOPIC_CONFIG[topic]["signal_type"]
@@ -262,6 +264,7 @@ async def run_report_generation(
     ).order_by(SignalRanking.rank.asc()).limit(20)
 
     rankings = (await db.execute(stmt)).scalars().all()
+    ranking_ids = [r.id for r in rankings]
     items = []
     seen_urls = set()
     for r in rankings:
@@ -270,6 +273,8 @@ async def run_report_generation(
             items.append(item)
             seen_urls.add(item.source_url)
     
+    logger.info(f"[DIAGNOSTIC] Topic: {topic_str} | Rankings Used: {ranking_ids}")
+    logger.info(f"[DIAGNOSTIC] Candidates fetched: {len(items)} items found. IDs: {[it.id for it in items]}")
     if not items:
         # Fallback to latest items (Ideally topic-specific)
         if topic:
@@ -289,7 +294,6 @@ async def run_report_generation(
         items = list(items)
 
     # 1.1 Noise Filter for Global Report (Phase 19.3)
-    topic_str = topic if topic else "global"
     logger.info(f"Candidates fetched: {len(items)} items found.")
     
     if topic_str == "global":
@@ -311,6 +315,7 @@ async def run_report_generation(
     
     # Fetch enriched clusters for context
     cluster_ids = list(set(it.cluster_id for it in items if it.cluster_id))
+    logger.info(f"[DIAGNOSTIC] Topic: {topic_str} | Clusters Selected: {cluster_ids}")
     clusters_stmt = select(EventCluster).where(EventCluster.id.in_(cluster_ids))
     clusters = (await db.execute(clusters_stmt)).scalars().all()
     
@@ -412,14 +417,29 @@ async def run_report_generation(
         and not any(p in t.target_label.lower() for p in BANNED_PHRASES)
     ]
     if topic:
-        # Filter patterns that mentioned topic entities or sector
-        patterns = [p for p in patterns if topic.lower() in p.target_label.lower()]
+        # FIXED: Improved Trend-to-Topic Matching using controlled vocabulary
+        topic_patterns = []
+        for t in patterns:
+            if matches_topic(t.target_label, topic):
+                topic_patterns.append(t)
+                logger.info(f"[DIAGNOSTIC] Trend MATCHED: {t.target_label} (ID: {t.id}) matches vocabulary for topic {topic}")
+            else:
+                logger.info(f"[DIAGNOSTIC] Trend REJECTED: {t.target_label} (ID: {t.id}) does not match vocabulary for topic {topic}")
+        patterns = topic_patterns
     
     # Sort and Hard Cap to Top 3 (Phase 19.3)
     patterns.sort(key=lambda x: x.intensity_score, reverse=True)
     patterns = patterns[:3]
         
-    trends_pool = patterns if patterns else [t for t in all_trends if t.intensity_score <= 10.0][:10]
+    # FIXED: Remove Global Trend Fallback for specialized reports
+    if topic:
+        trends_pool = patterns
+        if not trends_pool:
+            logger.info(f"[DIAGNOSTIC] Topic: {topic_str} | No topic-specific trends found. Fallback: Neutral message.")
+    else:
+        # Global report still uses the general pool
+        trends_pool = patterns if patterns else [t for t in all_trends if t.intensity_score <= 10.0][:10]
+        logger.info(f"[DIAGNOSTIC] Topic: global | Selected {len(trends_pool)} global trends.")
 
     # Explained Trend Context for LLM
     trend_context_list = []
@@ -460,6 +480,11 @@ async def run_report_generation(
                 skeleton_trends["surges"].append(entry_str)
             else: # entity_heat
                 skeleton_trends["changes"].append(entry_str)
+
+    # Add neutral fallback message for specialized reports if pool is empty
+    if topic and not trends_pool:
+        neutral_msg = "Baseline monitoring continues; no strong topic-specific trend pattern detected in the current window."
+        skeleton_trends["persistent"].append(neutral_msg)
 
     trend_context_str = "\n\n".join(trend_context_list)
     

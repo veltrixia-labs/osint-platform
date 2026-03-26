@@ -35,48 +35,57 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
     now = datetime.now(timezone.utc)
     start_time = now - timedelta(days=1)
     
-    # 1. Fetch Candidates
+    logger.info(f"[SIGNAL RANKING] Processing: {signal_type} | filter_topic={filter_topic}")
+    
+    # 1. Fetch Candidates (Items) for this topic
     stmt = select(Item).where(Item.published_at >= start_time)
     if filter_topic:
         # Check topic via ItemTopic or rough_category
-        stmt = stmt.where((Item.category == filter_topic) | (Item.rough_category == filter_topic))
+        # We join with ItemTopic to be strictly topic-scoped
+        stmt = stmt.join(ItemTopic, ItemTopic.item_id == Item.id).where(ItemTopic.topic_code == filter_topic)
     
     candidates = (await db.execute(stmt)).scalars().all()
     if not candidates:
         logger.info(f"No candidates for {signal_type}")
         return
 
+    candidate_ids = [it.id for it in candidates]
+    logger.info(f"Found {len(candidates)} candidate items for topic {filter_topic}")
+
     # 2. Clustering (Non-LLM)
-    # Note: cluster_items handles DB updates for cluster_id
+    # cluster_items handles DB updates for cluster_id for these candidates
     metrics = await cluster_items(db, candidates)
     
     # 3. Rule-Based Signal Scoring (Non-LLM)
-    # We group by cluster_id for scoring
-    clusters_with_items = {}
-    for it in candidates:
-        if it.cluster_id:
-            # Re-fetch cluster for the instance if needed, or assume it's in a dict
-            # For simplicity, we'll re-calculate or fetch.
-            # Here we'll just use the engine logic on groups
-            pass
-
-    # Actually, run_signal_engine expects a dict of {Cluster: [Items]}
-    # Let's re-fetch clusters or just use the items directly for scoring logic
     from analysis.signal_engine import calculate_cluster_signal
     from db.models import EventCluster
     
-    cluster_stmt = select(EventCluster).where(EventCluster.created_at >= now - timedelta(hours=1))
+    # FIXED: Re-fetch ONLY clusters that contain candidates from this topic
+    # This ensures specialized rankings are strictly topic-scoped.
+    cluster_stmt = select(EventCluster).where(
+        EventCluster.id.in_(
+            select(Item.cluster_id).where(Item.id.in_(candidate_ids))
+        )
+    )
     clusters = (await db.execute(cluster_stmt)).scalars().all()
     
+    logger.info(f"Processing {len(clusters)} topic-scoped clusters for {signal_type}")
+
     final_scored_pool = []
     for cluster in clusters:
+        # Fetch items for this cluster that also match the topic (double-check isolation)
         it_stmt = select(Item).where(Item.cluster_id == cluster.id)
+        if filter_topic:
+            it_stmt = it_stmt.join(ItemTopic, ItemTopic.item_id == Item.id).where(ItemTopic.topic_code == filter_topic)
+            
         cluster_items_list = (await db.execute(it_stmt)).scalars().all()
         
+        if not cluster_items_list:
+            continue
+            
         score = await calculate_cluster_signal(cluster, cluster_items_list)
         # Use the representative item for ranking pool
-        if cluster_items_list:
-            final_scored_pool.append((score, cluster_items_list[0]))
+        final_scored_pool.append((score, cluster_items_list[0], cluster.id))
 
     # 4. Rank and Store
     final_scored_pool.sort(key=lambda x: x[0], reverse=True)
@@ -85,18 +94,20 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
     # Clear existing rankings for this type
     await db.execute(delete(SignalRanking).where(SignalRanking.signal_type == signal_type))
     
-    for rank, (score, item) in enumerate(top_items, 1):
-        db.add(SignalRanking(
+    for rank, (score, item, cluster_id) in enumerate(top_items, 1):
+        ranking_entry = SignalRanking(
             signal_type=signal_type,
             period_start=start_time,
             period_end=now,
             rank=rank,
             item_id=item.id,
             score=float(score)
-        ))
+        )
+        db.add(ranking_entry)
+        logger.info(f"RANK {rank}: Cluster {cluster_id} | Score {score:.2f} | Topic {filter_topic}")
         
     await db.commit()
-    logger.info(f"Rankings updated for {signal_type}: {len(top_items)} clusters.")
+    logger.info(f"Rankings updated for {signal_type}: {len(top_items)} clusters saved.")
 
 async def run_signal(db: AsyncSession):
     logger.info("Starting High-Efficiency Signal Job")
