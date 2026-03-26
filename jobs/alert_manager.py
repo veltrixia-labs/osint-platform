@@ -53,8 +53,11 @@ class AlertManager:
             if not severity:
                 continue
 
-            # 3. Escalation-Aware Deduplication
-            # Allows if (no previous alert in 12h) OR (previous alert had lower severity)
+            # 3. Escalation-Aware Deduplication (Composite Key)
+            # Same target_label + topic + trigger_type + 12h cooldown
+            if await cls._is_suppressed(db, sig.target_label, sig.topic, "pattern_risk", severity):
+                continue
+
             # 4. Intelligence Scoring (Phase 24)
             from jobs.alert_scoring import calculate_alert_score
             intel_score, breakdown = await calculate_alert_score(db, sig.intensity_score, spike_delta, domain_count, "pattern_risk", sig.target_label)
@@ -184,27 +187,31 @@ class AlertManager:
         return domain_count, evidence_list
 
     @classmethod
-    async def _is_suppressed(cls, db, target_label: str, new_severity: str) -> bool:
-        """Escalation-aware suppression logic."""
+    async def _is_suppressed(cls, db, target_label: str, topic: str, trigger_type: str, new_severity: str) -> bool:
+        """Escalation-aware suppression logic using composite key."""
         cooldown_threshold = datetime.now(timezone.utc) - timedelta(hours=ALERT_COOLDOWN_HOURS)
         
-        # Find the most recent alert for this pattern in the window
+        # Find the most recent alert matching the composite key in the window
         stmt = select(AlertLog).where(
             AlertLog.target_label == target_label,
+            AlertLog.topic == topic,
+            AlertLog.trigger_type == trigger_type,
             AlertLog.triggered_at >= cooldown_threshold
         ).order_by(AlertLog.triggered_at.desc()).limit(1)
         
         last_alert = (await db.execute(stmt)).scalar_one_or_none()
         if not last_alert:
-            return False # No previous alert, not suppressed
+            return False # No previous alert for this event, not suppressed
             
         # Severity Order Map for comparison
         ORDER = {"watch": 1, "elevated": 2, "critical": 3}
         
+        # ESCALATION: Allow only if new severity is STRICTLY HIGHER than last severity
         if ORDER[new_severity] > ORDER.get(last_alert.severity, 0):
-            logger.info(f"Escalating alert for {target_label}: {last_alert.severity} -> {new_severity}")
-            return False # New severity is higher, allow escalation alert
+            logger.info(f"Escalating alert for {target_label} ({topic}): {last_alert.severity} -> {new_severity}")
+            return False # Allow escalation
             
+        logger.info(f"Alert suppressed for {target_label} ({topic}): Already issued {last_alert.severity} within cooldown.")
         return True # Same or lower severity, suppress
 
     @classmethod
