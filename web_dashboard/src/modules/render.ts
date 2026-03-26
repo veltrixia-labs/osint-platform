@@ -339,7 +339,7 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
         <div class="report-detail">
             <div class="u-flex-between u-m-top-1" style="margin-bottom: var(--space-m); flex-wrap: wrap; gap: 1rem;">
                 <div class="u-flex" style="flex-wrap: wrap; row-gap: 0.5rem;">
-                    <button class="btn-fb active u-tier-1" id="back-btn">← Back</button>
+                    <button class="btn-fb active u-tier-1" id="back-to-feed-btn">← Back</button>
                     <div style="color: #8b949e; font-size: var(--font-s); display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap;">
                         <span style="font-weight: 600; color: #c9d1d9;">${topicLabel}</span>
                         <span style="opacity: 0.5;">|</span>
@@ -408,7 +408,7 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
         </div>
     `;
 
-    const backBtn = container.querySelector('#back-btn');
+    const backBtn = container.querySelector('#back-to-feed-btn');
     if (backBtn) {
         backBtn.addEventListener('click', () => {
              if (onBack) onBack();

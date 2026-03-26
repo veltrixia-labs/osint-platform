@@ -15,12 +15,7 @@ pydantic-settings
 
 # LLM
 openai
-# LLM
-openai
-google-genai
-
-# Visualization
-matplotlib
+google-generativeai
 
 # OSINT & Scraping
 httpx

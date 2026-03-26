@@ -172,69 +172,15 @@ async def run_startup_checks():
         # Force an immediate pipeline run
         await pipeline_full_processing()
         
-        # [VERIFICATION] Force immediate report generation to verify isolation fix
-        logger.info("[STARTUP] Triggering report generation for production verification...")
-        from article.report_job import run_all_reports
-        reports = await run_all_reports(session, "daily_global", 1, auto_post_threads=False)
-        
-        # [VERIFICATION] Store results in diagnostic report for production audit
-        diag_content = f"# Topic Isolation Audit: {COMMIT_HASH}\n\nGenerated {len(reports)} reports.\n\n"
-        for r in reports:
-            diag_content += f"- **Topic**: {r.topic_code}\n  - **Title**: {r.title}\n"
-        
-        from db.models import Report
-        diag_report = Report(
-            id=uuid.uuid4(),
-            report_type="system_diagnostic",
-            topic_code="system",
-            title=f"Isolation Verification: {COMMIT_HASH}",
-            content_markdown=diag_content,
-            created_at=datetime.now(timezone.utc),
-            plan_required="admin"
-        )
-        session.add(diag_report)
-        
-        # [FINAL PROOF] Generate a visible clean report for public verification
-        proof_report = Report(
-            id=uuid.uuid4(),
-            report_type="daily_global",
-            topic_code="ai_semiconductor_intelligence",
-            title=f"PROVEN: Topic Isolation Active | Commit {COMMIT_HASH[:7]}",
-            content_markdown="This report confirms that the secondary signal filtering logic is now active in production.",
-            created_at=datetime.now(timezone.utc)
-        )
-        session.add(proof_report)
-        await session.commit()
-        
         # Immediate Operational Audit
         await run_db_size_check(session)
         await enforce_metadata_limits(session)
         await audit_metadata_sizes(session)
 
 async def main():
-    logger.info(f"--- OSINT SCHEDULER BOOTING [Commit: {COMMIT_HASH}] ---")
+    logger.info("--- OSINT SCHEDULER STARTUP ---")
+    logger.info("SCHEDULER_V2_ACTIVE")
     
-    # [ULTIMATE PROOF] Force a visible verification record IMMEDIATELY on boot
-    # This runs synchronously to guarantee production evidence.
-    try:
-        from db.database import AsyncSessionLocal
-        from db.models import Report
-        import uuid
-        async with AsyncSessionLocal() as session:
-            proof = Report(
-                id=uuid.uuid4(),
-                report_type="daily_global",
-                topic_code="ai_semiconductor_intelligence",
-                title=f"ULTIMATE PROOF: Isolation Active | {COMMIT_HASH[:7]}",
-                content_markdown=f"This record confirms commit {COMMIT_HASH} is executing. Signal and Trend guards are live.",
-                created_at=datetime.now(timezone.utc)
-            )
-            session.add(proof)
-            await session.commit()
-            logger.info(f"[PROOF] Verification report created: {proof.title}")
-    except Exception as e:
-        logger.error(f"[PROOF] Failure: {e}")
-
     # 1. Database Migrations & Seeding
     try:
         from db.database import run_migrations
@@ -247,7 +193,10 @@ async def main():
         await seed_admin(session)
         await update_system_metric(session, "scheduler_status", "starting")
 
-    # 2. Register Regular Jobs
+    # 2. Immediate Startup Pipeline
+    await run_startup_checks()
+
+    # 3. Register Regular Jobs
     register_jobs()
 
     # 4. Main Scheduler Loop
