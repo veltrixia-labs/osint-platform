@@ -8,7 +8,8 @@ from enum import Enum
 from typing import Dict, Any, Optional, List, Type
 from dataclasses import dataclass, field, asdict
 from openai import AsyncOpenAI
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -189,19 +190,18 @@ providers: Dict[str, LLMProvider] = {
     "openai": LLMProvider("openai", AdaptiveConcurrencyGate(3, 8), CircuitBreaker("OpenAI")),
 }
 
-model_cache: Dict[str, genai.GenerativeModel] = {}
+model_cache: Dict[str, Any] = {}
 _openai_client: Optional[AsyncOpenAI] = None
+_gemini_client: Optional[genai.Client] = None
 
 if settings.openai_api_key:
     _openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
 if settings.gemini_api_key:
-    genai.configure(api_key=settings.gemini_api_key)
+    _gemini_client = genai.Client(api_key=settings.gemini_api_key)
 
-def get_gemini_model(model_name: str, system_prompt: str) -> genai.GenerativeModel:
-    cache_key = f"{model_name}:{hash(system_prompt)}"
-    if cache_key not in model_cache:
-        model_cache[cache_key] = genai.GenerativeModel(model_name=model_name, system_instruction=system_prompt)
-    return model_cache[cache_key]
+def get_gemini_model(model_name: str, system_prompt: str) -> Dict[str, str]:
+    """Thin compatibility wrapper for the new google-genai Client API."""
+    return {"model": model_name, "system_instruction": system_prompt}
 
 # --- Core Logic ---
 
@@ -222,8 +222,15 @@ async def generate_with_retry(provider_name: str, system_prompt: str, user_promp
         try:
             async with p.gate:
                 if provider_name == "gemini":
-                    model = get_gemini_model(model_name, system_prompt)
-                    response = await asyncio.wait_for(model.generate_content_async(user_prompt), timeout=60.0)
+                    model_cfg = get_gemini_model(model_name, system_prompt)
+                    response = await _gemini_client.aio.models.generate_content(
+                        model=model_cfg["model"],
+                        contents=user_prompt,
+                        config=types.GenerateContentConfig(
+                            system_instruction=model_cfg["system_instruction"],
+                            temperature=0.7
+                        )
+                    )
                     text = response.text
                 else:
                     response = await asyncio.wait_for(
