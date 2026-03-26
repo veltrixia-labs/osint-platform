@@ -23,10 +23,15 @@ async def calculate_alert_score(db, intensity: float, spike: float, domains: int
     Calculates a normalized intelligence score (0.0 - 1.0) and returns the breakdown.
     Combines direct metrics with historical performance of similar patterns.
     """
-    # 1. Component Scores
+    # 1. Type Normalization & Defensive Handling (Fix for Decimal/float TypeError)
+    intensity = float(intensity or 0.0)
+    spike = float(spike or 0.0)
+    domains = int(domains or 0)
+
+    # 2. Component Scores
     s_intensity = min(intensity / MAX_INTENSITY, 1.0)
     s_spike = min(spike / MAX_SPIKE, 1.0)
-    s_domains = min(domains / MAX_DOMAINS, 1.0)
+    s_domains = min(float(domains) / float(MAX_DOMAINS), 1.0)
     
     # 2. Historical Reliability Score
     # Fetch average feedback for this pattern or trigger type
@@ -45,7 +50,7 @@ async def calculate_alert_score(db, intensity: float, spike: float, domains: int
         avg_feedback = (await db.execute(stmt_alt)).scalar() or 3.0 # Default to neutral
     
     # Normalize feedback (1-5 scale to 0.0-1.0)
-    s_historical = (avg_feedback - 1) / 4.0
+    s_historical = (float(avg_feedback) - 1.0) / 4.0
     
     # 3. Final weighted score
     final_score = (
