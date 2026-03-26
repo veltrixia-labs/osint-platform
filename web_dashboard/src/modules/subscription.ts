@@ -54,7 +54,7 @@ const PLANS: PlanConfig[] = [
             '5 alerts/day',
             'Daily intelligence reports',
             '3 watchlist keywords',
-            'Community topics only',
+            'Global topics only',
             'Email support',
         ],
     },

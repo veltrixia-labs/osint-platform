@@ -30,7 +30,7 @@ PLAN_LIMITS: Dict[str, Dict[str, Any]] = {
     PlanTier.FREE.value: {
         "alerts_per_day": 5,
         "watchlist_keywords": 3,
-        "allowed_topics": ["global", "market", "community"],
+        "allowed_topics": ["global"],
         "reports": [ReportType.DAILY.value],
     },
     PlanTier.PRO.value: {
@@ -56,7 +56,7 @@ PLAN_LIMITS: Dict[str, Dict[str, Any]] = {
 
 # Complete list of all topic codes in the platform
 ALL_TOPIC_CODES = [
-    "global", "market", "community",
+    "global",
     "energy_resource_risk", "global_market_intelligence",
     "ai_semiconductor_intelligence", "crypto_geopolitics",
     "defense_technology", "supply_chain_intelligence",

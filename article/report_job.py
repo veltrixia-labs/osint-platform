@@ -232,7 +232,7 @@ async def _should_generate_report_for_system(db: AsyncSession, report_type: str)
 
 async def run_report_generation(
     db: AsyncSession,
-    report_type: str = "daily_global",
+    report_type: str = "daily",
     period_days: int = 1,
     topic: str | None = None,
     auto_post_threads: bool = False

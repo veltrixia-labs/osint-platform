@@ -105,16 +105,16 @@ async def pipeline_health_check_wrapper():
 
 async def daily_reports_wrapper():
     async with AsyncSessionLocal() as session:
-        await run_all_reports(session, "daily_global", 1, auto_post_threads=True)
+        await run_all_reports(session, "daily", 1, auto_post_threads=True)
 
 async def weekly_reports_wrapper():
     async with AsyncSessionLocal() as session:
-        await run_all_reports(session, "weekly_global", 7, auto_post_threads=True)
+        await run_all_reports(session, "weekly", 7, auto_post_threads=True)
 
 async def monthly_reports_wrapper():
     if datetime.now(timezone.utc).day == 1:
         async with AsyncSessionLocal() as session:
-            await run_all_reports(session, "monthly_global", 30, auto_post_threads=True)
+            await run_all_reports(session, "monthly", 30, auto_post_threads=True)
 
 async def run_threads_publisher_wrapper():
     async with AsyncSessionLocal() as session:
