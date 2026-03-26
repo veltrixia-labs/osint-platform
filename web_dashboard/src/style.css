@@ -173,8 +173,10 @@ body.no-scroll {
   display: flex;
   flex-direction: column;
   z-index: 10;
-  overflow-x: hidden;
-  word-wrap: break-word;
+  box-sizing: border-box;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .sidebar h2 {
@@ -468,11 +470,10 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .watchlist-add-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.5rem;
   margin-top: 1.5rem;
   width: 100%;
-  min-width: 0;
 }
 
 .watchlist-add-row input {
@@ -487,7 +488,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 #sidebar-watchlist {
-  overflow-x: hidden !important;
+  width: 100%;
 }
 
 .watchlist-tags {

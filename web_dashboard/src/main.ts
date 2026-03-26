@@ -124,7 +124,7 @@ async function initDashboard() {
           <div class="sidebar-nav-link" id="nav-plans">Subscription Plans</div>
         </nav>
 
-        <div id="sidebar-watchlist" class="u-m-top-1" style="flex:1; overflow-y:auto; overflow-x:hidden; margin-bottom:1rem;"></div>
+        <div id="sidebar-watchlist" class="u-m-top-1" style="flex:1; overflow-y:auto; margin-bottom:1rem;"></div>
 
         <div class="sidebar-footer u-m-top-1">
           <div class="u-flex u-m-bottom-1">
