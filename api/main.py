@@ -32,7 +32,7 @@ from api.gating import (
 from db.enums import ReportType
 
 # Production Traceability
-COMMIT_HASH = os.getenv("RENDER_GIT_COMMIT", "a7bf299") # Fallback to a7bf299 for now
+COMMIT_HASH = os.getenv("RENDER_GIT_COMMIT", "15124ef")
 DEPLOY_TIMESTAMP = os.getenv("RENDER_MOD_TIME", datetime.now(timezone.utc).isoformat())
 
 app = FastAPI(title="OSINT Risk Analytics API")
