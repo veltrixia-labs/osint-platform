@@ -32,7 +32,7 @@ from api.gating import (
 from db.enums import ReportType
 
 # Production Traceability
-COMMIT_HASH = "42c5c68"
+COMMIT_HASH = "caee003"
 DEPLOY_TIMESTAMP = "2026-03-25T09:55:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
