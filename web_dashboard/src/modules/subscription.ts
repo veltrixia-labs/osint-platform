@@ -80,7 +80,8 @@ const PLANS: PlanConfig[] = [
         id: 'experts',
         name: PLAN_NAME_MAP.experts,
         subtitle: 'Advanced Strategic Intelligence',
-        price: '$49',
+        price: '$99',
+        originalPrice: '$149',
         priceNote: 'per month',
         color: '#3fb950', // Emerald/Green
         directCheckout: true,
@@ -254,8 +255,8 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                 ctaHtml += `<button class="plan-cancel-btn" data-plan="${plan.id}">Manage Subscription</button>`;
             }
         } else if (plan.id === 'free') {
-            // Free plan — users can't "downgrade" via button; show info only
-            ctaHtml = `<div class="plan-downgrade-note">Downgrade happens automatically on subscription expiry.</div>`;
+            // Free plan — simple label
+            ctaHtml = `<div class="plan-downgrade-note" style="text-align:center; font-size:0.8rem; color:var(--text-secondary); margin-top:1rem;">Default tier on expiry</div>`;
         } else if (plan.directCheckout) {
             ctaHtml = `<button class="plan-cta-btn" data-plan="${plan.id}" id="upgrade-btn-${plan.id}">Upgrade to ${plan.name}</button>`;
         } else {

@@ -572,3 +572,286 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   .health-grid { grid-template-columns: 1fr; }
   .login-card { padding: 2rem 1.5rem; }
 }
+
+/* ==============================
+   Pricing & Plans (Premium Tiers)
+   ============================== */
+
+.subscription-tab {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 0 3rem 0;
+}
+
+.sub-status-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.sub-status-header h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.sub-expiry {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.sub-expiry--warning {
+  color: #d29922;
+  font-weight: 600;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 4rem;
+  align-items: stretch;
+}
+
+.plan-card {
+  background: rgba(22, 27, 34, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+  min-height: 500px;
+}
+
+.plan-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--plan-color, var(--accent));
+}
+
+.plan-card--active {
+  border: 2px solid var(--plan-color, var(--accent));
+  box-shadow: 0 0 20px rgba(88, 166, 255, 0.1);
+}
+
+.plan-badge-top {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #d29922;
+  color: #0d1117;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(210, 153, 34, 0.3);
+}
+
+.plan-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  min-height: 140px;
+}
+
+.plan-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.plan-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  min-height: 2.5rem;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.plan-price-old {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
+  opacity: 0.5;
+}
+
+.plan-price-amount {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.pro-price-highlight {
+  color: #f2cc60; /* Gold text for Pro */
+}
+
+.plan-price-note {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2.5rem 0;
+  flex-grow: 1;
+}
+
+.plan-features li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.plan-features li::before {
+  content: '✓';
+  color: var(--plan-color, #3fb950);
+  margin-right: 12px;
+  font-weight: bold;
+}
+
+.plan-cta-area {
+  margin-top: auto;
+}
+
+.plan-cta-btn {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.plan-cta-btn:not(.plan-cta-btn--contact) {
+  background: var(--plan-color, var(--accent));
+  color: #fff;
+}
+
+.plan-cta-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.plan-cta-btn--contact {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-primary);
+  text-decoration: none;
+  display: block;
+  text-align: center;
+}
+
+.plan-current-label {
+  text-align: center;
+  font-weight: 700;
+  color: var(--plan-color, var(--accent));
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.plan-cancel-btn {
+  width: 100%;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.plan-cancel-btn:hover {
+  color: #f85149;
+  border-color: #f85149;
+}
+
+.comparison-section {
+  margin-top: 5rem;
+}
+
+.comparison-section h3 {
+  font-size: 1.75rem;
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.comparison-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.comparison-table th, 
+.comparison-table td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.comparison-table th {
+  background: rgba(255,255,255,0.03);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.cmp-feature {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cmp-current {
+  background: rgba(88, 166, 255, 0.05);
+}
+
+/* Responsive Overrides */
+@media (max-width: 1100px) {
+  .plans-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .sub-status-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .plan-card {
+    min-height: auto;
+  }
+}
