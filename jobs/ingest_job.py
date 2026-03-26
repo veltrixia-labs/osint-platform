@@ -83,7 +83,12 @@ async def run_ingest(db: AsyncSession):
                 payload_hash = hashlib.sha256(payload_str.encode("utf-8")).hexdigest()
 
                 stmt = select(RawItem).where(RawItem.payload_hash == payload_hash)
-                exists = (await db.execute(stmt)).scalar_one_or_none()
+                results = (await db.execute(stmt)).scalars().all()
+                
+                if len(results) > 1:
+                    logger.warning(f"[DATA_INTEGRITY] Duplicate payload_hash found in raw_items: {payload_hash} (count: {len(results)}) for source {source_id}")
+                
+                exists = results[0] if results else None
 
                 if not exists:
                     raw = RawItem(
