@@ -8,24 +8,14 @@ import {
     renderGracePeriodBanner,
     renderSubscriptionTab,
 } from './modules/subscription'
-
-const TOPICS = [
-    { code: 'global', label: '🌍 Global Briefing', restricted: false },
-    { code: 'market', label: '📈 Market Pulse', restricted: false },
-    { code: 'community', label: '🤝 Network Activity', restricted: false },
-    { code: 'energy_resource_risk', label: '⚡ Energy Risk', restricted: true },
-    { code: 'global_market_intelligence', label: '💰 Financial Intel', restricted: true },
-    { code: 'ai_semiconductor_intelligence', label: '🤖 AI/Semi Intel', restricted: true },
-    { code: 'crypto_geopolitics', label: '₿ Crypto Risk', restricted: true },
-    { code: 'defense_technology', label: '🛡️ Defense Tech', restricted: true },
-    { code: 'supply_chain_intelligence', label: '📦 Supply Chain', restricted: true },
-];
-
-function getTopicLabel(code: string | null): string {
-    if (!code) return '🌍 Global Briefing';
-    const t = TOPICS.find(x => x.code === code);
-    return t ? t.label : code.toUpperCase();
-}
+import {
+    ACCESS_MAP,
+    canAccessTopic,
+    getTopicDef,
+    normalizeReportType,
+    REPORT_TYPE_LABELS,
+    REPORT_TYPE_MIN_TIER,
+} from './modules/topics'
 
 
 const app = document.querySelector<HTMLDivElement>('#app')!
@@ -209,22 +199,26 @@ async function initDashboard() {
             if (currentTab !== 'feed') return;
             const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
             if (!feedContainer) return;
-            
-            feedContainer.innerHTML = `
-                <div id="topic-filters-container"></div>
-                <div id="featured-reports-container" class="u-flex" style="margin-bottom:2rem; flex-wrap:wrap; gap:var(--space-m);"></div>
-                <h3 class="u-m-top-1" style="margin-bottom: 1.5rem; color: #c9d1d9; border-bottom: 2px solid #30363d; padding-bottom: 0.5rem;">Live Alert Stream</h3>
-                <div id="feed-alerts-inner"><div class="u-p-2 u-text-center">Fetching Intelligence Feed...</div></div>
-            `;
+
+            // Only rebuild static structure on first render (avoid wiping active overlay)
+            if (!feedContainer.querySelector('#topic-tabs-container')) {
+                feedContainer.innerHTML = `
+                    <div id="topic-tabs-container"></div>
+                    <h3 class="u-m-top-1" style="margin-bottom: 1.5rem; color: #c9d1d9; border-bottom: 2px solid #30363d; padding-bottom: 0.5rem;">Live Alert Stream</h3>
+                    <div id="feed-alerts-inner"><div class="u-p-2 u-text-center">Fetching Intelligence Feed...</div></div>
+                `;
+            }
 
             const healthDiv = document.querySelector<HTMLElement>('#health-container');
             if (data.health && healthDiv) renderHealth(data.health, healthDiv);
 
+            const tabsContainer = document.querySelector<HTMLElement>('#topic-tabs-container');
+            if (tabsContainer) renderTopicTabs(tabsContainer, state);
+
             const feedInner = document.querySelector<HTMLElement>('#feed-alerts-inner');
-            if (feedInner) {
+            // Only update alert list if no locked overlay is showing
+            if (feedInner && !feedInner.querySelector('.locked-topic-view')) {
                 renderAlerts(data.alerts || [], feedInner);
-                const topicContainer = document.querySelector<HTMLElement>('#topic-filters-container');
-                if (topicContainer) renderTopicFilters(topicContainer, state);
             }
         });
         
@@ -232,22 +226,69 @@ async function initDashboard() {
         state.startPolling();
     };
 
-    const renderTopicFilters = (container: HTMLElement, state: DashboardState) => {
-        if (!container) return;
-        const currentTopic = state.topic;
+    const renderTopicTabs = (container: HTMLElement, state: DashboardState) => {
+        if (!container || !user) return;
+        const currentKey = state.topic ?? 'global';
+
         container.innerHTML = `
-            <div class="topic-filter-bar">
-                ${TOPICS.filter(t => !t.restricted || (user && user.tier === 'pro')).map(t => `
-                    <button class="topic-btn ${currentTopic === t.code ? 'topic-btn--active' : ''}" data-topic="${t.code}">
-                        ${t.label}
-                    </button>
-                `).join('')}
+            <div class="topic-tab-bar">
+                ${ACCESS_MAP.map(topic => {
+                    const accessible = canAccessTopic(user!.tier, topic);
+                    const isActive = currentKey === topic.key;
+                    const lockIcon = accessible ? '' : '<span class="topic-lock-icon">🔒</span>';
+                    return `<button
+                        class="topic-tab ${isActive ? 'topic-tab--active' : ''} ${!accessible ? 'topic-tab--locked' : ''}"
+                        data-key="${topic.key}"
+                        data-accessible="${accessible}"
+                        style="--topic-color: ${topic.color}"
+                        title="${accessible ? topic.label : topic.label + ' — Requires Pro'}"
+                    >${topic.icon} ${topic.label}${lockIcon}</button>`;
+                }).join('')}
             </div>
         `;
-        container.querySelectorAll('.topic-btn').forEach(btn => {
+
+        container.querySelectorAll('.topic-tab').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                state.setTopic((e.currentTarget as HTMLButtonElement).dataset.topic || null);
+                const target = e.currentTarget as HTMLButtonElement;
+                const accessible = target.dataset.accessible === 'true';
+                const key = target.dataset.key!;
+                if (accessible) {
+                    // null = global in API
+                    const topicDef = ACCESS_MAP.find(t => t.key === key)!;
+                    state.setTopic(topicDef.code);
+                } else {
+                    renderLockedTopicOverlay(key);
+                }
             });
+        });
+    };
+
+    const renderLockedTopicOverlay = (key: string) => {
+        const topic = ACCESS_MAP.find(t => t.key === key)!;
+        const minTierDisplay = topic.minTier.charAt(0).toUpperCase() + topic.minTier.slice(1);
+        const feedInner = document.querySelector<HTMLElement>('#feed-alerts-inner');
+        if (!feedInner) return;
+        feedInner.innerHTML = `
+            <div class="locked-topic-view">
+                <div class="locked-topic-skeletons">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                </div>
+                <div class="locked-topic-overlay">
+                    <div class="locked-topic-inner">
+                        <div class="locked-topic-icon">${topic.icon}</div>
+                        <h3 style="color: ${topic.color}">${topic.label}</h3>
+                        <p>This intelligence domain requires a <strong>${minTierDisplay}</strong> subscription or higher.</p>
+                        <button class="btn-primary locked-upgrade-btn" style="background: ${topic.color}22; color: ${topic.color}; border: 1px solid ${topic.color}55;">
+                            Upgrade to ${minTierDisplay} →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        feedInner.querySelector('.locked-upgrade-btn')?.addEventListener('click', () => {
+            handleTabSwitch('plans');
         });
     }
 
@@ -262,24 +303,38 @@ async function initDashboard() {
         (window as any).stopPolling?.();
         mainTitle.textContent = 'Expert Intelligence Reports';
         healthContainer.innerHTML = '';
-        alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Loading expertise catalog...</div>';
+        alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Loading intelligence catalog...</div>';
         try {
             const reports: Report[] = await fetchReports();
+            if (!reports.length) {
+                alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">No reports available for your plan yet.</div>';
+                return;
+            }
             alertsContainer.innerHTML = `
                 <div class="reports-grid u-m-top-1">
-                    ${reports.map(r => `
+                    ${reports.map(r => {
+                        const topicDef = getTopicDef(r.topic_code ?? null);
+                        const rtNorm = normalizeReportType(r.report_type);
+                        const rtLabel = REPORT_TYPE_LABELS[rtNorm] ?? rtNorm.toUpperCase();
+                        const planReq = r.plan_required || REPORT_TYPE_MIN_TIER[rtNorm] || 'free';
+                        const isPremium = planReq !== 'free';
+                        return `
                         <div class="alert-card u-tier-3" style="cursor:pointer;" onclick="window.dispatchEvent(new CustomEvent('view-report', {detail:{reportId:'${r.id}'}}))">
-                             <div class="u-flex-between">
-                                <span class="severity-badge" style="background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent);">${(r.report_type || 'daily').toUpperCase()}</span>
+                            <div class="u-flex-between">
+                                <div class="u-flex" style="gap:0.5rem; flex-wrap:wrap;">
+                                    <span class="severity-badge" style="background:${topicDef.color}22; color:${topicDef.color}; border:1px solid ${topicDef.color}55;">${topicDef.icon} ${topicDef.label}</span>
+                                    <span class="severity-badge" style="background:var(--accent-soft); color:var(--accent); border:1px solid var(--border-active);">${rtLabel}</span>
+                                    ${isPremium ? `<span class="severity-badge" style="background:rgba(210,153,34,0.1); color:#d29922; border:1px solid rgba(210,153,34,0.3);">${planReq.toUpperCase()}</span>` : ''}
+                                </div>
                                 <span style="font-size:var(--font-xs); color:#8b949e;">${new Date(r.created_at).toLocaleDateString()}</span>
                             </div>
-                            <h3 style="margin-top:0.5rem;">${r.title}</h3>
+                            <h3 style="margin-top:0.75rem;">${r.title}</h3>
                             <div class="u-flex-between u-m-top-1">
-                                <span style="font-size:var(--font-xs); color:var(--tier-grace); font-weight:600;">${getTopicLabel(r.topic_code)}</span>
+                                <span style="font-size:var(--font-xs); color:#8b949e;">${r.source_count || 0} sources · ${r.confidence_level || 'Medium'} confidence</span>
                                 <button class="btn-fb active u-tier-1">Read Analysis</button>
                             </div>
-                        </div>
-                    `).join('')}
+                        </div>`;
+                    }).join('')}
                 </div>
             `;
         } catch (e) { alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Unable to load reports.</div>'; }

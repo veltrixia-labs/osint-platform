@@ -128,7 +128,7 @@ const FEATURE_COMPARISON: [string, string, string, string, string][] = [
     ['Custom topics',               '✗',         '✗',           '✗',           '✓'],
     ['Watchlist keywords',          '3',         '20',          '100',         'Unlimited'],
     ['Support',                     'Community', 'Priority',    'Priority',    'Dedicated SLA'],
-    ['Community topics only',       '✓',         '✓',           '✓',           '✓'],
+    ['Specialized topics',           '✗',         '✓',           '✓',           '✓'],
     ['Entity-level intelligence',   '✗',         '✓',           '✓',           '✓'],
     ['Confidence metrics',          '✗',         '✓',           '✓',           '✓'],
     ['Source traceability',         '✗',         '✓',           '✓',           '✓'],

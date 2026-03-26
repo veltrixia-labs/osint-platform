@@ -1,5 +1,6 @@
 import { submitFeedback, updateWatchlist } from './api';
 import type { Alert, AnalystProfile, HealthData } from './api';
+import { getTopicDef, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
 
 export function renderHealth(data: HealthData, container: HTMLElement) {
     container.innerHTML = `
@@ -293,17 +294,14 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
     const dateStr = report.created_at || "";
     const cleanDate = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
     const date = new Date(cleanDate).toLocaleDateString();
-    
-    const TOPICS_INTERNAL = [
-        { code: 'energy_resource_risk', label: '⚡ Energy Risk' },
-        { code: 'global_market_intelligence', label: '💰 Financial Intel' },
-        { code: 'ai_semiconductor_intelligence', label: '🤖 AI/Semi Intel' },
-        { code: 'crypto_geopolitics', label: '₿ Crypto Risk' },
-        { code: 'defense_technology', label: '🛡️ Defense Tech' },
-        { code: 'supply_chain_intelligence', label: '📦 Supply Chain' },
-    ];
-    const topicObj = TOPICS_INTERNAL.find(t => t.code === report.topic_code);
-    const topicLabel = topicObj ? topicObj.label : (report.topic_code ? report.topic_code.toUpperCase() : 'GLOBAL INTEL');
+
+    // Use canonical mapping layer
+    const topicDef = getTopicDef(report.topic_code ?? null);
+    const topicLabel = `${topicDef.icon} ${topicDef.label}`;
+    const rtNorm = normalizeReportType(report.report_type);
+    const rtLabel = REPORT_TYPE_LABELS[rtNorm] ?? rtNorm.toUpperCase();
+    const planReq = report.plan_required || REPORT_TYPE_MIN_TIER[rtNorm] || 'free';
+    const planDisplay = planReq.charAt(0).toUpperCase() + planReq.slice(1);
 
     let md = isPreview ? (report.content_preview || "") : (report.content_markdown || "");
     let evidenceData: any[] = [];
@@ -343,7 +341,7 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
                     <div style="color: #8b949e; font-size: var(--font-s); display: flex; align-items: center; gap: var(--space-xs); flex-wrap: wrap;">
                         <span style="font-weight: 600; color: #c9d1d9;">${topicLabel}</span>
                         <span style="opacity: 0.5;">|</span>
-                        <span>${(report.report_type || "daily").toUpperCase()}</span>
+                        <span>${rtLabel.toUpperCase()}</span>
                         <span style="opacity: 0.5;">|</span>
                         <span style="color: #d29922; font-weight: 500;">${(report.plan_required || "free").toUpperCase()} Plan</span>
                         <span style="opacity: 0.5;">|</span>
@@ -400,7 +398,7 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
                                 <li>• Comprehensive Risk Exposure Analysis</li>
                                 <li>• Direct Entity & Asset Targeting Logs</li>
                             </ul>
-                            <button id="cta-main-btn" class="btn-primary u-w-full u-tier-1">Upgrade to Pro for Full Intelligence</button>
+                            <button id="cta-main-btn" class="btn-primary u-w-full u-tier-1">Upgrade to ${planDisplay} for Full Intelligence</button>
                         </div>
                     </div>
                 ` : ''}
