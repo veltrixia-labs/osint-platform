@@ -172,6 +172,11 @@ async def run_startup_checks():
         # Force an immediate pipeline run
         await pipeline_full_processing()
         
+        # [VERIFICATION] Force immediate report generation to verify isolation fix
+        logger.info("[STARTUP] Triggering report generation for production verification...")
+        from article.report_job import run_all_reports
+        await run_all_reports(session, "daily_global", 1, auto_post_threads=False)
+        
         # Immediate Operational Audit
         await run_db_size_check(session)
         await enforce_metadata_limits(session)
