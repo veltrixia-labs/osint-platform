@@ -217,7 +217,7 @@ async def main():
     
     # 1. Database Migrations & Seeding
     try:
-        from db.database import run_migrations
+        # from db.database import run_migrations # Already imported at top
         run_migrations()
         logger.info("Database migration/verification completed.")
     except Exception as e:
