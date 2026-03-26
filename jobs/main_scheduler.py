@@ -216,8 +216,8 @@ async def main():
         await seed_admin(session)
         await update_system_metric(session, "scheduler_status", "starting")
 
-    # 2. Immediate Startup Pipeline
-    await run_startup_checks()
+    # 2. Immediate # Startup sequence in background to avoid blocking the scheduler loop
+    asyncio.create_task(run_startup_checks())
 
     # 3. Register Regular Jobs
     register_jobs()
