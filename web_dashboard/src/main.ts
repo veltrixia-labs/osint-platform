@@ -11,6 +11,7 @@ import {
 import {
     ACCESS_MAP,
     canAccessTopic,
+    canAccessReport,
     getTopicDef,
     normalizeReportType,
     REPORT_TYPE_LABELS,
@@ -425,29 +426,35 @@ async function initDashboard() {
                 alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">No reports available for your plan yet.</div>';
                 return;
             }
+            
             alertsContainer.innerHTML = `
                 <div class="reports-grid u-m-top-1">
                     ${reports.map(r => {
                         const topicDef = getTopicDef(r.topic_code ?? null);
                         const rtNorm = normalizeReportType(r.report_type);
                         const rtLabel = REPORT_TYPE_LABELS[rtNorm] ?? rtNorm.toUpperCase();
+                        
+                        const accessible = canAccessReport(user!.tier, r.report_type, r.topic_code ?? null);
                         const planReq = r.plan_required || REPORT_TYPE_MIN_TIER[rtNorm] || 'free';
-                        const isPremium = planReq !== 'free';
+
                         return `
-                        <div class="alert-card u-tier-3" style="cursor:pointer;" onclick="window.dispatchEvent(new CustomEvent('view-report', {detail:{reportId:'${r.id}'}}))">
+                        <div class="alert-card u-tier-3 ${!accessible ? 'alert-card--locked' : ''}" 
+                             style="cursor:pointer;" 
+                             onclick="window.dispatchEvent(new CustomEvent('view-report', {detail:{reportId:'${r.id}'}}))">
                             <div class="u-flex-between">
                                 <div class="u-flex" style="gap:0.5rem; flex-wrap:wrap;">
                                     <span class="severity-badge" style="background:${topicDef.color}22; color:${topicDef.color}; border:1px solid ${topicDef.color}55;">${topicDef.icon} ${topicDef.label}</span>
                                     <span class="severity-badge" style="background:var(--accent-soft); color:var(--accent); border:1px solid var(--border-active);">${rtLabel}</span>
-                                    ${isPremium ? `<span class="severity-badge" style="background:rgba(210,153,34,0.1); color:#d29922; border:1px solid rgba(210,153,34,0.3);">${planReq.toUpperCase()}</span>` : ''}
+                                    ${!accessible ? `<span class="severity-badge" style="background:rgba(210,153,34,0.1); color:#d29922; border:1px solid rgba(210,153,34,0.3);">🔒 ${planReq.toUpperCase()} ONLY</span>` : ''}
                                 </div>
                                 <span style="font-size:var(--font-xs); color:#8b949e;">${new Date(r.created_at).toLocaleDateString()}</span>
                             </div>
                             <h3 style="margin-top:0.75rem;">${r.title}</h3>
-                            <div class="u-flex-between u-m-top-1">
+                            <div class="u-flex-between u-m-top-1" style="${!accessible ? 'filter: blur(0.5px); opacity: 0.6;' : ''}">
                                 <span style="font-size:var(--font-xs); color:#8b949e;">${r.source_count || 0} sources · ${r.confidence_level || 'Medium'} confidence</span>
-                                <button class="btn-fb active u-tier-1">Read Analysis</button>
+                                <button class="btn-fb active u-tier-1">${accessible ? 'Read Analysis' : 'Unlock'}</button>
                             </div>
+                            ${!accessible ? `<div class="alert-lock-overlay" style="border-radius:12px;">🔒 Upgrade to ${planReq.toUpperCase()} to access</div>` : ''}
                         </div>`;
                     }).join('')}
                 </div>
@@ -462,15 +469,10 @@ async function initDashboard() {
         alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Loading Report...</div>';
         try {
             const report = await fetchReport(id);
-            const topicDef = getTopicDef(report.topic_code ?? null);
-            const accessible = canAccessTopic(user!.tier, topicDef);
 
-            if (!accessible) {
-                renderLockedTopicOverlay(topicDef.key, alertsContainer);
-                return;
-            }
-
-            renderReportDetail(report, alertsContainer, () => handleTabSwitch(origin), (action) => {
+            // Note: We always render the Detail but the detail module handles the paywall masking internally
+            // if 'accessible' or report metadata indicates locking.
+            renderReportDetail(report, user!.tier, alertsContainer, () => handleTabSwitch(origin), (action) => {
                 if (action === 'upgrade') handleTabSwitch('plans');
             });
         } catch (e) { 

@@ -100,18 +100,60 @@ export const ACCESS_MAP: TopicDef[] = [
 ];
 
 /** Tier hierarchy for comparison */
-const TIER_ORDER: Record<string, number> = {
+export const TIER_ORDER: Record<string, number> = {
     free: 0,
     pro: 1,
     experts: 2,
-    enterprise: 3,
+    enterprise: 2, // Enterprise inherits Expert capabilities
+};
+
+/**
+ * ENTITLEMENT_MATRIX — The single source of truth for tier capabilities.
+ * All UI gating MUST derive from this mapping.
+ */
+export const ENTITLEMENT_MATRIX = {
+    free: {
+        topics: ['global'],
+        reports: ['daily'],
+    },
+    pro: {
+        topics: ['global', 'energy_resource_risk', 'global_market_intelligence', 'crypto_geopolitics'],
+        reports: ['daily', 'weekly'],
+    },
+    experts: {
+        topics: ['global', 'energy_resource_risk', 'global_market_intelligence', 'crypto_geopolitics', 'ai_semiconductor_intelligence', 'defense_technology', 'supply_chain_intelligence'],
+        reports: ['daily', 'weekly', 'monthly'],
+    },
+    enterprise: {
+        topics: ['global', 'energy_resource_risk', 'global_market_intelligence', 'crypto_geopolitics', 'ai_semiconductor_intelligence', 'defense_technology', 'supply_chain_intelligence'],
+        reports: ['daily', 'weekly', 'monthly'],
+    }
 };
 
 /**
  * Returns true if `userTier` meets or exceeds the topic's `minTier`.
+ * Note: Uses TIER_ORDER for hierarchy.
  */
 export function canAccessTopic(userTier: string, topic: TopicDef): boolean {
-    return (TIER_ORDER[userTier] ?? 0) >= (TIER_ORDER[topic.minTier] ?? 0);
+    const userRank = TIER_ORDER[userTier] ?? 0;
+    const topicRank = TIER_ORDER[topic.minTier] ?? 0;
+    return userRank >= topicRank;
+}
+
+/**
+ * Returns true if the user can access a specific report based on its type and topic.
+ */
+export function canAccessReport(userTier: string, reportType: string, topicCode: string | null): boolean {
+    const tier = userTier as keyof typeof ENTITLEMENT_MATRIX;
+    const entitlements = ENTITLEMENT_MATRIX[tier] || ENTITLEMENT_MATRIX.free;
+    
+    // 1. Check Report Type
+    const normType = normalizeReportType(reportType);
+    if (!entitlements.reports.includes(normType)) return false;
+    
+    // 2. Check Topic
+    const topicDef = getTopicDef(topicCode);
+    return canAccessTopic(userTier, topicDef);
 }
 
 /**

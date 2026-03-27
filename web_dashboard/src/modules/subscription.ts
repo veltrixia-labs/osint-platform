@@ -11,6 +11,7 @@
 
 import type { UserMe } from './api';
 import { fetchCheckoutSession, cancelSubscription } from './api';
+import { ENTITLEMENT_MATRIX } from './topics';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -54,7 +55,7 @@ const PLANS: PlanConfig[] = [
             '5 alerts/day',
             'Daily intelligence reports',
             '3 watchlist keywords',
-            'Global topics only',
+            'Global situational briefing only',
             'Email support',
         ],
     },
@@ -73,6 +74,7 @@ const PLANS: PlanConfig[] = [
             'Full source traceability',
             '100 alerts/day',
             'Daily + Weekly reports',
+            'Core specialized topics (Energy/Market/Crypto)',
             '20 watchlist keywords',
         ],
     },
@@ -89,7 +91,7 @@ const PLANS: PlanConfig[] = [
             'Monthly full LLM analysis',
             'Scenario analysis (Best/Base/Worst)',
             'Risk forecasting (30–60 days)',
-            'Cross-domain impact intelligence',
+            'Full Specialized Coverage (AI/Defense/Supply)',
             'High self-serve limits',
             'Unlimited alerts',
         ],
@@ -120,15 +122,41 @@ const PLANS: PlanConfig[] = [
  */
 const FEATURE_COMPARISON: [string, string, string, string, string][] = [
     ['Alerts per day',              '5',         '100',         'Unlimited',   'Unlimited'],
-    ['Daily reports',               '✓',         '✓',           '✓',           '✓'],
-    ['Weekly reports',              '✗',         '✓',           '✓',           '✓'],
-    ['Monthly reports',             '✗',         '✗',           '✓ (Full LLM)', '✓ (Full LLM)'],
+    ['Daily reports',               
+        ENTITLEMENT_MATRIX.free.reports.includes('daily') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.pro.reports.includes('daily') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.experts.reports.includes('daily') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.enterprise.reports.includes('daily') ? '✓' : '✗'
+    ],
+    ['Weekly reports',              
+        ENTITLEMENT_MATRIX.free.reports.includes('weekly') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.pro.reports.includes('weekly') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.experts.reports.includes('weekly') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.enterprise.reports.includes('weekly') ? '✓' : '✗'
+    ],
+    ['Monthly reports',             
+        ENTITLEMENT_MATRIX.free.reports.includes('monthly') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.pro.reports.includes('monthly') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.experts.reports.includes('monthly') ? '✓ (Full LLM)' : '✗',
+        ENTITLEMENT_MATRIX.enterprise.reports.includes('monthly') ? '✓ (Full LLM)' : '✗'
+    ],
     ['Scenario analysis',           '✗',         '✗',           '✓',           '✓'],
     ['Risk forecasting',            '✗',         '✗',           '✓',           '✓'],
+    ['Core Specialty Topics',       
+        ENTITLEMENT_MATRIX.free.topics.includes('energy_resource_risk') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.pro.topics.includes('energy_resource_risk') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.experts.topics.includes('energy_resource_risk') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.enterprise.topics.includes('energy_resource_risk') ? '✓' : '✗'
+    ],
+    ['Expert Specialty Topics',     
+        ENTITLEMENT_MATRIX.free.topics.includes('ai_semiconductor_intelligence') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.pro.topics.includes('ai_semiconductor_intelligence') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.experts.topics.includes('ai_semiconductor_intelligence') ? '✓' : '✗',
+        ENTITLEMENT_MATRIX.enterprise.topics.includes('ai_semiconductor_intelligence') ? '✓' : '✗'
+    ],
     ['Custom topics',               '✗',         '✗',           '✗',           '✓'],
     ['Watchlist keywords',          '3',         '20',          '100',         'Unlimited'],
     ['Support',                     'Community', 'Priority',    'Priority',    'Dedicated SLA'],
-    ['Specialized topics',           '✗',         '✓',           '✓',           '✓'],
     ['Entity-level intelligence',   '✗',         '✓',           '✓',           '✓'],
     ['Confidence metrics',          '✗',         '✓',           '✓',           '✓'],
     ['Source traceability',         '✗',         '✓',           '✓',           '✓'],

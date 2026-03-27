@@ -1,6 +1,6 @@
 import { submitFeedback, updateWatchlist } from './api';
 import type { Alert, AnalystProfile, HealthData } from './api';
-import { getTopicDef, canAccessTopic, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
+import { getTopicDef, canAccessTopic, canAccessReport, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
 
 export function renderHealth(data: HealthData, container: HTMLElement) {
     container.innerHTML = `
@@ -41,6 +41,8 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         const triggerLabel = (alert.trigger_type || 'Pattern').replace(/_/g, ' ').toUpperCase();
         const hasReport = !!alert.related_report_id;
 
+        // Note: Alert card access is topic-based. 
+        // Report access within the card will be validated upon clicking/loading.
         const cardContent = `
             <div class="alert-header u-flex-between">
                 <div class="u-flex" style="flex-wrap: wrap; row-gap: 0.5rem;">
@@ -84,7 +86,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 ${hasReport ? `
                 <div style="display:flex; align-items:flex-end;">
                     <button class="btn-fb active view-report-btn u-w-full u-tier-1 ${!accessible ? 'btn--locked' : ''}">
-                        ${accessible ? 'View Report' : `Upgrade to ${topicDef.minTier === 'pro' ? 'Pro' : 'Expert'} to access Intelligence`}
+                        ${accessible ? 'View Analysis' : `Upgrade to ${topicDef.minTier === 'pro' ? 'Pro' : 'Expert'} to access Intelligence`}
                     </button>
                 </div>
                 ` : `
@@ -313,8 +315,7 @@ function simpleMarkdown(md: string): string {
         .replace(/\n/g, '<br>');
 }
 
-export function renderReportDetail(report: any, container: HTMLElement, onBack?: () => void, onActionRequested?: (actionType: string) => void) {
-    const isPreview = report.is_preview === true || report.locked === true;
+export function renderReportDetail(report: any, userTier: string, container: HTMLElement, onBack?: () => void, onActionRequested?: (actionType: string) => void) {
     const dateStr = report.created_at || "";
     const cleanDate = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
     const date = new Date(cleanDate).toLocaleDateString();
@@ -324,6 +325,12 @@ export function renderReportDetail(report: any, container: HTMLElement, onBack?:
     const topicLabel = `${topicDef.icon} ${topicDef.label}`;
     const rtNorm = normalizeReportType(report.report_type);
     const rtLabel = REPORT_TYPE_LABELS[rtNorm] ?? rtNorm.toUpperCase();
+    
+    // Check access using CENTRALIZED ENTITLEMENTS
+    const hasAccess = canAccessReport(userTier, report.report_type, report.topic_code ?? null);
+    const isPreview = !hasAccess || report.is_preview === true || report.locked === true;
+    
+    // Determine required plan for display
     const planReq = report.plan_required || REPORT_TYPE_MIN_TIER[rtNorm] || 'free';
     const planDisplay = planReq.charAt(0).toUpperCase() + planReq.slice(1);
 
