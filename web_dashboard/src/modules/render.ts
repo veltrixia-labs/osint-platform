@@ -485,14 +485,16 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                         }
 
                         // Render remaining in order
-                        const renderSec = (s: any) => s ? `<h3>${s.title}</h3>${simpleMarkdown(s.content)}` : '';
-                        html += renderSec(developments);
-                        html += renderSec(trend);
-                        html += renderSec(scenarios);
+                        const renderSec = (s: any, priority: 'medium' | 'low' = 'medium') => 
+                            s ? `<div class="report-section--${priority}"><h3>${s.title}</h3>${simpleMarkdown(s.content)}</div>` : '';
+
+                        html += renderSec(developments, 'medium');
+                        html += renderSec(trend, 'medium');
+                        html += renderSec(scenarios, 'low');
                         
                         // Remaining bits
                         sections.forEach(s => {
-                            html += `<h3>${s.title}</h3>${simpleMarkdown(s.content)}`;
+                            html += renderSec(s, 'low');
                         });
 
                         return html || simpleMarkdown(md);

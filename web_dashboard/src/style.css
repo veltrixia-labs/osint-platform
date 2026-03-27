@@ -1127,10 +1127,53 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 .comparison-column--expert-highlight { background: rgba(63, 185, 80, 0.04); border-left: 1px solid rgba(63, 185, 80, 0.1); border-right: 1px solid rgba(63, 185, 80, 0.1); }
 .cmp-current.comparison-column--expert-highlight { background: rgba(63, 185, 80, 0.1); }
 
-/* Report Readability: Summary Box */
-.report-summary-box { background: rgba(88, 166, 255, 0.05); border-left: 4px solid var(--accent); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
-.summary-section { display: flex; flex-direction: column; gap: 0.5rem; }
+/* Report Section Visual Hierarchy */
+
+/* High Priority (Strong Card) */
+.report-summary-box {
+  background: rgba(88, 166, 255, 0.08); 
+  border: 1px solid rgba(88, 166, 255, 0.2); 
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  padding: 1.75rem;
+  margin-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.summary-section { display: flex; flex-direction: column; gap: 0.25rem; }
 .summary-label { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase; }
 .summary-content { color: #c9d1d9; line-height: 1.6; }
 .summary-content li { margin-bottom: 0.25rem; font-size: 0.95rem; }
 .summary-content ul { padding-left: 1.25rem; margin: 0; }
+
+/* Medium Priority (Light Separation) */
+.report-section--medium {
+  border-top: 1px solid var(--border);
+  padding-top: 2rem;
+  margin-top: 2rem;
+}
+
+.report-section--medium h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+/* Low Priority (Minimal UI) */
+.report-section--low {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+}
+
+.report-section--low h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+  opacity: 0.8;
+}
