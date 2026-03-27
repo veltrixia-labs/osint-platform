@@ -196,6 +196,45 @@ async def login(response: Response, request: Request, data: dict, db: AsyncSessi
     await SecurityLogger.log_event(db, "login_success", user_id=user.id, session_id=session_id, client_ip=request.client.host)
     return {"access_token": access_token, "token_type": "bearer"}
 
+class SignupData(BaseModel):
+    telegram_chat_id: str
+    password: str
+
+@app.post("/api/auth/signup", status_code=status.HTTP_201_CREATED)
+async def signup(request: Request, data: SignupData, db: AsyncSession = Depends(get_db)):
+    chat_id = data.telegram_chat_id
+    password = data.password
+    
+    # 1. Check if user already exists
+    stmt = select(AnalystProfile).where(AnalystProfile.telegram_chat_id == chat_id)
+    existing_user = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    # 2. Create new Free-tier user
+    hashed_pw = get_password_hash(password)
+    new_user = AnalystProfile(
+        id=uuid.uuid4(),
+        telegram_chat_id=chat_id,
+        hashed_password=hashed_pw,
+        user_role="analyst",
+        subscription_tier="free",
+        is_active=True,
+        created_at=datetime.now(timezone.utc)
+    )
+    
+    db.add(new_user)
+    try:
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Signup failed for {chat_id}: {e}")
+        raise HTTPException(status_code=500, detail="Registration failed")
+    
+    await SecurityLogger.log_event(db, "signup_success", user_id=new_user.id, details={"chat_id": chat_id}, client_ip=request.client.host)
+    return {"status": "success", "message": "Account created successfully", "chat_id": chat_id}
+
 class AnalyticsEventCreate(BaseModel):
     event_type: str
     report_id: Optional[uuid.UUID] = None

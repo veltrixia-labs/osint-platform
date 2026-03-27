@@ -1,7 +1,7 @@
 import './style.css'
 import { DashboardState } from './modules/poll'
 import { renderAlerts, renderHealth, renderSidebar, renderReportDetail } from './modules/render'
-import { login, fetchMe, logout, fetchUsage, fetchReports, fetchReport } from './modules/api'
+import { login, signup, fetchMe, logout, fetchUsage, fetchReports, fetchReport } from './modules/api'
 import type { UserMe, AnalystProfile, Report } from './modules/api'
 import {
     renderTierBadge,
@@ -20,7 +20,7 @@ import {
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 
-export async function renderLogin() {
+export async function renderLogin(message?: string, initialChatId?: string) {
     // Stop any active polling
     (window as any).stopPolling?.();
     
@@ -30,16 +30,28 @@ export async function renderLogin() {
         <div class="login-card">
             <h1>OSINT Intelligence</h1>
             <p>Enter your analyst credentials</p>
-            <input type="text" id="chat-id" placeholder="Telegram Chat ID" required />
+            ${message ? `<div id="login-message" style="color: #3fb950; margin-bottom: 1rem; font-size: 0.9rem;">${message}</div>` : ''}
+            <input type="text" id="chat-id" placeholder="Telegram Chat ID" required value="${initialChatId || ''}" />
             <input type="password" id="password" placeholder="Password" required />
             <button id="login-btn">Login</button>
             <div id="login-error" style="color: #ff7b72; margin-top: 1rem; font-size: 0.9rem;"></div>
+            <div style="margin-top: 1.5rem; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                <span style="opacity: 0.6;">New analyst?</span>
+                <a href="#" id="go-signup" style="color: var(--accent); text-decoration: none; margin-left: 0.5rem; font-weight: 600;">Create Account</a>
+            </div>
         </div>
     </div>
     `
     
-    const btn = document.querySelector('#login-btn')!
-    btn.addEventListener('click', async () => {
+    const loginBtn = document.querySelector('#login-btn')!
+    const signupLink = document.querySelector('#go-signup')!
+
+    signupLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        renderSignup();
+    });
+
+    loginBtn.addEventListener('click', async () => {
         const chatId = (document.querySelector('#chat-id') as HTMLInputElement).value
         const pwd = (document.querySelector('#password') as HTMLInputElement).value
         const errorDiv = document.querySelector('#login-error')!
@@ -49,6 +61,57 @@ export async function renderLogin() {
             initDashboard()
         } catch (e) {
             errorDiv.textContent = "Authentication failed. Please check credentials."
+        }
+    })
+}
+
+export async function renderSignup() {
+    app.className = 'login-page'
+    app.innerHTML = `
+    <div class="login-container">
+        <div class="login-card">
+            <h1>Create Account</h1>
+            <p>Join the OSINT Intelligence network</p>
+            <input type="text" id="signup-chat-id" placeholder="Choose a Chat ID" required />
+            <input type="password" id="signup-password" placeholder="Create Password" required />
+            <button id="signup-btn" class="u-tier-1">Sign Up</button>
+            <div id="signup-error" style="color: #ff7b72; margin-top: 1rem; font-size: 0.9rem;"></div>
+            <div style="margin-top: 1.5rem; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                <span style="opacity: 0.6;">Already have an account?</span>
+                <a href="#" id="go-login" style="color: var(--accent); text-decoration: none; margin-left: 0.5rem; font-weight: 600;">Back to Login</a>
+            </div>
+        </div>
+    </div>
+    `
+    
+    const signupBtn = document.querySelector('#signup-btn')!
+    const loginLink = document.querySelector('#go-login')!
+
+    loginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        renderLogin();
+    });
+
+    signupBtn.addEventListener('click', async () => {
+        const chatId = (document.querySelector('#signup-chat-id') as HTMLInputElement).value
+        const pwd = (document.querySelector('#signup-password') as HTMLInputElement).value
+        const errorDiv = document.querySelector('#signup-error')!
+        
+        if (!chatId || !pwd) {
+            errorDiv.textContent = "Please fill in all fields."
+            return;
+        }
+
+        try {
+            signupBtn.textContent = 'Creating Account...';
+            (signupBtn as HTMLButtonElement).disabled = true;
+            
+            await signup(chatId, pwd)
+            renderLogin("Account created successfully! Please log in.", chatId);
+        } catch (e: any) {
+            errorDiv.textContent = e.message || "Registration failed. Try a different ID.";
+            signupBtn.textContent = 'Sign Up';
+            (signupBtn as HTMLButtonElement).disabled = false;
         }
     })
 }
