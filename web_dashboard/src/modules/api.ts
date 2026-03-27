@@ -38,6 +38,7 @@ export interface Alert {
     intelligence_score: number;
     intensity: number;
     trigger_type: string;
+    topic: string | null;
     target_label: string;
     domain_count: number;
     evidence_list?: {

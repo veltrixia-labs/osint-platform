@@ -1,6 +1,6 @@
 import { submitFeedback, updateWatchlist } from './api';
 import type { Alert, AnalystProfile, HealthData } from './api';
-import { getTopicDef, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
+import { getTopicDef, canAccessTopic, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
 
 export function renderHealth(data: HealthData, container: HTMLElement) {
     container.innerHTML = `
@@ -23,13 +23,15 @@ export function renderHealth(data: HealthData, container: HTMLElement) {
     `;
 }
 
-export function renderAlerts(alerts: Alert[], container: HTMLElement) {
+export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: string = 'free') {
     if (!Array.isArray(alerts)) {
         console.error("renderAlerts expected an array, got:", alerts);
         container.innerHTML = '<div class="u-p-2 u-text-center" style="color:#f85149;">Technical error: invalid alerts data.</div>';
         return;
     }
     container.innerHTML = alerts.map(alert => {
+        const topicDef = getTopicDef(alert.topic);
+        const accessible = canAccessTopic(userTier, topicDef);
         const severityClass = alert.severity.toLowerCase();
         const date = new Date(alert.triggered_at);
         const displayDate = isNaN(date.getTime()) ? 'Recent' : date.toLocaleString(undefined, {
@@ -39,62 +41,75 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
         const triggerLabel = (alert.trigger_type || 'Pattern').replace(/_/g, ' ').toUpperCase();
         const hasReport = !!alert.related_report_id;
 
-        return `
-            <div class="alert-card ${severityClass}" data-id="${alert.id}">
-                <div class="alert-header u-flex-between">
-                    <div class="u-flex" style="flex-wrap: wrap; row-gap: 0.5rem;">
-                        <span class="severity-badge">${alert.severity}</span>
-                        <span class="watchlist-tag">
-                            ${triggerLabel}
-                        </span>
-                        <span style="color: #8b949e; font-size: var(--font-xs);">${displayDate}</span>
-                    </div>
-                    <div class="u-text-right">
-                        <div style="font-size: var(--font-xs); color:#8b949e;">Intelligence Priority</div>
-                        <div class="intel-score">${alert.intelligence_score.toFixed(2)}</div>
+        const cardContent = `
+            <div class="alert-header u-flex-between">
+                <div class="u-flex" style="flex-wrap: wrap; row-gap: 0.5rem;">
+                    <span class="severity-badge">${alert.severity}</span>
+                    <span class="watchlist-tag">
+                        ${triggerLabel}
+                    </span>
+                    <span style="color: #8b949e; font-size: var(--font-xs);">${displayDate}</span>
+                </div>
+                <div class="u-text-right">
+                    <div style="font-size: var(--font-xs); color:#8b949e;">Intelligence Priority</div>
+                    <div class="intel-score">${accessible ? alert.intelligence_score.toFixed(2) : '•.••'}</div>
+                </div>
+            </div>
+            
+            <h3 style="color: #58a6ff; line-height: 1.4; margin-bottom: 0.25rem;">${alert.target_label || 'Unknown Signal'}</h3>
+            ${!accessible ? `
+                <div style="font-size: var(--font-xs); color: ${topicDef.color}; opacity: 0.9; margin-bottom: 0.75rem; font-weight: 500;">
+                    ${topicDef.valueProposition}
+                    ${alert.intensity >= 8.0 ? `<span style="display: block; color: #ff7b72; margin-top: 2px;">🔥 High momentum signal detected</span>` : ''}
+                </div>
+            ` : ''}
+            
+            <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
+                <div>
+                    <h4>Risk Momentum</h4>
+                    <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${accessible ? (alert.intensity?.toFixed(2) || '0.00') : '•.••'}/10.0</div>
+                </div>
+                <div>
+                    <h4>Evidence</h4>
+                    <div class="evidence-trigger-btn u-tier-1 u-m-top-1" style="color:#58a6ff; background:var(--accent-soft); padding:4px 12px; border-radius:6px; display:inline-block; border:1px solid var(--border-active); font-size: var(--font-s); cursor: ${accessible ? 'pointer' : 'not-allowed'};">
+                        🔍 ${accessible ? (alert.domain_count || 0) : '•'} Domains
                     </div>
                 </div>
-                
-                <h3 style="color: #58a6ff; line-height: 1.4;">${alert.target_label || 'Unknown Signal'}</h3>
-                
-                <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
-                    <div>
-                        <h4>Risk Momentum</h4>
-                        <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${alert.intensity?.toFixed(2) || '0.00'}/10.0</div>
+                <div>
+                    <h4>Change</h4>
+                    <div style="font-size:var(--font-m); color:${accessible && (alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
+                        ${accessible ? ((alert.spike_delta || 0) > 0 ? '↑' : '') + (alert.spike_delta || 0).toFixed(2) : '•.••'}
                     </div>
-                    <div>
-                        <h4>Evidence</h4>
-                        <div class="evidence-trigger-btn u-tier-1 u-m-top-1" style="color:#58a6ff; background:var(--accent-soft); padding:4px 12px; border-radius:6px; display:inline-block; border:1px solid var(--border-active); font-size: var(--font-s); cursor: pointer;">
-                            🔍 ${alert.domain_count || 0} Domains
-                        </div>
-                    </div>
-                    <div>
-                        <h4>Change</h4>
-                        <div style="font-size:var(--font-m); color:${(alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
-                            ${(alert.spike_delta || 0) > 0 ? '↑' : ''}${(alert.spike_delta || 0).toFixed(2)}
-                        </div>
-                    </div>
-                    ${hasReport ? `
-                    <div style="display:flex; align-items:flex-end;">
-                        <button class="btn-fb active view-report-btn u-w-full u-tier-1">View Report</button>
-                    </div>
-                    ` : `
-                    <div style="font-size:var(--font-xs); color:#8b949e; display:flex; align-items:flex-end; opacity:0.6; font-style: italic;">
-                        Analysis Pending...
-                    </div>
-                    `}
                 </div>
+                ${hasReport ? `
+                <div style="display:flex; align-items:flex-end;">
+                    <button class="btn-fb active view-report-btn u-w-full u-tier-1 ${!accessible ? 'btn--locked' : ''}">
+                        ${accessible ? 'View Report' : `Upgrade to ${topicDef.minTier === 'pro' ? 'Pro' : 'Expert'} to access Intelligence`}
+                    </button>
+                </div>
+                ` : `
+                <div style="font-size:var(--font-xs); color:#8b949e; display:flex; align-items:flex-end; opacity:0.6; font-style: italic;">
+                    ${accessible ? 'Report not available yet' : 'Upgrade Required'}
+                </div>
+                `}
+            </div>
 
-                <div class="u-flex-between u-m-top-1">
-                    <div style="font-size: var(--font-xs); color: #8b949e;">
-                        ${alert.delivery ? `Targeted Alert` : 'Broadcast Alert'}
-                    </div>
-                    <div class="feedback-controls" style="margin-top:0;">
-                        ${[1, 2, 3, 4, 5].map(s => `
-                            <button class="btn-fb u-tier-1 ${alert.feedback_score === s ? 'active' : ''}" data-score="${s}">${s}</button>
-                        `).join('')}
-                    </div>
+            <div class="u-flex-between u-m-top-1">
+                <div style="font-size: var(--font-xs); color: #8b949e;">
+                    ${accessible ? (alert.delivery ? `Targeted Alert` : 'Broadcast Alert') : `Locked Sector: ${topicDef.label}`}
                 </div>
+                <div class="feedback-controls" style="margin-top:0; ${accessible ? '' : 'pointer-events:none; opacity:0.3;'}">
+                    ${[1, 2, 3, 4, 5].map(s => `
+                        <button class="btn-fb u-tier-1 ${alert.feedback_score === s ? 'active' : ''}" data-score="${s}">${s}</button>
+                    `).join('')}
+                </div>
+            </div>
+            ${!accessible ? `<div class="alert-lock-overlay">🔒 Content restricted to ${topicDef.minTier === 'pro' ? 'Pro' : 'Expert'} Analyst tier</div>` : ''}
+        `;
+
+        return `
+            <div class="alert-card ${severityClass} ${!accessible ? 'alert-card--locked' : ''}" data-id="${alert.id}" data-topic="${alert.topic || ''}">
+                ${cardContent}
             </div>
         `;
     }).join('');
@@ -123,9 +138,18 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement) {
             const alertId = card.dataset.id!;
             const alert = alerts.find(a => a.id === alertId);
             const reportId = alert?.related_report_id;
+            const topicDef = getTopicDef(alert?.topic || null);
+            const accessible = canAccessTopic(userTier, topicDef);
+
             if (reportId) {
-                const event = new CustomEvent('view-report', { detail: { reportId } });
-                window.dispatchEvent(event);
+                if (!accessible) {
+                    // Trigger upgrade overlay via custom event
+                    const event = new CustomEvent('show-locked-topic', { detail: { topicKey: topicDef.key } });
+                    window.dispatchEvent(event);
+                } else {
+                    const event = new CustomEvent('view-report', { detail: { reportId } });
+                    window.dispatchEvent(event);
+                }
             }
         });
     });

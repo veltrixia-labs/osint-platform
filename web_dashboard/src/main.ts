@@ -188,6 +188,10 @@ async function initDashboard() {
         renderSingleReport(e.detail.reportId, originTab);
     });
 
+    window.addEventListener('show-locked-topic', (e: any) => {
+        renderLockedTopicOverlay(e.detail.topicKey);
+    });
+
     const renderIntelligenceFeed = async () => {
         if (!user) { renderLogin(); return; }
         (window as any).stopPolling?.();
@@ -218,7 +222,7 @@ async function initDashboard() {
             const feedInner = document.querySelector<HTMLElement>('#feed-alerts-inner');
             // Only update alert list if no locked overlay is showing
             if (feedInner && !feedInner.querySelector('.locked-topic-view')) {
-                renderAlerts(data.alerts || [], feedInner);
+                renderAlerts(data.alerts || [], feedInner, user!.tier);
             }
         });
         
@@ -236,12 +240,13 @@ async function initDashboard() {
                     const accessible = canAccessTopic(user!.tier, topic);
                     const isActive = currentKey === topic.key;
                     const lockIcon = accessible ? '' : '<span class="topic-lock-icon">🔒</span>';
+                    const minTierDisplay = topic.minTier === 'experts' ? 'Expert' : topic.minTier.charAt(0).toUpperCase() + topic.minTier.slice(1);
                     return `<button
                         class="topic-tab ${isActive ? 'topic-tab--active' : ''} ${!accessible ? 'topic-tab--locked' : ''}"
                         data-key="${topic.key}"
                         data-accessible="${accessible}"
                         style="--topic-color: ${topic.color}"
-                        title="${accessible ? topic.label : topic.label + ' — Requires Pro'}"
+                        title="${accessible ? topic.label : 'Upgrade to ' + minTierDisplay + ' to access'}"
                     >${topic.icon} ${topic.label}${lockIcon}</button>`;
                 }).join('')}
             </div>
@@ -256,6 +261,12 @@ async function initDashboard() {
                     // null = global in API
                     const topicDef = ACCESS_MAP.find(t => t.key === key)!;
                     state.setTopic(topicDef.code);
+                    
+                    // Clear locked view if present to allow feed to re-render
+                    const feedInner = document.querySelector<HTMLElement>('#feed-alerts-inner');
+                    if (feedInner && feedInner.querySelector('.locked-topic-view')) {
+                        feedInner.innerHTML = '<div class="u-p-2 u-text-center">Loading Intelligence Feed...</div>';
+                    }
                 } else {
                     renderLockedTopicOverlay(key);
                 }
@@ -263,34 +274,75 @@ async function initDashboard() {
         });
     };
 
-    const renderLockedTopicOverlay = (key: string) => {
+    const renderLockedTopicOverlay = (key: string, targetContainer?: HTMLElement) => {
         const topic = ACCESS_MAP.find(t => t.key === key)!;
-        const minTierDisplay = topic.minTier.charAt(0).toUpperCase() + topic.minTier.slice(1);
-        const feedInner = document.querySelector<HTMLElement>('#feed-alerts-inner');
-        if (!feedInner) return;
-        feedInner.innerHTML = `
-            <div class="locked-topic-view">
+        const minTierDisplay = topic.minTier === 'experts' ? 'Expert' : topic.minTier.charAt(0).toUpperCase() + topic.minTier.slice(1);
+        const container = targetContainer || document.querySelector<HTMLElement>('#feed-alerts-inner');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="locked-topic-view" style="${targetContainer ? 'min-height: 500px;' : ''}">
                 <div class="locked-topic-skeletons">
                     <div class="skeleton-card"></div>
                     <div class="skeleton-card"></div>
                     <div class="skeleton-card"></div>
                 </div>
                 <div class="locked-topic-overlay">
-                    <div class="locked-topic-inner">
-                        <div class="locked-topic-icon">${topic.icon}</div>
-                        <h3 style="color: ${topic.color}">${topic.label}</h3>
-                        <p>This intelligence domain requires a <strong>${minTierDisplay}</strong> subscription or higher.</p>
-                        <button class="btn-primary locked-upgrade-btn" style="background: ${topic.color}22; color: ${topic.color}; border: 1px solid ${topic.color}55;">
-                            Upgrade to ${minTierDisplay} →
+                    <div class="locked-topic-inner" style="max-width: 600px; padding: 2.5rem;">
+                        <div class="locked-topic-icon" style="font-size: 3rem; margin-bottom: 1rem;">${topic.icon}</div>
+                        <h2 style="color: ${topic.color}; margin-bottom: 0.5rem; font-size: 1.8rem;">${topic.label}</h2>
+                        <p style="font-size: 1.1rem; color: #c9d1d9; font-weight: 500; margin-bottom: 1.5rem;">
+                            ${topic.valueProposition}
+                        </p>
+                        
+                        <div class="tier-comparison-mini u-m-bottom-2" style="background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); overflow: hidden; width: 100%;">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                                <thead style="background: rgba(255,255,255,0.03);">
+                                    <tr>
+                                        <th style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">Feature</th>
+                                        <th style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; opacity: 0.6;">Free</th>
+                                        <th style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; color: #d29922;">Pro</th>
+                                        <th style="padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; color: #bc8cff;">Expert</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">Global Briefing</td>
+                                        <td style="padding: 10px 12px; text-align: center; color: #3fb950;">✓</td>
+                                        <td style="padding: 10px 12px; text-align: center; color: #3fb950;">✓</td>
+                                        <td style="padding: 10px 12px; text-align: center; color: #3fb950;">✓</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">Specialized (Energy/Market)</td>
+                                        <td style="padding: 10px 12px; text-align: center; opacity: 0.3;">🔒</td>
+                                        <td style="padding: 10px 12px; text-align: center; color: #3fb950;">✓</td>
+                                        <td style="padding: 10px 12px; text-align: center; color: #3fb950;">✓</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px 12px;">Expert Portfolio (AI/Defense)</td>
+                                        <td style="padding: 10px 12px; text-align: center; opacity: 0.3;">🔒</td>
+                                        <td style="padding: 10px 12px; text-align: center; opacity: 0.3;">🔒</td>
+                                        <td style="padding: 10px 12px; text-align: center; color: #3fb950;">✓</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p style="font-size: 0.95rem; color: #8b949e; margin-bottom: 2rem;">
+                            Accessing this intelligence domain requires an <strong>${minTierDisplay}</strong> analyst subscription.
+                        </p>
+                        
+                        <button class="btn-primary locked-upgrade-btn" style="background: ${topic.color}; color: #0d1117; border: none; padding: 14px 32px; font-weight: 700; font-size: 1.1rem; cursor: pointer; border-radius: 8px; box-shadow: 0 4px 12px ${topic.color}44;">
+                            Unlock ${topic.label} Intelligence →
                         </button>
                     </div>
                 </div>
             </div>
         `;
-        feedInner.querySelector('.locked-upgrade-btn')?.addEventListener('click', () => {
+        container.querySelector('.locked-upgrade-btn')?.addEventListener('click', () => {
             handleTabSwitch('plans');
         });
-    }
+    };
 
     const renderPlans = async () => {
         (window as any).stopPolling?.();
@@ -344,12 +396,24 @@ async function initDashboard() {
         (window as any).stopPolling?.();
         mainTitle.textContent = 'Situation Report';
         healthContainer.innerHTML = '';
+        alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Loading Report...</div>';
         try {
             const report = await fetchReport(id);
+            const topicDef = getTopicDef(report.topic_code ?? null);
+            const accessible = canAccessTopic(user!.tier, topicDef);
+
+            if (!accessible) {
+                renderLockedTopicOverlay(topicDef.key, alertsContainer);
+                return;
+            }
+
             renderReportDetail(report, alertsContainer, () => handleTabSwitch(origin), (action) => {
                 if (action === 'upgrade') handleTabSwitch('plans');
             });
-        } catch (e) { alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Decryption failed.</div>'; }
+        } catch (e) { 
+            console.error("Report load failed:", e);
+            alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Decryption failed or unauthorized access.</div>'; 
+        }
     };
 
     const refreshWatchlist = async () => {

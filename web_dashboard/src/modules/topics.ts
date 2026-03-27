@@ -16,6 +16,10 @@ export interface TopicDef {
     minTier: 'free' | 'pro' | 'experts';
     /** Display color accent */
     color: string;
+    /** Short summary of the topic's scope */
+    description: string;
+    /** The core value statement for upgrade conversion */
+    valueProposition: string;
 }
 
 /**
@@ -30,6 +34,8 @@ export const ACCESS_MAP: TopicDef[] = [
         icon: '🌐',
         minTier: 'free',
         color: '#58a6ff',
+        description: 'Macro-level geopolitical and economic signal monitoring.',
+        valueProposition: 'Foundational intelligence for global situational awareness.',
     },
     {
         code: 'energy_resource_risk',
@@ -38,6 +44,8 @@ export const ACCESS_MAP: TopicDef[] = [
         icon: '⚡',
         minTier: 'pro',
         color: '#d29922',
+        description: 'Monitoring volatility in oil, gas, and critical minerals.',
+        valueProposition: 'Strategic analysis of energy market disruptions and supply risks.',
     },
     {
         code: 'global_market_intelligence',
@@ -46,6 +54,8 @@ export const ACCESS_MAP: TopicDef[] = [
         icon: '💰',
         minTier: 'pro',
         color: '#3fb950',
+        description: 'Cross-asset correlation and macroeconomic risk detection.',
+        valueProposition: 'Data-driven insights into central bank shifts and market inflections.',
     },
     {
         code: 'crypto_geopolitics',
@@ -54,30 +64,38 @@ export const ACCESS_MAP: TopicDef[] = [
         icon: '₿',
         minTier: 'pro',
         color: '#f78166',
+        description: 'Tracking digital asset flows and regulatory impact.',
+        valueProposition: 'Predictive intelligence on state-level crypto adoption and risks.',
     },
     {
         code: 'ai_semiconductor_intelligence',
         key: 'ai_semiconductor_intelligence',
         label: 'AI & Semiconductors',
         icon: '🤖',
-        minTier: 'pro',
+        minTier: 'experts',
         color: '#bc8cff',
+        description: 'Deep-dives into the silicon supply chain and AI competition.',
+        valueProposition: 'High-fidelity technical intelligence on compute-driven dominance.',
     },
     {
         code: 'defense_technology',
         key: 'defense_technology',
         label: 'Defense Technology',
         icon: '🛡️',
-        minTier: 'pro',
+        minTier: 'experts',
         color: '#ff7b72',
+        description: 'Intelligence on emerging weapons systems and dual-use tech.',
+        valueProposition: 'Strategic forecasting of disruptive military innovation.',
     },
     {
         code: 'supply_chain_intelligence',
         key: 'supply_chain_intelligence',
         label: 'Supply Chain Intel',
         icon: '📦',
-        minTier: 'pro',
+        minTier: 'experts',
         color: '#79c0ff',
+        description: 'Global logistics bottlenecks and tiered supplier mapping.',
+        valueProposition: 'Real-time monitoring of systemic vulnerabilities in trade.',
     },
 ];
 
