@@ -2,6 +2,15 @@ import { submitFeedback, updateWatchlist } from './api';
 import type { Alert, AnalystProfile, HealthData } from './api';
 import { getTopicDef, canAccessTopic, canAccessReport, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
 
+function formatIntensity(val: number | undefined | null): string {
+    if (typeof val !== 'number') return '0.0';
+    const rounded = val.toFixed(1);
+    let label = 'Low';
+    if (val >= 4) label = 'High';
+    else if (val >= 2) label = 'Medium';
+    return `${rounded} (${label})`;
+}
+
 export function renderHealth(data: HealthData, container: HTMLElement) {
     container.innerHTML = `
         <div class="health-grid">
@@ -69,7 +78,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
                 <div>
                     <h4>Risk Momentum</h4>
-                    <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${accessible ? (alert.intensity?.toFixed(2) || '0.00') : '•.••'}/10.0</div>
+                    <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${accessible ? formatIntensity(alert.intensity) : '•.••'}/10.0</div>
                 </div>
                 <div>
                     <h4>Evidence</h4>
@@ -80,7 +89,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 <div>
                     <h4>Change</h4>
                     <div style="font-size:var(--font-m); color:${accessible && (alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
-                        ${accessible ? ((alert.spike_delta || 0) > 0 ? '↑' : '') + (alert.spike_delta || 0).toFixed(2) : '•.••'}
+                        ${accessible ? ((alert.spike_delta || 0) > 0 ? '↑' : '') + (alert.spike_delta || 0).toFixed(1) : '•.••'}
                     </div>
                 </div>
                 ${hasReport ? `
@@ -428,7 +437,66 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                 </div>
 
                 <div class="markdown-body u-m-top-1" style="${isPreview ? 'mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);' : ''}">
-                    ${simpleMarkdown(md)}
+                    ${(() => {
+                        if (isPreview) return simpleMarkdown(md);
+
+                        // Prioritize sections for better scan efficiency
+                        const lines = md.split('\n');
+                        const sections: { title: string, content: string }[] = [];
+                        let currentSec = { title: '', content: '' };
+                        lines.forEach((l: string) => {
+                            const h = l.match(/^(#{1,3})\s+(.*)$/);
+                            if (h) {
+                                if (currentSec.title || currentSec.content.trim()) sections.push({ ...currentSec });
+                                currentSec = { title: h[2].trim(), content: '' };
+                            } else {
+                                currentSec.content += l + '\n';
+                            }
+                        });
+                        if (currentSec.title || currentSec.content.trim()) sections.push(currentSec);
+
+                        const findSec = (names: string[]) => {
+                            const idx = sections.findIndex(s => names.some(n => s.title.toLowerCase().includes(n.toLowerCase())));
+                            if (idx === -1) return null;
+                            return sections.splice(idx, 1)[0];
+                        };
+
+                        // Extract Summary & Actions
+                        const executive = findSec(['Executive Signal', 'Summary', 'Key Insights']);
+                        const actions = findSec(['Key Actions', 'Recommendations', 'Next Steps']);
+                        const developments = findSec(['Key Developments', 'Key Findings', 'Analysis']);
+                        const trend = findSec(['Trend Analysis', 'Market Context']);
+                        const scenarios = findSec(['Strategic Scenarios', 'Potential Developments', 'Outlook', 'Monitoring']);
+
+                        let html = '';
+                        
+                        // Render Summary Box
+                        if (executive || actions) {
+                            html += `<div class="report-summary-box">
+                                ${executive ? `<div class="summary-section">
+                                    <div class="summary-label">EXECUTIVE SIGNAL</div>
+                                    <div class="summary-content">${simpleMarkdown(executive.content.trim())}</div>
+                                </div>` : ''}
+                                ${actions ? `<div class="summary-section">
+                                    <div class="summary-label">KEY ACTIONS</div>
+                                    <div class="summary-content">${simpleMarkdown(actions.content.trim())}</div>
+                                </div>` : ''}
+                            </div>`;
+                        }
+
+                        // Render remaining in order
+                        const renderSec = (s: any) => s ? `<h3>${s.title}</h3>${simpleMarkdown(s.content)}` : '';
+                        html += renderSec(developments);
+                        html += renderSec(trend);
+                        html += renderSec(scenarios);
+                        
+                        // Remaining bits
+                        sections.forEach(s => {
+                            html += `<h3>${s.title}</h3>${simpleMarkdown(s.content)}`;
+                        });
+
+                        return html || simpleMarkdown(md);
+                    })()}
                 </div>
 
                 ${isPreview ? `
