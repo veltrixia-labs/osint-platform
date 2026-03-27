@@ -331,17 +331,24 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         }
 
         return `
-        <div class="plan-card ${isCurrent ? 'plan-card--active' : ''}" style="--plan-color: ${plan.color}">
-            ${plan.id === 'pro' ? '<div class="plan-badge-top">FOUNDING MEMBER</div>' : ''}
+        <div class="plan-card plan-card--${plan.id} ${isCurrent ? 'plan-card--active' : ''}" style="--plan-color: ${plan.color}">
+            ${plan.id === 'pro' ? '<div class="plan-ribbon">Most Popular</div>' : ''}
+            ${plan.id === 'experts' ? '<div class="plan-ribbon plan-ribbon--premium">Expert Choice</div>' : ''}
+            
             <div class="plan-header">
-                <h2 class="plan-name" style="color: ${plan.color}">${plan.name}</h2>
                 <div class="plan-best-for">${plan.bestFor}</div>
+                <h2 class="plan-name">${plan.name}</h2>
                 <p class="plan-subtitle">${plan.subtitle}</p>
-                <div class="plan-price">
-                    ${priceHtml}
-                </div>
             </div>
-            <ul class="plan-features">${featureList}</ul>
+
+            <div class="plan-price">
+                ${priceHtml}
+            </div>
+
+            <div class="plan-features-wrap">
+                <ul class="plan-features">${featureList}</ul>
+            </div>
+
             <div class="plan-cta-area">${ctaHtml}</div>
         </div>`;
     }).join('');
