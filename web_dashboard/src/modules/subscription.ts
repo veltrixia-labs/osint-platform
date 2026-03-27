@@ -33,7 +33,7 @@ const TIER_BEST_FOR: Record<string, string> = {
     free: 'Basic risk monitoring',
     pro: 'Operational risk intelligence',
     experts: 'Strategic risk intelligence',
-    enterprise: 'Organization-scale custom intelligence',
+    enterprise: 'Organizations requiring onboarding & customization',
 };
 
 interface PlanConfig {
@@ -55,7 +55,7 @@ const PLANS: PlanConfig[] = [
     {
         id: 'free',
         name: PLAN_NAME_MAP.free,
-        subtitle: 'Foundational awareness',
+        subtitle: 'Foundational Awareness',
         bestFor: TIER_BEST_FOR.free,
         price: '$0',
         priceNote: 'forever',
@@ -66,14 +66,14 @@ const PLANS: PlanConfig[] = [
             '5 alerts/day',
             'Daily intelligence reports',
             '3 watchlist keywords',
-            'Global situational briefing only',
+            'Real-time Signal Detection',
             'Email support',
         ],
     },
     {
         id: 'pro',
         name: PLAN_NAME_MAP.pro,
-        subtitle: 'Advanced individual analysis',
+        subtitle: 'Advanced Individual Analysis',
         bestFor: TIER_BEST_FOR.pro,
         price: '$19',
         priceNote: 'per month',
@@ -82,7 +82,7 @@ const PLANS: PlanConfig[] = [
         contactUrl: '',
         features: [
             'Entity-level intelligence',
-            'Analytical confidence metrics',
+            'AI-Enhanced Intelligence',
             'Full source traceability',
             '100 alerts/day',
             'Daily + Weekly reports',
@@ -93,7 +93,7 @@ const PLANS: PlanConfig[] = [
     {
         id: 'experts',
         name: PLAN_NAME_MAP.experts,
-        subtitle: 'Strategic foresight & forecasting',
+        subtitle: 'Strategic Foresight',
         bestFor: TIER_BEST_FOR.experts,
         price: '$49',
         priceNote: 'per month',
@@ -102,17 +102,17 @@ const PLANS: PlanConfig[] = [
         contactUrl: '',
         features: [
             'Monthly full LLM analysis',
-            'Scenario analysis (Best/Base/Worst)',
-            'Risk forecasting (30–60 days)',
+            'Scenario Analysis (Strategic LLM)',
+            'Risk Forecasting (Decision-Grade)',
             'Full Specialized Coverage (AI/Defense/Supply)',
-            'High self-serve limits',
+            'Decision-Grade Intelligence',
             'Unlimited alerts',
         ],
     },
     {
         id: 'enterprise',
         name: PLAN_NAME_MAP.enterprise,
-        subtitle: 'The full intelligence suite',
+        subtitle: 'Expert Intelligence + Priority Support',
         bestFor: TIER_BEST_FOR.enterprise,
         price: 'Custom',
         priceNote: 'contact us',
@@ -122,9 +122,8 @@ const PLANS: PlanConfig[] = [
         features: [
             'All Expert features',
             'Custom topic configuration',
-            'Team/Organization support',
-            'SLA guarantee',
-            'Dedicated account manager',
+            'Custom onboarding & operational support',
+            'Priority support escalation',
             'Custom intelligence workflows',
         ],
     },
@@ -154,8 +153,8 @@ const FEATURE_COMPARISON: [string, string, string, string, string][] = [
         ENTITLEMENT_MATRIX.experts.reports.includes('monthly') ? '✓ (Full LLM)' : '✗',
         ENTITLEMENT_MATRIX.enterprise.reports.includes('monthly') ? '✓ (Full LLM)' : '✗'
     ],
-    ['Scenario analysis',           '✗',         '✗',           '✓',           '✓'],
-    ['Risk forecasting',            '✗',         '✗',           '✓',           '✓'],
+    ['Scenario Analysis',           'Basic (Rule-based)', 'Basic (Rule-based)', 'Strategic (LLM-driven)', 'Strategic (LLM-driven)'],
+    ['Risk Forecasting',            'Monitoring Signals', 'AI-Enhanced Insights', 'Strategic Forecast (30–60 days)', 'Strategic Forecast (30–60 days)'],
     ['Core Specialty Topics',       
         ENTITLEMENT_MATRIX.free.topics.includes('energy_resource_risk') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.pro.topics.includes('energy_resource_risk') ? '✓' : '✗',
@@ -170,15 +169,12 @@ const FEATURE_COMPARISON: [string, string, string, string, string][] = [
     ],
     ['Custom topics',               '✗',         '✗',           '✗',           '✓'],
     ['Watchlist keywords',          '3',         '20',          '100',         'Unlimited'],
-    ['Support',                     'Community', 'Priority',    'Priority',    'Dedicated SLA'],
-    ['Entity-level intelligence',   '✗',         '✓',           '✓',           '✓'],
-    ['Confidence metrics',          '✗',         '✓',           '✓',           '✓'],
-    ['Source traceability',         '✗',         '✓',           '✓',           '✓'],
+    ['Support',                     'Community', 'Priority',    'Priority',    'Dedicated Escalation'],
+    ['Entity-level intelligence',   '✓',         '✓',           '✓',           '✓'],
+    ['Confidence metrics',          '✓',         '✓',           '✓',           '✓'],
+    ['Source traceability',         '✓',         '✓',           '✓',           '✓'],
     ['Cross-domain impact',         '✗',         '✗',           '✓',           '✓'],
     ['Self-serve limits',           'Low',       'Medium',      'High',        'Custom'],
-    ['Team/Org support',            '✗',         '✗',           '✗',           '✓'],
-    ['Dedicated Account Manager',   '✗',         '✗',           '✗',           '✓'],
-    ['Custom Workflows',            '✗',         '✗',           '✗',           '✓'],
 ];
 
 // ──────────────────────────────────────────────────────────────────────────────

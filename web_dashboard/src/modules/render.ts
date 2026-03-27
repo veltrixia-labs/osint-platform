@@ -364,6 +364,16 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
         md = md.split('# Sources')[0].trim();
     }
 
+    // Terminology Normalization (Depth-based Differentiation)
+    const isExpertPlus = planReq === 'experts' || planReq === 'enterprise';
+    if (isExpertPlus) {
+        md = md.replace(/# Scenarios/g, '# Strategic Scenarios');
+        md = md.replace(/# Monitoring Points/g, '# 30–60 Day Outlook');
+    } else {
+        md = md.replace(/# Scenarios/g, '# Potential Developments');
+        // Monitoring Points remains as is for Free/Pro
+    }
+
     container.innerHTML = `
         <div class="report-detail">
             <div class="u-flex-between u-m-top-1" style="margin-bottom: var(--space-m); flex-wrap: wrap; gap: 1rem;">
