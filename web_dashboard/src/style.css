@@ -14,7 +14,8 @@
   --danger: #f85149;
   --success: #3fb950;
   --border: rgba(255, 255, 255, 0.12);
-  --border-active: rgba(255, 255, 255, 0.25);
+  --border-active: rgba(255, 255, 255, 0.35);
+  --shadow-premium: 0 12px 32px rgba(0, 0, 0, 0.4);
 
   /* Tier palette */
   --tier-free: #8b949e;
@@ -770,3 +771,101 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   color: #e3b341;
 }
 
+/* ─────────────────────────────────────────────
+   Subscription Tab Redesign
+───────────────────────────────────────────── */
+.subscription-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  padding-bottom: 4rem;
+}
+
+.sub-status-card {
+  background: linear-gradient(135deg, var(--bg-secondary), color-mix(in srgb, var(--bg-secondary) 85%, var(--accent)));
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-active);
+  box-shadow: var(--shadow-premium);
+}
+
+.sub-status-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.sub-status-info h2 {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+.sub-status-current-row {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sub-status-current-row .label {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sub-status-current-row .value {
+  font-size: var(--font-xl);
+  font-weight: 800;
+  color: #fff;
+}
+
+.sub-status-meta {
+  text-align: right;
+}
+
+/* Plan Cards Enrichment */
+.plan-best-for {
+  font-size: var(--font-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.08);
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
+  display: inline-block;
+}
+
+.plan-card--active {
+  outline: 2px solid var(--plan-color);
+  outline-offset: -2px;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--plan-color) 25%, transparent);
+  transform: scale(1.02);
+}
+
+.plan-price-amount.pro-price-highlight {
+  color: #f7e07c;
+  text-shadow: 0 0 10px rgba(247, 224, 124, 0.3);
+}
+
+/* Comparison Table Refinement */
+.comparison-table .cmp-current {
+  background: rgba(88, 166, 255, 0.05);
+  position: relative;
+  border-left: 2px solid var(--accent);
+  border-right: 2px solid var(--accent);
+}
+
+.comparison-table thead th.cmp-current {
+  border-top: 2px solid var(--accent);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.comparison-table tbody tr:last-child td.cmp-current {
+  border-bottom: 2px solid var(--accent);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}

@@ -23,14 +23,24 @@ const GRACE_PERIOD_DAYS = 3;
 const PLAN_NAME_MAP: Record<string, string> = {
     free: 'Free',
     pro: 'Pro',
+    expert: 'Expert',
     experts: 'Expert',
     enterprise: 'Enterprise',
+};
+
+/** "Best For" labels for conversion guidance */
+const TIER_BEST_FOR: Record<string, string> = {
+    free: 'Basic risk monitoring',
+    pro: 'Operational risk intelligence',
+    experts: 'Strategic risk intelligence',
+    enterprise: 'Organization-scale custom intelligence',
 };
 
 interface PlanConfig {
     id: string;
     name: string;
     subtitle: string;
+    bestFor: string;
     price: string;
     originalPrice?: string;
     priceNote: string;
@@ -45,7 +55,8 @@ const PLANS: PlanConfig[] = [
     {
         id: 'free',
         name: PLAN_NAME_MAP.free,
-        subtitle: 'Get started with the basics',
+        subtitle: 'Foundational awareness',
+        bestFor: TIER_BEST_FOR.free,
         price: '$0',
         priceNote: 'forever',
         color: '#8b949e',
@@ -62,7 +73,8 @@ const PLANS: PlanConfig[] = [
     {
         id: 'pro',
         name: PLAN_NAME_MAP.pro,
-        subtitle: 'Founding Member Access',
+        subtitle: 'Advanced individual analysis',
+        bestFor: TIER_BEST_FOR.pro,
         price: '$19',
         priceNote: 'per month',
         color: '#58a6ff',
@@ -81,7 +93,8 @@ const PLANS: PlanConfig[] = [
     {
         id: 'experts',
         name: PLAN_NAME_MAP.experts,
-        subtitle: 'Advanced Strategic Intelligence',
+        subtitle: 'Strategic foresight & forecasting',
+        bestFor: TIER_BEST_FOR.experts,
         price: '$49',
         priceNote: 'per month',
         color: '#3fb950', // Emerald/Green
@@ -99,7 +112,8 @@ const PLANS: PlanConfig[] = [
     {
         id: 'enterprise',
         name: PLAN_NAME_MAP.enterprise,
-        subtitle: 'Custom intelligence at scale',
+        subtitle: 'The full intelligence suite',
+        bestFor: TIER_BEST_FOR.enterprise,
         price: 'Custom',
         priceNote: 'contact us',
         color: '#bc8cff',
@@ -183,6 +197,31 @@ function isInGracePeriod(user: UserMe): boolean {
     return days !== null && days <= GRACE_PERIOD_DAYS && days > -GRACE_PERIOD_DAYS;
 }
 
+/** Centralized normalization and labeling */
+const getTierDisplayName = (tier: string) => PLAN_NAME_MAP[tier.toLowerCase()] || 'Free';
+const getTierBadgeLabel = (tier: string) => getTierDisplayName(tier).toUpperCase();
+
+/** CTA Logic: Distinguish current plan vs higher tiers vs contact sales */
+function renderUpgradeButton(plan: PlanConfig, currentUser: UserMe): string {
+    const isCurrent = currentUser.tier === plan.id;
+    
+    if (isCurrent) {
+        let html = `<div class="plan-current-label">✓ Current Plan</div>`;
+        if (plan.id !== 'free') {
+            html += `<button class="plan-cancel-btn" data-plan="${plan.id}">Manage Subscription</button>`;
+        }
+        return html;
+    }
+
+    // Determine if it's an upgrade or contact sales
+    if (!plan.directCheckout) {
+        return `<a class="plan-cta-btn plan-cta-btn--contact" href="${plan.contactUrl}" target="_blank" rel="noopener">Contact Sales</a>`;
+    }
+
+    // Direct Stripe Checkout
+    return `<button class="plan-cta-btn" data-plan="${plan.id}" id="upgrade-btn-${plan.id}">Upgrade to ${plan.name}</button>`;
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Tier Badge (for sidebar)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -196,8 +235,8 @@ export function renderTierBadge(user: UserMe): string {
     };
     const col = colors[user.tier] ?? '#8b949e';
     const grace = isInGracePeriod(user) ? ' tier-badge--grace' : '';
-    const displayName = PLAN_NAME_MAP[user.tier] || user.tier.toUpperCase();
-    return `<span class="tier-badge${grace}" style="background: ${col}22; color: ${col}; border-color: ${col}55;">${displayName.toUpperCase()}</span>`;
+    const badgeLabel = getTierBadgeLabel(user.tier);
+    return `<span class="tier-badge${grace}" style="background: ${col}22; color: ${col}; border-color: ${col}55;">${badgeLabel}</span>`;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -274,22 +313,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
     const planCards = PLANS.map(plan => {
         const isCurrent = user.tier === plan.id;
         const featureList = plan.features.map(f => `<li>${f}</li>`).join('');
-
-        let ctaHtml = '';
-        if (isCurrent) {
-            ctaHtml = `<div class="plan-current-label">✓ Current Plan</div>`;
-            if (plan.id !== 'free') {
-                ctaHtml += `<button class="plan-cancel-btn" data-plan="${plan.id}">Manage Subscription</button>`;
-            }
-        } else if (plan.id === 'free') {
-            // Free plan — users can't "downgrade" via button; show info only
-            ctaHtml = `<div class="plan-downgrade-note">Downgrade happens automatically on subscription expiry.</div>`;
-        } else if (plan.directCheckout) {
-            ctaHtml = `<button class="plan-cta-btn" data-plan="${plan.id}" id="upgrade-btn-${plan.id}">Upgrade to ${plan.name}</button>`;
-        } else {
-            // Enterprise → contact-sales
-            ctaHtml = `<a class="plan-cta-btn plan-cta-btn--contact" href="${plan.contactUrl}" target="_blank" rel="noopener">Contact Sales</a>`;
-        }
+        const ctaHtml = renderUpgradeButton(plan, user);
 
         // Pricing Display Logic
         let priceHtml = '';
@@ -311,6 +335,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
             ${plan.id === 'pro' ? '<div class="plan-badge-top">FOUNDING MEMBER</div>' : ''}
             <div class="plan-header">
                 <h2 class="plan-name" style="color: ${plan.color}">${plan.name}</h2>
+                <div class="plan-best-for">${plan.bestFor}</div>
                 <p class="plan-subtitle">${plan.subtitle}</p>
                 <div class="plan-price">
                     ${priceHtml}
@@ -336,14 +361,22 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
 
     container.innerHTML = `
     <div class="subscription-tab">
-        <!-- Current Status -->
+        <!-- Current Status Redesign -->
         <div class="sub-status-card">
-            <div class="sub-status-header">
-                <h2>Subscription Status</h2>
-                ${renderTierBadge(user)}
+            <div class="sub-status-layout">
+                <div class="sub-status-info">
+                    <h2>Subscription Status</h2>
+                    ${renderTierBadge(user)}
+                    <div class="sub-status-current-row">
+                        <span class="label">Current Plan</span>
+                        <span class="value">${getTierDisplayName(user.tier)}</span>
+                    </div>
+                </div>
+                <div class="sub-status-meta">
+                    ${expiryHtml}
+                    ${grace ? `<div class="sub-expiry sub-expiry--warning">⚠️ Grace Period Active</div>` : ''}
+                </div>
             </div>
-            ${expiryHtml}
-            ${grace ? `<div class="grace-period-banner">⚠️ You are in a grace period. Please renew to retain access.</div>` : ''}
         </div>
 
         <!-- Plan Cards -->
@@ -359,10 +392,10 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                     <thead>
                         <tr>
                             <th>Feature</th>
-                            <th class="${user.tier === 'free' ? 'cmp-current' : ''}">${PLAN_NAME_MAP.free}</th>
-                            <th class="${user.tier === 'pro' ? 'cmp-current' : ''}">${PLAN_NAME_MAP.pro}</th>
-                            <th class="${user.tier === 'experts' ? 'cmp-current' : ''}">${PLAN_NAME_MAP.experts}</th>
-                            <th class="${user.tier === 'enterprise' ? 'cmp-current' : ''}">${PLAN_NAME_MAP.enterprise}</th>
+                            <th class="${user.tier === 'free' ? 'cmp-current' : ''}">${getTierDisplayName('free')}</th>
+                            <th class="${user.tier === 'pro' ? 'cmp-current' : ''}">${getTierDisplayName('pro')}</th>
+                            <th class="${user.tier === 'experts' ? 'cmp-current' : ''}">${getTierDisplayName('experts')}</th>
+                            <th class="${user.tier === 'enterprise' ? 'cmp-current' : ''}">${getTierDisplayName('enterprise')}</th>
                         </tr>
                     </thead>
                     <tbody>${tableRows}</tbody>
