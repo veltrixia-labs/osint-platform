@@ -40,6 +40,7 @@ interface PlanConfig {
     id: string;
     name: string;
     subtitle: string;
+    explanation?: string;
     bestFor: string;
     price: string;
     originalPrice?: string;
@@ -49,6 +50,8 @@ interface PlanConfig {
     directCheckout: boolean;
     contactUrl: string;
     features: string[];
+    ctaText?: string;
+    highlight?: string;
 }
 
 const PLANS: PlanConfig[] = [
@@ -69,45 +72,51 @@ const PLANS: PlanConfig[] = [
             'Real-time Signal Detection',
             'Email support',
         ],
+        ctaText: 'Start Monitoring',
     },
     {
         id: 'pro',
         name: PLAN_NAME_MAP.pro,
-        subtitle: 'Advanced Individual Analysis',
+        subtitle: 'Understand why signals matter',
+        explanation: 'Understand what signals mean and why they matter',
         bestFor: TIER_BEST_FOR.pro,
         price: '$19',
         priceNote: 'per month',
         color: '#58a6ff',
-        directCheckout: true,  // → Stripe Checkout
+        directCheckout: true,
         contactUrl: '',
         features: [
             'Entity-level intelligence',
-            'AI-Enhanced Intelligence',
+            'AI-powered insight generation',
             'Full source traceability',
             '100 alerts/day',
             'Daily + Weekly reports',
-            'Core specialized topics (Energy/Market/Crypto)',
-            '20 watchlist keywords',
+            'Core specialized topics',
+            'AI-generated analysis', // Microcopy
         ],
+        ctaText: 'Unlock AI Insights',
     },
     {
         id: 'experts',
         name: PLAN_NAME_MAP.experts,
-        subtitle: 'Strategic Foresight',
+        subtitle: 'Decision-grade intelligence for leads',
+        explanation: 'Turn insights into strategic action',
         bestFor: TIER_BEST_FOR.experts,
         price: '$49',
         priceNote: 'per month',
-        color: '#3fb950', // Emerald/Green
+        color: '#3fb950',
         directCheckout: true,
         contactUrl: '',
         features: [
-            'Monthly full LLM analysis',
-            'Scenario Analysis (Strategic LLM)',
-            'Risk Forecasting (Decision-Grade)',
-            'Full Specialized Coverage (AI/Defense/Supply)',
+            'Strategic Scenarios',
+            'Cross-domain impact analysis',
+            '30–60 day outlook',
+            'Strategic decision support',
             'Decision-Grade Intelligence',
             'Unlimited alerts',
         ],
+        ctaText: 'Unlock Strategic Intelligence',
+        highlight: 'Best for decision-makers',
     },
     {
         id: 'enterprise',
@@ -122,59 +131,68 @@ const PLANS: PlanConfig[] = [
         features: [
             'All Expert features',
             'Custom topic configuration',
-            'Custom onboarding & operational support',
+            'Custom onboarding',
             'Priority support escalation',
-            'Custom intelligence workflows',
+            'Strategic Intelligence workflow',
         ],
+        ctaText: 'Contact Sales',
     },
 ];
 
-/**
- * Feature comparison table rows.
- * Each row: [featureName, free, pro, expert, enterprise]
- */
-const FEATURE_COMPARISON: [string, string, string, string, string][] = [
-    ['Alerts per day',              '5',         '100',         'Unlimited',   'Unlimited'],
-    ['Daily reports',               
+interface ComparisonSection {
+    type: 'section';
+    label: string;
+    subtitle: string;
+}
+interface ComparisonRow {
+    type: 'row';
+    feat: string;
+    vals: [string, string, string, string];
+    isHighlight?: boolean;
+}
+type ComparisonItem = ComparisonSection | ComparisonRow;
+
+const FEATURE_COMPARISON: ComparisonItem[] = [
+    { type: 'section', label: 'SIGNAL', subtitle: 'What is happening' },
+    { type: 'row', feat: 'Alerts per day', vals: ['5', '100', 'Unlimited', 'Unlimited'] },
+    { type: 'row', feat: 'Daily reports', vals: [
         ENTITLEMENT_MATRIX.free.reports.includes('daily') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.pro.reports.includes('daily') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.experts.reports.includes('daily') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.enterprise.reports.includes('daily') ? '✓' : '✗'
-    ],
-    ['Weekly reports',              
+    ]},
+    { type: 'row', feat: 'Weekly reports', vals: [
         ENTITLEMENT_MATRIX.free.reports.includes('weekly') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.pro.reports.includes('weekly') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.experts.reports.includes('weekly') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.enterprise.reports.includes('weekly') ? '✓' : '✗'
-    ],
-    ['Monthly reports',             
-        ENTITLEMENT_MATRIX.free.reports.includes('monthly') ? '✓' : '✗',
-        ENTITLEMENT_MATRIX.pro.reports.includes('monthly') ? '✓' : '✗',
-        ENTITLEMENT_MATRIX.experts.reports.includes('monthly') ? '✓ (Full LLM)' : '✗',
-        ENTITLEMENT_MATRIX.enterprise.reports.includes('monthly') ? '✓ (Full LLM)' : '✗'
-    ],
-    ['Scenario Analysis',           'Basic (Rule-based)', 'Basic (Rule-based)', 'Strategic (LLM-driven)', 'Strategic (LLM-driven)'],
-    ['Risk Forecasting',            'Monitoring Signals', 'AI-Enhanced Insights', 'Strategic Forecast (30–60 days)', 'Strategic Forecast (30–60 days)'],
-    ['Core Specialty Topics',       
+    ]},
+    { type: 'row', feat: 'Watchlist keywords', vals: ['3', '20', '100', 'Unlimited'] },
+
+    { type: 'section', label: 'ANALYSIS', subtitle: 'Why it matters' },
+    { type: 'row', feat: 'Report Depth', isHighlight: true, vals: ['Baseline', 'AI-Enhanced', 'Strategic', 'Strategic'] },
+    { type: 'row', feat: 'Entity-level intelligence', vals: ['✓', '✓', '✓', '✓'] },
+    { type: 'row', feat: 'Confidence metrics', vals: ['✓', '✓', '✓', '✓'] },
+    { type: 'row', feat: 'Source traceability', vals: ['✓', '✓', '✓', '✓'] },
+    { type: 'row', feat: 'Core Specialty Topics', vals: [
         ENTITLEMENT_MATRIX.free.topics.includes('energy_resource_risk') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.pro.topics.includes('energy_resource_risk') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.experts.topics.includes('energy_resource_risk') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.enterprise.topics.includes('energy_resource_risk') ? '✓' : '✗'
-    ],
-    ['Expert Specialty Topics',     
+    ]},
+
+    { type: 'section', label: 'STRATEGY', subtitle: 'What to do next' },
+    { type: 'row', feat: 'Scenario Analysis', isHighlight: true, vals: ['Basic (Rule-based)', 'Basic (Rule-based)', 'Strategic (LLM-driven)', 'Strategic (LLM-driven)'] },
+    { type: 'row', feat: 'Risk Forecasting', isHighlight: true, vals: ['Monitoring Signals', 'AI-Enhanced Insights', 'Strategic Forecast (30–60 days)', 'Strategic Forecast (30–60 days)'] },
+    { type: 'row', feat: 'Expert Specialty Topics', vals: [
         ENTITLEMENT_MATRIX.free.topics.includes('ai_semiconductor_intelligence') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.pro.topics.includes('ai_semiconductor_intelligence') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.experts.topics.includes('ai_semiconductor_intelligence') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.enterprise.topics.includes('ai_semiconductor_intelligence') ? '✓' : '✗'
-    ],
-    ['Custom topics',               '✗',         '✗',           '✗',           '✓'],
-    ['Watchlist keywords',          '3',         '20',          '100',         'Unlimited'],
-    ['Support',                     'Community', 'Priority',    'Priority',    'Dedicated Escalation'],
-    ['Entity-level intelligence',   '✓',         '✓',           '✓',           '✓'],
-    ['Confidence metrics',          '✓',         '✓',           '✓',           '✓'],
-    ['Source traceability',         '✓',         '✓',           '✓',           '✓'],
-    ['Cross-domain impact',         '✗',         '✗',           '✓',           '✓'],
-    ['Self-serve limits',           'Low',       'Medium',      'High',        'Custom'],
+    ]},
+    { type: 'row', feat: 'Cross-domain impact', vals: ['✗', '✗', '✓', '✓'] },
+    { type: 'row', feat: 'Custom topics', vals: ['✗', '✗', '✗', '✓'] },
+    { type: 'row', feat: 'Support', vals: ['Community', 'Priority', 'Priority', 'Dedicated Escalation'] },
 ];
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -209,13 +227,15 @@ function renderUpgradeButton(plan: PlanConfig, currentUser: UserMe): string {
         return html;
     }
 
+    const ctaText = plan.ctaText || `Upgrade to ${plan.name}`;
+
     // Determine if it's an upgrade or contact sales
     if (!plan.directCheckout) {
-        return `<a class="plan-cta-btn plan-cta-btn--contact" href="${plan.contactUrl}" target="_blank" rel="noopener">Contact Sales</a>`;
+        return `<a class="plan-cta-btn plan-cta-btn--contact" href="${plan.contactUrl}" target="_blank" rel="noopener">${ctaText}</a>`;
     }
 
     // Direct Stripe Checkout
-    return `<button class="plan-cta-btn" data-plan="${plan.id}" id="upgrade-btn-${plan.id}">Upgrade to ${plan.name}</button>`;
+    return `<button class="plan-cta-btn" data-plan="${plan.id}" id="upgrade-btn-${plan.id}">${ctaText}</button>`;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -329,12 +349,13 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         return `
         <div class="plan-card plan-card--${plan.id} ${isCurrent ? 'plan-card--active' : ''}" style="--plan-color: ${plan.color}">
             ${plan.id === 'pro' ? '<div class="plan-ribbon">Most Popular</div>' : ''}
-            ${plan.id === 'experts' ? '<div class="plan-ribbon plan-ribbon--premium">Expert Choice</div>' : ''}
+            ${plan.highlight ? `<div class="plan-ribbon plan-ribbon--premium">${plan.highlight}</div>` : ''}
             
             <div class="plan-header">
                 <div class="plan-best-for">${plan.bestFor}</div>
                 <h2 class="plan-name">${plan.name}</h2>
                 <p class="plan-subtitle">${plan.subtitle}</p>
+                ${plan.explanation ? `<p class="plan-explanation">${plan.explanation}</p>` : ''}
             </div>
 
             <div class="plan-price">
@@ -350,15 +371,35 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
     }).join('');
 
     // Build feature comparison table
-    const tableRows = FEATURE_COMPARISON.map(([feat, free, pro, exp, ent]) => {
-        const highlight = (val: string, tier: string) =>
-            `<td class="${user.tier === tier ? 'cmp-current' : ''}">${val}</td>`;
-        return `<tr>
+    const tableRows = FEATURE_COMPARISON.map((item) => {
+        if (item.type === 'section') {
+            return `
+            <tr class="comparison-section-header">
+                <td colspan="5">
+                    <div class="section-label">${item.label}</div>
+                    <div class="comparison-section-subtitle">${item.subtitle}</div>
+                </td>
+            </tr>`;
+        }
+        
+        const { feat, vals, isHighlight } = item;
+        const [free, pro, exp, ent] = vals;
+        
+        const highlightCell = (val: string, tier: string) => {
+            const isExpertCol = tier === 'experts' || tier === 'enterprise';
+            const classes = [
+                user.tier === tier ? 'cmp-current' : '',
+                isExpertCol ? 'comparison-column--expert-highlight' : ''
+            ].filter(Boolean).join(' ');
+            return `<td class="${classes}">${val}</td>`;
+        };
+
+        return `<tr class="${isHighlight ? 'comparison-row--highlight' : ''}">
             <td class="cmp-feature">${feat}</td>
-            ${highlight(free, 'free')}
-            ${highlight(pro, 'pro')}
-            ${highlight(exp, 'experts')}
-            ${highlight(ent, 'enterprise')}
+            ${highlightCell(free, 'free')}
+            ${highlightCell(pro, 'pro')}
+            ${highlightCell(exp, 'experts')}
+            ${highlightCell(ent, 'enterprise')}
         </tr>`;
     }).join('');
 
