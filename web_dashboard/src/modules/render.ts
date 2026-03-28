@@ -2,13 +2,27 @@ import { submitFeedback, updateWatchlist } from './api';
 import type { Alert, AnalystProfile, HealthData } from './api';
 import { getTopicDef, canAccessTopic, canAccessReport, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
 
-function formatIntensity(val: number | undefined | null): string {
-    if (typeof val !== 'number') return '0.0';
+function formatIntensity(val: number | undefined | null): string | null {
+    if (typeof val !== 'number' || isNaN(val)) return null;
     const rounded = val.toFixed(1);
     let label = 'Low';
     if (val >= 4) label = 'High';
     else if (val >= 2) label = 'Medium';
     return `${rounded} (${label})`;
+}
+
+/**
+ * Sanitizes markdown content by identifying raw intensity floats and formatting them.
+ * Used as a fallback for LLM-generated sections like 'Emerging Surges'.
+ */
+function sanitizeMarkdownIntensities(text: string): string {
+    if (!text) return text;
+    // Regex matches "Intensity: 3.8628" or "(Intensity: 3.8628)" or "Intensity Score: 3.8628"
+    return text.replace(/(Intensity(?:\s+Score)?\s*:\s*)(\d+\.\d+)/gi, (match, _label, val) => {
+        const v = parseFloat(val);
+        const formatted = formatIntensity(v);
+        return formatted ? `Intensity: ${formatted}` : match;
+    });
 }
 
 export function renderHealth(data: HealthData, container: HTMLElement) {
@@ -78,7 +92,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
                 <div>
                     <h4>Intensity</h4>
-                    <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${accessible ? formatIntensity(alert.intensity) : '•.••'}/10.0</div>
+                    <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${accessible ? (formatIntensity(alert.intensity) || '•.••') : '•.••'}</div>
                 </div>
                 <div>
                     <h4>Evidence</h4>
@@ -409,11 +423,17 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                             <span style="font-size: 1.1rem;">📊</span> 
                             <span style="font-weight: 600;">Confidence: ${report.confidence_level || 'High'}</span>
                         </div>
-                        <span style="opacity: 0.3; width: 1px; height: 16px; background: #58a6ff;"></span>
-                        <div style="display: flex; gap: 0.75rem; align-items: center;">
-                            <span style="font-size: 1.1rem;">🔥</span> 
-                            <span style="font-weight: 600;">Intensity: ${formatIntensity(report.intensity)}</span>
-                        </div>
+                        ${(() => {
+                            const intensityStr = formatIntensity(report.intensity || report.intensity_score);
+                            if (!intensityStr) return '';
+                            return `
+                                <span style="opacity: 0.3; width: 1px; height: 16px; background: #58a6ff;"></span>
+                                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                                    <span style="font-size: 1.1rem;">🔥</span> 
+                                    <span style="font-weight: 600;">Intensity: ${intensityStr}</span>
+                                </div>
+                            `;
+                        })()}
                         <span class="chevron-icon" style="transition: transform 0.3s;">▾</span>
                     </div>
 
@@ -467,32 +487,46 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                             return sections.splice(idx, 1)[0];
                         };
 
-                        // Extract Summary & Actions
-                        const executive = findSec(['Executive Signal', 'Summary', 'Key Insights']);
+                        // Extract Summary & Actions with robust backward compatibility
+                        const executive = findSec(['Executive Summary', 'Executive Signal', 'Summary', 'Key Insights']);
                         const actions = findSec(['Key Actions', 'Recommendations', 'Next Steps']);
                         const developments = findSec(['Key Developments', 'Key Findings', 'Analysis']);
                         const trend = findSec(['Trend Analysis', 'Market Context']);
-                        const scenarios = findSec(['Strategic Scenarios', 'Potential Developments', 'Outlook', 'Monitoring']);
+                        const scenarios = findSec(['Strategic Forecast', 'Strategic Scenarios', 'Potential Developments', 'Scenarios', 'Outlook', 'Monitoring']);
 
                         let html = '';
                         
-                        // Render Summary Box
+                        // Render Summary Box (Targeting high-decision value content)
                         if (executive || actions) {
                             html += `<div class="report-summary-box">
-                                ${executive ? `<div class="summary-section">
+                                <div class="summary-section">
                                     <div class="summary-label">EXECUTIVE SIGNAL</div>
-                                    <div class="summary-content">${simpleMarkdown(executive.content.trim())}</div>
-                                </div>` : ''}
+                                    <div class="summary-content">${simpleMarkdown(sanitizeMarkdownIntensities(executive ? executive.content.trim() : (sections[0] ? sections[0].content.trim() : md.split('\n\n')[0])))}</div>
+                                </div>
                                 ${actions ? `<div class="summary-section">
                                     <div class="summary-label">KEY ACTIONS</div>
-                                    <div class="summary-content">${simpleMarkdown(actions.content.trim())}</div>
+                                    <div class="summary-content">${simpleMarkdown(sanitizeMarkdownIntensities(actions.content.trim()))}</div>
                                 </div>` : ''}
                             </div>`;
+                        } else if (sections.length > 0) {
+                            // Failsafe: If no explicit headers match, use the first section as executive summary
+                            const first = sections.shift();
+                            if (first) {
+                                html += `<div class="report-summary-box">
+                                    <div class="summary-section">
+                                        <div class="summary-label">EXECUTIVE SIGNAL</div>
+                                        <div class="summary-content">${simpleMarkdown(sanitizeMarkdownIntensities(first.content.trim()))}</div>
+                                    </div>
+                                </div>`;
+                            }
                         }
 
-                        // Render remaining in order
+                        // Render remaining in order (Impact Analysis / Watch Points handled via developments/scenarios mapping above)
                         const renderSec = (s: any, priority: 'medium' | 'low' = 'medium') => 
-                            s ? `<div class="report-section--${priority}"><h3>${s.title}</h3>${simpleMarkdown(s.content)}</div>` : '';
+                            s ? `<div class="report-section--${priority}"><h3>${s.title}</h3>${simpleMarkdown(sanitizeMarkdownIntensities(s.content))}</div>` : '';
+
+                        const impact = findSec(['Impact Analysis', 'Watch Points', 'Potential Implications']);
+                        if (impact) html += renderSec(impact, 'medium');
 
                         html += renderSec(developments, 'medium');
                         html += renderSec(trend, 'medium');

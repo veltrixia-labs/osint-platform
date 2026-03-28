@@ -200,70 +200,76 @@ def build_substack_skeleton(
     visuals: List[str] = None
 ) -> str:
     """
-    Builds the full 6-section skeleton report for Substack.
-    Uses more granular analyst tone for sections.
+    Builds the optimized analytical skeleton report.
+    Phase: Content Deduplication & Compression.
     """
     sections = []
     
-    # 1. Summary of Themes
-    sections.append("# Summary of Themes\n" + " / ".join(themes)) # Use slash for more professional separation
+    # 1. Executive Summary (Narrative Synthesis)
+    narrative = ""
+    if themes:
+        main_themes = ", ".join(themes[:3])
+        if len(themes) > 3:
+            main_themes += f", and {len(themes)-3} other emerging signals"
+        narrative = f"Current intelligence indicators suggest a convergence around **{main_themes}**. The following briefing details the core developments and strategic implications of these shifts."
+    else:
+        narrative = "Analysis of current signal clusters suggests shifting risk profiles across the monitored domain. This report synthesizes key factual developments and expected impacts."
     
-    # 2. Key Developments
+    sections.append("# Executive Summary\n" + narrative)
+    
+    # 2. Key Developments (Factual core)
     dev_str = "\n".join([f"- {d}" for d in developments[:5]])
     sections.append("# Key Developments\n" + dev_str)
 
-    # 2.5 Trend Analysis (New Phase 19/19.1/19.2)
+    # 3. Trend Analysis (Explain pattern meaning, not just headlines)
     trend_blocks = []
     if trends:
-        # High-level Risk Patterns (Phase 19.1/19.2)
+        # High-level Risk Patterns
         if trends.get("patterns"):
-            pattern_str = ""
+            pattern_str = "Analysis of longitudinal data indicates several evolving risk patterns:\n\n"
             for p in trends["patterns"]:
-                pattern_str += f"### Pattern: {p['label']} (Intensity: {p['intensity']}/10.0)\n"
+                # Use "### {Pattern Name}" instead of "### Pattern: {Name}" to keep it tight
+                pattern_str += f"### {p['label']} (Intensity: {p['intensity']})\n"
                 pattern_str += f"{p['description']}\n"
                 if p.get("supporting"):
-                    pattern_str += "**Supporting Developments:**\n"
-                    # Strict limit to 3 supporting events for Phase 19.2
-                    pattern_str += "\n".join([f"- {ev}" for ev in p["supporting"][:3]]) + "\n"
+                    # Compact view of evidence to avoid repeating Key Developments
+                    pattern_str += "**Evidence Base:** " + ", ".join([ev for ev in p["supporting"][:3]]) + "\n"
                 pattern_str += "\n"
             trend_blocks.append(pattern_str)
 
-        # Individual Signals (Fallback only if no patterns)
         if not trends.get("patterns"):
             if trends.get("persistent"):
-                trend_blocks.append("## Persistent Signals\n" + "\n".join([f"- {t}" for t in trends["persistent"]]))
+                trend_blocks.append("## Longitudinal Signals\n" + "\n".join([f"- {t}" for t in trends["persistent"]]))
             if trends.get("surges"):
                 trend_blocks.append("## Emerging Surges\n" + "\n".join([f"- {t}" for t in trends["surges"]]))
-            if trends.get("changes"):
-                trend_blocks.append("## What Changed vs Baseline\n" + "\n".join([f"- {t}" for t in trends["changes"]]))
     
     if trend_blocks:
         visual_md = ""
         if visuals:
-            # Use absolute-ish path for markdown (relative to root for now, or just filename if uploaded)
-            # Embedding with a clear caption
             for v in visuals:
                 visual_md += f"![Analyst Visualization](visuals/{v})\n\n"
-        
         sections.append("# Trend Analysis\n" + visual_md + "\n\n".join(trend_blocks))
     else:
-        sections.append("# Trend Analysis\nNo significant persistent or emerging risk patterns detected for this period.")
+        sections.append("# Trend Analysis\nNo significant risk patterns or surging signals detected in the current lookback window.")
     
-    # 3. Potential Implications (Impact Analysis)
-    imp_str = "\n".join([f"- {f['implication']} (Confidence: {f['confidence']} - {f['evidence']})" for f in forecasts])
-    sections.append("# Potential Implications\n" + imp_str)
+    # 4. Impact Analysis & Watch Points (MERGED)
+    impact_items = []
+    for f in forecasts:
+        risk = f['implication']
+        # Extract watch point from existing forecast data if available, or generate a hint
+        watch_hint = f.get('watch_indicator') or f"Watch for: {risk.split(' ')[0]} trigger events."
+        entry = f"- **{risk}**: {f['evidence']}. (Confidence: {f['confidence']})\n  **Watch:** {watch_hint}"
+        impact_items.append(entry)
     
-    # 4. Monitoring Points (Actionable Intel)
-    mon_str = "\n".join([f"- Watch for: {f['implication'].split(' ')[0]} indicators" for f in forecasts])
-    sections.append("# Monitoring Points\n" + mon_str)
+    sections.append("# Impact Analysis & Watch Points\n" + "\n".join(impact_items))
     
-    # 5. Scenarios (Conditional Forecasting)
+    # 5. Strategic Forecast (Renamed from Scenarios)
     sc_str = f"## Base Case (Confidence: {scenarios['base']['confidence']})\n{scenarios['base']['text']}\n\n"
     sc_str += f"## Escalation Case (Confidence: {scenarios['escalation']['confidence']})\n{scenarios['escalation']['text']}\n\n"
     sc_str += f"## Containment Case (Confidence: {scenarios['containment']['confidence']})\n{scenarios['containment']['text']}"
-    sections.append("# Scenarios\n" + sc_str)
+    sections.append("# Strategic Forecast\n" + sc_str)
     
-    # 6. Sources (Evidence Base)
+    # 6. Sources
     src_str = "\n".join([f"- {s}" for s in sorted(list(set(sources)))])
     sections.append("# Sources\n" + src_str)
     
@@ -275,12 +281,11 @@ def validate_skeleton(content: str) -> bool:
         return False
         
     mandatory = [
-        "Summary of Themes",
+        "Executive Summary",
         "Key Developments",
         "Trend Analysis",
-        "Potential Implications",
-        "Monitoring Points",
-        "Scenarios",
+        "Impact Analysis & Watch Points",
+        "Strategic Forecast",
         "Sources"
     ]
     
