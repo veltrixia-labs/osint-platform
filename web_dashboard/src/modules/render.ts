@@ -358,8 +358,10 @@ function simpleMarkdown(md: string): string {
             // Extract Confidence second
             const confidenceMatch = cleanText.match(/ — Confidence: (High|Medium|Low)/i);
             if (confidenceMatch) {
+                const confValue = confidenceMatch[1];
+                const confClass = confValue.toLowerCase() === 'low' ? 'confidence-low' : '';
                 cleanText = cleanText.replace(confidenceMatch[0], '');
-                confidenceHtml = `<span class="confidence-tag">${confidenceMatch[1]}</span>`;
+                confidenceHtml = `<span class="confidence-tag ${confClass}">${confValue}</span>`;
             }
             
             return `<li class="priority-${cls}">${cleanText.trim()}${rationaleHtml}${confidenceHtml}</li>`;
@@ -377,6 +379,7 @@ function simpleMarkdown(md: string): string {
         })
         .replace(/^\- (.*$)/gm, '<li>$1</li>')
         .replace(/\*\*(.*)\*\*/g, '<b>$1</b>')
+        .replace(/\*(.*)\*/g, '<i>$1</i>')
         .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:var(--tier-grace);">$1</a>')
         .replace(/\n/g, '<br>');
 }

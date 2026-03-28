@@ -310,6 +310,10 @@ def build_substack_skeleton(
                 # Embedded Metadata for UI Parsing: [IMPACT: HIGH, TIME: Immediate]
                 meta = f"[IMPACT: {o['impact'].replace(' IMPACT', '')}, TIME: {o['time_horizon']}]"
                 case_text += f"* {o['text']} {meta}\n"
+            
+            if s.get('show_tension_cue'):
+                case_text += "\n*Signals are emerging but not yet confirmed.*\n"
+                
             case_text += s['action_guidance']
             sc_parts.append(f"## {label} (Confidence: {s['confidence']})\n{case_text}")
     

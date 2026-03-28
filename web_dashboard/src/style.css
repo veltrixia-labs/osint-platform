@@ -1336,3 +1336,8 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   opacity: 0.4;
   font-style: normal;
 }
+
+.confidence-low {
+  opacity: 0.45;
+  filter: grayscale(0.2);
+}
