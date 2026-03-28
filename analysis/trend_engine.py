@@ -37,13 +37,38 @@ async def detect_trends(db: AsyncSession):
     recent_clusters = [c for c in all_clusters if _ensure_utc(c.created_at) >= recent_start]
     historical_clusters = [c for c in all_clusters if _ensure_utc(c.created_at) < recent_start]
     
-    # 2. Collect Raw Signals
-    raw_signals = []
-    raw_signals.extend(await _detect_entity_heat(recent_clusters, historical_clusters, window_start, now))
-    raw_signals.extend(await _detect_sector_surges(recent_clusters, historical_clusters, window_start, now))
-    raw_signals.extend(await _detect_sustained_events(recent_clusters, historical_clusters, window_start, now))
-    raw_signals.extend(await _detect_risk_acceleration(recent_clusters, historical_clusters, window_start, now))
+    # 2. Collect Raw Signals (Tracked by cluster_id if applicable)
+    # key: cluster_id or target_label, value: TrendSignal
+    signal_map = {}
+
+    def add_signal(sig: TrendSignal, cluster_id: str = None):
+        key = cluster_id if cluster_id else f"{sig.trend_type}:{sig.target_label}"
+        if key in signal_map:
+            existing = signal_map[key]
+            logger.info(f"[Trend Engine] MERGING: cluster_id={cluster_id} type='{existing.trend_type}' + '{sig.trend_type}'")
+            # Merge logic
+            existing.trend_type = f"{existing.trend_type}_merged"
+            if sig.intensity_score > existing.intensity_score:
+                existing.intensity_score = sig.intensity_score
+            # Merge metrics
+            existing.metrics_json.update(sig.metrics_json)
+            existing.metrics_json["is_merged"] = True
+            existing.metrics_json["original_types"] = existing.metrics_json.get("original_types", [existing.trend_type.split('_')[0]]) + [sig.trend_type]
+        else:
+            signal_map[key] = sig
+
+    # Run detectors
+    for sig, cid in await _detect_entity_heat(recent_clusters, historical_clusters, window_start, now):
+        add_signal(sig, cid)
+    for sig, cid in await _detect_sector_surges(recent_clusters, historical_clusters, window_start, now):
+        add_signal(sig, cid)
+    for sig, cid in await _detect_sustained_events(recent_clusters, historical_clusters, window_start, now):
+        add_signal(sig, cid)
+    for sig, cid in await _detect_risk_acceleration(recent_clusters, historical_clusters, window_start, now):
+        add_signal(sig, cid)
     
+    raw_signals = list(signal_map.values())
+
     # 3. Compression Layer (Phase 19.3)
     compressed_patterns = _compress_trends(raw_signals, window_start, now, is_global=True)
     
@@ -272,7 +297,7 @@ async def _detect_entity_heat(recent: List[EventCluster], history: List[EventClu
                 "delta": round(delta, 2),
                 "supporting_cluster_count": len([c for c in recent if ent in str(c.summary_data.get("top_entities", {}))])
             }
-            signals.append(TrendSignal(
+            signals.append((TrendSignal(
                 trend_type="entity_heat",
                 target_label=ent,
                 topic="global",
@@ -281,7 +306,7 @@ async def _detect_entity_heat(recent: List[EventCluster], history: List[EventClu
                 window_end=end,
                 description=description,
                 metrics_json=metrics
-            ))
+            ), None)) # No single cluster_id for entity heat
     return signals
 
 async def _detect_sector_surges(recent: List[EventCluster], history: List[EventCluster], start: datetime, end: datetime) -> List[TrendSignal]:
@@ -306,7 +331,7 @@ async def _detect_sector_surges(recent: List[EventCluster], history: List[EventC
                 "delta": round(delta, 2),
                 "supporting_cluster_count": len(recent_signals)
             }
-            signals.append(TrendSignal(
+            signals.append((TrendSignal(
                 trend_type="sector_surge",
                 target_label=sector,
                 topic=sector,
@@ -315,7 +340,7 @@ async def _detect_sector_surges(recent: List[EventCluster], history: List[EventC
                 window_end=end,
                 description=description,
                 metrics_json=metrics
-            ))
+            ), None))
     return signals
 
 async def _detect_sustained_events(recent: List[EventCluster], history: List[EventCluster], start: datetime, end: datetime) -> List[TrendSignal]:
@@ -341,9 +366,10 @@ async def _detect_sustained_events(recent: List[EventCluster], history: List[Eve
                     "baseline": hc.avg_signal_score,
                     "recent": rc.avg_signal_score,
                     "delta": round(rc.avg_signal_score - hc.avg_signal_score, 2),
-                    "supporting_cluster_count": rc.article_count + hc.article_count
+                    "supporting_cluster_count": rc.article_count + hc.article_count,
+                    "cluster_id": str(rc.id)
                 }
-                signals.append(TrendSignal(
+                signals.append((TrendSignal(
                     trend_type="sustained_event",
                     target_label=rc.representative_title[:50],
                     topic=rc.category or "global",
@@ -352,7 +378,7 @@ async def _detect_sustained_events(recent: List[EventCluster], history: List[Eve
                     window_end=_ensure_utc(rc.created_at),
                     description=description,
                     metrics_json=metrics
-                ) )
+                ), str(rc.id)))
                 break # Move to next recent cluster
     return signals
 
@@ -373,9 +399,10 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
                             "baseline": hc.avg_signal_score,
                             "recent": rc.avg_signal_score,
                             "delta": round(rc.avg_signal_score / hc.avg_signal_score, 2) if hc.avg_signal_score > 0 else 2.0,
-                            "supporting_cluster_count": rc.article_count
+                            "supporting_cluster_count": rc.article_count,
+                            "cluster_id": str(rc.id)
                         }
-                        signals.append(TrendSignal(
+                        signals.append((TrendSignal(
                             trend_type="risk_acceleration",
                             target_label=rc.representative_title[:50],
                             topic=rc.category or "global",
@@ -384,7 +411,7 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
                             window_end=_ensure_utc(rc.created_at),
                             description=description,
                             metrics_json=metrics
-                        ))
+                        ), str(rc.id)))
                         is_new = False
                         break # Prevent duplicates
             
@@ -395,9 +422,10 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
                     "baseline": 0.0,
                     "recent": rc.avg_signal_score,
                     "delta": rc.avg_signal_score,
-                    "supporting_cluster_count": rc.article_count
+                    "supporting_cluster_count": rc.article_count,
+                    "cluster_id": str(rc.id)
                 }
-                signals.append(TrendSignal(
+                signals.append((TrendSignal(
                     trend_type="risk_acceleration",
                     target_label=rc.representative_title[:50],
                     topic=rc.category or "global",
@@ -406,5 +434,5 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
                     window_end=_ensure_utc(rc.created_at),
                     description=description,
                     metrics_json=metrics
-                ))
+                ), str(rc.id)))
     return signals
