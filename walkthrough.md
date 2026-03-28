@@ -13,6 +13,29 @@ I have successfully restored the Live Alert Stream functionality by relaxing str
 - [x] Relaxed API Filtering in `api/main.py`
 - [x] Fixed Frontend Authentication for Alerts API (Introduced `apiClient`)
 
+### Phase 5: Strategic Forecast & Decision Utility (Current)
+*   **Actionable Scenarios**: Refactored `scenario_engine.py` to replace abstract jargon (e.g., "risk profiles") with concrete outcomes (e.g., "supply disruption", "sanction pressure").
+*   **Implicit Action Guidance**: Each forecast case now includes a professional recommendation posture:
+    *   **Base Case**: "Monitor key indicators; no immediate operational shift required."
+    *   **Escalation Case**: "Prepare for volatility and evaluate exposure to affected routes/suppliers."
+    *   **Containment Case**: "Maintain standard tracking; no tactical change is currently required."
+*   **Domain-Aware Outcomes**: Injected sector-specific language for Energy, Cyber, and Supply Chain risk clusters.
+
+### Final Verification Results
+*   **Signal Deduplication**: Confirmed 1:1 mapping between `EventCluster` and report bullets in `Trend Analysis`.
+*   **Intensity Consistency**: All intensity displays normalized to `Intensity: X.Y (Label)`. `0.0` values suppressed.
+*   **Decision Utility**: Strategic Forecasts provide clear "What happened", "What is the impact", and "What to do" logic.
+
+#### Final Commit Hash: `98f7e2a` (consolidated fix)
+| File | Change Summary |
+| :--- | :--- |
+| [scenario_engine.py](file:///c:/RDTP project/Development/OSINT_analytics/analysis/scenario_engine.py) | Upgraded scenarios with concrete outcomes and action guidance. |
+| [trend_engine.py](file:///c:/RDTP project/Development/OSINT_analytics/analysis/trend_engine.py) | Enforced 1:1 cluster-level signal consolidation. |
+| [report_job.py](file:///c:/RDTP project/Development/OSINT_analytics/article/report_job.py) | Final presentation-layer deduplication safety pass. |
+| [render.ts](file:///c:/RDTP project/Development/OSINT_analytics/web_dashboard/src/modules/render.ts) | Robust intensity sanitization and prefix stripping. |
+
+![Final Report Audit](file:///c:/RDTP project/Development/OSINT_analytics/tmp/final_audit.txt)
+
 ### 2. Core Logic Enhancements
 - **Fallback Evidence Matching**: In `alert_manager.py`, if an exact title match between a signal and articles fails, the system now falls back to keyword overlap and label containment checks.
 - **System-Wide Logging**: The system now creates an `AlertLog` for every significant trend, even if no analyst profile matches its criteria.

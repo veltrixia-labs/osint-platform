@@ -216,6 +216,29 @@ def build_substack_skeleton(
         narrative = "Analysis of current signal clusters suggests shifting risk profiles across the monitored domain. This report synthesizes key factual developments and expected impacts."
     
     sections.append("# Executive Summary\n" + narrative)
+
+    # 1.5. Key Actions (Decision Cues)
+    if scenarios:
+        all_actions = []
+        for case in scenarios.values():
+            if "actions" in case:
+                all_actions.extend(case["actions"])
+        
+        # Sort by Priority: High Priority (0) > Monitor (1) > Maintain (2)
+        priority_map = {"High Priority": 0, "Monitor": 1, "Maintain": 2}
+        all_actions.sort(key=lambda x: priority_map.get(x["priority"], 3))
+        
+        if all_actions:
+            # Select top 3-5 actions
+            selected_actions = all_actions[:5]
+            action_lines = []
+            for a in selected_actions:
+                line = f"- {a['priority']}: {a['text']}"
+                if a.get('rationale'):
+                    line += f" — *{a['rationale']}*"
+                action_lines.append(line)
+            
+            sections.append("# Key Actions\n" + "\n".join(action_lines))
     
     # 2. Key Developments (Factual core)
     dev_str = "\n".join([f"- {d}" for d in developments[:5]])
@@ -263,11 +286,15 @@ def build_substack_skeleton(
     
     sections.append("# Impact Analysis & Watch Points\n" + "\n".join(impact_items))
     
-    # 5. Strategic Forecast (Renamed from Scenarios)
-    sc_str = f"## Base Case (Confidence: {scenarios['base']['confidence']})\n{scenarios['base']['text']}\n\n"
-    sc_str += f"## Escalation Case (Confidence: {scenarios['escalation']['confidence']})\n{scenarios['escalation']['text']}\n\n"
-    sc_str += f"## Containment Case (Confidence: {scenarios['containment']['confidence']})\n{scenarios['containment']['text']}"
-    sections.append("# Strategic Forecast\n" + sc_str)
+    # 5. Strategic Forecast
+    sc_parts = []
+    for label, key in [("Base Case", "base"), ("Escalation Case", "escalation"), ("Containment Case", "containment")]:
+        if key in scenarios:
+            s = scenarios[key]
+            sc_parts.append(f"## {label} (Confidence: {s['confidence']})\n{s['text']}")
+    
+    if sc_parts:
+        sections.append("# Strategic Forecast\n" + "\n\n".join(sc_parts))
     
     # 6. Sources
     src_str = "\n".join([f"- {s}" for s in sorted(list(set(sources)))])

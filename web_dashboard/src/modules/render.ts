@@ -342,6 +342,17 @@ function simpleMarkdown(md: string): string {
         .replace(/^### (.*$)/gm, '<h4>$1</h4>')
         .replace(/^## (.*$)/gm, '<h3>$1</h3>')
         .replace(/^# (.*$)/gm, '<h2>$1</h2>')
+        .replace(/^\- (High Priority|Monitor|Maintain): (.*$)/gm, (match, priority, text) => {
+            const cls = priority.toLowerCase().replace(' ', '-');
+            let cleanText = text;
+            let rationaleHtml = '';
+            const rationaleMatch = text.match(/ — \*(.*)\*$/);
+            if (rationaleMatch) {
+                cleanText = text.replace(rationaleMatch[0], '');
+                rationaleHtml = `<span class="report-action-rationale">${rationaleMatch[1]}</span>`;
+            }
+            return `<li class="priority-${cls}">${cleanText}${rationaleHtml}</li>`;
+        })
         .replace(/^\* (.*$)/gm, '<li>$1</li>')
         .replace(/^\- (.*$)/gm, '<li>$1</li>')
         .replace(/\*\*(.*)\*\*/g, '<b>$1</b>')
@@ -508,18 +519,23 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                         let html = '';
                         
                         // Render Summary Box (Targeting high-decision value content)
-                        if (executive || actions) {
+                        if (executive) {
                             html += `<div class="report-summary-box">
                                 <div class="summary-section">
                                     <div class="summary-label">EXECUTIVE SIGNAL</div>
-                                    <div class="summary-content">${simpleMarkdown(sanitizeMarkdownIntensities(executive ? executive.content.trim() : (sections[0] ? sections[0].content.trim() : md.split('\n\n')[0])))}</div>
+                                    <div class="summary-content">${simpleMarkdown(sanitizeMarkdownIntensities(executive.content.trim()))}</div>
                                 </div>
-                                ${actions ? `<div class="summary-section">
-                                    <div class="summary-label">KEY ACTIONS</div>
-                                    <div class="summary-content">${simpleMarkdown(sanitizeMarkdownIntensities(actions.content.trim()))}</div>
-                                </div>` : ''}
                             </div>`;
-                        } else if (sections.length > 0) {
+                        }
+
+                        if (actions) {
+                            html += `<div class="report-actions-box">
+                                <h1>Key Actions</h1>
+                                <ul>${simpleMarkdown(sanitizeMarkdownIntensities(actions.content.trim()))}</ul>
+                            </div>`;
+                        }
+
+                        if (!executive && !actions && sections.length > 0) {
                             // Failsafe: If no explicit headers match, use the first section as executive summary
                             const first = sections.shift();
                             if (first) {

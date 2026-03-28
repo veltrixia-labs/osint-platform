@@ -461,3 +461,12 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
                     metrics_json=metrics
                 ), str(rc.id)))
     return signals
+async def main():
+    from db.database import AsyncSessionLocal
+    async with AsyncSessionLocal() as session:
+        await detect_trends(session)
+        await session.commit()
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
