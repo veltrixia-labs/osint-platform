@@ -2,59 +2,60 @@ def generate_scenarios(avg_score: float, forecasts: list) -> dict:
     """Generates concrete operational scenarios with prioritized action objects."""
     
     # 1. Component Extraction
-    primary_impl = forecasts[0]["implication"] if forecasts else "the current operational environment remains stable"
+    primary_impl = forecasts[0]["implication"] if forecasts else "current trends continue"
     primary_impl = primary_impl.lower().rstrip('.')
     
-    # 2. Domain Mapping (Map implication to concrete outcome nouns)
+    # 2. Domain Mapping (Strictly concrete real-world outcomes)
     domain_map = {
-        "energy": ["supply disruption", "price volatility", "shipping route pressure"],
-        "supply": ["logistics delays", "sourcing friction", "inventory gaps"],
-        "cyber": ["service disruption", "data exposure", "regulatory pressure"],
-        "market": ["market instability", "pricing pressure", "investor sentiment shifts"],
-        "geopolitics": ["operational friction", "sanction pressure", "regional instability"]
+        "geopolitics": ["sanctions pressure", "route instability", "supply disruptions", "border delays"],
+        "energy": ["price volatility", "supply gaps", "route pressure", "refinery bottlenecks"],
+        "supply": ["bottlenecks", "shipping delays", "inventory pressure", "logistics friction"],
+        "cyber": ["service disruption", "data exposure", "regulatory scrutiny", "access delays"],
+        "market": ["volatility spikes", "liquidity shifts", "spillover into adjacent sectors", "pricing pressure"]
     }
     
-    outcome = "operational friction" # Default
-    for domain, terms in domain_map.items():
-        if domain in primary_impl:
-            outcome = terms[0]
-            break
-
-    # 3. Scenario Construction
-    # Base: Concrete continuation + Monitor cue
-    base_text = (
-        f"If current trends continue, expect {primary_impl}, with limited immediate disruption to global markets.\n"
-        f"→ Continue monitoring, but no urgent action required."
-    )
-
-    # Escalation: Structured bullets + Prepare cue
-    esc_terms = domain_map.get(next((d for d in domain_map if d in primary_impl), "geopolitics"), ["systemic friction"])
+    # Identify the primary domain and outcomes
+    active_domain = next((d for d in domain_map if d in primary_impl), "geopolitics")
+    outcomes = domain_map.get(active_domain)
     
-    esc_text = (
-        f"If tensions escalate, expect:\n"
-        f"* acute {esc_terms[0]}\n"
-        f"* increased {esc_terms[1] if len(esc_terms) > 1 else 'market instability'}\n"
-        f"* spillover risk into adjacent sectors\n"
-        f"→ Prepare for short-term operational volatility and evaluate exposure."
+    # 3. Scenario Construction (Strict: If [cond], expect:\n* [out1]\n* [out2]\n→ [action])
+    
+    # Base Case: Continuation logic
+    base_text = (
+        f"If {primary_impl}, expect:\n"
+        f"* continued {outcomes[0]}\n"
+        f"* gradual {outcomes[1]}\n"
+        f"→ Continue monitoring {active_domain} supply routes and pricing signals."
     )
-
-    # Containment: Concrete benefit + Baseline cue
+    
+    # Escalation Case: High-Urgency logic
+    esc_trigger = f"escalation signals for {active_domain} increase" if "geopolitics" in active_domain else f"{active_domain} tensions escalate"
+    esc_text = (
+        f"If {esc_trigger}, expect:\n"
+        f"* acute {outcomes[0]}\n"
+        f"* increased {outcomes[2]}\n"
+        f"* {outcomes[3] if len(outcomes) > 3 else 'heightened market instability'}\n"
+        f"→ Prepare for short-term {outcomes[1]} and review exposure."
+    )
+    
+    # Containment Case: Stabilization logic
     cont_text = (
-        f"If diplomatic or regulatory efforts succeed, {outcome} will stabilize and market volatility will decrease.\n"
-        f"→ No immediate action required; maintain monitoring."
+        f"If stabilization measures for {active_domain} succeed, expect:\n"
+        f"* {outcomes[1].replace('pressure', 'stabilization').replace('volatility', 'stabilization').replace('delays', 'reduction').replace('friction', 'easing').replace('gaps', 'closure')}\n"
+        f"* reduced {outcomes[0]}\n"
+        f"→ No immediate action required; maintain baseline monitoring."
     )
 
     # 4. Structured Actions with explicit Priority and Rationale
-    # Note: Rationale provides the "why" for the assigned priority
     scenarios = {
         "base": {
             "text": base_text, 
             "confidence": "Medium", 
             "actions": [
                 {
-                    "text": "Monitor key indicators for shift in baseline volatility.", 
+                    "text": f"Continue monitoring {active_domain} indicators for shift in baseline volatility.", 
                     "priority": "Monitor",
-                    "rationale": f"because {outcome} remains localized but requires oversight"
+                    "rationale": f"because {outcomes[0]} persists but remains within manageable thresholds"
                 }
             ]
         },
@@ -63,14 +64,14 @@ def generate_scenarios(avg_score: float, forecasts: list) -> dict:
             "confidence": "Low", 
             "actions": [
                 {
-                    "text": f"Evaluate exposure to {outcome} and affected supply routes.", 
+                    "text": f"Review exposure to {outcomes[0]} and affected supply routes.", 
                     "priority": "High Priority",
-                    "rationale": f"due to rising {outcome} risk in key transit nodes"
+                    "rationale": f"due to rising {outcomes[0]} risk in key transit nodes"
                 },
                 {
-                    "text": "Prepare contingency plans for sector-wide volatility.", 
+                    "text": f"Prepare contingency plans for sector-wide {outcomes[1]}.", 
                     "priority": "Monitor",
-                    "rationale": "as spillover risk into adjacent sectors is increasing"
+                    "rationale": f"as {outcomes[1]} risk in adjacent sectors is increasing"
                 }
             ]
         },
@@ -79,9 +80,9 @@ def generate_scenarios(avg_score: float, forecasts: list) -> dict:
             "confidence": "Low", 
             "actions": [
                 {
-                    "text": "Maintain standard regional tracking; no tactical shift required.", 
+                    "text": "Maintain baseline monitoring of policy signals; no immediate shift required.", 
                     "priority": "Maintain",
-                    "rationale": "as diplomatic success would likely stabilize the domain"
+                    "rationale": f"as stabilization would likely reduce {outcomes[0]}"
                 }
             ]
         }
