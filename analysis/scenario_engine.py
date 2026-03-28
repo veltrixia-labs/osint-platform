@@ -20,17 +20,17 @@ def generate_scenarios(avg_score: float, forecasts: list) -> dict:
     
     # 3. Action Wording Helper (Decision Support Calibration)
     def calibrate_action(action_template, confidence, impact="MEDIUM"):
-        # verb_map[confidence] = [General Verb, High-Impact Verb]
-        verb_map = {
-            "High": ["Prepare", "Review exposure to", "Activate contingency review for"],
-            "Medium": ["Evaluate", "Monitor", "Assess impact of"],
-            "Low": ["Watch for", "Validate signals regarding", "Track developments in"]
-        }
-        
-        # Tension Guardrail: If Impact=HIGH but Confidence=Low, use weaker posture
-        if impact == "HIGH" and confidence == "Low":
+        # Strict Rule: Low confidence MUST NOT produce: Prepare, Reduce exposure, Execute
+        if confidence == "Low":
             verbs = ["Monitor closely", "Validate signals for", "Track early indicators of"]
+        elif impact == "HIGH" and confidence == "Medium":
+             verbs = ["Evaluate", "Assess impact of", "Check contingency preparedness for"]
         else:
+            verb_map = {
+                "High": ["Review", "Prepare", "Reduce exposure to"],
+                "Medium": ["Evaluate", "Monitor", "Assess impact of"],
+                "Low": ["Watch for", "Validate signals regarding", "Track developments in"]
+            }
             verbs = verb_map.get(confidence, verb_map["Medium"])
             
         # Simple template-based swap or prefixing
@@ -41,8 +41,8 @@ def generate_scenarios(avg_score: float, forecasts: list) -> dict:
 
     # 3.2 Uncertainty Framing Helper (Natural Language)
     def soften_outcome(text, impact, confidence):
-        if impact == "HIGH" and confidence == "Low":
-            # Natural softening instead of mechanical prepending
+        # Strict Rule: If confidence is Low, soften the phrasing regardless of impact
+        if confidence == "Low":
             softeners = {
                 "disruptions": "potential disruptions",
                 "instability": "early signs of instability",
@@ -51,17 +51,34 @@ def generate_scenarios(avg_score: float, forecasts: list) -> dict:
                 "gaps": "risk of supply gaps",
                 "bottlenecks": "potential for bottlenecks",
                 "friction": "early signs of friction",
-                "exposure": "potential exposure"
+                "exposure": "potential exposure",
+                "delays": "potential delays",
+                "scrutiny": "emerging scrutiny",
+                "shifts": "potential shifts",
+                "spikes": "potential spikes"
             }
-            # Replace keywords if present, otherwise default softener
+            # Natural softening instead of mechanical prepending
+            softened = False
             for word, soft in softeners.items():
                 if word in text:
+                    # Special case: if text is "sanctions pressure", we want "emerging sanctions pressure" 
+                    # not "sanctions emerging pressure". 
+                    # Strategy: If it's a domain outcome, prefix the whole thing with the softener's 'modifier' part.
+                    # Or just use the keyword replacement more intelligently.
+                    if word == "pressure" and "sanctions" in text:
+                        return f"emerging {text}"
+                    if word == "disruptions" and "supply" in text:
+                        return f"potential {text}"
+                    if word == "instability" and "route" in text:
+                        return f"early signs of {text}"
+                    
                     return text.replace(word, soft)
+            
             return f"potential {text}"
         return text
 
     # 3.5 Scenario Construction helper
-    def build_case_data(cond_trigger, outcome_indices, action_guide, confidence="Low"):
+    def build_case_data(cond_trigger, outcome_indices, action_template, confidence="Low"):
         case_outcomes = []
         has_tension = False
         
@@ -84,10 +101,13 @@ def generate_scenarios(avg_score: float, forecasts: list) -> dict:
                 "time_horizon": time
             })
             
+        # Calibrate the single-line action guidance too
+        action_guide = calibrate_action(action_template, confidence, "HIGH" if has_tension else "MEDIUM")
+            
         return {
             "trigger": f"If {cond_trigger}, expect:",
             "outcomes": case_outcomes,
-            "action_guidance": action_guide,
+            "action_guidance": f"→ {action_guide}",
             "confidence": confidence,
             "show_tension_cue": has_tension
         }
@@ -105,17 +125,17 @@ def generate_scenarios(avg_score: float, forecasts: list) -> dict:
     scenarios = {
         "base": build_case_data(
             primary_impl, [0, 1], 
-            f"→ Continue monitoring {active_domain} supply routes and pricing signals.",
+            f"monitoring {active_domain} supply routes and pricing signals.",
             base_conf
         ),
         "escalation": build_case_data(
             esc_trigger, [0, 2, 3], 
-            f"→ Prepare for short-term {outcomes[1]} and review exposure.",
+            f"{outcomes[1]} and affected supply routes.",
             esc_conf
         ),
         "containment": build_case_data(
             f"stabilization measures for {active_domain} succeed", [1, 0], 
-            f"→ No immediate action required; maintain baseline monitoring.",
+            f"Continue baseline monitoring as signals stabilize.",
             "Low"
         )
     }
