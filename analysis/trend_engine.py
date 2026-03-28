@@ -265,7 +265,7 @@ async def _detect_entity_heat(recent: List[EventCluster], history: List[EventClu
         delta = count / baseline_avg if baseline_avg > 0 else (count if count > 2 else 0)
         
         if delta >= SURGE_THRESHOLD or (baseline_avg == 0 and count >= 3):
-            description = f"Significant heat surge for entity '{ent}' detected."
+            description = "Significant activity surge detected."
             metrics = {
                 "baseline": round(baseline_avg, 2),
                 "recent": count,
@@ -299,7 +299,7 @@ async def _detect_sector_surges(recent: List[EventCluster], history: List[EventC
         delta = recent_avg / historical_avg if historical_avg > 0 else (1.0 if recent_avg > 0 else 0)
         
         if delta >= 1.2 and recent_avg > 0.3: # 20% surge in intensity
-            description = f"Sector '{sector}' is experiencing elevated signal intensity."
+            description = f"Sector '{sector}' is experiencing elevated risk signals."
             metrics = {
                 "baseline": round(historical_avg, 2),
                 "recent": round(recent_avg, 2),
@@ -336,7 +336,7 @@ async def _detect_sustained_events(recent: List[EventCluster], history: List[Eve
             cat_match = rc.category == hc.category
             
             if (title_match and ent_overlap >= 1) or (ent_overlap >= 2 and cat_match):
-                description = f"Sustained activity detected for event: {rc.representative_title}"
+                description = rc.representative_title
                 metrics = {
                     "baseline": hc.avg_signal_score,
                     "recent": rc.avg_signal_score,
@@ -368,7 +368,7 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
                     is_new = False
                     if rc.avg_signal_score > hc.avg_signal_score * 1.5:
                         # Escalation detected
-                        description = f"Rapid risk escalation detected: {rc.representative_title}"
+                        description = rc.representative_title
                         metrics = {
                             "baseline": hc.avg_signal_score,
                             "recent": rc.avg_signal_score,
@@ -390,7 +390,7 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
             
             if is_new and rc.avg_signal_score > 0.7:
                 # High-risk NEW event is also a form of acceleration/surge
-                description = f"Emerging high-risk event detected: {rc.representative_title}"
+                description = rc.representative_title
                 metrics = {
                     "baseline": 0.0,
                     "recent": rc.avg_signal_score,

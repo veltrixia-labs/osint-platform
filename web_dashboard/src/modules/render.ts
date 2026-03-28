@@ -17,9 +17,19 @@ function formatIntensity(val: number | undefined | null): string | null {
  */
 function sanitizeMarkdownIntensities(text: string): string {
     if (!text) return text;
-    // Robust regex: Matches "Intensity: 3.8", "(Intensity: 3.8)", "Intensity Score: 3.8", etc.
-    // Handles trailing floats and optional surrounding parentheses.
-    return text.replace(/\(?Intensity(?:\s+Score)?\s*:\s*(\d+(?:\.\d+)?)\)?/gi, (match, val) => {
+    
+    // 1. Remove redundant systemic prefixes that reduce scan speed
+    const prefixExcludes = [
+        /Emerging high-risk event detected:\s*/gi,
+        /Rapid risk escalation detected:\s*/gi,
+        /Sustained activity detected for event:\s*/gi,
+        /High-risk signal:\s*/gi
+    ];
+    let cleanText = text;
+    prefixExcludes.forEach(re => { cleanText = cleanText.replace(re, ''); });
+
+    // 2. Robust regex: Matches "Intensity: 3.8", "(Intensity: 3.8)", "Intensity Score: 3.8", etc.
+    return cleanText.replace(/\(?Intensity(?:\s+Score)?\s*:\s*(\d+(?:\.\d+)?)\)?/gi, (match, val) => {
         const v = parseFloat(val);
         const formatted = formatIntensity(v);
         return formatted ? `Intensity: ${formatted}` : match;

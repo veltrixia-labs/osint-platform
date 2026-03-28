@@ -453,7 +453,27 @@ async def run_report_generation(
             }
             skeleton_trends["patterns"].append(entry)
         else:
-            entry_str = f"{t.target_label}: {t.description} (Intensity: {t.intensity_score})"
+            # Deduplicate target_label vs description
+            desc = t.description
+            label = t.target_label
+            
+            # If description already starts with the label or contains it significantly, just use description
+            if desc.lower().startswith(label.lower()) or label.lower() in desc.lower()[:len(label)+5]:
+                clean_item = desc
+            else:
+                clean_item = f"{label}: {desc}"
+            
+            # Strip redundant systemic prefixes if they linger from legacy signals
+            for prefix in ["Emerging high-risk event detected: ", "Rapid risk escalation detected: ", "Sustained activity detected for event: "]:
+                if clean_item.startswith(prefix):
+                    clean_item = clean_item[len(prefix):]
+            
+            # Ensure proper punctuation before intensity
+            if not clean_item.endswith("."):
+                clean_item += "."
+            
+            entry_str = f"{clean_item} Intensity: {t.intensity_score}"
+            
             if t.trend_type == "sustained_event":
                 skeleton_trends["persistent"].append(entry_str)
             elif t.trend_type in ["sector_surge", "risk_acceleration"]:
