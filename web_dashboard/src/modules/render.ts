@@ -3,7 +3,8 @@ import type { Alert, AnalystProfile, HealthData } from './api';
 import { getTopicDef, canAccessTopic, canAccessReport, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
 
 function formatIntensity(val: number | undefined | null): string | null {
-    if (typeof val !== 'number' || isNaN(val)) return null;
+    // Treat 0 or negative as invalid/missing for UI presentation purposes
+    if (typeof val !== 'number' || isNaN(val) || val <= 0) return null;
     const rounded = val.toFixed(1);
     let label = 'Low';
     if (val >= 4) label = 'High';
@@ -13,12 +14,12 @@ function formatIntensity(val: number | undefined | null): string | null {
 
 /**
  * Sanitizes markdown content by identifying raw intensity floats and formatting them.
- * Used as a fallback for LLM-generated sections like 'Emerging Surges'.
  */
 function sanitizeMarkdownIntensities(text: string): string {
     if (!text) return text;
-    // Regex matches "Intensity: 3.8628" or "(Intensity: 3.8628)" or "Intensity Score: 3.8628"
-    return text.replace(/(Intensity(?:\s+Score)?\s*:\s*)(\d+\.\d+)/gi, (match, _label, val) => {
+    // Robust regex: Matches "Intensity: 3.8", "(Intensity: 3.8)", "Intensity Score: 3.8", etc.
+    // Handles trailing floats and optional surrounding parentheses.
+    return text.replace(/\(?Intensity(?:\s+Score)?\s*:\s*(\d+(?:\.\d+)?)\)?/gi, (match, val) => {
         const v = parseFloat(val);
         const formatted = formatIntensity(v);
         return formatted ? `Intensity: ${formatted}` : match;
@@ -532,12 +533,13 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                         html += renderSec(trend, 'medium');
                         html += renderSec(scenarios, 'low');
                         
-                        // Remaining bits
+                        // Render remaining bits
                         sections.forEach(s => {
                             html += renderSec(s, 'low');
                         });
 
-                        return html || simpleMarkdown(md);
+                        console.log("[DEBUG] Final HTML Generated. Length:", html.length);
+                        return html || simpleMarkdown(sanitizeMarkdownIntensities(md));
                     })()}
                 </div>
 
