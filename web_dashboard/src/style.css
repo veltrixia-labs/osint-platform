@@ -1320,3 +1320,19 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   margin-right: 4px;
   opacity: 0.5;
 }
+
+.confidence-tag {
+  font-size: 0.65rem;
+  color: #8b949e;
+  opacity: 0.7;
+  font-style: italic;
+  margin-left: 6px;
+  display: inline-block;
+}
+
+.confidence-tag::before {
+  content: '— ';
+  margin-right: 2px;
+  opacity: 0.4;
+  font-style: normal;
+}

@@ -346,12 +346,23 @@ function simpleMarkdown(md: string): string {
             const cls = priority.toLowerCase().replace(' ', '-');
             let cleanText = text;
             let rationaleHtml = '';
-            const rationaleMatch = text.match(/ — \*(.*)\*$/);
+            let confidenceHtml = '';
+            
+            // Extract Rationale first
+            const rationaleMatch = cleanText.match(/ — \*(.*)\*/);
             if (rationaleMatch) {
-                cleanText = text.replace(rationaleMatch[0], '');
+                cleanText = cleanText.replace(rationaleMatch[0], '');
                 rationaleHtml = `<span class="report-action-rationale">${rationaleMatch[1]}</span>`;
             }
-            return `<li class="priority-${cls}">${cleanText}${rationaleHtml}</li>`;
+            
+            // Extract Confidence second
+            const confidenceMatch = cleanText.match(/ — Confidence: (High|Medium|Low)/i);
+            if (confidenceMatch) {
+                cleanText = cleanText.replace(confidenceMatch[0], '');
+                confidenceHtml = `<span class="confidence-tag">${confidenceMatch[1]}</span>`;
+            }
+            
+            return `<li class="priority-${cls}">${cleanText.trim()}${rationaleHtml}${confidenceHtml}</li>`;
         })
         .replace(/^\* (.*$)/gm, (_, content) => {
             // Case: Outcome with structured metadata: [IMPACT: HIGH, TIME: Immediate]

@@ -248,6 +248,8 @@ def build_substack_skeleton(
                 line = f"- {a['priority']}: {a['text']}"
                 if a.get('rationale'):
                     line += f" — *{a['rationale']}*"
+                if a.get('confidence'):
+                    line += f" — Confidence: {a['confidence']}"
                 action_lines.append(line)
             
             sections.append("# Key Actions\n" + "\n".join(action_lines))
