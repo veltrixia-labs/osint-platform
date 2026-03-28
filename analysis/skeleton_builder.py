@@ -217,7 +217,7 @@ def build_substack_skeleton(
     
     sections.append("# Executive Summary\n" + narrative)
 
-    # 1.5. Key Actions (Decision Cues)
+    # 1.5. Key Actions (Decision Compression)
     if scenarios:
         all_actions = []
         for case in scenarios.values():
@@ -229,8 +229,20 @@ def build_substack_skeleton(
         all_actions.sort(key=lambda x: priority_map.get(x["priority"], 3))
         
         if all_actions:
-            # Select top 3-5 actions
-            selected_actions = all_actions[:5]
+            # Decision Compression: Max 3 actions. 
+            # Ensure at least 1 High Priority if it exists.
+            high_prio = [a for a in all_actions if a["priority"] == "High Priority"]
+            other_prio = [a for a in all_actions if a["priority"] != "High Priority"]
+            
+            selected_actions = []
+            if high_prio:
+                selected_actions.append(high_prio[0])
+                remaining = (high_prio[1:] + other_prio)
+            else:
+                remaining = other_prio
+                
+            selected_actions.extend(remaining[:3 - len(selected_actions)])
+            
             action_lines = []
             for a in selected_actions:
                 line = f"- {a['priority']}: {a['text']}"
@@ -286,12 +298,18 @@ def build_substack_skeleton(
     
     sections.append("# Impact Analysis & Watch Points\n" + "\n".join(impact_items))
     
-    # 5. Strategic Forecast
+    # 5. Strategic Forecast (Decision Compression Layer)
     sc_parts = []
     for label, key in [("Base Case", "base"), ("Escalation Case", "escalation"), ("Containment Case", "containment")]:
         if key in scenarios:
             s = scenarios[key]
-            sc_parts.append(f"## {label} (Confidence: {s['confidence']})\n{s['text']}")
+            case_text = s['trigger'] + "\n"
+            for o in s.get('outcomes', []):
+                # Embedded Metadata for UI Parsing: [IMPACT: HIGH, TIME: Immediate]
+                meta = f"[IMPACT: {o['impact'].replace(' IMPACT', '')}, TIME: {o['time_horizon']}]"
+                case_text += f"* {o['text']} {meta}\n"
+            case_text += s['action_guidance']
+            sc_parts.append(f"## {label} (Confidence: {s['confidence']})\n{case_text}")
     
     if sc_parts:
         sections.append("# Strategic Forecast\n" + "\n\n".join(sc_parts))

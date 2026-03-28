@@ -353,7 +353,17 @@ function simpleMarkdown(md: string): string {
             }
             return `<li class="priority-${cls}">${cleanText}${rationaleHtml}</li>`;
         })
-        .replace(/^\* (.*$)/gm, '<li>$1</li>')
+        .replace(/^\* (.*$)/gm, (_, content) => {
+            // Case: Outcome with structured metadata: [IMPACT: HIGH, TIME: Immediate]
+            const metaMatch = content.match(/\[IMPACT:\s*(HIGH|MEDIUM|LOW),\s*TIME:\s*([^\]]+)\]/i);
+            if (metaMatch) {
+                const textOnly = content.replace(metaMatch[0], '').trim();
+                const impact = metaMatch[1].toUpperCase();
+                const time = metaMatch[2];
+                return `<li>${textOnly} <span class="impact-tag impact-${impact.toLowerCase()}">${impact} IMPACT</span><span class="time-tag">${time}</span></li>`;
+            }
+            return `<li>${content}</li>`;
+        })
         .replace(/^\- (.*$)/gm, '<li>$1</li>')
         .replace(/\*\*(.*)\*\*/g, '<b>$1</b>')
         .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:var(--tier-grace);">$1</a>')
