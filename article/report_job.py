@@ -404,6 +404,11 @@ async def run_report_generation(
     all_trends = (await db.execute(trend_stmt)).scalars().all()
     
     # Pass 2: Final Presentation Deduplication (Safety Guard)
+    print("DEBUG SURGES (Incoming):", [
+        (t.target_label, t.intensity_score, (t.metrics_json or {}).get("cluster_id"))
+        for t in all_trends
+    ])
+
     def normalize_label(l: str) -> str:
         if not l: return ""
         import re
@@ -411,22 +416,31 @@ async def run_report_generation(
         l = re.sub(r'\s+', ' ', l)
         return l.rstrip('.!?:;,')
 
-    dedup_map = {}
+    seen_keys = set()
+    all_trends_dedup = []
+
     for t in all_trends:
         if t.intensity_score > 10.0: continue # Skip outlier noise
+        
         m = t.metrics_json or {}
         cluster_id = m.get("cluster_id")
         n_label = normalize_label(t.target_label)
-        # Prioritize cluster_id for identity
-        key = cluster_id if cluster_id else f"label:{n_label}"
         
-        if key in dedup_map:
-            if t.intensity_score > dedup_map[key].intensity_score:
-                dedup_map[key] = t
-        else:
-            dedup_map[key] = t
+        # Hard Deduplication Key: (cluster_id, label, intensity_rounded)
+        # Acts as final protection layer even if upstream fails
+        key = (
+            str(cluster_id or ""),
+            n_label,
+            round(float(t.intensity_score or 0), 1)
+        )
+        
+        if key in seen_keys:
+            continue
             
-    all_trends_dedup = list(dedup_map.values())
+        seen_keys.add(key)
+        all_trends_dedup.append(t)
+        
+    print(f"DEBUG SURGES (After Dedup): {len(all_trends_dedup)} unique signals remaining.")
 
     # Prioritize Risk Patterns, then Sustained Events
     BANNED_PHRASES = ["escalating regional risks", "general escalation", "regional risk", "mixed signals"]

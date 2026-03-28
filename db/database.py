@@ -69,6 +69,9 @@ def get_engine_args(use_asyncpg: bool = True):
         else:
             ssl_mode = "strict_require"
             connect_args[ "ssl" if use_asyncpg else "sslmode" ] = "require"
+    elif "sqlite" in parsed.scheme:
+        # Increase timeout for SQLite to avoid 'database is locked' errors
+        connect_args["timeout"] = 60
 
     return db_url, connect_args, ssl_mode
 

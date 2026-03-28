@@ -97,11 +97,51 @@ async def detect_trends(db: AsyncSession):
     # 3. Compression Layer (Phase 19.3)
     compressed_patterns = _compress_trends(raw_signals, window_start, now, is_global=True)
     
-    # 4. Save to DB
-    for sig in raw_signals + compressed_patterns:
-        db.add(sig)
+    # 4. Save to DB with Duplicate Guard
+    # Check what already exists in the latest window to avoid duplicates across runs
+    logger.info(f"Applying Insertion Guard for {len(raw_signals) + len(compressed_patterns)} signals...")
     
-    logger.info(f"Trend Detection Engine finished. Created {len(raw_signals)} raw signals and {len(compressed_patterns)} patterns.")
+    # Pre-fetch recent signals to avoid N+1 queries
+    stmt = select(TrendSignal).where(TrendSignal.created_at >= recent_start)
+    db_recent_signals = (await db.execute(stmt)).scalars().all()
+    
+    # Map for quick lookup: (type, target_label, cluster_id) -> TrendSignal
+    def get_guard_key(s: TrendSignal) -> tuple:
+        cid = s.metrics_json.get("cluster_id") if s.metrics_json else None
+        # Normalize label for matching
+        import re
+        l = (s.target_label or "").lower().strip()
+        l = re.sub(r'\s+', ' ', l).rstrip('.!?:;,')
+        return (s.trend_type, l, str(cid) if cid else None)
+
+    guard_map = {get_guard_key(s): s for s in db_recent_signals}
+    
+    created_count = 0
+    merged_count = 0
+    
+    for sig in raw_signals + compressed_patterns:
+        key = get_guard_key(sig)
+        if key in guard_map:
+            existing = guard_map[key]
+            # MERGE LOGIC (Root Fix #3)
+            # 1. Keep max intensity
+            if sig.intensity_score > existing.intensity_score:
+                existing.intensity_score = sig.intensity_score
+            
+            # 2. Update description if longer
+            if len(sig.description or "") > len(existing.description or ""):
+                existing.description = sig.description
+                
+            # 3. Update metrics
+            if sig.metrics_json:
+                existing.metrics_json.update(sig.metrics_json)
+                
+            merged_count += 1
+        else:
+            db.add(sig)
+            created_count += 1
+    
+    logger.info(f"Trend Detection Engine finished. Created {created_count} new, merged {merged_count} into existing.")
 
 def _compress_trends(signals: List[TrendSignal], start: datetime, end: datetime, is_global: bool = True) -> List[TrendSignal]:
     """Compresses individual signals into semantic analyst-driven risk patterns."""
