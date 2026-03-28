@@ -342,7 +342,7 @@ function simpleMarkdown(md: string): string {
         .replace(/^### (.*$)/gm, '<h4>$1</h4>')
         .replace(/^## (.*$)/gm, '<h3>$1</h3>')
         .replace(/^# (.*$)/gm, '<h2>$1</h2>')
-        .replace(/^\- (High Priority|Monitor|Maintain): (.*$)/gm, (match, priority, text) => {
+        .replace(/^\- (High Priority|Monitor|Maintain): (.*$)/gm, (_, priority, text) => {
             const cls = priority.toLowerCase().replace(' ', '-');
             let cleanText = text;
             let rationaleHtml = '';

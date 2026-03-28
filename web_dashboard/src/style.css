@@ -517,7 +517,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 .plan-features li::before {
-  content: 'âœE;
+  content: 'âœ“';
   color: var(--plan-color);
   font-weight: 800;
   flex-shrink: 0;
@@ -972,9 +972,9 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 
 
-/* E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    Alert Card Locking (Step 2)
-E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½E½ */
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 
 .alert-card--locked {
   position: relative;
@@ -1211,14 +1211,14 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 .report-actions-box li {
   position: relative;
   padding-left: 1.5rem !important;
-  margin-bottom: 0.5rem !important;
+  margin-bottom: 0.8rem !important;
   font-size: var(--font-s) !important;
   color: var(--text-primary);
   line-height: 1.4;
 }
 
 .report-actions-box li::before {
-  content: "?";
+  content: "â†’";
   position: absolute;
   left: 0;
   color: var(--accent);
@@ -1230,42 +1230,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   to { opacity: 1; transform: translateX(0); }
 }
 
-/* ==============================
-   Priority-Specific Action Styles
-   ============================== */
-
-.report-actions-box li.priority-high-priority.Priority {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.report-actions-box li.priority-high-priority.Priority::before {
-  color: var(--danger); /* More urgent marker for High Priority */
-  content: "?";
-}
-
-.report-actions-box li.priority-Monitor {
-  color: var(--text-primary);
-}
-
-.report-actions-box li.priority-Monitor::before {
-  color: var(--accent);
-  content: "¨";
-}
-
-.report-actions-box li.priority-Maintain {
-  color: var(--text-secondary);
-  opacity: 0.8;
-}
-
-.report-actions-box li.priority-Maintain::before {
-  color: var(--text-secondary);
-  content: "?";
-}
-
-/* ==============================
-   Priority-Specific Action Styles
-   ============================== */
+/* Priority-Specific Action Styles */
 
 .report-actions-box li.priority-high-priority {
   font-weight: 600 !important;
@@ -1274,7 +1239,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .report-actions-box li.priority-high-priority::before {
   color: var(--danger) !important;
-  content: "?" !important;
+  content: "âš¡" !important;
 }
 
 .report-actions-box li.priority-monitor {
@@ -1283,7 +1248,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .report-actions-box li.priority-monitor::before {
   color: var(--accent) !important;
-  content: "¨" !important;
+  content: "â†’" !important;
 }
 
 .report-actions-box li.priority-maintain {
@@ -1293,7 +1258,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .report-actions-box li.priority-maintain::before {
   color: var(--text-secondary) !important;
-  content: "?" !important;
+  content: "â€¢" !important;
 }
 
 .report-actions-box .report-action-rationale {
