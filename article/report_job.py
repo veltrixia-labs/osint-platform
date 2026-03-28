@@ -453,22 +453,54 @@ async def run_report_generation(
             }
             skeleton_trends["patterns"].append(entry)
         else:
-            # Deduplicate target_label vs description
-            desc = t.description
-            label = t.target_label
+            # 1. Normalize both strings for comparison
+            def normalize(s: str) -> str:
+                if not s: return ""
+                # lowercase, trim, collapse spaces, strip trailing punctuation
+                import re
+                s = s.lower().strip()
+                s = re.sub(r'\s+', ' ', s)
+                return s.rstrip('.!?:;,')
+
+            desc = t.description or ""
+            label = t.target_label or ""
             
-            # If description already starts with the label or contains it significantly, just use description
-            if desc.lower().startswith(label.lower()) or label.lower() in desc.lower()[:len(label)+5]:
-                clean_item = desc
+            n_desc = normalize(desc)
+            n_label = normalize(label)
+            
+            # 2. Refined Semantic Deduplication Heuristic
+            # - Exact/Normalized match
+            # - One contains the other
+            # - Significant prefix overlap (first 40 chars or 70% of label)
+            # - Meaningful opening phrase overlap
+            
+            overlap_threshold = min(len(n_label), 40)
+            is_duplicate = (
+                not n_label or not n_desc or
+                n_label == n_desc or
+                n_label in n_desc or
+                n_desc in n_label or
+                (len(n_label) > 10 and len(n_desc) > 10 and n_label[:overlap_threshold] == n_desc[:overlap_threshold])
+            )
+            
+            # 3. Resolution Rule: Prefer the longer/more informative string if duplicated
+            if is_duplicate:
+                clean_item = desc if len(desc) >= len(label) else label
             else:
                 clean_item = f"{label}: {desc}"
             
             # Strip redundant systemic prefixes if they linger from legacy signals
-            for prefix in ["Emerging high-risk event detected: ", "Rapid risk escalation detected: ", "Sustained activity detected for event: "]:
-                if clean_item.startswith(prefix):
+            for prefix in [
+                "Emerging high-risk event detected: ", 
+                "Rapid risk escalation detected: ", 
+                "Sustained activity detected for event: ",
+                "High-risk signal: "
+            ]:
+                if clean_item.lower().startswith(prefix.lower()):
                     clean_item = clean_item[len(prefix):]
             
             # Ensure proper punctuation before intensity
+            clean_item = clean_item.strip()
             if not clean_item.endswith("."):
                 clean_item += "."
             
