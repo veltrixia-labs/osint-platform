@@ -77,7 +77,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             
             <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
                 <div>
-                    <h4>Risk Momentum</h4>
+                    <h4>Intensity</h4>
                     <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${accessible ? formatIntensity(alert.intensity) : '•.••'}/10.0</div>
                 </div>
                 <div>
@@ -404,11 +404,17 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
             <div class="report-content-card u-m-top-1">
                 <h1 style="margin-bottom: 1.5rem;">${report.title}</h1>
                 <div class="u-m-top-1" style="text-align: left; margin-bottom: 2rem;">
-                    <div class="confidence-trigger u-flex u-tier-2" style="display: inline-flex; background: var(--accent-soft); color: #58a6ff; padding: 8px 16px; border-radius: 20px; font-size: var(--font-m); border: 1px solid var(--border-active); cursor: pointer; user-select: none;">
-                        <span style="font-size: 1.1rem; margin-right: 0.5rem;">📊</span> 
-                        <span style="font-weight: 600;">Confidence: ${report.confidence_level || 'High'}</span>
-                        <span style="opacity: 0.8; margin-left: 0.5rem;">(${report.source_count || 0} sources)</span>
-                        <span class="chevron-icon" style="transition: transform 0.3s; margin-left: 0.5rem;">▾</span>
+                    <div class="confidence-trigger u-flex u-tier-2" style="display: inline-flex; background: var(--accent-soft); color: #58a6ff; padding: 8px 20px; border-radius: 20px; font-size: var(--font-m); border: 1px solid var(--border-active); cursor: pointer; user-select: none; gap: 1rem; align-items: center;">
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <span style="font-size: 1.1rem;">📊</span> 
+                            <span style="font-weight: 600;">Confidence: ${report.confidence_level || 'High'}</span>
+                        </div>
+                        <span style="opacity: 0.3; width: 1px; height: 16px; background: #58a6ff;"></span>
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <span style="font-size: 1.1rem;">🔥</span> 
+                            <span style="font-weight: 600;">Intensity: ${formatIntensity(report.intensity)}</span>
+                        </div>
+                        <span class="chevron-icon" style="transition: transform 0.3s;">▾</span>
                     </div>
 
                     <div class="evidence-panel u-m-top-1" style="display: none; background: rgba(13, 17, 23, 0.95); border: 1px solid var(--border-active); border-radius: 16px; padding: 2rem; box-shadow: 0 12px 48px rgba(0,0,0,0.6); backdrop-filter: blur(12px); max-width: 700px; margin-top: 1rem;">
