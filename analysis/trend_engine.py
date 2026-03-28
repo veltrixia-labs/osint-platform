@@ -38,26 +38,51 @@ async def detect_trends(db: AsyncSession):
     historical_clusters = [c for c in all_clusters if _ensure_utc(c.created_at) < recent_start]
     
     # 2. Collect Raw Signals (Tracked by cluster_id if applicable)
-    # key: cluster_id or target_label, value: TrendSignal
+    # key: cluster_id or normalized target_label, value: TrendSignal
     signal_map = {}
 
+    def normalize_label(l: str) -> str:
+        if not l: return ""
+        import re
+        l = l.lower().strip()
+        l = re.sub(r'\s+', ' ', l)
+        return l.rstrip('.!?:;,')
+
     def add_signal(sig: TrendSignal, cluster_id: str = None):
-        key = cluster_id if cluster_id else f"{sig.trend_type}:{sig.target_label}"
+        # Refined Merge Key: cluster_id takes priority
+        n_label = normalize_label(sig.target_label)
+        key = cluster_id if cluster_id else f"label:{n_label}"
+        
         if key in signal_map:
             existing = signal_map[key]
-            logger.info(f"[Trend Engine] MERGING: cluster_id={cluster_id} type='{existing.trend_type}' + '{sig.trend_type}'")
-            # Merge logic
-            existing.trend_type = f"{existing.trend_type}_merged"
+            logger.info(f"[Trend Engine] ENFORCED MERGE: key={key} type='{existing.trend_type}' + '{sig.trend_type}'")
+            # 1. Merge semantics
+            if existing.trend_type != sig.trend_type and "_merged" not in existing.trend_type:
+                existing.trend_type = f"{existing.trend_type}_merged"
+            
+            # 2. Maximize intensity
             if sig.intensity_score > existing.intensity_score:
                 existing.intensity_score = sig.intensity_score
-            # Merge metrics
+            
+            # 3. Prefer most informative description (longest clean description)
+            if len(sig.description or "") > len(existing.description or ""):
+                existing.description = sig.description
+            
+            # 4. Consolidate metadata
+            orig_types = existing.metrics_json.get("original_types", [existing.trend_type.split('_')[0]])
+            if sig.trend_type not in orig_types:
+                orig_types.append(sig.trend_type)
+            
             existing.metrics_json.update(sig.metrics_json)
+            existing.metrics_json["original_types"] = orig_types
             existing.metrics_json["is_merged"] = True
-            existing.metrics_json["original_types"] = existing.metrics_json.get("original_types", [existing.trend_type.split('_')[0]]) + [sig.trend_type]
+            if cluster_id:
+                existing.metrics_json["cluster_id"] = cluster_id
         else:
             signal_map[key] = sig
 
     # Run detectors
+    # Detectors return (TrendSignal, cluster_id_or_none)
     for sig, cid in await _detect_entity_heat(recent_clusters, historical_clusters, window_start, now):
         add_signal(sig, cid)
     for sig, cid in await _detect_sector_surges(recent_clusters, historical_clusters, window_start, now):

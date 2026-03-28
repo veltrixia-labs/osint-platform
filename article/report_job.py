@@ -403,23 +403,45 @@ async def run_report_generation(
     trend_stmt = select(TrendSignal).where(TrendSignal.created_at >= now - timedelta(hours=24))
     all_trends = (await db.execute(trend_stmt)).scalars().all()
     
+    # Pass 2: Final Presentation Deduplication (Safety Guard)
+    def normalize_label(l: str) -> str:
+        if not l: return ""
+        import re
+        l = l.lower().strip()
+        l = re.sub(r'\s+', ' ', l)
+        return l.rstrip('.!?:;,')
+
+    dedup_map = {}
+    for t in all_trends:
+        if t.intensity_score > 10.0: continue # Skip outlier noise
+        m = t.metrics_json or {}
+        cluster_id = m.get("cluster_id")
+        n_label = normalize_label(t.target_label)
+        # Prioritize cluster_id for identity
+        key = cluster_id if cluster_id else f"label:{n_label}"
+        
+        if key in dedup_map:
+            if t.intensity_score > dedup_map[key].intensity_score:
+                dedup_map[key] = t
+        else:
+            dedup_map[key] = t
+            
+    all_trends_dedup = list(dedup_map.values())
+
     # Prioritize Risk Patterns, then Sustained Events
     BANNED_PHRASES = ["escalating regional risks", "general escalation", "regional risk", "mixed signals"]
     patterns = [
-        t for t in all_trends 
+        t for t in all_trends_dedup 
         if t.trend_type == "risk_pattern" 
-        and t.intensity_score <= 10.0 
         and not any(p in t.target_label.lower() for p in BANNED_PHRASES)
     ]
     if topic:
-        # Filter patterns that mentioned topic entities or sector
         patterns = [p for p in patterns if topic.lower() in p.target_label.lower()]
     
-    # Sort and Hard Cap to Top 3 (Phase 19.3)
     patterns.sort(key=lambda x: x.intensity_score, reverse=True)
     patterns = patterns[:3]
         
-    trends_pool = patterns if patterns else [t for t in all_trends if t.intensity_score <= 10.0][:10]
+    trends_pool = patterns if patterns else [t for t in all_trends_dedup][:10]
 
     # Explained Trend Context for LLM
     trend_context_list = []
