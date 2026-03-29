@@ -61,6 +61,24 @@ RISK_HEADLINE_TEMPLATES = {
         "{theme} Sensitivity Signals Heightened Pressure",
         "Rate Pressure Expands Across {theme} Hubs"
     ],
+    "market": [
+        "{theme} Asset Volatility Signals Mount",
+        "Market Sensitivity Rises Following {event}",
+        "{theme} Sentiment Shifts Amid {event}",
+        "Equity Risk Expands in {theme} Context"
+    ],
+    "energy": [
+        "Energy Security Alerts Intensify as {event}",
+        "{theme} Resource Flow Under Pressure",
+        "Refinery Pressure Mounts Amid {theme} Disruptions",
+        "{theme} Output Stability Signals Alerts"
+    ],
+    "defense": [
+        "Defense Posture Shifts Amid {event}",
+        "{theme} Strategic Readiness Signals Mount",
+        "Procurement Friction Builds in {theme} Context",
+        "{theme} Naval Deployment Risks Intensify"
+    ],
     "supply_chain": [
         "{theme} Bottleneck Alerts Intensify",
         "Resource Flow Disrupted as {event} Expands",
@@ -147,7 +165,17 @@ def build_threads_teaser(
 
     # Determine templates for this sector
     cat_fixed = category.lower() if category else "default"
-    templates = RISK_HEADLINE_TEMPLATES.get(cat_fixed, RISK_HEADLINE_TEMPLATES["shared"])
+    
+    # Refined mapping for L1 (Headline)
+    l1_key = "shared"
+    if "energy" in cat_fixed: l1_key = "energy"
+    elif "defense" in cat_fixed: l1_key = "defense"
+    elif "market" in cat_fixed or "economy" in cat_fixed: l1_key = "market"
+    elif "geopolitics" in cat_fixed: l1_key = "geopolitics"
+    elif "cyber" in cat_fixed: l1_key = "cyber"
+    elif "supply" in cat_fixed: l1_key = "supply_chain"
+    
+    templates = RISK_HEADLINE_TEMPLATES.get(l1_key, RISK_HEADLINE_TEMPLATES["shared"])
     
     # Rotation logic
     title_hash = hash(norm_event + top_theme)
@@ -186,10 +214,11 @@ def build_threads_teaser(
     search_text = search_text.lower()
     
     cat_key = "default"
-    mapping_order = ["geopolitics", "energy", "economy", "cyber", "supply_chain", "defense"]
+    mapping_order = ["geopolitics", "energy", "economy", "market", "cyber", "supply_chain", "defense"]
     for k in mapping_order:
-        if k in search_text or (k == "economy" and "market" in search_text):
+        if k in search_text:
             cat_key = k
+            if k == "market": cat_key = "economy" # Shared detail templates
             break
             
     l2 = WHY_IT_MATTERS_TEMPLATES.get(cat_key, WHY_IT_MATTERS_TEMPLATES["default"])
