@@ -434,22 +434,71 @@ async def run_report_generation(
         seen_keys.add(key)
         all_trends_dedup.append(t)
         
-    print(f"DEBUG SURGES (After Dedup): {len(all_trends_dedup)} unique signals remaining.")
-
-    # Prioritize Risk Patterns, then Sustained Events
-    BANNED_PHRASES = ["escalating regional risks", "general escalation", "regional risk", "mixed signals"]
-    patterns = [
-        t for t in all_trends_dedup 
-        if t.trend_type == "risk_pattern" 
-        and not any(p in t.target_label.lower() for p in BANNED_PHRASES)
+    # Pass 3: Relevance Filtering & Hard Exclusions (Phase 2)
+    BANNED_SURGE_KEYWORDS = [
+        "sports", "world cup", "olympics", "football", "basketball", "gaming", "esports",
+        "wildlife", "animal rescue", "celebrity", "entertainment", "hollywood", "weather alert",
+        "local traffic", "human interest"
     ]
-    if topic:
-        patterns = [p for p in patterns if topic.lower() in p.target_label.lower()]
     
-    patterns.sort(key=lambda x: x.intensity_score, reverse=True)
-    patterns = patterns[:3]
+    # Domain keyword bonuses
+    DOMAIN_BONUS_KEYWORDS = {
+        "energy_resource_risk": ["oil", "gas", "lng", "refinery", "pipeline", "opec", "grid", "supply"],
+        "geopolitics_intelligence": ["sanctions", "escalation", "diplomatic", "naval", "border", "conflict", "stability", "treaty"],
+        "global_market_intelligence": ["equity", "volatility", "interest rate", "fed", "liquidity", "inflation", "asset"],
+        "supply_chain_intelligence": ["logistics", "shipping", "port", "congestion", "inventory", "freight"]
+    }
+
+    def calculate_trend_relevance(trend, report_themes, report_category):
+        # 1. Hard Exclusions
+        t_text = (trend.target_label + " " + (trend.description or "")).lower()
+        if any(w in t_text for w in BANNED_SURGE_KEYWORDS):
+            return -100 # Permanent rejection
         
-    trends_pool = patterns if patterns else [t for t in all_trends_dedup][:10]
+        score = 0
+        theme_tokens = " ".join(report_themes).lower().split()
+        
+        # 2. Theme Keyword Match
+        for token in theme_tokens:
+            if len(token) < 4: continue # Skip short noise
+            if token in trend.target_label.lower():
+                score += 5
+            if trend.description and token in trend.description.lower():
+                score += 3
+        
+        # 3. Domain Alignment
+        cat_norm = (report_category or "").lower()
+        if trend.topic and cat_norm in trend.topic.lower():
+            score += 10
+        
+        # 4. Sector Bonus
+        bonus_words = DOMAIN_BONUS_KEYWORDS.get(cat_norm, [])
+        if any(w in t_text for w in bonus_words):
+            score += 7
+
+        return score
+
+    scored_trends = []
+    for t in all_trends_dedup:
+        # Outlier noise skip
+        if t.intensity_score > 10.0: continue 
+
+        rel_score = calculate_trend_relevance(t, themes, topic_str)
+        
+        # Strict Threshold: Score >= 5 (requires at least one strong match)
+        if rel_score >= 5:
+            scored_trends.append((t, rel_score))
+
+    # Sort by Relevance first, then Intensity
+    scored_trends.sort(key=lambda x: (x[1], x[0].intensity_score), reverse=True)
+    
+    # Cap at 8 signals
+    trends_pool = [x[0] for x in scored_trends[:8]]
+    
+    if not trends_pool:
+        logger.info(f"Emerging Surges: No thematic matches found for theme/category. Section will be sparse.")
+    else:
+        logger.info(f"Emerging Surges: Selected {len(trends_pool)} relevant signals from pool of {len(all_trends_dedup)}.")
 
     # Explained Trend Context for LLM
     trend_context_list = []
