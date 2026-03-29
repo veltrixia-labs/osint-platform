@@ -104,7 +104,7 @@ export const TIER_ORDER: Record<string, number> = {
     free: 0,
     pro: 1,
     experts: 2,
-    enterprise: 2, // Enterprise inherits Expert capabilities
+    enterprise: 3,
 };
 
 /**
@@ -127,6 +127,7 @@ export const ENTITLEMENT_MATRIX = {
     enterprise: {
         topics: ['global', 'energy_resource_risk', 'global_market_intelligence', 'crypto_geopolitics', 'ai_semiconductor_intelligence', 'defense_technology', 'supply_chain_intelligence'],
         reports: ['daily', 'weekly', 'monthly'],
+        custom: true
     }
 };
 
