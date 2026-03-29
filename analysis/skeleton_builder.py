@@ -45,72 +45,72 @@ def normalize_title(title: str) -> str:
 RISK_HEADLINE_TEMPLATES = {
     "geopolitics": [
         "{theme} Risk Rises Following {event}",
-        "{theme} Strategic Friction Builds Amid {event}",
-        "{theme} Chokepoint Alerts Intensify as {event}",
-        "Naval Pressure Expands in {theme} Context"
+        "Geopolitical Friction Builds Amid {event}",
+        "{theme} Chokepoint Alerts Postured as {event}",
+        "Awaiting Deployment: Naval Pressure Expands in {theme} Context"
     ],
     "cyber": [
-        "{theme} Digital Vulnerability Mounts",
-        "Attribution Risk Rises for {theme} Incidents",
-        "{theme} Integrity Under Pressure",
-        "Digital Surface Expansion Signals {theme} Alerts"
+        "{theme} Digital Vulnerability Level Shift",
+        "Attribution Data Surfaces for {theme} Incidents",
+        "{theme} Integrity Under Sector Pressure",
+        "Surface Risk Expansion Signals {theme} Alerts"
     ],
     "economy": [
-        "{theme} Liquidity Strain Intensifies",
-        "Pricing Volatility Rises Following {event}",
-        "{theme} Sensitivity Signals Heightened Pressure",
-        "Rate Pressure Expands Across {theme} Hubs"
+        "{theme} Liquidity Strain Indicators Rises",
+        "Pricing Volatility Signal Following {event}",
+        "{theme} Sensitivity Triggers Heightened Pressure",
+        "Capital Pressure Expands Across {theme} Hubs"
     ],
     "market": [
-        "{theme} Asset Volatility Signals Mount",
+        "{theme} Asset Volatility Triggers Exposure Risks",
         "Market Sensitivity Rises Following {event}",
-        "{theme} Sentiment Shifts Amid {event}",
-        "Equity Risk Expands in {theme} Context"
+        "{theme} Sentiment Shift Signals Amid {event}",
+        "Equity Risk Exposure Expands in {theme} Context"
     ],
     "energy": [
-        "Energy Security Alerts Intensify as {event}",
-        "{theme} Resource Flow Under Pressure",
-        "Refinery Pressure Mounts Amid {theme} Disruptions",
-        "{theme} Output Stability Signals Alerts"
+        "Energy Security Risk Rises as {event} Expands",
+        "{theme} Resource Flow Signals Monitoring Required",
+        "Refinery Pressure Mounts Following {theme} Signal",
+        "{theme} Output Stability Signals Under Observation"
     ],
     "defense": [
-        "Defense Posture Shifts Amid {event}",
-        "{theme} Strategic Readiness Signals Mount",
-        "Procurement Friction Builds in {theme} Context",
-        "{theme} Naval Deployment Risks Intensify"
+        "Defense Posture Shift Observed Amid {event}",
+        "{theme} Strategic Readiness Signals Surface",
+        "Procurement Friction Surface in {theme} Context",
+        "{theme} Naval Deployment Risks Surface as {event}"
     ],
     "supply_chain": [
-        "{theme} Bottleneck Alerts Intensify",
-        "Resource Flow Disrupted as {event} Expands",
-        "{theme} Constraints Signal Disruptive Pressure",
+        "{theme} Bottleneck Alerts Following {event}",
+        "Resource Flow Disruption as {event} Expands",
+        "{theme} Constraints Signal Potential Gridlock",
         "Port Congestion Risks Mount Following {event}"
     ],
     "shared": [
-        "{theme} Risk Alerts Intensify Following {event}",
+        "{theme} Risk Alerts Rises Following {event}",
         "{theme} Stability Under Pressure Amid {event}",
-        "{theme} Focus Intensifies as Pressure Mounts",
-        "Structural Friction Builds in {theme} Context"
+        "{theme} Focus Required as Risk Indicators Surface",
+        "Structural Friction Surface in {theme} Context"
     ]
 }
 
 WHY_IT_MATTERS_TEMPLATES = {
-    "geopolitics": "Regional spillover and sanction risks remain high as geopolitical chokepoints face sustained pressure.",
-    "cyber": "Critical infrastructure stability and attribution risks are intensifying following recent digital asset incidents.",
-    "economy": "Market liquidity and policy sensitivity are driving volatility across global resource and tech hubs.",
-    "supply_chain": "Logistics bottlenecks and maritime shipping constraints are signaling potential delivery disruptions.",
-    "defense": "Defense procurement and readiness shifts are indicating a significant transformation in regional security posture.",
-    "energy": "Global energy security and resource flow stability are coming under renewed pressure from supply-side risks.",
-    "default": "The observed cluster activity indicates shifting risk profiles with potential cross-sector transmission."
+    "geopolitics": "Regional spillover and sanctions exposure remain elevated as geopolitical chokepoints face sustained pressure.",
+    "cyber": "Critical infrastructure stability and attribution risks are intensifying following recent signal expansion.",
+    "economy": "Market liquidity and pricing volatility are driving heightened policy sensitivity across global hubs.",
+    "supply_chain": "Logistics bottlenecks and maritime shipping constraints threaten production stability and inventory flow.",
+    "defense": "Defense procurement readiness and regional security posture shifts are signaling a transition in strategic depth.",
+    "energy": "Global energy security and refinery output stability are coming under renewed pressure from supply-side risks.",
+    "default": "Observed cluster activity indicates shifting risk profiles with potential for cross-sector transmission."
 }
 
 # Monitorable Watch-Points (L3)
 WHAT_TO_WATCH_TEMPLATES = {
-    "geopolitics": "Monitor troop movements, naval deployments, and high-level diplomatic signaling across key corridors.",
-    "cyber": "Watch for patch releases, attribution statements from security agencies, and further service status reports.",
-    "economy": "Track liquidity indicators, interest rate signaling from central banks, and energy futures volatility.",
-    "supply_chain": "Observe shipping insurance rates, port congestion data, and inventory level shifts in affected hubs.",
-    "defense": "Monitor procurement contracts, joint military exercises, and weapon system deployment status.",
-    "energy": "Track daily output levels, storage capacity shifts, and spot price movements for critical energy resources.",
+    "geopolitics": "Monitor troop movements and high-level diplomatic signaling across key corridors for escalation triggers.",
+    "cyber": "Watch for attribution statements from security agencies and service status reports for infrastructure impact.",
+    "economy": "Track interest rate signaling and pricing volatility in futures markets to assess cross-market sentiment.",
+    "supply_chain": "Observe port congestion data and shipping insurance rates for signals of sustained delivery disruptions.",
+    "defense": "Monitor procurement contracts and military exercise status for shifts in regional security readiness.",
+    "energy": "Track daily output levels and storage capacity shifts to assess immediate energy resource flow risks.",
     "default": "Watch for further institutional responses and multi-source confirmation of ongoing risk trends."
 }
 
