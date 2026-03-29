@@ -96,6 +96,14 @@ WHAT_TO_WATCH_TEMPLATES = {
     "default": "Watch for further institutional responses and multi-source confirmation of ongoing risk trends."
 }
 
+# Domain-Specific Narrative Framing (Executive Summary)
+EXECUTIVE_SUMMARY_TEMPLATES = {
+    "energy": "Analysis of current energy security indicators suggests a shift in **{themes}**. The following briefing evaluates the impact on regional production and infrastructure stability.",
+    "market": "Strategic intelligence regarding global market volatility indicates a convergence around **{themes}**. This report synthesizes price sensitivities and sector-wide sentiment shifts.",
+    "geopolitics": "Current geopolitical indicators suggest a significant shift in **{themes}**. The following briefing assesses regional stability and the potential for strategic escalation.",
+    "default": "Current intelligence indicators suggest a convergence around **{themes}**. The following briefing details the core developments and strategic implications of these shifts."
+}
+
 # State tracking for rotation (simple process-level cache)
 _LAST_USED_TEMPLATE = {}
 _LAST_USED_KEYWORDS = set()
@@ -197,7 +205,8 @@ def build_substack_skeleton(
     scenarios: Dict, 
     sources: List[str],
     trends: Dict[str, List[str]] = None,
-    visuals: List[str] = None
+    visuals: List[str] = None,
+    domain: str = None
 ) -> str:
     """
     Builds the optimized analytical skeleton report.
@@ -205,13 +214,20 @@ def build_substack_skeleton(
     """
     sections = []
     
-    # 1. Executive Summary (Narrative Synthesis)
+    # 1. Executive Summary (Narrative Synthesis - Domain-Aware)
     narrative = ""
+    domain_key = domain.lower() if domain else "default"
+    if "market" in domain_key: domain_key = "market"
+    if "energy" in domain_key: domain_key = "energy"
+    if "geo" in domain_key: domain_key = "geopolitics"
+    
+    template = EXECUTIVE_SUMMARY_TEMPLATES.get(domain_key, EXECUTIVE_SUMMARY_TEMPLATES["default"])
+    
     if themes:
         main_themes = ", ".join(themes[:3])
         if len(themes) > 3:
             main_themes += f", and {len(themes)-3} other emerging signals"
-        narrative = f"Current intelligence indicators suggest a convergence around **{main_themes}**. The following briefing details the core developments and strategic implications of these shifts."
+        narrative = template.format(themes=main_themes)
     else:
         narrative = "Analysis of current signal clusters suggests shifting risk profiles across the monitored domain. This report synthesizes key factual developments and expected impacts."
     

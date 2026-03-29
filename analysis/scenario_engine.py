@@ -1,4 +1,4 @@
-def generate_scenarios(avg_score: float, forecasts: list) -> dict:
+def generate_scenarios(avg_score: float, forecasts: list, domain: str = None) -> dict:
     """Generates concrete operational scenarios with standardized uncertainty qualifiers and singular actions."""
     
     # 1. Component Extraction
@@ -14,9 +14,23 @@ def generate_scenarios(avg_score: float, forecasts: list) -> dict:
         "market": ["volatility spikes", "liquidity shifts", "spillover into adjacent sectors", "pricing pressure"]
     }
     
-    # Identify the primary domain and outcomes
-    active_domain = next((d for d in domain_map if d in primary_impl), "geopolitics")
-    outcomes = domain_map.get(active_domain)
+    # Ensure domain is normalized and handled as the primary lens
+    active_domain = domain.lower() if domain else "geopolitics"
+    
+    # Mapping logic: If the passed domain is specialized, use its context.
+    # If it's a generic one, try to refine from forecasts.
+    if active_domain in ["global", "geopolitics", "market", "energy", "supply_chain", "cyber"]:
+        # Standardize naming for mapping
+        domain_key = active_domain
+        if "market" in domain_key: domain_key = "market"
+        if "energy" in domain_key: domain_key = "energy"
+        if "supply" in domain_key: domain_key = "supply"
+    else:
+        # Fallback to inference if domain is unknown/none
+        domain_key = next((d for d in domain_map if d in primary_impl), "geopolitics")
+        
+    outcomes = domain_map.get(domain_key, domain_map["geopolitics"])
+    active_domain = domain_key
     
     # 3. Action Wording Helper (Standardized Guidance)
     def calibrate_action(template_core, confidence, impact="MEDIUM"):

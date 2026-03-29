@@ -396,7 +396,7 @@ async def run_report_generation(
     
     # D. Forecasts & Scenarios
     forecasts = generate_forecasts([topic] if topic else ["global"], " ".join([c.representative_title for c in clusters]), avg_score)
-    scenarios = generate_scenarios(avg_score, forecasts)
+    scenarios = generate_scenarios(avg_score, forecasts, domain=topic)
 
     # E. Trend Analysis (Phase 19 & 19.1)
     # Fetch trends for the target period
@@ -574,7 +574,8 @@ async def run_report_generation(
         scenarios, 
         [it.source_url for it in items],
         trends=skeleton_trends,
-        visuals=visual_files
+        visuals=visual_files,
+        domain=topic
     )
     
     # 4. Skeleton Validation
