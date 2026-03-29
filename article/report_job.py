@@ -816,28 +816,72 @@ async def run_report_generation(
     top_cluster_event = items[0].title if items else "No significant developments identified."
     top_theme = themes[0] if themes else (topic.capitalize() if topic else "Global")
     
-    platform_base = os.getenv("PLATFORM_BASE_URL", "https://osint-web-1oev.onrender.com")
-    platform_url = f"{platform_base}/?report_id={report_id}"
-    
-    teaser_md = build_threads_teaser(top_cluster_event, top_theme, topic_str, platform_url)
+    # --- SOCIAL SIGNAL SELECTION LAYER (PHASE 2) ---
+    def normalize_theme_key(text: str) -> str:
+        if not text: return ""
+        import re
+        t = text.lower()
+        t = re.sub(r'[^\w\s]', '', t)
+        return " ".join(t.split()).strip()
 
-    with open(os.path.join(out_dir, f"teaser_{base_name}.md"), "w", encoding='utf-8') as f:
-        f.write(teaser_md)
+    norm_theme = normalize_theme_key(top_theme)
+    should_post = True
+    suppression_reason = None
+
+    # A. Intensity Check
+    if avg_score < 0.6:
+        should_post = False
+        suppression_reason = f"Low intensity ({avg_score:.2f})"
     
-    # 8. Queue Threads Auto-Post
-    # (Off-loaded to the polling job - now independent of Substack status)
-    if auto_post_threads:
-        stmt_pending = select(ExternalPost).where(
-            ExternalPost.report_id == report_id,
-            ExternalPost.platform == "threads"
+    # B. Theme Quality Check
+    elif not norm_theme or len(norm_theme.split()) < 2 or "summary" in norm_theme or "latest" in norm_theme:
+        should_post = False
+        suppression_reason = f"Generic or weak theme ('{top_theme}')"
+
+    # C. Novelty Check (48h Window)
+    if should_post:
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=48)
+        stmt_novelty = select(ExternalPost).where(
+            ExternalPost.normalized_theme == norm_theme,
+            ExternalPost.created_at >= cutoff,
+            ExternalPost.status == "success"
         )
-        existing_post = (await db.execute(stmt_pending)).scalars().first()
-        if not existing_post:
-            logger.info("Queuing Threads post into 'pending' sequence...")
-            db.add(ExternalPost(platform="threads", report_id=report_id, status="pending"))
-            await db.commit()
-        else:
-            logger.info("Threads post is already queued/processed.")
+        recent_duplicate = (await db.execute(stmt_novelty)).scalars().first()
+        if recent_duplicate:
+            should_post = False
+            suppression_reason = f"Recent duplicate theme ('{norm_theme}')"
+
+    if not should_post:
+        logger.info(f"Social Post Suppressed: {suppression_reason}")
+    else:
+        platform_base = os.getenv("PLATFORM_BASE_URL", "https://osint-web-1oev.onrender.com")
+        platform_url = f"{platform_base}/?report_id={report_id}"
+        
+        teaser_md = build_threads_teaser(top_cluster_event, top_theme, topic_str, platform_url)
+
+        with open(os.path.join(out_dir, f"teaser_{base_name}.md"), "w", encoding='utf-8') as f:
+            f.write(teaser_md)
+        
+        # 8. Queue Threads Auto-Post
+        if auto_post_threads:
+            stmt_pending = select(ExternalPost).where(
+                ExternalPost.report_id == report_id,
+                ExternalPost.platform == "threads"
+            )
+            existing_post = (await db.execute(stmt_pending)).scalars().first()
+            if not existing_post:
+                new_post = ExternalPost(
+                    platform="threads",
+                    report_id=report_id,
+                    status="pending",
+                    category=topic_str,
+                    normalized_theme=norm_theme
+                )
+                db.add(new_post)
+                await db.commit()
+                logger.info(f"Social Post Queued: {top_theme} ({topic_str})")
+            else:
+                logger.info("Threads post is already queued/processed for this report.")
 
     # Record Metrics
     logger.info(f"Phase 11 Metrics [{topic_str}]: " + json.dumps({
