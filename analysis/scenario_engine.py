@@ -82,6 +82,29 @@ def generate_scenarios(avg_score: float, forecasts: list, domain: str = None) ->
 
     # 3.5 Scenario Construction helper
     def build_case_data(cond_trigger, outcome_indices, action_template, confidence="Low"):
+        # Clean Trigger Logic (Safe Patch)
+        import re
+        clean_text = cond_trigger.strip().rstrip('.,:;')
+        
+        # Strip leading systemic phrases
+        for prefix in ["Expect", "Continued", "Analysis suggests"]:
+            if clean_text.lower().startswith(prefix.lower()):
+                clean_text = clean_text[len(prefix):].strip()
+        
+        # Safety Guard: If remains too verbose or messy, fallback to templates
+        # (Heuristic: >80 chars or contains full-sentence punctuation/indicators)
+        is_messy = len(clean_text) > 80 or "." in clean_text or clean_text.lower().startswith("no immediate")
+        if is_messy:
+            if "escalat" in cond_trigger.lower():
+                clean_text = "escalation signals increase"
+            elif "stabiliz" in cond_trigger.lower() or "succeed" in cond_trigger.lower():
+                clean_text = "stabilization measures succeed"
+            else:
+                clean_text = "current trends persist"
+                
+        # Final normalization (strip leftover punctuation)
+        clean_text = clean_text.lstrip().rstrip('.,:;')
+
         case_outcomes = []
         has_tension = False
         
@@ -108,7 +131,7 @@ def generate_scenarios(avg_score: float, forecasts: list, domain: str = None) ->
         action_sentence = calibrate_action(action_template, confidence, "HIGH" if has_tension else "MEDIUM")
             
         return {
-            "trigger": f"If {cond_trigger}, expect:",
+            "trigger": f"If {clean_text}, expect:",
             "outcomes": case_outcomes,
             "action_guidance": f"→ {action_sentence}",
             "confidence": confidence,

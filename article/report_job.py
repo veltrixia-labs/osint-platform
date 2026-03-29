@@ -71,6 +71,91 @@ except ImportError:
     generate_intensity_chart = None
     generate_diversity_chart = None
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Analysis Context Helpers
+# ──────────────────────────────────────────────────────────────────────────────
+
+DOMAIN_KEYWORDS = {
+    "energy_resource_risk": ["oil", "energy", "refinery", "pipeline", "opec", "gas", "crude", "shipping", "lng"],
+    "global_market_intelligence": ["inflation", "fed", "equity", "volatility", "market", "pricing", "liquidity", "yields", "economic"],
+    "ai_semiconductor_intelligence": ["ai", "chip", "semiconductor", "gpu", "nvidia", "fab", "compute", "model", "export control"],
+    "defense_technology": ["procurement", "weapons", "missile", "drone", "defense industry", "military technology"],
+    "supply_chain_intelligence": ["logistics", "shipping", "port", "congestion", "raw materials", "shortage", "inventory"],
+    "crypto_geopolitics": ["crypto", "bitcoin", "ethereum", "web3", "digital asset", "regulation", "cbdc", "stablecoin"]
+}
+
+EXCLUDED_NICHES = {"sports", "gaming", "celebrity", "wildlife", "local weather", "human interest"}
+
+def calculate_trend_relevance(trend: TrendSignal, report_themes: List[str], report_category: str) -> float:
+    """
+    Calculates a relevance score for a trend signal based on report context.
+    - Theme overlap (keywords)
+    - Domain alignment (category)
+    - Sector-specific bonuses
+    - Hard exclusions (noise suppression)
+    """
+    score = 0.0
+    label_lower = (trend.target_label or "").lower()
+    desc_lower = (trend.description or "").lower()
+    
+    # 1. Hard Exclusions (Noise)
+    if any(niche in label_lower or niche in desc_lower for niche in EXCLUDED_NICHES):
+        return -100.0  # Immediate rejection
+        
+    # 2. Theme Keyword Match
+    for theme in report_themes:
+        tw = theme.lower().strip()
+        if len(tw) < 3: continue
+        if tw in label_lower: score += 5.0
+        if tw in desc_lower: score += 2.0
+        
+    # 3. Domain Alignment Match
+    if trend.topic == report_category:
+        score += 10.0
+        
+    # 4. Sector-specific Bonus (Even if domain tag differs)
+    keywords = DOMAIN_KEYWORDS.get(report_category, [])
+    for kw in keywords:
+        if kw in label_lower: score += 5.0
+        if kw in desc_lower: score += 2.0
+        
+    return score
+
+def infer_domain_from_content(themes: List[str], requested_topic: str) -> str:
+    """
+    Infers the correct intelligence domain from theme keywords.
+    Prevents assignment of 'Energy' themes to 'AI' reports, etc.
+    """
+    if not themes: return requested_topic
+    
+    theme_text = " ".join(themes).lower()
+    scores = {domain: 0 for domain in DOMAIN_KEYWORDS.keys()}
+    
+    for domain, keywords in DOMAIN_KEYWORDS.items():
+        for kw in keywords:
+            if kw in theme_text:
+                scores[domain] += 1
+                
+    if not any(scores.values()):
+        return requested_topic
+        
+    # Find top scoring domain
+    inferred = max(scores, key=scores.get)
+    max_score = scores[inferred]
+    
+    # Confidence Threshold: At least 2 matches OR if current has 0 and max has 1+
+    current_score = scores.get(requested_topic, 0)
+    if max_score >= 2 or (current_score == 0 and max_score >= 1):
+        if inferred != requested_topic:
+            logger.info(f"Domain Correction: Overriding {requested_topic} -> {inferred} (Score: {max_score})")
+        return inferred
+        
+    return requested_topic
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Pipeline Orchestration
+# ──────────────────────────────────────────────────────────────────────────────
+
 # Config
 NUM_WORKERS = 3
 REPORT_TASK_DEADLINE = 240.0 
@@ -296,13 +381,16 @@ async def run_report_generation(
         signal_type = "Top 10 Global Risk Signals"
 
     # 1. Fetch Candidates (Priority: SignalRanking)
-    # Using aware now for comparison with DateTime(timezone=True)
+    # -- DOMAIN CORRECTION LAYER --
     stmt = select(SignalRanking).where(
         SignalRanking.signal_type == signal_type,
         SignalRanking.created_at >= now - timedelta(hours=24)
     ).order_by(SignalRanking.rank.asc()).limit(20)
-
+    
     rankings = (await db.execute(stmt)).scalars().all()
+    if not rankings and topic:
+        logger.warning(f"No SignalRankings found for {topic} in last 24h.")
+        
     items = []
     seen_urls = set()
     for r in rankings:
@@ -312,9 +400,7 @@ async def run_report_generation(
             seen_urls.add(item.source_url)
     
     if not items:
-        # Fallback to latest items (Ideally topic-specific)
         if topic:
-            # Try to get items matching this topic from ItemTopic
             stmt_fallback = (
                 select(Item)
                 .join(ItemTopic, ItemTopic.item_id == Item.id)
@@ -326,19 +412,11 @@ async def run_report_generation(
         else:
             stmt_fallback = select(Item).where(Item.published_at >= start_time).order_by(Item.published_at.desc()).limit(10)
         
-        items = (await db.execute(stmt_fallback)).scalars().all()
-        items = list(items)
+        items = list((await db.execute(stmt_fallback)).scalars().all())
 
-    # B. Signal & Themes
+    # 1.1 Themes & Effective Topic
     themes = extract_themes(items)
-    
-    # Domain Classification Correction Layer (Self-Correction)
-    requested_topic = topic
-    inferred_topic = infer_domain_from_content(themes, requested_topic)
-    domain_mismatch = (inferred_topic != requested_topic)
-    
-    # Effective topic for generation logic (Lenses/Prompts)
-    effective_topic = inferred_topic
+    effective_topic = infer_domain_from_content(themes, topic or "global")
     topic_str = effective_topic if effective_topic else "global"
 
     # 1.1 Noise Filter for Global Report (Phase 19.3)
@@ -484,71 +562,20 @@ async def run_report_generation(
         seen_keys.add(key)
         all_trends_dedup.append(t)
         
-    # Pass 3: Relevance Filtering & Hard Exclusions (Phase 2)
-    BANNED_SURGE_KEYWORDS = [
-        "sports", "world cup", "olympics", "football", "basketball", "gaming", "esports",
-        "wildlife", "animal rescue", "celebrity", "entertainment", "hollywood", "weather alert",
-        "local traffic", "human interest"
-    ]
-    
-    # Domain keyword bonuses
-    DOMAIN_BONUS_KEYWORDS = {
-        "energy_resource_risk": ["oil", "gas", "lng", "refinery", "pipeline", "opec", "grid", "supply"],
-        "geopolitics_intelligence": ["sanctions", "escalation", "diplomatic", "naval", "border", "conflict", "stability", "treaty"],
-        "global_market_intelligence": ["equity", "volatility", "interest rate", "fed", "liquidity", "inflation", "asset"],
-        "supply_chain_intelligence": ["logistics", "shipping", "port", "congestion", "inventory", "freight"]
-    }
-
-    def calculate_trend_relevance(trend, report_themes, report_category):
-        # 1. Hard Exclusions
-        t_text = (trend.target_label + " " + (trend.description or "")).lower()
-        if any(w in t_text for w in BANNED_SURGE_KEYWORDS):
-            return -100 # Permanent rejection
-        
-        score = 0
-        theme_tokens = " ".join(report_themes).lower().split()
-        
-        # 2. Theme Keyword Match
-        for token in theme_tokens:
-            if len(token) < 4: continue # Skip short noise
-            if token in trend.target_label.lower():
-                score += 5
-            if trend.description and token in trend.description.lower():
-                score += 3
-        
-        # 3. Domain Alignment
-        cat_norm = (report_category or "").lower()
-        if trend.topic and cat_norm in trend.topic.lower():
-            score += 10
-        
-        # 4. Sector Bonus
-        bonus_words = DOMAIN_BONUS_KEYWORDS.get(cat_norm, [])
-        if any(w in t_text for w in bonus_words):
-            score += 7
-
-        return score
-
     scored_trends = []
     for t in all_trends_dedup:
-        # Outlier noise skip
-        if t.intensity_score > 10.0: continue 
-
         rel_score = calculate_trend_relevance(t, themes, topic_str)
-        
-        # Strict Threshold: Score >= 5 (requires at least one strong match)
         if rel_score >= 5:
             scored_trends.append((t, rel_score))
 
     # Sort by Relevance first, then Intensity
     scored_trends.sort(key=lambda x: (x[1], x[0].intensity_score), reverse=True)
-    
-    # Cap at 8 signals
     trends_pool = [x[0] for x in scored_trends[:8]]
     
     if not trends_pool:
-        logger.info(f"Emerging Surges: No thematic matches found for theme/category. Section will be sparse.")
+        logger.info(f"Emerging Surges: No thematic matches found for topic '{topic_str}'.")
     else:
-        logger.info(f"Emerging Surges: Selected {len(trends_pool)} relevant signals from pool of {len(all_trends_dedup)}.")
+        logger.info(f"Emerging Surges: Selected {len(trends_pool)} relevant signals.")
 
     # Explained Trend Context for LLM
     trend_context_list = []
@@ -1086,9 +1113,53 @@ async def run_all_reports(db, report_type: str = "daily_global", period_days: in
 
     logger.info(get_metrics_summary())
 
+async def purge_report_history(db: AsyncSession, clear_files: bool = True):
+    """
+    Completely resets the report history (Hard Cleanup).
+    Purges reports, pdf_jobs, and trigger logs.
+    """
+    from sqlalchemy import delete
+    from db.models import PdfJob, ReportTriggerLog, Report
+    
+    logger.info("!!! STARTING HARD CLEANUP / REPORT PURGE !!!")
+    
+    # 1. Purge DB Records
+    # Order matters if FKs are not cascading
+    await db.execute(delete(PdfJob))
+    await db.execute(delete(ReportTriggerLog))
+    await db.execute(delete(Report))
+    await db.commit()
+    logger.info("Database report history purged.")
+    
+    # 2. Clear Filesystem Artifacts
+    if clear_files:
+        import glob
+        patterns = ["outputs/analysis_*.md", "outputs/teaser_*.md"]
+        for p in patterns:
+            files = glob.glob(p)
+            for f in files:
+                try:
+                    os.remove(f)
+                    logger.info(f"Deleted artifact: {f}")
+                except Exception as e:
+                    logger.error(f"Failed to delete {f}: {e}")
+        logger.info("Filesystem report artifacts cleared.")
+
 if __name__ == "__main__":
-    import uuid
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="OSINT Report Generation Job")
+    parser.add_argument("--type", type=str, default="daily", choices=["daily", "weekly", "monthly", "specialized"], help="Report type to generate")
+    parser.add_argument("--purge", action="store_true", help="Perform Hard Cleanup (purge all history) before starting")
+    parser.add_argument("--threads", action="store_true", help="Enable Threads auto-posting")
+    
+    args = parser.parse_args()
+
     async def main():
         async with AsyncSessionLocal() as session:
-            await run_all_reports(session)
+            if args.purge:
+                await purge_report_history(session)
+            
+            await run_all_reports(session, report_type=args.type, auto_post_threads=args.threads)
+            
     asyncio.run(main())

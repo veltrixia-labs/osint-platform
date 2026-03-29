@@ -373,7 +373,7 @@ function simpleMarkdown(md: string): string {
                 const textOnly = content.replace(metaMatch[0], '').trim();
                 const impact = metaMatch[1].toUpperCase();
                 const time = metaMatch[2];
-                return `<li>${textOnly} <span class="impact-tag impact-${impact.toLowerCase()}">${impact} IMPACT</span><span class="time-tag">${time}</span></li>`;
+                return `<li>${textOnly} <span class="impact-tag impact-${impact.toLowerCase()}">${impact} IMPACT</span> <span class="time-tag">${time}</span></li>`;
             }
             return `<li>${content}</li>`;
         })

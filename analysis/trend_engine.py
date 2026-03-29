@@ -128,7 +128,9 @@ async def detect_trends(db: AsyncSession):
             if sig.intensity_score > existing.intensity_score:
                 existing.intensity_score = sig.intensity_score
             
-            # 2. Update description if longer
+            # 2. Update description and label if longer
+            if len(sig.target_label or "") > len(existing.target_label or ""):
+                existing.target_label = sig.target_label
             if len(sig.description or "") > len(existing.description or ""):
                 existing.description = sig.description
                 
@@ -438,7 +440,7 @@ async def _detect_sustained_events(recent: List[EventCluster], history: List[Eve
                 }
                 signals.append((TrendSignal(
                     trend_type="sustained_event",
-                    target_label=rc.representative_title[:50],
+                    target_label=(rc.representative_title[:110].rsplit(' ', 1)[0] + "...") if len(rc.representative_title) > 110 else rc.representative_title,
                     topic=rc.category or "global",
                     intensity_score=float(rc.avg_signal_score),
                     window_start=_ensure_utc(hc.created_at),
@@ -471,7 +473,7 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
                         }
                         signals.append((TrendSignal(
                             trend_type="risk_acceleration",
-                            target_label=rc.representative_title[:50],
+                            target_label=(rc.representative_title[:110].rsplit(' ', 1)[0] + "...") if len(rc.representative_title) > 110 else rc.representative_title,
                             topic=rc.category or "global",
                             intensity_score=float(rc.avg_signal_score),
                             window_start=_ensure_utc(hc.created_at),
@@ -494,7 +496,7 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
                 }
                 signals.append((TrendSignal(
                     trend_type="risk_acceleration",
-                    target_label=rc.representative_title[:50],
+                    target_label=(rc.representative_title[:110].rsplit(' ', 1)[0] + "...") if len(rc.representative_title) > 110 else rc.representative_title,
                     topic=rc.category or "global",
                     intensity_score=float(rc.avg_signal_score),
                     window_start=_ensure_utc(rc.created_at),
