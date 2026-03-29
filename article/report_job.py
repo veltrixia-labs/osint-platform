@@ -404,10 +404,6 @@ async def run_report_generation(
     all_trends = (await db.execute(trend_stmt)).scalars().all()
     
     # Pass 2: Final Presentation Deduplication (Safety Guard)
-    print("DEBUG SURGES (Incoming):", [
-        (t.target_label, t.intensity_score, (t.metrics_json or {}).get("cluster_id"))
-        for t in all_trends
-    ])
 
     def normalize_label(l: str) -> str:
         if not l: return ""
@@ -422,19 +418,17 @@ async def run_report_generation(
     for t in all_trends:
         if t.intensity_score > 10.0: continue # Skip outlier noise
         
-        m = t.metrics_json or {}
-        cluster_id = m.get("cluster_id")
         n_label = normalize_label(t.target_label)
         
-        # Hard Deduplication Key: (cluster_id, label, intensity_rounded)
-        # Acts as final protection layer even if upstream fails
-        key = (
-            str(cluster_id or ""),
-            n_label,
-            round(float(t.intensity_score or 0), 1)
-        )
+        # Stable Deduplication Key: (trend_type, label)
+        # Matches the insertion guard key in trend_engine.py
+        key = (t.trend_type, n_label)
         
         if key in seen_keys:
+            # If we see a duplicate in the 24h window, keep the one with higher intensity
+            idx = next(i for i, x in enumerate(all_trends_dedup) if (x.trend_type, normalize_label(x.target_label)) == key)
+            if t.intensity_score > all_trends_dedup[idx].intensity_score:
+                all_trends_dedup[idx] = t
             continue
             
         seen_keys.add(key)

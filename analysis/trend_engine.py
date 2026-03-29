@@ -105,25 +105,25 @@ async def detect_trends(db: AsyncSession):
     stmt = select(TrendSignal).where(TrendSignal.created_at >= recent_start)
     db_recent_signals = (await db.execute(stmt)).scalars().all()
     
-    # Map for quick lookup: (type, target_label, cluster_id) -> TrendSignal
+    # Map for quick lookup: (type, target_label) -> TrendSignal
     def get_guard_key(s: TrendSignal) -> tuple:
-        cid = s.metrics_json.get("cluster_id") if s.metrics_json else None
-        # Normalize label for matching
+        # Normalize label for matching (MUST MATCH report_job.py EXACTLY)
         import re
         l = (s.target_label or "").lower().strip()
         l = re.sub(r'\s+', ' ', l).rstrip('.!?:;,')
-        return (s.trend_type, l, str(cid) if cid else None)
+        return (s.trend_type, l)
 
     guard_map = {get_guard_key(s): s for s in db_recent_signals}
     
     created_count = 0
     merged_count = 0
     
+    # Combined processing list to handle intra-batch merges correctly
     for sig in raw_signals + compressed_patterns:
         key = get_guard_key(sig)
         if key in guard_map:
             existing = guard_map[key]
-            # MERGE LOGIC (Root Fix #3)
+            # MERGE LOGIC
             # 1. Keep max intensity
             if sig.intensity_score > existing.intensity_score:
                 existing.intensity_score = sig.intensity_score
@@ -139,6 +139,8 @@ async def detect_trends(db: AsyncSession):
             merged_count += 1
         else:
             db.add(sig)
+            # Add to guard_map immediately to handle intra-batch duplicates
+            guard_map[key] = sig
             created_count += 1
     
     logger.info(f"Trend Detection Engine finished. Created {created_count} new, merged {merged_count} into existing.")
