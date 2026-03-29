@@ -230,6 +230,47 @@ async def _should_generate_report_for_system(db: AsyncSession, report_type: str)
             
     return False
 
+def infer_domain_from_content(themes: List[str], requested_topic: str | None) -> str | None:
+    """
+    Analyzes thematic tokens to infer the most appropriate domain.
+    Returns the inferred topic_code if confidence is high, else requested_topic.
+    """
+    if not themes or themes == ["Strategic Monitoring"]:
+        return requested_topic
+
+    DOMAIN_KEYWORDS = {
+        "energy_resource_risk": ["oil", "energy", "refinery", "pipeline", "opec", "gas", "crude", "lng"],
+        "global_market_intelligence": ["inflation", "fed", "equity", "volatility", "market", "pricing", "liquidity", "yields", "crypto"],
+        "ai_semiconductor_intelligence": ["ai", "chip", "semiconductor", "gpu", "nvidia", "fab", "compute", "model", "llm"],
+        "defense_technology": ["military", "weapons", "missile", "drone", "defense", "procurement", "sanctions", "war", "conflict", "escalation", "border", "naval", "stability", "diplomatic"]
+    }
+
+    scores = {topic: 0 for topic in DOMAIN_KEYWORDS}
+    theme_text = " ".join(themes).lower()
+
+    for topic, keywords in DOMAIN_KEYWORDS.items():
+        for kw in keywords:
+            if kw in theme_text:
+                scores[topic] += 1
+    
+    if not any(scores.values()):
+        return requested_topic
+        
+    # Find top-scoring domain
+    inferred = max(scores, key=scores.get)
+    max_score = scores[inferred]
+    
+    # Confidence Threshold: At least 2 signal matches
+    # OR if the requested topic has 0 and another has 1+
+    requested_score = scores.get(requested_topic, 0)
+    
+    if max_score >= 2 or (requested_score == 0 and max_score >= 1):
+        if inferred != requested_topic:
+            logger.info(f"Domain Mismatch Detected: Requested={requested_topic}, Inferred={inferred}, Score={max_score}, Reason: {', '.join([k for k in DOMAIN_KEYWORDS[inferred] if k in theme_text])}")
+        return inferred
+        
+    return requested_topic
+
 async def run_report_generation(
     db: AsyncSession,
     report_type: str = "daily",
@@ -288,8 +329,19 @@ async def run_report_generation(
         items = (await db.execute(stmt_fallback)).scalars().all()
         items = list(items)
 
+    # B. Signal & Themes
+    themes = extract_themes(items)
+    
+    # Domain Classification Correction Layer (Self-Correction)
+    requested_topic = topic
+    inferred_topic = infer_domain_from_content(themes, requested_topic)
+    domain_mismatch = (inferred_topic != requested_topic)
+    
+    # Effective topic for generation logic (Lenses/Prompts)
+    effective_topic = inferred_topic
+    topic_str = effective_topic if effective_topic else "global"
+
     # 1.1 Noise Filter for Global Report (Phase 19.3)
-    topic_str = topic if topic else "global"
     logger.info(f"Candidates fetched: {len(items)} items found.")
     
     if topic_str == "global":
@@ -303,7 +355,7 @@ async def run_report_generation(
         logger.info(f"After global noise filter: {len(items)} items remaining.")
     
     if not items:
-        return "", "failed", "No items found for report window."
+        return "", "failed", "No items found after noise filtering."
 
     # 2. Rule-Based Intelligence Construction
     # A. Clustering & Context Extraction
@@ -330,8 +382,6 @@ async def run_report_generation(
     
     cluster_context_str = "\n\n".join(cluster_context_list)
     
-    # B. Signal & Themes
-    themes = extract_themes(items)
     avg_score = sum(it.lightweight_score for it in items) / len(items) if items else 0.0
     
     # C. Developments (Theme Alignment & Context Slot - Phase 19.4)
@@ -395,8 +445,8 @@ async def run_report_generation(
         enriched_developments.append(entry)
     
     # D. Forecasts & Scenarios
-    forecasts = generate_forecasts([topic] if topic else ["global"], " ".join([c.representative_title for c in clusters]), avg_score)
-    scenarios = generate_scenarios(avg_score, forecasts, domain=topic)
+    forecasts = generate_forecasts([effective_topic] if effective_topic else ["global"], " ".join([c.representative_title for c in clusters]), avg_score)
+    scenarios = generate_scenarios(avg_score, forecasts, domain=effective_topic)
 
     # E. Trend Analysis (Phase 19 & 19.1)
     # Fetch trends for the target period
@@ -597,13 +647,13 @@ async def run_report_generation(
     # F. Visual Analytics Generation (Phase 20)
     visual_files = []
     date_str = now.strftime('%Y%m%d')
-    topic_str = topic if topic else "global"
     
     if HAS_VISUAL_ENGINE:
         try:
             # Visual 1: Intensity Chart for MAX Intensity Risk Pattern
-            if patterns:
-                max_p = max(patterns, key=lambda x: x.intensity_score)
+            risk_patterns = [p for p in trends_pool if p.trend_type == "risk_pattern"]
+            if risk_patterns:
+                max_p = max(risk_patterns, key=lambda x: x.intensity_score)
                 v1 = await generate_intensity_chart(db, max_p.target_label, topic_str, date_str)
                 if v1: visual_files.append(v1)
                 
@@ -624,7 +674,7 @@ async def run_report_generation(
         [it.source_url for it in items],
         trends=skeleton_trends,
         visuals=visual_files,
-        domain=topic
+        domain=effective_topic
     )
     
     # 4. Skeleton Validation
@@ -744,7 +794,7 @@ async def run_report_generation(
         major_theme = themes[0].source_label if hasattr(themes[0], 'source_label') else str(themes[0])
         if ":" in major_theme: major_theme = major_theme.split(":")[0].strip()
     
-    topic_label = TOPIC_CONFIG.get(topic, {}).get("label") if topic else "Global"
+    topic_label = TOPIC_CONFIG.get(effective_topic, {}).get("label") if effective_topic else "Global"
     
     # Standardized Format: Themes: [Major Theme] | [Topic Label] Intelligence
     derived_title = f"Themes: {major_theme} | {topic_label} Intelligence"
