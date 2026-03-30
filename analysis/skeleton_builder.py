@@ -290,7 +290,16 @@ def build_substack_skeleton(
             
             action_lines = []
             for a in selected_actions:
-                line = f"- {a['priority']}: {a['text']}"
+                prio_label = a['priority']
+                action_text = a['text']
+                
+                # Prevent "Monitor: Monitor closely"
+                if action_text.lower().startswith(prio_label.lower()):
+                    # Use the text as is if it already starts with the priority verb
+                    line = f"- {action_text}"
+                else:
+                    line = f"- {prio_label}: {action_text}"
+                
                 if a.get('rationale'):
                     line += f" — *{a['rationale']}*"
                 if a.get('confidence'):
@@ -340,7 +349,14 @@ def build_substack_skeleton(
         risk = f['implication']
         # Extract watch point from existing forecast data if available, or generate a hint
         watch_hint = f.get('watch_indicator') or f"Watch for: {risk.split(' ')[0]} trigger events."
-        entry = f"- **{risk}**: {f['evidence']}. (Confidence: {f['confidence']})\n  **Watch:** {watch_hint}"
+        
+        # Fix Watch duplication: if it starts with "Watch for:", use as-is. Otherwise prepend "**Watch:** "
+        if watch_hint.lower().startswith("watch for:"):
+            watch_line = watch_hint
+        else:
+            watch_line = f"**Watch:** {watch_hint}"
+        
+        entry = f"- **{risk}**: {f['evidence']}. (Confidence: {f['confidence']})\n  {watch_line}"
         impact_items.append(entry)
     
     sections.append("# Impact Analysis & Watch Points\n" + "\n".join(impact_items))

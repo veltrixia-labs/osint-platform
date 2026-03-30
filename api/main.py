@@ -756,19 +756,25 @@ async def get_system_diagnostics(
         } for r in results
     ]
 
-# --- Static File Serving (Moved to bottom) ---
-# NOTE: In production on Render, these should be served from the 'web_dashboard/dist' folder.
+# --- Static File Serving ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+visuals_path = os.path.join(BASE_DIR, "outputs", "visuals")
+archive_path = os.path.join(BASE_DIR, "outputs", "archive")
 dist_path = os.path.join(BASE_DIR, "web_dashboard", "dist")
 
-logger.info(f"Looking for static files at: {dist_path}")
+# Ensure directories exist
+os.makedirs(visuals_path, exist_ok=True)
+os.makedirs(archive_path, exist_ok=True)
+
+# Mount Visuals (Public)
+app.mount("/visuals", StaticFiles(directory=visuals_path), name="visuals")
+
+# Mount Archive (Admin inspection)
+app.mount("/archive", StaticFiles(directory=archive_path), name="archive")
+
+# Mount Frontend (Fallback)
 if os.path.exists(dist_path):
     app.mount("/", StaticFiles(directory=dist_path, html=True), name="static")
-else:
-    logger.warning(f"Static files directory not found: {dist_path}")
-    logger.warning(f"Contents of {BASE_DIR}: {os.listdir(BASE_DIR) if os.path.exists(BASE_DIR) else 'N/A'}")
-    web_dashboard_dir = os.path.join(BASE_DIR, "web_dashboard")
-    logger.warning(f"Contents of {web_dashboard_dir}: {os.listdir(web_dashboard_dir) if os.path.exists(web_dashboard_dir) else 'N/A'}")
 
 if __name__ == "__main__":
     import uvicorn

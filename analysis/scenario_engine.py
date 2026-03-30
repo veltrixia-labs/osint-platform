@@ -8,7 +8,7 @@ def generate_scenarios(avg_score: float, forecasts: list, domain: str = None) ->
     # 2. Domain Mapping (Strictly concrete real-world outcomes)
     domain_map = {
         "geopolitics": ["sanctions pressure", "route instability", "supply disruptions", "border delays"],
-        "energy": ["price volatility", "supply gaps", "route pressure", "refinery bottlenecks"],
+        "energy": ["price volatility", "supply gaps", "route pressure", "refinery bottlenecks", "market signals", "supply indicators", "energy indicators"],
         "supply": ["bottlenecks", "shipping delays", "inventory pressure", "logistics friction"],
         "cyber": ["service disruption", "data exposure", "regulatory scrutiny", "access delays"],
         "market": ["volatility spikes", "liquidity shifts", "spillover into adjacent sectors", "pricing pressure"]
@@ -47,15 +47,42 @@ def generate_scenarios(avg_score: float, forecasts: list, domain: str = None) ->
             }
             verbs = verb_map.get(confidence, verb_map["Medium"])
             
-        # Select exactly one verb to prevent concatenation noise
-        v = verbs[0]
-        # Clean the template core - remove any leading 'monitoring' or similar if they might duplicate the verb
+        # Prevent "monitoring monitoring" or "monitor Track"
         core = template_core.strip()
-        if core.lower().startswith("monitor") or core.lower().startswith("track"):
-            # If the core already has a verb-like start, just use it or adjust
-            pass
+        v = verbs[0]
+        
+        # Enforce: "Maintain baseline monitoring..." for containment/stabilization cases
+        if "baseline monitoring" in core.lower():
+            v = "Maintain"
+            if core.lower().startswith("as signals stabilize"):
+                core = "baseline monitoring " + core
+            elif core.lower().startswith("baseline monitoring"):
+                pass # Use core as is
+        
+        # Final pass - if v is already in core, don't duplicate
+        if core.lower().startswith(v.lower()):
+            final_text = core
+        else:
+            final_text = f"{v} {core}"
             
-        return f"{v} {core}"
+        # --- Safe Deduplication Pass ---
+        # Collapse adjacent identical words (len > 2, avoid "had had", etc.)
+        tokens = final_text.split()
+        if not tokens: return final_text
+        
+        clean_tokens = [tokens[0]]
+        ignored_phrases = {"had", "very", "the", "in", "at", "to", "of"} # Add common short ones or specific pairs
+        
+        for i in range(1, len(tokens)):
+            prev = tokens[i-1].lower().strip('.,!?;:')
+            curr = tokens[i].lower().strip('.,!?;:')
+            
+            if prev == curr and len(curr) > 2 and curr not in ignored_phrases:
+                # Duplicate detected: skip current token
+                continue
+            clean_tokens.append(tokens[i])
+            
+        return " ".join(clean_tokens).strip()
 
     # 3.2 Standardized Uncertainty Framing (Strict Rule)
     def soften_outcome(text, confidence):
@@ -91,9 +118,12 @@ def generate_scenarios(avg_score: float, forecasts: list, domain: str = None) ->
             if clean_text.lower().startswith(prefix.lower()):
                 clean_text = clean_text[len(prefix):].strip()
         
-        # Safety Guard: If remains too verbose or messy, fallback to templates
-        # (Heuristic: >80 chars or contains full-sentence punctuation/indicators)
-        is_messy = len(clean_text) > 80 or "." in clean_text or clean_text.lower().startswith("no immediate")
+        # Safety Guard: If remains too verbose, short (under 20 chars), or messy, fallback to templates
+        # Reject triggers containing "recommended", "monitoring", or "analysis"
+        banned_words = ["recommended", "monitoring", "analysis"]
+        is_awkward = any(w in clean_text.lower() for w in banned_words)
+        
+        is_messy = len(clean_text) > 80 or len(clean_text) < 20 or "." in clean_text or clean_text.lower().startswith("no immediate") or is_awkward
         if is_messy:
             if "escalat" in cond_trigger.lower():
                 clean_text = "escalation signals increase"
@@ -165,6 +195,11 @@ def generate_scenarios(avg_score: float, forecasts: list, domain: str = None) ->
             "Low"
         )
     }
+    
+    # Domain Wording Refinement for Energy
+    if domain_key == "energy":
+        for case_key in ["base", "escalation", "containment"]:
+            scenarios[case_key]["trigger"] = scenarios[case_key]["trigger"].replace("geopolitics indicators", "energy indicators")
     
     # Post-process containment text for stabilization
     for o in scenarios["containment"]["outcomes"]:

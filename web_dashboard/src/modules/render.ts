@@ -373,13 +373,14 @@ function simpleMarkdown(md: string): string {
                 const textOnly = content.replace(metaMatch[0], '').trim();
                 const impact = metaMatch[1].toUpperCase();
                 const time = metaMatch[2];
-                return `<li>${textOnly} <span class="impact-tag impact-${impact.toLowerCase()}">${impact} IMPACT</span> <span class="time-tag">${time}</span></li>`;
+                return `<li>${textOnly} <span class="impact-tag impact-${impact.toLowerCase()}">${impact} IMPACT</span> <span class="separator">·</span> <span class="time-tag">${time}</span></li>`;
             }
             return `<li>${content}</li>`;
         })
         .replace(/^\- (.*$)/gm, '<li>$1</li>')
         .replace(/\*\*(.*)\*\*/g, '<b>$1</b>')
         .replace(/\*(.*)\*/g, '<i>$1</i>')
+        .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="report-visual u-m-top-1" style="max-width:100%; border-radius:8px; border:1px solid var(--border);">')
         .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:var(--tier-grace);">$1</a>')
         .replace(/\n/g, '<br>');
 }

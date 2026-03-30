@@ -19,7 +19,7 @@ from scripts.backfill_reports import backfill_reports
 from jobs.cleanup_job import (
     run_alert_cleanup, run_retention_cleanup, run_db_size_check, 
     enforce_metadata_limits, audit_metadata_sizes, update_system_metric, 
-    run_retention_audit, run_trend_cleanup
+    run_retention_audit, run_trend_cleanup, run_visual_cleanup
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -139,6 +139,14 @@ async def run_ops_monitoring():
         await audit_metadata_sizes(session)
         await run_retention_audit(session)
         await run_retention_cleanup(session) # Full retention cleanup
+    
+    # Visual Asset Cleanup (Configurable via ENV)
+    # Defaulting to dry_run=True or archive_only=True during initial rollout for safety
+    dry_run = os.getenv("CLEANUP_DRY_RUN", "true").lower() == "true"
+    archive_only = os.getenv("CLEANUP_ARCHIVE_ONLY", "true").lower() == "true"
+    retention = int(os.getenv("CLEANUP_RETENTION_DAYS", "14"))
+    
+    await run_visual_cleanup(dry_run=dry_run, archive_only=archive_only, retention=retention)
 
 def register_jobs():
     logger.info("Registering job schedules (Async Native Mapping)...")
