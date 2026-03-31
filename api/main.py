@@ -32,30 +32,28 @@ from api.gating import (
 from db.enums import ReportType
 
 # Production Traceability
-COMMIT_HASH = "caee003"
-DEPLOY_TIMESTAMP = "2026-03-25T09:55:00Z"
+COMMIT_HASH = "caee004"
+DEPLOY_TIMESTAMP = "2026-03-31T10:00:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)
 
 # [Robustness] Ensure all tables exist at startup (Alembic Migration Runner)
-try:
-    from db.database import Base, AsyncSessionLocal, run_migrations
-    from db.seeding import seed_admin
-    import asyncio
-    
-    # 1. Run Alembic Migrations
-    run_migrations()
+@app.on_event("startup")
+async def startup_event():
+    try:
+        from db.database import Base, AsyncSessionLocal, run_migrations
+        from db.seeding import seed_admin
+        
+        # 1. Run Alembic Migrations
+        run_migrations()
 
-    # 2. Seed Admin User (Async)
-    async def run_seed():
+        # 2. Seed Admin User
         async with AsyncSessionLocal() as session:
             await seed_admin(session)
-    
-    asyncio.create_task(run_seed())
-
-except Exception as e:
-    logger.error(f"Error during API startup initialization: {e}")
+        logger.info("Startup initialization complete.")
+    except Exception as e:
+        logger.error(f"Error during API startup initialization: {e}", exc_info=True)
 
 
 logger.info("--- OSINT SCHEDULER STARTUP ---")
@@ -143,9 +141,15 @@ ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", f"http://localhost:{WEB_PORT}").s
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://localhost:8010",
+        "https://osint-platform.onrender.com"
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -229,8 +233,8 @@ async def signup(request: Request, data: SignupData, db: AsyncSession = Depends(
         await db.commit()
     except Exception as e:
         await db.rollback()
-        logger.error(f"Signup failed for {chat_id}: {e}")
-        raise HTTPException(status_code=500, detail="Registration failed")
+        logger.error(f"Signup failed for {chat_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
     
     await SecurityLogger.log_event(db, "signup_success", user_id=new_user.id, details={"chat_id": chat_id}, client_ip=request.client.host)
     return {"status": "success", "message": "Account created successfully", "chat_id": chat_id}
@@ -295,6 +299,67 @@ async def get_alerts(
             detail=f"Topic '{topic}' requires a higher subscription tier. "
                    f"Your plan ({tier}) allows: {', '.join(get_allowed_topics(tier))}"
         )
+
+    # Base query
+    stmt = select(AlertLog)
+    if severity:
+        stmt = stmt.where(AlertLog.severity == severity)
+    if suppressed is not None:
+        stmt = stmt.where(AlertLog.suppressed == suppressed)
+    if topic:
+        stmt = stmt.where(AlertLog.topic == topic)
+    if since:
+        stmt = stmt.where(AlertLog.triggered_at >= since)
+    
+    stmt = stmt.order_by(AlertLog.triggered_at.desc()).limit(limit)
+    result = await db.execute(stmt)
+    alerts = result.scalars().all()
+
+    return [
+        {
+            "id": str(a.id),
+            "target_label": a.target_label,
+            "topic": a.topic,
+            "trigger_type": a.trigger_type,
+            "severity": a.severity,
+            "triggered_at": a.triggered_at.isoformat(),
+            "intensity": a.intensity,
+            "feedback_score": a.feedback_score,
+            "related_report_id": str(a.related_report_id) if a.related_report_id else None,
+            "intelligence_score": a.intelligence_score,
+            "fidelity_score": a.fidelity_score,
+            "is_high_fidelity": a.is_high_fidelity,
+            "status": a.status,
+            "domain_count": a.metadata_json.get("domain_count", 0) if a.metadata_json else 0,
+            "spike_delta": a.metadata_json.get("spike_delta", 0.0) if a.metadata_json else 0.0,
+            "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else []
+        }
+        for a in alerts
+    ]
+
+@app.get("/api/alerts/live")
+async def get_live_alerts(
+    limit: int = 15,
+    current_user: tuple = Depends(rate_limit("/api/alerts/live")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Provides a high-speed stream of high-fidelity signals for the dashboard pulse."""
+    stmt = select(AlertLog).where(AlertLog.is_high_fidelity == True).order_by(AlertLog.triggered_at.desc()).limit(limit)
+    result = await db.execute(stmt)
+    alerts = result.scalars().all()
+
+    return [
+        {
+            "id": str(a.id),
+            "target_label": a.target_label,
+            "topic": a.topic,
+            "severity": a.severity,
+            "triggered_at": a.triggered_at.isoformat(),
+            "fidelity_score": a.fidelity_score,
+            "intensity": a.intensity
+        }
+        for a in alerts
+    ]
 
     # Caching Logic
     cache_key = f"alerts:{severity}:{suppressed}:{analyst_id}:{topic}:{limit}:{since}"
@@ -467,6 +532,9 @@ async def get_report_detail(
         )
     # ──────────────────────────────────────────────────────────────────────
 
+    def get_conf_score(level):
+        return 0.92 if level == "High" else 0.65 if level == "Medium" else 0.35
+
     return {
         "id": str(report.id),
         "report_type": report.report_type,
@@ -474,10 +542,12 @@ async def get_report_detail(
         "content_markdown": report.content_markdown,
         "title": report.title or f"{report.topic_code} Briefing",
         "teaser_md": report.teaser_md,
+        "summary_bluf": report.teaser_md, # Mapping for Phase 2
         "locked": False,
         "is_premium": report.is_premium,
         "source_count": report.source_count or 0,
         "confidence_level": str(report.confidence_level or "Low"),
+        "confidence_score": get_conf_score(report.confidence_level),
         "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
         "plan_required": plan_required
     }
@@ -535,14 +605,12 @@ async def list_reports(
                 "id": str(r.id),
                 "report_type": r.report_type or "unknown",
                 "topic_code": r.topic_code or "global",
+                "title": r.title or "Intelligence Briefing",
+                "summary_bluf": r.teaser_md or "Summary analysis pending...",
                 "is_premium": bool(r.is_premium),
                 "plan_required": r.plan_required or "free",
-                "source_count": r.source_count or 0,
-                "confidence_level": r.confidence_level or "Low",
-                "created_at": r.created_at.isoformat() if hasattr(r.created_at, 'isoformat') else str(r.created_at),
-                "content_markdown": (r.content_markdown or "")[:300] + "...",
-                "title": r.title or f"{r.topic_code} Briefing",
-                "teaser_md": r.teaser_md
+                "confidence_score": 0.92 if r.confidence_level == "High" else 0.65 if r.confidence_level == "Medium" else 0.35,
+                "created_at": r.created_at.isoformat() if hasattr(r.created_at, 'isoformat') else str(r.created_at)
             } for r in final_reports
         ]
     except Exception as e:
@@ -700,9 +768,14 @@ async def get_system_metrics(
     suppressed_stmt = select(func.count(AlertLog.id)).where(AlertLog.triggered_at >= week_ago, AlertLog.suppressed == True)
     suppressed = (await db.execute(suppressed_stmt)).scalar() or 0
     
+    high_fidelity_stmt = select(func.count(AlertLog.id)).where(AlertLog.triggered_at >= week_ago, AlertLog.is_high_fidelity == True)
+    high_fidelity = (await db.execute(high_fidelity_stmt)).scalar() or 0
+    
     health_data = {
         "review_rate": round(reviewed / total if total > 0 else 0, 2),
         "suppression_ratio": round(suppressed / (total + suppressed) if (total + suppressed) > 0 else 0, 2),
+        "total_alerts": total,
+        "high_fidelity_count": high_fidelity
     }
 
     if user.user_role == "admin":

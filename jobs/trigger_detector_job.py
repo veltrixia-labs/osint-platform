@@ -9,7 +9,7 @@ from sqlalchemy import func
 
 from db.database import AsyncSessionLocal
 from db.models import SignalRanking, ReportTriggerLog
-from article.report_job import run_report_generation
+from jobs.report_generator import run_report_generation
 from jobs.threads_post_job import post_to_threads
 
 logging.basicConfig(level=logging.INFO)

@@ -226,6 +226,8 @@ class AlertLog(Base):
     status = Column(String, default="pending_evidence") # confirmed, pending_evidence
     is_system_wide = Column(Boolean, default=True)
     supporting_events_count = Column(Integer, default=0)
+    fidelity_score = Column(Float, default=0.0) # 0.0-1.0 signal verification score
+    is_high_fidelity = Column(Boolean, default=False)
     metadata_json = Column(JSONB) # {delta, source_count, domain_count, visual_path, scoring_breakdown}
 
 class AnalystProfile(Base):

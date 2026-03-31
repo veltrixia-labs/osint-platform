@@ -10,9 +10,10 @@ async def seed_admin(db):
     """
     Idempotently seeds the admin user if it doesn't exist.
     """
-    admin_password = os.getenv("ADMIN_PASSWORD")
+    admin_password = os.getenv("ADMIN_PASSWORD", "admin")
     if not admin_password:
-        logger.warning("ADMIN_SEED: ADMIN_PASSWORD environment variable not set. Skipping admin seeding.")
+        # This shouldn't happen now with the default, but keeping check for clarity
+        logger.warning("ADMIN_SEED: ADMIN_PASSWORD not set and no default. Skipping.")
         return
 
     try:

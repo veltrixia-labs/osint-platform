@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE = "/api";
 
 let accessToken: string | null = localStorage.getItem('access_token');
 
@@ -47,6 +47,8 @@ export interface Alert {
         url: string;
     }[];
     spike_delta: number;
+    fidelity_score?: number;
+    is_high_fidelity?: boolean;
     related_report_id?: string;
     feedback_score?: number;
     delivery?: {
@@ -62,6 +64,9 @@ export interface Report {
     title: string;
     teaser_md: string;
     content_markdown: string;
+    content_preview?: string;
+    intensity?: number;
+    intensity_score?: number;
     is_premium: boolean;
     plan_required: string;
     source_count: number;
@@ -230,6 +235,11 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
 export async function fetchAlerts(params: Record<string, string> = {}): Promise<Alert[]> {
     const query = new URLSearchParams(params).toString();
     const resp = await apiClient.get(`/alerts?${query}`);
+    return await resp.json();
+}
+
+export async function fetchLiveAlerts(limit: number = 10): Promise<Alert[]> {
+    const resp = await apiClient.get(`/alerts/live?limit=${limit}`);
     return await resp.json();
 }
 

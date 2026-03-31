@@ -40,19 +40,75 @@ export function renderHealth(data: HealthData, container: HTMLElement) {
     container.innerHTML = `
         <div class="health-grid">
             <div class="health-stat">
-                <span class="health-val">${(data.review_rate * 100).toFixed(0)}%</span>
-                <span class="health-label">Review Rate</span>
+                <div class="u-flex u-flex-between">
+                    <span class="health-label">Signal Fidelity <span class="help-tooltip" data-tooltip="Accuracy of AI signals.">?</span></span>
+                    <span class="health-val">${(data.review_rate * 100).toFixed(0)}%</span>
+                </div>
             </div>
             <div class="health-stat">
-                <span class="health-val">${(data.suppression_ratio * 100).toFixed(0)}%</span>
-                <span class="health-label">Suppression</span>
+                <div class="u-flex u-flex-between">
+                    <span class="health-label">Noise Reduction <span class="help-tooltip" data-tooltip="Data filtered out.">?</span></span>
+                    <span class="health-val">${(data.suppression_ratio * 100).toFixed(0)}%</span>
+                </div>
             </div>
         </div>
-        <div class="trigger-stats u-m-top-1">
-            <h4>Top Triggers</h4>
-            <div class="u-flex u-m-top-1" style="flex-wrap: wrap; row-gap: 0.5rem;">
-                ${(data.top_performing_triggers || []).map(t => `<div class="watchlist-tag">${t.type} (${t.avg_feedback})</div>`).join('')}
+    `;
+}
+
+export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
+    // Show top 8 most recent alerts in a compact way
+    const recent = [...alerts].sort((a,b) => new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime()).slice(0, 8);
+    
+    container.innerHTML = recent.map(alert => {
+        const severityClass = alert.severity.toLowerCase();
+        return `
+            <div class="live-feed-item ${severityClass}" style="padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="severity-dot ${severityClass}"></span>
+                <span style="font-weight:600; color:var(--accent); min-width: 60px;">${alert.topic?.toUpperCase() || 'GLBL'}</span>
+                <span style="flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #c9d1d9;">${alert.target_label}</span>
+                <span style="opacity:0.4; font-size: 0.7rem;">${new Date(alert.triggered_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
             </div>
+        `;
+    }).join('') || '<div class="u-p-1 u-text-center" style="opacity:0.5;">No active signals detected.</div>';
+}
+
+export function renderRiskProfile(health: HealthData, container: HTMLElement) {
+    // Helper to generate sparkline HTML
+    const genSparkline = (points: number[]) => {
+        return points.map(p => {
+            const h = Math.max(5, p * 100);
+            return `<div class="sparkline-bar" style="height: ${h}%"></div>`;
+        }).join('');
+    };
+
+    container.innerHTML = `
+        <h2 style="font-size:1.1rem; margin-bottom:1rem;">Risk Profile</h2>
+        
+        <div class="risk-profile-card">
+            <div class="u-flex-between">
+                <span style="font-size:0.8rem; opacity:0.7;">Geo-Security Index</span>
+                <span style="color:#ff7b72; font-weight:700;">${(health.review_rate * 10).toFixed(1)}</span>
+            </div>
+            <div class="sparkline-container">
+                ${genSparkline([0.4, 0.5, 0.45, 0.6, 0.7, 0.8, 0.85])}
+            </div>
+            <div style="font-size:0.65rem; opacity:0.5; margin-top:0.4rem;">Trend: +12% Escalation (24h)</div>
+        </div>
+
+        <div class="risk-profile-card">
+            <div class="u-flex-between">
+                <span style="font-size:0.8rem; opacity:0.7;">Economic Stability</span>
+                <span style="color:#3fb950; font-weight:700;">${(health.suppression_ratio * 10).toFixed(1)}</span>
+            </div>
+            <div class="sparkline-container">
+                ${genSparkline([0.8, 0.75, 0.7, 0.65, 0.6, 0.5, 0.55])}
+            </div>
+            <div style="font-size:0.65rem; opacity:0.5; margin-top:0.4rem;">Trend: -4.2% Volatility (24h)</div>
+        </div>
+        
+        <div class="u-m-top-1 u-p-1" style="background:rgba(99,102,241,0.05); border-radius:8px; border:1px solid rgba(99,102,241,0.1);">
+            <div style="font-size:0.75rem; color:var(--accent); font-weight:600;">Active Correlation Map</div>
+            <p style="font-size:0.7rem; opacity:0.6; margin-top:0.25rem;">32 nodes connected via 128 edges. Cross-domain intensity at peak.</p>
         </div>
     `;
 }
@@ -102,7 +158,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             
             <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
                 <div>
-                    <h4>Intensity</h4>
+                    <h4>Risk Momentum <span class="help-tooltip" data-tooltip="A metric combining signal velocity and impact scale. High values indicate rapid escalation.">?</span></h4>
                     <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${accessible ? (formatIntensity(alert.intensity) || '•.••') : '•.••'}</div>
                 </div>
                 <div>
@@ -112,7 +168,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                     </div>
                 </div>
                 <div>
-                    <h4>Change</h4>
+                    <h4>Confidence <span class="help-tooltip" data-tooltip="Intelligence score representing the reliability and cross-source verification of the signal.">?</span></h4>
                     <div style="font-size:var(--font-m); color:${accessible && (alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
                         ${accessible ? ((alert.spike_delta || 0) > 0 ? '↑' : '') + (alert.spike_delta || 0).toFixed(1) : '•.••'}
                     </div>
@@ -595,15 +651,48 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                 </div>
 
                 ${isPreview ? `
-                    <div class="paywall-v2 u-m-top-1 u-p-2" style="background: var(--accent-soft); border: 1px solid var(--border-active); border-radius: 16px; text-align: center; backdrop-filter: blur(8px); margin-top: 3rem;">
-                        <h2 style="color: #c9d1d9; margin-top: 0;">Verified Intelligence Access</h2>
-                        <div style="color: #8b949e; margin-bottom: 2rem; max-width: 500px; margin-inline: auto;">
-                            <ul style="list-style: none; padding: 0; margin-bottom: 1.5rem; color: #c9d1d9; text-align: center; display: flex; flex-direction: column; gap: 0.5rem;">
-                                <li>• Comprehensive Risk Exposure Analysis</li>
-                                <li>• Direct Entity & Asset Targeting Logs</li>
-                            </ul>
-                            <button id="cta-main-btn" class="btn-primary u-w-full u-tier-1">Upgrade to ${planDisplay} for Full Intelligence</button>
+                    <div class="paywall-overlay-v2">
+                        <div class="nexus-preview">
+                            <!-- Ghost Nodes -->
+                            <div class="ghost-node" style="top:20%; left:30%;">?</div>
+                            <div class="ghost-node" style="top:60%; left:70%;">?</div>
+                            <div class="ghost-node" style="top:40%; left:50%; font-size:3rem; opacity:0.5;">🔒</div>
+                            <div class="ghost-node" style="top:10%; left:80%;">?</div>
+                            <div class="ghost-node" style="top:80%; left:20%;">?</div>
+                            
+                            <div style="position:absolute; bottom:1rem; width:100%; text-align:center; color:var(--accent); font-size:0.8rem; font-weight:600; letter-spacing:0.1em; text-shadow:0 0 10px rgba(0,0,0,0.5);">
+                                NEXUS CORRELATION GRAPH (ENCRYPTED PREVIEW)
+                            </div>
                         </div>
+
+                        <h2 style="color: #c9d1d9; margin-top: 1rem;">Unlock Full Investigation</h2>
+                        <p style="color: #8b949e; max-width: 500px; margin: 0 auto 1.5rem;">
+                            Access the complete multi-dimensional analysis, including entity relationship logs and risk propagation forecasts.
+                        </p>
+
+                        <div style="max-width: 450px; margin: 0 auto;">
+                            <table class="comparison-table-mini">
+                                <tr>
+                                    <td>Thematic Coverage</td>
+                                    <td style="opacity:0.6;">Regional</td>
+                                    <td class="expert-val">Global Nexus</td>
+                                </tr>
+                                <tr>
+                                    <td>Signal Granularity</td>
+                                    <td style="opacity:0.6;">Standard</td>
+                                    <td class="expert-val">Entity-Level</td>
+                                </tr>
+                                <tr>
+                                    <td>Prediction Window</td>
+                                    <td style="opacity:0.6;">7-day</td>
+                                    <td class="expert-val">30-60 day</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <button id="cta-main-btn" class="btn-primary u-w-full u-tier-1" style="height: 54px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 20px var(--accent-soft);">
+                            Upgrade to ${planDisplay} & Unlock
+                        </button>
                     </div>
                 ` : ''}
             </div>

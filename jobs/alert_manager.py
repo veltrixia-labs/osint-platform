@@ -69,8 +69,11 @@ class AlertManager:
             # 6. Fetch additional context for linking
             report_id, anchor = await cls._get_latest_report_link(db, sig)
             
-            # 7. Create Master Alert Log Entry
-            # (We now log even if targets is empty to populate the Live Alert Stream)
+            # 7. Signal Fidelity & Master Alert Log Entry (Phase 2)
+            # Fidelity is a measure of cross-domain verification (0.0-1.0)
+            fidelity_score = min(1.0, (domain_count / 10.0) + 0.2) if domain_count > 0 else 0.1
+            is_high_fidelity = fidelity_score >= 0.7 or (severity == "critical" and domain_count >= 3)
+
             is_system_wide = len(targets) == 0
             # Mark as confirmed if we found evidence domains, otherwise pending
             status = "confirmed" if domain_count > 0 else "pending_evidence"
@@ -82,6 +85,8 @@ class AlertManager:
                 severity=severity,
                 intensity=sig.intensity_score,
                 intelligence_score=intel_score,
+                fidelity_score=fidelity_score,
+                is_high_fidelity=is_high_fidelity,
                 section_anchor=anchor,
                 related_report_id=report_id,
                 status=status,

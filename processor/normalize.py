@@ -1,15 +1,12 @@
-import asyncio
 import hashlib
-import logging
 import re
-from datetime import datetime, timezone
+import logging
+from datetime import datetime, timezone, timedelta
 from dateutil import parser as dt_parser
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from db.database import AsyncSessionLocal
 from db.models import RawItem, Item
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def normalize_text(text: str) -> str:
@@ -17,9 +14,12 @@ def normalize_text(text: str) -> str:
     return re.sub(r'[^a-zA-Z0-9]', '', text).lower()
 
 async def run_normalize(db: AsyncSession):
-    logger.info("Starting High-Efficiency Normalize Job")
+    """
+    High-Efficiency Normalize Job migrated from jobs/normalize_job.py.
+    Handles Stage 1 normalization: Noise filtering and URL-based deduplication.
+    """
+    logger.info("Starting Processor Normalize Job")
     
-    from datetime import datetime, timezone, timedelta
     lookback = datetime.now(timezone.utc) - timedelta(hours=12)
     
     # Efficient selection: Filter by recent created_at AND limit to avoid massive sorts
@@ -48,7 +48,7 @@ async def run_normalize(db: AsyncSession):
         title_norm = normalize_text(title)
         title_hash = hashlib.sha256(title_norm.encode('utf-8')).hexdigest()
         
-        # We can use either or both. We'll use URL as primary dedup_key but check title too.
+        # Check if item exists (URL or title hash match)
         check_stmt = select(Item).where((Item.dedup_key == url_hash) | (Item.dedup_key == title_hash))
         item_exists = (await db.execute(check_stmt)).scalar_one_or_none()
         
@@ -66,7 +66,7 @@ async def run_normalize(db: AsyncSession):
             
             new_item = Item(
                 type="article",
-                dedup_key=url_hash, # Keep URL as primary ID mapping
+                dedup_key=url_hash,
                 published_at=pub_date,
                 title=title,
                 summary=summary,
@@ -85,10 +85,4 @@ async def run_normalize(db: AsyncSession):
             metrics["deduped"] += 1
             
     await db.commit()
-    logger.info(f"Normalize finished. Metrics: {metrics}")
-
-if __name__ == "__main__":
-    async def main():
-        async with AsyncSessionLocal() as session:
-            await run_normalize(session)
-    asyncio.run(main())
+    logger.info(f"Processor Normalize finished. Metrics: {metrics}")

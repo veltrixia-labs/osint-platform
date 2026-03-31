@@ -1,6 +1,6 @@
 import './style.css'
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderHealth, renderSidebar, renderReportDetail } from './modules/render'
+import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderRiskProfile } from './modules/render'
 import { login, signup, fetchMe, logout, fetchUsage, fetchReports, fetchReport } from './modules/api'
 import type { UserMe, AnalystProfile, Report } from './modules/api'
 import {
@@ -166,38 +166,65 @@ async function initDashboard() {
 
       <div class="mobile-overlay" id="mobile-overlay"></div>
 
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header u-flex u-m-bottom-1">
-          <div style="width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">O</div>
-          <h2>OSINT Analytics</h2>
-        </div>
-        
-        <nav class="u-m-top-1">
-          <div class="sidebar-nav-link sidebar-nav-link--active" id="nav-feed">Intelligence Feed</div>
-          <div class="sidebar-nav-link" id="nav-reports">Expert Reports</div>
-          <div class="sidebar-nav-link" id="nav-plans">Subscription Plans</div>
-        </nav>
-
-        <div id="sidebar-watchlist" class="u-m-top-1" style="flex:1; overflow-y:auto; overflow-x:hidden; margin-bottom:1rem;"></div>
-
-        <div class="sidebar-footer u-m-top-1">
-          <div class="u-flex u-m-bottom-1">
-            <div id="user-tier-badge"></div>
+      <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-header u-flex u-m-bottom-1">
+            <div style="width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">O</div>
+            <h2>OSINT Analytics</h2>
           </div>
-          <button id="logout-btn" style="width:100%; padding:0.6rem; background:rgba(248,81,73,0.1); color:#f85149; border:1px solid rgba(248,81,73,0.2); border-radius:6px; cursor:pointer;">Logout</button>
-        </div>
-      </aside>
+          
+          <nav class="u-m-top-1">
+            <div class="sidebar-nav-link sidebar-nav-link--active" id="nav-feed">Intelligence Feed</div>
+            <div class="sidebar-nav-link" id="nav-reports">Expert Reports</div>
+            <div class="sidebar-nav-link" id="nav-plans">Subscription Plans</div>
+          </nav>
 
-      <main class="main-content">
-        ${graceBanner ? `<div id="grace-header">${graceBanner}</div>` : ''}
-        <div class="header-row">
-          <h1 id="main-title">Analyst Intelligence</h1>
-          <div id="health-container"></div>
-        </div>
-        <div class="main-feed" id="alerts-container">
-          <div class="u-p-2 u-text-center">Initializing intelligence feed...</div>
-        </div>
-      </main>
+          <div id="sidebar-watchlist" class="u-m-top-1" style="flex:1; overflow-y:auto; overflow-x:hidden; margin-bottom:1rem;"></div>
+
+          <div class="sidebar-footer u-m-top-1">
+            <div class="u-flex u-m-bottom-1">
+              <div id="user-tier-badge"></div>
+            </div>
+            <button id="logout-btn" style="width:100%; padding:0.6rem; background:rgba(248,81,73,0.1); color:#f85149; border:1px solid rgba(248,81,73,0.2); border-radius:6px; cursor:pointer;">Logout</button>
+          </div>
+        </aside>
+
+        <main class="main-content">
+          ${graceBanner ? `<div id="grace-header">${graceBanner}</div>` : ''}
+          <div class="header-row">
+            <h1 id="main-title">Analyst Intelligence</h1>
+            <div id="health-container"></div>
+          </div>
+          
+          <div id="live-feed-container" class="live-feed-container" style="display:none;">
+            <div class="live-feed-header">
+                <div class="pulse-dot"></div>
+                <span style="font-weight:700; letter-spacing:0.05em; font-size:0.9rem;">LIVE INTELLIGENCE FEED</span>
+            </div>
+            <div id="live-feed-ticker" class="live-feed-ticker">
+                <div class="u-p-1 u-text-center" style="opacity:0.5;">Scanning global signals...</div>
+            </div>
+          </div>
+
+          <div class="main-feed" id="alerts-container">
+            <div class="u-p-2 u-text-center">Initializing intelligence feed...</div>
+          </div>
+        </main>
+
+        <aside class="sidebar-right" id="sidebar-right">
+            <div id="risk-profile-container">
+                <h2 style="font-size:1.1rem; margin-bottom:1rem;">Risk Profile</h2>
+                <div class="u-p-1 u-text-center" style="opacity:0.5; font-size:0.8rem;">Analyzing risk trends...</div>
+            </div>
+            <div style="flex:1;"></div>
+            <div class="sidebar-footer" style="border-top:1px solid var(--border); padding-top:1rem;">
+                <div style="font-size:0.7rem; color:var(--text-secondary); opacity:0.6;">
+                    System Status: <span style="color:#3fb950;">Stable</span><br>
+                    Last Refined: ${new Date().toLocaleTimeString()}
+                </div>
+            </div>
+        </aside>
+      </div>
       `;
 
       const hamburger = document.querySelector('#mobile-menu-btn');
@@ -266,6 +293,7 @@ async function initDashboard() {
         state.subscribe((data) => {
             if (currentTab !== 'feed') return;
             const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
+            const healthDiv = document.querySelector<HTMLElement>('#health-container');
             if (!feedContainer) return;
 
             // Only rebuild static structure on first render (avoid wiping active overlay)
@@ -277,8 +305,21 @@ async function initDashboard() {
                 `;
             }
 
-            const healthDiv = document.querySelector<HTMLElement>('#health-container');
             if (data.health && healthDiv) renderHealth(data.health, healthDiv);
+
+            // Phase 2: Live Feed & Risk Profile
+            const liveFeedContainer = document.querySelector<HTMLElement>('#live-feed-container');
+            const liveFeedTicker = document.querySelector<HTMLElement>('#live-feed-ticker');
+            const riskProfileContainer = document.querySelector<HTMLElement>('#risk-profile-container');
+
+            if (liveFeedContainer) liveFeedContainer.style.display = 'block';
+            if (liveFeedTicker && data.alerts) {
+                // For Live Feed, we show 100% of global signals in a compact way
+                renderLiveFeed(data.alerts, liveFeedTicker);
+            }
+            if (riskProfileContainer && data.health) {
+                renderRiskProfile(data.health, riskProfileContainer);
+            }
 
             const tabsContainer = document.querySelector<HTMLElement>('#topic-tabs-container');
             if (tabsContainer) renderTopicTabs(tabsContainer, state);
@@ -428,7 +469,7 @@ async function initDashboard() {
             }
             
             alertsContainer.innerHTML = `
-                <div class="reports-grid u-m-top-1">
+                <div class="reports-list u-m-top-1">
                     ${reports.map(r => {
                         const topicDef = getTopicDef(r.topic_code ?? null);
                         const rtNorm = normalizeReportType(r.report_type);
@@ -436,25 +477,41 @@ async function initDashboard() {
                         
                         const accessible = canAccessReport(user!.tier, r.report_type, r.topic_code ?? null);
                         const planReq = r.plan_required || REPORT_TYPE_MIN_TIER[rtNorm] || 'free';
+                        
+                        // Extract BLUF (Bottom Line Up Front) from content or preview
+                        const bluf = (r.content_preview || r.content_markdown || "")
+                            .replace(/#+ /g, '')
+                            .split('\n')
+                            .filter((line: string) => line.trim().length > 20)[0]?.substring(0, 120) + '...';
 
                         return `
-                        <div class="alert-card u-tier-3 ${!accessible ? 'alert-card--locked' : ''}" 
-                             style="cursor:pointer;" 
+                        <div class="report-row ${!accessible ? 'report-row--locked' : ''}" 
                              onclick="window.dispatchEvent(new CustomEvent('view-report', {detail:{reportId:'${r.id}'}}))">
-                            <div class="u-flex-between">
-                                <div class="u-flex" style="gap:0.5rem; flex-wrap:wrap;">
-                                    <span class="severity-badge" style="background:${topicDef.color}22; color:${topicDef.color}; border:1px solid ${topicDef.color}55;">${topicDef.icon} ${topicDef.label}</span>
-                                    <span class="severity-badge" style="background:var(--accent-soft); color:var(--accent); border:1px solid var(--border-active);">${rtLabel}</span>
-                                    ${!accessible ? `<span class="severity-badge" style="background:rgba(210,153,34,0.1); color:#d29922; border:1px solid rgba(210,153,34,0.3);">🔒 ${planReq.toUpperCase()} ONLY</span>` : ''}
+                            <!-- Col 1: Metrics & Badges -->
+                            <div class="report-col-meta">
+                                <div class="topic-icon-ring" style="--color: ${topicDef.color}">${topicDef.icon}</div>
+                                <div class="badge-stack">
+                                    <span class="report-badge">${rtLabel}</span>
+                                    <span class="report-date">${new Date(r.created_at).toLocaleDateString()}</span>
                                 </div>
-                                <span style="font-size:var(--font-xs); color:#8b949e;">${new Date(r.created_at).toLocaleDateString()}</span>
                             </div>
-                            <h3 style="margin-top:0.75rem;">${r.title}</h3>
-                            <div class="u-flex-between u-m-top-1" style="${!accessible ? 'filter: blur(0.5px); opacity: 0.6;' : ''}">
-                                <span style="font-size:var(--font-xs); color:#8b949e;">${r.source_count || 0} sources · ${r.confidence_level || 'Medium'} confidence</span>
-                                <button class="btn-fb active u-tier-1">${accessible ? 'Read Analysis' : 'Unlock'}</button>
+                            
+                            <!-- Col 2: Title & BLUF -->
+                            <div class="report-col-main">
+                                <h3 class="report-title">${r.title.split(' | ')[0]}</h3>
+                                <p class="report-bluf">${accessible ? bluf : 'Detailed strategic analysis is restricted to ' + planReq.toUpperCase() + ' tier.'}</p>
                             </div>
-                            ${!accessible ? `<div class="alert-lock-overlay" style="border-radius:12px;">🔒 Upgrade to ${planReq.toUpperCase()} to access</div>` : ''}
+                            
+                            <!-- Col 3: Actions & Score -->
+                            <div class="report-col-action">
+                                <div class="score-display">
+                                    <span class="score-val">${r.confidence_level || 'Medium'}</span>
+                                    <span class="score-label">Confidence</span>
+                                </div>
+                                <button class="btn-fb active">${accessible ? 'Read' : 'Unlock'}</button>
+                            </div>
+                            
+                            ${!accessible ? `<div class="alert-lock-overlay">🔒 Upgrade to ${planReq.toUpperCase()}</div>` : ''}
                         </div>`;
                     }).join('')}
                 </div>

@@ -1,4 +1,7 @@
+import asyncio
+import logging
 from jobs.main_scheduler import main as scheduler_main
+from db.database import engine, Base
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

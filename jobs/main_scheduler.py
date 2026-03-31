@@ -6,11 +6,11 @@ from datetime import datetime, timezone
 from db.database import AsyncSessionLocal
 from db.seeding import seed_admin
 from jobs.ingest_job import run_ingest
-from jobs.normalize_job import run_normalize
-from jobs.classify_job import run_classify
+from processor.normalize import run_normalize
+from processor.classify import run_classify
 from jobs.signal_job import run_signal
 from jobs.health_check_job import run_health_check
-from article.report_job import run_all_reports
+from jobs.report_generator import run_all_reports
 from jobs.trigger_detector_job import run_trigger_check
 from jobs.trend_analyze_job import run_trend_analysis
 from jobs.alert_manager import run_alert_manager
