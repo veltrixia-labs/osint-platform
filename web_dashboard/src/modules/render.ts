@@ -234,10 +234,15 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 <div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.8;">
                     ${accessible ? (alert.delivery ? `DIRECT INTELLIGENCE SIGNAL` : 'BROADCAST ALERT') : `Locked Sector: ${topicDef.label}`}
                 </div>
-                <div class="validation-badge" style="font-size: 0.65rem; color: #3fb950; display: flex; align-items: center; gap: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
-                    ${accessible ? '<span>✓</span> Validated' : ''}
                 </div>
             </div>
+            
+            <div class="u-m-top-1" style="border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                <a class="map-viz-link ${!accessible ? 'btn--locked' : ''}" data-id="${alert.id}" style="font-size: 0.8rem; color: var(--accent); cursor: pointer; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                    Visualize & Track on Global Map &rarr;
+                </a>
+            </div>
+
             ${!accessible ? `<div class="alert-lock-overlay">🔒 Content restricted to ${topicDef.minTier === 'pro' ? 'Pro' : 'Expert'} Analyst tier</div>` : ''}
         `;
 
@@ -286,12 +291,28 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         });
     });
 
-    // Attach Map Focus events
+    // Attach Map Focus events (Exclusive to the visualize link)
+    container.querySelectorAll('.map-viz-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const el = e.currentTarget as HTMLElement;
+            const alertId = el.dataset.id;
+            console.log(`[Antigravity] Visualize Link Clicked: ID = ${alertId}`);
+            if (alertId) {
+                window.dispatchEvent(new CustomEvent('focus-map', { detail: { alertId } }));
+            }
+        });
+    });
+
+    // General card click (Secondary focus, but prevent if link clicked)
     container.querySelectorAll('.alert-card').forEach(card => {
         card.addEventListener('click', (e) => {
             const el = e.currentTarget as HTMLElement;
+            const target = e.target as HTMLElement;
+            if (target.closest('.view-report-btn') || target.closest('.evidence-trigger-btn') || target.closest('.map-viz-link')) {
+                return;
+            }
             const alertId = el.dataset.id;
-            console.log(`[Antigravity] Alert Card Clicked: ID = ${alertId}`);
             if (alertId) {
                 window.dispatchEvent(new CustomEvent('focus-map', { detail: { alertId } }));
             }
@@ -930,24 +951,28 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                         ` : ''}
                     </div>
                 `;
-                L.marker([coords.lat, coords.lng], { 
+                const isFocus = focusAlertId === alert.id;
+                
+                const marker = L.marker([coords.lat, coords.lng], { 
                     icon: markerIcon,
-                    zIndexOffset: 1000,
+                    zIndexOffset: isFocus ? 5000 : 1000,
                     pane: 'overlayPane' 
                 })
                     .addTo(layerGroup)
                     .bindPopup(popupContent);
                     
-                // Handle Focus / Camera Transition (Independent of Arcs)
-                const isFocus = focusAlertId === alert.id;
+                // Handle Focus / Camera Transition
                 if (isFocus) {
                     console.log(`[Antigravity] Starting Transition to ${coords.lat}, ${coords.lng}`);
                     map.flyTo([coords.lat, coords.lng], 3, {
                         duration: 1.8,
                         easeLinearity: 0.25
                     });
+                    
+                    // Auto-open popup after transition
                     map.once('moveend', () => {
-                        console.log(`[Antigravity] Transit Complete`);
+                        console.log(`[Antigravity] Transit Complete - Extracting details...`);
+                        marker.openPopup();
                     });
                 }
 
