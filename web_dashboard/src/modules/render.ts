@@ -305,21 +305,6 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             }
         });
     });
-
-    // General card click (Secondary focus, but prevent if link clicked)
-    container.querySelectorAll('.alert-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-            const el = e.currentTarget as HTMLElement;
-            const target = e.target as HTMLElement;
-            if (target.closest('.view-report-btn') || target.closest('.evidence-trigger-btn') || target.closest('.map-viz-link')) {
-                return;
-            }
-            const alertId = el.dataset.id;
-            if (alertId) {
-                window.dispatchEvent(new CustomEvent('focus-map', { detail: { alertId } }));
-            }
-        });
-    });
 }
 
 function showEvidenceModal(title: string, evidenceList: any[]) {
