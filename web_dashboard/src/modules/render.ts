@@ -884,34 +884,39 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             fetchReports()
         ]);
 
-        // 1. Data Validation & Target Matching
-        let targetAlert = null;
+        // 1. Context Isolation (Exclusive Focus Mode)
+        // If an alert is focused, we hide all OTHER alerts and reports to avoid clutter/overlap.
+        let targetAlert: Alert | null = null;
+        let filteredAlerts = alerts;
+        let filteredReports = reports;
+
         if (focusAlertId) {
-            targetAlert = alerts.find(a => a.id === focusAlertId);
+            targetAlert = alerts.find(a => a.id === focusAlertId) || null;
             if (targetAlert) {
-                console.log(`[Antigravity] Target Alert Found: ${targetAlert.target_label}`);
+                console.log(`[Antigravity] Exclusive Focus: ${targetAlert.target_label}`);
+                filteredAlerts = [targetAlert];
+                
+                // Only show reports that are explicitly linked to this alert
+                const tid = targetAlert.related_report_id;
+                if (tid) {
+                    filteredReports = reports.filter(r => r.id === tid);
+                } else {
+                    filteredReports = [];
+                }
             } else {
-                console.warn(`[Antigravity] Focus Alert ID ${focusAlertId} not found in current dataset.`);
+                console.warn(`[Antigravity] Focus Alert ID ${focusAlertId} not found.`);
             }
         }
 
-        // 2. Delayed Plotting to ensure Map Container is ready (300ms for stable hardware acceleration)
+        // 2. Delayed Plotting to ensure Map Container is ready
         setTimeout(() => {
-            if (focusAlertId) {
-                console.log(`[Antigravity] Drawing Pulse & Arc for: ${focusAlertId}`);
-            }
-
             layerGroup.clearLayers();
-            renderRegionalContext(layerGroup, alerts);
+            renderRegionalContext(layerGroup, filteredAlerts);
 
-
-        // Plot Alerts
-        alerts.forEach(alert => {
+        // Plot Filtered Alerts
+        filteredAlerts.forEach(alert => {
             const coords = getAlertCoords(alert);
             if (coords) {
-                console.log(`[Antigravity] Found Coordinates via: ${coords.source} | ${coords.lat}, ${coords.lng}`);
-                console.log(`[Antigravity] Marker Created at: ${coords.lat}, ${coords.lng} with Intensity: ${alert.intensity || 5}`);
-
                 const intensity = alert.intensity || 5;
                 const isCritical = intensity >= 9.0;
                 
@@ -953,6 +958,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                         ` : ''}
                     </div>
                 `;
+
                 const isFocus = focusAlertId === alert.id;
                 
                 const marker = L.marker([coords.lat, coords.lng], { 
@@ -1043,7 +1049,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             iconAnchor: [10, 10]
         });
 
-        reports.forEach(report => {
+        filteredReports.forEach(report => {
             if (report.location_lat && report.location_lng) {
                 const popupContent = `
                     <div style="padding:10px; min-width:250px;">

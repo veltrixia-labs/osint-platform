@@ -248,16 +248,27 @@ class AlertManager:
 
     @classmethod
     async def _get_latest_report_link(cls, db, sig: TrendSignal) -> Tuple[Optional[uuid.UUID], Optional[str]]:
-        """Finds the most recent report containing this pattern to create a deep link."""
-        # Stable Anchor aligned with skeleton_builder.py's format: "### Pattern: {p['label']}"
-        # Markdown anchors for headers are usually slugified. We'll provide the raw pattern for linking.
+        """Finds the most recent report of the SAME TOPIC to create a valid context link."""
+        # Mapping frontend topic slugs to DB topic_codes if needed
+        # Assuming sig.topic (e.g. 'geopolitical') matches Report.topic_code or sub-slug
         anchor = f"#pattern-{sig.target_label.lower().replace(' ', '-')}"
         
-        stmt = select(Report).order_by(Report.created_at.desc()).limit(1)
+        # Priority 1: Topic-specific match
+        stmt = select(Report).where(
+            or_(
+                Report.topic_code == sig.topic,
+                Report.title.ilike(f"%{sig.target_label}%")
+            )
+        ).order_by(Report.created_at.desc()).limit(1)
+        
         report = (await db.execute(stmt)).scalar_one_or_none()
         
         if report:
+            logger.info(f"Resolved context mapping: Alert for {sig.target_label} -> Report {report.id} ({report.topic_code})")
             return report.id, anchor
+        
+        # No matching context found, return null to avoid deceptive linking
+        logger.info(f"No specific context report found for {sig.target_label} ({sig.topic}). Disabling deep link.")
         return None, None
 
     @classmethod
