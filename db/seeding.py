@@ -17,41 +17,43 @@ async def seed_admin(db):
         return
 
     try:
-        # Check if admin already exists
-        stmt = select(AnalystProfile).where(AnalystProfile.telegram_chat_id == "admin")
-        result = await db.execute(stmt)
-        admin = result.scalar_one_or_none()
+        # 1. Handle 'admin'
+        stmt_admin = select(AnalystProfile).where(AnalystProfile.telegram_chat_id == "admin")
+        res_admin = await db.execute(stmt_admin)
+        admin = res_admin.scalar_one_or_none()
 
         if admin:
-            # Force update password for production recovery
             admin.hashed_password = get_password_hash(admin_password)
             logger.info("[Antigravity] Admin user password synchronized with environment.")
         else:
-            # Create admin user
-            hashed_pw = get_password_hash(admin_password)
+            hashed_pw_admin = get_password_hash(admin_password)
             admin = AnalystProfile(
                 telegram_chat_id="admin",
-                hashed_password=hashed_pw,
+                hashed_password=hashed_pw_admin,
                 user_role="admin",
                 is_active=True,
                 subscription_tier="enterprise"
             )
             db.add(admin)
-            logger.info("ADMIN_SEED: Created admin user 'admin' successfully.")
 
-        # Create testuser
-        test_pw = get_password_hash("testuser")
-        new_test = AnalystProfile(
-            telegram_chat_id="testuser",
-            hashed_password=test_pw,
-            user_role="analyst",
-            is_active=True,
-            subscription_tier="enterprise"
-        )
-        db.add(new_test)
+        # 2. Handle 'testuser'
+        stmt_test = select(AnalystProfile).where(AnalystProfile.telegram_chat_id == "testuser")
+        res_test = await db.execute(stmt_test)
+        testuser = res_test.scalar_one_or_none()
 
+        if not testuser:
+            test_pw = get_password_hash("testuser")
+            testuser = AnalystProfile(
+                telegram_chat_id="testuser",
+                hashed_password=test_pw,
+                user_role="analyst",
+                is_active=True,
+                subscription_tier="enterprise"
+            )
+            db.add(testuser)
+        
         await db.commit()
-        logger.info("ADMIN_SEED: Created admin user 'admin' successfully.")
+        logger.info("[Antigravity] Seed synchronization for all users: SUCCESS.")
 
     except Exception as e:
         await db.rollback()
