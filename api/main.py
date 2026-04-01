@@ -189,7 +189,9 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:8000",
         "http://localhost:8010",
-        "https://osint-platform.onrender.com"
+        "https://osint-platform.onrender.com",
+        "https://osint-web-1oev.onrender.com",
+        "https://osint-platform-xs7p.onrender.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
