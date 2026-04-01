@@ -15,6 +15,7 @@ from jobs.trigger_detector_job import run_trigger_check
 from jobs.trend_analyze_job import run_trend_analysis
 from jobs.alert_manager import run_alert_manager
 from jobs.threads_publisher_job import run_threads_publisher
+from jobs.learning_loop import run_learning_job
 from scripts.backfill_reports import backfill_reports
 from jobs.cleanup_job import (
     run_alert_cleanup, run_retention_cleanup, run_db_size_check, 
@@ -120,6 +121,9 @@ async def run_threads_publisher_wrapper():
     async with AsyncSessionLocal() as session:
         await run_threads_publisher(session)
 
+async def run_learning_wrapper():
+    await run_learning_job()
+
 async def run_cleanup_bundle():
     """Bundle of hourly/daily cleanups to ensure they run under one concurrency guard name."""
     async with AsyncSessionLocal() as session:
@@ -170,6 +174,9 @@ def register_jobs():
 
     # Operational Monitoring
     schedule.every().day.at("00:00").do(schedule_async, "ops_monitoring", run_ops_monitoring)
+
+    # Phase 4: Self-Learning Feedback Loop (Daily at 02:00)
+    schedule.every().day.at("02:00").do(schedule_async, "learning_loop", run_learning_wrapper)
 
 async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""

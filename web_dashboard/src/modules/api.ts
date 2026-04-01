@@ -31,6 +31,20 @@ export interface CheckoutResponse {
     plan?: string;
 }
 
+export interface StakeholderImpact {
+    stakeholder_id: string;
+    entity_name: string;
+    impact_direction: string;
+    impact_alpha: number;
+    confidence: number;
+    reasoning: string;
+    location_lat?: number;
+    location_lng?: number;
+    is_locked?: boolean;
+    topic?: string;
+    cascading_impacts?: StakeholderImpact[];
+}
+
 export interface Alert {
     id: string;
     severity: string;
@@ -50,7 +64,15 @@ export interface Alert {
     fidelity_score?: number;
     is_high_fidelity?: boolean;
     related_report_id?: string;
-    feedback_score?: number;
+    metadata_json?: {
+        spike_delta?: number;
+        domain_count?: number;
+        evidence_list?: any[];
+        cascading_impacts?: StakeholderImpact[];
+    };
+    location_lat?: number;
+    location_lng?: number;
+    cascading_impacts?: StakeholderImpact[];
     delivery?: {
         analyst_id: string;
         relevance_score: number;
@@ -72,6 +94,8 @@ export interface Report {
     source_count: number;
     confidence_level: string;
     created_at: string;
+    location_lat?: number;
+    location_lng?: number;
     locked?: boolean;
 }
 

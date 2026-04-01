@@ -1,6 +1,7 @@
 import './style.css'
+declare const __APP_BUILD_INFO__: string;
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderRiskProfile } from './modules/render'
+import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderRiskProfile, renderMap } from './modules/render'
 import { login, signup, fetchMe, logout, fetchUsage, fetchReports, fetchReport } from './modules/api'
 import type { UserMe, AnalystProfile, Report } from './modules/api'
 import {
@@ -119,7 +120,7 @@ export async function renderSignup() {
 
 
 
-type TabId = 'feed' | 'plans' | 'reports'
+type TabId = 'feed' | 'plans' | 'reports' | 'map'
 
 async function initDashboard() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -175,6 +176,7 @@ async function initDashboard() {
           
           <nav class="u-m-top-1">
             <div class="sidebar-nav-link sidebar-nav-link--active" id="nav-feed">Intelligence Feed</div>
+            <div class="sidebar-nav-link" id="nav-map">Global Map</div>
             <div class="sidebar-nav-link" id="nav-reports">Expert Reports</div>
             <div class="sidebar-nav-link" id="nav-plans">Subscription Plans</div>
           </nav>
@@ -209,6 +211,7 @@ async function initDashboard() {
           <div class="main-feed" id="alerts-container">
             <div class="u-p-2 u-text-center">Initializing intelligence feed...</div>
           </div>
+          <div id="map-page-container" style="display:none;"></div>
         </main>
 
         <aside class="sidebar-right" id="sidebar-right">
@@ -216,11 +219,20 @@ async function initDashboard() {
                 <h2 style="font-size:1.1rem; margin-bottom:1rem;">Risk Profile</h2>
                 <div class="u-p-1 u-text-center" style="opacity:0.5; font-size:0.8rem;">Analyzing risk trends...</div>
             </div>
+            <div id="quick-map-trigger" class="u-m-top-1" style="cursor:pointer;">
+                <div class="premium-card u-p-1" style="border:1px solid var(--accent); background:rgba(0,168,255,0.05); cursor:pointer;">
+                    <div style="font-size:0.8rem; font-weight:700; color:var(--accent); margin-bottom:0.5rem;">Global Risk Distribution</div>
+                    <div id="map-mini-preview" style="height:80px; background:#0d1117; border-radius:4px; display:flex; align-items:center; justify-content:center; border:1px dashed rgba(255,255,255,0.1);">
+                        <span style="font-size:0.65rem; opacity:0.5;">Launch Intelligence Map →</span>
+                    </div>
+                </div>
+            </div>
             <div style="flex:1;"></div>
             <div class="sidebar-footer" style="border-top:1px solid var(--border); padding-top:1rem;">
                 <div style="font-size:0.7rem; color:var(--text-secondary); opacity:0.6;">
                     System Status: <span style="color:#3fb950;">Stable</span><br>
-                    Last Refined: ${new Date().toLocaleTimeString()}
+                    Last Refined: ${new Date().toLocaleTimeString()}<br>
+                    <span style="color:var(--accent); display:block; margin-top:0.3rem;">Build: ${typeof __APP_BUILD_INFO__ !== 'undefined' ? __APP_BUILD_INFO__ : 'Dev'}</span>
                 </div>
             </div>
         </aside>
@@ -261,26 +273,90 @@ async function initDashboard() {
       document.body.classList.remove('no-scroll');
     };
 
-    const handleTabSwitch = (tab: TabId) => {
+    const handleTabSwitch = (tab: TabId, focusAlertId?: string) => {
         currentTab = tab;
         updateNavUI(tab);
-        if (tab === 'feed') renderIntelligenceFeed();
-        else if (tab === 'plans') renderPlans();
-        else if (tab === 'reports') renderReports();
+        console.log(`[Antigravity] Viewport State: ${tab}${focusAlertId ? ` | Focus: ${focusAlertId}` : ''}`);
+        
+        const mainContent = document.querySelector<HTMLElement>('.main-content');
+        const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
+        const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
+        const liveFeed = document.querySelector<HTMLElement>('#live-feed-container');
+        
+        // Start fade-out
+        if (mainContent) mainContent.style.opacity = '0';
+
+        setTimeout(() => {
+            // Strict Toggle
+            if (feedContainer) feedContainer.style.display = (tab === 'feed' || tab === 'plans' || tab === 'reports') ? 'block' : 'none';
+            if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
+            if (liveFeed) liveFeed.style.display = (tab === 'feed') ? 'block' : 'none';
+
+            if (tab === 'feed') renderIntelligenceFeed();
+            else if (tab === 'plans') renderPlans();
+            else if (tab === 'reports') renderReports();
+            else if (tab === 'map') renderMapPage(focusAlertId);
+
+            // Fade-in
+            if (mainContent) mainContent.style.opacity = '1';
+        }, 50);
     };
 
     document.querySelector('#nav-feed')?.addEventListener('click', () => handleTabSwitch('feed'));
+    document.querySelector('#nav-map')?.addEventListener('click', () => handleTabSwitch('map'));
     document.querySelector('#nav-plans')?.addEventListener('click', () => handleTabSwitch('plans'));
     document.querySelector('#nav-reports')?.addEventListener('click', () => handleTabSwitch('reports'));
+    document.querySelector('#quick-map-trigger')?.addEventListener('click', () => handleTabSwitch('map'));
+
+    // New Event Listener: Switch to Map tab and focus on alert
+    window.addEventListener('focus-map', (e: any) => {
+        handleTabSwitch('map', e.detail.alertId);
+    });
 
     window.addEventListener('view-report', (e: any) => {
         // Track the tab we're leaving
         const originTab = currentTab;
+        
+        // Ensure map and ticker are hidden
+        const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
+        const liveFeed = document.querySelector<HTMLElement>('#live-feed-container');
+        const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
+        if (mapContainer) mapContainer.style.display = 'none';
+        if (liveFeed) liveFeed.style.display = 'none';
+        if (feedContainer) feedContainer.style.display = 'block';
+
         renderSingleReport(e.detail.reportId, originTab);
     });
 
     window.addEventListener('show-locked-topic', (e: any) => {
         renderLockedTopicOverlay(e.detail.topicKey);
+    });
+
+    window.addEventListener('upsell-click', () => {
+        // Create Upsell Modal for Expert Tier
+        const modal = document.createElement('div');
+        modal.className = 'upsell-modal';
+        modal.innerHTML = `
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">💎</div>
+            <h2 style="color: #bc8cff; margin-bottom: 0.5rem;">Expert-Tier Intelligence</h2>
+            <p style="color: #c9d1d9; line-height: 1.6; margin-bottom: 1.5rem;">
+                You've discovered a <strong>Strategic Ghost Node</strong>. <br/>
+                Expert analysts can see the full cascading impact chain, including hidden stakeholders and deep reasoning.
+            </p>
+            <div style="text-align: left; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                <div style="color: #3fb950; margin-bottom: 0.5rem;">✓ Full Cascading Logic (No Limits)</div>
+                <div style="color: #3fb950; margin-bottom: 0.5rem;">✓ Second-Order Risk Curves</div>
+                <div style="color: #3fb950;">✓ Self-Learning Weight Audits</div>
+            </div>
+            <button class="upsell-btn" id="modal-upgrade-btn">Upgrade to Expert</button>
+            <button style="background:transparent; border:none; color:var(--text-secondary); margin-top:1rem; cursor:pointer;" onclick="this.parentElement.remove()">Maybe Later</button>
+        `;
+        document.body.appendChild(modal);
+        
+        document.querySelector('#modal-upgrade-btn')?.addEventListener('click', () => {
+            modal.remove();
+            handleTabSwitch('plans');
+        });
     });
 
     const renderIntelligenceFeed = async () => {
@@ -536,6 +612,16 @@ async function initDashboard() {
             console.error("Report load failed:", e);
             alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Decryption failed or unauthorized access.</div>'; 
         }
+    };
+
+    const renderMapPage = async (focusAlertId?: string) => {
+        if (!user) { renderLogin(); return; }
+        (window as any).stopPolling?.();
+        mainTitle.textContent = 'Global Intelligence Map';
+        healthContainer.innerHTML = '';
+        
+        const mapContainer = document.querySelector<HTMLElement>('#map-page-container')!;
+        renderMap(mapContainer, user.tier, focusAlertId);
     };
 
     const refreshWatchlist = async () => {

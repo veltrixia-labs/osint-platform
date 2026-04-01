@@ -83,6 +83,8 @@ class Report(Base):
     is_premium = Column(Boolean, default=False)
     source_count = Column(Integer, default=0)
     confidence_level = Column(String, default="Low") # High, Medium, Low
+    location_lat = Column(Float)
+    location_lng = Column(Float)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -228,6 +230,8 @@ class AlertLog(Base):
     supporting_events_count = Column(Integer, default=0)
     fidelity_score = Column(Float, default=0.0) # 0.0-1.0 signal verification score
     is_high_fidelity = Column(Boolean, default=False)
+    location_lat = Column(Float)
+    location_lng = Column(Float)
     metadata_json = Column(JSONB) # {delta, source_count, domain_count, visual_path, scoring_breakdown}
 
 class AnalystProfile(Base):
@@ -297,8 +301,54 @@ class StripeEvent(Base):
         UniqueConstraint("event_id", name="uq_stripe_event_id"),
     )
 
+
 class SystemMetric(Base):
     __tablename__ = "system_metrics"
     metric_key = Column(String, primary_key=True)
     metric_value = Column(String)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+# --- Phase 4: Cascading Impact & Self-Learning Engine ---
+
+class Stakeholder(Base):
+    __tablename__ = "stakeholders"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, nullable=False)
+    ticker = Column(String, index=True)
+    sector = Column(String)
+    country = Column(String)
+    domain = Column(String, nullable=False) # ai_semi, market, energy, supply_chain, defense, crypto, digital_infra
+    description = Column(Text)
+    location_lat = Column(Float)
+    location_lng = Column(Float)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class Dependency(Base):
+    __tablename__ = "dependencies"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source_id = Column(UUID(as_uuid=True), ForeignKey("stakeholders.id", ondelete="CASCADE"), nullable=False)
+    target_id = Column(UUID(as_uuid=True), ForeignKey("stakeholders.id", ondelete="CASCADE"), nullable=False)
+    dependency_type = Column(String) # supplier, competitor, subsidiary, regulator
+    exposure_weight = Column(Float, default=0.5) # 0.0-1.0
+    beta_correlation = Column(Float, default=1.0) # correlation with macro/trigger
+    substitution_elasticity = Column(Float, default=0.5) # 0.0-1.0
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("source_id", "target_id", name="uq_dependency_pair"),
+    )
+
+class Prediction(Base):
+    __tablename__ = "predictions"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    prediction_id = Column(String, unique=True, nullable=False)
+    trigger_event = Column(Text)
+    target_id = Column(UUID(as_uuid=True), ForeignKey("stakeholders.id", ondelete="CASCADE"), nullable=False)
+    predicted_alpha = Column(Float) # Expected movement relative to baseline
+    baseline_index_ticker = Column(String, default="^GSPC") # S&P 500 default
+    time_horizon_days = Column(Integer, default=7)
+    confidence_score = Column(Float)
+    is_evaluated = Column(Boolean, default=False)
+    actual_alpha = Column(Float)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    evaluated_at = Column(DateTime(timezone=True))

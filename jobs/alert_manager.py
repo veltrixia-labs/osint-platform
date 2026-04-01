@@ -9,6 +9,9 @@ from sqlalchemy.future import select
 from sqlalchemy import desc, func, or_
 from db.models import TrendSignal, EventCluster, Item, AlertLog, Report, AnalystProfile
 from urllib.parse import urlparse
+from processor.location_resolver import LocationResolver
+
+resolver = LocationResolver()
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +81,11 @@ class AlertManager:
             # Mark as confirmed if we found evidence domains, otherwise pending
             status = "confirmed" if domain_count > 0 else "pending_evidence"
             
+            # Geotagging (Heuristic First)
+            coords = resolver.resolve_heuristically(f"{sig.target_label} {sig.description}")
+            lat, lng = coords if coords else (None, None)
+            
+
             alert_log = AlertLog(
                 target_label=sig.target_label,
                 topic=sig.topic,
@@ -92,6 +100,8 @@ class AlertManager:
                 status=status,
                 is_system_wide=is_system_wide,
                 supporting_events_count=len(evidence_list),
+                location_lat=lat,
+                location_lng=lng,
                 metadata_json={
                     "spike_delta": round(float(spike_delta), 2),
                     "domain_count": domain_count,
@@ -101,6 +111,23 @@ class AlertManager:
             )
             db.add(alert_log)
             await db.flush() # Need actual ID for delivery logs
+
+            # --- Phase 4: Cascading Impact Discovery ---
+            if is_high_fidelity or severity in ["critical", "elevated"]:
+                try:
+                    from processor.impact_discovery import ImpactDiscoveryEngine
+                    engine = ImpactDiscoveryEngine(db)
+                    discovery_results = await engine.run_discovery(
+                        trigger_item_id=sig.id,
+                        title=sig.target_label,
+                        summary=sig.description or f"Triggered on {sig.topic}"
+                    )
+                    if discovery_results:
+                        logger.info(f"Discovered {len(discovery_results)} cascading impacts for {sig.target_label}")
+                        # Attach discovery metadata to the alert log for UI rendering
+                        alert_log.metadata_json["cascading_impacts"] = discovery_results
+                except Exception as e:
+                    logger.error(f"Failed Phase 4 impact discovery: {e}")
 
             if not targets:
                 logger.info(f"Alert for {sig.target_label} logged as system-wide (No matched analysts).")

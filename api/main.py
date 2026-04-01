@@ -38,17 +38,49 @@ DEPLOY_TIMESTAMP = "2026-03-31T10:00:00Z"
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)
 
-# [Robustness] Ensure all tables exist at startup (Alembic Migration Runner)
+# [Robustness] Startup Freshness & Seeding
+def check_frontend_freshness():
+    """Verify that built assets (dist) are newer than source code (src)."""
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        src_path = os.path.join(base_dir, "web_dashboard", "src")
+        dist_path = os.path.join(base_dir, "web_dashboard", "dist")
+        
+        if os.path.exists(src_path) and os.path.exists(dist_path):
+            latest_src = 0
+            for root, _, files in os.walk(src_path):
+                for f in files:
+                    mtime = os.path.getmtime(os.path.join(root, f))
+                    if mtime > latest_src: latest_src = mtime
+            
+            latest_dist = os.path.getmtime(dist_path)
+            for root, _, files in os.walk(dist_path):
+                for f in files:
+                    mtime = os.path.getmtime(os.path.join(root, f))
+                    if mtime > latest_dist: latest_dist = mtime
+
+            if latest_src > latest_dist:
+                logger.warning(" [WARNING] Frontend assets are STALE. Src was modified after last Dist build.")
+                logger.warning(" [ACTION REQUIRED] Run 'python scripts/setup_dev_env.py' to rebuild UI.")
+        elif os.path.exists(src_path) and not os.path.exists(dist_path):
+            logger.warning(" [WARNING] Frontend 'dist' folder is MISSING. API cannot serve UI.")
+            logger.warning(" [ACTION REQUIRED] Run 'python scripts/setup_dev_env.py' to build UI.")
+    except Exception as e:
+        logger.error(f"Error checking frontend freshness: {e}")
+
 @app.on_event("startup")
 async def startup_event():
     try:
         from db.database import Base, AsyncSessionLocal, run_migrations
         from db.seeding import seed_admin
         
-        # 1. Run Alembic Migrations
+        # 1. Freshness Check
+        check_frontend_freshness()
+
+        # 2. Run Alembic Migrations
         run_migrations()
 
-        # 2. Seed Admin User
+        # 3. Seed Admin User
         async with AsyncSessionLocal() as session:
             await seed_admin(session)
         logger.info("Startup initialization complete.")
@@ -56,12 +88,22 @@ async def startup_event():
         logger.error(f"Error during API startup initialization: {e}", exc_info=True)
 
 
+@app.middleware("http")
+async def add_no_cache_header(request: Request, call_next):
+    """Prevent browser from caching stale UI assets in development."""
+    response = await call_next(request)
+    if os.getenv("DEBUG", "true").lower() == "true": # Default to true for dev consistency
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response
+
+
+
 logger.info("--- OSINT SCHEDULER STARTUP ---")
 logger.info("SCHEDULER_V2_ACTIVE: SUCCESS_ASYNC_NATIVE")
 logger.info(f"--- OSINT API BOOTING [Version: {COMMIT_HASH}] ---")
 
-@app.get("/")
-async def root():
+@app.get("/api/status")
+async def api_status():
     return {"status": "ok", "message": "OSINT API is running", "version": COMMIT_HASH}
 
 @app.get("/healthz")
@@ -278,18 +320,47 @@ from api.gating import (
 )
 from api.rate_limit import rate_limit
 
+def _gate_cascading_impacts(tier: str, impacts: list) -> list:
+    """Filter cascading impacts based on user subscription tier."""
+    if tier == "free":
+        return []
+    
+    if tier == "pro":
+        # Only show first 2 impacts, and mark the rest as locked
+        gated = []
+        for i, imp in enumerate(impacts):
+            if i < 2:
+                # Truncate reasoning for Pro
+                imp_copy = imp.copy()
+                if "reasoning" in imp_copy:
+                    imp_copy["reasoning"] = imp_copy["reasoning"][:50] + "..."
+                gated.append(imp_copy)
+            else:
+                # Add Ghost Node placeholder
+                gated.append({
+                    "entity_name": "???",
+                    "impact_alpha": 0.0,
+                    "is_locked": True,
+                    "location_lat": imp.get("location_lat"),
+                    "location_lng": imp.get("location_lng")
+                })
+        return gated
+    
+    # Expert gets everything
+    return impacts
+
 @app.get("/api/alerts")
 async def get_alerts(
     severity: Optional[str] = None,
     suppressed: Optional[bool] = None,
-    analyst_id: Optional[uuid.UUID] = None,
+    analyst_id: Optional[str] = None,
     topic: Optional[str] = None,
     limit: int = 20,
     since: Optional[datetime] = None,
     current_user: tuple = Depends(rate_limit("/api/alerts")),
     db: AsyncSession = Depends(get_db)
 ):
-    user = current_user  # rate_limit() returns AnalystProfile directly
+    user = current_user
     tier = await get_effective_tier(user)
 
     # ── Topic gating ──────────────────────────────────────────────────────
@@ -297,11 +368,28 @@ async def get_alerts(
         raise HTTPException(
             status_code=403,
             detail=f"Topic '{topic}' requires a higher subscription tier. "
-                   f"Your plan ({tier}) allows: {', '.join(get_allowed_topics(tier))}"
         )
+
+    # Caching Logic
+    cache_key = f"alerts:{severity}:{suppressed}:{analyst_id}:{topic}:{limit}:{since}"
+    if await blacklist_manager._is_redis_available():
+        try:
+            cached = await blacklist_manager.redis_client.get(cache_key)
+            if cached:
+                return json.loads(cached)
+        except:
+            pass
 
     # Base query
     stmt = select(AlertLog)
+    
+    # Handle analyst_id filter (if valid UUID string)
+    if analyst_id:
+        try:
+            uid = uuid.UUID(analyst_id)
+            stmt = stmt.join(AlertDelivery).where(AlertDelivery.analyst_id == uid)
+        except ValueError:
+            pass # Ignore invalid UUID strings
     if severity:
         stmt = stmt.where(AlertLog.severity == severity)
     if suppressed is not None:
@@ -315,7 +403,7 @@ async def get_alerts(
     result = await db.execute(stmt)
     alerts = result.scalars().all()
 
-    return [
+    formatted = [
         {
             "id": str(a.id),
             "target_label": a.target_label,
@@ -332,10 +420,21 @@ async def get_alerts(
             "status": a.status,
             "domain_count": a.metadata_json.get("domain_count", 0) if a.metadata_json else 0,
             "spike_delta": a.metadata_json.get("spike_delta", 0.0) if a.metadata_json else 0.0,
-            "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else []
+            "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else [],
+            # --- Tiered Cascading Impact Gating ---
+            "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if a.metadata_json else []
         }
         for a in alerts
     ]
+
+    # Store in Cache (60s TTL)
+    if await blacklist_manager._is_redis_available():
+        try:
+            await blacklist_manager.redis_client.setex(cache_key, 60, json.dumps(formatted))
+        except:
+            pass
+
+    return formatted
 
 @app.get("/api/alerts/live")
 async def get_live_alerts(
@@ -348,6 +447,9 @@ async def get_live_alerts(
     result = await db.execute(stmt)
     alerts = result.scalars().all()
 
+    user = current_user
+    tier = await get_effective_tier(user)
+
     return [
         {
             "id": str(a.id),
@@ -356,79 +458,11 @@ async def get_live_alerts(
             "severity": a.severity,
             "triggered_at": a.triggered_at.isoformat(),
             "fidelity_score": a.fidelity_score,
-            "intensity": a.intensity
+            "intensity": a.intensity,
+            "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if a.metadata_json else []
         }
         for a in alerts
     ]
-
-    # Caching Logic
-    cache_key = f"alerts:{severity}:{suppressed}:{analyst_id}:{topic}:{limit}:{since}"
-    if await blacklist_manager._is_redis_available():
-        try:
-            cached = await blacklist_manager.redis_client.get(cache_key)
-            if cached:
-                return json.loads(cached)
-        except:
-            pass
-
-    stmt = select(AlertLog)
-    if analyst_id:
-        stmt = stmt.join(AlertDelivery).where(AlertDelivery.analyst_id == analyst_id)
-
-    if topic:
-        stmt = stmt.where(AlertLog.topic == topic)
-    if severity:
-        stmt = stmt.where(AlertLog.severity == severity)
-    if suppressed is not None:
-        stmt = stmt.where(AlertLog.suppressed == suppressed)
-    if since:
-        stmt = stmt.where(AlertLog.triggered_at >= since)
-
-    stmt = stmt.order_by(desc(AlertLog.triggered_at)).limit(limit)
-    results = (await db.execute(stmt)).scalars().all()
-
-    # Filter: Allow if has verified domains OR High Intensity OR has supporting events
-    # (Requirement: Prevent high-signal alerts from being suppressed by strict evidence checks)
-    filtered_results = []
-    for log in results:
-        metadata = log.metadata_json or {}
-        domain_count = metadata.get("domain_count", 0)
-        
-        # New multi-tier filtering logic
-        if domain_count > 0:
-            filtered_results.append(log)
-        elif log.intensity >= 8.0:
-            filtered_results.append(log)
-        elif getattr(log, "supporting_events_count", 0) > 0:
-            filtered_results.append(log)
-
-    formatted = [
-        {
-            "id": str(log.id),
-            "severity": log.severity,
-            "target_label": log.target_label,
-            "topic": log.topic,
-            "trigger_type": log.trigger_type,
-            "intelligence_score": log.intelligence_score,
-            "intensity": log.intensity,
-            "triggered_at": log.triggered_at.isoformat(),
-            "suppressed": log.suppressed,
-            "related_report_id": str(log.related_report_id) if log.related_report_id else None,
-            "domain_count": log.metadata_json.get("domain_count", 0) if log.metadata_json else 0,
-            "evidence_list": log.metadata_json.get("evidence_list", []),
-            "spike_delta": log.metadata_json.get("spike_delta", 0.0) if log.metadata_json else 0.0,
-            "metadata": log.metadata_json
-        } for log in filtered_results
-    ]
-
-    # Store in Cache (60s TTL)
-    if await blacklist_manager._is_redis_available():
-        try:
-            await blacklist_manager.redis_client.setex(cache_key, 60, json.dumps(formatted))
-        except:
-            pass
-
-    return formatted
 
 @app.post("/api/alerts/{alert_id}/feedback")
 async def submit_feedback(

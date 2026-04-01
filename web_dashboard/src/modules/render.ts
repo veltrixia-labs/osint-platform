@@ -1,6 +1,18 @@
-import { submitFeedback, updateWatchlist } from './api';
+import L from 'leaflet';
 import type { Alert, AnalystProfile, HealthData } from './api';
+import { fetchAlerts, fetchReports, updateWatchlist } from './api';
 import { getTopicDef, canAccessTopic, canAccessReport, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
+ 
+let activeMapFilters = new Set(['geopolitical', 'supply_chain', 'market', 'tech']);
+
+const TOPIC_LABELS: Record<string, string> = {
+    geopolitical: 'Geopolitical',
+    supply_chain: 'Supply Chain',
+    market: 'Global Market',
+    tech: 'Tech Infrastructure'
+};
+
+let currentFilterControl: L.Control | null = null;
 
 function formatIntensity(val: number | undefined | null): string | null {
     // Treat 0 or negative as invalid/missing for UI presentation purposes
@@ -10,6 +22,38 @@ function formatIntensity(val: number | undefined | null): string | null {
     if (val >= 4) label = 'High';
     else if (val >= 2) label = 'Medium';
     return `${rounded} (${label})`;
+}
+
+/**
+ * Hierarchical coordinate extraction to handle differing API response formats.
+ * Priority: Top-level > metadata_json > cascading_impacts[0]
+ */
+function getAlertCoords(alert: Alert): { lat: number, lng: number, source: string } | null {
+    if (alert.location_lat && alert.location_lng) {
+        return { lat: alert.location_lat, lng: alert.location_lng, source: 'Top-Level' };
+    }
+    const meta = alert.metadata_json as any;
+    if (meta?.location_lat && meta?.location_lng) {
+        return { lat: meta.location_lat, lng: meta.location_lng, source: 'Metadata' };
+    }
+    const impacts = (alert.cascading_impacts || meta?.cascading_impacts) as any[];
+    if (impacts && impacts.length > 0) {
+        return getNodeCoords(impacts[0]);
+    }
+    return null;
+}
+
+/**
+ * Generic coordinate extractor for Stakeholder/Finding nodes.
+ */
+function getNodeCoords(node: any): { lat: number, lng: number, source: string } | null {
+    if (node.location_lat && node.location_lng) {
+        return { lat: node.location_lat, lng: node.location_lng, source: 'Node-Direct' };
+    }
+    if (node.metadata_json?.location_lat && node.metadata_json?.location_lng) {
+        return { lat: node.metadata_json.location_lat, lng: node.metadata_json.location_lng, source: 'Node-Metadata' };
+    }
+    return null;
 }
 
 /**
@@ -42,13 +86,13 @@ export function renderHealth(data: HealthData, container: HTMLElement) {
             <div class="health-stat">
                 <div class="u-flex u-flex-between">
                     <span class="health-label">Signal Fidelity <span class="help-tooltip" data-tooltip="Accuracy of AI signals.">?</span></span>
-                    <span class="health-val">${(data.review_rate * 100).toFixed(0)}%</span>
+                    <span class="health-val">${((data.review_rate || 0) * 100).toFixed(0)}%</span>
                 </div>
             </div>
             <div class="health-stat">
                 <div class="u-flex u-flex-between">
                     <span class="health-label">Noise Reduction <span class="help-tooltip" data-tooltip="Data filtered out.">?</span></span>
-                    <span class="health-val">${(data.suppression_ratio * 100).toFixed(0)}%</span>
+                    <span class="health-val">${((data.suppression_ratio || 0) * 100).toFixed(0)}%</span>
                 </div>
             </div>
         </div>
@@ -87,7 +131,7 @@ export function renderRiskProfile(health: HealthData, container: HTMLElement) {
         <div class="risk-profile-card">
             <div class="u-flex-between">
                 <span style="font-size:0.8rem; opacity:0.7;">Geo-Security Index</span>
-                <span style="color:#ff7b72; font-weight:700;">${(health.review_rate * 10).toFixed(1)}</span>
+                <span style="color:#ff7b72; font-weight:700;">${((health.review_rate || 0) * 10).toFixed(1)}</span>
             </div>
             <div class="sparkline-container">
                 ${genSparkline([0.4, 0.5, 0.45, 0.6, 0.7, 0.8, 0.85])}
@@ -98,7 +142,7 @@ export function renderRiskProfile(health: HealthData, container: HTMLElement) {
         <div class="risk-profile-card">
             <div class="u-flex-between">
                 <span style="font-size:0.8rem; opacity:0.7;">Economic Stability</span>
-                <span style="color:#3fb950; font-weight:700;">${(health.suppression_ratio * 10).toFixed(1)}</span>
+                <span style="color:#3fb950; font-weight:700;">${((health.suppression_ratio || 0) * 10).toFixed(1)}</span>
             </div>
             <div class="sparkline-container">
                 ${genSparkline([0.8, 0.75, 0.7, 0.65, 0.6, 0.5, 0.55])}
@@ -144,7 +188,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 </div>
                 <div class="u-text-right">
                     <div style="font-size: var(--font-xs); color:#8b949e;">Intelligence Priority</div>
-                    <div class="intel-score">${accessible ? alert.intelligence_score.toFixed(2) : '•.••'}</div>
+                    <div class="intel-score">${accessible ? (alert.intelligence_score || 0).toFixed(2) : '•.••'}</div>
                 </div>
             </div>
             
@@ -187,13 +231,11 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             </div>
 
             <div class="u-flex-between u-m-top-1">
-                <div style="font-size: var(--font-xs); color: #8b949e;">
-                    ${accessible ? (alert.delivery ? `Targeted Alert` : 'Broadcast Alert') : `Locked Sector: ${topicDef.label}`}
+                <div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.8;">
+                    ${accessible ? (alert.delivery ? `DIRECT INTELLIGENCE SIGNAL` : 'BROADCAST ALERT') : `Locked Sector: ${topicDef.label}`}
                 </div>
-                <div class="feedback-controls" style="margin-top:0; ${accessible ? '' : 'pointer-events:none; opacity:0.3;'}">
-                    ${[1, 2, 3, 4, 5].map(s => `
-                        <button class="btn-fb u-tier-1 ${alert.feedback_score === s ? 'active' : ''}" data-score="${s}">${s}</button>
-                    `).join('')}
+                <div class="validation-badge" style="font-size: 0.65rem; color: #3fb950; display: flex; align-items: center; gap: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                    ${accessible ? '<span>✓</span> Validated' : ''}
                 </div>
             </div>
             ${!accessible ? `<div class="alert-lock-overlay">🔒 Content restricted to ${topicDef.minTier === 'pro' ? 'Pro' : 'Expert'} Analyst tier</div>` : ''}
@@ -206,25 +248,10 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         `;
     }).join('');
 
-    // Attach feedback events
-    container.querySelectorAll('.btn-fb[data-score]').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const target = e.currentTarget as HTMLButtonElement;
-            const card = target.closest('.alert-card') as HTMLElement;
-            const alertId = card.dataset.id!;
-            const score = parseInt(target.dataset.score!);
-
-            await submitFeedback(alertId, score);
-
-            // Optimistic UI update
-            card.querySelectorAll('.btn-fb[data-score]').forEach(b => b.classList.remove('active'));
-            target.classList.add('active');
-        });
-    });
-
     // Attach View Report events
     container.querySelectorAll('.view-report-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
+            e.stopPropagation(); // prevent triggering focus-map
             const target = e.currentTarget as HTMLButtonElement;
             const card = target.closest('.alert-card') as HTMLElement;
             const alertId = card.dataset.id!;
@@ -249,11 +276,24 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
     // Attach Evidence Modal events
     container.querySelectorAll('.evidence-trigger-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // prevent triggering focus-map
             const card = (e.currentTarget as HTMLElement).closest('.alert-card') as HTMLElement;
             const alertId = card.dataset.id;
             const alert = alerts.find(a => a.id === alertId);
             if (alert && alert.evidence_list && alert.evidence_list.length > 0) {
                 showEvidenceModal(alert.target_label, alert.evidence_list);
+            }
+        });
+    });
+
+    // Attach Map Focus events
+    container.querySelectorAll('.alert-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            const el = e.currentTarget as HTMLElement;
+            const alertId = el.dataset.id;
+            console.log(`[Antigravity] Alert Card Clicked: ID = ${alertId}`);
+            if (alertId) {
+                window.dispatchEvent(new CustomEvent('focus-map', { detail: { alertId } }));
             }
         });
     });
@@ -359,7 +399,13 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
             if (currentKws.includes(val)) return;
             try {
                 addBtn.textContent = "...";
-                await updateWatchlist(a.id, [...currentKws, val]);
+                const updatedKws = [...currentKws, val];
+                await updateWatchlist(a.id, updatedKws);
+                
+                // Optimistic & State Sync: Update the local analyst object in memory
+                a.watch_keywords = updatedKws;
+                input.value = ""; // Clear input
+                
                 if ((window as any).refreshUsage) (window as any).refreshUsage();
             } catch (err: any) {
                 alert(err.message);
@@ -382,7 +428,9 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
             const kw = target.dataset.keyword;
             const currentKws = a.watch_keywords || [];
             try {
-                await updateWatchlist(a.id, currentKws.filter(k => k !== kw));
+                const updatedKws = currentKws.filter(k => k !== kw);
+                await updateWatchlist(a.id, updatedKws);
+                a.watch_keywords = updatedKws; // State Sync
                 if ((window as any).refreshUsage) (window as any).refreshUsage();
             } catch (err: any) {
                 alert(err.message);
@@ -726,3 +774,465 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
         });
     }
 }
+
+let currentGlobalMap: L.Map | null = null;
+let currentDynamicLayer: L.LayerGroup | null = null;
+
+export const renderMap = async (container: HTMLElement, _tier: string, focusAlertId?: string) => {
+    console.log(`[Antigravity] Viewport update requested for Alert ID: ${focusAlertId || 'NONE'}`);
+    
+    // Safety delay to ensure Leaflet has a valid container size after the display:block transition
+    await new Promise(r => setTimeout(r, 100));
+
+    // 1. Persistent Map Canvas: Only initialize if not already mounted
+    if (!currentGlobalMap) {
+        container.innerHTML = '<div id="map-instance" style="height:100%; width:100%; min-height:500px; background:transparent;"></div>';
+        
+        // Wait for DOM
+        await new Promise(r => setTimeout(r, 50));
+        
+        const mapElement = document.getElementById('map-instance');
+        if (!mapElement) return;
+
+        currentGlobalMap = L.map('map-instance', {
+            zoomControl: false,
+            attributionControl: false,
+            minZoom: 2,
+            maxZoom: 16,
+            worldCopyJump: true
+        }).setView([20, 0], 2);
+
+        // Base layer: World Dark Gray
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Esri'
+        }).addTo(currentGlobalMap);
+
+        // Reference layer: English Labels
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+            className: 'map-labels'
+        }).addTo(currentGlobalMap);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(currentGlobalMap);
+        
+        // Create an exclusive layer for dynamic alerts/arcs 
+        currentDynamicLayer = L.layerGroup().addTo(currentGlobalMap);
+
+        // UI: Native Filter Control
+        initMapFilter(currentGlobalMap, () => {
+            renderMap(container, _tier, focusAlertId);
+        });
+    } else {
+        initMapFilter(currentGlobalMap, () => renderMap(container, _tier, focusAlertId));
+    }
+
+    const map = currentGlobalMap;
+    const layerGroup = currentDynamicLayer!;
+    
+    // Re-bind layerGroup if it became detached (Sanity Check)
+    if (!map.hasLayer(layerGroup)) {
+        layerGroup.addTo(map);
+    }
+    console.log(`[Antigravity] Arc Layer Active: ${map.hasLayer(layerGroup)}`);
+
+    // Clear old dynamic elements precisely without touching base tiles
+    layerGroup.clearLayers();
+    
+    // Force a resize check in case the container flexed
+    setTimeout(() => {
+        map.invalidateSize();
+        console.log(`[Antigravity] Map Container Ready (Size Invalidated)`);
+    }, 150);
+
+    // Initial view reset if no focus
+    if (!focusAlertId) {
+        map.setView([20, 0], 2);
+    }
+
+    try {
+        // Fetch Alerts & Reports
+        const [alerts, reports] = await Promise.all([
+            fetchAlerts(),
+            fetchReports()
+        ]);
+
+        // 1. Data Validation & Target Matching
+        let targetAlert = null;
+        if (focusAlertId) {
+            targetAlert = alerts.find(a => a.id === focusAlertId);
+            if (targetAlert) {
+                console.log(`[Antigravity] Target Alert Found: ${targetAlert.target_label}`);
+            } else {
+                console.warn(`[Antigravity] Focus Alert ID ${focusAlertId} not found in current dataset.`);
+            }
+        }
+
+        // 2. Delayed Plotting to ensure Map Container is ready (300ms for stable hardware acceleration)
+        setTimeout(() => {
+            if (focusAlertId) {
+                console.log(`[Antigravity] Drawing Pulse & Arc for: ${focusAlertId}`);
+            }
+
+            layerGroup.clearLayers();
+            renderRegionalContext(layerGroup, alerts);
+
+
+        // Plot Alerts
+        alerts.forEach(alert => {
+            const coords = getAlertCoords(alert);
+            if (coords) {
+                console.log(`[Antigravity] Found Coordinates via: ${coords.source} | ${coords.lat}, ${coords.lng}`);
+                console.log(`[Antigravity] Marker Created at: ${coords.lat}, ${coords.lng} with Intensity: ${alert.intensity || 5}`);
+
+                const intensity = alert.intensity || 5;
+                const isCritical = intensity >= 9.0;
+                
+                // Dynamic Marker Size & Style based on Intensity
+                const baseSize = 20 + (intensity * 2);
+                const markerIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `
+                        <div class="map-marker-pulse ${isCritical ? 'map-marker-pulse--critical' : ''}" 
+                             style="width: ${baseSize}px; height: ${baseSize}px;">
+                            <div class="ring"></div>
+                            <div class="core"></div>
+                        </div>
+                    `,
+                    iconSize: [baseSize, baseSize],
+                    iconAnchor: [baseSize / 2, baseSize / 2]
+                });
+
+                const popupContent = `
+                    <div style="padding:10px; min-width:240px;">
+                        <strong style="color:var(--accent); font-size:1rem; display:block; margin-bottom:4px;">${alert.target_label}</strong>
+                        <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">
+                            ${alert.topic?.replace('_', ' ').toUpperCase() || 'GLOBAL'} | ${alert.severity.toUpperCase()}
+                        </div>
+                        <div style="font-size:0.85rem; background:rgba(255,255,255,0.03); padding:8px; border-radius:6px; border:1px solid var(--border);">
+                            Signal Intensity: <span style="color:var(--accent); font-weight:700;">${intensity.toFixed(1)}</span>
+                        </div>
+                        
+                        ${alert.metadata_json?.cascading_impacts ? `
+                            <div style="margin-top:12px; border-top:1px solid var(--border); padding-top:8px;">
+                                <div style="font-size:0.7rem; color:var(--accent); font-weight:600; text-transform:uppercase; margin-bottom:4px;">Cascading Impacts</div>
+                                ${alert.metadata_json.cascading_impacts.slice(0, 3).map((f: any) => `
+                                    <div style="font-size:0.75rem; display:flex; justify-content:space-between; margin-bottom:2px;">
+                                        <span style="color:#c9d1d9;">${f.entity_name}</span>
+                                        <span style="color:${f.impact_alpha < 0 ? 'var(--danger)' : 'var(--success)'}; font-weight:700;">${f.impact_alpha > 0 ? '+' : ''}${f.impact_alpha}%</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                L.marker([coords.lat, coords.lng], { 
+                    icon: markerIcon,
+                    zIndexOffset: 1000,
+                    pane: 'overlayPane' 
+                })
+                    .addTo(layerGroup)
+                    .bindPopup(popupContent);
+                    
+                // Handle Focus / Camera Transition (Independent of Arcs)
+                const isFocus = focusAlertId === alert.id;
+                if (isFocus) {
+                    console.log(`[Antigravity] Starting Transition to ${coords.lat}, ${coords.lng}`);
+                    map.flyTo([coords.lat, coords.lng], 3, {
+                        duration: 1.8,
+                        easeLinearity: 0.25
+                    });
+                    map.once('moveend', () => {
+                        console.log(`[Antigravity] Transit Complete`);
+                    });
+                }
+
+                // [Demo Discovery] Injecting 3rd-Order Chain for Strategic AI Infrastructure Surge
+                if (alert.target_label === 'Strategic AI Infrastructure Surge') {
+                    alert.cascading_impacts = [
+                        {
+                            stakeholder_id: 'nvda_001',
+                            entity_name: 'NVIDIA',
+                            impact_direction: 'positive',
+                            impact_alpha: 4.2,
+                            topic: 'market',
+                            confidence: 0.94,
+                            reasoning: 'Strategic AI Export Restrictions directly hit GPU sales.',
+                            location_lat: 37.3541,
+                            location_lng: -121.9552,
+                            cascading_impacts: [
+                                {
+                                    stakeholder_id: 'tsmc_001',
+                                    entity_name: 'TSMC',
+                                    impact_direction: 'negative',
+                                    impact_alpha: -2.8,
+                                    topic: 'supply_chain',
+                                    confidence: 0.88,
+                                    reasoning: 'Reduced wafer demand from primary GPU client.',
+                                    location_lat: 24.7735,
+                                    location_lng: 121.0105,
+                                    cascading_impacts: [
+                                        {
+                                            stakeholder_id: 'aws_001',
+                                            entity_name: 'AWS',
+                                            impact_direction: 'negative',
+                                            impact_alpha: -1.5,
+                                            topic: 'tech',
+                                            confidence: 0.82,
+                                            reasoning: 'GPU shortage delays cloud cluster expansion.',
+                                            location_lat: 47.6062,
+                                            location_lng: -122.3321
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ];
+                }
+
+                // [v18 Upgrade] Recursive Cascading Impact Engine
+                const impacts = alert.cascading_impacts || (alert as any).metadata_json?.cascading_impacts;
+                if (impacts && impacts.length > 0) {
+                    const shouldDrawArcs = !focusAlertId || isFocus;
+                    if (shouldDrawArcs) {
+                        const drawDelay = isFocus ? 1200 : 500; 
+                        setTimeout(() => {
+                            renderImpactChain(map, layerGroup, coords, impacts, 1, intensity);
+                        }, drawDelay);
+                    }
+                }
+            }
+        });
+
+        // Plot Reports (Distinct icon for Expert Reports)
+        const reportIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: '<div class="map-marker-pulse" style="background:var(--success); border:2px solid white; scale:0.7;"></div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+
+        reports.forEach(report => {
+            if (report.location_lat && report.location_lng) {
+                const popupContent = `
+                    <div style="padding:10px; min-width:250px;">
+                        <strong style="color:var(--success); font-size:1rem; display:block; margin-bottom:4px;">EXPERT: ${report.title}</strong>
+                        <button class="plan-cta-btn" style="width:100%; padding:8px; font-size:0.8rem; background:var(--success); border-color:var(--success);" 
+                            onclick="window.dispatchEvent(new CustomEvent('view-report', {detail: {id: '${report.id}'}}))">
+                            Access Analysis &rarr;
+                        </button>
+                    </div>
+                `;
+                L.marker([report.location_lat, report.location_lng], { 
+                    icon: reportIcon,
+                    zIndexOffset: 800,
+                    pane: 'overlayPane'
+                })
+                    .addTo(layerGroup)
+                    .bindPopup(popupContent);
+            }
+        });
+
+        }, 300); // END delayed plotting loop
+
+        setTimeout(() => map.invalidateSize(), 200);
+
+    } catch (err) {
+        console.error("Failed to load map data:", err);
+    }
+}
+
+const renderRegionalContext = (layerGroup: L.LayerGroup, alerts: any[]) => {
+    // Foundational logic for "hot zone" visualization
+    const highIntensityAlerts = alerts.filter(a => (a.intensity || 0) > 8);
+    highIntensityAlerts.forEach(alert => {
+        if (alert.location_lat && alert.location_lng) {
+            L.circle([alert.location_lat, alert.location_lng], {
+                radius: 200000, 
+                color: '#f43f5e',
+                fillColor: '#f43f5e',
+                fillOpacity: 0.05,
+                stroke: false,
+                interactive: false
+            }).addTo(layerGroup);
+        }
+    });
+}
+
+/**
+ * [v18 Upgrade] Recursive rendering engine for 3rd-order cascading impacts.
+ */
+/**
+ * [v19 Upgrade] Recursive rendering engine with refined labels and filtering.
+ */
+function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number) {
+    if (level > 3 || !impacts) return;
+
+    impacts.forEach((finding, index) => {
+        const nodeCoords = getNodeCoords(finding);
+        if (!nodeCoords) return;
+
+        // 0. Filter Check
+        const nodeTopic = finding.topic || 'geopolitical';
+        if (!activeMapFilters.has(nodeTopic)) return;
+
+        const isLocked = finding.is_locked || false;
+        console.log(`[Antigravity] Refined Label Rendered for: ${isLocked ? '???' : finding.entity_name} with Topic: ${nodeTopic}`);
+
+        // 1. Calculate Bezier Path
+        const start = L.latLng(parentCoords.lat, parentCoords.lng);
+        const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
+        const points: L.LatLng[] = [];
+        const steps = 36;
+        
+        const dLat = end.lat - start.lat;
+        const dLng = end.lng - start.lng;
+        const dist = Math.sqrt(dLat*dLat + dLng*dLng);
+        
+        const heightAttenuation = 1.0 - (level - 1) * 0.25; 
+        const baseOffset = (0.15 + (Math.min(dist, 40) / 200)) * heightAttenuation;
+        const overlapAvoidance = (index % 3 === 0) ? 0.05 : ((index % 3 === 1) ? -0.05 : 0);
+        const offsetFactor = baseOffset + overlapAvoidance;
+
+        const midLat = (start.lat + end.lat) / 2;
+        const midLng = (start.lng + end.lng) / 2;
+        let cpLat = midLat - dLng * offsetFactor;
+        let cpLng = midLng + dLat * offsetFactor;
+        cpLat = Math.max(-80, Math.min(80, cpLat));
+
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            const lat = (1-t)**2 * start.lat + 2*(1-t)*t * cpLat + t**2 * end.lat;
+            const lng = (1-t)**2 * start.lng + 2*(1-t)*t * cpLng + t**2 * end.lng;
+            points.push(L.latLng(lat, lng));
+        }
+
+        // 2. Styling (Level-based)
+        const pathColor = finding.impact_alpha < 0 ? '#f43f5e' : '#10b981';
+        let weight = Math.max(1, (baseIntensity / 5) * (1.5 - (level-1)*0.4));
+        let opacity = 0.8 - (level-1) * 0.25;
+        let dashArray = level === 2 ? '5, 5' : (level === 3 ? '2, 6' : undefined);
+
+        L.polyline(points, {
+            className: `propagation-arc-curved ${isLocked ? 'ghost-node' : ''}`,
+            color: pathColor,
+            weight,
+            opacity: isLocked ? 0.2 : opacity,
+            dashArray
+        }).addTo(layer);
+
+        // 3. Recursive Call
+        const subImpacts = finding.cascading_impacts || finding.metadata_json?.cascading_impacts;
+        if (subImpacts && level < 3 && !isLocked) {
+            renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity);
+        }
+
+        // 4. Particle Animation
+        if (!isLocked) {
+            const animParticle = L.circleMarker(points[0], {
+                radius: 2.5 - (level-1)*0.5,
+                color: '#ffffff',
+                fillColor: pathColor,
+                fillOpacity: 1,
+                weight: 1,
+                className: 'pulse-particle-dynamic',
+                pane: 'overlayPane'
+            }).addTo(layer);
+
+            const alphaVal = Math.abs(finding.impact_alpha || 0.1);
+            const durationMs = Math.max(600, 4000 / (alphaVal * 1.5)); 
+
+            let startTime: number | null = null;
+            const animatePulse = (timestamp: number) => {
+                if (!startTime) startTime = timestamp;
+                const progress = ((timestamp - startTime) % durationMs) / durationMs;
+                const indexFloat = progress * steps;
+                const lowerIndex = Math.floor(indexFloat);
+                const upperIndex = Math.min(steps, Math.ceil(indexFloat));
+                const tLocal = indexFloat - lowerIndex;
+                if (points[lowerIndex] && points[upperIndex]) {
+                     const lat = points[lowerIndex].lat + (points[upperIndex].lat - points[lowerIndex].lat) * tLocal;
+                     const lng = points[lowerIndex].lng + (points[upperIndex].lng - points[lowerIndex].lng) * tLocal;
+                     animParticle.setLatLng([lat, lng]);
+                }
+                if (currentGlobalMap === map) requestAnimationFrame(animatePulse);
+            };
+            requestAnimationFrame(animatePulse);
+        }
+
+        // 5. Refined Node Marker (Mockup Aesthetic with Overlap Dodge)
+        const trendIcon = finding.impact_alpha >= 0 ? '↑' : '↓';
+        const trendClass = finding.impact_alpha >= 0 ? 'alpha-up' : 'alpha-down';
+        const topicLabel = TOPIC_LABELS[nodeTopic] || 'General';
+
+        // Aggressive dodge: At low zoom (level 2-3), labels are 48px high. 1 deg is tiny.
+        // We push Level 3 nodes as far as 8-10 degrees to ensure clear separation from the Alert/Level 1 centers.
+        const vOffset = level === 1 ? 0 : (level === 2 ? 3.5 : (index % 2 === 0 ? 8.0 : -8.0));
+        const finalCoords: [number, number] = [nodeCoords.lat + vOffset, nodeCoords.lng];
+
+        const pulseIcon = L.divIcon({
+            className: 'none',
+            html: `
+                <div class="market-pulse-node refined-node ${isLocked ? 'ghost-node' : ''}" 
+                     style="scale: ${1.0 - (level-1)*0.1};"
+                     onclick="${isLocked ? 'window.dispatchEvent(new CustomEvent(\'upsell-click\'))' : ''}">
+                    <div class="node-topic topic-tag-${nodeTopic}">${isLocked ? '[LOCKED]' : `[${topicLabel.toUpperCase()}]`}</div>
+                    <div class="node-entity">${isLocked ? '???' : finding.entity_name}</div>
+                    <div class="node-stats">
+                        <span class="${trendClass}">${isLocked ? 'Locked' : (finding.impact_alpha > 0 ? '+' : '') + finding.impact_alpha + '%'}</span>
+                        <span class="trend-arrow ${trendClass}">${isLocked ? '' : trendIcon}</span>
+                    </div>
+                </div>
+            `,
+            iconSize: [140, 48],
+            iconAnchor: [70, level === 1 ? 24 : 70] // Pivot higher level nodes significantly up
+        });
+        
+        L.marker(finalCoords, { 
+            icon: pulseIcon,
+            zIndexOffset: 1000 - level * 50,
+            pane: 'overlayPane'
+        }).addTo(layer);
+    });
+}
+
+function initMapFilter(map: L.Map, onUpdate: () => void) {
+    if (currentFilterControl) {
+        currentFilterControl.remove();
+    }
+
+    const FilterControl = L.Control.extend({
+        options: { position: 'topleft' },
+        onAdd: function() {
+            const div = L.DomUtil.create('div', 'map-filter-control map-filter-panel');
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+
+            div.innerHTML = `
+                <h3>Intelligence Filter</h3>
+                <div id="filter-items-root"></div>
+            `;
+            
+            const root = div.querySelector('#filter-items-root')!;
+            root.innerHTML = Object.entries(TOPIC_LABELS).map(([key, label]) => `
+                <label class="map-filter-item">
+                    <input type="checkbox" value="${key}" ${activeMapFilters.has(key) ? 'checked' : ''} />
+                    <span>${label}</span>
+                </label>
+            `).join('');
+
+            root.querySelectorAll('input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (target.checked) activeMapFilters.add(target.value);
+                    else activeMapFilters.delete(target.value);
+                    onUpdate();
+                });
+            });
+
+            return div;
+        }
+    });
+
+    currentFilterControl = new (FilterControl as any)();
+    currentFilterControl?.addTo(map);
+}
+

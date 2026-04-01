@@ -1,3 +1,5 @@
+@import "leaflet/dist/leaflet.css";
+
 :root {
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.6;
@@ -69,6 +71,11 @@ body.no-scroll {
   min-height: 100vh;
 }
 
+@keyframes fadeInUI {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 .app-container {
   display: grid;
   grid-template-columns: 280px 1fr 320px;
@@ -84,6 +91,17 @@ body.no-scroll {
   flex: 1;
   overflow-y: auto;
   padding-right: 0.5rem;
+  opacity: 1;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Reset specific elements pointer events */
+#alerts-container {
+  pointer-events: auto;
+}
+
+.alert-card, button, a, .report-card, .plan-card, .plan-section, .topic-btn, select, .live-feed-container {
+  pointer-events: auto;
 }
 
 #app.login-page {
@@ -173,10 +191,8 @@ body.no-scroll {
    Sidebar
    ============================== */
 
-.sidebar {
-  background: rgba(22, 27, 34, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+.sidebar, .sidebar-right {
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 1.5rem;
@@ -189,6 +205,7 @@ body.no-scroll {
   overflow-x: hidden;
   word-wrap: break-word;
 }
+
 
 .sidebar h2 {
   font-size: var(--font-l);
@@ -239,6 +256,18 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   gap: var(--space-m);
   width: 100%;
   min-width: 0;
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  transition: opacity 0.2s ease-in-out;
+}
+
+#map-page-container {
+  height: calc(100vh - 120px);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
 }
 
 .header-row {
@@ -277,11 +306,15 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   flex-direction: column;
   gap: 1rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .alert-card:hover {
-  background: rgba(22, 27, 34, 0.6);
-  border-color: rgba(88, 166, 255, 0.25);
+  background: rgba(88, 166, 255, 0.05);
+  border-color: rgba(88, 166, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 0 15px rgba(88, 166, 255, 0.1);
 }
 
 .alert-card.critical { border-left: 4px solid #f85149; }
@@ -792,9 +825,86 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   align-items: center;
 }
 
-.login-card input:focus {
-  border-color: var(--accent);
+/* ==============================
+   Phase 4: Propagation UI
+   ============================== */
+
+.propagation-arc {
+  stroke-dasharray: 10, 5;
+  animation: arc-flow 3s linear infinite;
+  stroke: var(--accent);
+  stroke-width: 2;
+  fill: none;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.propagation-arc.active {
+  opacity: 0.6;
+}
+
+@keyframes arc-flow {
+  from { stroke-dashoffset: 30; }
+  to { stroke-dashoffset: 0; }
+}
+
+.market-impact-node {
   background: var(--bg-tertiary);
+  border: 1px solid var(--border-active);
+  border-radius: 20px;
+  padding: 4px 10px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: help;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: node-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.market-impact-node.positive { 
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.market-impact-node.negative {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+@keyframes node-appear {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.impact-sparkline {
+  width: 30px;
+  height: 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.impact-sparkline div {
+  width: 4px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.propagation-modal-btn {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--border-active);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-top: 8px;
 }
 
 /* ==============================
@@ -1624,7 +1734,148 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     background: #3fb950;
 }
 
-/* Ghost Nodes & Premium Paywall */
+/* Ghost Nodes & Premium Paywall Visibility */
+.ghost-node {
+    filter: grayscale(1) blur(2px) !important;
+    opacity: 0.5 !important;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.ghost-node:hover {
+    filter: grayscale(0.5) blur(1px) !important;
+    opacity: 0.8 !important;
+}
+
+/* Market Pulse: Glassmorphism Labels */
+.market-pulse-node {
+    background: rgba(22, 27, 34, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+    z-index: 1100;
+}
+
+.market-pulse-node:hover {
+    background: rgba(22, 27, 34, 0.95);
+    border-color: var(--accent);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(88, 166, 255, 0.3);
+}
+
+/* ==============================
+   Refined Map Intelligence UI
+   ============================== */
+
+.map-filter-panel {
+    z-index: 2000;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    color: white;
+    width: 220px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    pointer-events: auto !important;
+    margin: 10px !important;
+    animation: fadeInDown 0.4s ease-out;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.map-filter-panel h3 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.4rem;
+}
+
+.map-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s;
+}
+
+.map-filter-item:hover {
+    opacity: 0.8;
+}
+
+.map-filter-item input {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* Refined Node Labels (Mockup Match) */
+.refined-node {
+    padding: 8px 12px;
+    min-width: 140px;
+}
+
+.refined-node .node-topic {
+    font-size: 0.55rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+}
+
+.refined-node .node-entity {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: #f0f6fc;
+}
+
+.refined-node .node-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.refined-node .trend-arrow {
+    font-size: 0.9rem;
+    margin-left: 4px;
+}
+
+/* Topic Semantic Colors */
+.topic-tag-geopolitical { color: #58a6ff; }
+.topic-tag-supply_chain { color: #ffa657; }
+.topic-tag-market { color: #56d364; }
+.topic-tag-tech { color: #d2a8ff; }
+.topic-tag-default { color: #8b949e; }
+
+.market-pulse-node .alpha-up { color: #3fb950; font-weight: 700; }
+.market-pulse-node .alpha-down { color: #f85149; font-weight: 700; }
+
 .nexus-preview {
     position: relative;
     height: 300px;
@@ -1633,23 +1884,6 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     margin: 1.5rem 0;
     overflow: hidden;
     border: 1px dashed var(--border-active);
-}
-
-.ghost-node {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    background: rgba(99, 102, 241, 0.05);
-    border: 2px solid rgba(99, 102, 241, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-    font-weight: bold;
-    font-size: 2rem;
-    filter: blur(2px);
-    animation: float-ghost 6s infinite ease-in-out;
 }
 
 @keyframes float-ghost {
@@ -1688,4 +1922,86 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .comparison-table-mini tr:last-child td {
     border-bottom: none;
+}
+
+/* Leaflet Overrides */
+.leaflet-container {
+    background: #0b0e14 !important;
+    font-family: inherit;
+}
+.leaflet-tile {
+    /* Subtle contrast for the base layer */
+    filter: brightness(1.2) contrast(1.1);
+}
+.map-labels {
+    /* Make English labels pop */
+    filter: brightness(2.0) contrast(1.5) saturate(0) !important;
+    z-index: 400;
+}
+.leaflet-bar {
+    border: 1px solid var(--border) !important;
+    box-shadow: none !important;
+}
+.leaflet-bar a {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+.leaflet-popup-content-wrapper {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border);
+    border-radius: 12px !important;
+}
+.leaflet-popup-tip {
+    background: var(--bg-secondary) !important;
+}
+.map-marker-pulse {
+    position: relative;
+    width: 20px;
+    height: 20px;
+}
+
+.map-marker-pulse .ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #f43f5e;
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
+    animation: pulse-ring 1.8s infinite cubic-bezier(0.24, 0, 0.38, 1);
+}
+
+.map-marker-pulse .core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 8px #f43f5e;
+    z-index: 2;
+}
+
+/* Critical State: Faster pulse, brighter CORE */
+.map-marker-pulse--critical .ring {
+    animation-duration: 1.2s;
+    background: #ff0033;
+}
+
+.map-marker-pulse--critical .core {
+    width: 8px;
+    height: 8px;
+    box-shadow: 0 0 15px #ffffff, 0 0 20px #ff0033;
+}
+
+@keyframes pulse-ring {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
+    70% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; box-shadow: 0 0 0 15px rgba(244, 63, 94, 0); }
+    100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
 }

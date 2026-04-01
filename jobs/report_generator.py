@@ -15,6 +15,9 @@ from llm.prompts import SYSTEM_PROMPT, NEUTRAL_ANALYSIS_PROMPT, LLM_POLISH_PROMP
 from llm.client import generate_analysis, get_metrics_summary
 
 TREND_LOOKBACK_DAYS = 7
+from processor.location_resolver import LocationResolver
+
+resolver = LocationResolver()
 logger = logging.getLogger(__name__)
 
 from render.markdown_builder import build_publish_markdown, build_teaser_markdown, build_degraded_markdown
@@ -909,6 +912,10 @@ async def run_report_generation(
         plan_required = "experts"
 
     if not repo:
+        # Geotagging (Heuristic First)
+        coords = resolver.resolve_heuristically(f"{derived_title} {teaser_md}")
+        lat, lng = coords if coords else (None, None)
+        
         repo = Report(
             report_type=current_type,
             topic_code=topic,
@@ -920,7 +927,9 @@ async def run_report_generation(
             is_premium=is_premium,
             plan_required=plan_required,
             source_count=count,
-            confidence_level=conf
+            confidence_level=conf,
+            location_lat=lat,
+            location_lng=lng
         )
         db.add(repo)
     else:
