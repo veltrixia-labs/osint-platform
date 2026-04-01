@@ -694,7 +694,15 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                         });
 
                         console.log("[DEBUG] Final HTML Generated. Length:", html.length);
-                        return html || simpleMarkdown(sanitizeMarkdownIntensities(md));
+                        
+                        // Robust Fallback: If structured extraction yielded nothing, use the raw markdown
+                        if (!html.trim()) {
+                            console.warn("[Antigravity] Structured extraction failed. Falling back to simple markdown.");
+                            html = simpleMarkdown(sanitizeMarkdownIntensities(md));
+                        }
+                        
+                        // Final Failsafe: if truly empty, show a recovery message
+                        return html || `<div class="u-p-2 u-text-center" style="opacity:0.6;">(Detailed intelligence for this sector is currently being synchronized...)</div>`;
                     })()}
                 </div>
 
@@ -816,14 +824,12 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
         
         // Create an exclusive layer for dynamic alerts/arcs 
         currentDynamicLayer = L.layerGroup().addTo(currentGlobalMap);
-
-        // UI: Native Filter Control
-        initMapFilter(currentGlobalMap, () => {
-            renderMap(container, _tier, focusAlertId);
-        });
-    } else {
-        initMapFilter(currentGlobalMap, () => renderMap(container, _tier, focusAlertId));
     }
+    
+    // UI: Native Filter Control (Always Refresh/Re-bind)
+    initMapFilter(currentGlobalMap, () => {
+        renderMap(container, _tier, focusAlertId);
+    });
 
     const map = currentGlobalMap;
     const layerGroup = currentDynamicLayer!;

@@ -32,8 +32,8 @@ from api.gating import (
 from db.enums import ReportType
 
 # Production Traceability
-COMMIT_HASH = "f5a9c36-repair"
-DEPLOY_TIMESTAMP = "2026-04-01T15:15:00Z"
+COMMIT_HASH = "2e4d9b1-stable"
+DEPLOY_TIMESTAMP = "2026-04-01T16:05:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)
@@ -425,7 +425,9 @@ async def get_alerts(
             "spike_delta": a.metadata_json.get("spike_delta", 0.0) if a.metadata_json else 0.0,
             "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else [],
             # --- Tiered Cascading Impact Gating ---
-            "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if a.metadata_json else []
+            "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if a.metadata_json else [],
+            "location_lat": a.location_lat,
+            "location_lng": a.location_lng
         }
         for a in alerts
     ]
@@ -462,7 +464,9 @@ async def get_live_alerts(
             "triggered_at": a.triggered_at.isoformat(),
             "fidelity_score": a.fidelity_score,
             "intensity": a.intensity,
-            "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if a.metadata_json else []
+            "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if a.metadata_json else [],
+            "location_lat": a.location_lat,
+            "location_lng": a.location_lng
         }
         for a in alerts
     ]
@@ -586,7 +590,9 @@ async def get_report_detail(
         "confidence_level": str(report.confidence_level or "Low"),
         "confidence_score": get_conf_score(report.confidence_level),
         "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
-        "plan_required": plan_required
+        "plan_required": plan_required,
+        "location_lat": report.location_lat,
+        "location_lng": report.location_lng
     }
 
 @app.get("/api/reports")
@@ -647,7 +653,9 @@ async def list_reports(
                 "is_premium": bool(r.is_premium),
                 "plan_required": r.plan_required or "free",
                 "confidence_score": 0.92 if r.confidence_level == "High" else 0.65 if r.confidence_level == "Medium" else 0.35,
-                "created_at": r.created_at.isoformat() if hasattr(r.created_at, 'isoformat') else str(r.created_at)
+                "created_at": r.created_at.isoformat() if hasattr(r.created_at, 'isoformat') else str(r.created_at),
+                "location_lat": r.location_lat,
+                "location_lng": r.location_lng
             } for r in final_reports
         ]
     except Exception as e:
@@ -688,7 +696,9 @@ async def get_public_report_preview(
         "is_premium": report.is_premium,
         "source_count": report.source_count,
         "confidence_level": report.confidence_level,
-        "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at
+        "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
+        "location_lat": report.location_lat,
+        "location_lng": report.location_lng
     }
 
 @app.post("/api/analytics/event")
