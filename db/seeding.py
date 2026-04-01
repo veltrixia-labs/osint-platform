@@ -23,19 +23,21 @@ async def seed_admin(db):
         admin = result.scalar_one_or_none()
 
         if admin:
-            logger.info("ADMIN_SEED: Admin user 'admin' already exists.")
-            return
-
-        # Create admin user
-        hashed_pw = get_password_hash(admin_password)
-        new_admin = AnalystProfile(
-            telegram_chat_id="admin",
-            hashed_password=hashed_pw,
-            user_role="admin",
-            is_active=True,
-            subscription_tier="enterprise"
-        )
-        db.add(new_admin)
+            # Force update password for production recovery
+            admin.hashed_password = get_password_hash(admin_password)
+            logger.info("[Antigravity] Admin user password synchronized with environment.")
+        else:
+            # Create admin user
+            hashed_pw = get_password_hash(admin_password)
+            admin = AnalystProfile(
+                telegram_chat_id="admin",
+                hashed_password=hashed_pw,
+                user_role="admin",
+                is_active=True,
+                subscription_tier="enterprise"
+            )
+            db.add(admin)
+            logger.info("ADMIN_SEED: Created admin user 'admin' successfully.")
 
         # Create testuser
         test_pw = get_password_hash("testuser")

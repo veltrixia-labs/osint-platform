@@ -32,8 +32,8 @@ from api.gating import (
 from db.enums import ReportType
 
 # Production Traceability
-COMMIT_HASH = "caee004"
-DEPLOY_TIMESTAMP = "2026-03-31T10:00:00Z"
+COMMIT_HASH = "608d37c"
+DEPLOY_TIMESTAMP = "2026-04-01T14:40:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)
@@ -84,6 +84,7 @@ async def startup_event():
         async with AsyncSessionLocal() as session:
             await seed_admin(session)
         logger.info("Startup initialization complete.")
+        logger.info("[Antigravity] Production build recovery sequence: COMPLETED.")
     except Exception as e:
         logger.error(f"Error during API startup initialization: {e}", exc_info=True)
 
