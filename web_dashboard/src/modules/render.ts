@@ -234,6 +234,8 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 <div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.8;">
                     ${accessible ? (alert.delivery ? `DIRECT INTELLIGENCE SIGNAL` : 'BROADCAST ALERT') : `Locked Sector: ${topicDef.label}`}
                 </div>
+                <div class="validation-badge" style="font-size: 0.65rem; color: #3fb950; display: flex; align-items: center; gap: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                    ${accessible ? '<span>✓</span> Validated' : ''}
                 </div>
             </div>
             
