@@ -888,7 +888,7 @@ async def run_report_generation(
     logger.info(f"Persisting report with metrics -> source_count: {count}, confidence: {conf}, title: {derived_title[:30]}")
 
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    if topic is None:
+    if effective_topic is None:
         stmt = select(Report).where(
             Report.topic_code.is_(None),
             Report.report_type == report_type,
@@ -896,7 +896,7 @@ async def run_report_generation(
         )
     else:
         stmt = select(Report).where(
-            Report.topic_code == topic,
+            Report.topic_code == effective_topic,
             Report.report_type == report_type,
             Report.created_at >= today_start
         )
@@ -918,7 +918,7 @@ async def run_report_generation(
         
         repo = Report(
             report_type=current_type,
-            topic_code=topic,
+            topic_code=effective_topic,
             period_start=now - timedelta(days=period_days),
             period_end=now,
             title=derived_title,
@@ -942,6 +942,7 @@ async def run_report_generation(
         repo.plan_required = plan_required
         repo.source_count = count
         repo.confidence_level = conf
+        repo.topic_code = effective_topic # [v30] Persist correction
 
     await db.flush()
     report_id = repo.id

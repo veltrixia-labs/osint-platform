@@ -503,7 +503,20 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
     const date = new Date(cleanDate).toLocaleDateString();
 
     // Use canonical mapping layer
-    const topicDef = getTopicDef(report.topic_code ?? null);
+    // [v30] Dynamic Topic Sync: Infer topic from title suffix if possible
+    let effectiveTopic = report.topic_code ?? null;
+    const titleMatch = report.title ? report.title.match(/\|\s*([^\|\s].*)$/) : null;
+    if (titleMatch) {
+        const titleSuffix = titleMatch[1].toLowerCase();
+        if (titleSuffix.includes('energy')) effectiveTopic = 'energy_resource_risk';
+        else if (titleSuffix.includes('market')) effectiveTopic = 'global_market_intelligence';
+        else if (titleSuffix.includes('defense')) effectiveTopic = 'defense_technology';
+        else if (titleSuffix.includes('ai') || titleSuffix.includes('semiconductor')) effectiveTopic = 'ai_semiconductor_intelligence';
+        else if (titleSuffix.includes('supply')) effectiveTopic = 'supply_chain_intelligence';
+        else if (titleSuffix.includes('crypto')) effectiveTopic = 'crypto_geopolitics';
+    }
+
+    const topicDef = getTopicDef(effectiveTopic);
     const topicLabel = `${topicDef.icon} ${topicDef.label}`;
     const rtNorm = normalizeReportType(report.report_type);
     const rtLabel = REPORT_TYPE_LABELS[rtNorm] ?? rtNorm.toUpperCase();
@@ -526,24 +539,24 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
         } catch (e) { console.error("Evidence parse error", e); }
     }
 
-    if (evidenceData.length === 0 && md.includes('# Sources')) {
-        const sourcesSection = md.split('# Sources')[1] || "";
-        const links = sourcesSection.match(/\[(.*?)\]\((.*?)\)/g);
-        if (links) {
-            evidenceData = links.map((l: string) => {
-                const parts = l.match(/\[(.*?)\]\((.*?)\)/);
-                return {
-                    title: parts ? parts[1] : "Verified Source",
-                    type: "External Doc",
-                    explanation: "Supporting data node captured during ingestion window.",
-                    link: parts ? parts[2] : "#"
-                };
-            });
+    // [v30] Robust Evidence/Source Section Stripping (Regex-based to avoid duplications)
+    const sourcePatterns = [
+        /#+\s*Sources\b/gi,
+        /#+\s*Evidence\b/gi,
+        /#+\s*References\b/gi,
+        /EVIDENCE LOG/gi
+    ];
+    
+    let sourceIndex = -1;
+    sourcePatterns.forEach(p => {
+        const m = md.match(p);
+        if (m && m.index !== undefined) {
+            if (sourceIndex === -1 || m.index < sourceIndex) sourceIndex = m.index;
         }
-    }
+    });
 
-    if (md.includes('# Sources')) {
-        md = md.split('# Sources')[0].trim();
+    if (sourceIndex !== -1) {
+        md = md.substring(0, sourceIndex).trim();
     }
 
     // Terminology Normalization (Depth-based Differentiation)
@@ -703,13 +716,18 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
 
                         console.log("[DEBUG] Final HTML Generated. Length:", html.length);
                         
-                        // Robust Fallback: If structured extraction yielded nothing, use the raw markdown
-                        if (!html.trim() && md.trim().length > 0) {
-                            console.warn("[Antigravity] Structured extraction failed. Falling back to simple markdown.");
+                        // [v30] Content Lockdown: If structured rendering is abnormally thin compared to source
+                        const sourceLen = md.trim().length;
+                        const resultLen = html.replace(/<[^>]*>/g, '').trim().length; // Text-only length
+                        
+                        const isAbnormallyThin = sourceLen > 500 && resultLen < 150;
+
+                        if ((!html.trim() || isAbnormallyThin) && sourceLen > 0) {
+                            console.warn("[Antigravity] Structured extraction failed or thin. Falling back to simple markdown.");
                             html = simpleMarkdown(sanitizeMarkdownIntensities(md));
                         }
                         
-                        // Final Failsafe: if truly empty, show a recovery message
+                        // Final Failsafe
                         return html || `<div class="u-p-2 u-text-center" style="opacity:0.6;">(Detailed intelligence for this sector is currently being synchronized...)</div>`;
                     })()}
                 </div>
