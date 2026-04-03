@@ -85,6 +85,7 @@ export interface Report {
     topic_code: string;
     title: string;
     teaser_md: string;
+    summary_bluf?: string; // Phase 19.5 canonical field
     content_markdown: string;
     content_preview?: string;
     intensity?: number;

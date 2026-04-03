@@ -630,7 +630,7 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                         const sections: { title: string, content: string }[] = [];
                         let currentSec = { title: '', content: '' };
                         lines.forEach((l: string) => {
-                            const h = l.match(/^(#{1,3})\s+(.*)$/);
+                            const h = l.match(/^(#{1,3})\s*(.*)$/);
                             if (h) {
                                 if (currentSec.title || currentSec.content.trim()) sections.push({ ...currentSec });
                                 currentSec = { title: h[2].trim(), content: '' };
@@ -704,7 +704,7 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                         console.log("[DEBUG] Final HTML Generated. Length:", html.length);
                         
                         // Robust Fallback: If structured extraction yielded nothing, use the raw markdown
-                        if (!html.trim()) {
+                        if (!html.trim() && md.trim().length > 0) {
                             console.warn("[Antigravity] Structured extraction failed. Falling back to simple markdown.");
                             html = simpleMarkdown(sanitizeMarkdownIntensities(md));
                         }

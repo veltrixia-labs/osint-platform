@@ -558,11 +558,9 @@ async function initDashboard() {
                         const accessible = canAccessReport(user!.tier, r.report_type, r.topic_code ?? null);
                         const planReq = r.plan_required || REPORT_TYPE_MIN_TIER[rtNorm] || 'free';
                         
-                        // Extract BLUF (Bottom Line Up Front) from content or preview
-                        const bluf = (r.content_preview || r.content_markdown || "")
-                            .replace(/#+ /g, '')
-                            .split('\n')
-                            .filter((line: string) => line.trim().length > 20)[0]?.substring(0, 120) + '...';
+                        // Extract BLUF (Bottom Line Up Front) from API field or fall back safely
+                        const bluf = (r.summary_bluf || r.teaser_md || "")
+                            .substring(0, 120) + ( (r.summary_bluf || r.teaser_md || "").length > 120 ? '...' : '');
 
                         return `
                         <div class="report-row ${!accessible ? 'report-row--locked' : ''}" 
