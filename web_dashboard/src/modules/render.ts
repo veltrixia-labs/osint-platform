@@ -1,10 +1,10 @@
 import L from 'leaflet';
 import type { Alert, AnalystProfile, HealthData } from './api';
-import { fetchAlerts, fetchReports, updateWatchlist } from './api';
+import { fetchAlerts, updateWatchlist } from './api';
 import { getTopicDef, canAccessTopic, canAccessReport, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
 import { STRATEGIC_ASSETS, getStrategicContext } from './infrastructure';
  
-let activeMapFilters = new Set(['geopolitical', 'supply_chain', 'market', 'tech']);
+let activeMapFilters = new Set(['global']);
 
 const TOPIC_LABELS: Record<string, string> = {
     geopolitical: 'Geopolitical',
@@ -870,17 +870,15 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
     }
 
     try {
-        // Fetch Alerts & Reports
-        const [alerts, reports] = await Promise.all([
-            fetchAlerts(),
-            fetchReports()
+        // Fetch Alerts (Reports removed from map for monitor purity)
+        const [alerts] = await Promise.all([
+            fetchAlerts()
         ]);
 
         // 1. Context Isolation (Exclusive Focus Mode)
         // If an alert is focused, we hide all OTHER alerts and reports to avoid clutter/overlap.
         let targetAlert: Alert | null = null;
         let filteredAlerts = alerts;
-        let filteredReports = reports;
 
         if (focusAlertId) {
             targetAlert = alerts.find(a => a.id === focusAlertId) || null;
@@ -888,13 +886,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                 console.log(`[Antigravity] Exclusive Focus: ${targetAlert.target_label}`);
                 filteredAlerts = [targetAlert];
                 
-                // Only show reports that are explicitly linked to this alert
-                const tid = targetAlert.related_report_id;
-                if (tid) {
-                    filteredReports = reports.filter(r => r.id === tid);
-                } else {
-                    filteredReports = [];
-                }
+// Filter reports removed for monitor purity
             } else {
                 console.warn(`[Antigravity] Focus Alert ID ${focusAlertId} not found.`);
             }
@@ -1038,34 +1030,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             }
         });
 
-        // Plot Reports (Distinct icon for Expert Reports)
-        const reportIcon = L.divIcon({
-            className: 'custom-div-icon',
-            html: '<div class="map-marker-pulse" style="background:var(--success); border:2px solid white; scale:0.7;"></div>',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
-        });
-
-        filteredReports.forEach(report => {
-            if (report.location_lat && report.location_lng) {
-                const popupContent = `
-                    <div style="padding:10px; min-width:250px;">
-                        <strong style="color:var(--success); font-size:1rem; display:block; margin-bottom:4px;">EXPERT: ${report.title}</strong>
-                        <button class="plan-cta-btn" style="width:100%; padding:8px; font-size:0.8rem; background:var(--success); border-color:var(--success);" 
-                            onclick="window.dispatchEvent(new CustomEvent('view-report', {detail: {id: '${report.id}'}}))">
-                            Access Analysis &rarr;
-                        </button>
-                    </div>
-                `;
-                L.marker([report.location_lat, report.location_lng], { 
-                    icon: reportIcon,
-                    zIndexOffset: 800,
-                    pane: 'overlayPane'
-                })
-                    .addTo(layerGroup)
-                    .bindPopup(popupContent);
-            }
-        });
+// [v36] Report markers removed from map for 'Strategic Monitor' purity
 
         }, 300); // END delayed plotting loop
 
@@ -1094,17 +1059,27 @@ const renderRegionalContext = (layerGroup: L.LayerGroup, alerts: any[]) => {
 
     // 2. [v35] Persistent Strategic Infrastructure Layer
     STRATEGIC_ASSETS.forEach(asset => {
-        const color = asset.type === 'choke_point' ? '#58a6ff' : (asset.type === 'energy' ? '#f1e05a' : '#bc8cff');
+        // [v36] Asset Visibility Filter: Show if topic matches or it's a global choke point
+        const isVisible = !asset.topic_code || activeMapFilters.has(asset.topic_code as string) || activeMapFilters.has('global');
+        if (!isVisible) return;
+
+        const color = asset.type === 'choke_point' ? '#58a6ff' : 
+                     (asset.type === 'energy' ? '#f1e05a' : 
+                     (asset.type === 'military' ? '#ff7b72' : 
+                     (asset.type === 'market' ? '#3fb950' : 
+                     (asset.type === 'crypto' ? '#f78166' : '#bc8cff'))));
+        
         const assetIcon = L.divIcon({
             className: 'infrastructure-node',
             html: `
                 <div class="infra-marker-container ${asset.type}" title="${asset.name}">
                     <div class="infra-dot" style="background: ${color};"></div>
+                    <div class="infra-symbol">${asset.symbol || ''}</div>
                     <div class="infra-label">${asset.name}</div>
                 </div>
             `,
-            iconSize: [80, 20],
-            iconAnchor: [40, 10]
+            iconSize: [100, 24],
+            iconAnchor: [50, 12]
         });
 
         L.marker([asset.lat, asset.lng], { icon: assetIcon, zIndexOffset: 500, pane: 'overlayPane' }).addTo(layerGroup);
@@ -1286,47 +1261,46 @@ function initMapFilter(map: L.Map, onUpdate: () => void) {
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
 
+            // [v36] 7-Domain Strategic Asset List
+            const TOPICS = [
+                { id: 'global', label: 'Monitor', icon: '🌐', color: '#58a6ff' },
+                { id: 'energy_resource_risk', label: 'Energy', icon: '⚡', color: '#d29922' },
+                { id: 'global_market_intelligence', label: 'Market', icon: '🏛️', color: '#3fb950' },
+                { id: 'crypto_geopolitics', label: 'Crypto', icon: '₿', color: '#f78166' },
+                { id: 'ai_semiconductor_intelligence', label: 'AI/Tech', icon: '🤖', color: '#bc8cff' },
+                { id: 'defense_technology', label: 'Defense', icon: '🛡️', color: '#ff7b72' },
+                { id: 'supply_chain_intelligence', label: 'Trade', icon: '🚢', color: '#79c0ff' }
+            ];
+
             div.innerHTML = `
-                <h3>Strategic Monitoring</h3>
-                <div class="monitor-hotbar u-flex" style="gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
-                    <button class="preset-btn" data-preset="energy" title="Energy Security Mode">⚡ Energy</button>
-                    <button class="preset-btn" data-preset="trade" title="Maritime Trade Mode">🚢 Trade</button>
-                    <button class="preset-btn" data-preset="tech" title="Tech Supremacy Mode">💾 Tech</button>
+                <div class="monitor-header u-flex-between">
+                    <h3>Strategic Monitoring</h3>
+                    <span style="font-size: 0.65rem; opacity: 0.5;">LIVE V1.5</span>
                 </div>
-                <div id="filter-items-root"></div>
+                <div class="monitor-hotbar">
+                    ${TOPICS.map(t => `
+                        <button class="preset-btn ${activeMapFilters.has(t.id) ? 'active' : ''}" 
+                                data-preset="${t.id}" 
+                                style="--accent-color: ${t.color}"
+                                title="${t.label} Intelligence">
+                            <span class="btn-icon">${t.icon}</span>
+                            <span class="btn-label">${t.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
             `;
             
-            // [v35] Preset Button Handlers
+            // [v36] Preset Button Handlers (Exclusive Filter)
             div.querySelectorAll('.preset-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const preset = (e.currentTarget as HTMLElement).dataset.preset;
+                    const preset = (e.currentTarget as HTMLElement).dataset.preset!;
                     activeMapFilters.clear();
-                    if (preset === 'energy') {
-                        activeMapFilters.add('supply_chain');
-                    } else if (preset === 'trade') {
-                        activeMapFilters.add('geopolitical');
-                        activeMapFilters.add('supply_chain');
-                    } else if (preset === 'tech') {
-                        activeMapFilters.add('tech');
-                        activeMapFilters.add('market');
-                    }
-                    onUpdate();
-                });
-            });
-
-            const root = div.querySelector('#filter-items-root')!;
-            root.innerHTML = Object.entries(TOPIC_LABELS).map(([key, label]) => `
-                <label class="map-filter-item">
-                    <input type="checkbox" value="${key}" ${activeMapFilters.has(key) ? 'checked' : ''} />
-                    <span>${label}</span>
-                </label>
-            `).join('');
-
-            root.querySelectorAll('input').forEach(input => {
-                input.addEventListener('change', (e) => {
-                    const target = e.target as HTMLInputElement;
-                    if (target.checked) activeMapFilters.add(target.value);
-                    else activeMapFilters.delete(target.value);
+                    activeMapFilters.add(preset);
+                    
+                    // Correlation Logic: Tech also shows Global Market
+                    if (preset === 'ai_semiconductor_intelligence') activeMapFilters.add('global_market_intelligence');
+                    if (preset === 'supply_chain_intelligence') activeMapFilters.add('global');
+                    
                     onUpdate();
                 });
             });

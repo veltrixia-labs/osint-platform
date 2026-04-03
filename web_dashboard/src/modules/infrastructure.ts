@@ -3,37 +3,45 @@ export interface StategicAsset {
     name: string;
     lat: number;
     lng: number;
-    type: 'choke_point' | 'energy' | 'tech' | 'corpHQ';
+    type: 'choke_point' | 'energy' | 'tech' | 'corpHQ' | 'military' | 'crypto' | 'market';
+    topic_code: string | null; // Links to ACCESS_MAP topic_code
     description: string;
     importance: number; // 0.0 to 1.0
+    symbol?: string;    // Override icon
 }
 
 export const STRATEGIC_ASSETS: StategicAsset[] = [
-    // Choke Points (Maritime Infrastructure)
-    { id: 'suez', name: 'Suez Canal', lat: 30.5852, lng: 32.2654, type: 'choke_point', description: 'Global trade bottleneck (Suez)', importance: 1.0 },
-    { id: 'hormuz', name: 'Strait of Hormuz', lat: 26.5667, lng: 56.25, type: 'choke_point', description: 'Primary oil transit nexus', importance: 1.0 },
-    { id: 'malacca', name: 'Strait of Malacca', lat: 2.25, lng: 102.25, type: 'choke_point', description: 'Main shipping channel between Indian & Pacific oceans', importance: 0.95 },
-    { id: 'mandeb', name: 'Bab-el-Mandeb', lat: 12.58, lng: 43.34, type: 'choke_point', description: 'Red Sea entrance / Suez Gateway', importance: 0.9 },
-    { id: 'panama', name: 'Panama Canal', lat: 9.08, lng: -79.68, type: 'choke_point', description: 'Atlantic/Pacific transit hub', importance: 0.85 },
-    { id: 'gibraltar', name: 'Strait of Gibraltar', lat: 35.95, lng: -5.48, type: 'choke_point', description: 'Mediterranean entrance', importance: 0.8 },
-    { id: 'bosphorus', name: 'Turkish Straits', lat: 41.02, lng: 29.02, type: 'choke_point', description: 'Black Sea to Mediterranean access', importance: 0.8 },
+    // --- Geopolitical & Trade Choke Points ---
+    { id: 'suez', name: 'Suez Canal', lat: 30.5852, lng: 32.2654, type: 'choke_point', topic_code: 'supply_chain_intelligence', description: 'Global trade bottleneck (Suez)', importance: 1.0, symbol: '🚢' },
+    { id: 'hormuz', name: 'Strait of Hormuz', lat: 26.5667, lng: 56.25, type: 'choke_point', topic_code: 'energy_resource_risk', description: 'Primary oil transit nexus', importance: 1.0, symbol: '🛢️' },
+    { id: 'malacca', name: 'Strait of Malacca', lat: 2.25, lng: 102.25, type: 'choke_point', topic_code: 'supply_chain_intelligence', description: 'Critical Indo-Pacific trade artery', importance: 0.95, symbol: '🚢' },
+    { id: 'mandeb', name: 'Bab-el-Mandeb', lat: 12.58, lng: 43.34, type: 'choke_point', topic_code: 'supply_chain_intelligence', description: 'Red Sea Gateway', importance: 0.9, symbol: '🚢' },
+    { id: 'panama', name: 'Panama Canal', lat: 9.08, lng: -79.68, type: 'choke_point', topic_code: 'supply_chain_intelligence', description: 'Atlantic/Pacific transit', importance: 0.85, symbol: '🚢' },
 
-    // Energy Backbone
-    { id: 'druzhba', name: 'Druzhba Pipeline Hub', lat: 52.88, lng: 31.91, type: 'energy', description: 'Major oil supply route to Europe', importance: 0.9 },
-    { id: 'yamal', name: 'Yamal-Europe Hub', lat: 51.95, lng: 20.3, type: 'energy', description: 'Strategic natural gas artery', importance: 0.85 },
-    { id: 'eastwest', name: 'East-West Pipeline', lat: 23.95, lng: 45.1, type: 'energy', description: 'Saudi Arabia crude oil corridor', importance: 0.8 },
-    { id: 'ras_tanura', name: 'Ras Tanura Terminal', lat: 26.63, lng: 50.12, type: 'energy', description: 'World largest crude oil export facility', importance: 0.95 },
+    // --- Defense & Military (New) ---
+    { id: 'norfolk', name: 'Naval Station Norfolk', lat: 36.93, lng: -76.32, type: 'military', topic_code: 'defense_technology', description: 'World largest naval station (US East Coast)', importance: 1.0, symbol: '⚓' },
+    { id: 'yokosuka', name: 'Yokosuka Naval Base', lat: 35.29, lng: 139.67, type: 'military', topic_code: 'defense_technology', description: 'Strategic Indo-Pacific naval hub', importance: 0.95, symbol: '⚓' },
+    { id: 'sevastopol', name: 'Sevastopol Naval Base', lat: 44.61, lng: 33.52, type: 'military', topic_code: 'defense_technology', description: 'Black Sea strategic bastion', importance: 0.9, symbol: '⚓' },
+    { id: 'ramstein', name: 'Ramstein Air Base', lat: 49.43, lng: 7.6, type: 'military', topic_code: 'defense_technology', description: 'Major NATO logistics & command hub', importance: 0.85, symbol: '🛫' },
 
-    // Technology Clusters & Semiconductor Hubs
-    { id: 'silicon_valley', name: 'Silicon Valley', lat: 37.38, lng: -122.08, type: 'tech', description: 'Global high-tech innovation center', importance: 1.0 },
-    { id: 'hsinchu', name: 'Hsinchu Science Park (TSMC)', lat: 24.78, lng: 121.01, type: 'tech', description: 'Crucial semiconductor foundry hub (TSMC)', importance: 1.0 },
-    { id: 'seoul', name: 'Seoul-Gyeonggi Hub (Samsung)', lat: 37.2, lng: 127.1, type: 'tech', description: 'Memory and logic chip production center', importance: 0.95 },
-    { id: 'shenzhen', name: 'Shenzhen Tech Hub', lat: 22.54, lng: 114.05, type: 'tech', description: 'Manufacturing & hardware innovation nexus', importance: 0.9 },
-    { id: 'shanghai_waigaoqiao', name: 'Waigaoqiao Free Trade Zone', lat: 31.33, lng: 121.58, type: 'tech', description: 'Strategic logistics & semiconductor center in PRC', importance: 0.85 },
+    // --- Energy & Resource Backbone ---
+    { id: 'druzhba', name: 'Druzhba Pipeline Hub', lat: 52.88, lng: 31.91, type: 'energy', topic_code: 'energy_resource_risk', description: 'Oil supply route to Europe', importance: 0.9, symbol: '⚡' },
+    { id: 'ras_tanura', name: 'Ras Tanura Terminal', lat: 26.63, lng: 50.12, type: 'energy', topic_code: 'energy_resource_risk', description: 'World largest oil export plant', importance: 1.0, symbol: '🔥' },
+    { id: 'nordstream', name: 'Nord Stream Exit (Germany)', lat: 54.12, lng: 13.68, type: 'energy', topic_code: 'energy_resource_risk', description: 'Critical gas infrastructure point', importance: 0.85, symbol: '⚡' },
 
-    // Corporate Strategic Nodes
-    { id: 'nvda_hq', name: 'NVIDIA HQ', lat: 37.3541, lng: -121.9552, type: 'corpHQ', description: 'Global AI compute leadership center', importance: 0.95 },
-    { id: 'asml_hq', name: 'ASML HQ (Veldhoven)', lat: 51.40, lng: 5.40, type: 'corpHQ', description: 'Monopolistic lithography tool manufacturing (EUV)', importance: 1.0 }
+    // --- Global Market & Exchanges (New) ---
+    { id: 'nyse', name: 'New York Stock Exchange', lat: 40.7069, lng: -74.0113, type: 'market', topic_code: 'global_market_intelligence', description: 'Global financial epicenter', importance: 1.0, symbol: '🏛️' },
+    { id: 'hkex', name: 'Hong Kong Exchange', lat: 22.28, lng: 114.15, type: 'market', topic_code: 'global_market_intelligence', description: 'Asian capital market nexus', importance: 0.95, symbol: '🏛️' },
+    { id: 'lse', name: 'London Stock Exchange', lat: 51.51, lng: -0.09, type: 'market', topic_code: 'global_market_intelligence', description: 'European financial hub', importance: 0.9, symbol: '🏛️' },
+
+    // --- Crypto & Digital Assets (New) ---
+    { id: 'texas_mining', name: 'Texas Bitcoin Mining Cluster', lat: 31.96, lng: -99.9, type: 'crypto', topic_code: 'crypto_geopolitics', description: 'Massive hash-rate industrial zone', importance: 0.8, symbol: '₿' },
+    { id: 'kazakh_mining', name: 'Kazakhstan Mining Hub', lat: 48.0, lng: 67.0, type: 'crypto', topic_code: 'crypto_geopolitics', description: 'Central Asian crypto mining nexus', importance: 0.75, symbol: '₿' },
+
+    // --- AI & Semiconductor Intelligence ---
+    { id: 'silicon_valley', name: 'Silicon Valley', lat: 37.38, lng: -122.08, type: 'tech', topic_code: 'ai_semiconductor_intelligence', description: 'AI innovation center', importance: 1.0, symbol: '🤖' },
+    { id: 'hsinchu', name: 'Hsinchu (TSMC)', lat: 24.78, lng: 121.01, type: 'tech', topic_code: 'ai_semiconductor_intelligence', description: 'Semiconductor foundry hub', importance: 1.0, symbol: '🤖' },
+    { id: 'asml_hq', name: 'ASML HQ (Veldhoven)', lat: 51.40, lng: 5.40, type: 'tech', topic_code: 'ai_semiconductor_intelligence', description: 'EUV lithography manufacturing', importance: 1.0, symbol: '🤖' }
 ];
 
 /**

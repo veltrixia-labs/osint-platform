@@ -2244,3 +2244,92 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     transform: scale(0.95);
 }
 
+
+/* [v36] Phase 5.2 Responsive Hotbar & Infrastructure Styling */
+.monitor-hotbar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.monitor-hotbar::-webkit-scrollbar {
+    height: 4px;
+}
+
+.monitor-hotbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
+.monitor-hotbar .preset-btn {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    height: 54px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.monitor-hotbar .preset-btn .btn-icon {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+    filter: grayscale(0.5);
+    transition: filter 0.2s;
+}
+
+.monitor-hotbar .preset-btn .btn-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #8b949e;
+}
+
+.monitor-hotbar .preset-btn:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: var(--accent-color);
+}
+
+.monitor-hotbar .preset-btn.active {
+    background: rgba(88, 166, 255, 0.1);
+    border-color: var(--accent-color);
+    box-shadow: inset 0 0 10px var(--accent-color);
+}
+
+.monitor-hotbar .preset-btn.active .btn-icon {
+    filter: none;
+    transform: scale(1.1);
+}
+
+.monitor-hotbar .preset-btn.active .btn-label {
+    color: var(--accent-color);
+}
+
+.infra-symbol {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    text-shadow: 0 0 10px rgba(0,0,0,1);
+    pointer-events: none;
+    z-index: 2;
+}
+
+.monitor-header h3 {
+    font-size: 0.85rem;
+    color: #c9d1d9;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
