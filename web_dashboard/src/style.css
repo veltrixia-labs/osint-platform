@@ -2171,3 +2171,76 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     border-radius: 4px;
 }
 
+
+/* [v35] Strategic Infrastructure & World Monitor UI */
+.marker-gravity-well .ring {
+    border: 3px solid #58a6ff !important;
+    box-shadow: 0 0 40px rgba(88, 166, 255, 0.6) !important;
+}
+
+.gravity-label {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 800;
+    color: #58a6ff;
+    text-shadow: 0 0 10px rgba(0,0,0,1);
+    margin-top: 8px;
+    letter-spacing: 0.1em;
+}
+
+.infra-marker-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+}
+
+.infra-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid white;
+    box-shadow: 0 0 8px rgba(255,255,255,0.5);
+}
+
+.infra-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #c9d1d9;
+    text-shadow: 1px 1px 2px black;
+    opacity: 0.8;
+}
+
+.infra-marker-container:hover .infra-label {
+    opacity: 1;
+    color: white;
+}
+
+.monitor-hotbar .preset-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: #8b949e;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.monitor-hotbar .preset-btn:hover {
+    background: var(--accent-soft);
+    color: #58a6ff;
+    border-color: var(--border-active);
+}
+
+.monitor-hotbar .preset-btn:active {
+    transform: scale(0.95);
+}
+

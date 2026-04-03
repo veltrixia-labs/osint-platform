@@ -2,6 +2,7 @@ import L from 'leaflet';
 import type { Alert, AnalystProfile, HealthData } from './api';
 import { fetchAlerts, fetchReports, updateWatchlist } from './api';
 import { getTopicDef, canAccessTopic, canAccessReport, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
+import { STRATEGIC_ASSETS, getStrategicContext } from './infrastructure';
  
 let activeMapFilters = new Set(['geopolitical', 'supply_chain', 'market', 'tech']);
 
@@ -911,19 +912,24 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                 const intensity = alert.intensity || 5;
                 const isCritical = intensity >= 9.0;
                 
-                // Dynamic Marker Size & Style based on Intensity
+                // [v35] Strategic Proximity Amplification (Gravity Well)
                 const baseSize = 20 + (intensity * 2);
+                const strategicHub = getStrategicContext(coords.lat, coords.lng, 500);
+                const ampScale = strategicHub ? 1.5 : 1.0;
+                const finalSize = baseSize * ampScale;
+
                 const markerIcon = L.divIcon({
                     className: 'custom-div-icon',
                     html: `
-                        <div class="map-marker-pulse ${isCritical ? 'map-marker-pulse--critical' : ''}" 
-                             style="width: ${baseSize}px; height: ${baseSize}px;">
-                            <div class="ring"></div>
+                        <div class="map-marker-pulse ${isCritical ? 'map-marker-pulse--critical' : ''} ${strategicHub ? 'marker-gravity-well' : ''}" 
+                             style="width: ${finalSize}px; height: ${finalSize}px;">
+                            <div class="ring" style="background: ${strategicHub ? 'rgba(88, 166, 255, 0.4)' : ''};"></div>
                             <div class="core"></div>
+                            ${strategicHub ? `<div class="gravity-label">[NEAR ${strategicHub.name.toUpperCase()}]</div>` : ''}
                         </div>
                     `,
-                    iconSize: [baseSize, baseSize],
-                    iconAnchor: [baseSize / 2, baseSize / 2]
+                    iconSize: [finalSize, finalSize],
+                    iconAnchor: [finalSize / 2, finalSize / 2]
                 });
 
                 const popupContent = `
@@ -1071,7 +1077,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
 }
 
 const renderRegionalContext = (layerGroup: L.LayerGroup, alerts: any[]) => {
-    // Foundational logic for "hot zone" visualization
+    // 1. Foundational Alert Context (Hot Zones)
     const highIntensityAlerts = alerts.filter(a => (a.intensity || 0) > 8);
     highIntensityAlerts.forEach(alert => {
         if (alert.location_lat && alert.location_lng) {
@@ -1081,6 +1087,36 @@ const renderRegionalContext = (layerGroup: L.LayerGroup, alerts: any[]) => {
                 fillColor: '#f43f5e',
                 fillOpacity: 0.05,
                 stroke: false,
+                interactive: false
+            }).addTo(layerGroup);
+        }
+    });
+
+    // 2. [v35] Persistent Strategic Infrastructure Layer
+    STRATEGIC_ASSETS.forEach(asset => {
+        const color = asset.type === 'choke_point' ? '#58a6ff' : (asset.type === 'energy' ? '#f1e05a' : '#bc8cff');
+        const assetIcon = L.divIcon({
+            className: 'infrastructure-node',
+            html: `
+                <div class="infra-marker-container ${asset.type}" title="${asset.name}">
+                    <div class="infra-dot" style="background: ${color};"></div>
+                    <div class="infra-label">${asset.name}</div>
+                </div>
+            `,
+            iconSize: [80, 20],
+            iconAnchor: [40, 10]
+        });
+
+        L.marker([asset.lat, asset.lng], { icon: assetIcon, zIndexOffset: 500, pane: 'overlayPane' }).addTo(layerGroup);
+        
+        // Visual gravity wells for choke points
+        if (asset.type === 'choke_point') {
+             L.circle([asset.lat, asset.lng], {
+                radius: 120000,
+                color: color,
+                fillOpacity: 0.02,
+                weight: 1,
+                dashArray: '5,10',
                 interactive: false
             }).addTo(layerGroup);
         }
@@ -1167,23 +1203,37 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 pane: 'overlayPane'
             }).addTo(layer);
 
+            // [v35] Physical Meaning Logic (Time-to-Impact)
+            // Use alpha and level to determine hypothetical 'velocity'
+            // alphaVal=10 (%) -> Fast, alphaVal=1 (%) -> Slow
             const alphaVal = Math.abs(finding.impact_alpha || 0.1);
-            const durationMs = Math.max(600, 4000 / (alphaVal * 1.5)); 
+            const levelDamping = 1.0 - (level - 1) * 0.2;
+            const durationMs = Math.max(400, 3000 / (alphaVal * levelDamping)); 
 
             let startTime: number | null = null;
             const animatePulse = (timestamp: number) => {
                 if (!startTime) startTime = timestamp;
-                const progress = ((timestamp - startTime) % durationMs) / durationMs;
+                const elapsed = timestamp - startTime;
+                const progress = (elapsed % durationMs) / durationMs;
+
                 const indexFloat = progress * steps;
                 const lowerIndex = Math.floor(indexFloat);
                 const upperIndex = Math.min(steps, Math.ceil(indexFloat));
                 const tLocal = indexFloat - lowerIndex;
+
                 if (points[lowerIndex] && points[upperIndex]) {
                      const lat = points[lowerIndex].lat + (points[upperIndex].lat - points[lowerIndex].lat) * tLocal;
                      const lng = points[lowerIndex].lng + (points[upperIndex].lng - points[lowerIndex].lng) * tLocal;
                      animParticle.setLatLng([lat, lng]);
+
+                     // [v35] Dynamic Decay/Trail: Faster particles are more opaque
+                     const opacity = 0.5 + (alphaVal / 20);
+                     animParticle.setStyle({ fillOpacity: opacity, opacity: opacity });
                 }
-                if (currentGlobalMap === map) requestAnimationFrame(animatePulse);
+                
+                if (currentGlobalMap === map && layer.hasLayer(animParticle)) {
+                    requestAnimationFrame(animatePulse);
+                }
             };
             requestAnimationFrame(animatePulse);
         }
@@ -1237,10 +1287,33 @@ function initMapFilter(map: L.Map, onUpdate: () => void) {
             L.DomEvent.disableScrollPropagation(div);
 
             div.innerHTML = `
-                <h3>Intelligence Filter</h3>
+                <h3>Strategic Monitoring</h3>
+                <div class="monitor-hotbar u-flex" style="gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <button class="preset-btn" data-preset="energy" title="Energy Security Mode">⚡ Energy</button>
+                    <button class="preset-btn" data-preset="trade" title="Maritime Trade Mode">🚢 Trade</button>
+                    <button class="preset-btn" data-preset="tech" title="Tech Supremacy Mode">💾 Tech</button>
+                </div>
                 <div id="filter-items-root"></div>
             `;
             
+            // [v35] Preset Button Handlers
+            div.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const preset = (e.currentTarget as HTMLElement).dataset.preset;
+                    activeMapFilters.clear();
+                    if (preset === 'energy') {
+                        activeMapFilters.add('supply_chain');
+                    } else if (preset === 'trade') {
+                        activeMapFilters.add('geopolitical');
+                        activeMapFilters.add('supply_chain');
+                    } else if (preset === 'tech') {
+                        activeMapFilters.add('tech');
+                        activeMapFilters.add('market');
+                    }
+                    onUpdate();
+                });
+            });
+
             const root = div.querySelector('#filter-items-root')!;
             root.innerHTML = Object.entries(TOPIC_LABELS).map(([key, label]) => `
                 <label class="map-filter-item">
