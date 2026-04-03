@@ -530,6 +530,7 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
     const planDisplay = planReq.charAt(0).toUpperCase() + planReq.slice(1);
 
     let md = isPreview ? (report.content_preview || "") : (report.content_markdown || "");
+    const fullOriginalMd = md; // [v31] Backup for failsafe fallback
     let evidenceData: any[] = [];
     const evidenceMatch = md.match(/<!--\s*EVIDENCE_JSON:\s*([\s\S]*?)\s*-->/);
     if (evidenceMatch) {
@@ -655,7 +656,10 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                         if (currentSec.title || currentSec.content.trim()) sections.push(currentSec);
 
                         const findSec = (names: string[]) => {
-                            const idx = sections.findIndex(s => names.some(n => s.title.toLowerCase().includes(n.toLowerCase())));
+                            const idx = sections.findIndex(s => 
+                                names.some(n => s.title.toLowerCase().includes(n.toLowerCase())) &&
+                                s.content.trim().length > 30 // [v31] Only 'find' if it has real substance
+                            );
                             if (idx === -1) return null;
                             return sections.splice(idx, 1)[0];
                         };
@@ -725,7 +729,7 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
 
                         if ((!html.trim() || isAbnormallyThin) && sourceLen > 0) {
                             console.warn("[Antigravity] Structured extraction failed or thin. Falling back to simple markdown.");
-                            html = simpleMarkdown(sanitizeMarkdownIntensities(md));
+                            html = simpleMarkdown(sanitizeMarkdownIntensities(fullOriginalMd)); // [v31] Use Backup
                         }
                         
                         // Final Failsafe
