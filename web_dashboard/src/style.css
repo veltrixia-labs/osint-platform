@@ -2128,3 +2128,46 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     overflow-y: auto !important;
 }
 
+
+/* [v34] Unified Alert Evidence Modal (Simplified & Stable) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-card {
+    background: #0d1117;
+    border: 1px solid var(--border-active);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.8);
+}
+
+.evidence-item {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.evidence-domain {
+    font-size: 0.75rem;
+    color: #58a6ff;
+    background: rgba(88,166,255,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
