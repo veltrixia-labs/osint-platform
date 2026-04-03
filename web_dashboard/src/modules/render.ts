@@ -430,11 +430,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
         </div>
 
         <div class="sidebar-footer-nav" style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--border);">
-            ${isGuest ? `
-                <div class="guest-nav-group u-m-bottom-1">
-                    <button class="nav-plans-btn u-m-bottom-1" style="width: 100%; padding: 0.75rem; background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent); border-radius: 8px; cursor: pointer; font-weight: 600;">Pricing / Plans →</button>
-                </div>
-            ` : `
+            ${isGuest ? '' : `
                 <div class="sidebar-analyst-id">
                     Analyst ID: ${a.id.slice(0, 8)}...
                 </div>
@@ -453,13 +449,6 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
     const addBtn = container.querySelector('#add-keyword-btn') as HTMLButtonElement | null;
     const input = container.querySelector('#new-keyword') as HTMLInputElement | null;
     const upgradeLink = container.querySelector('#watchlist-upgrade-link');
-    const plansBtn = container.querySelector('.nav-plans-btn');
-
-    if (plansBtn) {
-        plansBtn.addEventListener('click', () => {
-            document.querySelector<HTMLElement>('#nav-plans')?.click();
-        });
-    }
 
     if (addBtn && input) {
         addBtn.addEventListener('click', async () => {
