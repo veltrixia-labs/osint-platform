@@ -2083,3 +2083,48 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     z-index: 1;
 }
 
+
+/* [v33] Robust Global Modal Centering */
+.evidence-modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(10, 12, 16, 0.8) !important;
+    backdrop-filter: blur(25px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 2rem !important;
+    margin: 0 !important;
+    transition: opacity 0.3s ease;
+}
+
+.evidence-panel-modal {
+    background: #0d1117 !important;
+    border: 1px solid rgba(88, 166, 255, 0.25) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 0 0 1px rgba(88,166,255,0.1), 0 32px 64px rgba(0,0,0,0.8) !important;
+    width: 100% !important;
+    max-width: 800px !important;
+    height: auto !important;
+    max-height: 85vh !important;
+    color: #c9d1d9 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.evidence-panel-modal .u-flex-between {
+    padding: 2rem 2.5rem !important;
+    background: rgba(255,255,255,0.02) !important;
+}
+
+.evidence-panel-modal .u-flex {
+    padding: 2.5rem !important;
+    overflow-y: auto !important;
+}
+

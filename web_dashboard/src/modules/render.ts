@@ -80,6 +80,66 @@ function sanitizeMarkdownIntensities(text: string): string {
     });
 }
 
+/**
+ * [v33] Global Evidence Modal mounting to avoid container clipping.
+ */
+function showEvidenceModal(evidenceData: any[]) {
+    let modal = document.getElementById('evidence-modal-global');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'evidence-modal-global';
+        modal.className = 'evidence-modal-overlay';
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+        <div class="evidence-panel-modal">
+            <div class="u-flex-between" style="font-size: var(--font-xs); color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.2rem;">🛡️</span>
+                    <span>Source Transparency & Evidence Hub</span>
+                </div>
+                <button id="close-evidence-btn-global" style="background: rgba(255,255,255,0.05); border: none; color: #fff; cursor: pointer; font-size: 1.5rem; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s;">&times;</button>
+            </div>
+            
+            ${evidenceData.length > 0 ? `
+                <div class="u-flex" style="flex-direction: column; gap: 2.5rem;">
+                    ${evidenceData.map(e => `
+                        <div style="border-left: 4px solid var(--accent); padding-left: 1.5rem; background: rgba(88, 166, 255, 0.03); padding-top: 1rem; padding-bottom: 1.5rem; border-radius: 0 12px 12px 0;">
+                            <div class="u-flex-between" style="margin-bottom: 1rem; align-items: flex-start;">
+                                <div style="font-weight: 700; color: #f0f6fc; font-size: 1.1rem; line-height: 1.4;">${e.title}</div>
+                                <span style="font-size: 0.7rem; background: rgba(88, 166, 255, 0.1); color: #58a6ff; padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(88, 166, 255, 0.3); font-weight: 700; letter-spacing: 0.05em;">${e.type.toUpperCase()}</span>
+                            </div>
+                            <div style="font-size: 0.9rem; color: #8b949e; line-height: 1.8; margin-bottom: 1.25rem; font-style: italic;">"${e.explanation}"</div>
+                            ${e.link && e.link !== '#' ? `
+                                <a href="${e.link}" target="_blank" style="text-decoration: none; font-size: 0.75rem; color: #58a6ff; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; padding: 8px 16px; border: 1px solid rgba(88, 166, 255, 0.2); border-radius: 6px; transition: all 0.2s;">
+                                    <span>🔗 Deep Link to Source</span>
+                                </a>
+                            ` : '<div style="font-size: 0.75rem; color: #8b949e; opacity: 0.7; font-weight: 500;">🔒 Primary Intel Node - Internal Only</div>'}
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<div class="u-p-2 u-text-center" style="color: #8b949e; font-style: italic;">Deep analytical validation in progress...</div>'}
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    const closeBtn = modal.querySelector('#close-evidence-btn-global');
+    closeBtn?.addEventListener('click', () => {
+        modal!.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal!.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    });
+}
+
 export function renderHealth(data: HealthData, container: HTMLElement) {
     container.innerHTML = `
         <div class="health-grid">
@@ -288,7 +348,8 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             const alertId = card.dataset.id;
             const alert = alerts.find(a => a.id === alertId);
             if (alert && alert.evidence_list && alert.evidence_list.length > 0) {
-                showEvidenceModal(alert.target_label, alert.evidence_list);
+                // [v33] Unified global modal call
+                showEvidenceModal(alert.evidence_list);
             }
         });
     });
@@ -307,53 +368,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
     });
 }
 
-function showEvidenceModal(title: string, evidenceList: any[]) {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'modal-overlay';
-    
-    overlay.innerHTML = `
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2>Evidence: ${title}</h2>
-                <button class="modal-close" style="font-size:1.5rem; cursor:pointer; background:none; border:none; color:var(--text-secondary);">&times;</button>
-            </div>
-            <div class="modal-body">
-                ${evidenceList.map(item => `
-                    <div class="evidence-item">
-                        <h4>${item.title}</h4>
-                        <div class="evidence-meta u-m-top-1">
-                            <span class="evidence-domain">${item.domain}</span>
-                        </div>
-                        <a href="${item.url}" target="_blank" class="evidence-link u-m-top-1">
-                            🔗 View Original Source
-                        </a>
-                    </div>
-                `).join('')}
-                ${evidenceList.length === 0 ? '<p class="u-p-2 u-text-center">No supporting sources available.</p>' : ''}
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-    document.body.classList.add('no-scroll');
-
-    const close = () => {
-        document.body.removeChild(overlay);
-        document.body.classList.remove('no-scroll');
-        window.removeEventListener('keydown', onEsc);
-    };
-
-    overlay.querySelector('.modal-close')?.addEventListener('click', close);
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) close();
-    });
-
-    const onEsc = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') close();
-    };
-    window.addEventListener('keydown', onEsc);
-}
+// [v33] Legacy showEvidenceModal removed in favor of global implementation at line 86
 
 export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement) {
     if (!analysts || analysts.length === 0) {
@@ -582,55 +597,55 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                         <span style="opacity: 0.5;">|</span>
                         <span>${date}</span>
                     </div>
-                </div>
                 ${isPreview ? '<span class="tier-badge" style="background: rgba(210,153,34,0.1); color: #d29922; border: 1px solid rgba(210,153,34,0.3);">PREVIEW</span>' : ''}
             </div>
             
             <div class="report-content-card u-m-top-1">
                 <h1 style="margin-bottom: 1.5rem;">${report.title}</h1>
                 <div class="u-m-top-1" style="text-align: left; margin-bottom: 2rem;">
-                    <div class="confidence-trigger u-flex u-tier-2" style="display: inline-flex; background: var(--accent-soft); color: #58a6ff; padding: 8px 20px; border-radius: 20px; font-size: var(--font-m); border: 1px solid var(--border-active); cursor: pointer; user-select: none; gap: 1rem; align-items: center;">
+                    <div class="confidence-trigger u-flex u-tier-2" style="display: inline-flex; background: var(--accent-soft); color: #58a6ff; padding: 8px 24px; border-radius: 30px; font-size: var(--font-m); border: 1px solid var(--border-active); cursor: pointer; user-select: none; gap: 1.25rem; align-items: center; transition: all 0.2s;">
                         <div style="display: flex; gap: 0.75rem; align-items: center;">
-                            <span style="font-size: 1.1rem;">📊</span> 
-                            <span style="font-weight: 600;">Confidence: ${report.confidence_level || 'High'}</span>
+                            <span style="font-size: 1.25rem;">📊</span> 
+                            <span style="font-weight: 700; letter-spacing: 0.02em;">Confidence: ${report.confidence_level || 'High'}</span>
                         </div>
                         ${(() => {
                             const intensityStr = formatIntensity(report.intensity || report.intensity_score);
                             if (!intensityStr) return '';
                             return `
-                                <span style="opacity: 0.3; width: 1px; height: 16px; background: #58a6ff;"></span>
+                                <span style="opacity: 0.3; width: 1px; height: 18px; background: #58a6ff;"></span>
                                 <div style="display: flex; gap: 0.75rem; align-items: center;">
-                                    <span style="font-size: 1.1rem;">🔥</span> 
-                                    <span style="font-weight: 600;">Intensity: ${intensityStr}</span>
+                                    <span style="font-size: 1.25rem;">🔥</span> 
+                                    <span style="font-weight: 700;">Intensity: ${intensityStr}</span>
                                 </div>
                             `;
                         })()}
-                        <span class="chevron-icon" style="transition: transform 0.3s;">▾</span>
+                        <span class="chevron-icon" style="transition: transform 0.3s; opacity: 0.6; font-size: 0.8rem;">VIEW SOURCES ▾</span>
                     </div>
+                </div>
 
-                    <div id="evidence-modal" class="evidence-modal-overlay" style="display: none;">
-                        <div class="evidence-panel-modal">
-                            <div class="u-flex-between" style="font-size: var(--font-xs); color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
-                                <span>Source Transparency & Evidence Log</span>
-                                <button id="close-evidence-btn" style="background: none; border: none; color: #8b949e; cursor: pointer; font-size: 1.2rem;">&times;</button>
-                            </div>
-                        
-                        ${evidenceData.length > 0 ? `
-                            <div class="u-flex" style="flex-direction: column; gap: 2rem;">
-                                ${evidenceData.map(e => `
-                                    <div style="border-left: 3px solid var(--accent); padding-left: 1.25rem;">
-                                        <div class="u-flex-between" style="margin-bottom: 0.75rem; align-items: flex-start;">
-                                            <div style="font-weight: 600; color: #c9d1d9; font-size: var(--font-m);">${e.title}</div>
-                                            <span style="font-size: var(--font-xs); background: var(--accent-soft); color: #58a6ff; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border-active); white-space: nowrap;">${e.type}</span>
-                                        </div>
-                                        <div style="font-size: var(--font-s); color: #8b949e; line-height: 1.7; margin-bottom: 1rem;">${e.explanation}</div>
-                                        ${e.link && e.link !== '#' ? `
-                                            <a href="${e.link}" target="_blank" class="btn-fb u-flex u-tier-1" style="text-decoration: none; font-size: var(--font-xs); display: inline-flex;">🔗 View Source</a>
-                                        ` : '<div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.6; font-style: italic;">🔒 Private Intel Source</div>'}
+                <div id="evidence-modal" class="evidence-modal-overlay" style="display: none;">
+                    <div class="evidence-panel-modal">
+                        <div class="u-flex-between" style="font-size: var(--font-xs); color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+                            <span>Source Transparency & Evidence Log</span>
+                            <button id="close-evidence-btn" style="background: none; border: none; color: #8b949e; cursor: pointer; font-size: 1.2rem;">&times;</button>
+                        </div>
+                    
+                    ${evidenceData.length > 0 ? `
+                        <div class="u-flex" style="flex-direction: column; gap: 2rem;">
+                            ${evidenceData.map(e => `
+                                <div style="border-left: 3px solid var(--accent); padding-left: 1.25rem;">
+                                    <div class="u-flex-between" style="margin-bottom: 0.75rem; align-items: flex-start;">
+                                        <div style="font-weight: 600; color: #c9d1d9; font-size: var(--font-m);">${e.title}</div>
+                                        <span style="font-size: var(--font-xs); background: var(--accent-soft); color: #58a6ff; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border-active); white-space: nowrap;">${e.type}</span>
                                     </div>
-                                `).join('')}
-                            </div>
-                        ` : '<div class="u-p-2 u-text-center">ℹ️ Detailed evidence list pending enrichment...</div>'}
+                                    <div style="font-size: var(--font-s); color: #8b949e; line-height: 1.7; margin-bottom: 1rem;">${e.explanation}</div>
+                                    ${e.link && e.link !== '#' ? `
+                                        <a href="${e.link}" target="_blank" class="btn-fb u-flex u-tier-1" style="text-decoration: none; font-size: var(--font-xs); display: inline-flex;">🔗 View Source</a>
+                                    ` : '<div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.6; font-style: italic;">🔒 Private Intel Source</div>'}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<div class="u-p-2 u-text-center">ℹ️ Detailed evidence list pending enrichment...</div>'}
                     </div>
                 </div>
 
@@ -793,31 +808,9 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
     }
 
     const trigger = container.querySelector('.confidence-trigger');
-    const modal = container.querySelector('#evidence-modal') as HTMLElement;
-    const closeBtn = container.querySelector('#close-evidence-btn');
-    const chevron = container.querySelector('.chevron-icon') as HTMLElement;
-
-    if (trigger && modal) {
+    if (trigger) {
         trigger.addEventListener('click', () => {
-            const isHidden = modal.style.display === 'none';
-            modal.style.display = isHidden ? 'flex' : 'none';
-            if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-        });
-        
-        if (closeBtn) {
-            closeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                modal.style.display = 'none';
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            });
-        }
-
-        // Close on click outside the panel
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-                if (chevron) chevron.style.transform = 'rotate(0deg)';
-            }
+            showEvidenceModal(evidenceData);
         });
     }
 
