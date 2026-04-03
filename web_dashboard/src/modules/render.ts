@@ -609,11 +609,12 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                         <span class="chevron-icon" style="transition: transform 0.3s;">▾</span>
                     </div>
 
-                    <div class="evidence-panel u-m-top-1" style="display: none; background: rgba(13, 17, 23, 0.95); border: 1px solid var(--border-active); border-radius: 16px; padding: 2rem; box-shadow: 0 12px 48px rgba(0,0,0,0.6); backdrop-filter: blur(12px); max-width: 700px; margin-top: 1rem;">
-                        <div class="u-flex-between" style="font-size: var(--font-xs); color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
-                            <span>Source Transparency & Evidence Log</span>
-                            <span style="color: #58a6ff;">Verified Signal</span>
-                        </div>
+                    <div id="evidence-modal" class="evidence-modal-overlay" style="display: none;">
+                        <div class="evidence-panel-modal">
+                            <div class="u-flex-between" style="font-size: var(--font-xs); color: #8b949e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+                                <span>Source Transparency & Evidence Log</span>
+                                <button id="close-evidence-btn" style="background: none; border: none; color: #8b949e; cursor: pointer; font-size: 1.2rem;">&times;</button>
+                            </div>
                         
                         ${evidenceData.length > 0 ? `
                             <div class="u-flex" style="flex-direction: column; gap: 2rem;">
@@ -790,14 +791,31 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
     }
 
     const trigger = container.querySelector('.confidence-trigger');
-    const panel = container.querySelector('.evidence-panel') as HTMLElement;
+    const modal = container.querySelector('#evidence-modal') as HTMLElement;
+    const closeBtn = container.querySelector('#close-evidence-btn');
     const chevron = container.querySelector('.chevron-icon') as HTMLElement;
 
-    if (trigger && panel) {
+    if (trigger && modal) {
         trigger.addEventListener('click', () => {
-            const isHidden = panel.style.display === 'none';
-            panel.style.display = isHidden ? 'block' : 'none';
+            const isHidden = modal.style.display === 'none';
+            modal.style.display = isHidden ? 'flex' : 'none';
             if (chevron) chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+        });
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                modal.style.display = 'none';
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
+            });
+        }
+
+        // Close on click outside the panel
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
+            }
         });
     }
 
