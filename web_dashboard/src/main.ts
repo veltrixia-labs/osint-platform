@@ -132,8 +132,9 @@ async function initDashboard() {
     
     let user: UserMe | null = await fetchMe();
     
+    // [v37] Session Fail-safe
     if (!user && !reportId) {
-        renderLogin();
+        renderLogin("Session expired. Please log in.");
         return;
     }
     app.classList.remove('login-page');
@@ -645,4 +646,38 @@ async function initDashboard() {
     refreshWatchlist();
 }
 
-initDashboard();
+// [v37] Global Auth Watchdog
+window.addEventListener('session-expired', () => {
+    console.warn("[Antigravity] Session definitively expired. Redirecting to login...");
+    renderLogin("Your session has expired for security. Please log in again.");
+});
+
+// [v37] Visibility Watchdog: Re-verify on tab focus
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        fetchMe().then(user => {
+            if (!user && (app.className !== 'login-page')) {
+                window.dispatchEvent(new CustomEvent('session-expired'));
+            }
+        });
+    }
+});
+
+// [v37] Server Heartbeat: Keep Render awake & session alive
+const startHeartbeat = () => {
+    console.log("[Antigravity] Initializing Session Heartbeat (5m interval)");
+    const hb = setInterval(async () => {
+        try {
+            await fetchMe();
+            console.log("[Antigravity] Heartbeat Pulse: Session Active");
+        } catch (e) {
+            console.warn("[Antigravity] Heartbeat Fail-soft");
+        }
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    (window as any).stopHeartbeat = () => clearInterval(hb);
+};
+
+initDashboard().then(() => {
+    startHeartbeat();
+});

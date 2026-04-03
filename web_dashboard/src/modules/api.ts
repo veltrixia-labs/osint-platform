@@ -241,10 +241,14 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
                 headers.set('Authorization', `Bearer ${accessToken}`);
                 resp = await fetch(url, { ...authOptions, headers });
             } else {
-                // If refresh fails, clear token and return original error
+                // [v37] DEFINITIVE SESSION EXPIRY
+                // If refresh fails, the session is truly dead. Notify UI and clear local tokens.
                 if (!getLoggingOut()) {
                     accessToken = null;
                     localStorage.removeItem('access_token');
+                    
+                    // Dispatch global event for main.ts to handle redirect
+                    window.dispatchEvent(new CustomEvent('session-expired'));
                 }
                 return resp;
             }
