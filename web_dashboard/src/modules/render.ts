@@ -530,7 +530,6 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
     const planDisplay = planReq.charAt(0).toUpperCase() + planReq.slice(1);
 
     let md = isPreview ? (report.content_preview || "") : (report.content_markdown || "");
-    const fullOriginalMd = md; // [v31] Backup for failsafe fallback
     let evidenceData: any[] = [];
     const evidenceMatch = md.match(/<!--\s*EVIDENCE_JSON:\s*([\s\S]*?)\s*-->/);
     if (evidenceMatch) {
@@ -540,25 +539,24 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
         } catch (e) { console.error("Evidence parse error", e); }
     }
 
-    // [v30] Robust Evidence/Source Section Stripping (Regex-based to avoid duplications)
-    const sourcePatterns = [
-        /#+\s*Sources\b/gi,
-        /#+\s*Evidence\b/gi,
-        /#+\s*References\b/gi,
-        /EVIDENCE LOG/gi
-    ];
-    
-    let sourceIndex = -1;
-    sourcePatterns.forEach(p => {
-        const m = md.match(p);
-        if (m && m.index !== undefined) {
-            if (sourceIndex === -1 || m.index < sourceIndex) sourceIndex = m.index;
+    // [v32] Universal Source Stripping (More aggressive regex, applied BEFORE backup)
+    const sourceRegex = /^(#+\s*)?(Sources|Evidence|References|EVIDENCE LOG|Sources used|Key Sources)\b/gim;
+    const lines = md.split('\n');
+    let sourceStartLine = -1;
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].match(sourceRegex)) {
+            sourceStartLine = i;
+            break;
         }
-    });
-
-    if (sourceIndex !== -1) {
-        md = md.substring(0, sourceIndex).trim();
     }
+
+    if (sourceStartLine !== -1) {
+        md = lines.slice(0, sourceStartLine).join('\n').trim();
+    }
+
+    const fullOriginalMd = md; // [v31/v32] Backup for failsafe fallback (now safely stripped)
+
+    // Universal strip already handled in v32 logic above
 
     // Terminology Normalization (Depth-based Differentiation)
     const isExpertPlus = planReq === 'experts' || planReq === 'enterprise';
