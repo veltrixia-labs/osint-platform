@@ -76,6 +76,17 @@ body.no-scroll {
   100% { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes pulseHighlight {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.4); }
+  30% { transform: scale(1.02); box-shadow: 0 0 0 15px rgba(88, 166, 255, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); }
+}
+
+.pulse-highlight {
+  animation: pulseHighlight 1.5s ease-out 2;
+  border-color: var(--accent) !important;
+}
+
 .app-container {
   display: grid;
   grid-template-columns: 280px 1fr 320px;

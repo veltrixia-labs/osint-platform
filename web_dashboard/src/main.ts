@@ -132,11 +132,16 @@ async function initDashboard() {
     const paymentStatus = urlParams.get('payment');
     const sessionId = urlParams.get('session_id');
 
-    let user: UserMe | null = await fetchMe();
+    let user: UserMe | null = null;
+    try {
+        user = await fetchMe();
+    } catch (e) {
+        // Silently suppress 401s for guest mode
+        console.log("[Antigravity] Session check: Guest access initialized.");
+    }
     
-    // [v38] Guest Mode Implementation: Allow access if no user found
-    if (!user && !reportId && !paymentStatus) {
-        console.log("[Antigravity] No active session found. Initializing as Guest (Free Tier).");
+    // [v38] Full Open Access Implementation: Default to guest if no user found
+    if (!user) {
         user = {
             id: 'guest',
             chat_id: 'Guest',
@@ -144,11 +149,6 @@ async function initDashboard() {
             tier: 'free',
             expires_at: null
         };
-    } else if (!user && !reportId && paymentStatus === 'success') {
-        // Keep login for payment success to bind account
-    } else if (!user && !reportId) {
-        renderLogin("Session expired. Please log in.");
-        return;
     }
 
     if (user) app.classList.remove('login-page');

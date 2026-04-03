@@ -227,8 +227,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                         This intelligence is currently restricted to <span style="color:#c9d1d9; font-weight:600;">Registered Analysts</span>. 
                         Public release in <strong style="color:var(--accent);">${Math.ceil(24 - hoursAgo)} hours</strong>.
                     </div>
-                    <button class="btn-fb active u-m-top-1" style="box-shadow: 0 0 20px rgba(99,102,241,0.2); border-radius: 8px; padding: 10px 24px;" 
-                            onclick="window.location.reload()">Join Veltrixia Network →</button>
+                    <button class="btn-fb active u-m-top-1 trigger-plans-btn" style="box-shadow: 0 0 20px rgba(99,102,241,0.2); border-radius: 8px; padding: 10px 24px;">Unlock with Pro Plan →</button>
                 </div>
             ` : ''}
             <div class="alert-header u-flex-between" style="${isLocked ? 'opacity:0.1; pointer-events:none;' : ''}">
@@ -359,6 +358,39 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             }
         });
     });
+
+    // Attach Plans Trigger events
+    container.querySelectorAll('.trigger-plans-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelector<HTMLElement>('#nav-plans')?.click();
+            // Optional: Slight delay to ensure tab is rendered before scrolling/highlighting
+            setTimeout(() => {
+                const pricing = document.querySelector('.pricing-container') || document.querySelector('.subscription-grid');
+                if (pricing) {
+                    pricing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    pricing.classList.add('pulse-highlight');
+                    setTimeout(() => pricing.classList.remove('pulse-highlight'), 3000);
+                }
+            }, 100);
+        });
+    });
+
+    // Add persistent footer to the container base
+    const footer = document.createElement('div');
+    footer.className = 'content-footer u-m-top-2 u-p-2 u-text-center';
+    footer.style.opacity = '0.4';
+    footer.style.fontSize = '0.7rem';
+    footer.style.borderTop = '1px solid var(--border)';
+    footer.innerHTML = `
+        <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 0.5rem;">
+            <a href="disclosure.html" target="_blank" style="color: inherit; text-decoration: none;">Commercial Disclosure</a>
+            <a href="terms.html" target="_blank" style="color: inherit; text-decoration: none;">Terms</a>
+            <a href="privacy.html" target="_blank" style="color: inherit; text-decoration: none;">Privacy</a>
+        </div>
+        <div>&copy; 2026 VELTRIXIA LABS | Global Risk Intelligence Platform</div>
+    `;
+    container.appendChild(footer);
 }
 
 // [v33] Legacy showEvidenceModal removed in favor of global implementation at line 86
@@ -399,8 +431,9 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
 
         <div class="sidebar-footer-nav" style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--border);">
             ${isGuest ? `
-                <button class="plan-cta-btn" style="width: 100%; border-color: var(--accent); color: var(--accent);" 
-                        onclick="window.location.reload()">Join Veltrixia Network →</button>
+                <div class="guest-nav-group u-m-bottom-1">
+                    <button class="nav-plans-btn u-m-bottom-1" style="width: 100%; padding: 0.75rem; background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent); border-radius: 8px; cursor: pointer; font-weight: 600;">Pricing / Plans →</button>
+                </div>
             ` : `
                 <div class="sidebar-analyst-id">
                     Analyst ID: ${a.id.slice(0, 8)}...
@@ -420,6 +453,13 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
     const addBtn = container.querySelector('#add-keyword-btn') as HTMLButtonElement | null;
     const input = container.querySelector('#new-keyword') as HTMLInputElement | null;
     const upgradeLink = container.querySelector('#watchlist-upgrade-link');
+    const plansBtn = container.querySelector('.nav-plans-btn');
+
+    if (plansBtn) {
+        plansBtn.addEventListener('click', () => {
+            document.querySelector<HTMLElement>('#nav-plans')?.click();
+        });
+    }
 
     if (addBtn && input) {
         addBtn.addEventListener('click', async () => {
