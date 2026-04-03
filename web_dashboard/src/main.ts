@@ -34,7 +34,7 @@ export async function renderLogin(message?: string, initialChatId?: string) {
     app.innerHTML = `
     <div class="login-container">
         <div class="login-card">
-            <h1>OSINT Intelligence</h1>
+            <h1>VELTRIXIA LABS</h1>
             <p>Enter your analyst credentials</p>
             ${message ? `<div id="login-message" style="color: #3fb950; margin-bottom: 1rem; font-size: 0.9rem;">${message}</div>` : ''}
             <input type="text" id="chat-id" placeholder="Telegram Chat ID" required value="${initialChatId || ''}" />
@@ -77,7 +77,7 @@ export async function renderSignup() {
     <div class="login-container">
         <div class="login-card">
             <h1>Create Account</h1>
-            <p>Join the OSINT Intelligence network</p>
+            <p>Join the VELTRIXIA LABS network</p>
             <input type="text" id="signup-chat-id" placeholder="Choose a Chat ID" required />
             <input type="password" id="signup-password" placeholder="Create Password" required />
             <button id="signup-btn" class="u-tier-1">Sign Up</button>
@@ -129,19 +129,29 @@ type TabId = 'feed' | 'plans' | 'reports' | 'map'
 async function initDashboard() {
     const urlParams = new URLSearchParams(window.location.search);
     const reportId = urlParams.get('report_id');
-    
+    const paymentStatus = urlParams.get('payment');
+    const sessionId = urlParams.get('session_id');
+
     let user: UserMe | null = await fetchMe();
     
-    // [v37] Session Fail-safe
-    if (!user && !reportId) {
+    // [v38] Guest Mode Implementation: Allow access if no user found
+    if (!user && !reportId && !paymentStatus) {
+        console.log("[Antigravity] No active session found. Initializing as Guest (Free Tier).");
+        user = {
+            id: 'guest',
+            chat_id: 'Guest',
+            role: 'anonymous',
+            tier: 'free',
+            expires_at: null
+        };
+    } else if (!user && !reportId && paymentStatus === 'success') {
+        // Keep login for payment success to bind account
+    } else if (!user && !reportId) {
         renderLogin("Session expired. Please log in.");
         return;
     }
-    app.classList.remove('login-page');
 
-    // Handle Payment Status Notifications
-    const paymentStatus = urlParams.get('payment');
-    const sessionId = urlParams.get('session_id');
+    if (user) app.classList.remove('login-page');
 
     if (paymentStatus === 'success' && sessionId && !user) {
         app.innerHTML = `
@@ -163,9 +173,9 @@ async function initDashboard() {
       app.innerHTML = `
       <div class="mobile-header">
         <div class="u-flex">
-          <span style="font-weight:700; color:var(--accent);">OSINT</span>
+          <span style="font-weight:700; color:var(--accent);">VELTRIXIA</span>
           <span style="opacity:0.5;">|</span>
-          <span style="font-size:0.8rem; color:var(--text-secondary);">Analyst Platform</span>
+          <span style="font-size:0.8rem; color:var(--text-secondary);">LABS</span>
         </div>
         <button class="hamburger" id="mobile-menu-btn">☰</button>
       </div>
@@ -175,8 +185,8 @@ async function initDashboard() {
       <div class="app-container">
         <aside class="sidebar" id="sidebar">
           <div class="sidebar-header u-flex u-m-bottom-1">
-            <div style="width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">O</div>
-            <h2>OSINT Analytics</h2>
+            <div style="width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">V</div>
+            <h2>VELTRIXIA LABS</h2>
           </div>
           
           <nav class="u-m-top-1">

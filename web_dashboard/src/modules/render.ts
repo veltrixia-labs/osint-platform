@@ -205,6 +205,10 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         const accessible = canAccessTopic(userTier, topicDef);
         const severityClass = alert.severity.toLowerCase();
         const date = new Date(alert.triggered_at);
+        const hoursAgo = (Date.now() - date.getTime()) / (1000 * 60 * 60);
+        const isGuest = userTier === 'free';
+        const isLocked = isGuest && hoursAgo < 24;
+
         const displayDate = isNaN(date.getTime()) ? 'Recent' : date.toLocaleString(undefined, {
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
@@ -212,10 +216,22 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         const triggerLabel = (alert.trigger_type || 'Pattern').replace(/_/g, ' ').toUpperCase();
         const hasReport = !!alert.related_report_id;
 
-        // Note: Alert card access is topic-based. 
+        // [v38] Alert card access is topic-based OR time-delayed for guests. 
         // Report access within the card will be validated upon clicking/loading.
         const cardContent = `
-            <div class="alert-header u-flex-between">
+            ${isLocked ? `
+                <div class="lock-overlay u-flex-center" style="position:absolute; inset:0; background:rgba(13,17,23,0.7); z-index:100; backdrop-filter:blur(8px); border-radius:12px; flex-direction:column; padding:1.5rem; text-align:center; border: 1px solid rgba(88,166,255,0.1);">
+                    <div style="font-size:2.5rem; margin-bottom:1rem; filter: drop-shadow(0 0 10px var(--accent));">🔒</div>
+                    <div style="font-weight:700; color:var(--accent); font-size:1.1rem; letter-spacing:0.1em; text-transform: uppercase;">Real-Time Signal Locked</div>
+                    <div style="font-size:0.85rem; color:#8b949e; margin-top:0.75rem; line-height:1.6; max-width: 280px;">
+                        This intelligence is currently restricted to <span style="color:#c9d1d9; font-weight:600;">Registered Analysts</span>. 
+                        Public release in <strong style="color:var(--accent);">${Math.ceil(24 - hoursAgo)} hours</strong>.
+                    </div>
+                    <button class="btn-fb active u-m-top-1" style="box-shadow: 0 0 20px rgba(99,102,241,0.2); border-radius: 8px; padding: 10px 24px;" 
+                            onclick="window.location.reload()">Join Veltrixia Network →</button>
+                </div>
+            ` : ''}
+            <div class="alert-header u-flex-between" style="${isLocked ? 'opacity:0.1; pointer-events:none;' : ''}">
                 <div class="u-flex" style="flex-wrap: wrap; row-gap: 0.5rem;">
                     <span class="severity-badge">${alert.severity}</span>
                     <span class="watchlist-tag">
@@ -229,60 +245,60 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 </div>
             </div>
             
-            <h3 style="color: #58a6ff; line-height: 1.4; margin-bottom: 0.25rem;">${alert.target_label || 'Unknown Signal'}</h3>
-            ${!accessible ? `
-                <div style="font-size: var(--font-xs); color: ${topicDef.color}; opacity: 0.9; margin-bottom: 0.75rem; font-weight: 500;">
-                    ${topicDef.valueProposition}
-                    ${alert.intensity >= 8.0 ? `<span style="display: block; color: #ff7b72; margin-top: 2px;">🔥 High momentum signal detected</span>` : ''}
+            <div class="alert-body" style="${isLocked ? 'opacity:0.1; pointer-events:none;' : ''}">
+                <h3 style="color: #58a6ff; line-height: 1.4; margin-bottom: 0.25rem;">${alert.target_label || 'Unknown Signal'}</h3>
+                ${!accessible ? `
+                    <div style="font-size: var(--font-xs); color: ${topicDef.color}; opacity: 0.9; margin-bottom: 0.75rem; font-weight: 500;">
+                        ${topicDef.valueProposition}
+                        ${alert.intensity >= 8.0 ? `<span style="display: block; color: #ff7b72; margin-top: 2px;">🔥 High momentum signal detected</span>` : ''}
+                    </div>
+                ` : ''}
+                
+                <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
+                    <div>
+                        <h4>Risk Momentum <span class="help-tooltip" data-tooltip="A metric combining signal velocity and impact scale. High values indicate rapid escalation.">?</span></h4>
+                        <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${accessible ? (formatIntensity(alert.intensity) || '•.••') : '•.••'}</div>
+                    </div>
+                    <div>
+                        <h4>Evidence</h4>
+                        <div class="evidence-trigger-btn u-m-top-1" style="color:#58a6ff; background:var(--accent-soft); padding:4px 12px; border-radius:6px; display:inline-block; border:1px solid var(--border-active); font-size: var(--font-s); cursor: ${accessible ? 'pointer' : 'not-allowed'};">
+                            🔍 ${accessible ? (alert.domain_count || 0) : '•'} Domains
+                        </div>
+                    </div>
+                    <div>
+                        <h4>Confidence <span class="help-tooltip" data-tooltip="Intelligence score representing the reliability and cross-source verification of the signal.">?</span></h4>
+                        <div style="font-size:var(--font-m); color:${accessible && (alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
+                            ${accessible ? ((alert.spike_delta || 0) > 0 ? '↑' : '') + (alert.spike_delta || 0).toFixed(1) : '•.••'}
+                        </div>
+                    </div>
+                    ${hasReport ? `
+                    <div style="display:flex; align-items:flex-end;">
+                        <button class="btn-fb active view-report-btn u-w-full ${!accessible ? 'btn--locked' : ''}">
+                            ${accessible ? 'View Analysis' : `Upgrade to ${topicDef.minTier === 'pro' ? 'Pro' : 'Expert'} to access Intelligence`}
+                        </button>
+                    </div>
+                    ` : `
+                    <div style="font-size:var(--font-xs); color:#8b949e; display:flex; align-items:flex-end; opacity:0.6; font-style: italic;">
+                        ${accessible ? 'Report not available yet' : 'Upgrade Required'}
+                    </div>
+                    `}
                 </div>
-            ` : ''}
-            
-            <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
-                <div>
-                    <h4>Risk Momentum <span class="help-tooltip" data-tooltip="A metric combining signal velocity and impact scale. High values indicate rapid escalation.">?</span></h4>
-                    <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${accessible ? (formatIntensity(alert.intensity) || '•.••') : '•.••'}</div>
-                </div>
-                <div>
-                    <h4>Evidence</h4>
-                    <div class="evidence-trigger-btn u-tier-1 u-m-top-1" style="color:#58a6ff; background:var(--accent-soft); padding:4px 12px; border-radius:6px; display:inline-block; border:1px solid var(--border-active); font-size: var(--font-s); cursor: ${accessible ? 'pointer' : 'not-allowed'};">
-                        🔍 ${accessible ? (alert.domain_count || 0) : '•'} Domains
+
+                <div class="u-flex-between u-m-top-1">
+                    <div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.8;">
+                        ${accessible ? (alert.delivery ? `DIRECT INTELLIGENCE SIGNAL` : 'BROADCAST ALERT') : `Locked Sector: ${topicDef.label}`}
+                    </div>
+                    <div class="validation-badge" style="font-size: 0.65rem; color: #3fb950; display: flex; align-items: center; gap: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                        ${accessible ? '<span>✓</span> Validated' : ''}
                     </div>
                 </div>
-                <div>
-                    <h4>Confidence <span class="help-tooltip" data-tooltip="Intelligence score representing the reliability and cross-source verification of the signal.">?</span></h4>
-                    <div style="font-size:var(--font-m); color:${accessible && (alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
-                        ${accessible ? ((alert.spike_delta || 0) > 0 ? '↑' : '') + (alert.spike_delta || 0).toFixed(1) : '•.••'}
-                    </div>
-                </div>
-                ${hasReport ? `
-                <div style="display:flex; align-items:flex-end;">
-                    <button class="btn-fb active view-report-btn u-w-full u-tier-1 ${!accessible ? 'btn--locked' : ''}">
-                        ${accessible ? 'View Analysis' : `Upgrade to ${topicDef.minTier === 'pro' ? 'Pro' : 'Expert'} to access Intelligence`}
-                    </button>
-                </div>
-                ` : `
-                <div style="font-size:var(--font-xs); color:#8b949e; display:flex; align-items:flex-end; opacity:0.6; font-style: italic;">
-                    ${accessible ? 'Report not available yet' : 'Upgrade Required'}
-                </div>
-                `}
-            </div>
-
-            <div class="u-flex-between u-m-top-1">
-                <div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.8;">
-                    ${accessible ? (alert.delivery ? `DIRECT INTELLIGENCE SIGNAL` : 'BROADCAST ALERT') : `Locked Sector: ${topicDef.label}`}
-                </div>
-                <div class="validation-badge" style="font-size: 0.65rem; color: #3fb950; display: flex; align-items: center; gap: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
-                    ${accessible ? '<span>✓</span> Validated' : ''}
+                
+                <div class="u-m-top-1" style="border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                    <a class="map-viz-link ${!accessible ? 'btn--locked' : ''}" data-id="${alert.id}" style="font-size: 0.8rem; color: var(--accent); cursor: pointer; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                        Visualize & Track on Global Map &rarr;
+                    </a>
                 </div>
             </div>
-            
-            <div class="u-m-top-1" style="border-top: 1px solid var(--border); padding-top: 0.75rem;">
-                <a class="map-viz-link ${!accessible ? 'btn--locked' : ''}" data-id="${alert.id}" style="font-size: 0.8rem; color: var(--accent); cursor: pointer; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-                    Visualize & Track on Global Map &rarr;
-                </a>
-            </div>
-
-            ${!accessible ? `<div class="alert-lock-overlay">🔒 Content restricted to ${topicDef.minTier === 'pro' ? 'Pro' : 'Expert'} Analyst tier</div>` : ''}
         `;
 
         return `
@@ -348,42 +364,56 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
 // [v33] Legacy showEvidenceModal removed in favor of global implementation at line 86
 
 export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement) {
-    if (!analysts || analysts.length === 0) {
-        container.innerHTML = '<h2>Analysts</h2><p>No active profiles.</p>';
-        return;
-    }
-
+    if (!analysts.length) return;
     const a = analysts[0];
-    const usage = (window as any).getCurrentUsage();
-    const limitReached = usage && usage.keywords.used >= usage.keywords.limit;
+    const usage = (window as any).getCurrentUsage?.() || { keywords: { used: 0, limit: 3 } };
+    const isGuest = a.id === 'guest';
 
     container.innerHTML = `
-        <h2>Watchlist</h2>
-        <div class="watchlist-group">
-            <h4 class="u-m-top-1">Key Entities</h4>
-            <p style="margin-bottom: 1.5rem;">Add specific companies, assets, or executives to prioritize them in your intelligence stream.</p>
-            <div class="watchlist-tags" id="keyword-tags">
-                ${(a.watch_keywords || []).map(k => `
-                    <span class="watchlist-tag keyword-tag" data-keyword="${k}">
-                        ${k}
-                        <button class="remove-kw u-tier-1" data-keyword="${k}">&times;</button>
-                    </span>
-                `).join('')}
-            </div>
-            
-            <div class="watchlist-add-row u-m-top-1">
-                <input type="text" id="new-keyword" placeholder="Add entity..." ${limitReached ? 'disabled' : ''} />
-                <button id="add-keyword-btn" class="btn-primary u-tier-1" ${limitReached ? 'disabled' : ''}>Add</button>
-            </div>
-            ${limitReached ? `
-                <div class="limit-warning u-m-top-1" style="color:#d29922; font-size:var(--font-xs);">
+        <div class="sidebar-header">
+            <h3>Key Entities</h3>
+            <p style="font-size: 0.75rem; opacity: 0.6; margin-top: 4px;">Watchlist Priorities</p>
+        </div>
+        <div class="keyword-list">
+            ${(a.watch_keywords || []).map(k => `
+                <div class="kw-item u-flex-between">
+                    <span>${k}</span>
+                    <button class="remove-kw" data-keyword="${k}">&times;</button>
+                </div>
+            `).join('')}
+        </div>
+        <div class="add-kw-container u-m-top-1">
+            <input type="text" id="new-keyword" placeholder="${isGuest ? 'Join to add' : 'Add entity...'}" ${isGuest ? 'disabled' : ''} />
+            <button id="add-keyword-btn" class="u-tier-1" ${isGuest ? 'disabled' : ''}>Add</button>
+            ${isGuest ? `
+                <div class="guest-lock-msg" style="font-size: 0.7rem; color: var(--accent); margin-top: 8px; font-weight: 600;">
+                    🔒 Account required for alerts
+                </div>
+            ` : (usage.keywords?.used >= usage.keywords?.limit ? `
+                <div style="font-size: 0.7rem; color: #ff7b72; margin-top: 8px;">
                     Keyword limit reached (${usage.keywords.limit}/${usage.keywords.limit}). 
                     <a href="#" id="watchlist-upgrade-link" style="color:#58a6ff; text-decoration:none;">Upgrade to Pro</a>
                 </div>
-            ` : ''}
+            ` : '')}
         </div>
-        <div class="sidebar-analyst-id">
-            Analyst ID: ${a.id.slice(0, 8)}...
+
+        <div class="sidebar-footer-nav" style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--border);">
+            ${isGuest ? `
+                <button class="plan-cta-btn" style="width: 100%; border-color: var(--accent); color: var(--accent);" 
+                        onclick="window.location.reload()">Join Veltrixia Network →</button>
+            ` : `
+                <div class="sidebar-analyst-id">
+                    Analyst ID: ${a.id.slice(0, 8)}...
+                </div>
+                <button class="btn-logout" style="width: 100%; margin-top: 1rem; opacity: 0.6;" onclick="window.dispatchEvent(new CustomEvent('logout-request'))">Logout</button>
+            `}
+
+            <div class="legal-links u-m-top-1" style="font-size: 0.65rem; opacity: 0.4; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+                <a href="disclosure.html" target="_blank" style="color: inherit; text-decoration: none;">Disclosure</a>
+                <a href="terms.html" target="_blank" style="color: inherit; text-decoration: none;">Terms</a>
+                <a href="privacy.html" target="_blank" style="color: inherit; text-decoration: none;">Privacy</a>
+            </div>
+            <div style="font-size: 0.6rem; opacity: 0.3; text-align: center; margin-top: 8px;">&copy; 2026 VELTRIXIA LABS</div>
         </div>
     `;
 

@@ -247,8 +247,12 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
                     accessToken = null;
                     localStorage.removeItem('access_token');
                     
-                    // Dispatch global event for main.ts to handle redirect
-                    window.dispatchEvent(new CustomEvent('session-expired'));
+                    // [v38] Guest Mode Silence: Only redirect if an access_token previously existed
+                    // This prevents public users from seeing the login wall immediately.
+                    const hadToken = !!currentToken;
+                    if (hadToken) {
+                        window.dispatchEvent(new CustomEvent('session-expired'));
+                    }
                 }
                 return resp;
             }
