@@ -377,6 +377,9 @@ async function initDashboard() {
     const renderIntelligenceFeed = async () => {
         if (!user) { renderLogin(); return; }
         (window as any).stopPolling?.();
+        const alertsContainer = document.querySelector<HTMLElement>('#alerts-container');
+        if (alertsContainer) alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Initializing dashboard...</div>';
+
         const proBadge = user.tier === 'pro' ? '<span class="tier-badge u-m-top-1" style="background:var(--accent-soft); border:1px solid var(--accent); color:var(--accent);">💎 PRO Active</span>' : '';
         mainTitle.innerHTML = `Dashboard ${proBadge}`;
         
