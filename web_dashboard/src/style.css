@@ -2337,14 +2337,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     z-index: 2;
 }
 
-.monitor-header h3 {
-    font-size: 0.85rem;
-    color: #c9d1d9;
-    letter-spacing: 0.05em;
-    margin: 0;
-}
-
-/* --- [Phase 8.1/8.2] Tactical HUD & Global Map Redesign --- */
+/* --- [Phase 8.1/8.2/8.3] Tactical HUD & Global Map Redesign --- */
 
 #map-instance {
     background: #0b0e14 !important; /* Midnight Tactical Base */
@@ -2440,7 +2433,34 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     border: 3px solid var(--ring-color);
     box-shadow: 0 0 25px var(--ring-color);
     opacity: 0.9;
-    animation: tactical-pulse-v2 2s infinite ease-in-out;
+    animation: tactical-pulse-v2 var(--pulse-duration, 2s) infinite ease-in-out;
+}
+
+/* [v8.3] Physics-Based Pulsars */
+/* L1: Sharp, High-Frequency Alert */
+.marker-ring-tactical--l1 .glow-ring {
+    --pulse-duration: 0.8s;
+    filter: brightness(1.5);
+    box-shadow: 0 0 15px var(--ring-color);
+}
+
+/* L3: Heavy, Drifting Enterprise Casualty */
+.marker-ring-tactical--l3 .glow-ring {
+    --pulse-duration: 3.5s;
+    filter: saturate(0.6);
+    box-shadow: 0 0 45px var(--ring-color); /* Drifting wide blur */
+    opacity: 0.7;
+}
+
+/* Radial Burst Ignition */
+.node-ignite {
+    animation: ignite 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes ignite {
+    0% { transform: scale(0.5); opacity: 0; box-shadow: 0 0 0 0 #fff; }
+    30% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 40px 10px #fff; }
+    100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 transparent; }
 }
 
 @keyframes tactical-pulse-v2 {
@@ -2449,70 +2469,25 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     100% { transform: scale(0.92); opacity: 0.6; }
 }
 
-.marker-ring-tactical .count-val {
-    color: #fff;
-    font-weight: 900;
-    font-size: 1.1rem;
-    z-index: 2;
+/* [v8.3] Strategic Intelligence Flow Arcs */
+.propagation-arc-curved {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: energy-surge 1.2s ease-out forwards;
+    filter: drop-shadow(0 0 5px var(--ring-color));
 }
 
-/* Glassmorphism Tactical Popup */
-.tactical-popup .leaflet-popup-content-wrapper {
-    background: rgba(13, 17, 23, 0.94) !important;
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(88, 166, 255, 0.25);
-    border-radius: 4px;
-    padding: 0 !important;
-    color: #c9d1d9;
-    box-shadow: 0 12px 64px rgba(0, 0, 0, 0.95);
-    overflow: hidden;
+@keyframes energy-surge {
+    from { stroke-dashoffset: 1000; }
+    to { stroke-dashoffset: 0; }
 }
 
-.tactical-popup .leaflet-popup-content {
-    margin: 0 !important;
-    width: 320px !important;
+.pulse-particle-dynamic {
+    filter: blur(1px) brightness(1.5);
 }
 
-.tactical-card {
-    position: relative;
-    padding-left: 4px;
-}
-
-.tactical-card-accent {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 5px;
-    background: var(--topic-color, var(--accent));
-    box-shadow: 0 0 20px var(--topic-color, var(--accent));
-}
-
-.tactical-card-header {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.tactical-card-footer {
-    padding: 12px 20px;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.tactical-action-btn {
-    background: none;
-    border: none;
-    color: var(--accent);
-    font-weight: 800;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.ghost-node {
+    opacity: 0.2;
+    pointer-events: none;
 }
 

@@ -6,13 +6,6 @@ import { STRATEGIC_ASSETS } from './infrastructure';
  
 let activeMapFilters = new Set(['global']);
 
-const TOPIC_LABELS: Record<string, string> = {
-    geopolitical: 'Geopolitical',
-    supply_chain: 'Supply Chain',
-    market: 'Global Market',
-    tech: 'Tech Infrastructure'
-};
-
 let currentFilterControl: L.Control | null = null;
 
 function formatIntensity(val: number | undefined | null): string | null {
@@ -1004,14 +997,14 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                 const topicDef = getTopicDef(alert.topic);
                 const topicColor = topicDef?.color || '#58a6ff';
                 const pulseSize = 32 + (intensity * 4);
+                const markerClass = `marker-ring-tactical marker-ring-tactical--l1`;
 
                 const markerIcon = L.divIcon({
                     className: 'none',
                     html: `
-                        <div class="marker-ring-tactical" style="width: ${pulseSize}px; height: ${pulseSize}px; --ring-color: ${topicColor}">
+                        <div class="${markerClass}" style="width: ${pulseSize}px; height: ${pulseSize}px; --ring-color: ${topicColor}">
                             <div class="glow-ring"></div>
                             <div class="ring-inner"></div>
-                            <div class="count-val">${intensity.toFixed(0)}</div>
                         </div>
                     `,
                     iconSize: [pulseSize, pulseSize],
@@ -1125,15 +1118,16 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                     ];
                 }
 
-                // [v18 Upgrade] Recursive Cascading Impact Engine
+                // [v8.3] Sequential Discovery Initiation
                 const impacts = alert.cascading_impacts || (alert as any).metadata_json?.cascading_impacts;
                 if (impacts && impacts.length > 0) {
                     const shouldDrawArcs = !focusAlertId || isFocus;
                     if (shouldDrawArcs) {
-                        const drawDelay = isFocus ? 1200 : 500; 
+                        const baseDelay = isFocus ? 1500 : 500; 
                         setTimeout(() => {
+                            // Start the recursive chain with sequential awareness
                             renderImpactChain(map, layerGroup, coords, impacts, 1, intensity);
-                        }, drawDelay);
+                        }, baseDelay);
                     }
                 }
             }
@@ -1208,153 +1202,90 @@ const renderRegionalContext = (layerGroup: L.LayerGroup, alerts: any[]) => {
 }
 
 /**
- * [v18 Upgrade] Recursive rendering engine for 3rd-order cascading impacts.
- */
-/**
- * [v19 Upgrade] Recursive rendering engine with refined labels and filtering.
+ * [v8.3 Upgrade] Physics-Based Recursive Propagation Engine.
+ * Synchronizes SVG arc Surge with Node Ignition and Camera Tracking.
  */
 function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number) {
     if (level > 3 || !impacts) return;
 
+    // Discovery Delay per level (Causal Frame)
+    const levelDelay = 1200; // Time for arc to 'travel'
+
     impacts.forEach((finding, index) => {
-        const nodeCoords = getNodeCoords(finding);
-        if (!nodeCoords) return;
+        setTimeout(() => {
+            const nodeCoords = getNodeCoords(finding);
+            if (!nodeCoords) return;
 
-        // 0. Filter Check
-        const nodeTopic = finding.topic || 'geopolitical';
-        if (!activeMapFilters.has(nodeTopic)) return;
+            const isLocked = finding.is_locked || false;
+            const pathColor = finding.impact_alpha < 0 ? '#f43f5e' : '#10b981';
 
-        const isLocked = finding.is_locked || false;
-        console.log(`[Antigravity] Refined Label Rendered for: ${isLocked ? '???' : finding.entity_name} with Topic: ${nodeTopic}`);
+            // 1. Calculate Arc Path
+            const start = L.latLng(parentCoords.lat, parentCoords.lng);
+            const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
+            const points: L.LatLng[] = [];
+            const steps = 40;
+            
+            const dLat = end.lat - start.lat;
+            const dLng = end.lng - start.lng;
+            const dist = Math.sqrt(dLat*dLat + dLng*dLng);
+            
+            const heightAttenuation = 1.0 - (level - 1) * 0.2; 
+            const offsetFactor = (0.15 + (Math.min(dist, 40) / 200)) * heightAttenuation + (index % 2 === 0 ? 0.05 : -0.05);
 
-        // 1. Calculate Bezier Path
-        const start = L.latLng(parentCoords.lat, parentCoords.lng);
-        const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
-        const points: L.LatLng[] = [];
-        const steps = 36;
-        
-        const dLat = end.lat - start.lat;
-        const dLng = end.lng - start.lng;
-        const dist = Math.sqrt(dLat*dLat + dLng*dLng);
-        
-        const heightAttenuation = 1.0 - (level - 1) * 0.25; 
-        const baseOffset = (0.15 + (Math.min(dist, 40) / 200)) * heightAttenuation;
-        const overlapAvoidance = (index % 3 === 0) ? 0.05 : ((index % 3 === 1) ? -0.05 : 0);
-        const offsetFactor = baseOffset + overlapAvoidance;
+            const midLat = (start.lat + end.lat) / 2;
+            const midLng = (start.lng + end.lng) / 2;
+            const cpLat = midLat - dLng * offsetFactor;
+            const cpLng = midLng + dLat * offsetFactor;
 
-        const midLat = (start.lat + end.lat) / 2;
-        const midLng = (start.lng + end.lng) / 2;
-        let cpLat = midLat - dLng * offsetFactor;
-        let cpLng = midLng + dLat * offsetFactor;
-        cpLat = Math.max(-80, Math.min(80, cpLat));
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const lat = (1-t)**2 * start.lat + 2*(1-t)*t * cpLat + t**2 * end.lat;
+                const lng = (1-t)**2 * start.lng + 2*(1-t)*t * cpLng + t**2 * end.lng;
+                points.push(L.latLng(lat, lng));
+            }
 
-        for (let i = 0; i <= steps; i++) {
-            const t = i / steps;
-            const lat = (1-t)**2 * start.lat + 2*(1-t)*t * cpLat + t**2 * end.lat;
-            const lng = (1-t)**2 * start.lng + 2*(1-t)*t * cpLng + t**2 * end.lng;
-            points.push(L.latLng(lat, lng));
-        }
-
-        // 2. Styling (Level-based)
-        const pathColor = finding.impact_alpha < 0 ? '#f43f5e' : '#10b981';
-        let weight = Math.max(1, (baseIntensity / 5) * (1.5 - (level-1)*0.4));
-        let opacity = 0.8 - (level-1) * 0.25;
-        let dashArray = level === 2 ? '5, 5' : (level === 3 ? '2, 6' : undefined);
-
-        L.polyline(points, {
-            className: `propagation-arc-curved ${isLocked ? 'ghost-node' : ''}`,
-            color: pathColor,
-            weight,
-            opacity: isLocked ? 0.2 : opacity,
-            dashArray
-        }).addTo(layer);
-
-        // 3. Recursive Call
-        const subImpacts = finding.cascading_impacts || finding.metadata_json?.cascading_impacts;
-        if (subImpacts && level < 3 && !isLocked) {
-            renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity);
-        }
-
-        // 4. Particle Animation
-        if (!isLocked) {
-            const animParticle = L.circleMarker(points[0], {
-                radius: 2.5 - (level-1)*0.5,
-                color: '#ffffff',
-                fillColor: pathColor,
-                fillOpacity: 1,
-                weight: 1,
-                className: 'pulse-particle-dynamic',
-                pane: 'overlayPane'
+            // 2. Draw Arc (Energy Surge)
+            L.polyline(points, {
+                className: `propagation-arc-curved`,
+                color: pathColor,
+                weight: Math.max(1, (baseIntensity / 4) * (1.2 - (level-1)*0.3)),
+                opacity: isLocked ? 0.1 : 0.6,
+                interactive: false
             }).addTo(layer);
 
-            // [v35] Physical Meaning Logic (Time-to-Impact)
-            // Use alpha and level to determine hypothetical 'velocity'
-            // alphaVal=10 (%) -> Fast, alphaVal=1 (%) -> Slow
-            const alphaVal = Math.abs(finding.impact_alpha || 0.1);
-            const levelDamping = 1.0 - (level - 1) * 0.2;
-            const durationMs = Math.max(400, 3000 / (alphaVal * levelDamping)); 
+            // 3. Camera Work: Follow the Packet
+            if (level === 1) {
+                const centerPoint = L.latLng((start.lat + end.lat)/2, (start.lng + end.lng)/2);
+                map.panTo(centerPoint, { animate: true, duration: 1.2 });
+            }
 
-            let startTime: number | null = null;
-            const animatePulse = (timestamp: number) => {
-                if (!startTime) startTime = timestamp;
-                const elapsed = timestamp - startTime;
-                const progress = (elapsed % durationMs) / durationMs;
-
-                const indexFloat = progress * steps;
-                const lowerIndex = Math.floor(indexFloat);
-                const upperIndex = Math.min(steps, Math.ceil(indexFloat));
-                const tLocal = indexFloat - lowerIndex;
-
-                if (points[lowerIndex] && points[upperIndex]) {
-                     const lat = points[lowerIndex].lat + (points[upperIndex].lat - points[lowerIndex].lat) * tLocal;
-                     const lng = points[lowerIndex].lng + (points[upperIndex].lng - points[lowerIndex].lng) * tLocal;
-                     animParticle.setLatLng([lat, lng]);
-
-                     // [v35] Dynamic Decay/Trail: Faster particles are more opaque
-                     const opacity = 0.5 + (alphaVal / 20);
-                     animParticle.setStyle({ fillOpacity: opacity, opacity: opacity });
-                }
+            // 4. Arrival & Ignition (Trigger next node only after surge)
+            setTimeout(() => {
+                const pulseSize = 24 - (level * 4);
+                const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level + 1, 3)} node-ignite`;
                 
-                if (currentGlobalMap === map && layer.hasLayer(animParticle)) {
-                    requestAnimationFrame(animatePulse);
+                const nodeIcon = L.divIcon({
+                    className: 'none',
+                    html: `
+                        <div class="${markerClass}" style="width: ${pulseSize}px; height: ${pulseSize}px; --ring-color: ${pathColor}">
+                            <div class="glow-ring"></div>
+                            <div class="ring-inner"></div>
+                        </div>
+                    `,
+                    iconSize: [pulseSize, pulseSize],
+                    iconAnchor: [pulseSize/2, pulseSize/2]
+                });
+
+                L.marker([nodeCoords.lat, nodeCoords.lng], { icon: nodeIcon, pane: 'overlayPane' }).addTo(layer);
+
+                // Recursive discovery to next level
+                const subImpacts = finding.cascading_impacts || finding.metadata_json?.cascading_impacts;
+                if (subImpacts && level < 3 && !isLocked) {
+                    renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity);
                 }
-            };
-            requestAnimationFrame(animatePulse);
-        }
+            }, levelDelay);
 
-        // 5. Refined Node Marker (Mockup Aesthetic with Overlap Dodge)
-        const trendIcon = finding.impact_alpha >= 0 ? '↑' : '↓';
-        const trendClass = finding.impact_alpha >= 0 ? 'alpha-up' : 'alpha-down';
-        const topicLabel = TOPIC_LABELS[nodeTopic] || 'General';
-
-        // Aggressive dodge: At low zoom (level 2-3), labels are 48px high. 1 deg is tiny.
-        // We push Level 3 nodes as far as 8-10 degrees to ensure clear separation from the Alert/Level 1 centers.
-        const vOffset = level === 1 ? 0 : (level === 2 ? 3.5 : (index % 2 === 0 ? 8.0 : -8.0));
-        const finalCoords: [number, number] = [nodeCoords.lat + vOffset, nodeCoords.lng];
-
-        const pulseIcon = L.divIcon({
-            className: 'none',
-            html: `
-                <div class="market-pulse-node refined-node ${isLocked ? 'ghost-node' : ''}" 
-                     style="scale: ${1.0 - (level-1)*0.1};"
-                     onclick="${isLocked ? 'window.dispatchEvent(new CustomEvent(\'upsell-click\'))' : ''}">
-                    <div class="node-topic topic-tag-${nodeTopic}">${isLocked ? '[LOCKED]' : `[${topicLabel.toUpperCase()}]`}</div>
-                    <div class="node-entity">${isLocked ? '???' : finding.entity_name}</div>
-                    <div class="node-stats">
-                        <span class="${trendClass}">${isLocked ? 'Locked' : (finding.impact_alpha > 0 ? '+' : '') + finding.impact_alpha + '%'}</span>
-                        <span class="trend-arrow ${trendClass}">${isLocked ? '' : trendIcon}</span>
-                    </div>
-                </div>
-            `,
-            iconSize: [140, 48],
-            iconAnchor: [70, level === 1 ? 24 : 70] // Pivot higher level nodes significantly up
-        });
-        
-        L.marker(finalCoords, { 
-            icon: pulseIcon,
-            zIndexOffset: 1000 - level * 50,
-            pane: 'overlayPane'
-        }).addTo(layer);
+        }, index * 200);
     });
 }
 
