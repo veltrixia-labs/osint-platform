@@ -331,6 +331,17 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         `;
     }).join('');
 
+    // Attach Visualize & Track events
+    container.querySelectorAll('.map-viz-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const target = e.currentTarget as HTMLElement;
+            const alertId = target.dataset.id;
+            console.log(`[Antigravity] Map Tracking Initiated for Alert: ${alertId}`);
+            window.dispatchEvent(new CustomEvent('map-track-alert', { detail: { id: alertId } }));
+        });
+    });
+
     // Attach View Report events
     container.querySelectorAll('.view-report-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -949,12 +960,28 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
     }
     console.log(`[Antigravity] Arc Layer Active: ${map.hasLayer(layerGroup)}`);
 
-    // Clear old dynamic elements precisely without touching base tiles
-    layerGroup.clearLayers();
-    
+    // [v8.4] Tactical Zoom-Watcher
+    const updateZoomFactor = () => {
+        const zoom = map.getZoom();
+        const factor = Math.max(1.0, 1.0 + (zoom - 3) * 0.15);
+        map.getContainer().style.setProperty('--map-zoom-scale', factor.toString());
+    };
+    map.off('zoomend', updateZoomFactor);
+    map.on('zoomend', updateZoomFactor);
+    updateZoomFactor();
+
+    // Toggle Focal Suppression Context
+    if (focusAlertId) {
+        map.getContainer().classList.add('strategic-focal-active');
+    } else {
+        map.getContainer().classList.remove('strategic-focal-active');
+    }
+
     // Force multiple resize checks to handle varied Render load times
-    setTimeout(() => { map.invalidateSize(); }, 150);
-    setTimeout(() => { map.invalidateSize(); }, 500);
+    setTimeout(() => { 
+        map.invalidateSize(); 
+        updateZoomFactor();
+    }, 150);
 
     // Initial view reset if no focus
     if (!focusAlertId) {
@@ -996,19 +1023,22 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                 const intensity = alert.intensity || 5;
                 const topicDef = getTopicDef(alert.topic);
                 const topicColor = topicDef?.color || '#58a6ff';
-                const pulseSize = 32 + (intensity * 4);
-                const markerClass = `marker-ring-tactical marker-ring-tactical--l1`;
+                
+                // [v8.4] Granular Zoom-Reactive Scaling
+                const baseSize = 14 + (intensity * 1.5);
+                const markerClass = `marker-ring-tactical marker-ring-tactical--l1 ${focusAlertId && alert.id !== focusAlertId ? 'focal-suppressed' : ''}`;
 
                 const markerIcon = L.divIcon({
                     className: 'none',
                     html: `
-                        <div class="${markerClass}" style="width: ${pulseSize}px; height: ${pulseSize}px; --ring-color: ${topicColor}">
+                        <div class="${markerClass}" 
+                             style="width: calc(${baseSize}px * var(--map-zoom-scale, 1)); height: calc(${baseSize}px * var(--map-zoom-scale, 1)); --ring-color: ${topicColor}">
                             <div class="glow-ring"></div>
-                            <div class="ring-inner"></div>
+                            <div class="ring-inner" style="width:3px; height:3px;"></div>
                         </div>
                     `,
-                    iconSize: [pulseSize, pulseSize],
-                    iconAnchor: [pulseSize/2, pulseSize/2]
+                    iconSize: [baseSize * 1.5, baseSize * 1.5],
+                    iconAnchor: [baseSize * 0.75, baseSize * 0.75]
                 });
 
                 // [v8.1] Modern Tactical Intelligence Card
@@ -1201,15 +1231,11 @@ const renderRegionalContext = (layerGroup: L.LayerGroup, alerts: any[]) => {
     });
 }
 
-/**
- * [v8.3 Upgrade] Physics-Based Recursive Propagation Engine.
- * Synchronizes SVG arc Surge with Node Ignition and Camera Tracking.
- */
 function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number) {
     if (level > 3 || !impacts) return;
 
     // Discovery Delay per level (Causal Frame)
-    const levelDelay = 1200; // Time for arc to 'travel'
+    const levelDelay = 1200; 
 
     impacts.forEach((finding, index) => {
         setTimeout(() => {
@@ -1261,19 +1287,20 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
 
             // 4. Arrival & Ignition (Trigger next node only after surge)
             setTimeout(() => {
-                const pulseSize = 24 - (level * 4);
+                const baseSize = 10 - (level * 1.5);
                 const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level + 1, 3)} node-ignite`;
                 
                 const nodeIcon = L.divIcon({
                     className: 'none',
                     html: `
-                        <div class="${markerClass}" style="width: ${pulseSize}px; height: ${pulseSize}px; --ring-color: ${pathColor}">
+                        <div class="${markerClass}" 
+                             style="width: calc(${baseSize}px * var(--map-zoom-scale, 1)); height: calc(${baseSize}px * var(--map-zoom-scale, 1)); --ring-color: ${pathColor}">
                             <div class="glow-ring"></div>
-                            <div class="ring-inner"></div>
+                            <div class="ring-inner" style="width:2px; height:2px;"></div>
                         </div>
                     `,
-                    iconSize: [pulseSize, pulseSize],
-                    iconAnchor: [pulseSize/2, pulseSize/2]
+                    iconSize: [baseSize * 1.5, baseSize * 1.5],
+                    iconAnchor: [baseSize * 0.75, baseSize * 0.75]
                 });
 
                 L.marker([nodeCoords.lat, nodeCoords.lng], { icon: nodeIcon, pane: 'overlayPane' }).addTo(layer);

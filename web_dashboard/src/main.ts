@@ -658,6 +658,12 @@ async function initDashboard() {
     else handleTabSwitch('feed');
     refreshWatchlist();
 
+    // [v8.4] Strategic Tracking Integration
+    window.addEventListener('map-track-alert' as any, (e: CustomEvent) => {
+        console.log(`[Antigravity] Strategic Monitor Tracking: Alert ID ${e.detail.id}`);
+        handleTabSwitch('map', e.detail.id);
+    });
+
     // [v8.1] Tactical Map -> Report Integration
     window.addEventListener('map-view-report' as any, (e: CustomEvent) => {
         console.log(`[Antigravity] Map Navigation Triggered: Asset ID ${e.detail.id}`);

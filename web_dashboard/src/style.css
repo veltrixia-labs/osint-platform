@@ -2343,9 +2343,19 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     background: #0b0e14 !important; /* Midnight Tactical Base */
 }
 
+/* [v8.4] Reverted to 'Midnight Military Gray' Grayscale Imagery */
 .map-tactical-imagery-v2 {
-    /* Safe Military Desaturation - High-Fidelity Tactical Look */
-    filter: brightness(0.75) saturate(0.4) contrast(1.15) sepia(0.08) hue-rotate(-5deg);
+    filter: grayscale(1) brightness(0.55) contrast(1.2) sepia(0.05);
+    transition: filter 0.8s ease;
+}
+
+/* [v8.4] Strategic Focal Active (Dedicated Overlay Suppression) */
+#map-instance.strategic-focal-active .map-tactical-imagery-v2 {
+    filter: grayscale(1) brightness(0.3) blur(2px); /* Deep suppression during analysis */
+}
+
+#map-instance.strategic-focal-active .map-labels-tactical {
+    opacity: 0.1 !important;
 }
 
 .map-labels-tactical {
@@ -2486,8 +2496,11 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     filter: blur(1px) brightness(1.5);
 }
 
-.ghost-node {
-    opacity: 0.2;
-    pointer-events: none;
+.marker-ring-tactical.focal-suppressed {
+    display: none !important;
+}
+
+.marker-ring-tactical.node-ignite {
+    opacity: 0; /* Starts hidden, revealed by ignite animation */
 }
 
