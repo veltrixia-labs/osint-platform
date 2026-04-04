@@ -2344,3 +2344,175 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     margin: 0;
 }
 
+/* --- [Phase 8.1/8.2] Tactical HUD & Global Map Redesign --- */
+
+#map-instance {
+    background: #0b0e14 !important; /* Midnight Tactical Base */
+}
+
+.map-tactical-imagery-v2 {
+    /* Safe Military Desaturation - High-Fidelity Tactical Look */
+    filter: brightness(0.75) saturate(0.4) contrast(1.15) sepia(0.08) hue-rotate(-5deg);
+}
+
+.map-labels-tactical {
+    filter: brightness(1.4) contrast(1.1) saturate(0);
+    opacity: 0.85 !important;
+}
+
+/* Tactical HUD Badge */
+.world-monitor-badge {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    z-index: 1000;
+    background: rgba(13, 17, 23, 0.9);
+    backdrop-filter: blur(10px);
+    border-left: 3px solid #ff7b72;
+    padding: 10px 16px;
+    color: #fff;
+    pointer-events: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    border-radius: 2px;
+}
+
+.world-monitor-badge .tag {
+    color: #ff7b72;
+    font-size: 0.8rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.world-monitor-badge .version {
+    font-size: 0.65rem;
+    opacity: 0.5;
+    margin-top: 2px;
+}
+
+/* Analyst FAB Stack */
+.tactical-fab-stack {
+    position: absolute;
+    bottom: 40px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tactical-fab {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #0d1117;
+    border: 1px solid rgba(88,166,255,0.3);
+    color: #58a6ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    transition: all 0.2s;
+}
+
+.tactical-fab:hover {
+    background: #161b22;
+    border-color: #58a6ff;
+    transform: scale(1.1);
+}
+
+/* Multi-Colored Tactical Rings */
+.marker-ring-tactical {
+    position: relative;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+}
+
+.marker-ring-tactical .glow-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 3px solid var(--ring-color);
+    box-shadow: 0 0 25px var(--ring-color);
+    opacity: 0.9;
+    animation: tactical-pulse-v2 2s infinite ease-in-out;
+}
+
+@keyframes tactical-pulse-v2 {
+    0% { transform: scale(0.92); opacity: 0.6; }
+    50% { transform: scale(1.12); opacity: 1.0; }
+    100% { transform: scale(0.92); opacity: 0.6; }
+}
+
+.marker-ring-tactical .count-val {
+    color: #fff;
+    font-weight: 900;
+    font-size: 1.1rem;
+    z-index: 2;
+}
+
+/* Glassmorphism Tactical Popup */
+.tactical-popup .leaflet-popup-content-wrapper {
+    background: rgba(13, 17, 23, 0.94) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(88, 166, 255, 0.25);
+    border-radius: 4px;
+    padding: 0 !important;
+    color: #c9d1d9;
+    box-shadow: 0 12px 64px rgba(0, 0, 0, 0.95);
+    overflow: hidden;
+}
+
+.tactical-popup .leaflet-popup-content {
+    margin: 0 !important;
+    width: 320px !important;
+}
+
+.tactical-card {
+    position: relative;
+    padding-left: 4px;
+}
+
+.tactical-card-accent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background: var(--topic-color, var(--accent));
+    box-shadow: 0 0 20px var(--topic-color, var(--accent));
+}
+
+.tactical-card-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tactical-card-footer {
+    padding: 12px 20px;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tactical-action-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+

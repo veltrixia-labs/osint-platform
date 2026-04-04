@@ -908,10 +908,10 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
 
     // 1. Persistent Map Canvas: Only initialize if not already mounted
     if (!currentGlobalMap) {
-        container.innerHTML = '<div id="map-instance" style="height:100%; width:100%; min-height:500px; background:transparent;"></div>';
+        container.innerHTML = '<div id="map-instance" style="height:100%; width:100%; min-height:500px; background:#0b0e14;"></div>';
         
         // Wait for DOM
-        await new Promise(r => setTimeout(r, 50));
+        await new Promise(r => setTimeout(r, 100));
         
         const mapElement = document.getElementById('map-instance');
         if (!mapElement) return;
@@ -959,11 +959,9 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
     // Clear old dynamic elements precisely without touching base tiles
     layerGroup.clearLayers();
     
-    // Force a resize check in case the container flexed
-    setTimeout(() => {
-        map.invalidateSize();
-        console.log(`[Antigravity] Map Container Ready (Size Invalidated)`);
-    }, 150);
+    // Force multiple resize checks to handle varied Render load times
+    setTimeout(() => { map.invalidateSize(); }, 150);
+    setTimeout(() => { map.invalidateSize(); }, 500);
 
     // Initial view reset if no focus
     if (!focusAlertId) {
