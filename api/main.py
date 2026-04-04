@@ -325,6 +325,9 @@ from api.rate_limit import rate_limit
 
 def _gate_cascading_impacts(tier: str, impacts: list) -> list:
     """Filter cascading impacts based on user subscription tier."""
+    if not isinstance(impacts, list):
+        return []
+        
     if tier == "free":
         return []
     
@@ -332,11 +335,13 @@ def _gate_cascading_impacts(tier: str, impacts: list) -> list:
         # Only show first 2 impacts, and mark the rest as locked
         gated = []
         for i, imp in enumerate(impacts):
+            if not isinstance(imp, dict):
+                continue
             if i < 2:
                 # Truncate reasoning for Pro
                 imp_copy = imp.copy()
-                if "reasoning" in imp_copy:
-                    imp_copy["reasoning"] = imp_copy["reasoning"][:50] + "..."
+                if "reasoning" in imp_copy and imp_copy["reasoning"]:
+                    imp_copy["reasoning"] = str(imp_copy["reasoning"])[:50] + "..."
                 gated.append(imp_copy)
             else:
                 # Add Ghost Node placeholder

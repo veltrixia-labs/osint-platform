@@ -208,8 +208,12 @@ async def main():
         await seed_admin(session)
         await update_system_metric(session, "scheduler_status", "starting")
 
-    # 2. Immediate Startup Pipeline
-    await run_startup_checks()
+    # 2. Immediate Startup Pipeline (Resilient)
+    try:
+        await run_startup_checks()
+    except Exception as startup_e:
+        logger.error(f"[SELF-HEALING] Startup checks failed (Likely API/RateLimit): {startup_e}")
+        logger.info("[SELF-HEALING] Proceeding to background schedule loop anyway.")
 
     # 3. Register Regular Jobs
     register_jobs()
