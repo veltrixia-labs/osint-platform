@@ -479,6 +479,9 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
                 <a href="terms.html" target="_blank" style="color: inherit; text-decoration: none;">Terms</a>
                 <a href="privacy.html" target="_blank" style="color: inherit; text-decoration: none;">Privacy</a>
             </div>
+            <div style="font-size: 0.65rem; opacity: 0.8; text-align: center; margin-top: 1rem; color: var(--accent);">
+                API Version: 7.5-FINAL-SYNC | <span id="data-pulse" style="color: #3fb950;">📡 Connected</span>
+            </div>
             <div style="font-size: 0.6rem; opacity: 0.3; text-align: center; margin-top: 8px;">&copy; 2026 VELTRIXIA LABS</div>
         </div>
     `;

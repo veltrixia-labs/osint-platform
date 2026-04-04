@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 # Ensure project root is in path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from db.database import AsyncSessionLocal
+from db.database import AsyncSessionLocal, run_migrations
 from jobs.main_scheduler import pipeline_full_processing, daily_reports_wrapper, weekly_reports_wrapper
 
 logging.basicConfig(
@@ -18,6 +18,14 @@ logger = logging.getLogger("dev_sync_engine")
 
 async def run_sync():
     logger.info("Starting MANUAL ENGINE SYNC...")
+    
+    # 0. Database Schema Setup
+    logger.info("[SYNC] Phase 0: Initializing Database Schema (Alembic)...")
+    try:
+        run_migrations()
+    except Exception as e:
+        logger.error(f"Migration failed: {e}. Continue anyway if schema exists.")
+
     logger.info("Initializing DB Session...")
     
     try:
