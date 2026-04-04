@@ -2,7 +2,7 @@ import L from 'leaflet';
 import type { Alert, AnalystProfile, HealthData } from './api';
 import { fetchAlerts, updateWatchlist } from './api';
 import { getTopicDef, canAccessTopic, canAccessReport, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from './topics';
-import { STRATEGIC_ASSETS, getStrategicContext } from './infrastructure';
+import { STRATEGIC_ASSETS } from './infrastructure';
  
 let activeMapFilters = new Set(['global']);
 
@@ -924,14 +924,16 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             worldCopyJump: true
         }).setView([20, 0], 2);
 
-        // Base layer: World Dark Gray
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Esri'
+        // [v8.1] High-Fidelity Tactical Satellite Base
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Esri Satellite',
+            className: 'map-tactical-imagery-v2'
         }).addTo(currentGlobalMap);
 
-        // Reference layer: English Labels
+        // Reference layer: Modern Clean Labels
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-            className: 'map-labels'
+            className: 'map-labels-tactical',
+            opacity: 0.7
         }).addTo(currentGlobalMap);
 
         L.control.zoom({ position: 'bottomright' }).addTo(currentGlobalMap);
@@ -941,7 +943,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
     }
     
     // UI: Native Filter Control (Always Refresh/Re-bind)
-    initMapFilter(currentGlobalMap, () => {
+    initMapFilter(currentGlobalMap, container, () => {
         renderMap(container, _tier, focusAlertId);
     });
 
@@ -1001,49 +1003,59 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             const coords = getAlertCoords(alert);
             if (coords) {
                 const intensity = alert.intensity || 5;
-                const isCritical = intensity >= 9.0;
-                
-                // [v35] Strategic Proximity Amplification (Gravity Well)
-                const baseSize = 20 + (intensity * 2);
-                const strategicHub = getStrategicContext(coords.lat, coords.lng, 500);
-                const ampScale = strategicHub ? 1.5 : 1.0;
-                const finalSize = baseSize * ampScale;
+                const topicDef = getTopicDef(alert.topic);
+                const topicColor = topicDef?.color || '#58a6ff';
+                const pulseSize = 32 + (intensity * 4);
 
                 const markerIcon = L.divIcon({
-                    className: 'custom-div-icon',
+                    className: 'none',
                     html: `
-                        <div class="map-marker-pulse ${isCritical ? 'map-marker-pulse--critical' : ''} ${strategicHub ? 'marker-gravity-well' : ''}" 
-                             style="width: ${finalSize}px; height: ${finalSize}px;">
-                            <div class="ring" style="background: ${strategicHub ? 'rgba(88, 166, 255, 0.4)' : ''};"></div>
-                            <div class="core"></div>
-                            ${strategicHub ? `<div class="gravity-label">[NEAR ${strategicHub.name.toUpperCase()}]</div>` : ''}
+                        <div class="marker-ring-tactical" style="width: ${pulseSize}px; height: ${pulseSize}px; --ring-color: ${topicColor}">
+                            <div class="glow-ring"></div>
+                            <div class="ring-inner"></div>
+                            <div class="count-val">${intensity.toFixed(0)}</div>
                         </div>
                     `,
-                    iconSize: [finalSize, finalSize],
-                    iconAnchor: [finalSize / 2, finalSize / 2]
+                    iconSize: [pulseSize, pulseSize],
+                    iconAnchor: [pulseSize/2, pulseSize/2]
                 });
 
+                // [v8.1] Modern Tactical Intelligence Card
+                const cascadingImpacts = alert.metadata_json?.cascading_impacts || [];
                 const popupContent = `
-                    <div style="padding:10px; min-width:240px;">
-                        <strong style="color:var(--accent); font-size:1rem; display:block; margin-bottom:4px;">${alert.target_label}</strong>
-                        <div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:8px;">
-                            ${alert.topic?.replace('_', ' ').toUpperCase() || 'GLOBAL'} | ${alert.severity.toUpperCase()}
-                        </div>
-                        <div style="font-size:0.85rem; background:rgba(255,255,255,0.03); padding:8px; border-radius:6px; border:1px solid var(--border);">
-                            Signal Intensity: <span style="color:var(--accent); font-weight:700;">${intensity.toFixed(1)}</span>
-                        </div>
-                        
-                        ${alert.metadata_json?.cascading_impacts ? `
-                            <div style="margin-top:12px; border-top:1px solid var(--border); padding-top:8px;">
-                                <div style="font-size:0.7rem; color:var(--accent); font-weight:600; text-transform:uppercase; margin-bottom:4px;">Cascading Impacts</div>
-                                ${alert.metadata_json.cascading_impacts.slice(0, 3).map((f: any) => `
-                                    <div style="font-size:0.75rem; display:flex; justify-content:space-between; margin-bottom:2px;">
-                                        <span style="color:#c9d1d9;">${f.entity_name}</span>
-                                        <span style="color:${f.impact_alpha < 0 ? 'var(--danger)' : 'var(--success)'}; font-weight:700;">${f.impact_alpha > 0 ? '+' : ''}${f.impact_alpha}%</span>
-                                    </div>
-                                `).join('')}
+                    <div class="tactical-card tactical-popup-container" style="--topic-color: ${topicColor}">
+                        <div class="tactical-card-accent"></div>
+                        <div class="tactical-card-header">
+                            <strong style="color:#fff; font-size:1.05rem; display:block;">${alert.target_label}</strong>
+                            <div style="font-size:0.65rem; color:${topicColor}; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; margin-top:4px;">
+                                ${alert.topic?.replace(/_/g, ' ') || 'GLOBAL SIGNAL'} • ${alert.severity}
                             </div>
-                        ` : ''}
+                        </div>
+                        <div class="tactical-card-body">
+                            <p style="font-size:0.8rem; color:#8b949e; line-height:1.5; margin-bottom:16px;">
+                                ${alert.triggered_at ? new Date(alert.triggered_at).toLocaleString() : 'Live Scan Active'}
+                            </p>
+                            
+                            ${cascadingImpacts.length > 0 ? `
+                                <div style="margin-top:8px;">
+                                    <div style="font-size:0.65rem; opacity:0.5; text-transform:uppercase; margin-bottom:10px;">Market Ripple Effect</div>
+                                    ${cascadingImpacts.slice(0, 3).map((imp: any) => `
+                                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.8rem;">
+                                            <span style="color:#c9d1d9;">${imp.entity_name}</span>
+                                            <span style="color:${imp.impact_alpha < 0 ? 'var(--danger)' : 'var(--success)'}; font-weight:700;">
+                                                ${imp.impact_alpha > 0 ? '+' : ''}${imp.impact_alpha}%
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<div style="font-size:0.75rem; opacity:0.4;">Analyzing recursive dependencies...</div>'}
+                        </div>
+                        <div class="tactical-card-footer">
+                            <button class="tactical-action-btn" onclick="window.dispatchEvent(new CustomEvent('map-view-report', {detail: {id: '${alert.id}'}}))">
+                                VIEW REPORT →
+                            </button>
+                            <span style="font-size:0.6rem; opacity:0.4;">V.1.5 HUD</span>
+                        </div>
                     </div>
                 `;
 
@@ -1055,7 +1067,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                     pane: 'overlayPane' 
                 })
                     .addTo(layerGroup)
-                    .bindPopup(popupContent);
+                    .bindPopup(popupContent, { className: 'tactical-popup', maxWidth: 320 });
                     
                 // Handle Focus / Camera Transition
                 if (isFocus) {
@@ -1348,7 +1360,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
     });
 }
 
-function initMapFilter(map: L.Map, onUpdate: () => void) {
+function initMapFilter(map: L.Map, container: HTMLElement, onUpdate: () => void) {
     if (currentFilterControl) {
         currentFilterControl.remove();
     }
@@ -1410,5 +1422,25 @@ function initMapFilter(map: L.Map, onUpdate: () => void) {
 
     currentFilterControl = new (FilterControl as any)();
     currentFilterControl?.addTo(map);
+
+    // [v8.1] Tactical HUD Enrichment (Static Overlays)
+    // We add the "WORLD MONITOR" badge and the FAB actions as absolute overlays
+    if (!container.querySelector('.world-monitor-badge')) {
+        const hud = document.createElement('div');
+        hud.innerHTML = `
+            <div class="world-monitor-badge">
+                <div class="tag">WORLD MONITOR</div>
+                <div class="version">v.1.5.0 • STRATEGIC HUB</div>
+            </div>
+            
+            <div class="tactical-fab-stack">
+                <div class="tactical-fab active" title="Monitor Hub">🌐</div>
+                <div class="tactical-fab" title="Intelligence Radar">📡</div>
+                <div class="tactical-fab" title="Add Watchpoint">➕</div>
+                <div class="tactical-fab" title="Analysis Filters">⚙️</div>
+            </div>
+        `;
+        container.appendChild(hud);
+    }
 }
 

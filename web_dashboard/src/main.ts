@@ -657,6 +657,12 @@ async function initDashboard() {
     if (reportId) renderSingleReport(reportId);
     else handleTabSwitch('feed');
     refreshWatchlist();
+
+    // [v8.1] Tactical Map -> Report Integration
+    window.addEventListener('map-view-report' as any, (e: CustomEvent) => {
+        console.log(`[Antigravity] Map Navigation Triggered: Asset ID ${e.detail.id}`);
+        renderSingleReport(e.detail.id, 'map');
+    });
 }
 
 // [v37] Global Auth Watchdog
