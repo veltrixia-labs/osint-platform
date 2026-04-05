@@ -19,18 +19,19 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Add container_id to external_posts.
-
-    Threads uses a 2-step publish flow:
-      1. Create a container  -> returns container_id
-      2. Publish the container -> returns media_id (stored in external_id)
-    report_generator.py writes container_id; this column was previously missing
-    from the model, causing the value to be silently discarded.
-    """
-    op.add_column(
-        'external_posts',
-        sa.Column('container_id', sa.String(), nullable=True)
-    )
+    """Add container_id to external_posts with idempotency check."""
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    columns = [c['name'] for c in inspector.get_columns('external_posts')]
+    
+    if 'container_id' not in columns:
+        op.add_column(
+            'external_posts',
+            sa.Column('container_id', sa.String(), nullable=True)
+        )
+    else:
+        # Avoid error if column exists from manual fix or drift
+        print("[Alembic] Column 'container_id' already exists in 'external_posts'. Skipping.")
 
 
 def downgrade() -> None:

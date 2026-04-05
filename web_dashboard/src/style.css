@@ -1543,7 +1543,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 .report-actions-box li::before {
-  content: "»";
+  content: "\00BB";
   position: absolute;
   left: 0;
   color: var(--accent);
@@ -1564,7 +1564,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .report-actions-box li.priority-high-priority::before {
   color: var(--danger) !important;
-  content: "笞｡" !important;
+  content: "!" !important;
 }
 
 .report-actions-box li.priority-monitor {
@@ -1573,7 +1573,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .report-actions-box li.priority-monitor::before {
   color: var(--accent) !important;
-  content: "竊・ !important;
+  content: "\2192" !important;
 }
 
 .report-actions-box li.priority-maintain {
@@ -1583,7 +1583,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .report-actions-box li.priority-maintain::before {
   color: var(--text-secondary) !important;
-  content: "窶｢" !important;
+  content: "\2022" !important;
 }
 
 .report-actions-box .report-action-rationale {
@@ -1641,7 +1641,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 .time-tag::before {
-  content: 'ﾂｷ ';
+  content: "\00B7 ";
   margin-right: 4px;
   opacity: 0.5;
 }
@@ -1656,7 +1656,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 .confidence-tag::before {
-  content: '窶・';
+  content: "\2022";
   margin-right: 2px;
   opacity: 0.4;
   font-style: normal;
