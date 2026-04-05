@@ -5,7 +5,7 @@ console.log(`[Antigravity] Mode: ${import.meta.env.MODE}`);
 console.log(`[Antigravity] Build Version: 7.5-FINAL-SYNC`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderRiskProfile, renderMap } from './modules/render'
+import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderRiskProfile, renderMap } from './modules/render/index'
 import { login, signup, fetchMe, logout, fetchUsage, fetchReports, fetchReport } from './modules/api'
 import type { UserMe, AnalystProfile, Report } from './modules/api'
 import {
@@ -288,11 +288,19 @@ async function initDashboard() {
       document.body.classList.remove('no-scroll');
     };
 
-    const handleTabSwitch = (tab: TabId, focusAlertId?: string) => {
+    const handleTabSwitch = (tab: TabId, focusAlertId?: string, skipPushState = false) => {
         currentTab = tab;
         updateNavUI(tab);
         console.log(`[Antigravity] Viewport State: ${tab}${focusAlertId ? ` | Focus: ${focusAlertId}` : ''}`);
         
+        // Sync URL Hash (Phase 4)
+        if (!skipPushState) {
+            const newHash = `#${tab}${focusAlertId ? `?alert=${focusAlertId}` : ''}`;
+            if (window.location.hash !== newHash) {
+                history.pushState({ tab, focusAlertId }, '', newHash);
+            }
+        }
+
         const mainContent = document.querySelector<HTMLElement>('.main-content');
         const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
         const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
@@ -317,6 +325,33 @@ async function initDashboard() {
         }, 50);
     };
 
+    // [v38] Hash Router Watcher
+    window.addEventListener('hashchange', () => {
+        const hash = window.location.hash.slice(1);
+        if (!hash) return;
+        
+        const [base, query] = hash.split('?');
+        const params = new URLSearchParams(query || '');
+        
+        if (base === 'feed' || base === 'map' || base === 'plans' || base === 'reports') {
+            if (currentTab !== base) {
+                handleTabSwitch(base as TabId, params.get('alert') || undefined, true);
+            }
+        } else if (base.startsWith('report/')) {
+            const reportId = base.split('/')[1];
+            if (reportId) {
+                window.dispatchEvent(new CustomEvent('view-report', { detail: { reportId, skipPushState: true } }));
+            }
+        }
+    });
+
+    // History API Listener
+    window.addEventListener('popstate', (e) => {
+        if (e.state && e.state.tab) {
+            handleTabSwitch(e.state.tab, e.state.focusAlertId, true);
+        }
+    });
+
     document.querySelector('#nav-feed')?.addEventListener('click', () => handleTabSwitch('feed'));
     document.querySelector('#nav-map')?.addEventListener('click', () => handleTabSwitch('map'));
     document.querySelector('#nav-plans')?.addEventListener('click', () => handleTabSwitch('plans'));
@@ -329,6 +364,14 @@ async function initDashboard() {
     });
 
     window.addEventListener('view-report', (e: any) => {
+        const reportId = e.detail.reportId;
+        const skipPushState = e.detail.skipPushState;
+
+        // Sync URL Hash
+        if (!skipPushState) {
+            history.pushState({ tab: 'reports', reportId }, '', `#report/${reportId}`);
+        }
+
         // Track the tab we're leaving
         const originTab = currentTab;
         
@@ -340,7 +383,7 @@ async function initDashboard() {
         if (liveFeed) liveFeed.style.display = 'none';
         if (feedContainer) feedContainer.style.display = 'block';
 
-        renderSingleReport(e.detail.reportId, originTab);
+        renderSingleReport(reportId, originTab);
     });
 
     window.addEventListener('show-locked-topic', (e: any) => {
@@ -426,6 +469,8 @@ async function initDashboard() {
         });
         
         (window as any).stopPolling = () => state.stopPolling();
+        (window as any).pausePolling = () => state.pause();
+        (window as any).resumePolling = () => state.resume();
         state.startPolling();
     };
 
@@ -654,8 +699,24 @@ async function initDashboard() {
         badgeContainer.innerHTML = renderTierBadge(user);
     }
 
-    if (reportId) renderSingleReport(reportId);
-    else handleTabSwitch('feed');
+    // Initial Route Handling (Phase 4)
+    const initialHash = window.location.hash.slice(1);
+    if (initialHash) {
+        const [base, query] = initialHash.split('?');
+        const params = new URLSearchParams(query || '');
+        if (base === 'feed' || base === 'map' || base === 'plans' || base === 'reports') {
+            handleTabSwitch(base as TabId, params.get('alert') || undefined, true);
+        } else if (base.startsWith('report/')) {
+            const rId = base.split('/')[1];
+            window.dispatchEvent(new CustomEvent('view-report', { detail: { reportId: rId, skipPushState: true } }));
+        } else {
+            handleTabSwitch('feed', undefined, true);
+        }
+    } else if (reportId) {
+        renderSingleReport(reportId);
+    } else {
+        handleTabSwitch('feed', undefined, true);
+    }
     refreshWatchlist();
 
     // [v8.4] Strategic Tracking Integration
@@ -677,21 +738,33 @@ window.addEventListener('session-expired', () => {
     renderLogin("Your session has expired for security. Please log in again.");
 });
 
-// [v37] Visibility Watchdog: Re-verify on tab focus
+// [v37] Visibility Watchdog: Stop polling/heartbeat when hidden, refresh on tab focus
 document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
+    const isVisible = document.visibilityState === 'visible';
+    console.log(`[Antigravity] Visibility Change: ${document.visibilityState}`);
+    
+    if (isVisible) {
+        (window as any).resumePolling?.();
+        (window as any).resumeHeartbeat?.();
+        
         fetchMe().then(user => {
             if (!user && (app.className !== 'login-page')) {
                 window.dispatchEvent(new CustomEvent('session-expired'));
             }
         });
+    } else {
+        (window as any).pausePolling?.();
+        (window as any).pauseHeartbeat?.();
     }
 });
 
 // [v37] Server Heartbeat: Keep Render awake & session alive
 const startHeartbeat = () => {
     console.log("[Antigravity] Initializing Session Heartbeat (5m interval)");
+    let isPaused = false;
+    
     const hb = setInterval(async () => {
+        if (isPaused) return;
         try {
             await fetchMe();
             console.log("[Antigravity] Heartbeat Pulse: Session Active");
@@ -701,6 +774,8 @@ const startHeartbeat = () => {
     }, 5 * 60 * 1000); // 5 minutes
     
     (window as any).stopHeartbeat = () => clearInterval(hb);
+    (window as any).pauseHeartbeat = () => { isPaused = true; };
+    (window as any).resumeHeartbeat = () => { isPaused = false; };
 };
 
 initDashboard().then(() => {

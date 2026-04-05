@@ -4,44 +4,60 @@ export interface StategicAsset {
     lat: number;
     lng: number;
     type: 'choke_point' | 'energy' | 'tech' | 'corpHQ' | 'military' | 'crypto' | 'market';
-    topic_code: string | null; // Links to ACCESS_MAP topic_code
+    topic_code: string | null; 
     description: string;
-    importance: number; // 0.0 to 1.0
-    symbol?: string;    // Override icon
+    importance: number; 
+    symbol?: string;    
+    marketData?: {
+        ticker?: string;
+        price?: string;
+        change?: number; // percentage
+        status?: string;
+    };
+    newsSnippet?: {
+        headline: string;
+        source: string;
+        timestamp: string;
+    };
 }
 
 export const STRATEGIC_ASSETS: StategicAsset[] = [
     // --- Geopolitical & Trade Choke Points ---
-    { id: 'suez', name: 'Suez Canal', lat: 30.5852, lng: 32.2654, type: 'choke_point', topic_code: 'supply_chain_intelligence', description: 'Global trade bottleneck (Suez)', importance: 1.0, symbol: '🚢' },
-    { id: 'hormuz', name: 'Strait of Hormuz', lat: 26.5667, lng: 56.25, type: 'choke_point', topic_code: 'energy_resource_risk', description: 'Primary oil transit nexus', importance: 1.0, symbol: '🛢️' },
+    { 
+        id: 'suez', name: 'Suez Canal', lat: 30.5852, lng: 32.2654, type: 'choke_point', topic_code: 'supply_chain_intelligence', description: 'Global trade bottleneck (Suez)', importance: 1.0, symbol: '🚢',
+        marketData: { status: 'NORMAL', change: -0.2 },
+        newsSnippet: { headline: 'Transit volume stabilized after Red Sea disruption', source: 'REUTERS', timestamp: '2h ago' }
+    },
+    { 
+        id: 'hormuz', name: 'Strait of Hormuz', lat: 26.5667, lng: 56.25, type: 'choke_point', topic_code: 'energy_resource_risk', description: 'Primary oil transit nexus', importance: 1.0, symbol: '🛢️',
+        marketData: { status: 'MONITORED', change: 1.4 },
+        newsSnippet: { headline: 'Escort patrols increased in Gulf of Oman', source: 'BLOOMBERG', timestamp: '5h ago' }
+    },
     { id: 'malacca', name: 'Strait of Malacca', lat: 2.25, lng: 102.25, type: 'choke_point', topic_code: 'supply_chain_intelligence', description: 'Critical Indo-Pacific trade artery', importance: 0.95, symbol: '🚢' },
-    { id: 'mandeb', name: 'Bab-el-Mandeb', lat: 12.58, lng: 43.34, type: 'choke_point', topic_code: 'supply_chain_intelligence', description: 'Red Sea Gateway', importance: 0.9, symbol: '🚢' },
-    { id: 'panama', name: 'Panama Canal', lat: 9.08, lng: -79.68, type: 'choke_point', topic_code: 'supply_chain_intelligence', description: 'Atlantic/Pacific transit', importance: 0.85, symbol: '🚢' },
-
-    // --- Defense & Military (New) ---
-    { id: 'norfolk', name: 'Naval Station Norfolk', lat: 36.93, lng: -76.32, type: 'military', topic_code: 'defense_technology', description: 'World largest naval station (US East Coast)', importance: 1.0, symbol: '⚓' },
-    { id: 'yokosuka', name: 'Yokosuka Naval Base', lat: 35.29, lng: 139.67, type: 'military', topic_code: 'defense_technology', description: 'Strategic Indo-Pacific naval hub', importance: 0.95, symbol: '⚓' },
-    { id: 'sevastopol', name: 'Sevastopol Naval Base', lat: 44.61, lng: 33.52, type: 'military', topic_code: 'defense_technology', description: 'Black Sea strategic bastion', importance: 0.9, symbol: '⚓' },
-    { id: 'ramstein', name: 'Ramstein Air Base', lat: 49.43, lng: 7.6, type: 'military', topic_code: 'defense_technology', description: 'Major NATO logistics & command hub', importance: 0.85, symbol: '🛫' },
-
-    // --- Energy & Resource Backbone ---
-    { id: 'druzhba', name: 'Druzhba Pipeline Hub', lat: 52.88, lng: 31.91, type: 'energy', topic_code: 'energy_resource_risk', description: 'Oil supply route to Europe', importance: 0.9, symbol: '⚡' },
-    { id: 'ras_tanura', name: 'Ras Tanura Terminal', lat: 26.63, lng: 50.12, type: 'energy', topic_code: 'energy_resource_risk', description: 'World largest oil export plant', importance: 1.0, symbol: '🔥' },
-    { id: 'nordstream', name: 'Nord Stream Exit (Germany)', lat: 54.12, lng: 13.68, type: 'energy', topic_code: 'energy_resource_risk', description: 'Critical gas infrastructure point', importance: 0.85, symbol: '⚡' },
-
-    // --- Global Market & Exchanges (New) ---
-    { id: 'nyse', name: 'New York Stock Exchange', lat: 40.7069, lng: -74.0113, type: 'market', topic_code: 'global_market_intelligence', description: 'Global financial epicenter', importance: 1.0, symbol: '🏛️' },
-    { id: 'hkex', name: 'Hong Kong Exchange', lat: 22.28, lng: 114.15, type: 'market', topic_code: 'global_market_intelligence', description: 'Asian capital market nexus', importance: 0.95, symbol: '🏛️' },
-    { id: 'lse', name: 'London Stock Exchange', lat: 51.51, lng: -0.09, type: 'market', topic_code: 'global_market_intelligence', description: 'European financial hub', importance: 0.9, symbol: '🏛️' },
-
-    // --- Crypto & Digital Assets (New) ---
-    { id: 'texas_mining', name: 'Texas Bitcoin Mining Cluster', lat: 31.96, lng: -99.9, type: 'crypto', topic_code: 'crypto_geopolitics', description: 'Massive hash-rate industrial zone', importance: 0.8, symbol: '₿' },
-    { id: 'kazakh_mining', name: 'Kazakhstan Mining Hub', lat: 48.0, lng: 67.0, type: 'crypto', topic_code: 'crypto_geopolitics', description: 'Central Asian crypto mining nexus', importance: 0.75, symbol: '₿' },
+    
+    // --- Global Market & Exchanges ---
+    { 
+        id: 'nyse', name: 'New York Stock Exchange', lat: 40.7069, lng: -74.0113, type: 'market', topic_code: 'global_market_intelligence', description: 'Global financial epicenter', importance: 1.0, symbol: '🏛️',
+        marketData: { ticker: 'VIX', price: '14.85', change: -2.1, status: 'OPEN' },
+        newsSnippet: { headline: 'Treasury yields dip as inflation cooling signals emerge', source: 'CNBC', timestamp: '1h ago' }
+    },
 
     // --- AI & Semiconductor Intelligence ---
-    { id: 'silicon_valley', name: 'Silicon Valley', lat: 37.38, lng: -122.08, type: 'tech', topic_code: 'ai_semiconductor_intelligence', description: 'AI innovation center', importance: 1.0, symbol: '🤖' },
-    { id: 'hsinchu', name: 'Hsinchu (TSMC)', lat: 24.78, lng: 121.01, type: 'tech', topic_code: 'ai_semiconductor_intelligence', description: 'Semiconductor foundry hub', importance: 1.0, symbol: '🤖' },
-    { id: 'asml_hq', name: 'ASML HQ (Veldhoven)', lat: 51.40, lng: 5.40, type: 'tech', topic_code: 'ai_semiconductor_intelligence', description: 'EUV lithography manufacturing', importance: 1.0, symbol: '🤖' }
+    { 
+        id: 'silicon_valley', name: 'Silicon Valley (NVDA)', lat: 37.38, lng: -122.08, type: 'tech', topic_code: 'ai_semiconductor_intelligence', description: 'AI innovation center', importance: 1.0, symbol: '🤖',
+        marketData: { ticker: 'NVDA', price: '894.22', change: 1.25, status: 'ACTIVE' },
+        newsSnippet: { headline: 'NVIDIA expands Blackwell allocation for AWS clouds', source: 'THE VERGE', timestamp: '3h ago' }
+    },
+    { 
+        id: 'hsinchu', name: 'Hsinchu (TSMC)', lat: 24.78, lng: 121.01, type: 'tech', topic_code: 'ai_semiconductor_intelligence', description: 'Semiconductor foundry hub', importance: 1.0, symbol: '🤖',
+        marketData: { ticker: '2330.TW', price: '780.00', change: 3.4, status: 'ACTIVE' },
+        newsSnippet: { headline: '2nm yield targets met ahead of Apple A19 production', source: 'DIGITIMES', timestamp: '4h ago' }
+    },
+    { 
+        id: 'asml_hq', name: 'ASML (Veldhoven)', lat: 51.40, lng: 5.40, type: 'tech', topic_code: 'ai_semiconductor_intelligence', description: 'EUV lithography manufacturing', importance: 1.0, symbol: '🤖',
+        marketData: { ticker: 'ASML.AS', price: '921.40', change: -0.8, status: 'OPEN' },
+        newsSnippet: { headline: 'High-NA EUV tool shipping to Intel fab complete', source: 'TECHCRUNCH', timestamp: '6h ago' }
+    }
 ];
 
 /**

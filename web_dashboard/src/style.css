@@ -750,7 +750,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 .plan-features li::before {
-  content: '✓';
+  content: '•';
   color: var(--plan-color);
   font-weight: 800;
   flex-shrink: 0;
@@ -1129,9 +1129,9 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   .login-card { padding: 2rem 1.5rem; }
 }
 
-/* ─────────────────────────────────────────────
+/* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
    Topic Tab Bar
-───────────────────────────────────────────── */
+笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */
 .topic-tab-bar {
   display: flex;
   gap: 0.5rem;
@@ -1189,9 +1189,9 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   margin-left: 0.1rem;
 }
 
-/* ─────────────────────────────────────────────
+/* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
    Locked Topic Overlay
-───────────────────────────────────────────── */
+笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */
 .locked-topic-view {
   position: relative;
   min-height: 360px;
@@ -1282,9 +1282,9 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 
 
-/* ������������������������������������������������������������������������������������������
+/* ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ
    Alert Card Locking (Step 2)
-������������������������������������������������������������������������������������������ */
+・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ */
 
 .alert-card--locked {
   position: relative;
@@ -1327,9 +1327,9 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   color: #e3b341;
 }
 
-/* ─────────────────────────────────────────────
+/* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
    Subscription Tab Redesign
-───────────────────────────────────────────── */
+笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */
 .subscription-tab {
   display: flex;
   flex-direction: column;
@@ -1543,7 +1543,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 .report-actions-box li::before {
-  content: "→";
+  content: "»";
   position: absolute;
   left: 0;
   color: var(--accent);
@@ -1564,7 +1564,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .report-actions-box li.priority-high-priority::before {
   color: var(--danger) !important;
-  content: "⚡" !important;
+  content: "笞｡" !important;
 }
 
 .report-actions-box li.priority-monitor {
@@ -1573,7 +1573,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .report-actions-box li.priority-monitor::before {
   color: var(--accent) !important;
-  content: "→" !important;
+  content: "竊・ !important;
 }
 
 .report-actions-box li.priority-maintain {
@@ -1583,7 +1583,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .report-actions-box li.priority-maintain::before {
   color: var(--text-secondary) !important;
-  content: "•" !important;
+  content: "窶｢" !important;
 }
 
 .report-actions-box .report-action-rationale {
@@ -1641,7 +1641,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 .time-tag::before {
-  content: '· ';
+  content: 'ﾂｷ ';
   margin-right: 4px;
   opacity: 0.5;
 }
@@ -1656,7 +1656,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 .confidence-tag::before {
-  content: '— ';
+  content: '窶・';
   margin-right: 2px;
   opacity: 0.4;
   font-style: normal;
@@ -1798,7 +1798,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     border-radius: 12px;
     padding: 1rem;
     color: white;
-    width: 220px;
+    width: auto; min-width: 240px; max-width: calc(100% - 40px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     pointer-events: auto !important;
     margin: 10px !important;
@@ -2261,10 +2261,19 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     display: flex;
     gap: 6px;
     overflow-x: auto;
+    flex-wrap: nowrap;
     padding-bottom: 8px;
     margin-bottom: 12px;
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
+}
+
+@media (min-width: 1024px) {
+    .monitor-hotbar {
+        flex-wrap: wrap;
+        overflow-x: visible;
+        width: auto;
+    }
 }
 
 .monitor-hotbar::-webkit-scrollbar {
@@ -2343,7 +2352,7 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     background: #0b0e14 !important; /* Midnight Tactical Base */
 }
 
-/* [v8.4] Reverted to 'Midnight Military Gray' Grayscale Imagery */
+/* [v8.4] Reverted to Midnight Military Gray Grayscale Imagery */
 .map-tactical-imagery-v2 {
     filter: grayscale(1) brightness(0.55) contrast(1.2) sepia(0.05);
     transition: filter 0.8s ease;
@@ -2494,6 +2503,107 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .pulse-particle-dynamic {
     filter: blur(1px) brightness(1.5);
+}
+
+/* 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+   v8.6 Tactical Map Refinements
+笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏 */
+
+.silent-monitor-status {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(88, 166, 255, 0.15);
+    padding: 8px 24px;
+    border-radius: 100px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    animation: fadeInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translate(-50%, -10px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.tactical-popup .leaflet-popup-content-wrapper {
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+}
+
+.tactical-popup .leaflet-popup-tip {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+}
+
+.entity-card {
+    min-width: 260px;
+}
+
+.entity-card .tactical-card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+.entity-card .market-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Strategic Arcs (SVG) Optimization */
+.propagation-arc-curved {
+    stroke-dasharray: 2000;
+    stroke-dashoffset: 2000;
+    animation: arc-draw 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    filter: drop-shadow(0 0 5px var(--ring-color));
+}
+
+@keyframes arc-draw {
+    to { stroke-dashoffset: 0; }
+}
+
+/* Base Tactical Card Refinement */
+.tactical-card {
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    color: #c9d1d9;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.tactical-card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--topic-color, var(--accent));
+    box-shadow: 0 0 10px var(--topic-color, var(--accent));
+}
+
+/* [v8.7] Strategic Focal Transition */
+.map-focal-mode .leaflet-tile-pane {
+    filter: saturate(0.15) contrast(0.85) brightness(0.9);
+    transition: filter 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-focal-mode .silent-monitor-status {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
 }
 
 .marker-ring-tactical.focal-suppressed {

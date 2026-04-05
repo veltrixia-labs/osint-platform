@@ -1,0 +1,525 @@
+import L from 'leaflet';
+import type { Alert } from '../api';
+import { fetchAlerts } from '../api';
+import { getTopicDef } from '../topics';
+import { STRATEGIC_ASSETS } from '../infrastructure';
+import { getAlertCoords, getNodeCoords } from './utils';
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Module State (Internal)
+// ──────────────────────────────────────────────────────────────────────────────
+
+let activeMapFilters = new Set(['global']);
+let currentFilterControl: L.Control | null = null;
+let activeDiscoveryId: string | null = null;
+let lastDiscoveryTrigger: number = 0;
+let currentGlobalMap: L.Map | null = null;
+let currentDynamicLayer: L.LayerGroup | null = null;
+let isRendering = false; // Mutex to prevent infinite recursion
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Primary Render Entry
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Main entry point for the Global Intelligence Map.
+ * Renders the persistent Leaflet instance and overlay layers.
+ */
+export const renderMap = async (container: HTMLElement, _tier: string, focusAlertId?: string) => {
+    if (isRendering) return;
+    isRendering = true;
+
+    console.log(`[Antigravity] Map Engine: Viewport update [Focus: ${focusAlertId || 'GLOBAL'}]`);
+    
+    // Safety delay for container transition
+    await new Promise(r => setTimeout(r, 100));
+
+    // 1. Lifecycle Recovery: Re-anchor existing map if detached from DOM
+    const existingMapEl = document.getElementById('map-instance');
+    if (currentGlobalMap && !existingMapEl) {
+        console.log("[Antigravity] Map Anchor Recovered: Restoring engine to DOM");
+        container.innerHTML = '<div id="map-instance" style="height:100%; width:100%; min-height:500px; background:#0b0e14;"></div>';
+        
+        await new Promise(r => requestAnimationFrame(r));
+        currentGlobalMap.invalidateSize();
+        
+        // Restore HUD & Context
+        initMapFilter(currentGlobalMap, container, () => {
+            renderMap(container, _tier, focusAlertId);
+        });
+    }
+
+    // 2. Initial Setup: Create Persistent Map Canvas
+    if (!currentGlobalMap) {
+        container.innerHTML = '<div id="map-instance" style="height:100%; width:100%; min-height:500px; background:#0b0e14;"></div>';
+        await new Promise(r => setTimeout(r, 100));
+        
+        const mapElement = document.getElementById('map-instance');
+        if (!mapElement) {
+            isRendering = false;
+            return;
+        }
+
+        currentGlobalMap = L.map('map-instance', {
+            zoomControl: false,
+            attributionControl: false,
+            minZoom: 2,
+            maxZoom: 16,
+            worldCopyJump: true
+        }).setView([20, 0], 2);
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Esri Satellite',
+            className: 'map-tactical-imagery-v2'
+        }).addTo(currentGlobalMap);
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+            className: 'map-labels-tactical',
+            opacity: 0.7
+        }).addTo(currentGlobalMap);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(currentGlobalMap);
+        currentDynamicLayer = L.layerGroup().addTo(currentGlobalMap);
+
+        initMapFilter(currentGlobalMap, container, () => {
+            renderMap(container, _tier, focusAlertId);
+        });
+    }
+
+    const map = currentGlobalMap;
+    const layerGroup = currentDynamicLayer!;
+    if (!map.hasLayer(layerGroup)) layerGroup.addTo(map);
+
+    try {
+        // [v8.4] Tactical Zoom-Watcher with Health Guard
+        const updateZoomFactor = () => {
+            const cont = map.getContainer();
+            if (!cont || !cont.isConnected) return;
+            const zoom = map.getZoom();
+            const factor = Math.max(1.0, 1.0 + (zoom - 3) * 0.15);
+            cont.style.setProperty('--map-zoom-scale', factor.toString());
+        };
+        map.off('zoomend', updateZoomFactor);
+        map.on('zoomend', updateZoomFactor);
+        updateZoomFactor();
+
+        // Handle Focal Suppression Class
+        const mapCont = map.getContainer();
+        if (mapCont && mapCont.isConnected) {
+            if (focusAlertId) mapCont.classList.add('strategic-focal-active');
+            else mapCont.classList.remove('strategic-focal-active');
+        }
+
+        // Async invalidation to handle tab layouts
+        setTimeout(() => { 
+            if (map.getContainer()?.isConnected) {
+                map.invalidateSize(); 
+                updateZoomFactor();
+            }
+        }, 150);
+
+        if (!focusAlertId) {
+            map.setView([20, 0], 2);
+        }
+
+        // [v8.7] Discovery Lock: Prevent polling from cutting off active animations
+        const isReTrigger = (window as any)._mapTriggerTimestamp && (window as any)._mapTriggerTimestamp !== lastDiscoveryTrigger;
+        if (focusAlertId && focusAlertId === activeDiscoveryId && !isReTrigger) {
+            console.log("[Antigravity] Discovery Active - Skipping polling re-render to preserve narrative.");
+            isRendering = false;
+            return;
+        }
+
+        const [alerts] = await Promise.all([fetchAlerts()]);
+        
+        // [v8.6] Intent-Based Visibility: Hide alerts unless focused
+        let filteredAlerts = focusAlertId ? alerts.filter(a => a.id === focusAlertId) : [];
+
+        // Plotting Delay to ensure container stability
+        setTimeout(() => {
+            if (isReTrigger) lastDiscoveryTrigger = (window as any)._mapTriggerTimestamp;
+            activeDiscoveryId = focusAlertId || null;
+
+            // Reset container focal state if no focus
+            if (!focusAlertId) {
+                container.classList.remove('map-focal-mode');
+                activeDiscoveryId = null;
+            }
+
+            layerGroup.clearLayers();
+            renderRegionalContext(layerGroup, filteredAlerts);
+
+            filteredAlerts.forEach(alert => {
+                const coords = getAlertCoords(alert);
+                if (!coords) return;
+
+                const intensity = alert.intensity || 5;
+                const topicDef = getTopicDef(alert.topic);
+                const topicColor = topicDef?.color || '#58a6ff';
+                const baseSize = 12 + (intensity * 1.5); // Slightly smaller base
+                const markerClass = `marker-ring-tactical marker-ring-tactical--l1 ${focusAlertId && alert.id !== focusAlertId ? 'focal-suppressed' : ''}`;
+
+                const markerIcon = L.divIcon({
+                    className: 'none',
+                    html: `
+                        <div class="${markerClass}" 
+                             style="width: calc(${baseSize}px * var(--map-zoom-scale, 1)); height: calc(${baseSize}px * var(--map-zoom-scale, 1)); --ring-color: ${topicColor}">
+                            <div class="glow-ring"></div>
+                            <div class="ring-inner"></div>
+                        </div>
+                    `,
+                    iconSize: [baseSize * 1.5, baseSize * 1.5],
+                    iconAnchor: [baseSize * 0.75, baseSize * 0.75]
+                });
+
+                const cascadingImpacts = alert.metadata_json?.cascading_impacts || [];
+                const popupContent = `
+                    <div class="tactical-card tactical-popup-container" style="--topic-color: ${topicColor}">
+                        <div class="tactical-card-accent"></div>
+                        <div class="tactical-card-header">
+                            <strong style="color:#fff; font-size:1.05rem; display:block;">${alert.target_label}</strong>
+                            <div style="font-size:0.65rem; color:${topicColor}; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; margin-top:4px;">
+                                ${alert.topic?.replace(/_/g, ' ') || 'GLOBAL SIGNAL'} • ${alert.severity}
+                            </div>
+                        </div>
+                        <div class="tactical-card-body">
+                            <p style="font-size:0.8rem; color:#8b949e; line-height:1.5; margin-bottom:16px;">
+                                ${alert.triggered_at ? new Date(alert.triggered_at).toLocaleString() : 'Live Scan Active'}
+                            </p>
+                            ${cascadingImpacts.length > 0 ? `
+                                <div style="margin-top:8px;">
+                                    <div style="font-size:0.65rem; opacity:0.5; text-transform:uppercase; margin-bottom:10px;">Market Ripple Effect</div>
+                                    ${cascadingImpacts.slice(0, 3).map((imp: any) => `
+                                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.8rem;">
+                                            <span style="color:#c9d1d9;">${imp.entity_name}</span>
+                                            <span style="color:${imp.impact_alpha < 0 ? 'var(--danger)' : 'var(--success)'}; font-weight:700;">
+                                                ${imp.impact_alpha > 0 ? '+' : ''}${imp.impact_alpha}%
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<div style="font-size:0.75rem; opacity:0.4;">Analyzing recursive dependencies...</div>'}
+                        </div>
+                        <div class="tactical-card-footer">
+                            <button class="tactical-action-btn" onclick="window.dispatchEvent(new CustomEvent('map-view-report', {detail: {id: '${alert.id}'}}))">
+                                VIEW REPORT →
+                            </button>
+                            <span style="font-size:0.6rem; opacity:0.4;">V.1.5 HUD</span>
+                        </div>
+                    </div>
+                `;
+
+                const marker = L.marker([coords.lat, coords.lng], { 
+                    icon: markerIcon,
+                    zIndexOffset: focusAlertId === alert.id ? 5000 : 1000,
+                    pane: 'overlayPane' 
+                })
+                .addTo(layerGroup)
+                .bindPopup(popupContent, { className: 'tactical-popup', maxWidth: 320 });
+                    
+                   if (focusAlertId === alert.id) {
+                    container.classList.add('map-focal-mode');
+                    
+                    setTimeout(() => {
+                        map.flyTo([coords.lat, coords.lng], 4, { duration: 1.5 });
+                        map.once('moveend', () => {
+                            marker.openPopup();
+                            if (cascadingImpacts.length > 0) {
+                                renderImpactChain(map, layerGroup, coords, cascadingImpacts, 1, intensity);
+                            }
+                        });
+                    }, 500); 
+                }
+            });
+        }, 300);
+
+        isRendering = false;
+    } catch (err) {
+        console.error("[Antigravity] Map Strategy Render fault:", err);
+        isRendering = false;
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────────────────────────────────────
+
+function renderRegionalContext(layerGroup: L.LayerGroup, alerts: Alert[]) {
+    // 1. Foundational Alert Context (Hot Zones)
+    const highIntensityAlerts = alerts.filter(a => (a.intensity || 0) > 8);
+    highIntensityAlerts.forEach(alert => {
+        const coords = getAlertCoords(alert);
+        if (coords) {
+            L.circle([coords.lat, coords.lng], {
+                radius: 200000, 
+                color: '#f43f5e',
+                fillColor: '#f43f5e',
+                fillOpacity: 0.05,
+                stroke: false,
+                interactive: false
+            }).addTo(layerGroup);
+        }
+    });
+
+    // 2. Persistent Strategic Infrastructure Layer
+    STRATEGIC_ASSETS.forEach(asset => {
+        const isVisible = !asset.topic_code || activeMapFilters.has(asset.topic_code as string) || activeMapFilters.has('global');
+        if (!isVisible) return;
+
+        const color = asset.type === 'choke_point' ? '#58a6ff' : 
+                     (asset.type === 'energy' ? '#f1e05a' : 
+                     (asset.type === 'military' ? '#ff7b72' : 
+                     (asset.type === 'market' ? '#3fb950' : 
+                     (asset.type === 'crypto' ? '#f78166' : '#bc8cff'))));
+        
+         const assetIcon = L.divIcon({
+            className: 'infrastructure-node',
+            html: `
+                <div class="infra-marker-container ${asset.type}" title="${asset.name}">
+                    <div class="infra-dot" style="background: ${color};"></div>
+                    <div class="infra-label">${asset.name}</div>
+                </div>
+            `,
+            iconSize: [100, 24],
+            iconAnchor: [50, 12]
+        });
+
+        let popupContent = `
+            <div class="tactical-card entity-card" style="--topic-color: ${color}">
+                <div class="tactical-card-accent"></div>
+                <div class="tactical-card-header">
+                    <strong style="color:#fff; font-size:1rem;">${asset.name}</strong>
+                    <div style="font-size:0.6rem; color:${color}; font-weight:800; letter-spacing:1px; text-transform:uppercase;">
+                        ${asset.type.replace('_', ' ')} • STRATEGIC NODE
+                    </div>
+                </div>
+                <div class="tactical-card-body">
+                    ${asset.marketData ? `
+                        <div class="market-strip u-flex-between" style="background:rgba(255,255,255,0.03); padding:8px; border-radius:6px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.05);">
+                            <div>
+                                <span style="font-size:0.6rem; opacity:0.5; display:block;">${asset.marketData.ticker || 'INDEX'}</span>
+                                <span style="font-weight:700; font-size:0.9rem;">${asset.marketData.price || asset.marketData.status}</span>
+                            </div>
+                            <div style="text-align:right;">
+                                <span style="color:${asset.marketData.change! < 0 ? 'var(--danger)' : 'var(--success)'}; font-weight:700; font-size:0.9rem;">
+                                    ${asset.marketData.change! > 0 ? '+' : ''}${asset.marketData.change}%
+                                </span>
+                                <span style="font-size:0.6rem; opacity:0.5; display:block;">24h CHANGE</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${asset.newsSnippet ? `
+                        <div style="margin-top:8px;">
+                            <div style="font-size:0.6rem; color:${color}; font-weight:800; margin-bottom:4px;">LATEST INTELLIGENCE</div>
+                            <div style="font-size:0.75rem; color:#c9d1d9; line-height:1.4; font-style:italic;">"${asset.newsSnippet.headline}"</div>
+                            <div style="font-size:0.6rem; opacity:0.5; margin-top:4px;">SOURCE: ${asset.newsSnippet.source} • ${asset.newsSnippet.timestamp}</div>
+                        </div>
+                    ` : `<p style="font-size:0.75rem; opacity:0.6; line-height:1.4;">${asset.description}</p>`}
+                </div>
+                <div class="tactical-card-footer" style="padding-top:8px; margin-top:8px; border-top:1px solid rgba(255,255,255,0.05); font-size:0.6rem; opacity:0.4;">
+                    STRATEGIC INFRASTRUCTURE • V.1.6
+                </div>
+            </div>
+        `;
+
+        L.marker([asset.lat, asset.lng], { icon: assetIcon, zIndexOffset: 500, pane: 'overlayPane' })
+            .addTo(layerGroup)
+            .bindPopup(popupContent, { className: 'tactical-popup', maxWidth: 280 });
+    });
+}
+
+function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number) {
+    if (level > 3 || !impacts) return;
+
+    const levelDelay = 1200; 
+
+    impacts.forEach((finding, index) => {
+        setTimeout(() => {
+            const nodeCoords = getNodeCoords(finding);
+            if (!nodeCoords) return;
+
+            const isLocked = finding.is_locked || false;
+            const pathColor = finding.impact_alpha < 0 ? '#f43f5e' : '#10b981';
+
+            // Arc Path Calculation
+            const start = L.latLng(parentCoords.lat, parentCoords.lng);
+            const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
+            const points: L.LatLng[] = [];
+             const steps = 100;
+            
+            const dLat = end.lat - start.lat;
+            const dLng = end.lng - start.lng;
+            const dist = Math.sqrt(dLat*dLat + dLng*dLng);
+            
+            const heightAttenuation = 1.0 - (level - 1) * 0.2; 
+            const offsetFactor = (0.15 + (Math.min(dist, 40) / 200)) * heightAttenuation + (index % 2 === 0 ? 0.05 : -0.05);
+
+            const midLat = (start.lat + end.lat) / 2;
+            const midLng = (start.lng + end.lng) / 2;
+            const cpLat = midLat - dLng * offsetFactor;
+            const cpLng = midLng + dLat * offsetFactor;
+
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const lat = (1-t)**2 * start.lat + 2*(1-t)*t * cpLat + t**2 * end.lat;
+                const lng = (1-t)**2 * start.lng + 2*(1-t)*t * cpLng + t**2 * end.lng;
+                points.push(L.latLng(lat, lng));
+            }
+
+            L.polyline(points, {
+                className: `propagation-arc-curved`,
+                color: pathColor,
+                weight: Math.max(1, (baseIntensity / 4) * (1.2 - (level-1)*0.3)),
+                opacity: isLocked ? 0.1 : 0.6,
+                smoothFactor: 1.5,
+                interactive: false
+            }).addTo(layer);
+
+            if (level === 1) {
+                const centerPoint = L.latLng((start.lat + end.lat)/2, (start.lng + end.lng)/2);
+                map.panTo(centerPoint, { animate: true, duration: 1.2 });
+            }
+
+            setTimeout(() => {
+                const baseSize = 10 - (level * 1.5);
+                const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level + 1, 3)} node-ignite`;
+                
+                const nodeIcon = L.divIcon({
+                    className: 'none',
+                    html: `
+                        <div class="${markerClass}" 
+                             style="width: calc(${baseSize}px * var(--map-zoom-scale, 1)); height: calc(${baseSize}px * var(--map-zoom-scale, 1)); --ring-color: ${pathColor}">
+                            <div class="glow-ring"></div>
+                            <div class="ring-inner" style="width:2px; height:2px;"></div>
+                        </div>
+                    `,
+                    iconSize: [baseSize * 1.5, baseSize * 1.5],
+                    iconAnchor: [baseSize * 0.75, baseSize * 0.75]
+                });
+
+                 const nodeMarker = L.marker([nodeCoords.lat, nodeCoords.lng], { icon: nodeIcon, pane: 'overlayPane' }).addTo(layer);
+
+                if (level === 3) {
+                    const impactPopupContent = `
+                        <div class="tactical-card entity-card" style="--topic-color: ${pathColor}">
+                            <div class="tactical-card-accent"></div>
+                            <div class="tactical-card-header">
+                                <strong style="color:#fff; font-size:1rem;">${finding.entity_name}</strong>
+                                <div style="font-size:0.6rem; color:${pathColor}; font-weight:800; letter-spacing:1px; text-transform:uppercase;">
+                                    CAUSAL IMPACT • LEVEL 3
+                                </div>
+                            </div>
+                            <div class="tactical-card-body">
+                                <div class="market-strip u-flex-between" style="background:rgba(255,255,255,0.03); padding:8px; border-radius:6px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.05);">
+                                    <div>
+                                        <span style="font-size:0.6rem; opacity:0.5; display:block;">IMPACT ALPHA</span>
+                                        <span style="font-weight:700; font-size:0.9rem;">${finding.impact_alpha > 0 ? '+' : ''}${finding.impact_alpha}%</span>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <span style="color:${pathColor}; font-weight:700; font-size:0.9rem;">TARGETED</span>
+                                        <span style="font-size:0.6rem; opacity:0.5; display:block;">DISCOVERY COMPLETE</span>
+                                    </div>
+                                </div>
+                                <p style="font-size:0.75rem; color:#8b949e; line-height:1.4;">
+                                    Strategic dependency confirmed. This entity is currently being monitored for second-order volatility risks.
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    nodeMarker.bindPopup(impactPopupContent, { className: 'tactical-popup', maxWidth: 280 }).openPopup();
+                }
+
+                const subImpacts = finding.cascading_impacts || finding.metadata_json?.cascading_impacts;
+                if (subImpacts && level < 3 && !isLocked) {
+                    renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity);
+                }
+            }, levelDelay);
+
+        }, index * 200);
+    });
+}
+
+function initMapFilter(map: L.Map, container: HTMLElement, onUpdate: () => void) {
+    if (currentFilterControl) {
+        currentFilterControl.remove();
+    }
+
+    const FilterControl = L.Control.extend({
+        options: { position: 'topleft' },
+        onAdd: function() {
+            const div = L.DomUtil.create('div', 'map-filter-control map-filter-panel');
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+
+            const TOPICS = [
+                { id: 'global', label: 'Monitor', icon: '🌐', color: '#58a6ff' },
+                { id: 'energy_resource_risk', label: 'Energy', icon: '⚡', color: '#d29922' },
+                { id: 'global_market_intelligence', label: 'Market', icon: '🏛️', color: '#3fb950' },
+                { id: 'crypto_geopolitics', label: 'Crypto', icon: '₿', color: '#f78166' },
+                { id: 'ai_semiconductor_intelligence', label: 'AI/Tech', icon: '🤖', color: '#bc8cff' },
+                { id: 'defense_technology', label: 'Defense', icon: '🛡️', color: '#ff7b72' },
+                { id: 'supply_chain_intelligence', label: 'Trade', icon: '🚢', color: '#79c0ff' }
+            ];
+
+            div.innerHTML = `
+                <div class="monitor-header u-flex-between">
+                    <h3>Strategic Monitoring</h3>
+                    <span style="font-size: 0.65rem; opacity: 0.5;">LIVE V1.5</span>
+                </div>
+                <div class="monitor-hotbar">
+                    ${TOPICS.map(t => `
+                        <button class="preset-btn ${activeMapFilters.has(t.id) ? 'active' : ''}" 
+                                data-preset="${t.id}" 
+                                style="--accent-color: ${t.color}"
+                                title="${t.label} Intelligence">
+                            <span class="btn-icon">${t.icon}</span>
+                            <span class="btn-label">${t.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            
+            div.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const preset = (e.currentTarget as HTMLElement).dataset.preset!;
+                    activeMapFilters.clear();
+                    activeMapFilters.add(preset);
+                    if (preset === 'ai_semiconductor_intelligence') activeMapFilters.add('global_market_intelligence');
+                    if (preset === 'supply_chain_intelligence') activeMapFilters.add('global');
+                    onUpdate();
+                });
+            });
+
+            return div;
+        }
+    });
+
+    currentFilterControl = new (FilterControl as any)();
+    currentFilterControl?.addTo(map);
+
+    if (!container.querySelector('.world-monitor-badge')) {
+        const hud = document.createElement('div');
+        hud.innerHTML = `
+            <div class="world-monitor-badge">
+                <div class="tag">WORLD MONITOR</div>
+                <div class="version">v.1.5.0 • STRATEGIC HUB</div>
+            </div>
+
+            ${!(window as any).isFocalMapActive ? `
+                <div class="silent-monitor-status">
+                    <div style="font-size:0.6rem; opacity:0.4; letter-spacing:1px;">SILENT MONITOR ACTIVE</div>
+                    <div style="font-size:0.75rem; color:var(--accent);">Select from Feed to Track Signals</div>
+                </div>
+            ` : ''}
+            
+            <div class="tactical-fab-stack">
+                <div class="tactical-fab active" title="Monitor Hub">🌐</div>
+                <div class="tactical-fab" title="Intelligence Radar">📡</div>
+                <div class="tactical-fab" title="Add Watchpoint">➕</div>
+                <div class="tactical-fab" title="Analysis Filters">⚙️</div>
+            </div>
+        `;
+        container.appendChild(hud);
+    }
+}

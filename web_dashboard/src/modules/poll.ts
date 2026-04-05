@@ -6,6 +6,7 @@ export class DashboardState {
     health: HealthData | null;
     analysts: AnalystProfile[];
     isPolling: boolean;
+    isPaused: boolean;
     subscribers: ((state: DashboardState) => void)[];
     topic: string | null;
 
@@ -14,6 +15,7 @@ export class DashboardState {
         this.health = null;
         this.analysts = [];
         this.isPolling = false;
+        this.isPaused = false;
         this.subscribers = [];
         this.topic = null; // null means 'all' or default
     }
@@ -32,7 +34,7 @@ export class DashboardState {
     }
 
     async updateOnce() {
-        if (!this.isPolling) return;
+        if (!this.isPolling || this.isPaused) return;
         try {
             const params: any = { limit: 15 };
             if (this.topic) params.topic = this.topic;
@@ -66,10 +68,13 @@ export class DashboardState {
     startPolling(interval = 5000) {
         if (this.isPolling) return;
         this.isPolling = true;
+        this.isPaused = false;
         
         const poll = async () => {
             if (!this.isPolling) return;
-            await this.updateOnce();
+            if (!this.isPaused) {
+                await this.updateOnce();
+            }
             setTimeout(poll, interval);
         };
         
@@ -78,5 +83,18 @@ export class DashboardState {
 
     stopPolling() {
         this.isPolling = false;
+    }
+
+    pause() {
+        this.isPaused = true;
+    }
+
+    resume() {
+        if (!this.isPaused) return;
+        this.isPaused = false;
+        // Immediate refresh on tab focus
+        if (this.isPolling) {
+            this.updateOnce();
+        }
     }
 }

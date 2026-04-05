@@ -124,35 +124,45 @@ def calculate_trend_relevance(trend: TrendSignal, report_themes: List[str], repo
         
     return score
 
-def infer_domain_from_content(themes: List[str], requested_topic: str) -> str:
+def infer_domain_from_content(themes: List[str], requested_topic: str | None) -> str | None:
     """
     Infers the correct intelligence domain from theme keywords.
-    Prevents assignment of 'Energy' themes to 'AI' reports, etc.
+    Uses the module-level DOMAIN_KEYWORDS (all 6 topics) to prevent misassignment
+    (e.g. 'Energy' themes assigned to 'AI' reports).
+    Returns the inferred topic_code if confidence is high, else requested_topic.
     """
-    if not themes: return requested_topic
-    
+    # Guard: empty themes or placeholder string → keep requested topic as-is
+    if not themes or themes == ["Strategic Monitoring"]:
+        return requested_topic
+
     theme_text = " ".join(themes).lower()
     scores = {domain: 0 for domain in DOMAIN_KEYWORDS.keys()}
-    
+
     for domain, keywords in DOMAIN_KEYWORDS.items():
         for kw in keywords:
             if kw in theme_text:
                 scores[domain] += 1
-                
+
     if not any(scores.values()):
         return requested_topic
-        
-    # Find top scoring domain
+
+    # Find top-scoring domain
     inferred = max(scores, key=scores.get)
     max_score = scores[inferred]
-    
-    # Confidence Threshold: At least 2 matches OR if current has 0 and max has 1+
-    current_score = scores.get(requested_topic, 0)
-    if max_score >= 2 or (current_score == 0 and max_score >= 1):
+
+    # Confidence Threshold: At least 2 signal matches
+    # OR if the requested topic has 0 matches and another domain has 1+
+    requested_score = scores.get(requested_topic, 0)
+    if max_score >= 2 or (requested_score == 0 and max_score >= 1):
         if inferred != requested_topic:
-            logger.info(f"Domain Correction: Overriding {requested_topic} -> {inferred} (Score: {max_score})")
+            matched_kws = [k for k in DOMAIN_KEYWORDS[inferred] if k in theme_text]
+            logger.info(
+                f"Domain Mismatch Detected: Requested={requested_topic}, "
+                f"Inferred={inferred}, Score={max_score}, "
+                f"Reason: {', '.join(matched_kws)}"
+            )
         return inferred
-        
+
     return requested_topic
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -318,46 +328,9 @@ async def _should_generate_report_for_system(db: AsyncSession, report_type: str)
             
     return False
 
-def infer_domain_from_content(themes: List[str], requested_topic: str | None) -> str | None:
-    """
-    Analyzes thematic tokens to infer the most appropriate domain.
-    Returns the inferred topic_code if confidence is high, else requested_topic.
-    """
-    if not themes or themes == ["Strategic Monitoring"]:
-        return requested_topic
-
-    DOMAIN_KEYWORDS = {
-        "energy_resource_risk": ["oil", "energy", "refinery", "pipeline", "opec", "gas", "crude", "lng"],
-        "global_market_intelligence": ["inflation", "fed", "equity", "volatility", "market", "pricing", "liquidity", "yields", "crypto"],
-        "ai_semiconductor_intelligence": ["ai", "chip", "semiconductor", "gpu", "nvidia", "fab", "compute", "model", "llm"],
-        "defense_technology": ["military", "weapons", "missile", "drone", "defense", "procurement", "sanctions", "war", "conflict", "escalation", "border", "naval", "stability", "diplomatic"]
-    }
-
-    scores = {topic: 0 for topic in DOMAIN_KEYWORDS}
-    theme_text = " ".join(themes).lower()
-
-    for topic, keywords in DOMAIN_KEYWORDS.items():
-        for kw in keywords:
-            if kw in theme_text:
-                scores[topic] += 1
-    
-    if not any(scores.values()):
-        return requested_topic
-        
-    # Find top-scoring domain
-    inferred = max(scores, key=scores.get)
-    max_score = scores[inferred]
-    
-    # Confidence Threshold: At least 2 signal matches
-    # OR if the requested topic has 0 and another has 1+
-    requested_score = scores.get(requested_topic, 0)
-    
-    if max_score >= 2 or (requested_score == 0 and max_score >= 1):
-        if inferred != requested_topic:
-            logger.info(f"Domain Mismatch Detected: Requested={requested_topic}, Inferred={inferred}, Score={max_score}, Reason: {', '.join([k for k in DOMAIN_KEYWORDS[inferred] if k in theme_text])}")
-        return inferred
-        
-    return requested_topic
+# [CONSOLIDATED] infer_domain_from_content is defined above (L127).
+# The duplicate local definition that existed here has been removed.
+# Use the module-level DOMAIN_KEYWORDS covering all 6 topics.
 
 async def run_report_generation(
     db: AsyncSession,
@@ -1035,141 +1008,23 @@ async def run_report_generation(
     logger.info(f"Report process complete for {topic_str}.")
     return teaser_md, status, "OK"
 
-async def create_startup_debug_report(db: AsyncSession):
-    """Generates a dummy 'System Startup' report to verify DB write capability."""
-    # HARD-DISABLED for Production Stability
-    return
-
-    logger.info("Generating STARTUP DEBUG DUMMY REPORT...")
-    try:
-        now = datetime.now(timezone.utc)
-        title = f"System Startup Diagnostic: {now.strftime('%Y-%m-%d %H:%M:%S')}"
-        
-        # Check if a startup report already exists for this exact minute (prevent double inserts on fast restart)
-        stmt = select(Report).where(Report.report_type == "system_diagnostic").order_by(Report.created_at.desc()).limit(1)
-        existing = (await db.execute(stmt)).scalars().first()
-        
-        if existing and (now - existing.created_at).total_seconds() < 60:
-            logger.info("Startup diagnostic report already exists. Skipping.")
-            return
-
-        dummy = Report(
-            title=title,
-            teaser_md="This is a diagnostic report generated automatically at system startup to verify database write capabilities.",
-            content_markdown="# Diagnostic Report\n\nDatabase: PostgreSQL (Render)\nStatus: RUNNING",
-            report_type="system_diagnostic",
-            topic_code="system",
-            is_premium=False,
-            source_count=0,
-            confidence_level="High"
-        )
-        db.add(dummy)
-        await db.commit()
-        logger.info("STARTUP DEBUG DUMMY REPORT SAVED SUCCESSFULLY.")
-    except Exception as e:
-        logger.error(f"FAILED to generate startup debug report: {e}")
-
-async def report_worker(queue: asyncio.Queue, results_collector: Dict[str, str]):
-    while True:
-        task = await queue.get()
-        if task is None:
-            queue.task_done()
-            break
-        
-        args = task
-        topic_key = args[2] or "global"
-        
-        try:
-            async with AsyncSessionLocal() as session:
-                teaser, status, reason = await asyncio.wait_for(
-                    run_report_generation(session, *args[:3], auto_post_threads=args[3]),
-                    timeout=REPORT_TASK_DEADLINE
-                )
-                results_collector[topic_key] = status
-                logger.info(f"Report finished: {topic_key} | Status: {status}")
-        except Exception as e:
-            logger.error(f"Worker failed category {topic_key}: {e}")
-            results_collector[topic_key] = "failed"
-        finally:
-            queue.task_done()
-
-async def run_all_reports(db, report_type: str = "daily_global", period_days: int = 1, auto_post_threads: bool = False):
-    queue = asyncio.Queue()
-    results_collector = {}
-    
-    # Populate Queue
-    # tuple format: (report_type, period_days, topic, auto_post_threads)
-    queue.put_nowait((report_type, period_days, None, auto_post_threads))
-    for t in TOPIC_CONFIG.keys():
-        queue.put_nowait((report_type, period_days, t, auto_post_threads))
-
-    workers = [asyncio.create_task(report_worker(queue, results_collector)) for _ in range(NUM_WORKERS)]
-    await queue.join()
-    for _ in range(NUM_WORKERS): queue.put_nowait(None)
-    await asyncio.gather(*workers)
-
-    # Logging Summary
-    success_count = sum(1 for v in results_collector.values() if v == "success")
-    degraded_count = sum(1 for v in results_collector.values() if v == "degraded")
-    failed_count = sum(1 for v in results_collector.values() if v == "failed")
-    
-    logger.info("--- Report Generation Summary ---")
-    logger.info(f"Categories Processed: {len(results_collector)} / {EXPECTED_CATEGORIES}")
-    logger.info(f"Results: {results_collector}")
-    logger.info(f"Success: {success_count}, Degraded: {degraded_count}, Failed: {failed_count}")
-    
-    if len(results_collector) < EXPECTED_CATEGORIES or failed_count > 0:
-        logger.warning(f"!!! INCOMPLETE REPORT JOB DETECTED !!! Missing or failed categories.")
-
-    logger.info(get_metrics_summary())
-
-async def purge_report_history(db: AsyncSession, clear_files: bool = True):
-    """
-    Completely resets the report history (Hard Cleanup).
-    Purges reports, pdf_jobs, and trigger logs.
-    """
-    from sqlalchemy import delete
-    from db.models import PdfJob, ReportTriggerLog, Report
-    
-    logger.info("!!! STARTING HARD CLEANUP / REPORT PURGE !!!")
-    
-    # 1. Purge DB Records
-    # Order matters if FKs are not cascading
-    await db.execute(delete(PdfJob))
-    await db.execute(delete(ReportTriggerLog))
-    await db.execute(delete(Report))
-    await db.commit()
-    logger.info("Database report history purged.")
-    
-    # 2. Clear Filesystem Artifacts
-    if clear_files:
-        import glob
-        patterns = ["outputs/analysis_*.md", "outputs/teaser_*.md"]
-        for p in patterns:
-            files = glob.glob(p)
-            for f in files:
-                try:
-                    os.remove(f)
-                    logger.info(f"Deleted artifact: {f}")
-                except Exception as e:
-                    logger.error(f"Failed to delete {f}: {e}")
-        logger.info("Filesystem report artifacts cleared.")
-
 if __name__ == "__main__":
     import argparse
-    
+    from jobs.report_orchestrator import run_all_reports
+    from jobs.report_utils import purge_report_history
+
     parser = argparse.ArgumentParser(description="OSINT Report Generation Job")
     parser.add_argument("--type", type=str, default="daily", choices=["daily", "weekly", "monthly", "specialized"], help="Report type to generate")
     parser.add_argument("--purge", action="store_true", help="Perform Hard Cleanup (purge all history) before starting")
     parser.add_argument("--threads", action="store_true", help="Enable Threads auto-posting")
-    
+
     args = parser.parse_args()
 
     async def main():
         async with AsyncSessionLocal() as session:
             if args.purge:
                 await purge_report_history(session)
-            
             await run_all_reports(session, report_type=args.type, auto_post_threads=args.threads)
-            
+
     asyncio.run(main())
+

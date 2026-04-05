@@ -191,6 +191,7 @@ class ExternalPost(Base):
     platform = Column(String, nullable=False) # e.g., "threads"
     report_id = Column(UUID(as_uuid=True), ForeignKey("reports.id", ondelete="CASCADE"))
     external_id = Column(String) # media_id or post_id from the platform
+    container_id = Column(String)  # Threads 2-step flow: container ID before publish
     category = Column(String) # e.g. "energy_resource_risk"
     normalized_theme = Column(String, index=True) # Normalized theme key for novelty checks
     status = Column(String) # success, failure

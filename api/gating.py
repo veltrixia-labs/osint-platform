@@ -189,3 +189,41 @@ async def get_watchlist_limit_for_user(user: AnalystProfile) -> int:
     """Return watchlist limit for a user object (resolves tier internally)."""
     tier = await get_effective_tier(user)
     return get_watchlist_limit(tier)
+
+
+def _gate_cascading_impacts(tier: str, impacts: list) -> list:
+    """Filter cascading impact nodes based on user subscription tier.
+
+    - free:   no cascading impacts shown
+    - pro:    first 2 shown (reasoning truncated), rest replaced with ghost nodes
+    - expert+: all impacts shown in full
+    """
+    if not isinstance(impacts, list):
+        return []
+
+    if tier == "free":
+        return []
+
+    if tier == "pro":
+        gated = []
+        for i, imp in enumerate(impacts):
+            if not isinstance(imp, dict):
+                continue
+            if i < 2:
+                imp_copy = imp.copy()
+                if "reasoning" in imp_copy and imp_copy["reasoning"]:
+                    imp_copy["reasoning"] = str(imp_copy["reasoning"])[:50] + "..."
+                gated.append(imp_copy)
+            else:
+                # Ghost Node placeholder for locked impacts
+                gated.append({
+                    "entity_name": "???",
+                    "impact_alpha": 0.0,
+                    "is_locked": True,
+                    "location_lat": imp.get("location_lat"),
+                    "location_lng": imp.get("location_lng")
+                })
+        return gated
+
+    # Expert / Enterprise: full access
+    return impacts
