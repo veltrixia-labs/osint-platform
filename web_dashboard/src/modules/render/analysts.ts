@@ -54,6 +54,10 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
             <div style="font-size: 0.65rem; opacity: 0.8; text-align: center; margin-top: 1rem; color: var(--accent);">
                 API Version: 7.5-FINAL-SYNC | <span id="data-pulse" style="color: #3fb950;">📡 Connected</span>
             </div>
+            <div style="font-size: 0.6rem; opacity: 0.4; text-align: center; margin-top: 0.5rem; line-height: 1.4;">
+                System Status: <span style="color:#3fb950;">Stable</span><br>
+                Last Refined: ${new Date().toLocaleTimeString()}
+            </div>
             <div style="font-size: 0.6rem; opacity: 0.3; text-align: center; margin-top: 8px;">&copy; 2026 VELTRIXIA LABS</div>
         </div>
     `;

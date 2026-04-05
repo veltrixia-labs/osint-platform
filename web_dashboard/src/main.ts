@@ -228,17 +228,6 @@ async function initDashboard() {
           </div>
           <div id="map-page-container" style="display:none;"></div>
         </main>
-
-        <aside class="sidebar-right" id="sidebar-right">
-            <!-- Risk Profile and Correlation Map removed per user request -->
-            <div style="flex:1;"></div>
-            <div class="sidebar-footer" style="border-top:1px solid var(--border); padding-top:1rem;">
-                <div style="font-size:0.7rem; color:var(--text-secondary); opacity:0.6;">
-                    System Status: <span style="color:#3fb950;">Stable</span><br>
-                    Last Refined: ${new Date().toLocaleTimeString()}
-                </div>
-            </div>
-        </aside>
       </div>
       `;
 

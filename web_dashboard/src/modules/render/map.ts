@@ -68,14 +68,14 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             worldCopyJump: true
         }).setView([20, 0], 2);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{y}/{x}{r}.png', {
-            attribution: '&copy; CartoDB',
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Esri',
             className: 'map-tactical-imagery-v2'
         }).addTo(currentGlobalMap);
 
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
             className: 'map-labels-tactical',
-            opacity: 0.7
+            opacity: 0.6
         }).addTo(currentGlobalMap);
 
         L.control.zoom({ position: 'bottomright' }).addTo(currentGlobalMap);
@@ -463,9 +463,9 @@ function initMapFilter(map: L.Map, container: HTMLElement, onUpdate: () => void)
             ];
 
             div.innerHTML = `
-                <div class="monitor-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px;">
-                    <h3 style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); white-space: nowrap;">Strategic Monitoring</h3>
-                    <span style="font-size: 0.55rem; opacity: 0.4; letter-spacing: 1px;">LIVE V1.5</span>
+                <div class="monitor-header" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px; white-space: nowrap;">
+                    <h3 style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); flex-shrink: 0;">Strategic Monitoring</h3>
+                    <span style="font-size: 0.55rem; opacity: 0.5; letter-spacing: 1.5px; font-weight: 700;">LIVE V1.5</span>
                 </div>
                 <div class="monitor-hotbar">
                     ${TOPICS.map(t => `
@@ -498,16 +498,5 @@ function initMapFilter(map: L.Map, container: HTMLElement, onUpdate: () => void)
     currentFilterControl = new (FilterControl as any)();
     currentFilterControl?.addTo(map);
 
-    if (!container.querySelector('.silent-monitor-status')) {
-        const hud = document.createElement('div');
-        hud.innerHTML = `
-            ${!(window as any).isFocalMapActive ? `
-                <div class="silent-monitor-status">
-                    <div style="font-size:0.6rem; opacity:0.4; letter-spacing:1px;">SILENT MONITOR ACTIVE</div>
-                    <div style="font-size:0.75rem; color:var(--accent);">Select from Feed to Track Signals</div>
-                </div>
-            ` : ''}
-        `;
-        container.appendChild(hud);
-    }
+    // Removed Silent Monitor status per user request
 }
