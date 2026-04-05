@@ -95,7 +95,12 @@ async def list_reports(
         reports = result.scalars().all()
 
         filtered_reports = []
+        seen_titles = set()
         for r in reports:
+            # Deduplicate by Title (prevent exact duplicate briefings)
+            if r.title and r.title in seen_titles:
+                continue
+            
             r_type = (r.report_type or "").lower()
             t_code = (r.topic_code or "").lower()
             r_plan = r.plan_required or "free"
@@ -107,6 +112,8 @@ async def list_reports(
                 continue
 
             filtered_reports.append(r)
+            if r.title:
+                seen_titles.add(r.title)
 
         final_reports = filtered_reports[:limit]
 

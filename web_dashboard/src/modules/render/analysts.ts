@@ -11,15 +11,10 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
     const isGuest = a.id === 'guest';
 
     container.innerHTML = `
-        <div class="sidebar-header" style="margin-bottom: 1.5rem;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <span style="font-size: 1.2rem; filter: drop-shadow(0 0 5px var(--accent));">📈</span>
-                <h3 style="font-size: 0.9rem; letter-spacing: 0.02em; font-weight: 700; color: #fff;">Strategic Entities</h3>
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 1rem; opacity: 0.7;">🏢</span>
-                <p style="font-size: 0.65rem; opacity: 0.5; font-weight: 600; text-transform: uppercase;">Enterprise Assets & Priorities</p>
-            </div>
+        <div class="sidebar-header" style="margin-bottom: 1rem;">
+            <h3 style="font-size: 0.85rem; letter-spacing: 0.05em; font-weight: 800; color: var(--accent); text-transform: uppercase;">
+                Watchlist (Active Monitoring)
+            </h3>
         </div>
         <div class="keyword-list">
             ${(a.watch_keywords || []).map(k => `
@@ -46,13 +41,12 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
 
         <div class="sidebar-footer-nav" style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--border);">
             ${isGuest ? '' : `
-                <div class="sidebar-analyst-id">
-                    Analyst ID: ${a.id.slice(0, 8)}...
+                <div class="sidebar-analyst-id" style="font-size: 0.65rem; opacity: 0.4; text-align: center; margin-bottom: 0.5rem;">
+                    Analyst: ${a.id.slice(0, 8)}...
                 </div>
-                <button class="btn-logout" style="width: 100%; margin-top: 1rem; opacity: 0.6;" onclick="window.dispatchEvent(new CustomEvent('logout-request'))">Logout</button>
             `}
 
-            <div class="legal-links u-m-top-1" style="font-size: 0.65rem; opacity: 0.4; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+            <div class="legal-links" style="font-size: 0.65rem; opacity: 0.4; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
                 <a href="disclosure.html" target="_blank" style="color: inherit; text-decoration: none;">Disclosure</a>
                 <a href="terms.html" target="_blank" style="color: inherit; text-decoration: none;">Terms</a>
                 <a href="privacy.html" target="_blank" style="color: inherit; text-decoration: none;">Privacy</a>

@@ -5,7 +5,7 @@ console.log(`[Antigravity] Mode: ${import.meta.env.MODE}`);
 console.log(`[Antigravity] Build Version: 7.5-FINAL-SYNC`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderRiskProfile, renderMap } from './modules/render/index'
+import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderMap } from './modules/render/index'
 import { login, signup, fetchMe, logout, fetchUsage, fetchReports, fetchReport } from './modules/api'
 import type { UserMe, AnalystProfile, Report } from './modules/api'
 import {
@@ -230,24 +230,12 @@ async function initDashboard() {
         </main>
 
         <aside class="sidebar-right" id="sidebar-right">
-            <div id="risk-profile-container">
-                <h2 style="font-size:1.1rem; margin-bottom:1rem;">Risk Profile</h2>
-                <div class="u-p-1 u-text-center" style="opacity:0.5; font-size:0.8rem;">Analyzing risk trends...</div>
-            </div>
-            <div id="quick-map-trigger" class="u-m-top-1" style="cursor:pointer;">
-                <div class="premium-card u-p-1" style="border:1px solid var(--accent); background:rgba(0,168,255,0.05); cursor:pointer;">
-                    <div style="font-size:0.8rem; font-weight:700; color:var(--accent); margin-bottom:0.5rem;">Global Risk Distribution</div>
-                    <div id="map-mini-preview" style="height:80px; background:#0d1117; border-radius:4px; display:flex; align-items:center; justify-content:center; border:1px dashed rgba(255,255,255,0.1);">
-                        <span style="font-size:0.65rem; opacity:0.5;">Launch Intelligence Map →</span>
-                    </div>
-                </div>
-            </div>
+            <!-- Risk Profile and Correlation Map removed per user request -->
             <div style="flex:1;"></div>
             <div class="sidebar-footer" style="border-top:1px solid var(--border); padding-top:1rem;">
                 <div style="font-size:0.7rem; color:var(--text-secondary); opacity:0.6;">
                     System Status: <span style="color:#3fb950;">Stable</span><br>
-                    Last Refined: ${new Date().toLocaleTimeString()}<br>
-                    <span style="color:var(--accent); display:block; margin-top:0.3rem;">Build: ${typeof __APP_BUILD_INFO__ !== 'undefined' ? __APP_BUILD_INFO__ : 'Dev'}</span>
+                    Last Refined: ${new Date().toLocaleTimeString()}
                 </div>
             </div>
         </aside>
@@ -444,18 +432,14 @@ async function initDashboard() {
 
             if (data.health && healthDiv) renderHealth(data.health, healthDiv);
 
-            // Phase 2: Live Feed & Risk Profile
+            // Phase 2: Live Feed
             const liveFeedContainer = document.querySelector<HTMLElement>('#live-feed-container');
             const liveFeedTicker = document.querySelector<HTMLElement>('#live-feed-ticker');
-            const riskProfileContainer = document.querySelector<HTMLElement>('#risk-profile-container');
 
             if (liveFeedContainer) liveFeedContainer.style.display = 'block';
             if (liveFeedTicker && data.alerts) {
                 // For Live Feed, we show 100% of global signals in a compact way
                 renderLiveFeed(data.alerts, liveFeedTicker);
-            }
-            if (riskProfileContainer && data.health) {
-                renderRiskProfile(data.health, riskProfileContainer);
             }
 
             const tabsContainer = document.querySelector<HTMLElement>('#topic-tabs-container');
