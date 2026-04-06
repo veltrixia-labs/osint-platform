@@ -266,11 +266,12 @@ function renderRegionalContext(layerGroup: L.LayerGroup, alerts: Alert[]) {
         const isVisible = !asset.topic_code || activeMapFilters.has(asset.topic_code as string) || activeMapFilters.has('global');
         if (!isVisible) return;
 
-        const color = asset.type === 'choke_point' ? '#58a6ff' : 
+        const topicDef = asset.topic_code ? getTopicDef(asset.topic_code) : null;
+        const color = topicDef?.color || (asset.type === 'choke_point' ? '#58a6ff' : 
                      (asset.type === 'energy' ? '#f1e05a' : 
                      (asset.type === 'military' ? '#ff7b72' : 
                      (asset.type === 'market' ? '#3fb950' : 
-                     (asset.type === 'crypto' ? '#f78166' : '#bc8cff'))));
+                     (asset.type === 'crypto' ? '#f78166' : '#bc8cff')))));
         
          const assetIcon = L.divIcon({
             className: 'infrastructure-node',
