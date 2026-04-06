@@ -131,7 +131,7 @@ async def run_classify(db: AsyncSession):
         select(Item)
         .where(not_(Item.id.in_(analyzed_ids_subquery)))
         .order_by(Item.published_at.desc())
-        .limit(500)  # Bug Fix #3: Increased from 100 to handle backlog faster
+        .limit(100)  # [Opt] Reduced from 500 to prevent OOM/503 on Render low-tier
     )
     all_items = (await db.execute(stmt)).scalars().all()
     logger.info(f"[Classify] Found {len(all_items)} unanalyzed items to process.")

@@ -1,5 +1,12 @@
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// [v9.1] Global Scope Fix: Plugins like markercluster expect L to be global
+(window as any).L = L;
+
 import 'leaflet.markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { Alert } from '../api';
 import { fetchAlerts } from '../api';
 import { getTopicDef } from '../topics';
