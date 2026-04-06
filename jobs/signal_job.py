@@ -65,7 +65,7 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
     from analysis.signal_engine import calculate_cluster_signal
     from db.models import EventCluster
     
-    cluster_stmt = select(EventCluster).where(EventCluster.created_at >= now - timedelta(hours=1))
+    cluster_stmt = select(EventCluster).where(EventCluster.created_at >= now - timedelta(hours=24))  # [Fix v1.6.3] Expanded from 1h to 24h to capture backlog-processed clusters
     clusters = (await db.execute(cluster_stmt)).scalars().all()
     
     final_scored_pool = []
