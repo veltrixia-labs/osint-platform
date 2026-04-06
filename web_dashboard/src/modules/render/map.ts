@@ -440,7 +440,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
     });
 }
 
-function initMapFilter(map: L.Map, container: HTMLElement, onUpdate: () => void) {
+function initMapFilter(map: L.Map, _container: HTMLElement, onUpdate: () => void) {
     if (currentFilterControl) {
         currentFilterControl.remove();
     }
