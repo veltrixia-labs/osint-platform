@@ -167,6 +167,12 @@ async def get_system_diagnostics(
     ]
 
 
+@router.get("/health")
+async def public_health_check():
+    """Unauthenticated health endpoint for Render's port scan."""
+    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
 @router.get("/metrics")
 async def get_all_metrics(db: AsyncSession = Depends(get_db)):
     """Expose system metrics for dashboard/monitoring."""
