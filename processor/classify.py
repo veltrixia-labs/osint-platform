@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import not_
 from db.models import Item, Topic, ItemTopic, AnalysisCache
 from llm.client import generate_analysis
 
@@ -121,8 +122,19 @@ async def run_classify(db: AsyncSession):
     await seed_topics(db)
     
     now = datetime.now(timezone.utc)
-    stmt = select(Item).limit(100)
+
+    # --- Bug Fix #1 (Phase 9.1): Select UNANALYZED items, newest first ---
+    # Previous: select(Item).limit(100) — always grabbed the oldest 100, ignoring 3,600+ new articles.
+    # Fixed:    Only fetch items that have NO entry in analysis_cache, ordered by recency.
+    analyzed_ids_subquery = select(AnalysisCache.item_id)
+    stmt = (
+        select(Item)
+        .where(not_(Item.id.in_(analyzed_ids_subquery)))
+        .order_by(Item.published_at.desc())
+        .limit(500)  # Bug Fix #3: Increased from 100 to handle backlog faster
+    )
     all_items = (await db.execute(stmt)).scalars().all()
+    logger.info(f"[Classify] Found {len(all_items)} unanalyzed items to process.")
     
     pre_candidates = await pre_filter_and_score(db, all_items)
     

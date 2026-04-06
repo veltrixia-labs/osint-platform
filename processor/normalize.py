@@ -75,7 +75,7 @@ async def run_normalize(db: AsyncSession):
                 source_id=raw.source_id,
                 source_group=raw.source_group,
                 reliability_weight=raw.reliability_weight,
-                category="news",
+                category=None,  # Bug Fix #2 (Phase 9.1): Was "news" — classify.py sets the correct topic category
                 geo={},
                 tags={}
             )

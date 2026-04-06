@@ -339,15 +339,18 @@ async def _detect_entity_heat(recent: List[EventCluster], history: List[EventClu
     signals = []
     baseline_entities = {}
     for c in history:
-        entities = c.summary_data.get("top_entities", {})
-        for ent, count in entities.items():
-            baseline_entities[ent] = baseline_entities.get(ent, 0) + count
+        # Bug Fix #4 (Phase 9.1): Was 'top_entities' — actual key is 'top_geos'+'top_orgs'
+        for ent in c.summary_data.get("top_geos", []):
+            baseline_entities[ent] = baseline_entities.get(ent, 0) + 1
+        for ent in c.summary_data.get("top_orgs", []):
+            baseline_entities[ent] = baseline_entities.get(ent, 0) + 1
             
     recent_entities = {}
     for c in recent:
-        entities = c.summary_data.get("top_entities", {})
-        for ent, count in entities.items():
-            recent_entities[ent] = recent_entities.get(ent, 0) + count
+        for ent in c.summary_data.get("top_geos", []):
+            recent_entities[ent] = recent_entities.get(ent, 0) + 1
+        for ent in c.summary_data.get("top_orgs", []):
+            recent_entities[ent] = recent_entities.get(ent, 0) + 1
             
     # Calculate daily baseline avg
     recent_ts = recent[0].created_at if recent[0].created_at.tzinfo else recent[0].created_at.replace(tzinfo=timezone.utc)
@@ -364,7 +367,8 @@ async def _detect_entity_heat(recent: List[EventCluster], history: List[EventClu
                 "baseline": round(baseline_avg, 2),
                 "recent": count,
                 "delta": round(delta, 2),
-                "supporting_cluster_count": len([c for c in recent if ent in str(c.summary_data.get("top_entities", {}))])
+                # Bug Fix #4: Filter clusters that contain the entity in either geo or org lists
+                "supporting_cluster_count": len([c for c in recent if ent in c.summary_data.get("top_geos", []) or ent in c.summary_data.get("top_orgs", [])])
             }
             signals.append((TrendSignal(
                 trend_type="entity_heat",

@@ -313,5 +313,3 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
     await db.commit()
     logger.info(f"Clustering complete: {metrics}. Persisted {len(top_clusters)} clusters.")
     return metrics
-    logger.info(f"Clustering complete: {metrics}")
-    return metrics
