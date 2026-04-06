@@ -486,7 +486,6 @@ function initMapFilter(map: L.Map, _container: HTMLElement, onUpdate: () => void
                     activeMapFilters.clear();
                     activeMapFilters.add(preset);
                     if (preset === 'ai_semiconductor_intelligence') activeMapFilters.add('global_market_intelligence');
-                    if (preset === 'supply_chain_intelligence') activeMapFilters.add('global');
                     onUpdate();
                 });
             });

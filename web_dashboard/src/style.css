@@ -2270,9 +2270,10 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 @media (min-width: 1024px) {
     .monitor-hotbar {
-        flex-wrap: wrap;
-        overflow-x: visible;
-        width: auto;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        justify-content: flex-start;
+        width: 100%;
     }
 }
 
@@ -2286,13 +2287,13 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 .monitor-hotbar .preset-btn {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-width: 60px;
-    height: 54px;
+    min-width: 52px;
+    height: 50px;
     background: rgba(255,255,255,0.03);
     border: 1px solid var(--border);
     border-radius: 6px;
