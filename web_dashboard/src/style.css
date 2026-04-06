@@ -2615,3 +2615,162 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     opacity: 0; /* Starts hidden, revealed by ignite animation */
 }
 
+
+/* ==============================
+   Phase 9: Global Intelligence Map & Clustering
+   ============================== */
+
+/* Leaflet Cluster Overrides */
+.marker-cluster-small {
+    background-color: rgba(88, 166, 255, 0.2) !important;
+}
+.marker-cluster-small div {
+    background-color: rgba(13, 17, 23, 0.95) !important;
+    color: #fff !important;
+    border: 2px solid var(--accent) !important;
+    box-shadow: 0 0 10px rgba(88, 166, 255, 0.4);
+}
+
+.marker-cluster-medium {
+    background-color: rgba(63, 185, 80, 0.2) !important;
+}
+.marker-cluster-medium div {
+    background-color: rgba(13, 17, 23, 0.95) !important;
+    color: #fff !important;
+    border: 2px solid var(--success) !important;
+    box-shadow: 0 0 15px rgba(63, 185, 80, 0.4);
+}
+
+.marker-cluster-large {
+    background-color: rgba(248, 81, 73, 0.2) !important;
+}
+.marker-cluster-large div {
+    background-color: rgba(13, 17, 23, 0.95) !important;
+    color: #fff !important;
+    border: 2px solid var(--danger) !important;
+    box-shadow: 0 0 20px rgba(248, 81, 73, 0.4);
+}
+
+.marker-cluster {
+    background-clip: padding-box;
+    border-radius: 50%;
+}
+.marker-cluster div {
+    width: 30px;
+    height: 30px;
+    margin-left: 5px;
+    margin-top: 5px;
+    text-align: center;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 800;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Refined Tactical Card for Map */
+.tactical-popup .leaflet-popup-content-wrapper {
+    background: #0d1117 !important;
+    color: #c9d1d9 !important;
+    padding: 0 !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.6) !important;
+    border-radius: 12px !important;
+}
+
+.tactical-popup .leaflet-popup-content {
+    margin: 0 !important;
+    width: 300px !important;
+}
+
+.tactical-card {
+    position: relative;
+    padding: 20px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(88,166,255,0.05) 0%, transparent 100%);
+}
+
+.tactical-card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--topic-color, var(--accent));
+}
+
+.tactical-card-header {
+    margin-bottom: 12px;
+}
+
+.geography-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--topic-color, var(--accent));
+    margin-bottom: 6px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.geography-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+}
+
+.tactical-card-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.tactical-card-body {
+    font-size: 0.8rem;
+    color: #8b949e;
+    line-height: 1.5;
+}
+
+.tactical-card-summary {
+    background: rgba(255,255,255,0.02);
+    padding: 10px;
+    border-radius: 6px;
+    margin: 12px 0;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.tactical-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 12px;
+    margin-top: 12px;
+}
+
+.tactical-action-btn {
+    background: var(--topic-color, var(--accent)) !important;
+    color: #000 !important;
+    border: none !important;
+    padding: 6px 14px !important;
+    border-radius: 4px !important;
+    font-size: 0.75rem !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.tactical-version-tag {
+    font-size: 0.6rem;
+    opacity: 0.4;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+

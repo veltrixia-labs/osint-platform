@@ -64,6 +64,8 @@ export interface Alert {
     fidelity_score?: number;
     is_high_fidelity?: boolean;
     related_report_id?: string;
+    description?: string; // Phase 9: News Summary for Map
+    country?: string;     // Phase 9: Geographic Label for Map
     metadata_json?: {
         spike_delta?: number;
         domain_count?: number;

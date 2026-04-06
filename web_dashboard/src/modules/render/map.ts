@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import 'leaflet.markercluster';
 import type { Alert } from '../api';
 import { fetchAlerts } from '../api';
 import { getTopicDef } from '../topics';
@@ -15,6 +16,7 @@ let activeDiscoveryId: string | null = null;
 let lastDiscoveryTrigger: number = 0;
 let currentGlobalMap: L.Map | null = null;
 let currentDynamicLayer: L.LayerGroup | null = null;
+let clusterLayer: L.MarkerClusterGroup | null = null;
 let isRendering = false; // Mutex to prevent infinite recursion
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -80,6 +82,22 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
 
         L.control.zoom({ position: 'bottomright' }).addTo(currentGlobalMap);
         currentDynamicLayer = L.layerGroup().addTo(currentGlobalMap);
+        
+        clusterLayer = (L as any).markerClusterGroup({
+            showCoverageOnHover: false,
+            maxClusterRadius: 60,
+            iconCreateFunction: function(cluster: any) {
+                const count = cluster.getChildCount();
+                let sizeClass = 'small';
+                if (count > 20) sizeClass = 'medium';
+                if (count > 100) sizeClass = 'large';
+                return L.divIcon({
+                    html: `<div><span>${count}</span></div>`,
+                    className: `marker-cluster marker-cluster-${sizeClass}`,
+                    iconSize: [40, 40]
+                });
+            }
+        }).addTo(currentGlobalMap);
 
         initMapFilter(currentGlobalMap, container, () => {
             renderMap(container, _tier, focusAlertId);
@@ -132,106 +150,51 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
 
         const [alerts] = await Promise.all([fetchAlerts()]);
         
-        // [v8.6] Intent-Based Visibility: Hide alerts unless focused
-        let filteredAlerts = focusAlertId ? alerts.filter(a => a.id === focusAlertId) : [];
+        // --- Mode Logic Integration (v1.6) ---
+        layerGroup.clearLayers();
+        clusterLayer?.clearLayers();
 
-        // Plotting Delay to ensure container stability
-        setTimeout(() => {
-            if (isReTrigger) lastDiscoveryTrigger = (window as any)._mapTriggerTimestamp;
-            activeDiscoveryId = focusAlertId || null;
-
-            // Reset container focal state if no focus
-            if (!focusAlertId) {
-                container.classList.remove('map-focal-mode');
-                activeDiscoveryId = null;
-            }
-
-            layerGroup.clearLayers();
-            renderRegionalContext(layerGroup, filteredAlerts);
-
-            filteredAlerts.forEach(alert => {
+        if (!focusAlertId) {
+            // MODE A: GLOBAL MONITORING
+            console.log("[Antigravity] Map Mode: GLOBAL_MONITOR");
+            
+            // 1. Plot Clustered Alerts
+            alerts.forEach(alert => {
                 const coords = getAlertCoords(alert);
                 if (!coords) return;
 
-                const intensity = alert.intensity || 5;
                 const topicDef = getTopicDef(alert.topic);
                 const topicColor = topicDef?.color || '#58a6ff';
-                const baseSize = 12 + (intensity * 1.5); // Slightly smaller base
-                const markerClass = `marker-ring-tactical marker-ring-tactical--l1 ${focusAlertId && alert.id !== focusAlertId ? 'focal-suppressed' : ''}`;
+                const baseSize = 8;
 
                 const markerIcon = L.divIcon({
                     className: 'none',
-                    html: `
-                        <div class="${markerClass}" 
-                             style="width: calc(${baseSize}px * var(--map-zoom-scale, 1)); height: calc(${baseSize}px * var(--map-zoom-scale, 1)); --ring-color: ${topicColor}">
-                            <div class="glow-ring"></div>
-                            <div class="ring-inner"></div>
-                        </div>
-                    `,
-                    iconSize: [baseSize * 1.5, baseSize * 1.5],
-                    iconAnchor: [baseSize * 0.75, baseSize * 0.75]
+                    html: `<div class="marker-ring-tactical" style="width:${baseSize}px; height:${baseSize}px; --ring-color:${topicColor}"><div class="ring-inner"></div></div>`,
+                    iconSize: [baseSize, baseSize],
+                    iconAnchor: [baseSize/2, baseSize/2]
                 });
 
-                const cascadingImpacts = alert.metadata_json?.cascading_impacts || [];
-                const popupContent = `
-                    <div class="tactical-card tactical-popup-container" style="--topic-color: ${topicColor}">
-                        <div class="tactical-card-accent"></div>
-                        <div class="tactical-card-header">
-                            <strong style="color:#fff; font-size:1.05rem; display:block;">${alert.target_label}</strong>
-                            <div style="font-size:0.65rem; color:${topicColor}; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; margin-top:4px;">
-                                ${alert.topic?.replace(/_/g, ' ') || 'GLOBAL SIGNAL'} • ${alert.severity}
-                            </div>
-                        </div>
-                        <div class="tactical-card-body">
-                            <p style="font-size:0.8rem; color:#8b949e; line-height:1.5; margin-bottom:16px;">
-                                ${alert.triggered_at ? new Date(alert.triggered_at).toLocaleString() : 'Live Scan Active'}
-                            </p>
-                            ${cascadingImpacts.length > 0 ? `
-                                <div style="margin-top:8px;">
-                                    <div style="font-size:0.65rem; opacity:0.5; text-transform:uppercase; margin-bottom:10px;">Market Ripple Effect</div>
-                                    ${cascadingImpacts.slice(0, 3).map((imp: any) => `
-                                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.8rem;">
-                                            <span style="color:#c9d1d9;">${imp.entity_name}</span>
-                                            <span style="color:${imp.impact_alpha < 0 ? 'var(--danger)' : 'var(--success)'}; font-weight:700;">
-                                                ${imp.impact_alpha > 0 ? '+' : ''}${imp.impact_alpha}%
-                                            </span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            ` : '<div style="font-size:0.75rem; opacity:0.4;">Analyzing recursive dependencies...</div>'}
-                        </div>
-                        <div class="tactical-card-footer">
-                            <button class="tactical-action-btn" onclick="window.dispatchEvent(new CustomEvent('map-view-report', {detail: {id: '${alert.id}'}}))">
-                                VIEW REPORT →
-                            </button>
-                            <span style="font-size:0.6rem; opacity:0.4;">V.1.5 HUD</span>
-                        </div>
-                    </div>
-                `;
-
-                const marker = L.marker([coords.lat, coords.lng], { 
-                    icon: markerIcon,
-                    zIndexOffset: focusAlertId === alert.id ? 5000 : 1000,
-                    pane: 'overlayPane' 
-                })
-                .addTo(layerGroup)
-                .bindPopup(popupContent, { className: 'tactical-popup', maxWidth: 320 });
-                    
-                   if (focusAlertId === alert.id) {
-                    container.classList.add('map-focal-mode');
-                    
-                    setTimeout(() => {
-                        map.flyTo([coords.lat, coords.lng], 4, { duration: 1.5 });
-                        map.once('moveend', () => {
-                            marker.openPopup();
-                            if (cascadingImpacts.length > 0) {
-                                renderImpactChain(map, layerGroup, coords, cascadingImpacts, 1, intensity);
-                            }
-                        });
-                    }, 500); 
-                }
+                const marker = L.marker([coords.lat, coords.lng], { icon: markerIcon });
+                marker.bindPopup(createTacticalPopup(alert, topicColor), { className: 'tactical-popup', maxWidth: 320 });
+                clusterLayer?.addLayer(marker);
             });
-        }, 300);
+
+            // 2. Plot Persistent Strategic Infrastructure
+            renderStrategicInfrastructure(layerGroup);
+            
+            if (!map.hasLayer(clusterLayer!)) clusterLayer?.addTo(map);
+        } else {
+            // MODE B: TACTICAL IMPACT ANALYSIS
+            console.log(`[Antigravity] Map Mode: TACTICAL_FOCUS [${focusAlertId}]`);
+            
+            // Hide Cluster and Infrastructure for maximum clarity per user request
+            if (map.hasLayer(clusterLayer!)) map.removeLayer(clusterLayer!);
+
+            const focusedAlert = alerts.find(a => a.id === focusAlertId);
+            if (focusedAlert) {
+                renderFocusedAlert(map, layerGroup, focusedAlert);
+            }
+        }
 
         isRendering = false;
     } catch (err) {
@@ -241,37 +204,16 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Helpers
+// Sub-Renderers & Mode Components
 // ──────────────────────────────────────────────────────────────────────────────
 
-function renderRegionalContext(layerGroup: L.LayerGroup, alerts: Alert[]) {
-    // 1. Foundational Alert Context (Hot Zones)
-    const highIntensityAlerts = alerts.filter(a => (a.intensity || 0) > 8);
-    highIntensityAlerts.forEach(alert => {
-        const coords = getAlertCoords(alert);
-        if (coords) {
-            L.circle([coords.lat, coords.lng], {
-                radius: 200000, 
-                color: '#f43f5e',
-                fillColor: '#f43f5e',
-                fillOpacity: 0.05,
-                stroke: false,
-                interactive: false
-            }).addTo(layerGroup);
-        }
-    });
-
-    // 2. Persistent Strategic Infrastructure Layer
+function renderStrategicInfrastructure(layer: L.LayerGroup) {
     STRATEGIC_ASSETS.forEach(asset => {
         const isVisible = !asset.topic_code || activeMapFilters.has(asset.topic_code as string) || activeMapFilters.has('global');
         if (!isVisible) return;
 
         const topicDef = asset.topic_code ? getTopicDef(asset.topic_code) : null;
-        const color = topicDef?.color || (asset.type === 'choke_point' ? '#58a6ff' : 
-                     (asset.type === 'energy' ? '#f1e05a' : 
-                     (asset.type === 'military' ? '#ff7b72' : 
-                     (asset.type === 'market' ? '#3fb950' : 
-                     (asset.type === 'crypto' ? '#f78166' : '#bc8cff')))));
+        const color = topicDef?.color || '#bc8cff';
         
          const assetIcon = L.divIcon({
             className: 'infrastructure-node',
@@ -285,7 +227,7 @@ function renderRegionalContext(layerGroup: L.LayerGroup, alerts: Alert[]) {
             iconAnchor: [50, 12]
         });
 
-        let popupContent = `
+        const popupContent = `
             <div class="tactical-card entity-card" style="--topic-color: ${color}">
                 <div class="tactical-card-accent"></div>
                 <div class="tactical-card-header">
@@ -310,13 +252,14 @@ function renderRegionalContext(layerGroup: L.LayerGroup, alerts: Alert[]) {
                         </div>
                     ` : ''}
                     
-                    ${asset.newsSnippet ? `
-                        <div style="margin-top:8px;">
-                            <div style="font-size:0.6rem; color:${color}; font-weight:800; margin-bottom:4px;">LATEST INTELLIGENCE</div>
-                            <div style="font-size:0.75rem; color:#c9d1d9; line-height:1.4; font-style:italic;">"${asset.newsSnippet.headline}"</div>
-                            <div style="font-size:0.6rem; opacity:0.5; margin-top:4px;">SOURCE: ${asset.newsSnippet.source} • ${asset.newsSnippet.timestamp}</div>
+                    ${asset.strategicRole ? `
+                        <div style="background: rgba(88, 166, 255, 0.1); border-left: 2px solid ${color}; padding: 6px 10px; margin-top: 10px; border-radius: 0 4px 4px 0;">
+                            <div style="font-size: 0.55rem; color: ${color}; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Strategic Role</div>
+                            <div style="font-size: 0.75rem; color: #adbac7; line-height: 1.3;">${asset.strategicRole}</div>
                         </div>
-                    ` : `<p style="font-size:0.75rem; opacity:0.6; line-height:1.4;">${asset.description}</p>`}
+                    ` : `
+                        <p style="font-size:0.75rem; opacity:0.6; line-height:1.4; margin-bottom:8px;">${asset.description}</p>
+                    `}
                 </div>
                 <div class="tactical-card-footer" style="padding-top:8px; margin-top:8px; border-top:1px solid rgba(255,255,255,0.05); font-size:0.6rem; opacity:0.4;">
                     STRATEGIC INFRASTRUCTURE • V.1.6
@@ -325,10 +268,96 @@ function renderRegionalContext(layerGroup: L.LayerGroup, alerts: Alert[]) {
         `;
 
         L.marker([asset.lat, asset.lng], { icon: assetIcon, zIndexOffset: 500, pane: 'overlayPane' })
-            .addTo(layerGroup)
+            .addTo(layer)
             .bindPopup(popupContent, { className: 'tactical-popup', maxWidth: 280 });
     });
 }
+
+function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert) {
+    const coords = getAlertCoords(alert);
+    if (!coords) return;
+
+    const intensity = alert.intensity || 5;
+    const topicDef = getTopicDef(alert.topic);
+    const topicColor = topicDef?.color || '#58a6ff';
+    const baseSize = 16 + (intensity * 2);
+    
+    const markerIcon = L.divIcon({
+        className: 'none',
+        html: `
+            <div class="marker-ring-tactical marker-ring-tactical--l1" 
+                 style="width: calc(${baseSize}px * var(--map-zoom-scale, 1)); height: calc(${baseSize}px * var(--map-zoom-scale, 1)); --ring-color: ${topicColor}">
+                <div class="glow-ring"></div>
+                <div class="ring-inner"></div>
+            </div>
+        `,
+        iconSize: [baseSize * 1.5, baseSize * 1.5],
+        iconAnchor: [baseSize * 0.75, baseSize * 0.75]
+    });
+
+    const marker = L.marker([coords.lat, coords.lng], { icon: markerIcon, zIndexOffset: 5000 }).addTo(layer);
+    marker.bindPopup(createTacticalPopup(alert, topicColor, true), { className: 'tactical-popup', maxWidth: 320 });
+
+    const cascadingImpacts = alert.metadata_json?.cascading_impacts || [];
+
+    setTimeout(() => {
+        map.flyTo([coords.lat, coords.lng], 4, { duration: 1.5 });
+        map.once('moveend', () => {
+            marker.openPopup();
+            if (cascadingImpacts.length > 0) {
+                renderImpactChain(map, layer, coords, cascadingImpacts, 1, intensity);
+            }
+        });
+    }, 300);
+}
+
+function createTacticalPopup(alert: Alert, color: string, detailed = false): string {
+    const geography = (alert as any).country || 'GLOBAL EVENT';
+    const description = (alert as any).description || alert.target_label;
+    const cascadingImpacts = alert.metadata_json?.cascading_impacts || [];
+
+    return `
+        <div class="tactical-card" style="--topic-color: ${color}">
+            <div class="tactical-card-accent"></div>
+            <div class="tactical-card-header">
+                <div class="geography-label">${alert.severity} • ${geography}</div>
+                <h3 class="tactical-card-title">${alert.target_label}</h3>
+            </div>
+            <div class="tactical-card-body">
+                <div class="tactical-card-summary">
+                    ${description}
+                </div>
+                
+                ${detailed && cascadingImpacts.length > 0 ? `
+                    <div style="margin: 12px 0 6px 0; font-size: 0.65rem; color: ${color}; font-weight: 800; text-transform: uppercase;">Supply Chain Ripple Effects</div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        ${cascadingImpacts.slice(0, 3).map((imp: any) => `
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                                <span style="opacity: 0.8;">${imp.entity_name}</span>
+                                <span style="color: ${imp.impact_alpha < 0 ? 'var(--danger)' : 'var(--success)'}; font-weight: 800;">
+                                    ${imp.impact_alpha > 0 ? '+' : ''}${imp.impact_alpha}%
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                <div style="font-size: 0.65rem; opacity: 0.5; margin-top: 10px;">
+                    DETECTED: ${new Date(alert.triggered_at).toLocaleString('en-US', { timeStyle: 'short', dateStyle: 'medium' })}
+                </div>
+            </div>
+            <div class="tactical-card-footer">
+                <button class="tactical-action-btn" onclick="window.dispatchEvent(new CustomEvent('map-view-report', {detail: {id: '${alert.id}'}}))">
+                    View Report
+                </button>
+                <div class="tactical-version-tag">V1.6 HUD</div>
+            </div>
+        </div>
+    `;
+}
+
+// ── Deprecated Sub-Renderers ────────────────────────────────────────────────
+// renderRegionalContext removed in v1.6 (Clustering and Split-View implemented)
 
 function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number) {
     if (level > 3 || !impacts) return;

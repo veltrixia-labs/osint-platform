@@ -95,7 +95,9 @@ async def get_alerts(
             "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else [],
             "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if a.metadata_json else [],
             "location_lat": a.location_lat,
-            "location_lng": a.location_lng
+            "location_lng": a.location_lng,
+            "description": a.metadata_json.get("description") if a.metadata_json else None,
+            "country": a.metadata_json.get("country") if a.metadata_json else None
         }
         for a in alerts
     ]
@@ -135,7 +137,9 @@ async def get_live_alerts(
             "intensity": a.intensity,
             "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if a.metadata_json else [],
             "location_lat": a.location_lat,
-            "location_lng": a.location_lng
+            "location_lng": a.location_lng,
+            "description": a.metadata_json.get("description") if a.metadata_json else None,
+            "country": a.metadata_json.get("country") if a.metadata_json else None
         }
         for a in alerts
     ]
