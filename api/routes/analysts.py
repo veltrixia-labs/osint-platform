@@ -11,17 +11,16 @@ import logging
 from db.models import AnalystProfile
 from db.database import get_db
 from api.auth import get_current_user_from_access
-from api.gating import get_effective_tier, get_watchlist_limit, can_add_watchlist_keywords
-from api.rate_limit import rate_limit
-
-router = APIRouter(tags=["analysts"])
-logger = logging.getLogger(__name__)
-
+from db.enums import PlanTier
+from api.gating import (
+    get_effective_tier, get_watchlist_limit, can_add_watchlist_keywords,
+    requires_tier, TIER_FREE
+)
 
 @router.get("/analysts")
 async def get_analysts(
-    current_user: tuple = Depends(get_current_user_from_access),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[AnalystProfile] = Depends(requires_tier(PlanTier.FREE.value))
 ):
     stmt = select(AnalystProfile).where(AnalystProfile.is_active == True)
     analysts = (await db.execute(stmt)).scalars().all()

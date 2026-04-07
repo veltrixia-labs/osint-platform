@@ -15,11 +15,11 @@ import logging
 
 from db.models import AlertLog, AlertDelivery, AnalystProfile, Report, SystemMetric
 from db.database import get_db
-from api.auth import get_current_user_from_access, blacklist_manager
 from api.gating import (
     get_effective_tier, get_plan_limits, get_watchlist_limit, get_alert_limit,
-    can_access_report_type, get_allowed_topics, get_restricted_topics,
+    can_access_report_type, get_allowed_topics, get_restricted_topics, TIER_GUEST
 )
+from api.auth import get_current_user_from_access, get_optional_current_user, blacklist_manager
 
 router = APIRouter(tags=["system"])
 logger = logging.getLogger(__name__)
@@ -31,13 +31,23 @@ DEPLOY_TIMESTAMP = "2026-04-04T13:50:00Z"
 
 @router.get("/system/usage")
 async def get_usage(
-    current_user: tuple = Depends(get_current_user_from_access),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[tuple] = Depends(get_optional_current_user)
 ):
     """Return real-time usage statistics against the user's plan limits."""
-    user, _, _ = current_user
+    # current_user is (user, session_id, version) or None
+    user = current_user[0] if current_user else None
     tier = await get_effective_tier(user)
     limits = get_plan_limits(tier)
+
+    if not user:
+        return {
+            "tier": tier,
+            "alerts": {"used": 0, "limit": limits["alerts_per_day"]},
+            "keywords": {"used": 0, "limit": limits["watchlist_keywords"]},
+            "topics": {"allowed": get_allowed_topics(tier), "restricted": get_restricted_topics(tier)},
+            "reports": {"daily": True, "monthly": False},
+        }
 
     today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     alerts_stmt = (
@@ -79,13 +89,14 @@ async def get_usage(
 
 @router.get("/system/health")
 async def get_system_metrics(
-    current_user: tuple = Depends(get_current_user_from_access),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[tuple] = Depends(get_optional_current_user)
 ):
-    user, _, _ = current_user
+    user = current_user[0] if current_user else None
+    user_role = user.user_role if user else "guest"
 
     # Caching
-    cache_key = f"metrics:{user.user_role}"
+    cache_key = f"metrics:{user_role}"
     if await blacklist_manager._is_redis_available():
         try:
             cached = await blacklist_manager.redis_client.get(cache_key)
@@ -116,7 +127,7 @@ async def get_system_metrics(
         "high_fidelity_count": high_fidelity
     }
 
-    if user.user_role == "admin":
+    if user_role == "admin":
         trigger_stmt = select(
             AlertLog.trigger_type,
             func.avg(AlertLog.feedback_score)

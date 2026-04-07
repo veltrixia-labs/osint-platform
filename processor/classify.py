@@ -85,7 +85,7 @@ def select_top_k(items: List[Item]) -> List[Item]:
             cat_counts[cat] = count + 1
     return selected
 
-async def batch_classify_llm(items: List[Item]) -> Dict[str, Dict]:
+async def batch_classify_llm(db: AsyncSession, items: List[Item]) -> Dict[str, Dict]:
     results = {}
     for i in range(0, len(items), BATCH_SIZE):
         batch = items[i:i+BATCH_SIZE]
@@ -171,7 +171,7 @@ async def run_classify(db: AsyncSession):
         candidates_to_analyze.append(it)
         
     final_candidates = select_top_k(candidates_to_analyze)
-    llm_results = await batch_classify_llm(final_candidates)
+    llm_results = await batch_classify_llm(db, final_candidates)
     
     for it in final_candidates:
         res = llm_results.get(str(it.id))

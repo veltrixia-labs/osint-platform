@@ -14,8 +14,8 @@ from datetime import datetime, timezone
 from db.models import Report
 from db.database import get_db
 from db.enums import ReportType
-from api.auth import get_current_user_from_access
-from api.gating import get_effective_tier, is_tier_sufficient
+from api.auth import get_current_user_from_access, get_optional_current_user
+from api.gating import get_effective_tier, is_tier_sufficient, TIER_FREE
 
 router = APIRouter(tags=["reports"])
 logger = logging.getLogger(__name__)
@@ -24,10 +24,13 @@ logger = logging.getLogger(__name__)
 @router.get("/reports/{report_id}")
 async def get_report_detail(
     report_id: uuid.UUID,
-    current_user: tuple = Depends(get_current_user_from_access),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[tuple] = Depends(get_optional_current_user)
 ):
-    """Retrieve a specific report by ID (Strict Plan Gating)."""
+    """Retrieve a specific report by ID (Strict Plan Gating for logged-in and guests)."""
+    # current_user is (user, session_id, version) or None
+    user = current_user[0] if current_user else None
+    user_role = user.user_role if user else "guest"
     stmt = select(Report).where(Report.id == report_id)
     report = (await db.execute(stmt)).scalar_one_or_none()
 
@@ -39,7 +42,7 @@ async def get_report_detail(
 
     # ── Strict Plan Gating ────────────────────────────────────────────────
     plan_required = report.plan_required or "free"
-    if not is_tier_sufficient(tier, plan_required) and user.user_role != "admin":
+    if not is_tier_sufficient(tier, plan_required) and user_role != "admin":
         raise HTTPException(
             status_code=403,
             detail=f"Subscription upgrade required. This report requires the '{plan_required}' plan."
@@ -72,12 +75,13 @@ async def get_report_detail(
 async def list_reports(
     response: Response,
     db: AsyncSession = Depends(get_db),
-    current_user: tuple = Depends(get_current_user_from_access),
+    current_user: Optional[tuple] = Depends(get_optional_current_user),
     limit: int = 10,
     topic: Optional[str] = None
 ):
     response.headers["X-API-Version"] = "2026-03-24-REBRAND-V1"
-    user, _, _ = current_user
+    user = current_user[0] if current_user else None
+    user_role = user.user_role if user else "guest"
     tier = await get_effective_tier(user)
 
     try:
@@ -108,7 +112,7 @@ async def list_reports(
             if "system" in r_type or "diagnostic" in r_type or t_code == "system":
                 continue
 
-            if not is_tier_sufficient(tier, r_plan) and user.user_role != "admin":
+            if not is_tier_sufficient(tier, r_plan) and user_role != "admin":
                 continue
 
             filtered_reports.append(r)
