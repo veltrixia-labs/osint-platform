@@ -3,8 +3,8 @@ import logging
 from typing import Dict, Tuple
 from fastapi import HTTPException, Request, Depends
 from api.auth import blacklist_manager
-from api.gating import get_effective_tier, TIER_FREE, TIER_PRO, TIER_ENTERPRISE
-from api.auth import get_current_user_from_access
+from api.gating import get_effective_tier, TIER_GUEST, TIER_FREE, TIER_PRO, TIER_ENTERPRISE
+from api.auth import get_current_user_from_access, get_optional_current_user
 
 logger = logging.getLogger(__name__)
 
