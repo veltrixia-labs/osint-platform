@@ -5,7 +5,7 @@ console.log(`[Antigravity] Mode: ${import.meta.env.MODE}`);
 console.log(`[Antigravity] Build Version: 7.5-FINAL-SYNC`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderMap } from './modules/render/index'
+import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderMap, renderLegal } from './modules/render/index'
 import { login, signup, fetchMe, logout, fetchUsage, fetchReports, fetchReport } from './modules/api'
 import type { UserMe, AnalystProfile, Report } from './modules/api'
 import {
@@ -26,7 +26,7 @@ import {
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 
-export async function renderLogin(message?: string, initialChatId?: string) {
+export async function renderLogin(message?: string, initialEmail?: string) {
     // Stop any active polling
     (window as any).stopPolling?.();
     
@@ -37,13 +37,18 @@ export async function renderLogin(message?: string, initialChatId?: string) {
             <h1>VELTRIXIA LABS</h1>
             <p>Enter your analyst credentials</p>
             ${message ? `<div id="login-message" style="color: #3fb950; margin-bottom: 1rem; font-size: 0.9rem;">${message}</div>` : ''}
-            <input type="text" id="chat-id" placeholder="Telegram Chat ID" required value="${initialChatId || ''}" />
+            <input type="email" id="login-email" placeholder="Email Address" required value="${initialEmail || ''}" />
             <input type="password" id="password" placeholder="Password" required />
             <button id="login-btn">Login</button>
             <div id="login-error" style="color: #ff7b72; margin-top: 1rem; font-size: 0.9rem;"></div>
             <div style="margin-top: 1.5rem; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
                 <span style="opacity: 0.6;">New analyst?</span>
                 <a href="#" id="go-signup" style="color: var(--accent); text-decoration: none; margin-left: 0.5rem; font-weight: 600;">Create Account</a>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.75rem; opacity: 0.4; text-align: center;">
+                <a href="#legal" style="color: inherit; text-decoration: none; margin: 0 5px;">Disclosure</a> |
+                <a href="#legal" style="color: inherit; text-decoration: none; margin: 0 5px;">Terms</a> |
+                <a href="#legal" style="color: inherit; text-decoration: none; margin: 0 5px;">Privacy</a>
             </div>
         </div>
     </div>
@@ -58,12 +63,12 @@ export async function renderLogin(message?: string, initialChatId?: string) {
     });
 
     loginBtn.addEventListener('click', async () => {
-        const chatId = (document.querySelector('#chat-id') as HTMLInputElement).value
+        const email = (document.querySelector('#login-email') as HTMLInputElement).value
         const pwd = (document.querySelector('#password') as HTMLInputElement).value
         const errorDiv = document.querySelector('#login-error')!
         
         try {
-            await login(chatId, pwd)
+            await login(email, pwd)
             initDashboard()
         } catch (e) {
             errorDiv.textContent = "Authentication failed. Please check credentials."
@@ -78,13 +83,19 @@ export async function renderSignup() {
         <div class="login-card">
             <h1>Create Account</h1>
             <p>Join the VELTRIXIA LABS network</p>
-            <input type="text" id="signup-chat-id" placeholder="Choose a Chat ID" required />
+            <input type="email" id="signup-email" placeholder="Email Address" required />
+            <input type="text" id="signup-chat-id" placeholder="Telegram Chat ID (Optional)" />
             <input type="password" id="signup-password" placeholder="Create Password" required />
             <button id="signup-btn" class="u-tier-1">Sign Up</button>
             <div id="signup-error" style="color: #ff7b72; margin-top: 1rem; font-size: 0.9rem;"></div>
             <div style="margin-top: 1.5rem; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
                 <span style="opacity: 0.6;">Already have an account?</span>
                 <a href="#" id="go-login" style="color: var(--accent); text-decoration: none; margin-left: 0.5rem; font-weight: 600;">Back to Login</a>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.75rem; opacity: 0.4; text-align: center;">
+                <a href="#legal" style="color: inherit; text-decoration: none; margin: 0 5px;">Disclosure</a> |
+                <a href="#legal" style="color: inherit; text-decoration: none; margin: 0 5px;">Terms</a> |
+                <a href="#legal" style="color: inherit; text-decoration: none; margin: 0 5px;">Privacy</a>
             </div>
         </div>
     </div>
@@ -99,12 +110,13 @@ export async function renderSignup() {
     });
 
     signupBtn.addEventListener('click', async () => {
+        const email = (document.querySelector('#signup-email') as HTMLInputElement).value
         const chatId = (document.querySelector('#signup-chat-id') as HTMLInputElement).value
         const pwd = (document.querySelector('#signup-password') as HTMLInputElement).value
         const errorDiv = document.querySelector('#signup-error')!
         
-        if (!chatId || !pwd) {
-            errorDiv.textContent = "Please fill in all fields."
+        if (!email || !pwd) {
+            errorDiv.textContent = "Please fill in required fields."
             return;
         }
 
@@ -112,10 +124,10 @@ export async function renderSignup() {
             signupBtn.textContent = 'Creating Account...';
             (signupBtn as HTMLButtonElement).disabled = true;
             
-            await signup(chatId, pwd)
-            renderLogin("Account created successfully! Please log in.", chatId);
+            await signup(email, pwd, chatId)
+            renderLogin("Account created successfully! Please log in.", email);
         } catch (e: any) {
-            errorDiv.textContent = e.message || "Registration failed. Try a different ID.";
+            errorDiv.textContent = e.message || "Registration failed. Try a different email.";
             signupBtn.textContent = 'Sign Up';
             (signupBtn as HTMLButtonElement).disabled = false;
         }
@@ -124,7 +136,7 @@ export async function renderSignup() {
 
 
 
-type TabId = 'feed' | 'plans' | 'reports' | 'map'
+type TabId = 'feed' | 'plans' | 'reports' | 'map' | 'legal'
 
 async function initDashboard() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -135,23 +147,60 @@ async function initDashboard() {
     let user: UserMe | null = null;
     try {
         user = await fetchMe();
+        
+        // [v40] Session Integrity: Clear legacy chat_id sessions if email is missing
+        if (user && !user.email) {
+            console.warn("[Antigravity] Legacy session detected. Performing hard-reset.");
+            logout();
+            return;
+        }
     } catch (e) {
         // Silently suppress 401s for guest mode
         console.log("[Antigravity] Session check: Guest access initialized.");
     }
     
-    // [v38] Full Open Access Implementation: Default to guest if no user found
+    // [v38] Guest Mode Implementation: Define a clear 'guest' tier
     if (!user) {
         user = {
             id: 'guest',
+            email: 'Guest',
             chat_id: 'Guest',
             role: 'anonymous',
-            tier: 'free',
+            tier: 'guest',
             expires_at: null
         };
+        
+        // Security: If Guest tries to access restricted reports via hash, we ALLOW it
+        // and let renderReportDetail handle the preview/paywall state.
+        // This optimizes the Threads/SNS conversion funnel.
+        const currentHash = window.location.hash;
+        if (currentHash.startsWith('#report/')) {
+            console.log("[Antigravity] Social Referral Landing: Initializing Guest Preview.");
+        }
     }
 
     if (user) app.classList.remove('login-page');
+
+    // [v40] Event Delegation for Sidebar Actions
+    app.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        
+        // 1. Sidebar Login (Guest -> Login Page)
+        if (target.id === 'sidebar-login-btn') {
+            e.preventDefault();
+            renderLogin();
+            return;
+        }
+
+        // 2. Sidebar Logout (Member -> Guest Mode)
+        if (target.id === 'sidebar-logout-btn') {
+            e.preventDefault();
+            if (confirm("Sign out of analyst account?")) {
+                logout();
+            }
+            return;
+        }
+    });
 
     if (paymentStatus === 'success' && sessionId && !user) {
         app.innerHTML = `
@@ -288,7 +337,7 @@ async function initDashboard() {
 
         setTimeout(() => {
             // Strict Toggle
-            if (feedContainer) feedContainer.style.display = (tab === 'feed' || tab === 'plans' || tab === 'reports') ? 'block' : 'none';
+            if (feedContainer) feedContainer.style.display = (tab === 'feed' || tab === 'plans' || tab === 'reports' || tab === 'legal') ? 'block' : 'none';
             if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
             if (liveFeed) liveFeed.style.display = (tab === 'feed') ? 'block' : 'none';
 
@@ -296,6 +345,10 @@ async function initDashboard() {
             else if (tab === 'plans') renderPlans();
             else if (tab === 'reports') renderReports();
             else if (tab === 'map') renderMapPage(focusAlertId);
+            else if (tab === 'legal' && feedContainer) {
+                mainTitle.textContent = 'Legal & Compliance';
+                renderLegal(feedContainer);
+            }
 
             // Fade-in
             if (mainContent) mainContent.style.opacity = '1';
@@ -310,7 +363,7 @@ async function initDashboard() {
         const [base, query] = hash.split('?');
         const params = new URLSearchParams(query || '');
         
-        if (base === 'feed' || base === 'map' || base === 'plans' || base === 'reports') {
+        if (base === 'feed' || base === 'map' || base === 'plans' || base === 'reports' || base === 'legal') {
             if (currentTab !== base) {
                 handleTabSwitch(base as TabId, params.get('alert') || undefined, true);
             }

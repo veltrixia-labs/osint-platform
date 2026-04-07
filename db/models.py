@@ -238,7 +238,9 @@ class AlertLog(Base):
 class AnalystProfile(Base):
     __tablename__ = "analyst_profiles"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    telegram_chat_id = Column(String, unique=True, nullable=False)
+    telegram_chat_id = Column(String, unique=True, nullable=True) # Now optional
+    email = Column(String, unique=True, nullable=True)           # New Primary ID
+    is_email_verified = Column(Boolean, default=False)
     hashed_password = Column(String) # For Phase 27 Auth
     user_role = Column(String, default="analyst") # analyst, admin
     subscription_tier = Column(String, default="free") # free, pro, enterprise

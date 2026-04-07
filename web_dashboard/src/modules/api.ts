@@ -19,6 +19,7 @@ export interface AuthResponse {
 
 export interface UserMe {
     id: string;
+    email: string;
     chat_id: string;
     role: string;
     tier: string;
@@ -104,6 +105,7 @@ export interface Report {
 
 export interface AnalystProfile {
     id: string;
+    email: string;
     telegram_chat_id: string;
     user_role: string;
     subscription_tier: string;
@@ -122,25 +124,25 @@ export interface HealthData {
     top_performing_triggers: TriggerStat[];
 }
 
-export async function signup(telegram_chat_id: string, password: string): Promise<void> {
+export async function signup(email: string, password: string, telegram_chat_id?: string): Promise<void> {
     const resp = await fetch(`${API_BASE}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_chat_id, password })
+        body: JSON.stringify({ email, password, telegram_chat_id })
     });
     
     if (resp.status === 400) {
         const err = await resp.json().catch(() => ({}));
-        throw new Error(err.detail || "Username already taken");
+        throw new Error(err.detail || "Email already taken");
     }
     if (!resp.ok) throw new Error("Registration failed");
 }
 
-export async function login(telegram_chat_id: string, password: string): Promise<AuthResponse> {
+export async function login(email: string, password: string): Promise<AuthResponse> {
     const resp = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_chat_id, password })
+        body: JSON.stringify({ email, password })
     });
     
     if (resp.status === 401) throw new Error("Invalid credentials");

@@ -11,6 +11,8 @@ from openai import AsyncOpenAI
 from google import genai
 from google.genai import types
 from config.settings import settings
+import httpx
+
 
 logger = logging.getLogger(__name__)
 
@@ -95,8 +97,10 @@ class CostGuard:
         # Rough estimation (USD per 1M tokens)
         # GPT-4o-mini: ~0.15 prompt / 0.60 completion
         # Gemini 2.0 Flash: ~0.10 prompt / 0.40 completion (simplified)
-        if "openai" in model_type:
+        if "openai" in model_type or "deepseek" in model_type:
             cost = (prompt_tokens * 0.00000015) + (completion_tokens * 0.00000060)
+        elif "ollama" in model_type:
+            cost = 0.0 # Local is free
         else:
             cost = (prompt_tokens * 0.00000010) + (completion_tokens * 0.00000040)
         self.current_usage_usd += cost
@@ -188,16 +192,21 @@ cost_guard = CostGuard(daily_budget_usd=10.0)
 providers: Dict[str, LLMProvider] = {
     "gemini": LLMProvider("gemini", AdaptiveConcurrencyGate(2, 5), CircuitBreaker("Gemini")),
     "openai": LLMProvider("openai", AdaptiveConcurrencyGate(3, 8), CircuitBreaker("OpenAI")),
+    "deepseek": LLMProvider("deepseek", AdaptiveConcurrencyGate(3, 10), CircuitBreaker("DeepSeek")),
+    "ollama": LLMProvider("ollama", AdaptiveConcurrencyGate(1, 2), CircuitBreaker("Ollama")),
 }
 
 model_cache: Dict[str, Any] = {}
 _openai_client: Optional[AsyncOpenAI] = None
 _gemini_client: Optional[genai.Client] = None
+_deepseek_client: Optional[AsyncOpenAI] = None
 
 if settings.openai_api_key:
     _openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
 if settings.gemini_api_key:
     _gemini_client = genai.Client(api_key=settings.gemini_api_key)
+if settings.deepseek_api_key:
+    _deepseek_client = AsyncOpenAI(api_key=settings.deepseek_api_key, base_url="https://api.deepseek.com")
 
 def get_gemini_model(model_name: str, system_prompt: str) -> Dict[str, str]:
     """Thin compatibility wrapper for the new google-genai Client API."""
@@ -232,6 +241,28 @@ async def generate_with_retry(provider_name: str, system_prompt: str, user_promp
                         )
                     )
                     text = response.text
+                elif provider_name == "deepseek":
+                    response = await _deepseek_client.chat.completions.create(
+                        model=model_name,
+                        messages=[{"role":"system","content":system_prompt},{"role":"user","content":user_prompt}],
+                        temperature=0.7
+                    )
+                    text = response.choices[0].message.content
+                    cost_guard.add_cost(len(user_prompt)//4, len(text)//4, "deepseek")
+                elif provider_name == "ollama":
+                    async with httpx.AsyncClient() as client:
+                        response = await client.post(
+                            f"{settings.ollama_base_url}/api/generate",
+                            json={
+                                "model": model_name,
+                                "prompt": f"{system_prompt}\n\n{user_prompt}",
+                                "stream": False,
+                                "options": {"temperature": 0.7}
+                            },
+                            timeout=120.0
+                        )
+                        response.raise_for_status()
+                        text = response.json().get("response", "")
                 else:
                     response = await asyncio.wait_for(
                         _openai_client.chat.completions.create(
@@ -273,7 +304,7 @@ async def generate_batch_analysis(provider_name: str, system_prompt: str, user_p
     """Specific variant for batch processing to ensure failure doesn't block the whole pipeline if one provider fails."""
     return await generate_with_retry(provider_name, system_prompt, user_prompt, model_name)
 
-async def generate_analysis(system_prompt: str, user_prompt: str, preferred_model: str = "gemini", is_batch: bool = False) -> str | List[Dict]:
+async def generate_analysis(system_prompt: str, user_prompt: str, preferred_model: str = "deepseek", is_batch: bool = False) -> str | List[Dict]:
     # Health-based Scoring & Routing
     scored_providers = []
     for name, p in providers.items():
@@ -286,7 +317,13 @@ async def generate_analysis(system_prompt: str, user_prompt: str, preferred_mode
     
     for p_name, score in scored_providers:
         logger.info(f"Routing to {p_name} (Health Score: {score:.3f}, Batch: {is_batch})")
-        int_model = "gemini-2.0-flash" if p_name == "gemini" else "gpt-4o-mini"
+        
+        # Model Selection Mapping
+        if p_name == "gemini": int_model = "gemini-2.0-flash"
+        elif p_name == "openai": int_model = "gpt-4o-mini"
+        elif p_name == "deepseek": int_model = "deepseek-chat"
+        elif p_name == "ollama": int_model = "llama3" # Default local model
+        else: int_model = "gpt-4o-mini"
         
         if is_batch:
             res = await generate_batch_analysis(p_name, system_prompt, user_prompt, int_model)

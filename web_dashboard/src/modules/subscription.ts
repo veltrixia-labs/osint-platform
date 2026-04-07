@@ -21,16 +21,17 @@ const GRACE_PERIOD_DAYS = 3;
 
 /** Mapping internal tier IDs to user-facing display names */
 const PLAN_NAME_MAP: Record<string, string> = {
-    free: 'Free',
+    guest: 'Guest',
+    free: 'Free Member',
     pro: 'Pro',
-    expert: 'Expert',
     experts: 'Expert',
     enterprise: 'Enterprise',
 };
 
 /** "Best For" labels for conversion guidance */
 const TIER_BEST_FOR: Record<string, string> = {
-    free: 'Basic risk monitoring',
+    guest: 'Public risk monitoring (limited)',
+    free: 'Basic analyst access',
     pro: 'Operational risk intelligence',
     experts: 'Strategic risk intelligence',
     enterprise: 'Organizations requiring onboarding & customization',
@@ -244,6 +245,7 @@ function renderUpgradeButton(plan: PlanConfig, currentUser: UserMe): string {
 
 export function renderTierBadge(user: UserMe): string {
     const colors: Record<string, string> = {
+        guest: '#6e7681',
         free: '#8b949e',
         pro: '#58a6ff',
         experts: '#3fb950',

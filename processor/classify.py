@@ -109,8 +109,30 @@ async def batch_classify_llm(items: List[Item]) -> Dict[str, Dict]:
         
         batch_res = await generate_analysis(system_prompt, user_prompt, is_batch=True)
         if batch_res == "__DEGRADED_MODE__" or not isinstance(batch_res, dict):
+            # --- Robust Fallback (Keyword-Based) ---
+            from sqlalchemy import select
+            from db.models import Topic
+            topics_stmt = select(Topic)
+            all_topics = (await db.execute(topics_stmt)).scalars().all()
+            
             for it in batch:
-                results[str(it.id)] = {"category": it.rough_category, "confidence": 0.5, "keep": it.lightweight_score > 2.0, "reason": "Degraded Mode (Lightweight)"}
+                text = (it.title + " " + (it.summary or "")).lower()
+                best_topic = it.rough_category or "none"
+                best_score = it.lightweight_score
+                
+                # Try to improve rough category with specific keywords
+                for t in all_topics:
+                    kws = t.keywords if isinstance(t.keywords, list) else []
+                    if any(kw.lower() in text for kw in kws):
+                        best_topic = t.topic_code
+                        break
+                
+                results[str(it.id)] = {
+                    "category": best_topic,
+                    "confidence": 0.4,
+                    "keep": best_score > 3.0 or best_topic != "none",
+                    "reason": "Rule-Based Keyword Match (Degraded Mode)"
+                }
         else:
             for res_item in batch_res.get("results", []):
                 results[res_item["article_id"]] = res_item

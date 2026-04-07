@@ -411,73 +411,47 @@ async def run_report_generation(
     if not items:
         return "", "failed", "No items found after noise filtering."
 
-    # 2. Rule-Based Intelligence Construction
-    # A. Clustering & Context Extraction
-    clustering_metrics = await cluster_items(db, items)
+    # Attempt LLM Polish (Phase 19.5 - Adaptive Mode)
+    system_prompt = (
+        "You are a Senior Strategic Intelligence Analyst. Write a professional analytical report based on the provided data."
+    )
+    user_context = f"THEMES: {', '.join(themes)}\nCLUSTER DATA:\n{cluster_context_str}"
     
-    # Fetch enriched clusters for context
-    cluster_ids = list(set(it.cluster_id for it in items if it.cluster_id))
-    clusters_stmt = select(EventCluster).where(EventCluster.id.in_(cluster_ids))
-    clusters = (await db.execute(clusters_stmt)).scalars().all()
+    llm_polished = await generate_analysis(system_prompt, user_context, is_batch=False)
     
-    # Format Cluster Context for LLM
-    cluster_context_list = []
-    for c in clusters:
-        m = c.metrics_json or {}
-        s = c.summary_data or {}
-        context = (
-            f"EVENT: {c.representative_title}\n"
-            f"- Scale: {c.article_count} reports from {c.source_count} unique sources\n"
-            f"- Diversity: {m.get('source_diversity', 0) * 100}% agreement across sources\n"
-            f"- Timeline: Seen over {m.get('time_span_hours', 0)} hours\n"
-            f"- Key Entities: {', '.join(s.get('top_geos', []) + s.get('top_orgs', []))}"
+    from render.markdown_builder import build_publish_markdown, build_degraded_markdown
+    
+    if "## Mock Analysis" in llm_polished or llm_polished == "__DEGRADED_MODE__":
+        logger.warning(f"LLM Polish failed for {topic_str} report. Falling back to Data-Driven Memo.")
+        report_md = build_degraded_markdown(
+            title=f"{topic_str.replace('_', ' ').title()} Intelligence Report",
+            items=items,
+            topic_code=topic_str
         )
-        cluster_context_list.append(context)
+        status = "degraded"
+    else:
+        report_md = build_publish_markdown(
+            title=f"{topic_str.replace('_', ' ').title()} Strategic Intelligence",
+            llm_content=llm_polished,
+            items=items
+        )
+        status = "success"
     
-    cluster_context_str = "\n\n".join(cluster_context_list)
+    # 3. Persistence
+    new_report = Report(
+        report_type=report_type,
+        topic_code=topic_str,
+        title=f"{topic_str.replace('_', ' ').title()} Intelligence",
+        content_markdown=report_md,
+        period_start=start_time,
+        period_end=now,
+        source_count=len(items)
+    )
+    db.add(new_report)
+    await db.commit()
+    await db.refresh(new_report)
     
-    avg_score = sum(it.lightweight_score for it in items) / len(items) if items else 0.0
-    
-    # C. Developments (Theme Alignment & Context Slot - Phase 19.4)
-    # 1. Calculate Alignment Score for each cluster against themes
-    # 2. Pick top 4 highly-aligned (Core) + 1 relevant-but-broad (Context)
-    
-    scored_clusters = []
-    theme_str = " ".join(themes).lower()
-    
-    for c in clusters:
-        m = c.metrics_json or {}
-        s = c.summary_data or {}
-        # Calculate Overlap
-        cluster_entities = set([e.lower() for e in s.get("top_geos", []) + s.get("top_orgs", [])])
-        cluster_text = (c.representative_title + " " + (c.summary_data.get("summary", ""))).lower()
-        
-        alignment = 0
-        if any(ent in theme_str for ent in cluster_entities):
-            alignment += 2
-        if any(theme.lower() in cluster_text for theme in themes):
-            alignment += 3
-            
-        # Context Rule: Same Geo/Sector check
-        has_context_link = False
-        if any(geo.lower() in theme_str for geo in s.get("top_geos", [])):
-            has_context_link = True
-        if any(sector.lower() in theme_str for sector in s.get("top_sectors", [])):
-            has_context_link = True
-            
-        scored_clusters.append({
-            "cluster": c,
-            "alignment": alignment,
-            "has_context_link": has_context_link,
-            "score": c.article_count + (alignment * 5)
-        })
-        
-    # Sort by score
-    scored_clusters.sort(key=lambda x: x["score"], reverse=True)
-    
-    # Core Slots (Top 4 Highly Aligned)
-    core_clusters = [x for x in scored_clusters if x["alignment"] >= 2][:4]
-    remaining = [x for x in scored_clusters if x not in core_clusters]
+    return report_md, status, ""
     
     # Context Slot (top 1 from remaining that has context link)
     context_cluster = next((x for x in remaining if x["has_context_link"]), (remaining[0] if remaining else None))

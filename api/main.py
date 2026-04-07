@@ -181,15 +181,7 @@ ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", f"http://localhost:{WEB_PORT}").s
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:8000",
-        "http://localhost:8010",
-        "https://osint-platform.onrender.com",
-        "https://osint-web-1oev.onrender.com",
-        "https://osint-platform-xs7p.onrender.com"
-    ],
+    allow_origins=[origin.strip() for origin in ALLOWED_ORIGINS if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -209,21 +201,21 @@ app.include_router(analytics_router, prefix="/api")
 
 @app.post("/api/auth/login")
 async def login(response: Response, request: Request, data: dict, db: AsyncSession = Depends(get_db)):
-    chat_id = data.get("telegram_chat_id")
+    email = data.get("email")
     password = data.get("password")
 
-    logger.info(f"Login attempt for chat_id: {chat_id}")
-    stmt = select(AnalystProfile).where(AnalystProfile.telegram_chat_id == chat_id)
+    logger.info(f"Login attempt for email: {email}")
+    stmt = select(AnalystProfile).where(AnalystProfile.email == email)
     user = (await db.execute(stmt)).scalar_one_or_none()
 
     if not user:
-        logger.warning(f"Login failed: User not found for chat_id: {chat_id}")
-        await SecurityLogger.log_event(db, "login_failed", details={"chat_id": chat_id, "reason": "user_not_found"}, client_ip=request.client.host)
+        logger.warning(f"Login failed: User not found for email: {email}")
+        await SecurityLogger.log_event(db, "login_failed", details={"email": email, "reason": "user_not_found"}, client_ip=request.client.host)
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     if not verify_password(password, user.hashed_password):
-        logger.warning(f"Login failed: Password mismatch for chat_id: {chat_id}")
-        await SecurityLogger.log_event(db, "login_failed", details={"chat_id": chat_id, "reason": "password_mismatch"}, client_ip=request.client.host)
+        logger.warning(f"Login failed: Password mismatch for email: {email}")
+        await SecurityLogger.log_event(db, "login_failed", details={"email": email, "reason": "password_mismatch"}, client_ip=request.client.host)
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     session_id = await session_manager.create_session(db, user.id)
@@ -247,23 +239,26 @@ async def login(response: Response, request: Request, data: dict, db: AsyncSessi
 
 
 class SignupData(BaseModel):
-    telegram_chat_id: str
+    email: str
     password: str
+    telegram_chat_id: Optional[str] = None
 
 @app.post("/api/auth/signup", status_code=status.HTTP_201_CREATED)
 async def signup(request: Request, data: SignupData, db: AsyncSession = Depends(get_db)):
-    chat_id = data.telegram_chat_id
+    email = data.email
     password = data.password
+    chat_id = data.telegram_chat_id
 
-    stmt = select(AnalystProfile).where(AnalystProfile.telegram_chat_id == chat_id)
+    stmt = select(AnalystProfile).where(AnalystProfile.email == email)
     existing_user = (await db.execute(stmt)).scalar_one_or_none()
 
     if existing_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_pw = get_password_hash(password)
     new_user = AnalystProfile(
         id=uuid.uuid4(),
+        email=email,
         telegram_chat_id=chat_id,
         hashed_password=hashed_pw,
         user_role="analyst",
@@ -277,11 +272,11 @@ async def signup(request: Request, data: SignupData, db: AsyncSession = Depends(
         await db.commit()
     except Exception as e:
         await db.rollback()
-        logger.error(f"Signup failed for {chat_id}: {e}", exc_info=True)
+        logger.error(f"Signup failed for {email}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
-    await SecurityLogger.log_event(db, "signup_success", user_id=new_user.id, details={"chat_id": chat_id}, client_ip=request.client.host)
-    return {"status": "success", "message": "Account created successfully", "chat_id": chat_id}
+    await SecurityLogger.log_event(db, "signup_success", user_id=new_user.id, details={"email": email}, client_ip=request.client.host)
+    return {"status": "success", "message": "Account created successfully", "email": email}
 
 
 @app.post("/api/auth/refresh")
@@ -301,6 +296,7 @@ async def get_me(current_user_data: tuple = Depends(get_current_user_from_access
     user, _, _ = current_user_data
     return {
         "id": str(user.id),
+        "email": user.email,
         "chat_id": user.telegram_chat_id,
         "role": user.user_role,
         "tier": user.subscription_tier,

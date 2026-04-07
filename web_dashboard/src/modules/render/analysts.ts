@@ -39,17 +39,25 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
             ` : '')}
         </div>
 
-        <div class="sidebar-footer-nav" style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--border);">
-            ${isGuest ? '' : `
-                <div class="sidebar-analyst-id" style="font-size: 0.65rem; opacity: 0.4; text-align: center; margin-bottom: 0.5rem;">
-                    Analyst: ${a.id.slice(0, 8)}...
-                </div>
-            `}
+        <div class="sidebar-footer-nav" style="margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+            <div class="analyst-profile-section" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-size: 0.7rem; color: #8b949e; margin-bottom: 0.5rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Analyst Profile</div>
+                ${isGuest ? `
+                    <div style="margin-bottom: 0.75rem; font-size: 0.85rem; color: #c9d1d9;">Mode: <span style="color: var(--accent);">Guest Analyst</span></div>
+                    <button id="sidebar-login-btn" style="width: 100%; padding: 8px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem;">Sign In / Join</button>
+                ` : `
+                    <div style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #c9d1d9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${a.email}">
+                        ${a.email}
+                    </div>
+                    <div style="margin-bottom: 0.75rem; font-size: 0.7rem; opacity: 0.5;">ID: ${a.id.slice(0, 8)}...</div>
+                    <button id="sidebar-logout-btn" style="width: 100%; padding: 8px; background: rgba(248,81,73,0.15); color: #ff7b72; border: 1px solid rgba(248,81,73,0.4); border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">Sign Out</button>
+                `}
+            </div>
 
             <div class="legal-links" style="font-size: 0.65rem; opacity: 0.4; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
-                <a href="disclosure.html" target="_blank" style="color: inherit; text-decoration: none;">Disclosure</a>
-                <a href="terms.html" target="_blank" style="color: inherit; text-decoration: none;">Terms</a>
-                <a href="privacy.html" target="_blank" style="color: inherit; text-decoration: none;">Privacy</a>
+                <a href="#legal" style="color: inherit; text-decoration: none;">Disclosure</a>
+                <a href="#legal" style="color: inherit; text-decoration: none;">Terms</a>
+                <a href="#legal" style="color: inherit; text-decoration: none;">Privacy</a>
             </div>
             <div style="font-size: 0.65rem; opacity: 0.8; text-align: center; margin-top: 1rem; color: var(--accent);">
                 API Version: 7.5-FINAL-SYNC | <span id="data-pulse" style="color: #3fb950;">📡 Connected</span>

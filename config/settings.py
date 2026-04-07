@@ -1,6 +1,10 @@
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
+from dotenv import load_dotenv
+
+# Force-load .env at the very beginning
+load_dotenv(override=True)
 
 class Settings(BaseSettings):
     database_url: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///osint_platform.db")
@@ -16,6 +20,8 @@ class Settings(BaseSettings):
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
+    deepseek_api_key: str = os.getenv("DEEPSEEK_API_KEY", "")
+    ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     
     # Stripe Configuration
     stripe_secret_key: str = os.getenv("STRIPE_SECRET_KEY", "")
@@ -52,7 +58,12 @@ class Settings(BaseSettings):
         if not self.stripe_price_id_experts:
             raise RuntimeError("STRIPE_PRICE_ID_EXPERTS is required for Experts subscriptions.")
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding='utf-8', extra='ignore')
+    model_config = SettingsConfigDict(
+        env_file=".env", 
+        env_file_encoding='utf-8', 
+        extra='ignore',
+        case_sensitive=False
+    )
 
 settings = Settings()
 # Note: In production, we log missing keys but don't crash on startup 

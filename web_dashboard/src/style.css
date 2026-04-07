@@ -2774,3 +2774,105 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     letter-spacing: 1px;
 }
 
+/* ──────────────────────────────────────────────────────────────────────────────
+   Veltrixia Legal System (vlt-legal-)
+   Unified Disclosure, Terms, and Privacy Styling
+   ────────────────────────────────────────────────────────────────────────────── */
+
+.vlt-legal-tabs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-m);
+    padding-bottom: var(--space-l);
+}
+
+.vlt-legal-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: var(--space-m);
+    transition: var(--transition-standard);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.vlt-legal-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-premium);
+}
+
+.vlt-legal-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-s);
+    margin-bottom: var(--space-m);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: var(--space-s);
+}
+
+.vlt-legal-icon {
+    font-size: 1.5rem;
+    color: var(--accent);
+}
+
+.vlt-legal-title {
+    font-weight: 800;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.9rem;
+}
+
+.vlt-legal-content {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    flex: 1;
+}
+
+.vlt-legal-section {
+    margin-bottom: 1.5rem;
+}
+
+.vlt-legal-section h4 {
+    color: #c9d1d9;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.vlt-legal-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.vlt-legal-item .label {
+    opacity: 0.6;
+}
+
+.vlt-legal-item .value {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.vlt-legal-scrollbox {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 0.8rem;
+    scroll-behavior: smooth;
+}
+
+.vlt-legal-scrollbox::-webkit-scrollbar {
+    width: 4px;
+}
+
+.vlt-legal-scrollbox::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
