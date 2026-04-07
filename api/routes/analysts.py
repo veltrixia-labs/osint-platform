@@ -16,6 +16,7 @@ from api.gating import (
     get_effective_tier, get_watchlist_limit, can_add_watchlist_keywords,
     requires_tier, TIER_FREE
 )
+from api.rate_limit import rate_limit
 from fastapi import APIRouter
 import logging
 
