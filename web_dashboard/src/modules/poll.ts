@@ -46,18 +46,22 @@ export class DashboardState {
                 apiClient.get(`/analysts`)
             ]);
 
-            const [alerts, health, analysts] = await Promise.all([
+            const [alertsRes, health, analystsRes] = await Promise.all([
                 alertsResp.json(),
                 healthResp.json(),
                 analystsResp.json()
             ]);
 
+            // Robust validation to prevent crash on error objects (e.g. 401 Unauthorized)
+            const alerts = Array.isArray(alertsRes) ? alertsRes : [];
+            const analysts = Array.isArray(analystsRes) ? analystsRes : [];
+
             const unique = new Map();
-            (alerts || []).forEach((a: Alert) => {
+            alerts.forEach((a: Alert) => {
                 if (!unique.has(a.id)) unique.set(a.id, a);
             });
             this.alerts = Array.from(unique.values());
-            this.health = health;
+            this.health = health && health.status ? health : null;
             this.analysts = analysts;
             this.notify();
         } catch (err) {

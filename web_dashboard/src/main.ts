@@ -186,7 +186,7 @@ async function initDashboard() {
         const target = e.target as HTMLElement;
         
         // 1. Sidebar Login (Guest -> Login Page)
-        if (target.id === 'sidebar-login-btn') {
+        if (target.id === 'sidebar-login-btn' || target.classList.contains('trigger-login-btn')) {
             e.preventDefault();
             renderLogin();
             return;
@@ -690,11 +690,8 @@ async function initDashboard() {
         try {
             const report = await fetchReport(id);
 
-            // Note: We always render the Detail but the detail module handles the paywall masking internally
-            // if 'accessible' or report metadata indicates locking.
-            renderReportDetail(report, user!.tier, alertsContainer, () => handleTabSwitch(origin), (action) => {
-                if (action === 'upgrade') handleTabSwitch('plans');
-            });
+            // [v50] Detail module handles paywall masking and auth-triggers internally.
+            renderReportDetail(report, user!.tier, alertsContainer, () => handleTabSwitch(origin));
         } catch (e) { 
             console.error("Report load failed:", e);
             alertsContainer.innerHTML = '<div class="u-p-2 u-text-center">Decryption failed or unauthorized access.</div>'; 
@@ -806,4 +803,15 @@ const startHeartbeat = () => {
 
 initDashboard().then(() => {
     startHeartbeat();
+});
+// [v50] Global Conversion Funnel Listeners
+window.addEventListener('trigger-login', () => {
+    // Navigate to login view
+    renderLogin();
+});
+
+window.addEventListener('show-locked-topic', (e: any) => {
+    const topicKey = e.detail?.topicKey;
+    console.log(`[Antigravity] Locked Topic Intercept: ${topicKey}`);
+    renderLogin(); // Fallback to login for now, can be sophisticated Plans page later
 });

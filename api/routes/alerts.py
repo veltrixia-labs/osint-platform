@@ -30,18 +30,17 @@ async def get_alerts(
     topic: Optional[str] = None,
     limit: int = 20,
     since: Optional[datetime] = None,
-    current_user: tuple = Depends(rate_limit("/api/alerts")),
+    current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/alerts")),
     db: AsyncSession = Depends(get_db)
 ):
     user = current_user
     tier = await get_effective_tier(user)
 
     # ── Topic gating ──────────────────────────────────────────────────────
-    if topic and not is_topic_allowed(tier, topic):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Topic '{topic}' requires a higher subscription tier. "
-        )
+    # ── Topic gating (Soft) ───────────────────────────────────────────────
+    # We no longer block access with 403. Instead, the loop below will 
+    # 'mask' the content if the topic isn't allowed for the user's tier.
+    is_requested_topic_allowed = is_topic_allowed(tier, topic) if topic else True
 
     # Caching Logic
     cache_key = f"alerts:{severity}:{suppressed}:{analyst_id}:{topic}:{limit}:{since}"
@@ -102,20 +101,37 @@ async def get_alerts(
         for a in alerts
     ]
 
+    # Post-process for Mosaic/Masking
+    final_alerts = []
+    for a in formatted:
+        is_allowed = is_topic_allowed(tier, a["topic"])
+        if is_allowed:
+            a["is_locked"] = False
+            final_alerts.append(a)
+        else:
+            # Mask sensitive forensic data
+            a["is_locked"] = True
+            a["target_label"] = "🔒 [RESTRICTED]"
+            a["description"] = "Forensic intelligence for this event is restricted to Pro and Expert tiers. " \
+                              "Upgrade to unlock full-spectrum risk data and email notifications."
+            a["intensity"] = 0.0 # Clear intensity for locked
+            a["cascading_impacts"] = [] # Clear impacts for locked
+            final_alerts.append(a)
+
     # Store in Cache (60s TTL)
     if await blacklist_manager._is_redis_available():
         try:
-            await blacklist_manager.redis_client.setex(cache_key, 60, json.dumps(formatted))
+            await blacklist_manager.redis_client.setex(cache_key, 60, json.dumps(final_alerts))
         except:
             pass
 
-    return formatted
+    return final_alerts
 
 
 @router.get("/alerts/live")
 async def get_live_alerts(
     limit: int = 15,
-    current_user: tuple = Depends(rate_limit("/api/alerts/live")),
+    current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/alerts/live")),
     db: AsyncSession = Depends(get_db)
 ):
     """Provides a high-speed stream of high-fidelity signals for the dashboard pulse."""
@@ -126,7 +142,7 @@ async def get_live_alerts(
     user = current_user
     tier = await get_effective_tier(user)
 
-    return [
+    live_data = [
         {
             "id": str(a.id),
             "target_label": a.target_label,
@@ -143,6 +159,21 @@ async def get_live_alerts(
         }
         for a in alerts
     ]
+    
+    # Applied Mosaic to live stream too
+    final_live = []
+    for a in live_data:
+        is_allowed = is_topic_allowed(tier, a["topic"])
+        if is_allowed:
+            a["is_locked"] = False
+        else:
+            a["is_locked"] = True
+            a["target_label"] = "🔒 [RESTRICTED]"
+            a["description"] = "Detailed tactical signal is restricted."
+            a["cascading_impacts"] = []
+        final_live.append(a)
+
+    return final_live
 
 
 @router.post("/alerts/{alert_id}/feedback")

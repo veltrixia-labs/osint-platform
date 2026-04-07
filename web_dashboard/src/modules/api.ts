@@ -76,6 +76,7 @@ export interface Alert {
     location_lat?: number;
     location_lng?: number;
     cascading_impacts?: StakeholderImpact[];
+    is_locked?: boolean;
     delivery?: {
         analyst_id: string;
         relevance_score: number;

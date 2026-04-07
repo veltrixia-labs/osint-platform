@@ -31,16 +31,16 @@ TIER_GUEST = "guest"
 
 PLAN_LIMITS: Dict[str, Dict[str, Any]] = {
     TIER_GUEST: {
-        "alerts_per_day": 0,
+        "alerts_per_day": 3,
         "watchlist_keywords": 0,
         "allowed_topics": ["global"],
         "reports": [],
     },
     PlanTier.FREE.value: {
-        "alerts_per_day": 5,
-        "watchlist_keywords": 3,
-        "allowed_topics": ["global", "energy_resource_risk", "global_market_intelligence"], # Expanded for Free
-        "reports": [ReportType.DAILY.value],
+        "alerts_per_day": 3,
+        "watchlist_keywords": 0,
+        "allowed_topics": ["global"],
+        "reports": [],
     },
     PlanTier.PRO.value: {
         "alerts_per_day": 100,
@@ -167,12 +167,16 @@ def requires_tier(min_tier: str):
         user = current_user[0] if current_user else None
         effective = await get_effective_tier(user)
 
-        # 1. Check for Guest (401)
+        # 1. Check for Guest Access
+        # Allow Guest if the required tier is FREE (Public access)
         if effective == TIER_GUEST:
-            raise HTTPException(
-                status_code=401,
-                detail="Authentication required to access this feature."
-            )
+            if min_tier == PlanTier.FREE.value:
+                return None # Valid guest access
+            else:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Account required for this intelligence domain. Please sign in or upgrade."
+                )
 
         # 2. Check for Tier Sufficiency (403)
         try:

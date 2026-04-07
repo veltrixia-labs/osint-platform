@@ -5,7 +5,7 @@ import { sanitizeMarkdownIntensities, simpleMarkdown } from './utils';
  * Renders the full Situational Report detail view.
  * Handles section extraction and role-based masking (paywalling).
  */
-export function renderReportDetail(report: any, userTier: string, container: HTMLElement, onBack?: () => void, onActionRequested?: (actionType: string) => void) {
+export function renderReportDetail(report: any, userTier: string, container: HTMLElement, onBack?: () => void) {
     const dateStr = report.created_at || "";
     const cleanDate = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
     const date = new Date(cleanDate).toLocaleDateString();
@@ -34,7 +34,6 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
     
     // Determine required plan for display
     const planReq = report.plan_required || REPORT_TYPE_MIN_TIER[rtNorm] || 'free';
-    const planDisplay = planReq.charAt(0).toUpperCase() + planReq.slice(1);
 
     let md = isPreview ? (report.content_preview || "") : (report.content_markdown || "");
     let evidenceData: any[] = [];
@@ -218,26 +217,15 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                 </div>
 
                 ${isPreview ? `
-                    <div class="paywall-overlay-v2">
-                        <div class="nexus-preview">
-                            <div class="ghost-node" style="top:20%; left:30%;">?</div>
-                            <div class="ghost-node" style="top:60%; left:70%;">?</div>
-                            <div class="ghost-node" style="top:40%; left:50%; font-size:3rem; opacity:0.5;">🔒</div>
-                            <div class="ghost-node" style="top:10%; left:80%;">?</div>
-                            <div class="ghost-node" style="top:80%; left:20%;">?</div>
-                            
-                            <div style="position:absolute; bottom:1rem; width:100%; text-align:center; color:var(--accent); font-size:0.8rem; font-weight:600; letter-spacing:0.1em; text-shadow:0 0 10px rgba(0,0,0,0.5);">
-                                NEXUS CORRELATION GRAPH (ENCRYPTED PREVIEW)
-                            </div>
+                    <div class="vlt-mosaic-mask" style="border-radius: 12px; margin-top: 1rem;">
+                        <div class="vlt-lock-icon">🔒</div>
+                        <div class="vlt-gating-title">Full Investigation Restricted</div>
+                        <div class="vlt-gating-text" style="margin-bottom: 1.5rem;">
+                            Access the complete multi-dimensional analysis, entity relationship logs, and <span style="color:#58a6ff; font-weight:600;">Direct Professional Delivery</span>.
                         </div>
 
-                        <h2 style="color: #c9d1d9; margin-top: 1rem;">Unlock Full Investigation</h2>
-                        <p style="color: #8b949e; max-width: 500px; margin: 0 auto 1.5rem;">
-                            Access the complete multi-dimensional analysis, including entity relationship logs and risk propagation forecasts.
-                        </p>
-
-                        <div style="max-width: 450px; margin: 0 auto;">
-                            <table class="comparison-table-mini">
+                        <div style="max-width: 450px; margin: 0 auto; width: 100%;">
+                            <table class="comparison-table-mini" style="margin-bottom: 1.5rem;">
                                 <tr>
                                     <td>Thematic Coverage</td>
                                     <td style="opacity:0.6;">Regional</td>
@@ -256,8 +244,8 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
                             </table>
                         </div>
 
-                        <button id="cta-main-btn" class="btn-primary u-w-full u-tier-1" style="height: 54px; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 20px var(--accent-soft);">
-                            Upgrade to ${planDisplay} & Unlock
+                        <button class="vlt-mosaic-cta trigger-login-btn" style="width: 100%; max-width: 320px; justify-content: center; height: 50px;">
+                            <span>Sign Up to Unlock Full Intelligence</span>
                         </button>
                     </div>
                 ` : ''}
@@ -295,9 +283,11 @@ export function renderReportDetail(report: any, userTier: string, container: HTM
     }
 
     if (isPreview) {
-        container.querySelector('#cta-main-btn')?.addEventListener('click', () => {
-            if (onActionRequested) onActionRequested('upgrade');
-            else window.location.reload();
+        container.querySelectorAll('.trigger-login-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent('trigger-login'));
+            });
         });
     }
 }

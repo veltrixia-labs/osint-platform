@@ -2876,3 +2876,83 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     border-radius: 2px;
 }
 
+/* ── Mosaic & Gating UI (vlt-v50) ────────────────────────────────────────── */
+
+.vlt-mosaic-container {
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+}
+
+.vlt-mosaic-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    background: rgba(13, 17, 23, 0.4);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    border-radius: inherit;
+    border: 1px solid rgba(88, 166, 255, 0.1);
+}
+
+.vlt-mosaic-cta {
+    background: var(--accent);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: var(--font-m);
+    box-shadow: 0 4px 15px rgba(88, 166, 255, 0.3);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vlt-mosaic-cta:hover {
+    transform: translateY(-2px);
+    background: #58a6ff;
+}
+
+.vlt-blur-sm {
+    filter: blur(4px);
+    pointer-events: none;
+    user-select: none;
+}
+
+.vlt-blur-lg {
+    filter: blur(10px);
+    pointer-events: none;
+    user-select: none;
+}
+
+.vlt-lock-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 0 10px var(--accent));
+}
+
+.vlt-gating-title {
+    font-weight: 700;
+    color: #c9d1d9;
+    margin-bottom: 0.5rem;
+}
+
+.vlt-gating-text {
+    font-size: var(--font-s);
+    color: #8b949e;
+    max-width: 280px;
+}
+

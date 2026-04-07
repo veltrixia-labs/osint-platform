@@ -44,7 +44,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
                 <div style="font-size: 0.7rem; color: #8b949e; margin-bottom: 0.5rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Analyst Profile</div>
                 ${isGuest ? `
                     <div style="margin-bottom: 0.75rem; font-size: 0.85rem; color: #c9d1d9;">Mode: <span style="color: var(--accent);">Guest Analyst</span></div>
-                    <button id="sidebar-login-btn" style="width: 100%; padding: 8px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem;">Sign In / Join</button>
+                    <button class="trigger-login-btn" style="width: 100%; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(88,166,255,0.2);">Enable Email Alerts</button>
                 ` : `
                     <div style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #c9d1d9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${a.email}">
                         ${a.email}
