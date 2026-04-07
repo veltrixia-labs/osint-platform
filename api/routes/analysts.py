@@ -16,6 +16,11 @@ from api.gating import (
     get_effective_tier, get_watchlist_limit, can_add_watchlist_keywords,
     requires_tier, TIER_FREE
 )
+from fastapi import APIRouter
+import logging
+
+router = APIRouter(tags=["analysts"])
+logger = logging.getLogger(__name__)
 
 @router.get("/analysts")
 async def get_analysts(
