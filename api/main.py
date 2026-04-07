@@ -70,8 +70,12 @@ def check_frontend_freshness():
                 logger.warning(" [WARNING] Frontend assets are STALE. Src was modified after last Dist build.")
                 logger.warning(" [ACTION REQUIRED] Run 'python scripts/setup_dev_env.py' to rebuild UI.")
         elif os.path.exists(src_path) and not os.path.exists(dist_path):
-            logger.warning(" [WARNING] Frontend 'dist' folder is MISSING. API cannot serve UI.")
-            logger.warning(" [ACTION REQUIRED] Run 'python scripts/setup_dev_env.py' to build UI.")
+            # [v50] Suppress "ACTION REQUIRED" on Render Backend service
+            if not os.getenv("RENDER"):
+                logger.warning(" [WARNING] Frontend 'dist' folder is MISSING. API cannot serve UI.")
+                logger.warning(" [ACTION REQUIRED] Run 'python scripts/setup_dev_env.py' to build UI.")
+            else:
+                logger.info("[Antigravity] Frontend 'dist' folder missing (Expected on Render Backend-only service).")
     except Exception as e:
         logger.error(f"Error checking frontend freshness: {e}")
 
