@@ -176,12 +176,24 @@ async def get_reports_sample(db: AsyncSession = Depends(get_db)):
 # Config
 API_PORT = int(os.getenv("PORT", os.getenv("API_PORT", 8000)))
 WEB_PORT = int(os.getenv("WEB_PORT", 5173))
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", f"http://localhost:{WEB_PORT}").split(",")
+
+# Dynamic Whitelist + Production Authority
+RAW_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",")
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://veltrixia.net",
+    "https://www.veltrixia.net"
+]
+for r in RAW_ORIGINS:
+    cleaned = r.strip().rstrip("/")
+    if cleaned and cleaned not in ALLOWED_ORIGINS:
+        ALLOWED_ORIGINS.append(cleaned)
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in ALLOWED_ORIGINS if origin.strip()],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
