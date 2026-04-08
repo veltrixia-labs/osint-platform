@@ -88,7 +88,7 @@ async def run_threads_publisher(db: AsyncSession):
             report = (await db.execute(select(Report).where(Report.id == post.report_id))).scalar_one_or_none()
             # 2. Skip Substack live-check (Phase 34 Decoupling)
             # The internal platform is live as soon as the report exists.
-            target_url = f"{os.getenv('PLATFORM_BASE_URL', 'https://osint-web-1oev.onrender.com')}/?report_id={report.id}"
+            target_url = f"{os.getenv('DOMAIN_URL', 'https://veltrixia.net')}/?report_id={report.id}"
             logger.info(f"Target Platform URL: {target_url}")
                 
             # 3. If live, reconstruct the teaser file path

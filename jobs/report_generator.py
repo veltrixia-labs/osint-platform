@@ -18,6 +18,7 @@ TREND_LOOKBACK_DAYS = 7
 from processor.location_resolver import LocationResolver
 
 resolver = LocationResolver()
+from integrations.threads_client import ThreadsClient
 logger = logging.getLogger(__name__)
 
 from render.markdown_builder import build_publish_markdown, build_teaser_markdown, build_degraded_markdown
@@ -502,7 +503,7 @@ async def run_report_generation(
     await db.refresh(new_report)
 
     # 6. Threads Teaser
-    platform_base = os.getenv("PLATFORM_BASE_URL", "https://veltrixia.net")
+    platform_base = os.getenv("DOMAIN_URL", os.getenv("PLATFORM_BASE_URL", "https://veltrixia.net"))
     platform_url = f"{platform_base}/?report_id={new_report.id}"
     top_event = items[0].title if items else "No significant developments identified."
     
