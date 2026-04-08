@@ -487,7 +487,7 @@ async def run_report_generation(
     # Create Report Record
     new_report = Report(
         report_type=current_type,
-        topic_code=effective_topic,
+        topic_code=effective_topic or "global",
         title=derived_title,
         teaser_md=teaser_md,
         content_markdown=final_content,

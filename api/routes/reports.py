@@ -92,7 +92,12 @@ async def list_reports(
         )
 
         if topic:
-            stmt = stmt.where(Report.topic_code == topic)
+            if topic.lower() == "global":
+                # Match both "global" and NULL for the main briefing
+                from sqlalchemy import or_
+                stmt = stmt.where(or_(Report.topic_code == "global", Report.topic_code.is_(None)))
+            else:
+                stmt = stmt.where(Report.topic_code == topic)
 
         stmt = stmt.order_by(Report.created_at.desc()).limit(limit * 2)
         result = await db.execute(stmt)

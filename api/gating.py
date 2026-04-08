@@ -33,26 +33,26 @@ PLAN_LIMITS: Dict[str, Dict[str, Any]] = {
     TIER_GUEST: {
         "alerts_per_day": 3,
         "watchlist_keywords": 0,
-        "allowed_topics": ["global"],
-        "reports": [],
+        "allowed_topics": "all",
+        "reports": "all",
     },
     PlanTier.FREE.value: {
         "alerts_per_day": 3,
         "watchlist_keywords": 0,
-        "allowed_topics": ["global"],
-        "reports": [],
+        "allowed_topics": "all",
+        "reports": "all",
     },
     PlanTier.PRO.value: {
         "alerts_per_day": 100,
         "watchlist_keywords": 20,
         "allowed_topics": "all",
-        "reports": [ReportType.DAILY.value, ReportType.WEEKLY.value],
+        "reports": "all",
     },
     PlanTier.EXPERTS.value: {
         "alerts_per_day": "unlimited",
         "watchlist_keywords": 100,
         "allowed_topics": "all",
-        "reports": "all",  # Includes Monthly
+        "reports": "all",
     },
     PlanTier.ENTERPRISE.value: {
         "alerts_per_day": "unlimited",
@@ -113,35 +113,23 @@ def get_alert_limit(tier: str) -> Union[int, str]:
 
 
 def is_topic_allowed(tier: str, topic_code: str) -> bool:
-    """Return True if *topic_code* is accessible under *tier*."""
-    allowed = get_plan_limits(tier)["allowed_topics"]
-    if allowed == "all":
-        return True
-    return topic_code in allowed
+    """TEMPORARY: Returns True for all topics (De-gating phase)."""
+    return True
 
 
 def get_allowed_topics(tier: str) -> List[str]:
-    """Return the list of topic codes the tier can access."""
-    allowed = get_plan_limits(tier)["allowed_topics"]
-    if allowed == "all":
-        return list(ALL_TOPIC_CODES)
-    return list(allowed)
+    """Return the list of all topic codes (De-gating phase)."""
+    return list(ALL_TOPIC_CODES)
 
 
 def get_restricted_topics(tier: str) -> List[str]:
-    """Return topic codes that the tier CANNOT access."""
-    allowed = get_plan_limits(tier)["allowed_topics"]
-    if allowed == "all":
-        return []
-    return [t for t in ALL_TOPIC_CODES if t not in allowed]
+    """Return an empty list (De-gating phase)."""
+    return []
 
 
 def can_access_report_type(tier: str, report_type: str) -> bool:
-    """Return True if *report_type* is available under *tier*."""
-    reports = get_plan_limits(tier)["reports"]
-    if reports == "all":
-        return True
-    return report_type in reports
+    """TEMPORARY: Returns True for all report types (De-gating phase)."""
+    return True
 
 
 def can_add_watchlist_keywords(tier: str, new_total: int) -> bool:
