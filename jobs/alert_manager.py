@@ -21,12 +21,12 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 ALERT_ENABLED = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
 ALERT_COOLDOWN_HOURS = 12
 
-# Severity Thresholds (Phase 22)
+# Severity Thresholds (Phase 22 - Calibrated for Restoration)
 # Evaluation Priority: Critical > Elevated > Watch
 SEVERITY_CONFIG = {
-    "critical": {"min_intensity": 8.5, "min_spike": 4.0, "min_domains": 8},
-    "elevated": {"min_intensity": 7.0, "min_spike": 3.0, "min_domains": 5},
-    "watch":    {"min_intensity": 5.5, "min_spike": 0.0, "min_domains": 3}
+    "critical": {"min_intensity": 8.0, "min_spike": 4.0, "min_domains": 8},
+    "elevated": {"min_intensity": 6.0, "min_spike": 3.0, "min_domains": 5},
+    "watch":    {"min_intensity": 3.0, "min_spike": 0.0, "min_domains": 2} # Relaxed from 5.5/3
 }
 
 class AlertManager:
@@ -36,9 +36,21 @@ class AlertManager:
         # Phase 24: We now proceed with scoring and logging even if Telegram is disabled
         # Original: if not ALERT_ENABLED: return
 
+        ALLOWED_TYPES = ["risk_pattern", "risk_acceleration", "entity_heat", "sector_surge", "sustained_event"]
+
         for sig in new_signals:
-            if sig.trend_type != "risk_pattern":
+            if sig.trend_type not in ALLOWED_TYPES:
                 continue
+
+            # Map the signal's trend_type to an appropriate display trigger_type
+            trigger_type_map = {
+                "risk_pattern": "pattern_risk",
+                "risk_acceleration": "acceleration",
+                "entity_heat": "entity_surge",
+                "sector_surge": "sector_surge",
+                "sustained_event": "event_continuation"
+            }
+            display_trigger_type = trigger_type_map.get(sig.trend_type, "pattern_risk")
 
             # 1. Gather Metrics for Severity
             domain_count, evidence_list = await cls._get_evidence_metrics(db, sig)
@@ -58,12 +70,12 @@ class AlertManager:
 
             # 3. Escalation-Aware Deduplication (Composite Key)
             # Same target_label + topic + trigger_type + 12h cooldown
-            if await cls._is_suppressed(db, sig.target_label, sig.topic, "pattern_risk", severity):
+            if await cls._is_suppressed(db, sig.target_label, sig.topic, display_trigger_type, severity):
                 continue
 
             # 4. Intelligence Scoring (Phase 24)
             from jobs.alert_scoring import calculate_alert_score
-            intel_score, breakdown = await calculate_alert_score(db, sig.intensity_score, spike_delta, domain_count, "pattern_risk", sig.target_label)
+            intel_score, breakdown = await calculate_alert_score(db, sig.intensity_score, spike_delta, domain_count, display_trigger_type, sig.target_label)
             
             # 5. Personalization & Multi-Analyst Routing (Phase 25)
             from jobs.personalization_service import get_target_analysts
@@ -89,7 +101,7 @@ class AlertManager:
             alert_log = AlertLog(
                 target_label=sig.target_label,
                 topic=sig.topic,
-                trigger_type="pattern_risk",
+                trigger_type=display_trigger_type,
                 severity=severity,
                 intensity=sig.intensity_score,
                 intelligence_score=intel_score,
@@ -175,14 +187,33 @@ class AlertManager:
     async def _get_evidence_metrics(cls, db, sig: TrendSignal) -> Tuple[int, List[Dict[str, str]]]:
         """Counts unique media domains and returns list of source metadata with fallback matching."""
         titles = sig.metrics_json.get("supporting_events", [])
-        if not titles: 
+        cluster_id = sig.metrics_json.get("cluster_id")
+        
+        if not titles and not cluster_id: 
             return 0, []
         
-        # 1. Exact Match Strategy
-        stmt = select(Item).where(Item.title.in_(titles))
-        items = (await db.execute(stmt)).scalars().all()
+        # 1. Cluster-ID Strategy (Most Reliable) - New for Restoration
+        items = []
+        if cluster_id:
+            try:
+                from db.models import EventCluster
+                # Find items associated with this cluster
+                # Assuming Cluster -> Item relationship exists or items have cluster_id
+                # (Checking models.py, Item has cluster_id)
+                import uuid
+                stmt = select(Item).where(Item.cluster_id == uuid.UUID(cluster_id))
+                items = (await db.execute(stmt)).scalars().all()
+                if items:
+                    logger.info(f"Resolved {len(items)} evidence items via cluster_id {cluster_id}")
+            except Exception as e:
+                logger.error(f"Failed cluster_id evidence lookup: {e}")
+
+        # 2. Exact Match Strategy (Fallback if no cluster_id or no items found)
+        if not items:
+            stmt = select(Item).where(Item.title.in_(titles))
+            items = (await db.execute(stmt)).scalars().all()
         
-        # 2. Fallback: Keyword Overlap / Label Containment
+        # 3. Fallback: Keyword Overlap / Label Containment
         if not items:
             logger.info(f"No exact title matches for {sig.target_label}, attempting fallback...")
             # Try to match items whose titles contain the target_label (useful for entity heat)

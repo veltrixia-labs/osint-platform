@@ -202,12 +202,12 @@ def _compress_trends(signals: List[TrendSignal], start: datetime, end: datetime,
             # Score Calculation (Phase 19.4 Weighted)
             overlap = (geo_match * 4) + (risk_match * 3) + (sector_match * 2) + (entity_match * 1)
             
-            if overlap >= 6: # High-Cohesion Threshold (Phase 19.4 Final)
+            if overlap >= 5: # High-Cohesion Threshold (Phase 19.4 Final - Adjusted from 6 to 5)
                 logger.debug(f"[Trend Grouping] Merging '{item['signal'].target_label}' into group '{list(group['geo'])[0] if group['geo'] else 'None'}' "
                              f"Score: {overlap} (Geo:{geo_match}, Risk:{risk_match}, Sector:{sector_match}, Ent:{entity_match}) "
                              f"Overlaps: {geo_overlap_set | risk_overlap_set | sector_overlap_set | entity_overlap_set}")
                              
-            if overlap > max_overlap and overlap >= 6: 
+            if overlap > max_overlap and overlap >= 5: 
                 max_overlap = overlap
                 best_group_idx = idx
                 

@@ -76,7 +76,8 @@ async def get_target_analysts(db, alert_label: str, alert_score: float, severity
             continue
             
         # 2. Check Severity Threshold
-        p_sev_rank = sev_rank.get(p.min_severity_threshold.lower(), 1)
+        p_min_sev = p.min_severity_threshold.lower() if p.min_severity_threshold else "watch"
+        p_sev_rank = sev_rank.get(p_min_sev, 1)
         if current_sev_rank < p_sev_rank:
             continue
             
@@ -98,7 +99,8 @@ async def get_target_analysts(db, alert_label: str, alert_score: float, severity
         personal_score = min(alert_score * rel_multiplier, 1.0)
         
         # 5. Check Intelligence Threshold
-        if personal_score >= p.min_intelligence_threshold:
+        p_min_intel = p.min_intelligence_threshold if p.min_intelligence_threshold is not None else 0.0
+        if personal_score >= p_min_intel:
             targets.append((p, round(personal_score, 3), False))
             
     return targets
