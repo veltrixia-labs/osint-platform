@@ -316,6 +316,7 @@ async def _should_generate_report_for_system(db: AsyncSession, report_type: str)
     if report_type not in ["monthly", "specialized"]:
         return True # Default reports are generated for everyone
     
+    from db.models import AnalystProfile
     stmt = select(AnalystProfile).where(AnalystProfile.is_active == True)
     analysts = (await db.execute(stmt)).scalars().all()
     
@@ -328,10 +329,6 @@ async def _should_generate_report_for_system(db: AsyncSession, report_type: str)
             
     return False
 
-# [CONSOLIDATED] infer_domain_from_content is defined above (L127).
-# The duplicate local definition that existed here has been removed.
-# Use the module-level DOMAIN_KEYWORDS covering all 6 topics.
-
 async def run_report_generation(
     db: AsyncSession,
     report_type: str = "daily",
@@ -340,7 +337,8 @@ async def run_report_generation(
     auto_post_threads: bool = False
 ) -> Tuple[str, str, str]: # returns (teaser_md, status, reason)
     """
-    Generates report using Data-Driven Intelligence + Optional LLM Polish.
+    Unified report generation: Fetches items, clusters them, extracts themes, 
+    and applies tiered LLM analysis (Pro/Expert) or Rule-based synthesis (Daily).
     """
     logger.info(f"Generating report: {report_type} | topic={topic}")
     
@@ -357,25 +355,23 @@ async def run_report_generation(
         signal_type = "Top 10 Global Risk Signals"
 
     # 1. Fetch Candidates (Priority: SignalRanking)
-    # -- DOMAIN CORRECTION LAYER --
     stmt = select(SignalRanking).where(
         SignalRanking.signal_type == signal_type,
         SignalRanking.created_at >= now - timedelta(hours=24)
     ).order_by(SignalRanking.rank.asc()).limit(20)
     
     rankings = (await db.execute(stmt)).scalars().all()
-    if not rankings and topic:
-        logger.warning(f"No SignalRankings found for {topic} in last 24h.")
-        
     items = []
     seen_urls = set()
     for r in rankings:
-        item = (await db.execute(select(Item).where(Item.id == r.item_id))).scalar_one_or_none()
+        item_stmt = select(Item).where(Item.id == r.item_id)
+        item = (await db.execute(item_stmt)).scalar_one_or_none()
         if item and item.source_url not in seen_urls:
             items.append(item)
             seen_urls.add(item.source_url)
     
     if not items:
+        # Fallback to recent items for topic
         if topic:
             stmt_fallback = (
                 select(Item)
@@ -387,600 +383,137 @@ async def run_report_generation(
             )
         else:
             stmt_fallback = select(Item).where(Item.published_at >= start_time).order_by(Item.published_at.desc()).limit(10)
-        
         items = list((await db.execute(stmt_fallback)).scalars().all())
 
-    # 1.1 Themes & Effective Topic
-    themes = extract_themes(items)
-    effective_topic = infer_domain_from_content(themes, topic or "global")
-    topic_str = effective_topic if effective_topic else "global"
+    if not items:
+        return "", "failed", "No items found for analysis."
 
-    # 1.1 Noise Filter for Global Report (Phase 19.3)
-    logger.info(f"Candidates fetched: {len(items)} items found.")
-    
+    # 1.1 Noise Filter for Global (Phase 19.3)
+    topic_str = topic if topic else "global"
     if topic_str == "global":
         RISK_STOPWORDS = {"f1", "grandprix", "entertainment", "sports", "celebrity", "lifestyle", "fashion", "hollywood"}
-        filtered_items = []
+        filtered = []
         for it in items:
-            content_lower = (it.title + " " + (it.summary or "")).lower()
-            if not any(stop in content_lower for stop in RISK_STOPWORDS):
-                filtered_items.append(it)
-        items = filtered_items[:10] # Keep top 10 after filtering
-        logger.info(f"After global noise filter: {len(items)} items remaining.")
-    
-    if not items:
-        return "", "failed", "No items found after noise filtering."
+            text_lower = (it.title + " " + (it.summary or "")).lower()
+            if not any(stop in text_lower for stop in RISK_STOPWORDS):
+                filtered.append(it)
+        items = filtered[:10]
 
-    # Attempt LLM Polish (Phase 19.5 - Adaptive Mode)
-    system_prompt = (
-        "You are a Senior Strategic Intelligence Analyst. Write a professional analytical report based on the provided data."
-    )
-    user_context = f"THEMES: {', '.join(themes)}\nCLUSTER DATA:\n{cluster_context_str}"
+    # 2. Advanced Analysis (Clustering & Context)
+    clusters, clustering_metrics = cluster_items(items)
+    avg_score = 0.8 # Default baseline
     
-    llm_polished = await generate_analysis(system_prompt, user_context, is_batch=False)
-    
-    from render.markdown_builder import build_publish_markdown, build_degraded_markdown
-    
-    if "## Mock Analysis" in llm_polished or llm_polished == "__DEGRADED_MODE__":
-        logger.warning(f"LLM Polish failed for {topic_str} report. Falling back to Data-Driven Memo.")
-        report_md = build_degraded_markdown(
-            title=f"{topic_str.replace('_', ' ').title()} Intelligence Report",
-            items=items,
-            topic_code=topic_str
-        )
-        status = "degraded"
-    else:
-        report_md = build_publish_markdown(
-            title=f"{topic_str.replace('_', ' ').title()} Strategic Intelligence",
-            llm_content=llm_polished,
-            items=items
-        )
-        status = "success"
-    
-    # 3. Persistence
-    new_report = Report(
-        report_type=report_type,
-        topic_code=topic_str,
-        title=f"{topic_str.replace('_', ' ').title()} Intelligence",
-        content_markdown=report_md,
-        period_start=start_time,
-        period_end=now,
-        source_count=len(items)
-    )
-    db.add(new_report)
-    await db.commit()
-    await db.refresh(new_report)
-    
-    return report_md, status, ""
-    
-    # Context Slot (top 1 from remaining that has context link)
-    context_cluster = next((x for x in remaining if x["has_context_link"]), (remaining[0] if remaining else None))
-    
-    final_selection = core_clusters
-    if context_cluster:
-        final_selection.append(context_cluster)
-        
-    enriched_developments = []
-    for x in final_selection:
-        c = x["cluster"]
-        support_label = ""
-        if c.source_count > 3:
-            support_label = "[High Support] "
-        elif c.source_count > 1:
-            support_label = "[Multi-Source] "
-        
-        entry = f"{support_label}{c.representative_title} (Sources: {c.source_count})"
-        enriched_developments.append(entry)
-    
-    # D. Forecasts & Scenarios
-    forecasts = generate_forecasts([effective_topic] if effective_topic else ["global"], " ".join([c.representative_title for c in clusters]), avg_score)
-    scenarios = generate_scenarios(avg_score, forecasts, domain=effective_topic)
+    cluster_context_list = []
+    for c in clusters:
+        cluster_context_list.append(f"CLUSTER: {c.representative_title} (Docs: {c.source_count})\n- Summary: {c.narrative_summary}")
+    cluster_context_str = "\n\n".join(cluster_context_list) if cluster_context_list else "No significant clusters identified."
 
-    # E. Trend Analysis (Phase 19 & 19.1)
-    # Fetch trends for the target period
+    # 3. Themes & Trends
+    themes = extract_themes(items)
+    effective_topic = infer_domain_from_content(themes, topic_str)
+    
+    # Trend Analysis
     trend_stmt = select(TrendSignal).where(TrendSignal.created_at >= now - timedelta(hours=24))
     all_trends = (await db.execute(trend_stmt)).scalars().all()
     
-    # Pass 2: Final Presentation Deduplication (Safety Guard)
-
-    def normalize_label(l: str) -> str:
-        if not l: return ""
-        import re
-        l = l.lower().strip()
-        l = re.sub(r'\s+', ' ', l)
-        return l.rstrip('.!?:;,')
-
-    seen_keys = set()
-    all_trends_dedup = []
-
-    for t in all_trends:
-        if t.intensity_score > 10.0: continue # Skip outlier noise
-        
-        n_label = normalize_label(t.target_label)
-        
-        # Stable Deduplication Key: (trend_type, label)
-        # Matches the insertion guard key in trend_engine.py
-        key = (t.trend_type, n_label)
-        
-        if key in seen_keys:
-            # If we see a duplicate in the 24h window, keep the one with higher intensity
-            idx = next(i for i, x in enumerate(all_trends_dedup) if (x.trend_type, normalize_label(x.target_label)) == key)
-            if t.intensity_score > all_trends_dedup[idx].intensity_score:
-                all_trends_dedup[idx] = t
-            continue
-            
-        seen_keys.add(key)
-        all_trends_dedup.append(t)
-        
     scored_trends = []
-    for t in all_trends_dedup:
+    for t in all_trends:
         rel_score = calculate_trend_relevance(t, themes, topic_str)
         if rel_score >= 5:
             scored_trends.append((t, rel_score))
-
-    # Sort by Relevance first, then Intensity
+    
     scored_trends.sort(key=lambda x: (x[1], x[0].intensity_score), reverse=True)
     trends_pool = [x[0] for x in scored_trends[:8]]
     
-    if not trends_pool:
-        logger.info(f"Emerging Surges: No thematic matches found for topic '{topic_str}'.")
-    else:
-        logger.info(f"Emerging Surges: Selected {len(trends_pool)} relevant signals.")
-
-    # Explained Trend Context for LLM
-    trend_context_list = []
     skeleton_trends = {"patterns": [], "persistent": [], "surges": [], "changes": []}
-    
+    trend_context_list = []
     for t in trends_pool:
         m = t.metrics_json or {}
-        # 1. Explained context for LLM
-        if t.trend_type == "risk_pattern":
-            explained = (
-                f"RISK PATTERN: {t.target_label}\n"
-                f"- Evolution: {t.description}\n"
-                f"- Supporting Events: {', '.join(m.get('supporting_events', []))}\n"
-                f"- Key Metrics: {m.get('recent', 0)} vs baseline {m.get('baseline', 0)} (Δ {m.get('delta', 0)})"
-            )
-        else:
-            explained = (
-                f"TREND: {t.target_label} ({t.trend_type})\n"
-                f"- Change: {m.get('delta', 0) * 100}% shift from baseline ({m.get('baseline', 0)} -> {m.get('recent', 0)})\n"
-                f"- Evidence: Supported by {m.get('supporting_cluster_count', 0)} clusters"
-            )
+        explained = f"TREND: {t.target_label} ({t.trend_type}) - Intensity: {t.intensity_score}"
         trend_context_list.append(explained)
         
-        # 2. Skeleton entries based on type
         if t.trend_type == "risk_pattern":
-            entry = {
-                "label": t.target_label,
-                "description": t.description,
-                "intensity": round(t.intensity_score, 2),
-                "supporting": m.get("supporting_events", [])
-            }
-            skeleton_trends["patterns"].append(entry)
+            skeleton_trends["patterns"].append({"label": t.target_label, "intensity": t.intensity_score})
+        elif t.trend_type == "sustained_event":
+            skeleton_trends["persistent"].append(explained)
         else:
-            # 1. Normalize both strings for comparison
-            def normalize(s: str) -> str:
-                if not s: return ""
-                # lowercase, trim, collapse spaces, strip trailing punctuation
-                import re
-                s = s.lower().strip()
-                s = re.sub(r'\s+', ' ', s)
-                return s.rstrip('.!?:;,')
+            skeleton_trends["surges"].append(explained)
 
-            desc = t.description or ""
-            label = t.target_label or ""
-            
-            n_desc = normalize(desc)
-            n_label = normalize(label)
-            
-            # 2. Refined Semantic Deduplication Heuristic
-            # - Exact/Normalized match
-            # - One contains the other
-            # - Significant prefix overlap (first 40 chars or 70% of label)
-            # - Meaningful opening phrase overlap
-            
-            overlap_threshold = min(len(n_label), 40)
-            is_duplicate = (
-                not n_label or not n_desc or
-                n_label == n_desc or
-                n_label in n_desc or
-                n_desc in n_label or
-                (len(n_label) > 10 and len(n_desc) > 10 and n_label[:overlap_threshold] == n_desc[:overlap_threshold])
-            )
-            
-            # 3. Resolution Rule: Prefer the longer/more informative string if duplicated
-            if is_duplicate:
-                clean_item = desc if len(desc) >= len(label) else label
-            else:
-                clean_item = f"{label}: {desc}"
-            
-            # Strip redundant systemic prefixes if they linger from legacy signals
-            for prefix in [
-                "Emerging high-risk event detected: ", 
-                "Rapid risk escalation detected: ", 
-                "Sustained activity detected for event: ",
-                "High-risk signal: "
-            ]:
-                if clean_item.lower().startswith(prefix.lower()):
-                    clean_item = clean_item[len(prefix):]
-            
-            # Ensure proper punctuation before intensity
-            clean_item = clean_item.strip()
-            if not clean_item.endswith("."):
-                clean_item += "."
-            
-            entry_str = f"{clean_item} Intensity: {t.intensity_score}"
-            
-            if t.trend_type == "sustained_event":
-                skeleton_trends["persistent"].append(entry_str)
-            elif t.trend_type in ["sector_surge", "risk_acceleration"]:
-                skeleton_trends["surges"].append(entry_str)
-            else: # entity_heat
-                skeleton_trends["changes"].append(entry_str)
+    trend_context_str = "\n\n".join(trend_context_list) if trend_context_list else "No significant trends detected."
 
-    trend_context_str = "\n\n".join(trend_context_list)
+    # 4. Content Generation
+    forecasts = generate_forecasts([effective_topic] if effective_topic else ["global"], " ".join(themes), avg_score)
+    scenarios = generate_scenarios(avg_score, forecasts, domain=effective_topic)
     
-    # F. Visual Analytics Generation (Phase 20)
-    visual_files = []
-    date_str = now.strftime('%Y%m%d')
-    
-    if HAS_VISUAL_ENGINE:
-        try:
-            # Visual 1: Intensity Chart for MAX Intensity Risk Pattern
-            risk_patterns = [p for p in trends_pool if p.trend_type == "risk_pattern"]
-            if risk_patterns:
-                max_p = max(risk_patterns, key=lambda x: x.intensity_score)
-                v1 = await generate_intensity_chart(db, max_p.target_label, topic_str, date_str)
-                if v1: visual_files.append(v1)
-                
-            # Visual 2: Source Diversity Chart for MAX Supported Cluster
-            if clusters and len(visual_files) < 2:
-                max_c = max(clusters, key=lambda x: x.article_count)
-                v2 = await generate_diversity_chart(db, max_c.id, topic_str, date_str)
-                if v2: visual_files.append(v2)
-        except Exception as ve:
-            logger.error(f"Error during visual generation: {ve}")
-
-    # 3. Build Skeleton Report
     skeleton_content = build_substack_skeleton(
-        themes, 
-        enriched_developments, 
-        forecasts, 
-        scenarios, 
-        [it.source_url for it in items],
-        trends=skeleton_trends,
-        visuals=visual_files,
-        domain=effective_topic
+        themes, [], forecasts, scenarios, [it.source_url for it in items],
+        trends=skeleton_trends, domain=effective_topic
     )
     
-    # 4. Skeleton Validation
-    if not validate_skeleton(skeleton_content):
-        return "", "failed", "Skeleton structure validation failed."
-
-    # 5. Tiered Content Generation (Phase 36 Redesign)
-    plan_required = PlanTier.FREE.value
-    status = "rule_based"
-    final_content = skeleton_content
-    llm_attempts = 0
-    llm_successVal = 0
-    
-    # Standardize report type for generation logic
     current_type = (report_type or "daily").lower()
-    if "event_driven" in current_type: # Legacy compatibility
-        current_type = ReportType.DAILY.value
-
+    plan_required = PlanTier.FREE.value
+    status = "success"
+    final_content = skeleton_content
+    
+    # Tiered Analysis Logic
     if current_type == ReportType.DAILY.value:
-        # ABSOLUTE LLM ISOLATION: No generate_analysis call
-        logger.info(f"Generating DAILY report: 100% Rule-based (LLM bypassed).")
-        plan_required = PlanTier.FREE.value
-        status = "success" # Rule-based is considered success for Daily
-        
+        logger.info("Generating DAILY report: Rule-based (LLM bypassed).")
     elif current_type == ReportType.WEEKLY.value:
-        logger.info(f"Generating WEEKLY report: Lightweight LLM analysis (Pro+).")
         plan_required = PlanTier.PRO.value
         analysis_input = f"SKELETON DATA:\n{skeleton_content}\n\nCONTEXT:\n{cluster_context_str}"
         polished = await generate_analysis(WEEKLY_ANALYSIS_PROMPT, analysis_input)
         if polished and polished != "__DEGRADED_MODE__":
             final_content = polished
-            status = "success"
-        else:
-            logger.warning("Weekly LLM analysis failed. Falling back to rule-based.")
-
     elif current_type == ReportType.MONTHLY.value:
-        logger.info(f"Generating MONTHLY report: Full Expert Analysis (Experts only).")
         plan_required = PlanTier.EXPERTS.value
-        analysis_input = f"MONTHLY RAW DATA & TRENDS:\n{skeleton_content}\n\nBROADER CONTEXT:\n{trend_context_str}"
+        analysis_input = f"MONTHLY DATA:\n{skeleton_content}\n\nBROADER CONTEXT:\n{trend_context_str}"
         expert_analysis = await generate_analysis(MONTHLY_EXPERTS_PROMPT, analysis_input)
-        
-        if expert_analysis and expert_analysis != "__DEGRADED_MODE__" and "Scenario Analysis" in expert_analysis:
+        if expert_analysis and expert_analysis != "__DEGRADED_MODE__":
             final_content = expert_analysis
-            status = "success"
-        else:
-            logger.warning("Monthly Expert LLM failed. Using Degraded Monthly Skeleton.")
-            # Mandatory Fallback structure for Monthly
-            final_content = (
-                "# Monthly Intelligence Report (Degraded Mode)\n\n"
-                "## 1. Macro Overview\nRule-based summary of developments is available below.\n\n"
-                "## 2. Key Structural Shifts\nStructural automated detection active.\n\n"
-                "## 3. Scenario Analysis\n[LLM UNAVAILABLE: Strategic scenarios suspended]\n\n"
-                "## 4. Risk Forecast\nRisk metrics derived from rule-based thresholds.\n\n"
-                "## 5. Cross-Domain Impact\nCross-domain synthesis requires LLM assistance.\n\n"
-                "## 6. Forward Outlook (30–60 days)\nMaintain monitoring based on current rule-based signals.\n\n"
-                "---\n"
-                + skeleton_content
-            )
-            status = "rule_based_fallback"
-    
-    if current_type != ReportType.DAILY.value:
-        llm_attempts = 1
-        llm_successVal = 1 if status == "success" else 0
 
-
-    # --- ADD EVIDENCE JSON ---
-    import json
-    evidence_payload = []
-    
-    # URL Validation Patterns
-    BANNED_DOMAINS = ["example.com", "localhost", "127.0.0.1", "test.com", "dummy.org", "maritime-intel-example.org"]
-    
-    for it in items:
-        url = (it.source_url or "").lower()
-        
-        # 1. Strict Validation: Must be http(s) and not a common placeholder
-        is_valid_url = (
-            url.startswith("http") and 
-            not any(d in url for d in BANNED_DOMAINS) and
-            len(url) > 12 # Minimum length for a real URL (e.g. http://a.com)
-        )
-        
-        # 2. Data Integrity Safeguard: Skip records with mock/test keywords in title or summary
-        is_mock_data = any(kw in (it.title or "").lower() or kw in (it.summary or "").lower() for kw in ["mock item", "test report", "dummy article"])
-        
-        if not is_valid_url or is_mock_data:
-            # Still allow the entry but mark it as restricted for the UI to handle
-            final_url = "#" if not is_valid_url else url
-        else:
-            final_url = url
-            
-        expl = (it.summary or "Observed data node matching cluster parameters.")
-        if len(expl) > 150: expl = expl[:147] + "..."
-        
-        evidence_payload.append({
-            "title": (it.title or "Unknown Source")[:100],
-            "type": it.source_name or "Intelligence Node",
-            "explanation": expl,
-            "link": final_url
-        })
-        if len(evidence_payload) >= 10: break
-
-    try:
-        evi_str = json.dumps(evidence_payload)
-        final_content += f"\n\n<!-- EVIDENCE_JSON: {evi_str} -->\n"
-    except Exception as e:
-        logger.error(f"Failed to serialize evidence JSON: {e}")
-    # -------------------------
-    # -------------------------
-
-    # 6. Title and Metadata Generation (Phase 36 Redesign)
-    
-    # --- Title Generation ---
-    # Major Theme Logic: Use themes[0] (Top confidence/sorted)
-    major_theme = "Unknown"
-    if themes and len(themes) > 0:
-        major_theme = themes[0].source_label if hasattr(themes[0], 'source_label') else str(themes[0])
-        if ":" in major_theme: major_theme = major_theme.split(":")[0].strip()
-    
+    # 5. Metadata & Persistence
+    major_theme = themes[0] if themes else (topic_str.capitalize() if topic_str else "Global")
     topic_label = TOPIC_CONFIG.get(effective_topic, {}).get("label") if effective_topic else "Global"
+    derived_title = f"Intelligence: {major_theme} | {topic_label} Focused"
     
-    # Standardized Format: Themes: [Major Theme] | [Topic Label] Intelligence
-    derived_title = f"Themes: {major_theme} | {topic_label} Intelligence"
-    
-    # --- Teaser Generation ---
-    lines = final_content.split('\n')
-
-    # --- Teaser Generation ---
-    # Extract 2-3 meaningful lines starting from the first non-header, non-empty line
+    # Simple teaser from content
     teaser_lines = []
-    for line in lines:
-        clean = line.strip()
-        if clean and not clean.startswith('#') and not clean.startswith('!') and not clean.startswith('[') and not clean.startswith('<!--'):
-            teaser_lines.append(clean)
-            if len(teaser_lines) >= 3:
-                break
-    
-    teaser_md = " ".join(teaser_lines)
-    if len(teaser_md) > 280:
-        teaser_md = teaser_md[:277] + "..."
+    for line in final_content.split('\n'):
+        if line.strip() and not line.strip().startswith(('#', '!', '[')):
+            teaser_lines.append(line.strip())
+            if len(teaser_lines) >= 2: break
+    teaser_md = " ".join(teaser_lines)[:277] + "..."
 
-    # 7. Output Persistence & Idempotency Flow
-    topic_str = topic if topic else "global"
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    out_dir = os.path.join(base_dir, "outputs")
-    os.makedirs(out_dir, exist_ok=True)
-    
-    date_str = now.strftime('%Y%m%d')
-    base_name = f"{topic_str}_{report_type}_{date_str}_en"
-    
-    md_path = os.path.join(out_dir, f"analysis_{base_name}.md")
-    with open(md_path, "w", encoding='utf-8') as f:
-        f.write(final_content)
-
-    # 8. Calculate Metrics & Better Metadata
-    count = len(items)
-    
-    # Confirmed Title
-    if not derived_title or "Summary of Themes" in derived_title:
-        derived_title = f"Themes: {major_theme} | {topic_label} Intelligence"
-    
-    # Refined teaser (avoid null, ensure meaningful start)
-    if not teaser_md:
-        # Re-derive teaser from content if missing
-        teaser_lines = []
-        for line in final_content.split('\n'):
-            clean = line.strip()
-            if clean and not any(clean.startswith(x) for x in ['#', '!', '[', '<!--', 'Date:']):
-                teaser_lines.append(clean)
-                if len(teaser_lines) >= 3: break
-        teaser_md = " ".join(teaser_lines)[:277] + "..." if teaser_lines else "Latest OSINT analysis and risk intelligence briefing."
-
-    # Scoring Logic
-    if count >= 8 and llm_successVal:
-        conf = "High"
-    elif count >= 3 or llm_successVal:
-        conf = "Medium"
-    else:
-        conf = "Low"
-
-    logger.info(f"Persisting report with metrics -> source_count: {count}, confidence: {conf}, title: {derived_title[:30]}")
-
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    if effective_topic is None:
-        stmt = select(Report).where(
-            Report.topic_code.is_(None),
-            Report.report_type == report_type,
-            Report.created_at >= today_start
-        )
-    else:
-        stmt = select(Report).where(
-            Report.topic_code == effective_topic,
-            Report.report_type == report_type,
-            Report.created_at >= today_start
-        )
-    repo = (await db.execute(stmt)).scalars().first()
-
-    is_premium = (current_type != ReportType.DAILY.value)
-    
-    # Tier mapping for reports (Gating logic alignment)
-    plan_required = "free"
-    if current_type == ReportType.WEEKLY.value:
-        plan_required = "pro"
-    elif current_type == ReportType.MONTHLY.value:
-        plan_required = "experts"
-
-    if not repo:
-        # Geotagging (Heuristic First)
-        coords = resolver.resolve_heuristically(f"{derived_title} {teaser_md}")
-        lat, lng = coords if coords else (None, None)
-        
-        repo = Report(
-            report_type=current_type,
-            topic_code=effective_topic,
-            period_start=now - timedelta(days=period_days),
-            period_end=now,
-            title=derived_title,
-            teaser_md=teaser_md,
-            content_markdown=final_content,
-            is_premium=is_premium,
-            plan_required=plan_required,
-            source_count=count,
-            confidence_level=conf,
-            location_lat=lat,
-            location_lng=lng
-        )
-        db.add(repo)
-    else:
-        logger.info(f"Report already exists for {topic_str} today. Updating content and metadata.")
-        repo.report_type = current_type
-        repo.title = derived_title
-        repo.teaser_md = teaser_md
-        repo.content_markdown = final_content
-        repo.is_premium = is_premium
-        repo.plan_required = plan_required
-        repo.source_count = count
-        repo.confidence_level = conf
-        repo.topic_code = effective_topic # [v30] Persist correction
-
-    await db.flush()
-    report_id = repo.id
+    # Create Report Record
+    new_report = Report(
+        report_type=current_type,
+        topic_code=effective_topic,
+        title=derived_title,
+        teaser_md=teaser_md,
+        content_markdown=final_content,
+        is_premium=(current_type != ReportType.DAILY.value),
+        plan_required=plan_required,
+        source_count=len(items),
+        confidence_level="Medium",
+        created_at=now
+    )
+    db.add(new_report)
     await db.commit()
+    await db.refresh(new_report)
 
-    # 7. Build Teaser (Internal Platform Focus)
-    top_cluster_event = items[0].title if items else "No significant developments identified."
-    top_theme = themes[0] if themes else (topic.capitalize() if topic else "Global")
+    # 6. Threads Teaser
+    platform_base = os.getenv("PLATFORM_BASE_URL", "https://veltrixia.net")
+    platform_url = f"{platform_base}/?report_id={new_report.id}"
+    top_event = items[0].title if items else "No significant developments identified."
     
-    # --- SOCIAL SIGNAL SELECTION LAYER (PHASE 2) ---
-    def normalize_theme_key(text: str) -> str:
-        if not text: return ""
-        import re
-        t = text.lower()
-        t = re.sub(r'[^\w\s]', '', t)
-        return " ".join(t.split()).strip()
+    gen_teaser_threads = build_threads_teaser(top_event, major_theme, topic_str, platform_url)
 
-    norm_theme = normalize_theme_key(top_theme)
-    should_post = True
-    suppression_reason = None
-
-    # A. Intensity Check
-    if avg_score < 0.6:
-        should_post = False
-        suppression_reason = f"Low intensity ({avg_score:.2f})"
+    logger.info(f"Report generation complete for {topic_str}. Version: {status}")
     
-    # B. Theme Quality Check
-    elif not norm_theme or len(norm_theme.split()) < 2 or "summary" in norm_theme or "latest" in norm_theme:
-        should_post = False
-        suppression_reason = f"Generic or weak theme ('{top_theme}')"
-
-    # C. Novelty Check (48h Window)
-    if should_post:
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=48)
-        stmt_novelty = select(ExternalPost).where(
-            ExternalPost.normalized_theme == norm_theme,
-            ExternalPost.created_at >= cutoff,
-            ExternalPost.status == "success"
-        )
-        recent_duplicate = (await db.execute(stmt_novelty)).scalars().first()
-        if recent_duplicate:
-            should_post = False
-            suppression_reason = f"Recent duplicate theme ('{norm_theme}')"
-
-    if not should_post:
-        logger.info(f"Social Post Suppressed: {suppression_reason}")
-    else:
-        platform_base = os.getenv("PLATFORM_BASE_URL", "https://osint-web-1oev.onrender.com")
-        platform_url = f"{platform_base}/?report_id={report_id}"
-        
-        teaser_md = build_threads_teaser(top_cluster_event, top_theme, topic_str, platform_url)
-
-        with open(os.path.join(out_dir, f"teaser_{base_name}.md"), "w", encoding='utf-8') as f:
-            f.write(teaser_md)
-        
-        # 8. Queue Threads Auto-Post
-        if auto_post_threads:
-            stmt_pending = select(ExternalPost).where(
-                ExternalPost.report_id == report_id,
-                ExternalPost.platform == "threads"
-            )
-            existing_post = (await db.execute(stmt_pending)).scalars().first()
-            if not existing_post:
-                new_post = ExternalPost(
-                    platform="threads",
-                    report_id=report_id,
-                    status="pending",
-                    category=topic_str,
-                    normalized_theme=norm_theme
-                )
-                db.add(new_post)
-                await db.commit()
-                logger.info(f"Social Post Queued: {top_theme} ({topic_str})")
-            else:
-                logger.info("Threads post is already queued/processed for this report.")
-
-    # Record Metrics
-    logger.info(f"Phase 11 Metrics [{topic_str}]: " + json.dumps({
-        "cluster_count": clustering_metrics["clusters_created"],
-        "theme_count": len(themes),
-        "signal_scores": avg_score,
-        "forecast_rules_triggered": len(forecasts),
-        "scenario_count": 3,
-        "llm_polish_attempts": llm_attempts,
-        "llm_polish_success": llm_successVal,
-        "threads_posts_generated": 1,
-        "substack_articles_generated": 1
-    }))
-
-    logger.info(f"Report process complete for {topic_str}.")
-    return teaser_md, status, "OK"
+    # 7. Final Cleanup (Record Metrics)
+    logger.info(f"Phase 11 Metrics [{topic_str}]: source_count={len(items)}, clusters={clustering_metrics.get('clusters_created')}")
+    
+    return gen_teaser_threads, status, "OK"
 
 if __name__ == "__main__":
     import argparse
