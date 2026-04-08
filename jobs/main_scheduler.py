@@ -89,7 +89,11 @@ async def pipeline_full_processing():
             
             logger.info("[TRIGGER CHECK]")
             await run_trigger_check(session)
-        logger.info("--- Pipeline Completed ---")
+            
+            from jobs.cleanup_job import update_system_metric
+            await update_system_metric(session, "scheduler_last_full_run", datetime.now(timezone.utc).isoformat())
+            
+        logger.info("--- Pipeline Completed Successfully ---")
     except Exception as e:
         err_msg = str(e)
         if "DiskFullError" in err_msg or "No space left on device" in err_msg:

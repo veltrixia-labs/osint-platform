@@ -65,18 +65,39 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
     from analysis.signal_engine import calculate_cluster_signal
     from db.models import EventCluster
     
-    cluster_stmt = select(EventCluster).where(EventCluster.created_at >= now - timedelta(hours=24))  # [Fix v1.6.3] Expanded from 1h to 24h to capture backlog-processed clusters
+    # 3. Bulk Fetch Clusters and Items to avoid N+1 problem (Fix v1.6.4)
+    from analysis.signal_engine import calculate_cluster_signal
+    from db.models import EventCluster
+    
+    cluster_stmt = select(EventCluster).where(EventCluster.created_at >= now - timedelta(hours=24))
     clusters = (await db.execute(cluster_stmt)).scalars().all()
     
+    if not clusters:
+        logger.info(f"[SIGNAL] No clusters found in last 24h for {signal_type}")
+        return
+
+    # Bulk fetch all relevant items for these clusters in one query
+    cluster_ids = [c.id for c in clusters]
+    item_stmt = select(Item).where(Item.cluster_id.in_(cluster_ids))
+    all_cluster_items = (await db.execute(item_stmt)).scalars().all()
+    
+    # Map items to clusters in memory
+    from collections import defaultdict
+    items_by_cluster = defaultdict(list)
+    for it in all_cluster_items:
+        items_by_cluster[it.cluster_id].append(it)
+
     final_scored_pool = []
+    logger.info(f"[SIGNAL] Scoring {len(clusters)} clusters for {signal_type}...")
+    
     for cluster in clusters:
-        it_stmt = select(Item).where(Item.cluster_id == cluster.id)
-        cluster_items_list = (await db.execute(it_stmt)).scalars().all()
-        
+        cluster_items_list = items_by_cluster.get(cluster.id, [])
+        if not cluster_items_list:
+            continue
+            
         score = await calculate_cluster_signal(cluster, cluster_items_list)
         # Use the representative item for ranking pool
-        if cluster_items_list:
-            final_scored_pool.append((score, cluster_items_list[0]))
+        final_scored_pool.append((score, cluster_items_list[0]))
 
     # 4. Rank and Store
     final_scored_pool.sort(key=lambda x: x[0], reverse=True)
@@ -96,7 +117,7 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
         ))
         
     await db.commit()
-    logger.info(f"Rankings updated for {signal_type}: {len(top_items)} clusters.")
+    logger.info(f"Rankings updated for {signal_type}: {len(top_items)} items ranked from {len(clusters)} source clusters.")
 
 async def run_signal(db: AsyncSession):
     logger.info("Starting High-Efficiency Signal Job")
