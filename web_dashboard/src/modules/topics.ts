@@ -135,7 +135,7 @@ export const ENTITLEMENT_MATRIX = {
  * Returns true if `userTier` meets or exceeds the topic's `minTier`.
  * Note: Uses TIER_ORDER for hierarchy.
  */
-export function canAccessTopic(userTier: string, topic: TopicDef): boolean {
+export function canAccessTopic(_userTier: string, _topic: TopicDef): boolean {
     // [Dev Phase Override] Always allow access to verify system completion
     return true;
 }
@@ -143,7 +143,7 @@ export function canAccessTopic(userTier: string, topic: TopicDef): boolean {
 /**
  * Returns true if the user can access a specific report based on its type and topic.
  */
-export function canAccessReport(userTier: string, reportType: string, topicCode: string | null): boolean {
+export function canAccessReport(_userTier: string, _reportType: string, _topicCode: string | null): boolean {
     // [Dev Phase Override] Always allow access to verify system completion
     return true;
 }
