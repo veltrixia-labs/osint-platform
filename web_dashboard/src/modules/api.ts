@@ -12,6 +12,17 @@ const setLoggingOut = (val: boolean) => {
     else sessionStorage.removeItem("isLoggingOut");
 };
 
+/**
+ * [v42] Sync Status Events
+ * Notifies the UI about API connectivity and auth health.
+ */
+export type SyncStatus = 'stable' | 'retrying' | 'offline';
+function dispatchSyncEvent(status: SyncStatus) {
+    window.dispatchEvent(new CustomEvent('api-sync-status', { 
+        detail: { status, timestamp: new Date() } 
+    }));
+}
+
 export interface AuthResponse {
     access_token: string;
     token_type: string;
@@ -222,7 +233,14 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
         credentials: 'include'
     };
 
-    let resp = await fetch(url, authOptions);
+    let resp: Response;
+    try {
+        resp = await fetch(url, authOptions);
+        if (resp.ok) dispatchSyncEvent('stable');
+    } catch (e) {
+        dispatchSyncEvent('offline');
+        throw e;
+    }
 
     // B. Refresh Logic (401 Handling)
     if (resp.status === 401 && !url.includes('/auth/refresh') && !url.includes('/auth/login')) {
@@ -242,10 +260,13 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
                 accessToken = data.access_token;
                 localStorage.setItem('access_token', accessToken!);
                 
+                dispatchSyncEvent('stable');
+
                 // Retry original request
                 headers.set('Authorization', `Bearer ${accessToken}`);
                 resp = await fetch(url, { ...authOptions, headers });
             } else {
+                dispatchSyncEvent('retrying');
                 // [v37] DEFINITIVE SESSION EXPIRY
                 // If refresh fails, the session is truly dead. Notify UI and clear local tokens.
                 if (!getLoggingOut()) {

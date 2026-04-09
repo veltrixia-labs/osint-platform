@@ -249,6 +249,7 @@ async function initDashboard() {
           <div id="sidebar-watchlist" class="u-m-top-1" style="flex:1; overflow-y:auto; overflow-x:hidden; margin-bottom:1rem;"></div>
 
           <div class="sidebar-footer u-m-top-1">
+            <div id="sync-hud" style="font-size: 0.65rem; color: #8b949e; margin-bottom: 0.75rem; letter-spacing: 0.05rem; font-family: monospace;">● SYNC: INITIALIZING...</div>
             <div class="u-flex u-m-bottom-1">
               <div id="user-tier-badge"></div>
             </div>
@@ -741,6 +742,38 @@ async function initDashboard() {
     } else {
         handleTabSwitch('feed', undefined, true);
     }
+    // [v42] Strategic Heartbeat & Sync Monitor
+    const updateSyncHUD = (status: string, timestamp: Date) => {
+        const hud = document.querySelector('#sync-hud');
+        if (!hud) return;
+        
+        const timeStr = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const colorMap: Record<string, string> = {
+            'stable': '#3fb950',
+            'retrying': '#d29922',
+            'offline': '#f85149'
+        };
+        
+        const color = colorMap[status] || '#8b949e';
+        const label = status.toUpperCase();
+        
+        hud.innerHTML = `<span style="color: ${color}; margin-right: 4px;">●</span> SYNC: ${timeStr} (${label})`;
+    };
+
+    window.addEventListener('api-sync-status' as any, (e: CustomEvent) => {
+        updateSyncHUD(e.detail.status, e.detail.timestamp);
+    });
+
+    // Start Silent Heartbeat (10 minutes)
+    const startHeartbeat = () => {
+        console.log("[Antigravity] Initializing background tactical synchronization...");
+        setInterval(async () => {
+            console.log("[Antigravity] Background Sync Triggered...");
+            await fetchMe(); // Triggers silent refresh check in api.ts
+        }, 10 * 60 * 1000);
+    };
+    startHeartbeat();
+
     refreshWatchlist();
 
     // [v8.4] Strategic Tracking Integration
@@ -756,10 +789,10 @@ async function initDashboard() {
     });
 }
 
-// [v37] Global Auth Watchdog
+// [v37] Global Auth Watchdog - REDACTED REDIRECT for v42
 window.addEventListener('session-expired', () => {
-    console.warn("[Antigravity] Session definitively expired. Redirecting to login...");
-    renderLogin("Your session has expired for security. Please log in again.");
+    console.warn("[Antigravity] Session expired (Silent). Background refresh failed or guest period ended.");
+    // renderLogin("Your session has expired for security. Please log in again."); // Disabled to prevent page switches
 });
 
 // [v37] Visibility Watchdog: Stop polling/heartbeat when hidden, refresh on tab focus
