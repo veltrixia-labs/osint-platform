@@ -26,7 +26,7 @@ ALERT_COOLDOWN_HOURS = 12
 SEVERITY_CONFIG = {
     "critical": {"min_intensity": 8.0, "min_spike": 4.0, "min_domains": 8},
     "elevated": {"min_intensity": 6.0, "min_spike": 3.0, "min_domains": 5},
-    "watch":    {"min_intensity": 3.0, "min_spike": 0.0, "min_domains": 2} # Relaxed from 5.5/3
+    "watch":    {"min_intensity": 2.5, "min_spike": 0.0, "min_domains": 2} # Boosted signal (2.5) for release phase
 }
 
 class AlertManager:
@@ -68,10 +68,14 @@ class AlertManager:
             if not severity:
                 continue
 
-            # 3. Escalation-Aware Deduplication (Composite Key)
-            # Same target_label + topic + trigger_type + 12h cooldown
-            if await cls._is_suppressed(db, sig.target_label, sig.topic, display_trigger_type, severity):
+            # 3. Escalation & Intensification-Aware Deduplication
+            suppressed, is_spike, last_intensity = await cls._check_suppression(db, sig.target_label, sig.topic, display_trigger_type, severity, sig.intensity_score)
+            if suppressed:
                 continue
+
+            if is_spike:
+                display_trigger_type = f"{display_trigger_type} (🚨 INTENSITY SPIKE)"
+                logger.info(f"Intensification detected for {sig.target_label}: {last_intensity} -> {sig.intensity_score}")
 
             # 4. Intelligence Scoring (Phase 24)
             from jobs.alert_scoring import calculate_alert_score
@@ -250,32 +254,38 @@ class AlertManager:
         return domain_count, evidence_list
 
     @classmethod
-    async def _is_suppressed(cls, db, target_label: str, topic: str, trigger_type: str, new_severity: str) -> bool:
-        """Escalation-aware suppression logic using composite key."""
+    async def _check_suppression(cls, db, target_label: str, topic: str, trigger_type: str, new_severity: str, current_intensity: float) -> Tuple[bool, bool, float]:
+        """Escalation and intensification-aware suppression logic."""
         cooldown_threshold = datetime.now(timezone.utc) - timedelta(hours=ALERT_COOLDOWN_HOURS)
         
         # Find the most recent alert matching the composite key in the window
+        # We check both the base trigger_type and the spiked version
         stmt = select(AlertLog).where(
             AlertLog.target_label == target_label,
             AlertLog.topic == topic,
-            AlertLog.trigger_type == trigger_type,
             AlertLog.triggered_at >= cooldown_threshold
         ).order_by(AlertLog.triggered_at.desc()).limit(1)
         
         last_alert = (await db.execute(stmt)).scalar_one_or_none()
         if not last_alert:
-            return False # No previous alert for this event, not suppressed
+            return False, False, 0.0 # Not suppressed
             
         # Severity Order Map for comparison
         ORDER = {"watch": 1, "elevated": 2, "critical": 3}
         
-        # ESCALATION: Allow only if new severity is STRICTLY HIGHER than last severity
+        # 1. ESCALATION: Allow only if new severity is STRICTLY HIGHER than last severity
         if ORDER[new_severity] > ORDER.get(last_alert.severity, 0):
             logger.info(f"Escalating alert for {target_label} ({topic}): {last_alert.severity} -> {new_severity}")
-            return False # Allow escalation
+            return False, False, last_alert.intensity
+
+        # 2. INTENSIFICATION: Allow if intensity increased by 1.5x
+        last_intensity = last_alert.intensity or 0.0
+        if current_intensity > (last_intensity * 1.5) and current_intensity > 2.0:
+            logger.info(f"Intensifying alert for {target_label}: {last_intensity} -> {current_intensity}")
+            return False, True, last_intensity
             
         logger.info(f"Alert suppressed for {target_label} ({topic}): Already issued {last_alert.severity} within cooldown.")
-        return True # Same or lower severity, suppress
+        return True, False, last_intensity
 
     @classmethod
     async def _get_latest_report_link(cls, db, sig: TrendSignal) -> Tuple[Optional[uuid.UUID], Optional[str]]:

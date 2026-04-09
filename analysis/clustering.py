@@ -2,8 +2,10 @@ import logging
 import re
 from typing import List, Dict, Set, Any
 from collections import Counter
-from datetime import datetime, timezone
+from sqlalchemy import select, desc, func
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timezone, timedelta
 from db.models import Item, EventCluster
 import uuid
 
@@ -237,10 +239,16 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
 
     metrics["cluster_confidence_avg"] = conf_sum / len([c for c in clusters if len(c) > 1]) if any(len(c) > 1 for c in clusters) else 0
 
-    # 3. Filter and Persist to DB
-    # Phase 27: Emergency Write Reduction
-    # - Only keep clusters with at least 2 articles (reduces noise/volume)
-    # - Hard cap at Top 50 clusters by avg_signal_score per run
+    # 3. Filter and Persist to DB with 2-Stage Reconciliation
+    # Phase 27.2: Reconciliation Logic
+    # 1. Fetch existing clusters from the last 24 hours
+    limit_24h = datetime.now(timezone.utc) - timedelta(hours=24)
+    stmt_24h = select(EventCluster).where(EventCluster.created_at >= limit_24h).order_by(desc(EventCluster.created_at))
+    existing_clusters = (await db.execute(stmt_24h)).scalars().all()
+    
+    # 2. Divide existing into 1h (Fast Path) and 24h (Deep Path)
+    limit_1h = datetime.now(timezone.utc) - timedelta(hours=1)
+    recent_1h = [c for c in existing_clusters if c.created_at >= limit_1h]
     
     valid_clusters = []
     for cluster in clusters:
@@ -254,6 +262,39 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
     
     for avg_score, cluster in top_clusters:
         rep_item = cluster[0]
+        
+        # Reconciliation: Check if a similar cluster already exists
+        matched_cluster = None
+        
+        # Stage 1: Fast Path (Last 1h)
+        for ec_existing in recent_1h:
+            sim = calculate_similarity(tokenize(rep_item.title), tokenize(ec_existing.representative_title))
+            if sim >= 0.75: # High confidence match
+                matched_cluster = ec_existing
+                break
+        
+        # Stage 2: Deep Path (Last 24h, skip if matched in Stage 1)
+        if not matched_cluster:
+            for ec_existing in existing_clusters:
+                if ec_existing in recent_1h: continue # Guard
+                sim = calculate_similarity(tokenize(rep_item.title), tokenize(ec_existing.representative_title))
+                if sim >= 0.75:
+                    matched_cluster = ec_existing
+                    break
+
+        if matched_cluster:
+            # Update Existing Cluster
+            logger.info(f"Reconciling items to existing cluster: {matched_cluster.id} ({matched_cluster.representative_title})")
+            matched_cluster.article_count += len(cluster)
+            # Weighted average for score update? Simple update for now
+            matched_cluster.avg_signal_score = (matched_cluster.avg_signal_score + avg_score) / 2
+            
+            # Update items to point to existing cluster
+            for item in cluster:
+                item.cluster_id = matched_cluster.id
+            continue
+
+        # Else: Create New Cluster
         # ... (rest of the persistence logic stays same, using avg_score)
         
         # 3.1 Calculate Temporal Span

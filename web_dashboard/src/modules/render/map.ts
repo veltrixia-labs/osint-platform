@@ -376,7 +376,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
             const nodeCoords = getNodeCoords(finding);
             if (!nodeCoords) return;
 
-            const isLocked = finding.is_locked || false;
+            // const isLocked = finding.is_locked || false; // Disabled for Dev Release
             const pathColor = finding.impact_alpha < 0 ? '#f43f5e' : '#10b981';
 
             // Arc Path Calculation
@@ -408,7 +408,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 className: `propagation-arc-curved`,
                 color: pathColor,
                 weight: Math.max(1, (baseIntensity / 4) * (1.2 - (level-1)*0.3)),
-                opacity: isLocked ? 0.1 : 0.6,
+                opacity: 0.6,
                 smoothFactor: 1.5,
                 interactive: false
             }).addTo(layer);
@@ -468,7 +468,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 }
 
                 const subImpacts = finding.cascading_impacts || finding.metadata_json?.cascading_impacts;
-                if (subImpacts && level < 3 && !isLocked) {
+                if (subImpacts && level < 3) {
                     renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity);
                 }
             }, levelDelay);

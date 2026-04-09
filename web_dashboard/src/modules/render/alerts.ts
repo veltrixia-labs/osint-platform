@@ -66,7 +66,6 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         const accessible = canAccessTopic(userTier, topicDef);
         const severityClass = alert.severity.toLowerCase();
         const date = new Date(alert.triggered_at);
-        const isLocked = alert.is_locked === true;
 
         const displayDate = isNaN(date.getTime()) ? 'Recent' : date.toLocaleString(undefined, {
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -75,24 +74,9 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         const triggerLabel = (alert.trigger_type || 'Pattern').replace(/_/g, ' ').toUpperCase();
         const hasReport = !!alert.related_report_id;
 
-        // [v50] Unified Mosaic Gating UI
+        // [v50] Unified Mosaic Gating UI - DISABLED for Dev Release
         const cardContent = `
-            ${isLocked ? `
-                <div class="vlt-mosaic-mask">
-                    <div class="vlt-lock-icon">🔒</div>
-                    <div class="vlt-gating-title">Forensic Intelligence Restricted</div>
-                    <div class="vlt-gating-text">
-                        Detailed analysis and <span style="color:#58a6ff; font-weight:600;">Real-time Email Notifications</span> for this domain require an active Analyst Account.
-                    </div>
-                    <button class="vlt-mosaic-cta trigger-login-btn">
-                        <span>Sign Up for Email Alerts</span>
-                    </button>
-                    <div style="font-size: 0.7rem; color: #8b949e; margin-top: 1rem; opacity: 0.6;">
-                        Topic: ${topicDef.label} | Tier: ${topicDef.minTier.toUpperCase()}
-                    </div>
-                </div>
-            ` : ''}
-            <div class="alert-header u-flex-between" style="${isLocked ? 'filter: blur(8px); pointer-events:none; opacity: 0.3;' : ''}">
+            <div class="alert-header u-flex-between">
                 <div class="u-flex" style="flex-wrap: wrap; row-gap: 0.5rem;">
                     <span class="severity-badge">${alert.severity}</span>
                     <span class="watchlist-tag">
@@ -102,11 +86,11 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 </div>
                 <div class="u-text-right">
                     <div style="font-size: var(--font-xs); color:#8b949e;">Intelligence Priority</div>
-                    <div class="intel-score">${!isLocked ? (alert.intelligence_score || 0).toFixed(2) : '•.••'}</div>
+                    <div class="intel-score">${(alert.intelligence_score || 0).toFixed(2)}</div>
                 </div>
             </div>
             
-            <div class="alert-body" style="${isLocked ? 'filter: blur(8px); pointer-events:none; opacity: 0.3;' : ''}">
+            <div class="alert-body">
                 <h3 style="color: #58a6ff; line-height: 1.4; margin-bottom: 0.25rem;">${alert.target_label || 'Unknown Signal'}</h3>
                 ${!accessible ? `
                     <div style="font-size: var(--font-xs); color: ${topicDef.color}; opacity: 0.9; margin-bottom: 0.75rem; font-weight: 500;">
@@ -118,29 +102,29 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
                     <div>
                         <h4>Risk Momentum</h4>
-                        <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${!isLocked ? (formatIntensity(alert.intensity) || '•.••') : '•.••'}</div>
+                        <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${formatIntensity(alert.intensity) || '•.••'}</div>
                     </div>
                     <div>
                         <h4>Evidence</h4>
-                        <div class="evidence-trigger-btn u-m-top-1" style="color:#58a6ff; background:var(--accent-soft); padding:4px 12px; border-radius:6px; display:inline-block; border:1px solid var(--border-active); font-size: var(--font-s); cursor: ${!isLocked ? 'pointer' : 'not-allowed'};">
-                            🔍 ${!isLocked ? (alert.domain_count || 0) : '•'} Domains
+                        <div class="evidence-trigger-btn u-m-top-1" style="color:#58a6ff; background:var(--accent-soft); padding:4px 12px; border-radius:6px; display:inline-block; border:1px solid var(--border-active); font-size: var(--font-s); cursor: pointer;">
+                            🔍 ${alert.domain_count || 0} Domains
                         </div>
                     </div>
                     <div>
                         <h4>Confidence</h4>
-                        <div style="font-size:var(--font-m); color:${!isLocked && (alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
-                            ${!isLocked ? ((alert.spike_delta || 0) > 0 ? '↑' : '') + (alert.spike_delta || 0).toFixed(1) : '•.••'}
+                        <div style="font-size:var(--font-m); color:${(alert.spike_delta || 0) > 0 ? '#3fb950' : '#8b949e'}; font-weight:600;">
+                            ${((alert.spike_delta || 0) > 0 ? '↑' : '') + (alert.spike_delta || 0).toFixed(1)}
                         </div>
                     </div>
                     ${hasReport ? `
                     <div style="display:flex; align-items:flex-end;">
-                        <button class="btn-fb active view-report-btn u-w-full ${isLocked ? 'btn--locked' : ''}">
-                            ${!isLocked ? 'View Analysis' : 'Report Locked'}
+                        <button class="btn-fb active view-report-btn u-w-full">
+                            View Analysis
                         </button>
                     </div>
                     ` : `
                     <div style="font-size:var(--font-xs); color:#8b949e; display:flex; align-items:flex-end; opacity:0.6; font-style: italic;">
-                        ${!isLocked ? 'Report not available yet' : 'Upgrade Required'}
+                        Report not available yet
                     </div>
                     `}
                 </div>

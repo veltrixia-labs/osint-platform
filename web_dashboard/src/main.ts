@@ -226,6 +226,7 @@ async function initDashboard() {
           <span style="opacity:0.5;">|</span>
           <span style="font-size:0.8rem; color:var(--text-secondary);">LABS</span>
         </div>
+        <div class="dev-mode-badge" style="margin-left:auto; margin-right:1rem; position:static;">Dev Mode: Unlocked</div>
         <button class="hamburger" id="mobile-menu-btn">☰</button>
       </div>
 
