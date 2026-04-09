@@ -2460,9 +2460,10 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #000;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+    background: var(--ring-color, #000); /* Use sector color as primary dot color */
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 10px var(--ring-color, rgba(0,0,0,0.5)), 0 4px 12px rgba(0,0,0,0.8);
+    transition: transform 0.2s;
 }
 
 .marker-ring-tactical .glow-ring {
