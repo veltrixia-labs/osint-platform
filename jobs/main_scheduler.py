@@ -16,7 +16,6 @@ from jobs.trend_analyze_job import run_trend_analysis
 from jobs.alert_manager import run_alert_manager
 from jobs.threads_publisher_job import run_threads_publisher
 from jobs.learning_loop import run_learning_job
-from scripts.backfill_reports import backfill_reports
 from jobs.cleanup_job import (
     run_alert_cleanup, run_retention_cleanup, run_db_size_check, 
     enforce_metadata_limits, audit_metadata_sizes, update_system_metric, 
@@ -186,8 +185,6 @@ async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""
     logger.info("Triggering IMMEDIATE startup checks...")
     async with AsyncSessionLocal() as session:
-        await backfill_reports(session)
-        
         # Force an immediate pipeline run
         await pipeline_full_processing()
         
