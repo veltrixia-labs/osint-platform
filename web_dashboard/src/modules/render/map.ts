@@ -94,13 +94,35 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             showCoverageOnHover: false,
             maxClusterRadius: 60,
             iconCreateFunction: function(cluster: any) {
-                const count = cluster.getChildCount();
-                let sizeClass = 'small';
-                if (count > 20) sizeClass = 'medium';
-                if (count > 100) sizeClass = 'large';
+                const markers = cluster.getAllChildMarkers();
+                const total = markers.length;
+                const topicCounts: Record<string, number> = {};
+
+                markers.forEach((m: any) => {
+                    const alert = m.options.alertData as Alert;
+                    const topic = alert?.topic || 'global';
+                    topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+                });
+
+                const sortedTopics = Object.keys(topicCounts).sort((a, b) => topicCounts[b] - topicCounts[a]);
+                let gradientString = 'conic-gradient(';
+                let currentPct = 0;
+                
+                sortedTopics.forEach((topic, idx) => {
+                    const topicDef = getTopicDef(topic);
+                    const color = topicDef?.color || '#58a6ff';
+                    const pct = (topicCounts[topic] / total) * 100;
+                    gradientString += `${color} ${currentPct}% ${currentPct + pct}%`;
+                    currentPct += pct;
+                    if (idx < sortedTopics.length - 1) gradientString += ', ';
+                });
+                gradientString += ')';
+
                 return L.divIcon({
-                    html: `<div><span>${count}</span></div>`,
-                    className: `marker-cluster marker-cluster-${sizeClass}`,
+                    html: `<div style="background: ${gradientString}; border-radius: 50%; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.25);">
+                             <span style="color: #fff; font-weight: 800; font-size: 13px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${total}</span>
+                           </div>`,
+                    className: `marker-cluster marker-cluster-pie`,
                     iconSize: [40, 40]
                 });
             }
@@ -181,7 +203,10 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                     iconAnchor: [baseSize/2, baseSize/2]
                 });
 
-                const marker = L.marker([coords.lat, coords.lng], { icon: markerIcon });
+                const marker = L.marker([coords.lat, coords.lng], { 
+                    icon: markerIcon,
+                    alertData: alert 
+                } as any);
                 marker.bindPopup(createTacticalPopup(alert, topicColor), { className: 'tactical-popup', maxWidth: 320 });
                 clusterLayer?.addLayer(marker);
             });
@@ -312,7 +337,7 @@ function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert) {
         map.once('moveend', () => {
             marker.openPopup();
             if (cascadingImpacts.length > 0) {
-                renderImpactChain(map, layer, coords, cascadingImpacts, 1, intensity);
+                renderImpactChain(map, layer, coords, cascadingImpacts, 1, intensity, alert);
             }
         });
     }, 300);
@@ -354,8 +379,8 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
                 </div>
             </div>
             <div class="tactical-card-footer">
-                <button class="tactical-action-btn" onclick="window.dispatchEvent(new CustomEvent('map-view-report', {detail: {id: '${alert.id}'}}))">
-                    View Report
+                <button class="tactical-action-btn" onclick="window.dispatchEvent(new CustomEvent('map-view-report', {detail: {id: '${alert.related_report_id || alert.id}'}}))">
+                    View Full Analysis
                 </button>
                 <div class="tactical-version-tag">V1.6 HUD</div>
             </div>
@@ -366,7 +391,7 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
 // ── Deprecated Sub-Renderers ────────────────────────────────────────────────
 // renderRegionalContext removed in v1.6 (Clustering and Split-View implemented)
 
-function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number) {
+function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number, originalAlert: Alert) {
     if (level > 3 || !impacts) return;
 
     const levelDelay = 1200; 
@@ -461,6 +486,11 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                                 <p style="font-size:0.75rem; color:#8b949e; line-height:1.4;">
                                     Strategic dependency confirmed. This entity is currently being monitored for second-order volatility risks.
                                 </p>
+                                ${originalAlert.related_report_id ? `
+                                    <button class="tactical-action-btn u-m-top-1" style="width:100%;" onclick="window.dispatchEvent(new CustomEvent('map-view-report', {detail: {id: '${originalAlert.related_report_id}'}}))">
+                                        Open Full Analysis &rarr;
+                                    </button>
+                                ` : ''}
                             </div>
                         </div>
                     `;
@@ -469,7 +499,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
 
                 const subImpacts = finding.cascading_impacts || finding.metadata_json?.cascading_impacts;
                 if (subImpacts && level < 3) {
-                    renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity);
+                    renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity, originalAlert);
                 }
             }, levelDelay);
 
