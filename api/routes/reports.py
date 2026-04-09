@@ -28,8 +28,8 @@ async def get_report_detail(
     current_user: Optional[tuple] = Depends(get_optional_current_user)
 ):
     """Retrieve a specific report by ID (Strict Plan Gating for logged-in and guests)."""
-    # current_user is (user, session_id, version) or None
-    user = current_user[0] if current_user else None
+    # current_user is AnalystProfile | None (Phase 35 Alignment)
+    user = current_user
     user_role = user.user_role if user else "guest"
     stmt = select(Report).where(Report.id == report_id)
     report = (await db.execute(stmt)).scalar_one_or_none()
@@ -37,7 +37,6 @@ async def get_report_detail(
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
-    user, _, _ = current_user
     tier = await get_effective_tier(user)
 
     # ── Strict Plan Gating ────────────────────────────────────────────────

@@ -313,22 +313,8 @@ async def handle_threads_autopost(db: AsyncSession, report_id: uuid.UUID, teaser
         # We don't bubble this up to avoid breaking the analysis job
 
 async def _should_generate_report_for_system(db: AsyncSession, report_type: str) -> bool:
-    """Determine if a report should be generated based on active user subscription tiers."""
-    if report_type not in ["monthly", "specialized"]:
-        return True # Default reports are generated for everyone
-    
-    from db.models import AnalystProfile
-    stmt = select(AnalystProfile).where(AnalystProfile.is_active == True)
-    analysts = (await db.execute(stmt)).scalars().all()
-    
-    for a in analysts:
-        tier = await get_effective_tier(a)
-        if report_type == "monthly" and tier in [TIER_PRO, TIER_ENTERPRISE]:
-            return True
-        if report_type == "specialized" and tier == TIER_ENTERPRISE:
-            return True
-            
-    return False
+    """[Dev Phase Override] Always allow generation to verify system functionality."""
+    return True
 
 async def run_report_generation(
     db: AsyncSession,
@@ -401,12 +387,19 @@ async def run_report_generation(
         items = filtered[:10]
 
     # 2. Advanced Analysis (Clustering & Context)
-    clusters, clustering_metrics = cluster_items(items)
+    clustering_metrics = await cluster_items(db, items)
+    
+    # Extract clusters from the returned metrics (or fetch refined clusters from DB)
+    from db.models import EventCluster
+    stmt_clusters = select(EventCluster).where(EventCluster.created_at >= now - timedelta(hours=1))
+    clusters = (await db.execute(stmt_clusters)).scalars().all()
     avg_score = 0.8 # Default baseline
     
     cluster_context_list = []
     for c in clusters:
-        cluster_context_list.append(f"CLUSTER: {c.representative_title} (Docs: {c.source_count})\n- Summary: {c.narrative_summary}")
+        # Use representative title and keywords from summary_data for context (Phase 35)
+        keywords = ", ".join(c.summary_data.get("keywords", [])) if c.summary_data else ""
+        cluster_context_list.append(f"CLUSTER: {c.representative_title} (Docs: {c.source_count})\n- Focus: {keywords}")
     cluster_context_str = "\n\n".join(cluster_context_list) if cluster_context_list else "No significant clusters identified."
 
     # 3. Themes & Trends
@@ -434,7 +427,11 @@ async def run_report_generation(
         trend_context_list.append(explained)
         
         if t.trend_type == "risk_pattern":
-            skeleton_trends["patterns"].append({"label": t.target_label, "intensity": t.intensity_score})
+            skeleton_trends["patterns"].append({
+                "label": t.target_label, 
+                "intensity": t.intensity_score,
+                "description": t.description or "Evolution of observed signals suggests a sustained risk pattern."
+            })
         elif t.trend_type == "sustained_event":
             skeleton_trends["persistent"].append(explained)
         else:
