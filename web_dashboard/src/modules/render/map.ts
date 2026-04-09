@@ -119,10 +119,12 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                 gradientString += ')';
 
                 return L.divIcon({
-                    html: `<div style="background: ${gradientString}; border-radius: 50%; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,255,255,0.25);">
-                             <span style="color: #fff; font-weight: 800; font-size: 13px; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">${total}</span>
-                           </div>`,
-                    className: `marker-cluster marker-cluster-pie`,
+                    html: `
+                        <div class="marker-cluster-base" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(13, 17, 23, 0.85); backdrop-filter: blur(4px); border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.2); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                            <span style="color: #fff; font-weight: 800; font-size: 13px;">${total}</span>
+                        </div>
+                    `,
+                    className: `marker-cluster marker-cluster-refined`,
                     iconSize: [40, 40]
                 });
             }
