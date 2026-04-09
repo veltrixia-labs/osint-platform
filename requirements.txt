@@ -45,3 +45,5 @@ argon2-cffi
 redis
 PyYAML
 aiohttp
+matplotlib
+numpy
