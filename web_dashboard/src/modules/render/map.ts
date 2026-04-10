@@ -60,7 +60,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
 
     // 2. Initial Setup: Create Persistent Map Canvas
     if (!currentGlobalMap) {
-        container.innerHTML = '<div id="map-instance" style="height:100%; width:100%; min-height:500px; background:#0b0e14;"></div>';
+        container.innerHTML = '<div id="map-instance" style="height:100%; width:100%; min-height:500px; background:#09111f;"></div>';
         await new Promise(r => setTimeout(r, 100));
         
         const mapElement = document.getElementById('map-instance');
@@ -179,10 +179,10 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             return;
         }
 
-        // [v8.8] Dynamic Strategy: Fetch all non-suppressed alerts from the last 24h
+        // [v8.9] Dynamic Strategy: Fetch all alerts from the last 24h (Maximum Visibility)
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         const [alerts] = await Promise.all([
-            fetchAlerts({ since: twentyFourHoursAgo, limit: '500', suppressed: 'false' })
+            fetchAlerts({ since: twentyFourHoursAgo, limit: '500' })
         ]);
         
         // --- Mode Logic Integration (v1.6) ---

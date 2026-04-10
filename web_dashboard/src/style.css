@@ -2998,3 +2998,36 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     max-width: 280px;
 }
 
+/* ── Navy Tactical Map Engineering (v9.3) ────────────────────────────────── */
+
+#map-instance {
+    background: #09111f !important; /* Deep Navy Background */
+}
+
+.map-tactical-imagery-v2 {
+    /* Land/Sea Contrast Filter: Shifts gray toward Navy while boosting contrast */
+    filter: brightness(0.65) contrast(1.4) hue-rotate(200deg) saturate(1.4) !important;
+}
+
+.map-labels-tactical {
+    /* Crisp Tactical Labels */
+    filter: invert(1) brightness(0.8) contrast(1.2) !important;
+    opacity: 0.7 !important;
+}
+
+/* Strategic Asset Glow (Stability Fix) */
+.marker-ring-tactical {
+    box-shadow: 0 0 15px var(--ring-color), 0 0 5px rgba(255,255,255,0.3);
+    z-index: 500;
+}
+
+.marker-ring-tactical:hover {
+    transform: scale(1.3);
+    filter: brightness(1.2);
+    z-index: 1000;
+}
+
+.leaflet-tile-pane {
+    background: #09111f;
+}
+
