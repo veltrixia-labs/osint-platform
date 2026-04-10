@@ -3006,5 +3006,83 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 .leaflet-tile-pane {
     background: #0d1117;
+    transition: filter 0.5s ease;
 }
+
+/* [v10.6] Tactical Animation Engine (Signal Flow & Mesh Ripples) */
+
+.strategic-focal-active .leaflet-tile-pane {
+    filter: brightness(0.4) saturate(0.5); /* Dim map for maximum signal contrast */
+}
+
+/* 1. Curved Propagation Arcs */
+.propagation-arc-curved {
+    stroke-dasharray: 10, 10;
+    stroke-linecap: round;
+    animation: signal-flow 4s linear infinite;
+    filter: drop-shadow(0 0 4px var(--ring-color, #58a6ff));
+}
+
+@keyframes signal-flow {
+    from { stroke-dashoffset: 200; }
+    to { stroke-dashoffset: 0; }
+}
+
+/* 2. Tactical Mesh Ripple (Abstract Impacts) */
+.tactical-mesh-pulse {
+    position: relative;
+    pointer-events: none;
+}
+
+.tactical-mesh-pulse .pulse-ring {
+    position: absolute;
+    width: var(--ripple-size);
+    height: var(--ripple-size);
+    left: calc(var(--ripple-size) / -2);
+    top: calc(var(--ripple-size) / -2);
+    border: 2px solid var(--ripple-color);
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0.1);
+    animation: ripple-out var(--ripple-duration) ease-out forwards;
+}
+
+@keyframes ripple-out {
+    0% {
+        transform: scale(0.1);
+        opacity: 0.8;
+        border-width: 4px;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0;
+        border-width: 1px;
+    }
+}
+
+/* 3. Node Ignition Glow (Impact Points) */
+.node-ignite {
+    animation: ignite 1s ease-out forwards;
+}
+
+@keyframes ignite {
+    0% {
+        transform: scale(0.5);
+        filter: brightness(3) blur(2px);
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1) blur(0px);
+    }
+}
+
+.marker-ring-tactical {
+    box-shadow: 0 0 15px var(--ring-color), 0 0 5px rgba(255,255,255,0.3);
+    border-radius: 50%;
+    z-index: 500;
+}
+
+.marker-ring-tactical--l1 { --ring-color: #58a6ff; }
+.marker-ring-tactical--l2 { --ring-color: #d29922; }
+.marker-ring-tactical--l3 { --ring-color: #f78166; }
 

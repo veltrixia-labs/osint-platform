@@ -491,7 +491,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 points.push(L.latLng(lat, lng));
             }
 
-            L.polyline(points, {
+            const arc = L.polyline(points, {
                 className: `propagation-arc-curved`,
                 color: pathColor,
                 weight: Math.max(1, (baseIntensity / 4) * (1.2 - (level-1)*0.3)),
@@ -499,6 +499,12 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 smoothFactor: 1.5,
                 interactive: false
             }).addTo(layer);
+
+            // [v10.6] Sync CSS Variable to SVG element for glow effect
+            setTimeout(() => {
+                const el = arc.getElement() as HTMLElement;
+                if (el) el.style.setProperty('--ring-color', pathColor);
+            }, 0);
 
             if (level === 1) {
                 const centerPoint = L.latLng((start.lat + end.lat)/2, (start.lng + end.lng)/2);
