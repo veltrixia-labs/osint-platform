@@ -72,7 +72,6 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         });
         
         const triggerLabel = (alert.trigger_type || 'Pattern').replace(/_/g, ' ').toUpperCase();
-        const hasReport = !!alert.related_report_id;
 
         // [v50] Unified Mosaic Gating UI - DISABLED for Dev Release
         const cardContent = `
@@ -116,17 +115,11 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                             ${((alert.spike_delta || 0) > 0 ? '↑' : '') + (alert.spike_delta || 0).toFixed(1)}
                         </div>
                     </div>
-                    ${hasReport ? `
                     <div style="display:flex; align-items:flex-end;">
-                        <button class="btn-fb active view-report-btn u-w-full">
-                            View Analysis
-                        </button>
+                        <a href="#" class="map-track-link" data-id="${alert.id}" style="color: var(--accent); font-size: var(--font-s); text-decoration: none; font-weight: 600; border-bottom: 1px solid transparent; transition: all 0.2s;" onmouseover="this.style.borderBottom='1px solid var(--accent)'" onmouseout="this.style.borderBottom='1px solid transparent'">
+                            Visualize & Track on Global Map —
+                        </a>
                     </div>
-                    ` : `
-                    <div style="font-size:var(--font-xs); color:#8b949e; display:flex; align-items:flex-end; opacity:0.6; font-style: italic;">
-                        Report not available yet
-                    </div>
-                    `}
                 </div>
                 
                 ${accessible ? `
@@ -234,16 +227,17 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         });
     });
 
-    // Attach Map Focus events (Exclusive to the visualize link)
-    container.querySelectorAll('.map-viz-link').forEach(link => {
+    // [v10.1] Tactical Map Optimization: Visualize & Track
+    container.querySelectorAll('.map-track-link').forEach(link => {
         link.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
             const el = e.currentTarget as HTMLElement;
-            const alertId = el.dataset.id;
-            console.log(`[Antigravity] Visualize Link Clicked: ID = ${alertId}`);
-            if (alertId) {
-                (window as any)._mapTriggerTimestamp = Date.now();
-                window.dispatchEvent(new CustomEvent('focus-map', { detail: { alertId } }));
+            const id = el.dataset.id;
+            console.log(`[Antigravity] Visualize Link Clicked: ID = ${id}`);
+            if (id) {
+                // [v10.1] main.ts listens for map-track-alert to switch tabs and focus
+                window.dispatchEvent(new CustomEvent('map-track-alert', { detail: { id } }));
             }
         });
     });

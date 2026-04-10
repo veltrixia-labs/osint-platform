@@ -367,6 +367,8 @@ function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert) {
 function createTacticalPopup(alert: Alert, color: string, detailed = false): string {
     const geography = (alert as any).country || 'GLOBAL EVENT';
     const description = (alert as any).description || alert.target_label;
+    const evidence = alert.evidence_list || (alert.metadata_json as any)?.evidence_list;
+    const sourceUrl = evidence?.[0]?.url || '#';
     const cascadingImpacts = alert.metadata_json?.cascading_impacts || [];
 
     return `
@@ -378,7 +380,9 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
             </div>
             <div class="tactical-card-body">
                 <div class="tactical-card-summary">
-                    ${description}
+                    <a href="${sourceUrl}" target="_blank" style="color: inherit; text-decoration: none; display: block; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1.0'">
+                        ${description}
+                    </a>
                 </div>
                 
                 ${detailed && cascadingImpacts.length > 0 ? `
