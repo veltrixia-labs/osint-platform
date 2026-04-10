@@ -77,14 +77,18 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             worldCopyJump: true
         }).setView([20, 0], 2);
 
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Esri',
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20,
             className: 'map-tactical-imagery-v2'
         }).addTo(currentGlobalMap);
 
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+            subdomains: 'abcd',
+            maxZoom: 20,
             className: 'map-labels-tactical',
-            opacity: 0.6
+            opacity: 0.8
         }).addTo(currentGlobalMap);
 
         L.control.zoom({ position: 'bottomright' }).addTo(currentGlobalMap);

@@ -2998,21 +2998,11 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     max-width: 280px;
 }
 
-/* ── Navy Tactical Map Engineering (v9.3) ────────────────────────────────── */
+
+/* ── Tactical Map Architecture (v9.5 - CartoDB Dark Matter) ────────────────── */
 
 #map-instance {
-    background: #09111f !important; /* Deep Navy Background */
-}
-
-.map-tactical-imagery-v2 {
-    /* Land/Sea Contrast Filter: Shifts gray toward Navy while boosting contrast */
-    filter: brightness(0.65) contrast(1.4) hue-rotate(200deg) saturate(1.4) !important;
-}
-
-.map-labels-tactical {
-    /* Crisp Tactical Labels */
-    filter: invert(1) brightness(0.8) contrast(1.2) !important;
-    opacity: 0.7 !important;
+    background: #0d1117 !important; /* Matches Platform Dark Theme */
 }
 
 /* Strategic Asset Glow (Stability Fix) */
@@ -3028,6 +3018,6 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 }
 
 .leaflet-tile-pane {
-    background: #09111f;
+    background: #0d1117;
 }
 
