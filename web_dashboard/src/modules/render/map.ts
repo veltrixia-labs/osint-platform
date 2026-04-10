@@ -77,18 +77,16 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             worldCopyJump: true
         }).setView([20, 0], 2);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: 'abcd',
-            maxZoom: 20,
-            className: 'map-tactical-imagery-v2'
+            maxZoom: 20
         }).addTo(currentGlobalMap);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png', {
             subdomains: 'abcd',
             maxZoom: 20,
-            className: 'map-labels-tactical',
-            opacity: 0.8
+            opacity: 0.9
         }).addTo(currentGlobalMap);
 
         L.control.zoom({ position: 'bottomright' }).addTo(currentGlobalMap);

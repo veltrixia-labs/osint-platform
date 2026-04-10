@@ -2368,28 +2368,15 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 
 /* --- [Phase 8.1/8.2/8.3] Tactical HUD & Global Map Redesign --- */
 
+/* [v9.6] Clean Tactical Baselayer (No Legacy Filters) */
 #map-instance {
-    background: #0b0e14 !important; /* Midnight Tactical Base */
+    background: #0d1117 !important; 
 }
-
-/* [v8.4] Reverted to Midnight Military Gray Grayscale Imagery */
 .map-tactical-imagery-v2 {
-    filter: grayscale(1) brightness(0.55) contrast(1.2) sepia(0.05);
-    transition: filter 0.8s ease;
+    transition: filter 0.5s ease;
 }
-
-/* [v8.4] Strategic Focal Active (Dedicated Overlay Suppression) */
-#map-instance.strategic-focal-active .map-tactical-imagery-v2 {
-    filter: grayscale(1) brightness(0.3) blur(2px); /* Deep suppression during analysis */
-}
-
-#map-instance.strategic-focal-active .map-labels-tactical {
-    opacity: 0.1 !important;
-}
-
 .map-labels-tactical {
-    filter: brightness(1.4) contrast(1.1) saturate(0);
-    opacity: 0.85 !important;
+    opacity: 0.9 !important;
 }
 
 /* Tactical HUD Badge */
