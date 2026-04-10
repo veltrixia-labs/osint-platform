@@ -86,6 +86,15 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             opacity: 0.9
         }).addTo(currentGlobalMap);
 
+        // [v10.6] Dedicated Tactical Overlay Pane
+        // Forced to top-layer (Z:650) to ensure animations are never hidden by labels or clusters.
+        currentGlobalMap.createPane('vlt-tactical-pane');
+        const tacticalPane = currentGlobalMap.getPane('vlt-tactical-pane');
+        if (tacticalPane) {
+            tacticalPane.style.zIndex = '650';
+            tacticalPane.style.pointerEvents = 'none';
+        }
+
         L.control.zoom({ position: 'bottomright' }).addTo(currentGlobalMap);
         currentDynamicLayer = L.layerGroup().addTo(currentGlobalMap);
         
@@ -428,7 +437,11 @@ function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, c
         iconAnchor: [size/2, size/2]
     });
 
-    const marker = L.marker(latLng, { icon, interactive: false }).addTo(layer);
+    const marker = L.marker(latLng, { 
+        icon, 
+        interactive: false,
+        pane: 'vlt-tactical-pane' 
+    }).addTo(layer);
     setTimeout(() => {
         if (layer.hasLayer(marker)) layer.removeLayer(marker);
     }, duration);
@@ -461,54 +474,57 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
             const pathColor = finding.impact_alpha < 0 ? '#f43f5e' : '#10b981';
 
             // [v10.5] Tactical Mesh Fallback: If no coordinates, render a ripple at origin
+            // Fix [v10.7]: Remove early return to allow recursion to continue for abstract alerts.
             if (!nodeCoords) {
                 renderTacticalRipple(layer, L.latLng(parentCoords.lat, parentCoords.lng), pathColor, level);
-                return;
-            }
+                // We proceed even if nodeCoords is missing, using parentCoords as the next origin.
+                nodeCoords = { lat: parentCoords.lat, lng: parentCoords.lng, source: 'Abstract-Carryover' };
+            } else {
+                // Arc Path Calculation (Only if real destination exists)
+                const start = L.latLng(parentCoords.lat, parentCoords.lng);
+                const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
+                const points: L.LatLng[] = [];
+                const steps = 100;
+                
+                const dLat = end.lat - start.lat;
+                const dLng = end.lng - start.lng;
+                const dist = Math.sqrt(dLat*dLat + dLng*dLng);
+                
+                const heightAttenuation = 1.0 - (level - 1) * 0.2; 
+                const offsetFactor = (0.15 + (Math.min(dist, 40) / 200)) * heightAttenuation + (index % 2 === 0 ? 0.05 : -0.05);
 
-            // Arc Path Calculation
-            const start = L.latLng(parentCoords.lat, parentCoords.lng);
-            const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
-            const points: L.LatLng[] = [];
-             const steps = 100;
-            
-            const dLat = end.lat - start.lat;
-            const dLng = end.lng - start.lng;
-            const dist = Math.sqrt(dLat*dLat + dLng*dLng);
-            
-            const heightAttenuation = 1.0 - (level - 1) * 0.2; 
-            const offsetFactor = (0.15 + (Math.min(dist, 40) / 200)) * heightAttenuation + (index % 2 === 0 ? 0.05 : -0.05);
+                const midLat = (start.lat + end.lat) / 2;
+                const midLng = (start.lng + end.lng) / 2;
+                const cpLat = midLat - dLng * offsetFactor;
+                const cpLng = midLng + dLat * offsetFactor;
 
-            const midLat = (start.lat + end.lat) / 2;
-            const midLng = (start.lng + end.lng) / 2;
-            const cpLat = midLat - dLng * offsetFactor;
-            const cpLng = midLng + dLat * offsetFactor;
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    const lat = (1-t)**2 * start.lat + 2*(1-t)*t * cpLat + t**2 * end.lat;
+                    const lng = (1-t)**2 * start.lng + 2*(1-t)*t * cpLng + t**2 * end.lng;
+                    points.push(L.latLng(lat, lng));
+                }
 
-            for (let i = 0; i <= steps; i++) {
-                const t = i / steps;
-                const lat = (1-t)**2 * start.lat + 2*(1-t)*t * cpLat + t**2 * end.lat;
-                const lng = (1-t)**2 * start.lng + 2*(1-t)*t * cpLng + t**2 * end.lng;
-                points.push(L.latLng(lat, lng));
-            }
+                const arc = L.polyline(points, {
+                    className: `propagation-arc-curved`,
+                    color: pathColor,
+                    weight: 2.5, // [v10.7] High-visibility constant weight
+                    opacity: 0.8,
+                    smoothFactor: 1.5,
+                    interactive: false,
+                    pane: 'vlt-tactical-pane' // Force to top-layer
+                }).addTo(layer);
 
-            const arc = L.polyline(points, {
-                className: `propagation-arc-curved`,
-                color: pathColor,
-                weight: Math.max(1, (baseIntensity / 4) * (1.2 - (level-1)*0.3)),
-                opacity: 0.6,
-                smoothFactor: 1.5,
-                interactive: false
-            }).addTo(layer);
+                // [v10.6] Sync CSS Variable to SVG element for glow effect
+                setTimeout(() => {
+                    const el = arc.getElement() as HTMLElement;
+                    if (el) el.style.setProperty('--ring-color', pathColor);
+                }, 0);
 
-            // [v10.6] Sync CSS Variable to SVG element for glow effect
-            setTimeout(() => {
-                const el = arc.getElement() as HTMLElement;
-                if (el) el.style.setProperty('--ring-color', pathColor);
-            }, 0);
-
-            if (level === 1) {
-                const centerPoint = L.latLng((start.lat + end.lat)/2, (start.lng + end.lng)/2);
-                map.panTo(centerPoint, { animate: true, duration: 1.2 });
+                if (level === 1) {
+                    const centerPoint = L.latLng((start.lat + end.lat)/2, (start.lng + end.lng)/2);
+                    map.panTo(centerPoint, { animate: true, duration: 1.2 });
+                }
             }
 
             setTimeout(() => {
@@ -528,7 +544,10 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     iconAnchor: [baseSize * 0.75, baseSize * 0.75]
                 });
 
-                 const nodeMarker = L.marker([nodeCoords.lat, nodeCoords.lng], { icon: nodeIcon, pane: 'overlayPane' }).addTo(layer);
+                 const nodeMarker = L.marker([nodeCoords.lat, nodeCoords.lng], { 
+                     icon: nodeIcon, 
+                     pane: 'vlt-tactical-pane' 
+                 }).addTo(layer);
 
                 if (level === 3) {
                     const impactPopupContent = `
