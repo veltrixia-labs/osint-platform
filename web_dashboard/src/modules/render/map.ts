@@ -399,10 +399,7 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
                     DETECTED: ${new Date(alert.triggered_at).toLocaleString('en-US', { timeStyle: 'short', dateStyle: 'medium' })}
                 </div>
             </div>
-            <div class="tactical-card-footer">
-                <button class="tactical-action-btn" onclick="window.dispatchEvent(new CustomEvent('map-view-report', {detail: {id: '${alert.related_report_id || alert.id}'}}))">
-                    View Full Analysis
-                </button>
+            <div class="tactical-card-footer" style="justify-content: flex-end;">
                 <div class="tactical-version-tag">V1.6 HUD</div>
             </div>
         </div>
@@ -419,7 +416,20 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
 
     impacts.forEach((finding, index) => {
         setTimeout(() => {
-            const nodeCoords = getNodeCoords(finding);
+            let nodeCoords = getNodeCoords(finding);
+
+            // [v9.10] Entity-Name Coordinate Resolution Fallback
+            if (!nodeCoords && finding.entity_name) {
+                const asset = STRATEGIC_ASSETS.find(a => 
+                    a.name.toLowerCase().includes(finding.entity_name.toLowerCase()) ||
+                    finding.entity_name.toLowerCase().includes(a.name.toLowerCase())
+                );
+                if (asset) {
+                    nodeCoords = { lat: asset.lat, lng: asset.lng, source: 'Name-Lookup' };
+                    console.log(`[Antigravity] Resolved coordinates for ${finding.entity_name} via ${asset.name}`);
+                }
+            }
+
             if (!nodeCoords) return;
 
             // const isLocked = finding.is_locked || false; // Disabled for Dev Release
