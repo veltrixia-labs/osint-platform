@@ -410,13 +410,37 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
     `;
 }
 
+/**
+ * [v10.5] Renders a tactical expanding pulse to represent abstract impact waves.
+ */
+function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, color: string, level: number) {
+    const size = 30 + (level * 40);
+    const duration = 1500;
+    
+    const icon = L.divIcon({
+        className: 'none',
+        html: `
+            <div class="tactical-mesh-pulse" style="--ripple-color: ${color}; --ripple-size: ${size}px; --ripple-duration: ${duration}ms">
+                <div class="pulse-ring"></div>
+            </div>
+        `,
+        iconSize: [size, size],
+        iconAnchor: [size/2, size/2]
+    });
+
+    const marker = L.marker(latLng, { icon, interactive: false }).addTo(layer);
+    setTimeout(() => {
+        if (layer.hasLayer(marker)) layer.removeLayer(marker);
+    }, duration);
+}
+
 // ── Deprecated Sub-Renderers ────────────────────────────────────────────────
 // renderRegionalContext removed in v1.6 (Clustering and Split-View implemented)
 
 function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number, originalAlert: Alert) {
     if (level > 3 || !impacts) return;
 
-    const levelDelay = 1200; 
+    const levelDelay = 1500; // [v10.5] Sequenced timing for distinct wave recognition
 
     impacts.forEach((finding, index) => {
         setTimeout(() => {
@@ -434,10 +458,13 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 }
             }
 
-            if (!nodeCoords) return;
-
-            // const isLocked = finding.is_locked || false; // Disabled for Dev Release
             const pathColor = finding.impact_alpha < 0 ? '#f43f5e' : '#10b981';
+
+            // [v10.5] Tactical Mesh Fallback: If no coordinates, render a ripple at origin
+            if (!nodeCoords) {
+                renderTacticalRipple(layer, L.latLng(parentCoords.lat, parentCoords.lng), pathColor, level);
+                return;
+            }
 
             // Arc Path Calculation
             const start = L.latLng(parentCoords.lat, parentCoords.lng);
@@ -533,6 +560,37 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 }
 
                 const subImpacts = finding.cascading_impacts || finding.metadata_json?.cascading_impacts;
+                
+                // [v10.5] MONITOR Organization Sync:
+                // When reaching wave 2 or 3, if fewer than 3 sub-impacts exist, 
+                // supplement with Strategic Assets matching the alert topic.
+                if (level >= 2 && (!subImpacts || subImpacts.length < 2)) {
+                    const targetTopic = originalAlert.topic;
+                    const metaTopic = (originalAlert.metadata_json as any)?.topic;
+                    const effectiveTopic = targetTopic || metaTopic;
+
+                    if (effectiveTopic) {
+                        const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.9);
+                        const topAssets = relatedAssets.slice(0, 3);
+                        
+                        topAssets.forEach((asset, i) => {
+                            // Inject virtual impacts targeting real map organizations
+                            const virtualImpact = {
+                                entity_name: asset.name,
+                                location_lat: asset.lat,
+                                location_lng: asset.lng,
+                                impact_alpha: finding.impact_alpha * 0.8,
+                                is_virtual: true
+                            };
+                            
+                            // Delay virtual arcs slightly for visual layering
+                            setTimeout(() => {
+                                renderImpactChain(map, layer, nodeCoords, [virtualImpact], level + 1, baseIntensity, originalAlert);
+                            }, i * 300);
+                        });
+                    }
+                }
+
                 if (subImpacts && level < 3) {
                     renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity, originalAlert);
                 }
