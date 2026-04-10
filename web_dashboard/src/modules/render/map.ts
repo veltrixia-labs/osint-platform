@@ -52,10 +52,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
         await new Promise(r => requestAnimationFrame(r));
         currentGlobalMap.invalidateSize();
         
-        // Restore HUD & Context
-        initMapFilter(currentGlobalMap, container, () => {
-            renderMap(container, _tier, focusAlertId);
-        });
+        // Restore HUD & Context (Moved to main render loop for sync)
     }
 
     // 2. Initial Setup: Create Persistent Map Canvas
@@ -132,9 +129,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             }
         }).addTo(currentGlobalMap);
 
-        initMapFilter(currentGlobalMap, container, () => {
-            renderMap(container, _tier, focusAlertId);
-        });
+        // Filter UI moved to main render loop for state synchronization
     }
 
     const map = currentGlobalMap;
@@ -248,6 +243,11 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
                 console.warn("[Antigravity] Focused alert context lost (24h retention limit reached).");
             }
         }
+
+        // [v9.9] UI Sync: Refresh Filter Panel on every render to ensure active states match
+        initMapFilter(map, container, () => {
+            renderMap(container, _tier, focusAlertId);
+        });
 
         isRendering = false;
     } catch (err) {
