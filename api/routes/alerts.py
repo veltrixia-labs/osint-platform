@@ -12,7 +12,7 @@ import uuid
 import json
 import logging
 
-from db.models import AlertLog, AlertDelivery
+from db.models import AlertLog, AlertDelivery, AnalystProfile
 from db.database import get_db
 from api.gating import get_effective_tier, is_topic_allowed, _gate_cascading_impacts
 from api.auth import blacklist_manager
@@ -174,6 +174,46 @@ async def get_live_alerts(
         final_live.append(a)
 
     return final_live
+
+
+@router.get("/alerts/{alert_id}")
+async def get_alert(
+    alert_id: uuid.UUID,
+    current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/alerts/{id}")),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(AlertLog).where(AlertLog.id == alert_id)
+    result = await db.execute(stmt)
+    a = result.scalar_one_or_none()
+    
+    if not a:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    tier = await get_effective_tier(current_user)
+    is_allowed = is_topic_allowed(tier, a.topic)
+
+    data = {
+        "id": str(a.id),
+        "target_label": a.target_label if is_allowed else "🔒 [RESTRICTED]",
+        "topic": a.topic,
+        "trigger_type": a.trigger_type,
+        "severity": a.severity,
+        "triggered_at": a.triggered_at.isoformat(),
+        "intensity": a.intensity if is_allowed else 0.0,
+        "feedback_score": a.feedback_score,
+        "related_report_id": str(a.related_report_id) if a.related_report_id else None,
+        "intelligence_score": a.intelligence_score,
+        "fidelity_score": a.fidelity_score,
+        "status": a.status,
+        "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if (a.metadata_json and is_allowed) else [],
+        "location_lat": a.location_lat,
+        "location_lng": a.location_lng,
+        "description": (a.metadata_json.get("description") if a.metadata_json else None) if is_allowed else "Forensic intelligence restricted.",
+        "country": a.metadata_json.get("country") if a.metadata_json else None,
+        "is_locked": not is_allowed
+    }
+
+    return data
 
 
 @router.post("/alerts/{alert_id}/feedback")

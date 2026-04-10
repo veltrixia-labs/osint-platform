@@ -297,6 +297,12 @@ export async function fetchAlerts(params: Record<string, string> = {}): Promise<
     return await resp.json();
 }
 
+export async function fetchAlert(id: string): Promise<Alert> {
+    const resp = await apiClient.get(`/alerts/${id}`);
+    if (!resp.ok) throw new Error("Alert not found or expired");
+    return await resp.json();
+}
+
 export async function fetchLiveAlerts(limit: number = 10): Promise<Alert[]> {
     const resp = await apiClient.get(`/alerts/live?limit=${limit}`);
     return await resp.json();

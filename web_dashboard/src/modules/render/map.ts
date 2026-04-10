@@ -8,7 +8,7 @@ import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { Alert } from '../api';
-import { fetchAlerts } from '../api';
+import { fetchAlerts, fetchAlert } from '../api';
 import { getTopicDef } from '../topics';
 import { STRATEGIC_ASSETS } from '../infrastructure';
 import { getAlertCoords, getNodeCoords } from './utils';
@@ -179,7 +179,11 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             return;
         }
 
-        const [alerts] = await Promise.all([fetchAlerts()]);
+        // [v8.8] Dynamic Strategy: Fetch all non-suppressed alerts from the last 24h
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const [alerts] = await Promise.all([
+            fetchAlerts({ since: twentyFourHoursAgo, limit: '500', suppressed: 'false' })
+        ]);
         
         // --- Mode Logic Integration (v1.6) ---
         layerGroup.clearLayers();
@@ -224,9 +228,22 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             // Hide Cluster and Infrastructure for maximum clarity per user request
             if (map.hasLayer(clusterLayer!)) map.removeLayer(clusterLayer!);
 
-            const focusedAlert = alerts.find(a => a.id === focusAlertId);
+            let focusedAlert = alerts.find(a => a.id === focusAlertId);
+            
+            // Fallback: If not in the main 24h bulk list (e.g. low-significance), fetch individually
+            if (!focusedAlert) {
+                try {
+                    console.log(`[Antigravity] Alert ${focusAlertId} not in bulk list, performing explicit retrieval...`);
+                    focusedAlert = await fetchAlert(focusAlertId);
+                } catch (e) {
+                    console.error("[Antigravity] Failed to resolve focused alert:", e);
+                }
+            }
+
             if (focusedAlert) {
                 renderFocusedAlert(map, layerGroup, focusedAlert);
+            } else {
+                console.warn("[Antigravity] Focused alert context lost (24h retention limit reached).");
             }
         }
 
