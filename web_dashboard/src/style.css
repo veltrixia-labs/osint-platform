@@ -3086,3 +3086,56 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
 .marker-ring-tactical--l2 { --ring-color: #d29922; }
 .marker-ring-tactical--l3 { --ring-color: #f78166; }
 
+/* [v10.8] Tactical Status HUD (Animation Diagnostics) */
+.tactical-status-hud {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 10000;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tactical-status-hud.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.tactical-status-hud .hud-inner {
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    padding: 10px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.tactical-status-hud .hud-pulse {
+    width: 8px;
+    height: 8px;
+    background: #58a6ff;
+    border-radius: 50%;
+    animation: hud-pulse 1.5s infinite;
+    box-shadow: 0 0 8px #58a6ff;
+}
+
+@keyframes hud-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.tactical-status-hud .hud-text {
+    color: #c9d1d9;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+

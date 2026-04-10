@@ -19,12 +19,12 @@ import { getAlertCoords, getNodeCoords } from './utils';
 
 let activeMapFilters = new Set(['global']);
 let currentFilterControl: L.Control | null = null;
-let activeDiscoveryId: string | null = null;
 let lastDiscoveryTrigger: number = 0;
 let currentGlobalMap: L.Map | null = null;
 let currentDynamicLayer: L.LayerGroup | null = null;
 let clusterLayer: L.MarkerClusterGroup | null = null;
 let isRendering = false; // Mutex to prevent infinite recursion
+let _isTacticalDiscoveryActive = false; // [v10.8] Critical Polling Lock
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Primary Render Entry
@@ -179,10 +179,15 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
 
         // [v8.7] Discovery Lock: Prevent polling from cutting off active animations
         const isReTrigger = (window as any)._mapTriggerTimestamp && (window as any)._mapTriggerTimestamp !== lastDiscoveryTrigger;
-        if (focusAlertId && focusAlertId === activeDiscoveryId && !isReTrigger) {
+        if (focusAlertId && _isTacticalDiscoveryActive && !isReTrigger) {
             console.log("[Antigravity] Discovery Active - Skipping polling re-render to preserve narrative.");
             isRendering = false;
             return;
+        }
+
+        // [v10.8] Manual Reset: If switching to Global View, ensure lock is released
+        if (!focusAlertId) {
+            _isTacticalDiscoveryActive = false;
         }
 
         // [v8.9] Dynamic Strategy: Fetch all alerts from the last 24h (Maximum Visibility)
@@ -335,15 +340,46 @@ function renderStrategicInfrastructure(layer: L.LayerGroup) {
     });
 }
 
-function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert) {
-    const coords = getAlertCoords(alert);
-    if (!coords) return;
+/**
+ * [v10.8] Displays a tactical status indicator on the map during discovery.
+ */
+function renderTacticalStatusHud(_layer: L.LayerGroup, text: string) {
+    const hudId = 'tactical-discovery-hud';
+    const existing = document.getElementById(hudId);
+    if (existing) existing.remove();
+
+    const HUD_HTML = `
+        <div class="hud-inner">
+            <span class="hud-pulse"></span>
+            <span class="hud-text">${text}</span>
+        </div>
+    `;
+
+    const hud = L.DomUtil.create('div', 'tactical-status-hud', document.getElementById('map-instance') || undefined);
+    hud.id = hudId;
+    hud.innerHTML = HUD_HTML;
+    
+    setTimeout(() => hud.classList.add('active'), 100);
+}
+
+export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert) {
+    const rawCoords = getAlertCoords(alert);
+    if (!rawCoords) return;
+
+    // [v10.8] Coordinate Sanitization
+    const coords = { 
+        lat: Number(rawCoords.lat), 
+        lng: Number(rawCoords.lng) 
+    };
+
+    _isTacticalDiscoveryActive = true; 
+    renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...");
 
     const intensity = alert.intensity || 5;
     const topicDef = getTopicDef(alert.topic);
     const topicColor = topicDef?.color || '#58a6ff';
-    const baseSize = 16 + (intensity * 2);
-    
+    const baseSize = 24;
+
     const markerIcon = L.divIcon({
         className: 'none',
         html: `
@@ -357,19 +393,44 @@ function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert) {
         iconAnchor: [baseSize * 0.75, baseSize * 0.75]
     });
 
-    const marker = L.marker([coords.lat, coords.lng], { icon: markerIcon, zIndexOffset: 5000 }).addTo(layer);
+    // [v10.8] Forced Layering (Z:650)
+    const marker = L.marker([coords.lat, coords.lng], { 
+        icon: markerIcon, 
+        zIndexOffset: 5000, 
+        pane: 'vlt-tactical-pane' 
+    }).addTo(layer);
+    
     marker.bindPopup(createTacticalPopup(alert, topicColor, true), { className: 'tactical-popup', maxWidth: 320 });
 
     const cascadingImpacts = alert.metadata_json?.cascading_impacts || [];
 
+    // [v10.8] Guaranteed Pipeline: Don't rely solely on flaky 'moveend'
     setTimeout(() => {
         map.flyTo([coords.lat, coords.lng], 4, { duration: 1.5 });
-        map.once('moveend', () => {
-            marker.openPopup();
-            if (cascadingImpacts.length > 0) {
-                renderImpactChain(map, layer, coords, cascadingImpacts, 1, intensity, alert);
-            }
-        });
+        
+        const startNarrative = () => {
+             const currentHud = document.getElementById('tactical-discovery-hud');
+             if (currentHud && currentHud.innerText.includes("POSITION")) {
+                renderTacticalStatusHud(layer, "TRACING CASCADE VECTORS...");
+                marker.openPopup();
+                if (cascadingImpacts.length > 0) {
+                    renderImpactChain(map, layer, coords, cascadingImpacts, 1, intensity, alert);
+                }
+                
+                // Auto-dismiss HUD after 8s (estimated animation completion)
+                setTimeout(() => {
+                    const hud = document.getElementById('tactical-discovery-hud');
+                    if (hud) {
+                        hud.classList.remove('active');
+                        setTimeout(() => hud.remove(), 500);
+                    }
+                }, 8000);
+             }
+        };
+
+        map.once('moveend', startNarrative);
+        setTimeout(startNarrative, 3000); // Safety fallback
+
     }, 300);
 }
 
