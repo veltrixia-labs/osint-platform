@@ -572,18 +572,13 @@ function initMapFilter(map: L.Map, _container: HTMLElement, onUpdate: () => void
                 btn.addEventListener('click', (e) => {
                     const preset = (e.currentTarget as HTMLElement).dataset.preset!;
                     
-                    // [v9.7] Toggle-Off Logic: If already active, clear all to hide infrastructure
+                    // [v9.8] Strict Selection Mutex:
+                    // If already active, toggle off. Otherwise, clear everything and set only the new one.
                     if (activeMapFilters.has(preset)) {
                         activeMapFilters.clear();
                     } else {
-                        // Switch behavior: Clear existing and activate selected
                         activeMapFilters.clear();
                         activeMapFilters.add(preset);
-                        
-                        // Dependency handling (e.g. AI depends on general Market info)
-                        if (preset === 'ai_semiconductor_intelligence') {
-                            activeMapFilters.add('global_market_intelligence');
-                        }
                     }
                     
                     onUpdate();
