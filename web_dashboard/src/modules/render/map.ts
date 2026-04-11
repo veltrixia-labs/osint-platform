@@ -568,8 +568,6 @@ function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, c
     }, duration);
 }
 
-// renderRegionalContext removed in v1.6 (Clustering and Split-View implemented)
-
 /**
  * [v10.10] Renders a permanent node label at a discovery destination point.
  */
@@ -579,13 +577,13 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: L.LatLngExpression
         html: `
             <div class="tactical-node-label" style="--node-color: ${color}">
                 <div class="node-label-inner">
-                    <span class="node-name">${finding.entity_name}</span>
+                    <span class="node-name">${finding.entity_name || 'Strategic Node'}</span>
                     <span class="node-impact">${finding.impact_alpha > 0 ? '+' : ''}${finding.impact_alpha}%</span>
                 </div>
             </div>
         `,
         iconSize: [120, 30],
-        iconAnchor: [0, 15] // Appear to the right of the point
+        iconAnchor: [0, 15]
     });
 
     L.marker(latLng, { 
@@ -596,52 +594,50 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: L.LatLngExpression
 }
 
 function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number, originalAlert: Alert) {
-    if (level > 3 || !impacts) return;
+    if (level > 4 || !impacts || impacts.length === 0) {
+        if (level > 1) setTimeout(() => renderTacticalStatusHud(layer, "CASCADING ANALYSIS COMPLETE"), 2000);
+        return;
+    }
 
-    const levelDelay = 1500; // [v10.5] Sequenced timing for distinct wave recognition
+    const levelDelay = 1500;
+    
+    // [v10.11] Auto-Chaining Logic:
+    // If we have multiple impacts at this level, we treat the first one as the current node
+    // AND passing the REMAINING impacts as virtual children to the next wave.
+    const finding = impacts[0];
+    const remainingImpacts = impacts.slice(1);
 
-    impacts.forEach((finding, index) => {
-        setTimeout(() => {
+    setTimeout(() => {
+        try {
             let nodeCoords = getNodeCoords(finding);
 
-            // [v9.10] Entity-Name Coordinate Resolution Fallback
+            // [v9.10] Coordinate Resolution Fallback
             if (!nodeCoords && finding.entity_name) {
                 const asset = STRATEGIC_ASSETS.find(a => 
                     a.name.toLowerCase().includes(finding.entity_name.toLowerCase()) ||
                     finding.entity_name.toLowerCase().includes(a.name.toLowerCase())
                 );
-                if (asset) {
-                    nodeCoords = { lat: asset.lat, lng: asset.lng, source: 'Name-Lookup' };
-                    console.log(`[Antigravity] Resolved coordinates for ${finding.entity_name} via ${asset.name}`);
-                }
+                if (asset) nodeCoords = { lat: asset.lat, lng: asset.lng, source: 'Name-Lookup' };
             }
 
-            const pathColor = finding.impact_alpha < 0 ? '#f43f5e' : '#10b981';
+            const pathColor = (finding.impact_alpha || 0) < 0 ? '#f43f5e' : '#10b981';
 
-            // [v10.5] Tactical Mesh Fallback: If no coordinates, render a ripple at origin
-            // Fix [v10.7]: Remove early return to allow recursion to continue for abstract alerts.
             if (!nodeCoords) {
                 renderTacticalRipple(layer, L.latLng(parentCoords.lat, parentCoords.lng), pathColor, level);
-                // We proceed even if nodeCoords is missing, using parentCoords as the next origin.
                 nodeCoords = { lat: parentCoords.lat, lng: parentCoords.lng, source: 'Abstract-Carryover' };
             } else {
-                // Arc Path Calculation (Only if real destination exists)
                 const start = L.latLng(parentCoords.lat, parentCoords.lng);
                 const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
                 const points: L.LatLng[] = [];
-                const steps = 100;
+                const steps = 60; // Optimized steps
                 
                 const dLat = end.lat - start.lat;
                 const dLng = end.lng - start.lng;
                 const dist = Math.sqrt(dLat*dLat + dLng*dLng);
-                
-                const heightAttenuation = 1.0 - (level - 1) * 0.2; 
-                const offsetFactor = (0.15 + (Math.min(dist, 40) / 200)) * heightAttenuation + (index % 2 === 0 ? 0.05 : -0.05);
+                const offsetFactor = (0.15 + (Math.min(dist, 40) / 200)) * (1.0 - (level - 1) * 0.2) + (level % 2 === 0 ? 0.05 : -0.05);
 
-                const midLat = (start.lat + end.lat) / 2;
-                const midLng = (start.lng + end.lng) / 2;
-                const cpLat = midLat - dLng * offsetFactor;
-                const cpLng = midLng + dLat * offsetFactor;
+                const cpLat = (start.lat + end.lat) / 2 - dLng * offsetFactor;
+                const cpLng = (start.lng + end.lng) / 2 + dLat * offsetFactor;
 
                 for (let i = 0; i <= steps; i++) {
                     const t = i / steps;
@@ -653,14 +649,13 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 const arc = L.polyline(points, {
                     className: `propagation-arc-curved`,
                     color: pathColor,
-                    weight: 2.5, // [v10.7] High-visibility constant weight
+                    weight: 2.5,
                     opacity: 0.8,
                     smoothFactor: 1.5,
                     interactive: false,
-                    pane: 'vlt-tactical-pane' // Force to top-layer
+                    pane: 'vlt-tactical-pane'
                 }).addTo(layer);
 
-                // [v10.6] Sync CSS Variable to SVG element for glow effect
                 setTimeout(() => {
                     const el = arc.getElement() as HTMLElement;
                     if (el) el.style.setProperty('--ring-color', pathColor);
@@ -672,92 +667,38 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 }
             }
 
-             setTimeout(() => {
-                const baseSize = 10 - (level * 1.5);
+            // Node Completion & Labeling
+            setTimeout(() => {
+                const baseSize = Math.max(4, 10 - (level * 1.5));
                 const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level + 1, 3)} node-ignite`;
-                
                 const nodeIcon = L.divIcon({
                     className: 'none',
-                    html: `
-                        <div class="${markerClass}" 
-                             style="width: calc(${baseSize}px * var(--map-zoom-scale, 1)); height: calc(${baseSize}px * var(--map-zoom-scale, 1)); --ring-color: ${pathColor}">
-                            <div class="glow-ring"></div>
-                            <div class="ring-inner" style="width:2px; height:2px;"></div>
-                        </div>
-                    `,
-                    iconSize: [baseSize * 1.5, baseSize * 1.5],
-                    iconAnchor: [baseSize * 0.75, baseSize * 0.75]
+                    html: `<div class="${markerClass}" style="width:${baseSize}px; height:${baseSize}px; --ring-color:${pathColor}"><div class="glow-ring"></div></div>`,
+                    iconSize: [baseSize, baseSize],
+                    iconAnchor: [baseSize/2, baseSize/2]
                 });
 
-                 const nodeMarker = L.marker([nodeCoords.lat, nodeCoords.lng], { 
-                     icon: nodeIcon, 
-                     pane: 'vlt-tactical-pane' 
-                 }).addTo(layer);
+                L.marker([nodeCoords!.lat, nodeCoords!.lng], { icon: nodeIcon, pane: 'vlt-tactical-pane' }).addTo(layer);
 
-                 // [v10.10] Render Persistent Entity Label
-                 renderTacticalNodeLabel(layer, [nodeCoords.lat, nodeCoords.lng], finding, pathColor);
+                const entityName = finding.entity_name || 'Strategic Node';
+                renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], { ...finding, entity_name: entityName }, pathColor);
+                renderTacticalStatusHud(layer, `WAVE ${level}: ANALYZING ${entityName.toUpperCase()}...`);
 
-                 // [v10.10] Synchronize HUD to specific entity propagation
-                 const hudText = `WAVE ${level}: PROPAGATING TO ${finding.entity_name.toUpperCase()}...`;
-                 renderTacticalStatusHud(layer, hudText);
-
-                if (level === 3) {
-                    const sourceLabel = finding.source === 'statistical_model' ? 'STATISTICAL MODEL' : 'GEOPOLITICAL AI';
-                    const sourceColor = finding.source === 'statistical_model' ? '#8b949e' : pathColor;
-                    
-                    const impactPopupContent = `
-                        <div class="tactical-card entity-card" style="--topic-color: ${pathColor}">
-                            <div class="tactical-card-accent"></div>
-                            <div class="tactical-card-header">
-                                <strong style="color:#fff; font-size:1rem;">${finding.entity_name}</strong>
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                                    <div style="font-size:0.6rem; color:${pathColor}; font-weight:800; letter-spacing:1px; text-transform:uppercase;">
-                                        CAUSAL IMPACT • LEVEL ${level}
-                                    </div>
-                                    <div style="font-size:0.5rem; background: ${sourceColor}; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: 900; letter-spacing: 0.5px;">
-                                        ${sourceLabel}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="tactical-card-body">
-                                <div class="market-strip u-flex-between" style="background:rgba(255,255,255,0.03); padding:8px; border-radius:6px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.05);">
-                                    <div>
-                                        <span style="font-size:0.6rem; opacity:0.5; display:block;">IMPACT ALPHA</span>
-                                        <span style="font-weight:700; font-size:0.9rem;">${finding.impact_alpha > 0 ? '+' : ''}${finding.impact_alpha}%</span>
-                                    </div>
-                                    <div style="text-align:right;">
-                                        <span style="color:${pathColor}; font-weight:700; font-size:0.9rem;">TARGETED</span>
-                                        <span style="font-size:0.6rem; opacity:0.5; display:block;">DISCOVERY COMPLETE</span>
-                                    </div>
-                                </div>
-                                <p style="font-size:0.75rem; color:#c9d1d9; line-height:1.4;">
-                                    ${finding.reasoning || 'Strategic dependency confirmed. This entity is currently being monitored for second-order volatility risks.'}
-                                </p>
-                            </div>
-                        </div>
-                    `;
-                    nodeMarker.bindPopup(impactPopupContent, { className: 'tactical-popup', maxWidth: 280 }).openPopup();
-                    
-                    // Final HUD sync
-                    setTimeout(() => renderTacticalStatusHud(layer, "CASCADING ANALYSIS COMPLETE"), 2000);
-                }
-
-                const subImpacts = finding.cascading_impacts || finding.metadata_json?.cascading_impacts;
-                
-                // [v10.10] Sequential Chaining Fix: Recursion now always starts from nodeCoords
-                if (subImpacts && level < 3) {
-                    renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity, originalAlert);
+                // Recurse into sub-impacts OR next item in flat list
+                const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
+                if (subImpacts && subImpacts.length > 0) {
+                    renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert);
+                } else if (remainingImpacts.length > 0) {
+                    renderImpactChain(map, layer, nodeCoords!, remainingImpacts, level + 1, baseIntensity, originalAlert);
                 }
             }, levelDelay);
 
-        }, index * 200);
-    });
+        } catch (e) { console.error("[v10.11] Chain fault:", e); }
+    }, 150);
 }
 
 function initMapFilter(map: L.Map, _container: HTMLElement, onUpdate: () => void) {
-    if (currentFilterControl) {
-        currentFilterControl.remove();
-    }
+    if (currentFilterControl) currentFilterControl.remove();
 
     const FilterControl = L.Control.extend({
         options: { position: 'topleft' },
@@ -797,16 +738,11 @@ function initMapFilter(map: L.Map, _container: HTMLElement, onUpdate: () => void
             div.querySelectorAll('.preset-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const preset = (e.currentTarget as HTMLElement).dataset.preset!;
-                    
-                    // [v9.8] Strict Selection Mutex:
-                    // If already active, toggle off. Otherwise, clear everything and set only the new one.
-                    if (activeMapFilters.has(preset)) {
-                        activeMapFilters.clear();
-                    } else {
+                    if (activeMapFilters.has(preset)) activeMapFilters.clear();
+                    else {
                         activeMapFilters.clear();
                         activeMapFilters.add(preset);
                     }
-                    
                     onUpdate();
                 });
             });
@@ -817,6 +753,4 @@ function initMapFilter(map: L.Map, _container: HTMLElement, onUpdate: () => void
 
     currentFilterControl = new (FilterControl as any)();
     currentFilterControl?.addTo(map);
-
-    // Removed Silent Monitor status per user request
 }
