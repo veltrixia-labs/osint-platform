@@ -389,19 +389,29 @@ window.addEventListener('map-status-update', (e: any) => {
 });
 
 export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert) {
-    const rawCoords = getAlertCoords(alert);
-    if (!rawCoords) return;
+    let rawCoords = getAlertCoords(alert);
+    
+    // [v10.12] Geographic Fallback: If no explicit coords, use first Strategic Asset for topic
+    if (!rawCoords && alert.topic) {
+        const topicAsset = STRATEGIC_ASSETS.find(a => a.topic_code === alert.topic);
+        if (topicAsset) {
+            rawCoords = { lat: topicAsset.lat, lng: topicAsset.lng, source: 'Topic-Asset-Fallback' };
+            console.log(`[Antigravity] No Alert coords. Falling back to Topic Asset: ${topicAsset.name}`);
+        }
+    }
 
-    // [v10.8] Coordinate Sanitization
-    const coords = { 
-        lat: Number(rawCoords.lat), 
-        lng: Number(rawCoords.lng) 
-    };
+    if (!rawCoords) {
+        console.error(`[Antigravity] Map Engine Halt: Could not resolve coordinates for ${alert.id}`);
+        return;
+    }
+
+    const coords = { lat: Number(rawCoords.lat), lng: Number(rawCoords.lng) };
 
     _isTacticalDiscoveryActive = true; 
-    _activeDiscoveryId = alert.id; // [v10.9] Lock specific ID
+    _activeDiscoveryId = alert.id;
     
     renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...");
+    console.log(`[Antigravity] Narrative Start: ${alert.target_label} @ ${coords.lat},${coords.lng} (Src: ${rawCoords.source})`);
 
     const intensity = alert.intensity || 5;
     const topicDef = getTopicDef(alert.topic);
@@ -421,7 +431,6 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         iconAnchor: [baseSize * 0.75, baseSize * 0.75]
     });
 
-    // [v10.8] Forced Layering (Z:650)
     const marker = L.marker([coords.lat, coords.lng], { 
         icon: markerIcon, 
         zIndexOffset: 5000, 
@@ -430,7 +439,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
     
     marker.bindPopup(createTacticalPopup(alert, topicColor, true), { className: 'tactical-popup', maxWidth: 320 });
 
-    const cascadingImpactsRaw = alert.metadata_json?.cascading_impacts || [];
+    // [v10.12] Modern API Path (Top-level) vs Legacy Path (Nested)
+    const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
     let cascadingImpacts = [...cascadingImpactsRaw];
 
     // [v10.9] Runtime Fallback: If DB is empty (Past Alerts), generate virtual bridge to Strategic Assets
@@ -684,11 +694,14 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], { ...finding, entity_name: entityName }, pathColor);
                 renderTacticalStatusHud(layer, `WAVE ${level}: ANALYZING ${entityName.toUpperCase()}...`);
 
-                // Recurse into sub-impacts OR next item in flat list
+                // [v10.12] Modern API Path (Top-level) vs Legacy Path (Nested)
                 const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
+                
                 if (subImpacts && subImpacts.length > 0) {
+                    console.log(`[Antigravity] Recursing into Nested Wave ${level + 1} (${subImpacts.length} nodes)`);
                     renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert);
                 } else if (remainingImpacts.length > 0) {
+                    console.log(`[Antigravity] Recursing into Flat Wave ${level + 1} (${remainingImpacts.length} remaining)`);
                     renderImpactChain(map, layer, nodeCoords!, remainingImpacts, level + 1, baseIntensity, originalAlert);
                 }
             }, levelDelay);

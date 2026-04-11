@@ -17,17 +17,25 @@ export function formatIntensity(val: number | undefined | null): string | null {
  * Priority: Top-level > metadata_json > cascading_impacts[0]
  */
 export function getAlertCoords(alert: Alert): { lat: number, lng: number, source: string } | null {
-    if (alert.location_lat && alert.location_lng) {
+    // 1. Direct API Fields (Modern)
+    if (typeof alert.location_lat === 'number' && typeof alert.location_lng === 'number') {
         return { lat: alert.location_lat, lng: alert.location_lng, source: 'Top-Level' };
     }
+    
+    // 2. Metadata Nesting (Legacy)
     const meta = alert.metadata_json as any;
-    if (meta?.location_lat && meta?.location_lng) {
+    if (typeof meta?.location_lat === 'number' && typeof meta?.location_lng === 'number') {
         return { lat: meta.location_lat, lng: meta.location_lng, source: 'Metadata' };
     }
-    const impacts = (alert.cascading_impacts || meta?.cascading_impacts) as any[];
+    
+    // 3. First Impact Fallback
+    const impacts = (alert.cascading_impacts || (alert.metadata_json as any)?.cascading_impacts) as any[];
     if (impacts && impacts.length > 0) {
-        return getNodeCoords(impacts[0]);
+        const coords = getNodeCoords(impacts[0]);
+        if (coords) return { ...coords, source: `Impact-0:${coords.source}` };
     }
+    
+    console.warn(`[Antigravity] Coordinate Resolution Failure for Alert ${alert.id}. No lat/lng found.`);
     return null;
 }
 
@@ -35,10 +43,10 @@ export function getAlertCoords(alert: Alert): { lat: number, lng: number, source
  * Generic coordinate extractor for Stakeholder/Finding nodes.
  */
 export function getNodeCoords(node: any): { lat: number, lng: number, source: string } | null {
-    if (node.location_lat && node.location_lng) {
+    if (typeof node.location_lat === 'number' && typeof node.location_lng === 'number') {
         return { lat: node.location_lat, lng: node.location_lng, source: 'Node-Direct' };
     }
-    if (node.metadata_json?.location_lat && node.metadata_json?.location_lng) {
+    if (typeof node.metadata_json?.location_lat === 'number' && typeof node.metadata_json?.location_lng === 'number') {
         return { lat: node.metadata_json.location_lat, lng: node.metadata_json.location_lng, source: 'Node-Metadata' };
     }
     return null;
