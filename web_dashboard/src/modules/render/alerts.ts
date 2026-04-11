@@ -236,6 +236,9 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             const id = el.dataset.id;
             console.log(`[Antigravity] Visualize Link Clicked: ID = ${id}`);
             if (id) {
+                // [v10.9] Explicit Timestamp: Ensure map logic recognizes this as a fresh user action
+                (window as any)._mapTriggerTimestamp = Date.now();
+                
                 // [v10.1] main.ts listens for map-track-alert to switch tabs and focus
                 window.dispatchEvent(new CustomEvent('map-track-alert', { detail: { id } }));
             }

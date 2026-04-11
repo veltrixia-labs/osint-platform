@@ -25,6 +25,7 @@ let currentDynamicLayer: L.LayerGroup | null = null;
 let clusterLayer: L.MarkerClusterGroup | null = null;
 let isRendering = false; // Mutex to prevent infinite recursion
 let _isTacticalDiscoveryActive = false; // [v10.8] Critical Polling Lock
+let _activeDiscoveryId: string | null = null; // [v10.9] Sticky State Guard
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Primary Render Entry
@@ -179,6 +180,13 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
 
         // [v8.7] Discovery Lock: Prevent polling from cutting off active animations
         const isReTrigger = (window as any)._mapTriggerTimestamp && (window as any)._mapTriggerTimestamp !== lastDiscoveryTrigger;
+        
+        // [v10.9] ID Switch Guard: If the focus ID has changed, we MUST break the lock
+        if (focusAlertId && focusAlertId !== _activeDiscoveryId) {
+            console.log(`[Antigravity] Focus Shift: ${_activeDiscoveryId} -> ${focusAlertId}. Resetting lock.`);
+            _isTacticalDiscoveryActive = false;
+        }
+
         if (focusAlertId && _isTacticalDiscoveryActive && !isReTrigger) {
             console.log("[Antigravity] Discovery Active - Skipping polling re-render to preserve narrative.");
             isRendering = false;
@@ -188,6 +196,12 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
         // [v10.8] Manual Reset: If switching to Global View, ensure lock is released
         if (!focusAlertId) {
             _isTacticalDiscoveryActive = false;
+            _activeDiscoveryId = null;
+        }
+        
+        // Sync trigger state
+        if (isReTrigger) {
+            lastDiscoveryTrigger = (window as any)._mapTriggerTimestamp;
         }
 
         // [v8.9] Dynamic Strategy: Fetch all alerts from the last 24h (Maximum Visibility)
@@ -373,6 +387,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
     };
 
     _isTacticalDiscoveryActive = true; 
+    _activeDiscoveryId = alert.id; // [v10.9] Lock specific ID
+    
     renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...");
 
     const intensity = alert.intensity || 5;
