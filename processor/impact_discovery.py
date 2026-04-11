@@ -55,19 +55,25 @@ class ImpactDiscoveryEngine:
             "2. HISTORICAL PRECEDENCE: Does this pattern match known historical conflicts, market crashes, or social upheavals?\n"
             "3. SOCIAL-LEGAL IMPACT: Potential for civil unrest, major regulatory shifts, or systemic instability.\n\n"
             "TASK:\n"
-            "Identify 3 secondary stakeholders (Companies, Organizations, or Market Segments) affected by this signal.\n"
-            "Predict the 'Impact Alpha' (expected movement relative to S&P 500) over a 7-day horizon.\n\n"
-            "Strictly return JSON:\n"
+            "Identify a sequential 3rd-order chain of affected stakeholders (Entity A -> Entity B -> Entity C).\n"
+            "Each entity must be a direct consequence of the previous one being affected.\n\n"
+            "Strictly return nested JSON:\n"
             "{\n"
             "  'findings': [\n"
             "    {\n"
-            "      'stakeholder_id': 'UUID or null',\n"
-            "      'entity_name': 'Entity Name',\n"
-            "      'impact_direction': 'positive/negative',\n"
+            "      'entity_name': 'Level 1 Entity',\n"
             "      'impact_alpha': -5.0,\n"
-            "      'confidence': 0.85,\n"
-            "      'source': 'ai_reasoning',\n"
-            "      'reasoning': 'Explain via the Geopolitical/Historical/Social context requested.'\n"
+            "      'reasoning': '...', \n"
+            "      'cascading_impacts': [\n"
+            "        {\n"
+            "          'entity_name': 'Level 2 Entity',\n"
+            "          'impact_alpha': -3.2,\n"
+            "          'cascading_impacts': [{\n"
+            "            'entity_name': 'Level 3 Entity',\n"
+            "            'impact_alpha': -1.5\n"
+            "          }]\n"
+            "        }\n"
+            "      ]\n"
             "    }\n"
             "  ]\n"
             "}"
@@ -93,33 +99,43 @@ class ImpactDiscoveryEngine:
                     intensity=5.0 # Default fallback intensity
                 )
 
-            processed_findings = []
-
-            for f in findings:
-                # 2. Log Prediction to DB if we have a valid stakeholder_id
-                s_id = f.get("stakeholder_id")
+            async def enrich_finding(finding: Dict[str, Any]):
+                # Enforce source if missing
+                if "source" not in finding:
+                    finding["source"] = "ai_reasoning"
+                
+                s_id = finding.get("stakeholder_id")
                 stakeholder = None
                 if s_id and s_id != "null":
-                    # Get stakeholder for metadata
-                    s_stmt = select(Stakeholder).where(Stakeholder.id == uuid.UUID(s_id))
-                    stakeholder = (await self.db.execute(s_stmt)).scalar_one_or_none()
-                    
-                    # Create Prediction record
-                    pred = Prediction(
-                        prediction_id=f"PRED-{uuid.uuid4().hex[:8].upper()}",
-                        trigger_event=f"{title}: {summary[:200]}...",
-                        target_id=uuid.UUID(s_id),
-                        predicted_alpha=f.get("impact_alpha", 0.0),
-                        confidence_score=f.get("confidence", 0.0),
-                        is_evaluated=False
-                    )
-                    self.db.add(pred)
-                
-                # Enrich finding with spatial metadata for UI
-                if stakeholder:
-                    f["location_lat"] = stakeholder.location_lat
-                    f["location_lng"] = stakeholder.location_lng
-                
+                    try:
+                        s_stmt = select(Stakeholder).where(Stakeholder.id == uuid.UUID(s_id))
+                        stakeholder = (await self.db.execute(s_stmt)).scalar_one_or_none()
+                        
+                        if stakeholder:
+                            finding["location_lat"] = stakeholder.location_lat
+                            finding["location_lng"] = stakeholder.location_lng
+                            
+                        # Create Prediction record for tracking
+                        pred = Prediction(
+                            prediction_id=f"PRED-{uuid.uuid4().hex[:8].upper()}",
+                            trigger_event=f"{title}: {summary[:200]}...",
+                            target_id=uuid.UUID(s_id),
+                            predicted_alpha=finding.get("impact_alpha", 0.0),
+                            confidence_score=finding.get("confidence", 0.0),
+                            is_evaluated=False
+                        )
+                        self.db.add(pred)
+                    except Exception as ex:
+                        logger.warning(f"Failed to enrich stakeholder {s_id}: {ex}")
+
+                # Recurse into children
+                children = finding.get("cascading_impacts", [])
+                for child in children:
+                    await enrich_finding(child)
+
+            processed_findings = []
+            for f in findings:
+                await enrich_finding(f)
                 processed_findings.append(f)
 
             await self.db.commit()

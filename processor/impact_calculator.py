@@ -35,35 +35,33 @@ class ImpactCalculator:
         findings = []
         target_keys = TOPIC_ASSET_MAP.get(topic, TOPIC_ASSET_MAP["global"])
         
-        # [v10.9] Statistical Logic: Alpha = (Intensity * Weight) / (1 + log(Distance))
-        # This simulates the "ripple" attenuation over geographic distance.
+        # [v10.10] Sequential Chaining Logic: A -> B -> C
+        # We pick 3 distinct assets and link them.
         
-        for i, asset_id in enumerate(target_keys[:3]): # Top 3 relevant assets
-            # In production, we'd fetch the actual stakeholder from DB by asset_id
-            # Here we provide the finding structure the UI expects
-            
-            # Simple simulation of "impact" direction based on topic sentiment (default negative for OSINT)
+        chain = []
+        for i, asset_id in enumerate(target_keys[:3]):
             target_name = asset_id.replace("_", " ").title()
             
-            # Distance penalty
-            dist_km = 1000.0 # Default fallback if no coords
-            if lat is not None and lng is not None:
-                # Mock coords for calculation if db not queried
-                # (Actual coordinates would come from the Stakeholder table)
-                dist_km = 500.0 # Simulated proximity
-            
-            # Logarithmic attenuation
-            attenuation = 1.0 / (1.0 + math.log10(max(1, dist_km / 100)))
+            # Simple simulation of "impact" (attenuated per level)
+            attenuation = 1.0 / (1.0 + (i * 0.5))
             calculated_alpha = round(-(intensity * 0.5) * attenuation, 2)
             
-            findings.append({
+            chain.append({
                 "stakeholder_id": None,
                 "entity_name": target_name,
                 "impact_direction": "negative",
                 "impact_alpha": calculated_alpha,
-                "confidence": 0.7, # Statistical baseline
-                "reasoning": f"Mathematical projection: Cross-domain correlation high for {topic} signal at current intensity ({intensity}).",
-                "source": "statistical_model"
+                "confidence": 0.7 - (i * 0.1),
+                "reasoning": f"Level {i+1} propagation: Volatility transfer from preceding node in {topic} sector.",
+                "source": "statistical_model",
+                "cascading_impacts": []
             })
+
+        if len(chain) >= 3:
+            chain[1]["cascading_impacts"] = [chain[2]]
+            chain[0]["cascading_impacts"] = [chain[1]]
+            findings = [chain[0]]
+        elif len(chain) > 0:
+            findings = [chain[0]]
             
         return findings

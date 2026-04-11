@@ -568,8 +568,32 @@ function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, c
     }, duration);
 }
 
-// ── Deprecated Sub-Renderers ────────────────────────────────────────────────
 // renderRegionalContext removed in v1.6 (Clustering and Split-View implemented)
+
+/**
+ * [v10.10] Renders a permanent node label at a discovery destination point.
+ */
+function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: L.LatLngExpression, finding: any, color: string) {
+    const icon = L.divIcon({
+        className: 'none',
+        html: `
+            <div class="tactical-node-label" style="--node-color: ${color}">
+                <div class="node-label-inner">
+                    <span class="node-name">${finding.entity_name}</span>
+                    <span class="node-impact">${finding.impact_alpha > 0 ? '+' : ''}${finding.impact_alpha}%</span>
+                </div>
+            </div>
+        `,
+        iconSize: [120, 30],
+        iconAnchor: [0, 15] // Appear to the right of the point
+    });
+
+    L.marker(latLng, { 
+        icon, 
+        interactive: false,
+        pane: 'vlt-tactical-pane' 
+    }).addTo(layer);
+}
 
 function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number, originalAlert: Alert) {
     if (level > 3 || !impacts) return;
@@ -648,7 +672,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 }
             }
 
-            setTimeout(() => {
+             setTimeout(() => {
                 const baseSize = 10 - (level * 1.5);
                 const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level + 1, 3)} node-ignite`;
                 
@@ -669,6 +693,13 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                      icon: nodeIcon, 
                      pane: 'vlt-tactical-pane' 
                  }).addTo(layer);
+
+                 // [v10.10] Render Persistent Entity Label
+                 renderTacticalNodeLabel(layer, [nodeCoords.lat, nodeCoords.lng], finding, pathColor);
+
+                 // [v10.10] Synchronize HUD to specific entity propagation
+                 const hudText = `WAVE ${level}: PROPAGATING TO ${finding.entity_name.toUpperCase()}...`;
+                 renderTacticalStatusHud(layer, hudText);
 
                 if (level === 3) {
                     const sourceLabel = finding.source === 'statistical_model' ? 'STATISTICAL MODEL' : 'GEOPOLITICAL AI';
@@ -702,68 +733,18 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                                 <p style="font-size:0.75rem; color:#c9d1d9; line-height:1.4;">
                                     ${finding.reasoning || 'Strategic dependency confirmed. This entity is currently being monitored for second-order volatility risks.'}
                                 </p>
-                                
-                                ${finding.source === 'statistical_model' ? `
-                                    <button class="tactical-upgrade-btn u-m-top-1" style="width:100%;" 
-                                            onclick="window.dispatchEvent(new CustomEvent('map-upgrade-ai', {detail: {alertId: '${originalAlert.id}'}}))">
-                                        ✨ Enhance with Deep AI Analysis &rarr;
-                                    </button>
-                                ` : ''}
-
-                                ${originalAlert.related_report_id ? `
-                                    <button class="tactical-action-btn u-m-top-1" style="width:100%;" onclick="window.dispatchEvent(new CustomEvent('map-view-report', {detail: {id: '${originalAlert.related_report_id}'}}))">
-                                        Open Full Analysis &rarr;
-                                    </button>
-                                ` : ''}
                             </div>
                         </div>
                     `;
                     nodeMarker.bindPopup(impactPopupContent, { className: 'tactical-popup', maxWidth: 280 }).openPopup();
+                    
+                    // Final HUD sync
+                    setTimeout(() => renderTacticalStatusHud(layer, "CASCADING ANALYSIS COMPLETE"), 2000);
                 }
 
                 const subImpacts = finding.cascading_impacts || finding.metadata_json?.cascading_impacts;
                 
-                // [v10.5] MONITOR Organization Sync:
-                // When reaching wave 2 or 3, if fewer than 3 sub-impacts exist, 
-                // supplement with Strategic Assets matching the alert topic.
-                if (level >= 2 && (!subImpacts || subImpacts.length < 2)) {
-                    const targetTopic = originalAlert.topic;
-                    const metaTopic = (originalAlert.metadata_json as any)?.topic;
-                    const rawTopic = targetTopic || metaTopic;
-                    
-                    // [v10.9] Topic Normalization Bridge
-                    const topicMap: Record<string, string> = {
-                        'market': 'global_market_intelligence',
-                        'energy': 'energy_resource_risk',
-                        'tech': 'ai_semiconductor_intelligence',
-                        'defense': 'defense_technology',
-                        'supply_chain': 'supply_chain_intelligence',
-                        'crypto': 'crypto_geopolitics'
-                    };
-                    const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
-
-                    if (effectiveTopic) {
-                        const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.9);
-                        const topAssets = relatedAssets.slice(0, 3);
-                        
-                        topAssets.forEach((asset, i) => {
-                            // Inject virtual impacts targeting real map organizations
-                            const virtualImpact = {
-                                entity_name: asset.name,
-                                location_lat: asset.lat,
-                                location_lng: asset.lng,
-                                impact_alpha: finding.impact_alpha * 0.8,
-                                is_virtual: true
-                            };
-                            
-                            // Delay virtual arcs slightly for visual layering
-                            setTimeout(() => {
-                                renderImpactChain(map, layer, nodeCoords, [virtualImpact], level + 1, baseIntensity, originalAlert);
-                            }, i * 300);
-                        });
-                    }
-                }
-
+                // [v10.10] Sequential Chaining Fix: Recursion now always starts from nodeCoords
                 if (subImpacts && level < 3) {
                     renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity, originalAlert);
                 }

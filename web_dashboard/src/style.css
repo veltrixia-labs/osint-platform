@@ -3165,6 +3165,48 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     transform: translateY(0);
 }
 
+/* [v10.10] Tactical Node Labels (Entity Info) */
+.tactical-node-label {
+    pointer-events: none;
+    animation: label-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+}
+
+.node-label-inner {
+    background: rgba(13, 17, 23, 0.7);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 2px solid var(--node-color);
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    min-width: 80px;
+}
+
+.node-label-inner .node-name {
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.node-label-inner .node-impact {
+    color: var(--node-color);
+    font-size: 0.6rem;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+@keyframes label-slide-in {
+    from { transform: translateX(-10px); opacity: 0; }
+    to { transform: translateX(5px); opacity: 1; }
+}
+
 /* HUD Variants */
 .tactical-status-hud.enhancing .hud-inner {
     border-color: #bc8cff;
