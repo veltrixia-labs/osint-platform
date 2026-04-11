@@ -431,13 +431,14 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         iconAnchor: [baseSize * 0.75, baseSize * 0.75]
     });
 
+    // [v10.14] Pure Pulse Source: No card/marker for the origin to reduce clutter.
     const marker = L.marker([coords.lat, coords.lng], { 
         icon: markerIcon, 
         zIndexOffset: 5000, 
         pane: 'vlt-tactical-pane' 
     }).addTo(layer);
     
-    marker.bindPopup(createTacticalPopup(alert, topicColor, true), { className: 'tactical-popup', maxWidth: 320 });
+    // marker.bindPopup(createTacticalPopup(alert, topicColor, true), { className: 'tactical-popup', maxWidth: 320 });
 
     // [v10.12] Modern API Path (Top-level) vs Legacy Path (Nested)
     const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
@@ -579,32 +580,35 @@ function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, c
 }
 
 /**
- * [v10.13] Renders a prominent card label for a discovery node.
+ * [v10.14] High-Fidelity Tactical Card.
+ * Includes vertical offset for collision avoidance.
  */
-function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: L.LatLngExpression, finding: any, color: string, level: number, index: number) {
-    // Generate an ID similar to user's image (A, B, C...)
-    const waveChar = String.fromCharCode(64 + level); // Wave 1=A, 2=B... or custom mapping
-    const nodeChar = String.fromCharCode(65 + index); // Node A, B, C...
-    const labelId = level === 1 ? nodeChar : `${waveChar}-${nodeChar}`;
+function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], finding: any, color: string, level: number, index: number) {
+    const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 45) || 'Strategic Impact Detected';
     
-    const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 40) || 'Active Impact';
+    // [v10.14] Label Anti-Overlap: Offset cards at same level horizontally/vertically
+    const xOffset = 25;
+    const yOffset = (index - 1) * 35; // Staggers labels vertically (B sits above, C sits below, etc.)
 
     const icon = L.divIcon({
         className: 'none',
         html: `
-            <div class="tactical-node-label" style="--node-color: ${color}">
-                <div class="node-label-inner">
+            <div class="tactical-node-label" style="--node-color: ${color}; transform: translate(${xOffset}px, ${yOffset}px)">
+                <div class="node-label-inner card-high-fidelity">
                     <div class="node-label-header">
-                        <span class="node-badge">${labelId}</span>
-                        <span class="node-name">${finding.entity_name || 'Strategic Node'}</span>
+                        <span class="node-type-dot"></span>
+                        <span class="node-name">${finding.entity_name || 'Strategic Hub'}</span>
                     </div>
-                    <div class="node-impact-detail">${impactSummary}</div>
-                    <div class="node-impact-alpha">${finding.impact_alpha > 0 ? '+' : ''}${finding.impact_alpha}%</div>
+                    <div class="node-impact-summary">${impactSummary}</div>
+                    <div class="node-footer">
+                        <span class="node-level-tag">WAVE ${level}</span>
+                        <span class="node-impact-alpha">${finding.impact_alpha > 0 ? '+' : ''}${finding.impact_alpha}%</span>
+                    </div>
                 </div>
             </div>
         `,
-        iconSize: [160, 60],
-        iconAnchor: [0, 30]
+        iconSize: [180, 80],
+        iconAnchor: [0, 40]
     });
 
     L.marker(latLng, { 
@@ -620,12 +624,9 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
         return;
     }
 
-    const levelDelay = 1800;
-    
-    // [v10.13] Branching Strategy:
-    // We loop through ALL impacts at this level and fan them out in parallel.
+    // [v10.14] Staggered Wave Propagation
     impacts.forEach((finding, index) => {
-        const staggerDelay = index * 400; // Fans out beautifully
+        const branchDelay = index * 350; // Simultaneous-but-staggered fan-out
 
         setTimeout(() => {
             try {
@@ -649,15 +650,14 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     const start = L.latLng(parentCoords.lat, parentCoords.lng);
                     const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
                     const points: L.LatLng[] = [];
-                    const steps = 60;
+                    const steps = Math.max(30, Math.min(60, Math.floor(L.latLng(start).distanceTo(end) / 50000)));
                     
                     const dLat = end.lat - start.lat;
                     const dLng = end.lng - start.lng;
                     const dist = Math.sqrt(dLat*dLat + dLng*dLng);
                     
-                    // Branching Curve: Each sibling gets a slightly different arc offset to avoid overlap
                     const offsetBase = (0.15 + (Math.min(dist, 40) / 200)) * (1.0 - (level - 1) * 0.2);
-                    const siblingOffset = (index % 2 === 0 ? 0.05 : -0.05) * (index + 1);
+                    const siblingOffset = (index % 2 === 0 ? 0.08 : -0.08) * (index + 1);
                     const offsetFactor = offsetBase + siblingOffset;
 
                     const cpLat = (start.lat + end.lat) / 2 - dLng * offsetFactor;
@@ -673,17 +673,21 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     const arc = L.polyline(points, {
                         className: `propagation-arc-curved`,
                         color: pathColor,
-                        weight: 2.5,
-                        opacity: 0.8,
+                        weight: 3.0,
+                        opacity: 0, // Animate in
                         smoothFactor: 1.5,
                         interactive: false,
                         pane: 'vlt-tactical-pane'
                     }).addTo(layer);
 
+                    // Refined Arc Animation
                     setTimeout(() => {
                         const el = arc.getElement() as HTMLElement;
-                        if (el) el.style.setProperty('--ring-color', pathColor);
-                    }, 0);
+                        if (el) {
+                            el.style.opacity = '0.8';
+                            el.style.setProperty('--ring-color', pathColor);
+                        }
+                    }, 50);
 
                     if (level === 1 && index === 0) {
                         const centerPoint = L.latLng((start.lat + end.lat)/2, (start.lng + end.lng)/2);
@@ -691,9 +695,10 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     }
                 }
 
-                // Node Completion & Labeling
+                // Wave Arrival Narrative
+                const arrivalDelay = 1200; // Time it takes for the arc to 'land'
                 setTimeout(() => {
-                    const baseSize = Math.max(4, 10 - (level * 1.5));
+                    const baseSize = 10;
                     const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level + 1, 3)} node-ignite`;
                     const nodeIcon = L.divIcon({
                         className: 'none',
@@ -708,17 +713,17 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index);
                     renderTacticalStatusHud(layer, `WAVE ${level}: ANALYZING ${entityName.toUpperCase()}...`);
 
-                    // Branching Recursion: Each node recurses into its *own* sub-impacts
+                    // [v10.14] Synchronous Wave Recurse: Start Wave N+1 only AFTER Wave N lands.
                     const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
                     if (subImpacts && subImpacts.length > 0) {
                         renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert);
                     }
-                }, levelDelay);
+                }, arrivalDelay);
 
             } catch (e) {
-                console.error("[v10.13] Branch fault:", e);
+                console.error("[v10.14] Branch fault:", e);
             }
-        }, staggerDelay);
+        }, branchDelay);
     });
 }
 
