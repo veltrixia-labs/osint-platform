@@ -14,6 +14,7 @@ import logging
 
 from db.models import AlertLog, AlertDelivery, AnalystProfile
 from db.database import get_db
+from processor.impact_discovery import ImpactDiscoveryEngine
 from api.gating import get_effective_tier, is_topic_allowed, _gate_cascading_impacts
 from api.auth import blacklist_manager
 from api.rate_limit import rate_limit
@@ -235,3 +236,47 @@ async def submit_feedback(
     alert.feedback_score = score
     await db.commit()
     return {"status": "success"}
+@router.post("/alerts/{alert_id}/analyze")
+async def upgrade_to_ai_analysis(
+    alert_id: uuid.UUID,
+    current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/alerts/analyze")),
+    db: AsyncSession = Depends(get_db)
+):
+    """Triggers real-time AI impact discovery for an alert (On-Demand Upgrade)."""
+    stmt = select(AlertLog).where(AlertLog.id == alert_id)
+    alert = (await db.execute(stmt)).scalar_one_or_none()
+    
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+
+    # [v10.9] Efficiency Check: Only run if not already deep-analyzed
+    existing_impacts = alert.metadata_json.get("cascading_impacts", [])
+    if any(i.get("source") == "ai_reasoning" for i in existing_impacts):
+        return {"status": "skipped", "message": "Deep analysis already exists", "cascading_impacts": existing_impacts}
+
+    try:
+        engine = ImpactDiscoveryEngine(db)
+        discovery_results = await engine.run_discovery(
+            trigger_item_id=uuid.uuid4(), # Virtual trigger
+            title=alert.target_label,
+            summary=alert.description or f"Triggered on {alert.topic}"
+        )
+        
+        if discovery_results:
+            # Force update metadata
+            updated_meta = dict(alert.metadata_json)
+            updated_meta["cascading_impacts"] = discovery_results
+            alert.metadata_json = updated_meta
+            await db.commit()
+            
+            return {
+                "status": "success",
+                "message": "AI analysis complete",
+                "cascading_impacts": discovery_results
+            }
+        else:
+            return {"status": "warning", "message": "AI discovery returned no new insights"}
+            
+    except Exception as e:
+        logger.error(f"On-demand AI upgrade failed for {alert_id}: {e}")
+        raise HTTPException(status_code=500, detail="Intelligence engine failed to respond.")

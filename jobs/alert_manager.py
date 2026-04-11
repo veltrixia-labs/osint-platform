@@ -129,7 +129,9 @@ class AlertManager:
             await db.flush() # Need actual ID for delivery logs
 
             # --- Phase 4: Cascading Impact Discovery ---
-            if is_high_fidelity or severity in ["critical", "elevated"]:
+            # [v10.9] Tiered Intelligence Logic:
+            # Proactive AI for high-priority alerts; others use on-demand upgrades.
+            if severity in ["critical", "elevated"]: 
                 try:
                     from processor.impact_discovery import ImpactDiscoveryEngine
                     engine = ImpactDiscoveryEngine(db)

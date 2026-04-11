@@ -774,6 +774,40 @@ async function initDashboard() {
     };
     startHeartbeat();
 
+    // [v10.9] Tactical AI Upgrade Trigger (On-Demand Intelligence)
+    window.addEventListener('map-upgrade-ai' as any, async (e: CustomEvent) => {
+        const alertId = e.detail.alertId;
+        console.log(`[Antigravity] Tactical Upgrade Initiated: Alert ${alertId}`);
+        
+        try {
+            // 1. Trigger Status HUD Update (via event)
+            window.dispatchEvent(new CustomEvent('map-status-update', { detail: { message: 'ENHANCING SIGNAL...' } }));
+            
+            // 2. Call Backend Analyze Endpoint
+            const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+            const response = await fetch(`${baseUrl}/alerts/${alertId}/analyze`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success' || result.status === 'skipped') {
+                console.log("[Antigravity] AI Analysis Synced. Re-rendering focus...");
+                // 3. Force Re-render of focused alert on map
+                window.dispatchEvent(new CustomEvent('map-status-update', { detail: { message: 'INTELLIGENCE SYNCED' } }));
+                
+                // We re-trigger focus-map with the same ID to force a fresh fetch/render
+                window.dispatchEvent(new CustomEvent('focus-map', { detail: { alertId } }));
+            } else {
+                window.dispatchEvent(new CustomEvent('map-status-update', { detail: { message: 'SYNC ERROR' } }));
+            }
+        } catch (err) {
+            console.error("AI Upgrade failed:", err);
+            window.dispatchEvent(new CustomEvent('map-status-update', { detail: { message: 'NETWORK TIMEOUT' } }));
+        }
+    });
+
     refreshWatchlist();
 
     // [v8.4] Strategic Tracking Integration

@@ -1,6 +1,7 @@
 import logging
 import json
 import uuid
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -48,22 +49,25 @@ class ImpactDiscoveryEngine:
         ]
 
         system_prompt = (
-            "You are an Advanced OSINT Impact Analyst. Your task is to identify which secondary stakeholders "
-            "(Companies, Organizations, or Market Segments) are affected by the following intelligence signal.\n\n"
-            "Use the provided list of 'Known Stakeholders' as a reference. If an entity is not in the list but clearly affected, "
-            "propose it as a 'new_entity'.\n\n"
-            "For each affected entity, predict the 'Impact Alpha': the expected movement relative to the market baseline (e.g., S&P 500) "
-            "over a 7-day horizon. Direction: positive/negative, Magnitude: percentage (e.g., -2.5).\n\n"
-            "Strictly return JSON with the following structure:\n"
+            "You are an Advanced Geopolitical & Market Intelligence Analyst. Your task is to analyze cascading ripple effects "
+            "through three specific lenses:\n"
+            "1. GEOPOLITICAL POWER: How does this signal shift regional influence, alliances, or security dynamics?\n"
+            "2. HISTORICAL PRECEDENCE: Does this pattern match known historical conflicts, market crashes, or social upheavals?\n"
+            "3. SOCIAL-LEGAL IMPACT: Potential for civil unrest, major regulatory shifts, or systemic instability.\n\n"
+            "TASK:\n"
+            "Identify 3 secondary stakeholders (Companies, Organizations, or Market Segments) affected by this signal.\n"
+            "Predict the 'Impact Alpha' (expected movement relative to S&P 500) over a 7-day horizon.\n\n"
+            "Strictly return JSON:\n"
             "{\n"
             "  'findings': [\n"
             "    {\n"
-            "      'stakeholder_id': 'UUID from context or null',\n"
-            "      'entity_name': 'Name',\n"
+            "      'stakeholder_id': 'UUID or null',\n"
+            "      'entity_name': 'Entity Name',\n"
             "      'impact_direction': 'positive/negative',\n"
             "      'impact_alpha': -5.0,\n"
             "      'confidence': 0.85,\n"
-            "      'reasoning': 'Short explanation of the cascading effect'\n"
+            "      'source': 'ai_reasoning',\n"
+            "      'reasoning': 'Explain via the Geopolitical/Historical/Social context requested.'\n"
             "    }\n"
             "  ]\n"
             "}"
@@ -77,11 +81,18 @@ class ImpactDiscoveryEngine:
 
         try:
             analysis = await generate_analysis(system_prompt, user_prompt, is_batch=False)
-            if analysis == "__DEGRADED_MODE__" or not isinstance(analysis, dict):
-                logger.warning("Impact discovery failed (degraded/invalid JSON).")
-                return []
-
             findings = analysis.get("findings", [])
+            
+            # [v10.9] Statistical Fallback: If AI is empty or degraded, use numerical model
+            if not findings:
+                logger.info(f"AI returned empty findings for {title}. Triggering Statistical Fallback.")
+                from processor.impact_calculator import ImpactCalculator
+                findings = ImpactCalculator.calculate_impacts(
+                    topic=summary.split(' ')[0], # Rough topic extraction or pass from caller
+                    lat=None, lng=None, 
+                    intensity=5.0 # Default fallback intensity
+                )
+
             processed_findings = []
 
             for f in findings:

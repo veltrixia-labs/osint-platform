@@ -373,8 +373,20 @@ function renderTacticalStatusHud(_layer: L.LayerGroup, text: string) {
     hud.id = hudId;
     hud.innerHTML = HUD_HTML;
     
+    // [v10.9] Visual Variants
+    if (text.includes('ENHANCING')) hud.classList.add('enhancing');
+    
     setTimeout(() => hud.classList.add('active'), 100);
 }
+
+// [v10.9] Global HUD Controller
+window.addEventListener('map-status-update', (e: any) => {
+    // Note: This requires a layer reference. In on-demand mode, we use the active map instance.
+    const mapEl = document.getElementById('map-instance');
+    if (mapEl) {
+        renderTacticalStatusHud({} as any, e.detail.message);
+    }
+});
 
 export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert) {
     const rawCoords = getAlertCoords(alert);
@@ -627,13 +639,21 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                  }).addTo(layer);
 
                 if (level === 3) {
+                    const sourceLabel = finding.source === 'statistical_model' ? 'STATISTICAL MODEL' : 'GEOPOLITICAL AI';
+                    const sourceColor = finding.source === 'statistical_model' ? '#8b949e' : pathColor;
+                    
                     const impactPopupContent = `
                         <div class="tactical-card entity-card" style="--topic-color: ${pathColor}">
                             <div class="tactical-card-accent"></div>
                             <div class="tactical-card-header">
                                 <strong style="color:#fff; font-size:1rem;">${finding.entity_name}</strong>
-                                <div style="font-size:0.6rem; color:${pathColor}; font-weight:800; letter-spacing:1px; text-transform:uppercase;">
-                                    CAUSAL IMPACT • LEVEL 3
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                                    <div style="font-size:0.6rem; color:${pathColor}; font-weight:800; letter-spacing:1px; text-transform:uppercase;">
+                                        CAUSAL IMPACT • LEVEL ${level}
+                                    </div>
+                                    <div style="font-size:0.5rem; background: ${sourceColor}; color: #000; padding: 2px 6px; border-radius: 4px; font-weight: 900; letter-spacing: 0.5px;">
+                                        ${sourceLabel}
+                                    </div>
                                 </div>
                             </div>
                             <div class="tactical-card-body">
@@ -647,9 +667,17 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                                         <span style="font-size:0.6rem; opacity:0.5; display:block;">DISCOVERY COMPLETE</span>
                                     </div>
                                 </div>
-                                <p style="font-size:0.75rem; color:#8b949e; line-height:1.4;">
-                                    Strategic dependency confirmed. This entity is currently being monitored for second-order volatility risks.
+                                <p style="font-size:0.75rem; color:#c9d1d9; line-height:1.4;">
+                                    ${finding.reasoning || 'Strategic dependency confirmed. This entity is currently being monitored for second-order volatility risks.'}
                                 </p>
+                                
+                                ${finding.source === 'statistical_model' ? `
+                                    <button class="tactical-upgrade-btn u-m-top-1" style="width:100%;" 
+                                            onclick="window.dispatchEvent(new CustomEvent('map-upgrade-ai', {detail: {alertId: '${originalAlert.id}'}}))">
+                                        ✨ Enhance with Deep AI Analysis &rarr;
+                                    </button>
+                                ` : ''}
+
                                 ${originalAlert.related_report_id ? `
                                     <button class="tactical-action-btn u-m-top-1" style="width:100%;" onclick="window.dispatchEvent(new CustomEvent('map-view-report', {detail: {id: '${originalAlert.related_report_id}'}}))">
                                         Open Full Analysis &rarr;
@@ -669,7 +697,18 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 if (level >= 2 && (!subImpacts || subImpacts.length < 2)) {
                     const targetTopic = originalAlert.topic;
                     const metaTopic = (originalAlert.metadata_json as any)?.topic;
-                    const effectiveTopic = targetTopic || metaTopic;
+                    const rawTopic = targetTopic || metaTopic;
+                    
+                    // [v10.9] Topic Normalization Bridge
+                    const topicMap: Record<string, string> = {
+                        'market': 'global_market_intelligence',
+                        'energy': 'energy_resource_risk',
+                        'tech': 'ai_semiconductor_intelligence',
+                        'defense': 'defense_technology',
+                        'supply_chain': 'supply_chain_intelligence',
+                        'crypto': 'crypto_geopolitics'
+                    };
+                    const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
 
                     if (effectiveTopic) {
                         const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.9);

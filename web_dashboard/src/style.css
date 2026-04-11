@@ -3139,3 +3139,40 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     text-transform: uppercase;
 }
 
+/* [v10.9] AI Upgrade Button */
+.tactical-upgrade-btn {
+    background: linear-gradient(135deg, #bc8cff, #79c0ff);
+    color: #0d1117;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 15px rgba(188, 140, 255, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.tactical-upgrade-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(188, 140, 255, 0.5);
+    filter: brightness(1.1);
+}
+
+.tactical-upgrade-btn:active {
+    transform: translateY(0);
+}
+
+/* HUD Variants */
+.tactical-status-hud.enhancing .hud-inner {
+    border-color: #bc8cff;
+    box-shadow: 0 0 15px rgba(188, 140, 255, 0.4);
+}
+
+.tactical-status-hud.enhancing .hud-pulse {
+    background: #bc8cff;
+    box-shadow: 0 0 8px #bc8cff;
+}
+
