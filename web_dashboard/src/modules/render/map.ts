@@ -586,9 +586,9 @@ function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, c
 function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], finding: any, color: string, level: number, index: number) {
     const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 45) || 'Strategic Impact Detected';
     
-    // [v10.14] Label Anti-Overlap: Offset cards at same level horizontally/vertically
+    // [v10.15] Label Anti-Overlap: Offset cards at same level horizontally/vertically
     const xOffset = 25;
-    const yOffset = (index - 1) * 35; // Staggers labels vertically (B sits above, C sits below, etc.)
+    const yOffset = (index % 2 === 0 ? index * 45 : index * -45); // Alternating stagger to open up space
 
     const icon = L.divIcon({
         className: 'none',
@@ -643,14 +643,21 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
 
                 const pathColor = (finding.impact_alpha || 0) < 0 ? '#f43f5e' : '#10b981';
 
+                // [v10.15] Source Redundancy Check:
+                // If this finding is the same as the alert source, skip the wave-arc and label
+                // but still recurse into children from this position.
+                const isSourceNode = finding.entity_name?.toUpperCase() === originalAlert.target_label?.toUpperCase() ||
+                                    finding.entity_name?.toUpperCase() === (originalAlert as any).entity_name?.toUpperCase();
+
                 if (!nodeCoords) {
-                    renderTacticalRipple(layer, L.latLng(parentCoords.lat, parentCoords.lng), pathColor, level);
+                    if (!isSourceNode) renderTacticalRipple(layer, L.latLng(parentCoords.lat, parentCoords.lng), pathColor, level);
                     nodeCoords = { lat: parentCoords.lat, lng: parentCoords.lng, source: 'Abstract-Carryover' };
-                } else {
+                } else if (!isSourceNode) {
                     const start = L.latLng(parentCoords.lat, parentCoords.lng);
                     const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
                     const points: L.LatLng[] = [];
-                    const steps = Math.max(30, Math.min(60, Math.floor(L.latLng(start).distanceTo(end) / 50000)));
+                    const distance = L.latLng(start).distanceTo(end);
+                    const steps = Math.max(30, Math.min(60, Math.floor(distance / 50000)));
                     
                     const dLat = end.lat - start.lat;
                     const dLng = end.lng - start.lng;
@@ -673,20 +680,17 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     const arc = L.polyline(points, {
                         className: `propagation-arc-curved`,
                         color: pathColor,
-                        weight: 3.0,
-                        opacity: 0, // Animate in
+                        weight: 3.5,
+                        opacity: 0.8, // [v10.15] RESTORED: Directly visible
                         smoothFactor: 1.5,
                         interactive: false,
                         pane: 'vlt-tactical-pane'
                     }).addTo(layer);
 
-                    // Refined Arc Animation
+                    // Add dynamic glow variable
                     setTimeout(() => {
                         const el = arc.getElement() as HTMLElement;
-                        if (el) {
-                            el.style.opacity = '0.8';
-                            el.style.setProperty('--ring-color', pathColor);
-                        }
+                        if (el) el.style.setProperty('--ring-color', pathColor);
                     }, 50);
 
                     if (level === 1 && index === 0) {
@@ -696,27 +700,29 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 }
 
                 // Wave Arrival Narrative
-                const arrivalDelay = 1200; // Time it takes for the arc to 'land'
+                const arrivalDelay = isSourceNode ? 100 : 1200; 
                 setTimeout(() => {
-                    const baseSize = 10;
-                    const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level + 1, 3)} node-ignite`;
-                    const nodeIcon = L.divIcon({
-                        className: 'none',
-                        html: `<div class="${markerClass}" style="width:${baseSize}px; height:${baseSize}px; --ring-color:${pathColor}"><div class="glow-ring"></div></div>`,
-                        iconSize: [baseSize, baseSize],
-                        iconAnchor: [baseSize/2, baseSize/2]
-                    });
+                    if (!isSourceNode) {
+                        const baseSize = 10;
+                        const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level + 1, 3)} node-ignite`;
+                        const nodeIcon = L.divIcon({
+                            className: 'none',
+                            html: `<div class="${markerClass}" style="width:${baseSize}px; height:${baseSize}px; --ring-color:${pathColor}"><div class="glow-ring"></div></div>`,
+                            iconSize: [baseSize, baseSize],
+                            iconAnchor: [baseSize/2, baseSize/2]
+                        });
 
-                    L.marker([nodeCoords!.lat, nodeCoords!.lng], { icon: nodeIcon, pane: 'vlt-tactical-pane' }).addTo(layer);
+                        L.marker([nodeCoords!.lat, nodeCoords!.lng], { icon: nodeIcon, pane: 'vlt-tactical-pane' }).addTo(layer);
 
-                    const entityName = finding.entity_name || 'Strategic Node';
-                    renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index);
-                    renderTacticalStatusHud(layer, `WAVE ${level}: ANALYZING ${entityName.toUpperCase()}...`);
+                        const entityName = finding.entity_name || 'Strategic Node';
+                        renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index);
+                        renderTacticalStatusHud(layer, `WAVE ${level}: ANALYZING ${entityName.toUpperCase()}...`);
+                    }
 
-                    // [v10.14] Synchronous Wave Recurse: Start Wave N+1 only AFTER Wave N lands.
+                    // Branching Recursion: Still recurse if it's source node (to get Wave 1 out of Level 0)
                     const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
                     if (subImpacts && subImpacts.length > 0) {
-                        renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert);
+                        renderImpactChain(map, layer, nodeCoords!, subImpacts, isSourceNode ? level : level + 1, baseIntensity, originalAlert);
                     }
                 }, arrivalDelay);
 

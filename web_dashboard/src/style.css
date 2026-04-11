@@ -3269,3 +3269,12 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     box-shadow: 0 0 8px #bc8cff;
 }
 
+/* [v10.15] Tactical Propagation Arcs */
+.propagation-arc-curved {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 4px var(--ring-color));
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    z-index: 500;
+}
