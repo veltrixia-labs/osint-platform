@@ -410,35 +410,20 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
     _isTacticalDiscoveryActive = true; 
     _activeDiscoveryId = alert.id;
     
-    renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...");
-    console.log(`[Antigravity] Narrative Start: ${alert.target_label} @ ${coords.lat},${coords.lng} (Src: ${rawCoords.source})`);
-
     const intensity = alert.intensity || 5;
     const topicDef = getTopicDef(alert.topic);
     const topicColor = topicDef?.color || '#58a6ff';
-    const baseSize = 24;
 
-    const markerIcon = L.divIcon({
-        className: 'none',
-        html: `
-            <div class="marker-ring-tactical marker-ring-tactical--l1" 
-                 style="width: calc(${baseSize}px * var(--map-zoom-scale, 1)); height: calc(${baseSize}px * var(--map-zoom-scale, 1)); --ring-color: ${topicColor}">
-                <div class="glow-ring"></div>
-                <div class="ring-inner"></div>
-            </div>
-        `,
-        iconSize: [baseSize * 1.5, baseSize * 1.5],
-        iconAnchor: [baseSize * 0.75, baseSize * 0.75]
-    });
+    renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...");
+    console.log(`[Antigravity] Narrative Start: ${alert.target_label} @ ${coords.lat},${coords.lng} (Src: ${rawCoords.source})`);
 
-    // [v10.14] Pure Pulse Source: No card/marker for the origin to reduce clutter.
-    const marker = L.marker([coords.lat, coords.lng], { 
-        icon: markerIcon, 
-        zIndexOffset: 5000, 
-        pane: 'vlt-tactical-pane' 
-    }).addTo(layer);
-    
-    // marker.bindPopup(createTacticalPopup(alert, topicColor, true), { className: 'tactical-popup', maxWidth: 320 });
+    // [v10.16.2] Origin Card: No symbols (A/B), just the facts.
+    const alertFinding = {
+        entity_name: alert.target_label || "Active Event",
+        impact_summary: alert.description || alert.target_label || "Strategic Signal Detected",
+        impact_alpha: alert.intensity || 5
+    };
+    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0);
 
     // [v10.12] Modern API Path (Top-level) vs Legacy Path (Nested)
     const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
@@ -483,12 +468,13 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
              const currentHud = document.getElementById('tactical-discovery-hud');
              if (currentHud && currentHud.innerText.includes("POSITION")) {
                 renderTacticalStatusHud(layer, "TRACING CASCADE VECTORS...");
-                marker.openPopup();
+                
+                // [v10.16.2] Branch from Level 1 (Alert) to Level 2 (Order 1 Findings)
                 if (cascadingImpacts.length > 0) {
-                    renderImpactChain(map, layer, coords, cascadingImpacts, 1, intensity, alert);
+                    renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert);
                 }
                 
-                // Auto-dismiss HUD after 8s (estimated animation completion)
+                // Auto-dismiss HUD after 8s
                 setTimeout(() => {
                     const hud = document.getElementById('tactical-discovery-hud');
                     if (hud) {
@@ -588,7 +574,7 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], 
     
     // [v10.15] Label Anti-Overlap: Offset cards at same level horizontally/vertically
     const xOffset = 25;
-    const yOffset = (index % 2 === 0 ? index * 45 : index * -45); // Alternating stagger to open up space
+    const yOffset = (index % 2 === 0 ? index * 45 : index * -45); 
 
     const icon = L.divIcon({
         className: 'none',
@@ -601,7 +587,7 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], 
                     </div>
                     <div class="node-impact-summary">${impactSummary}</div>
                     <div class="node-footer">
-                        <span class="node-level-tag">WAVE ${level}</span>
+                        <span class="node-level-tag">${level === 1 ? 'ORIGIN' : `ORDER ${level - 1}`}</span>
                         <span class="node-impact-alpha">${finding.impact_alpha > 0 ? '+' : ''}${finding.impact_alpha}%</span>
                     </div>
                 </div>
@@ -643,86 +629,84 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
 
                 const pathColor = (finding.impact_alpha || 0) < 0 ? '#f43f5e' : '#10b981';
 
-                // [v10.15] Source Redundancy Check:
-                // If this finding is the same as the alert source, skip the wave-arc and label
-                // but still recurse into children from this position.
-                const isSourceNode = finding.entity_name?.toUpperCase() === originalAlert.target_label?.toUpperCase() ||
-                                    finding.entity_name?.toUpperCase() === (originalAlert as any).entity_name?.toUpperCase();
-
+                // [v10.16] RESTORED CORE FLOW: Source node is NOT suppressed.
+                // We draw lines from Alert (A) -> Finding 1 (B, C, D) -> Finding 2
+                
                 if (!nodeCoords) {
-                    if (!isSourceNode) renderTacticalRipple(layer, L.latLng(parentCoords.lat, parentCoords.lng), pathColor, level);
+                    renderTacticalRipple(layer, L.latLng(parentCoords.lat, parentCoords.lng), pathColor, level);
                     nodeCoords = { lat: parentCoords.lat, lng: parentCoords.lng, source: 'Abstract-Carryover' };
-                } else if (!isSourceNode) {
+                } else {
                     const start = L.latLng(parentCoords.lat, parentCoords.lng);
                     const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
-                    const points: L.LatLng[] = [];
+                    
+                    // Don't draw arc if it's the exact same spot (rare but possible if LLM recurses on same entity)
                     const distance = L.latLng(start).distanceTo(end);
-                    const steps = Math.max(30, Math.min(60, Math.floor(distance / 50000)));
-                    
-                    const dLat = end.lat - start.lat;
-                    const dLng = end.lng - start.lng;
-                    const dist = Math.sqrt(dLat*dLat + dLng*dLng);
-                    
-                    const offsetBase = (0.15 + (Math.min(dist, 40) / 200)) * (1.0 - (level - 1) * 0.2);
-                    const siblingOffset = (index % 2 === 0 ? 0.08 : -0.08) * (index + 1);
-                    const offsetFactor = offsetBase + siblingOffset;
+                    if (distance > 1000) {
+                        const points: L.LatLng[] = [];
+                        const steps = Math.max(30, Math.min(60, Math.floor(distance / 50000)));
+                        
+                        const dLat = end.lat - start.lat;
+                        const dLng = end.lng - start.lng;
+                        const dist = Math.sqrt(dLat*dLat + dLng*dLng);
+                        
+                        const offsetBase = (0.15 + (Math.min(dist, 40) / 200)) * (1.0 - (level - 1) * 0.2);
+                        const siblingOffset = (index % 2 === 0 ? 0.08 : -0.08) * (index + 1);
+                        const offsetFactor = offsetBase + siblingOffset;
 
-                    const cpLat = (start.lat + end.lat) / 2 - dLng * offsetFactor;
-                    const cpLng = (start.lng + end.lng) / 2 + dLat * offsetFactor;
+                        const cpLat = (start.lat + end.lat) / 2 - dLng * offsetFactor;
+                        const cpLng = (start.lng + end.lng) / 2 + dLat * offsetFactor;
 
-                    for (let i = 0; i <= steps; i++) {
-                        const t = i / steps;
-                        const lat = (1-t)**2 * start.lat + 2*(1-t)*t * cpLat + t**2 * end.lat;
-                        const lng = (1-t)**2 * start.lng + 2*(1-t)*t * cpLng + t**2 * end.lng;
-                        points.push(L.latLng(lat, lng));
+                        for (let i = 0; i <= steps; i++) {
+                            const t = i / steps;
+                            const lat = (1-t)**2 * start.lat + 2*(1-t)*t * cpLat + t**2 * end.lat;
+                            const lng = (1-t)**2 * start.lng + 2*(1-t)*t * cpLng + t**2 * end.lng;
+                            points.push(L.latLng(lat, lng));
+                        }
+
+                        const arc = L.polyline(points, {
+                            className: `propagation-arc-curved`,
+                            color: pathColor,
+                            weight: 3.5,
+                            opacity: 0.8,
+                            smoothFactor: 1.5,
+                            interactive: false,
+                            pane: 'vlt-tactical-pane'
+                        }).addTo(layer);
+
+                        setTimeout(() => {
+                            const el = arc.getElement() as HTMLElement;
+                            if (el) el.style.setProperty('--ring-color', pathColor);
+                        }, 50);
                     }
 
-                    const arc = L.polyline(points, {
-                        className: `propagation-arc-curved`,
-                        color: pathColor,
-                        weight: 3.5,
-                        opacity: 0.8, // [v10.15] RESTORED: Directly visible
-                        smoothFactor: 1.5,
-                        interactive: false,
-                        pane: 'vlt-tactical-pane'
-                    }).addTo(layer);
-
-                    // Add dynamic glow variable
-                    setTimeout(() => {
-                        const el = arc.getElement() as HTMLElement;
-                        if (el) el.style.setProperty('--ring-color', pathColor);
-                    }, 50);
-
-                    if (level === 1 && index === 0) {
+                    if (level === 2 && index === 0) {
                         const centerPoint = L.latLng((start.lat + end.lat)/2, (start.lng + end.lng)/2);
                         map.panTo(centerPoint, { animate: true, duration: 1.2 });
                     }
                 }
 
                 // Wave Arrival Narrative
-                const arrivalDelay = isSourceNode ? 100 : 1200; 
+                const arrivalDelay = 1200; 
                 setTimeout(() => {
-                    if (!isSourceNode) {
-                        const baseSize = 10;
-                        const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level + 1, 3)} node-ignite`;
-                        const nodeIcon = L.divIcon({
-                            className: 'none',
-                            html: `<div class="${markerClass}" style="width:${baseSize}px; height:${baseSize}px; --ring-color:${pathColor}"><div class="glow-ring"></div></div>`,
-                            iconSize: [baseSize, baseSize],
-                            iconAnchor: [baseSize/2, baseSize/2]
-                        });
+                    const baseSize = 10;
+                    const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level, 3)} node-ignite`;
+                    const nodeIcon = L.divIcon({
+                        className: 'none',
+                        html: `<div class="${markerClass}" style="width:${baseSize}px; height:${baseSize}px; --ring-color:${pathColor}"><div class="glow-ring"></div></div>`,
+                        iconSize: [baseSize, baseSize],
+                        iconAnchor: [baseSize/2, baseSize/2]
+                    });
 
-                        L.marker([nodeCoords!.lat, nodeCoords!.lng], { icon: nodeIcon, pane: 'vlt-tactical-pane' }).addTo(layer);
+                    L.marker([nodeCoords!.lat, nodeCoords!.lng], { icon: nodeIcon, pane: 'vlt-tactical-pane' }).addTo(layer);
 
-                        const entityName = finding.entity_name || 'Strategic Node';
-                        renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index);
-                        renderTacticalStatusHud(layer, `WAVE ${level}: ANALYZING ${entityName.toUpperCase()}...`);
-                    }
+                    const entityName = finding.entity_name || 'Strategic Node';
+                    renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index);
+                    renderTacticalStatusHud(layer, `WAVE ${level - 1}: ANALYZING ${entityName.toUpperCase()}...`);
 
-                    // Branching Recursion: Still recurse if it's source node (to get Wave 1 out of Level 0)
+                    // Branching Recursion: Sync level increment (Alert=1, Order1=2, Order2=3...)
                     const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
                     if (subImpacts && subImpacts.length > 0) {
-                        renderImpactChain(map, layer, nodeCoords!, subImpacts, isSourceNode ? level : level + 1, baseIntensity, originalAlert);
+                        renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert);
                     }
                 }, arrivalDelay);
 
