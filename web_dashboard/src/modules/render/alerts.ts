@@ -122,36 +122,33 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                     </div>
                 </div>
                 
-                ${accessible ? `
-                <div class="impact-chain-system u-m-top-1" style="background: rgba(88,166,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
-                    <div style="font-weight: 800; font-size: 0.65rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px;">
-                        <span>⛓️</span> Cascading Impact Analysis (3rd-Order)
+                ${(alert.cascading_impacts && alert.cascading_impacts.length > 0) ? `
+                    <div class="impact-chain-system u-m-top-1" style="background: rgba(88,166,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+                        <div style="font-weight: 800; font-size: 0.65rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px;">
+                            <span>⛓️</span> Active Impact Discovery (${alert.cascading_impacts[0].source === 'ai_reasoning' ? 'AI Analyzed' : 'Statistical Model'})
+                        </div>
+                        ${alert.cascading_impacts.slice(0, 3).map((imp, idx) => `
+                            <div class="impact-node" style="position: relative; padding-left: 1.2rem; margin-bottom: 0.4rem; margin-left: ${idx * 0.6}rem;">
+                                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: ${idx === 0 ? 'var(--accent)' : '#8b949e'}; opacity: 0.5;"></div>
+                                ${idx > 0 ? `<div style="position: absolute; left: -0.6rem; top: 0.4rem; width: 0.6rem; height: 2px; background: #8b949e; opacity: 0.3;"></div>` : ''}
+                                <div style="font-weight: 700; color: ${idx === 0 ? 'var(--accent)' : (idx === 2 ? '#3fb950' : '#c9d1d9')}; font-size: 0.75rem;">
+                                    ${idx === 0 ? 'PRIMARY RIPPLE' : (idx === 1 ? '↳ SECONDARY' : '↳ TERTIARY')} • ${imp.entity_name}
+                                </div>
+                                <div style="font-size: 0.7rem; opacity: 0.8;">${imp.reasoning || 'Cascading dependency detected.'}</div>
+                            </div>
+                        `).join('')}
                     </div>
-                    
-                    <!-- Primary Signal -->
-                    <div class="impact-node" style="position: relative; padding-left: 1.2rem; margin-bottom: 0.5rem;">
-                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--accent); opacity: 0.5;"></div>
-                        <div style="font-weight: 700; color: var(--accent); font-size: 0.75rem;">PRIMARY SIGNAL</div>
-                        <div style="font-size: 0.75rem; opacity: 0.9;">Detected anomaly in ${alert.topic || 'Sector'}</div>
+                ` : `
+                    <div class="impact-chain-system u-m-top-1" style="background: rgba(255,255,255,0.02); border: 1px dashed var(--border); border-radius: 8px; padding: 0.75rem; opacity: 0.7;">
+                        <div style="font-weight: 800; font-size: 0.65rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem;">
+                            🔎 Analysis Missing for Past Signal
+                        </div>
+                        <div style="font-size: 0.7rem; color: #8b949e;">
+                            This alert was generated before the Geopolitical Engine upgrade. 
+                            <span style="color: var(--accent); font-weight: 600;">Visualize on map</span> to trigger real-time AI discovery.
+                        </div>
                     </div>
-
-                    <!-- Secondary Impact -->
-                    <div class="impact-node" style="position: relative; padding-left: 1.2rem; margin-left: 0.6rem; margin-bottom: 0.5rem;">
-                        <div style="position: absolute; left: 0; top: -0.5rem; bottom: 0; width: 2px; background: #8b949e; opacity: 0.3;"></div>
-                        <div style="position: absolute; left: -0.6rem; top: 0.4rem; width: 0.6rem; height: 2px; background: #8b949e; opacity: 0.3;"></div>
-                        <div style="font-weight: 700; color: #c9d1d9; font-size: 0.75rem;">↳ 2ND WAVE (RIPPLE)</div>
-                        <div style="font-size: 0.75rem; opacity: 0.8;">Network-level volatility & cross-domain correlation</div>
-                    </div>
-
-                    <!-- Tertiary (Enterprise) Impact -->
-                    <div class="impact-node" style="position: relative; padding-left: 1.2rem; margin-left: 1.2rem;">
-                        <div style="position: absolute; left: 0; top: -0.5rem; bottom: 0.6rem; width: 2px; background: #8b949e; opacity: 0.3;"></div>
-                        <div style="position: absolute; left: -0.6rem; top: 0.4rem; width: 0.6rem; height: 2px; background: #8b949e; opacity: 0.3;"></div>
-                        <div style="font-weight: 700; color: #3fb950; font-size: 0.75rem;">↳ 3RD WAVE (ENTERPRISE ASSET)</div>
-                        <div style="font-size: 0.75rem; opacity: 0.8; font-style: italic;">Detailed impact on Strategic Portfolio Assets</div>
-                    </div>
-                </div>
-                ` : ''}
+                `}
 
                 <div class="u-flex-between u-m-top-1">
                     <div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.8;">

@@ -54,6 +54,7 @@ export interface StakeholderImpact {
     location_lng?: number;
     is_locked?: boolean;
     topic?: string;
+    source?: string;
     cascading_impacts?: StakeholderImpact[];
 }
 
