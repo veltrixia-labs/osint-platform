@@ -87,12 +87,20 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             opacity: 0.9
         }).addTo(currentGlobalMap);
 
-        // [v10.6] Dedicated Tactical Overlay Pane
-        // Forced to top-layer (Z:650) to ensure animations are never hidden by labels or clusters.
+        // [v10.19] PHYSICAL PANE SEGREGATION
+        // Arc pane (BELOW): Lines and propagation paths — never overlaps nodes
+        currentGlobalMap.createPane('vlt-arc-pane');
+        const arcPane = currentGlobalMap.getPane('vlt-arc-pane');
+        if (arcPane) {
+            arcPane.style.zIndex = '350'; // Below tilePane(400) labels but above base
+            arcPane.style.pointerEvents = 'none';
+        }
+
+        // Node pane (ABOVE): Cards, markers, HUD — always on top
         currentGlobalMap.createPane('vlt-tactical-pane');
         const tacticalPane = currentGlobalMap.getPane('vlt-tactical-pane');
         if (tacticalPane) {
-            tacticalPane.style.zIndex = '800'; // Above markerPane (600) and popupPane (700)
+            tacticalPane.style.zIndex = '900'; // Above everything: markerPane(600), popupPane(700), tooltipPane(650)
             tacticalPane.style.pointerEvents = 'none';
         }
 
@@ -569,27 +577,38 @@ function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, c
  * [v10.14] High-Fidelity Tactical Card.
  * Includes vertical offset for collision avoidance.
  */
-function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], finding: any, color: string, level: number, index: number, total: number) {
-    const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 45) || 'Strategic Impact Detected';
+function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], finding: any, _color: string, level: number, index: number, total: number) {
+    const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 80) || 'Strategic Impact Detected';
     
-    // [v10.17] Smart Radial Placement: Compute card offset based on index to avoid overlap
+    // [v10.19] Sentiment-driven color: positive = blue, negative = red
+    const alpha = finding.impact_alpha ?? 0;
+    const sentimentColor = alpha >= 0 ? '#388bfd' : '#ff7b72';
+    const alphaFormatted = `${alpha >= 0 ? '+' : ''}${alpha.toFixed(1)}%`;
+    const sentimentClass = alpha >= 0 ? 'sentiment-positive' : 'sentiment-negative';
+
+    // Smart Radial Placement
     const distance = 95; 
     const angleStep = (2 * Math.PI) / Math.max(1, total);
-    const angle = (index * angleStep) - (Math.PI / 4); // Starting at 45deg
-    
+    const angle = (index * angleStep) - (Math.PI / 4);
     const xOffset = Math.cos(angle) * distance;
     const yOffset = Math.sin(angle) * distance;
 
-    // Origins (Level 1) start expanded, others start collapsed
     const isOrigin = level === 1;
     const initialClass = isOrigin ? 'expanded' : 'collapsed';
+
+    // Quantum metrics
+    const resilience = finding.quantum_metrics?.resilience?.toFixed(1) ?? '50.0';
+    const contagion = finding.quantum_metrics?.contagion?.toFixed(2) ?? '0.30';
+    const metricsSource = finding.quantum_metrics?.metrics_source ?? 'probabilistic_estimation';
+    const metricsLabel = metricsSource === 'graph_tensor' ? '📊 Graph Tensor' : 
+                         metricsSource === 'sector_baseline' ? '📐 Sector Baseline' : '🔢 Estimated';
 
     const icon = L.divIcon({
         className: 'none',
         html: `
             <div id="tnode-${finding.stakeholder_id || index}-${level}" 
-                 class="tactical-node-wrapper ${initialClass}" 
-                 style="--node-color: ${color}; --x-off: ${xOffset}px; --y-off: ${yOffset}px">
+                 class="tactical-node-wrapper ${initialClass} ${sentimentClass}" 
+                 style="--node-color: ${sentimentColor}; --x-off: ${xOffset}px; --y-off: ${yOffset}px">
                 
                 <div class="tactical-node-trigger">
                     <div class="node-type-dot"></div>
@@ -605,17 +624,18 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], 
 
                     <div class="node-impact-summary">${impactSummary}</div>
 
-                    <!-- [v10.18] Quantum Metrics Grid -->
+                    <!-- [v10.19] Quantum Metrics Grid with source label -->
                     <div class="node-metrics-grid">
                         <div class="metric-item">
                             <span class="metric-label">Resilience (Ω)</span>
-                            <span class="metric-value">${finding.quantum_metrics?.resilience || 50}%</span>
+                            <span class="metric-value">${resilience}%</span>
                         </div>
                         <div class="metric-item">
                             <span class="metric-label">Contagion (ΔC)</span>
-                            <span class="metric-value">${finding.quantum_metrics?.contagion || 0.3}</span>
+                            <span class="metric-value">${contagion}</span>
                         </div>
                     </div>
+                    <div class="metrics-source-tag">${metricsLabel}</div>
 
                     <!-- [v10.18] Tactical Recommendation -->
                     <div class="node-action-container">
@@ -625,13 +645,13 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], 
 
                     <div class="node-footer">
                         <span class="node-level-tag">${isOrigin ? 'ORIGIN' : `ORDER ${level - 1}`}</span>
-                        <span class="node-impact-alpha">${finding.impact_alpha > 0 ? '+' : ''}${finding.impact_alpha}%</span>
+                        <span class="node-impact-alpha">${alphaFormatted}</span>
                     </div>
                 </div>
             </div>
         `,
-        iconSize: [220, 120],
-        iconAnchor: [110, 60] 
+        iconSize: [240, 140],
+        iconAnchor: [120, 70] 
     });
 
     const marker = L.marker(latLng, { 
@@ -730,7 +750,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                             opacity: 0.8,
                             smoothFactor: 1.5,
                             interactive: false,
-                            pane: 'vlt-tactical-pane'
+                            pane: 'vlt-arc-pane'  // [v10.19] Arc stays in lower pane
                         }).addTo(layer);
 
                         setTimeout(() => {

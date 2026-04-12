@@ -23,6 +23,49 @@ class ImpactDiscoveryEngine:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
+    async def _auto_provision_stakeholder(self, finding: Dict[str, Any]) -> Optional[Stakeholder]:
+        """
+        [v10.19] Auto-Registration Engine.
+        If an entity identified by LLM is not in DB, create it with AI-inferred coordinates and sector.
+        """
+        entity_name = finding.get("entity_name", "Unknown Entity")
+        entity_lat = finding.get("entity_lat")
+        entity_lng = finding.get("entity_lng")
+        entity_sector = finding.get("entity_sector", "global")
+
+        if not entity_lat or not entity_lng:
+            logger.warning(f"[Antigravity] Auto-Provision skipped for '{entity_name}': No coordinates provided by LLM.")
+            return None
+
+        # Map LLM sector string to DB domain code
+        domain_map = {
+            "semiconductor": "ai_semi", "tech": "ai_semi", "ai": "ai_semi",
+            "energy": "energy", "oil": "energy", "gas": "energy",
+            "shipping": "supply_chain", "supply": "supply_chain", "logistics": "supply_chain",
+            "market": "market", "finance": "market", "banking": "market",
+            "defense": "defense", "military": "defense",
+            "crypto": "crypto", "blockchain": "crypto",
+        }
+        domain = "global"
+        for key, val in domain_map.items():
+            if key in entity_sector.lower():
+                domain = val
+                break
+
+        new_stakeholder = Stakeholder(
+            id=uuid.uuid4(),
+            name=entity_name,
+            sector=entity_sector,
+            country=finding.get("entity_country", "Unknown"),
+            domain=domain,
+            description=f"Auto-provisioned by AI during impact discovery on {datetime.now(timezone.utc).strftime('%Y-%m-%d')}.",
+            location_lat=float(entity_lat),
+            location_lng=float(entity_lng),
+        )
+        self.db.add(new_stakeholder)
+        logger.info(f"[Antigravity] AUTO-PROVISIONED Stakeholder: '{entity_name}' at ({entity_lat}, {entity_lng}) in domain '{domain}'")
+        return new_stakeholder
+
     async def run_discovery(self, trigger_item_id: uuid.UUID, title: str, summary: str) -> List[Dict[str, Any]]:
         """
         Extract stakeholders and predict impacts from a news/alert signal.
@@ -33,7 +76,6 @@ class ImpactDiscoveryEngine:
         event_hash = hashlib.md5(f"{title}:{summary[:100]}".encode()).hexdigest()
         cached_result = _discovery_cache.get(event_hash)
         if cached_result:
-            # Check TTL
             ts, data = cached_result
             if datetime.now(timezone.utc) - ts < timedelta(hours=CACHE_TTL_HOURS):
                 logger.info(f"Using cached impact discovery for event hash: {event_hash}")
@@ -46,7 +88,7 @@ class ImpactDiscoveryEngine:
         known_stakes = await self.get_all_stakeholders()
         stakeholder_context = []
         
-        for s in known_stakes[:15]: # Limit context to top 15 for token efficiency
+        for s in known_stakes[:15]:  # Limit context to top 15 for token efficiency
             indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, s.id)
             stakeholder_context.append({
                 "id": str(s.id),
@@ -62,26 +104,32 @@ class ImpactDiscoveryEngine:
         system_prompt = (
             "You are an OSINT Intelligence Architect. Your task is to analyze cascading ripple effects "
             "as a DIVERGENT BRANCHING CAUSAL TREE (Order 1 -> Order 2 -> Order 3).\n\n"
-            "CONTEXTUAL DATA: You are provided with SOCIOGRAPHIC INDICATORS for stakeholders:\n"
-            "- Resilience (Omega): Ability to substitute/recover.\n"
-            "- Contagion (Delta-C): Probability of impact transfer.\n"
-            "- Fragility (FRG): Structural vulnerability.\n\n"
+            "CONTEXTUAL DATA: You are provided with SOCIOGRAPHIC INDICATORS for known stakeholders:\n"
+            "- Resilience (Omega): Ability to substitute/recover. Lower = more vulnerable.\n"
+            "- Contagion (Delta-C): Probability of impact transfer to next node.\n"
+            "- Fragility (FRG): Structural vulnerability from concentrated dependencies.\n\n"
             "COGNITIVE DIRECTIVES:\n"
-            "1. METRIC-DRIVEN JUSTIFICATION: Use the provided Quantum Indices to justify the magnitude of impact.\n"
-            "2. ACTIONABLE ADVICE: For every finding, provide a 'containment_action' (Actionable recommendation).\n"
-            "3. TIMELINE: Estimate 'time_to_impact' (e.g., 'Immediate', '3-5 Days', '2 Weeks').\n"
-            "4. FAN-OUT: Identify 3 distinct Level 1 entities, and branch secondary effects.\n\n"
-            "Strictly return nested branching JSON:\n"
+            "1. METRIC-DRIVEN JUSTIFICATION: In 'reasoning', EXPLICITLY cite the Omega/Delta-C values from the context to explain the magnitude. e.g. 'Given a low Omega of 35%, disruption is expected to persist over 2 weeks.'\n"
+            "2. ACTIONABLE ADVICE: For every finding, provide a specific 'containment_action'.\n"
+            "3. TIMELINE: Estimate 'time_to_impact' (e.g., 'Immediate', '3-5 Days', '2-4 Weeks').\n"
+            "4. FAN-OUT: Identify 3 distinct Level 1 entities, and branch at least 1-2 secondary effects per entity.\n"
+            "5. GEO-ENRICHMENT: For each entity (ESPECIALLY unknown ones not in the context list), "
+            "provide 'entity_lat', 'entity_lng' (decimal degrees), 'entity_sector', and 'entity_country'.\n\n"
+            "Strictly return nested branching JSON with this exact schema:\n"
             "{\n"
             "  'findings': [\n"
             "    {\n"
-            "      'entity_name': '...', \n"
+            "      'entity_name': 'Company or Region Name',\n"
+            "      'entity_lat': 35.68,\n"
+            "      'entity_lng': 139.69,\n"
+            "      'entity_sector': 'semiconductor',\n"
+            "      'entity_country': 'Japan',\n"
             "      'impact_alpha': -5.0,\n"
-            "      'impact_summary': '...', \n"
-            "      'reasoning': '...', \n"
-            "      'containment_action': '...', \n"
-            "      'time_to_impact': '...', \n"
-            "      'cascading_impacts': [...] \n"
+            "      'impact_summary': '3-5 word summary',\n"
+            "      'reasoning': 'Cite Omega/Delta-C values here to justify magnitude.',\n"
+            "      'containment_action': 'Specific actionable recommendation.',\n"
+            "      'time_to_impact': 'Estimated timeline',\n"
+            "      'cascading_impacts': [...same schema...]\n"
             "    }\n"
             "  ]\n"
             "}"
@@ -102,42 +150,48 @@ class ImpactDiscoveryEngine:
                 logger.info(f"AI returned empty findings for {title}. Triggering Statistical Fallback.")
                 from processor.impact_calculator import ImpactCalculator
                 findings = ImpactCalculator.calculate_impacts(
-                    topic=summary.split(' ')[0], # Rough topic extraction or pass from caller
+                    topic=summary.split(' ')[0],
                     lat=None, lng=None, 
-                    intensity=5.0 # Default fallback intensity
+                    intensity=5.0
                 )
 
             async def enrich_finding(finding: Dict[str, Any]):
-                # Enforce source if missing
+                """Enrich finding with DB data, auto-provisioning new entities as needed."""
                 if "source" not in finding:
                     finding["source"] = "ai_reasoning"
                 
                 s_id = finding.get("stakeholder_id")
                 stakeholder = None
                 
-                # [v10.18] Quantum Metric Enrichment
-                # If we have a stakeholder, fetch their real-time sociographic indices
                 try:
-                    # 1. Coordinate & Metadata Enrichment
+                    # 1. Attempt exact ID match
                     if s_id and s_id != "null":
                         s_stmt = select(Stakeholder).where(Stakeholder.id == uuid.UUID(s_id))
                         stakeholder = (await self.db.execute(s_stmt)).scalar_one_or_none()
-                    elif not s_id and finding.get("entity_name"):
-                        # Fallback: Fuzzy Name Match if LLM didn't provide ID
-                        fuzzy_stmt = select(Stakeholder).where(Stakeholder.name.ilike(f"%{finding['entity_name']}%"))
-                        stakeholder = (await self.db.execute(fuzzy_stmt)).first()
-                        if stakeholder: stakeholder = stakeholder[0]
+                    
+                    # 2. Fuzzy name match if no ID
+                    if not stakeholder and finding.get("entity_name"):
+                        fuzzy_stmt = select(Stakeholder).where(
+                            Stakeholder.name.ilike(f"%{finding['entity_name']}%")
+                        )
+                        result = (await self.db.execute(fuzzy_stmt)).first()
+                        if result:
+                            stakeholder = result[0]
+
+                    # 3. [v10.19] AUTO-PROVISIONING: If still not found, create new record
+                    if not stakeholder:
+                        stakeholder = await self._auto_provision_stakeholder(finding)
 
                     if stakeholder:
                         finding["stakeholder_id"] = str(stakeholder.id)
                         finding["location_lat"] = stakeholder.location_lat
                         finding["location_lng"] = stakeholder.location_lng
                         
-                        # Calculate Indices
+                        # Re-calc Indices (may be zero if just created, will grow over time)
                         indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, stakeholder.id)
                         finding["quantum_metrics"] = indices
 
-                        # Create Prediction record
+                        # Create Prediction record for self-learning
                         pred = Prediction(
                             prediction_id=f"PRED-{uuid.uuid4().hex[:8].upper()}",
                             trigger_event=f"{title}: {summary[:200]}...",
@@ -148,7 +202,7 @@ class ImpactDiscoveryEngine:
                         )
                         self.db.add(pred)
                     else:
-                        # Fallback metrics for unknown entities
+                        # Final fallback: probabilistic estimation
                         finding["quantum_metrics"] = {
                             "resilience": 45.0, 
                             "contagion": 0.4, 
@@ -156,9 +210,9 @@ class ImpactDiscoveryEngine:
                             "metrics_source": "probabilistic_estimation"
                         }
                 except Exception as ex:
-                    logger.warning(f"Failed to enrich stakeholder {s_id}: {ex}")
+                    logger.warning(f"Failed to enrich stakeholder '{finding.get('entity_name')}': {ex}")
 
-                # Recurse
+                # Recurse into children
                 children = finding.get("cascading_impacts", [])
                 for child in children:
                     await enrich_finding(child)
@@ -170,7 +224,7 @@ class ImpactDiscoveryEngine:
 
             await self.db.commit()
             
-            # 3. Store in Cache
+            # Store in Cache
             _discovery_cache[event_hash] = (datetime.now(timezone.utc), processed_findings)
             
             return processed_findings

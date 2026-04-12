@@ -3381,5 +3381,46 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     filter: drop-shadow(0 0 4px var(--ring-color));
     transition: opacity 0.5s ease;
     pointer-events: none;
-    z-index: 500;
+    z-index: 350; /* [v10.19] Arc pane — always below node cards */
+}
+
+/* [v10.19] Sentiment Color Coding */
+.tactical-node-wrapper.sentiment-positive {
+    --node-color: #388bfd;
+}
+
+.tactical-node-wrapper.sentiment-positive .node-label-inner {
+    border-color: rgba(56, 139, 253, 0.4);
+    box-shadow: 0 8px 32px rgba(56, 139, 253, 0.25), inset 0 1px 0 rgba(56, 139, 253, 0.2);
+}
+
+.tactical-node-wrapper.sentiment-positive .node-type-dot {
+    background: #388bfd;
+    box-shadow: 0 0 8px rgba(56, 139, 253, 0.8);
+}
+
+.tactical-node-wrapper.sentiment-negative {
+    --node-color: #ff7b72;
+}
+
+.tactical-node-wrapper.sentiment-negative .node-label-inner {
+    border-color: rgba(255, 123, 114, 0.4);
+    box-shadow: 0 8px 32px rgba(255, 123, 114, 0.25), inset 0 1px 0 rgba(255, 123, 114, 0.2);
+}
+
+.tactical-node-wrapper.sentiment-negative .node-type-dot {
+    background: #ff7b72;
+    box-shadow: 0 0 8px rgba(255, 123, 114, 0.8);
+}
+
+/* [v10.19] Metrics Source Tag */
+.metrics-source-tag {
+    font-size: 0.48rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-align: right;
+    margin-top: -4px;
+    margin-bottom: 6px;
 }
