@@ -92,7 +92,7 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
         currentGlobalMap.createPane('vlt-tactical-pane');
         const tacticalPane = currentGlobalMap.getPane('vlt-tactical-pane');
         if (tacticalPane) {
-            tacticalPane.style.zIndex = '650';
+            tacticalPane.style.zIndex = '800'; // Above markerPane (600) and popupPane (700)
             tacticalPane.style.pointerEvents = 'none';
         }
 
@@ -760,13 +760,21 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     L.marker([nodeCoords!.lat, nodeCoords!.lng], { icon: nodeIcon, pane: 'vlt-tactical-pane' }).addTo(layer);
 
                     const entityName = finding.entity_name || 'Strategic Node';
+                    console.log(`[Antigravity] Map Node Arrival: ${entityName} (Level ${level})`);
+                    if (finding.quantum_metrics) {
+                        console.log(`[Antigravity] Quantum baseline for ${entityName}:`, finding.quantum_metrics);
+                    }
+
                     renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index, impacts.length);
                     renderTacticalStatusHud(layer, `WAVE ${level - 1}: ANALYZING ${entityName.toUpperCase()}...`);
 
                     // Branching Recursion: Sync level increment (Alert=1, Order1=2, Order2=3...)
                     const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
-                    if (subImpacts && subImpacts.length > 0) {
-                        renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert);
+                    if (subImpacts && subImpacts.length > 0 && level < 3) {
+                        console.log(`[Antigravity] Propagating Wave ${level}...`);
+                        setTimeout(() => {
+                           renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert);
+                        }, 500); 
                     }
                 }, arrivalDelay);
 

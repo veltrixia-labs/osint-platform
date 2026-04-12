@@ -55,6 +55,10 @@ class ImpactDiscoveryEngine:
                 "quantum_indices": indices
             })
 
+        logger.info(f"[Antigravity] Quantum Baseline Injected: {len(stakeholder_context)} entities analyzed.")
+        if stakeholder_context:
+            logger.info(f"[Antigravity] Sample Baseline: {stakeholder_context[0]['name']} -> {stakeholder_context[0]['quantum_indices']}")
+
         system_prompt = (
             "You are an OSINT Intelligence Architect. Your task is to analyze cascading ripple effects "
             "as a DIVERGENT BRANCHING CAUSAL TREE (Order 1 -> Order 2 -> Order 3).\n\n"
