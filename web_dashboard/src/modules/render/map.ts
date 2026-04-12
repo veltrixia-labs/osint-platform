@@ -423,7 +423,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         impact_summary: alert.description || alert.target_label || "Strategic Signal Detected",
         impact_alpha: alert.intensity || 5
     };
-    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0);
+    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
 
     // [v10.12] Modern API Path (Top-level) vs Legacy Path (Nested)
     const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
@@ -569,17 +569,33 @@ function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, c
  * [v10.14] High-Fidelity Tactical Card.
  * Includes vertical offset for collision avoidance.
  */
-function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], finding: any, color: string, level: number, index: number) {
+function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], finding: any, color: string, level: number, index: number, total: number) {
     const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 45) || 'Strategic Impact Detected';
     
-    // [v10.15] Label Anti-Overlap: Offset cards at same level horizontally/vertically
-    const xOffset = 25;
-    const yOffset = (index % 2 === 0 ? index * 45 : index * -45); 
+    // [v10.17] Smart Radial Placement: Compute card offset based on index to avoid overlap
+    const distance = 95; 
+    const angleStep = (2 * Math.PI) / Math.max(1, total);
+    const angle = (index * angleStep) - (Math.PI / 4); // Starting at 45deg
+    
+    const xOffset = Math.cos(angle) * distance;
+    const yOffset = Math.sin(angle) * distance;
+
+    // Origins (Level 1) start expanded, others start collapsed
+    const isOrigin = level === 1;
+    const initialClass = isOrigin ? 'expanded' : 'collapsed';
 
     const icon = L.divIcon({
         className: 'none',
         html: `
-            <div class="tactical-node-label" style="--node-color: ${color}; transform: translate(${xOffset}px, ${yOffset}px)">
+            <div id="tnode-${finding.stakeholder_id || index}-${level}" 
+                 class="tactical-node-wrapper ${initialClass}" 
+                 style="--node-color: ${color}; --x-off: ${xOffset}px; --y-off: ${yOffset}px">
+                
+                <div class="tactical-node-trigger">
+                    <div class="node-type-dot"></div>
+                    <div class="node-name-mini">${finding.entity_name || 'Node'}</div>
+                </div>
+
                 <div class="node-label-inner card-high-fidelity">
                     <div class="node-label-header">
                         <span class="node-type-dot"></span>
@@ -587,21 +603,44 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], 
                     </div>
                     <div class="node-impact-summary">${impactSummary}</div>
                     <div class="node-footer">
-                        <span class="node-level-tag">${level === 1 ? 'ORIGIN' : `ORDER ${level - 1}`}</span>
+                        <span class="node-level-tag">${isOrigin ? 'ORIGIN' : `ORDER ${level - 1}`}</span>
                         <span class="node-impact-alpha">${finding.impact_alpha > 0 ? '+' : ''}${finding.impact_alpha}%</span>
                     </div>
                 </div>
             </div>
         `,
-        iconSize: [180, 80],
-        iconAnchor: [0, 40]
+        iconSize: [220, 120],
+        iconAnchor: [110, 60] 
     });
 
-    L.marker(latLng, { 
+    const marker = L.marker(latLng, { 
         icon, 
-        interactive: false,
+        interactive: true,
         pane: 'vlt-tactical-pane' 
     }).addTo(layer);
+
+    marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        const el = document.getElementById(`tnode-${finding.stakeholder_id || index}-${level}`);
+        if (el) {
+            const isExpanding = el.classList.contains('collapsed');
+            
+            if (isExpanding) {
+                document.querySelectorAll('.tactical-node-wrapper.expanded').forEach(other => {
+                    if (other.id !== el.id && !other.classList.contains('origin-permanent')) {
+                       other.classList.remove('expanded');
+                       other.classList.add('collapsed');
+                    }
+                });
+            }
+            el.classList.toggle('collapsed');
+            el.classList.toggle('expanded');
+        }
+    });
+
+    if (isOrigin) {
+        marker.getElement()?.classList.add('origin-permanent');
+    }
 }
 
 function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number, originalAlert: Alert) {
@@ -700,7 +739,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     L.marker([nodeCoords!.lat, nodeCoords!.lng], { icon: nodeIcon, pane: 'vlt-tactical-pane' }).addTo(layer);
 
                     const entityName = finding.entity_name || 'Strategic Node';
-                    renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index);
+                    renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index, impacts.length);
                     renderTacticalStatusHud(layer, `WAVE ${level - 1}: ANALYZING ${entityName.toUpperCase()}...`);
 
                     // Branching Recursion: Sync level increment (Alert=1, Order1=2, Order2=3...)
