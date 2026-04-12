@@ -1,6 +1,10 @@
 import math
 import logging
+import uuid
 from typing import List, Dict, Any, Optional
+from sqlalchemy.future import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from db.models import Stakeholder, Dependency
 
 logger = logging.getLogger(__name__)
 
@@ -15,34 +19,71 @@ TOPIC_ASSET_MAP = {
     "global": ["swift", "fed", "suez", "malacca"]
 }
 
-def get_distance_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
-    R = 6371.0
-    dlat = math.radians(lat2 - lat1)
-    dlng = math.radians(lng2 - lng1)
-    a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng / 2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return R * c
-
 class ImpactCalculator:
-    """Mathematical fallback engine for calculating probabilistic impacts when AI is unavailable."""
+    """
+    [v10.18] Quantum Analytics Engine.
+    Calculates sociological and statistical indices to inform AI predictions.
+    """
     
     @staticmethod
+    async def evaluate_sociographic_indices(db: AsyncSession, stakeholder_id: uuid.UUID) -> Dict[str, Any]:
+        """
+        Calculate Quantitative Baseline for a specific stakeholder.
+        - Omega (Resilience Factor)
+        - Delta-C (Contagion Probability)
+        - FRG (Fragility Index)
+        """
+        try:
+            # Fetch dependencies where this stakeholder is a source or target
+            stmt = select(Dependency).where(
+                (Dependency.source_id == stakeholder_id) | (Dependency.target_id == stakeholder_id)
+            )
+            result = await db.execute(stmt)
+            deps = result.scalars().all()
+            
+            if not deps:
+                return {
+                    "resilience": 50.0,
+                    "contagion": 0.3,
+                    "fragility": 0.4,
+                    "metrics_source": "sector_baseline"
+                }
+
+            # 1. Resilience Factor (Omega): Higher substitution_elasticity = Higher resilience
+            avg_elasticity = sum(d.substitution_elasticity for d in deps) / len(deps)
+            resilience = round(avg_elasticity * 100, 1)
+
+            # 2. Contagion Prob (Delta-C): beta_correlation * exposure_weight
+            source_deps = [d for d in deps if d.source_id == stakeholder_id]
+            if source_deps:
+                avg_contagion = sum(d.beta_correlation * d.exposure_weight for d in source_deps) / len(source_deps)
+            else:
+                avg_contagion = 0.3
+            contagion = round(avg_contagion, 2)
+
+            # 3. Fragility Index (FRG): Dependence on single sources
+            inbound_deps = [d for d in deps if d.target_id == stakeholder_id]
+            fragility = round(len(inbound_deps) * 0.15 + (1 - avg_elasticity), 2)
+
+            return {
+                "resilience": resilience,
+                "contagion": min(1.0, contagion),
+                "fragility": min(1.0, fragility),
+                "metrics_source": "graph_tensor"
+            }
+        except Exception as e:
+            logger.error(f"Failed to calculate indices for {stakeholder_id}: {e}")
+            return {"resilience": 50, "contagion": 0.5, "fragility": 0.5, "metrics_source": "fallback"}
+
+    @staticmethod
     def calculate_impacts(topic: str, lat: Optional[float], lng: Optional[float], intensity: float) -> List[Dict[str, Any]]:
-        from db.models import Stakeholder # Lazy import to avoid circular dep
-        # For simplicity in this demo, we'll simulate the finding structure based on TOPIC_ASSET_MAP
-        # In a real environment, we'd query the 'stakeholders' table for IDs.
-        
+        """Fallback engine when AI is unavailable."""
         findings = []
         target_keys = TOPIC_ASSET_MAP.get(topic, TOPIC_ASSET_MAP["global"])
-        
-        # [v10.10] Sequential Chaining Logic: A -> B -> C
-        # We pick 3 distinct assets and link them.
         
         chain = []
         for i, asset_id in enumerate(target_keys[:3]):
             target_name = asset_id.replace("_", " ").title()
-            
-            # Simple simulation of "impact" (attenuated per level)
             attenuation = 1.0 / (1.0 + (i * 0.5))
             calculated_alpha = round(-(intensity * 0.5) * attenuation, 2)
             

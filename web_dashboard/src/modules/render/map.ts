@@ -600,8 +600,29 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], 
                     <div class="node-label-header">
                         <span class="node-type-dot"></span>
                         <span class="node-name">${finding.entity_name || 'Strategic Hub'}</span>
+                        <span class="node-time-tag">${finding.time_to_impact || 'Immediate'}</span>
                     </div>
+
                     <div class="node-impact-summary">${impactSummary}</div>
+
+                    <!-- [v10.18] Quantum Metrics Grid -->
+                    <div class="node-metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">Resilience (Ω)</span>
+                            <span class="metric-value">${finding.quantum_metrics?.resilience || 50}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Contagion (ΔC)</span>
+                            <span class="metric-value">${finding.quantum_metrics?.contagion || 0.3}</span>
+                        </div>
+                    </div>
+
+                    <!-- [v10.18] Tactical Recommendation -->
+                    <div class="node-action-container">
+                        <div class="action-header">CONTAINMENT ACTION</div>
+                        <div class="action-text">${finding.containment_action || 'Monitor for volatility spillover.'}</div>
+                    </div>
+
                     <div class="node-footer">
                         <span class="node-level-tag">${isOrigin ? 'ORIGIN' : `ORDER ${level - 1}`}</span>
                         <span class="node-impact-alpha">${finding.impact_alpha > 0 ? '+' : ''}${finding.impact_alpha}%</span>

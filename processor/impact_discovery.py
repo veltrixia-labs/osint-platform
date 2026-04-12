@@ -41,36 +41,43 @@ class ImpactDiscoveryEngine:
 
         logger.info(f"Running LLM Impact Discovery for: {title}")
         
-        # 1. Get known stakeholders for context (to improve matching)
+        # 1. Get known stakeholders and calculate Quantum Indices
+        from processor.impact_calculator import ImpactCalculator
         known_stakes = await self.get_all_stakeholders()
-        stakeholder_context = [
-            {"id": str(s.id), "name": s.name, "ticker": s.ticker, "domain": s.domain}
-            for s in known_stakes
-        ]
+        stakeholder_context = []
+        
+        for s in known_stakes[:15]: # Limit context to top 15 for token efficiency
+            indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, s.id)
+            stakeholder_context.append({
+                "id": str(s.id),
+                "name": s.name,
+                "domain": s.domain,
+                "quantum_indices": indices
+            })
 
         system_prompt = (
             "You are an OSINT Intelligence Architect. Your task is to analyze cascading ripple effects "
             "as a DIVERGENT BRANCHING CAUSAL TREE (Order 1 -> Order 2 -> Order 3).\n\n"
+            "CONTEXTUAL DATA: You are provided with SOCIOGRAPHIC INDICATORS for stakeholders:\n"
+            "- Resilience (Omega): Ability to substitute/recover.\n"
+            "- Contagion (Delta-C): Probability of impact transfer.\n"
+            "- Fragility (FRG): Structural vulnerability.\n\n"
             "COGNITIVE DIRECTIVES:\n"
-            "1. FAN-OUT: From the source (Alert), identify at least 3 distinct DIRECT (Level 1) stake-holders "
-            "(Companies, Shipping, Market Sectors, or Facilities).\n"
-            "2. SECONDARY BRANCHING: For each Level 1 entity, identify 1-2 SPECIFIC secondary (Level 2) effects.\n"
-            "3. IMPACT SUMMARY: Provide a extremely short 'impact_summary' (3-5 words) for each node (e.g., 'Production Delays', 'Supply Shortage').\n\n"
+            "1. METRIC-DRIVEN JUSTIFICATION: Use the provided Quantum Indices to justify the magnitude of impact.\n"
+            "2. ACTIONABLE ADVICE: For every finding, provide a 'containment_action' (Actionable recommendation).\n"
+            "3. TIMELINE: Estimate 'time_to_impact' (e.g., 'Immediate', '3-5 Days', '2 Weeks').\n"
+            "4. FAN-OUT: Identify 3 distinct Level 1 entities, and branch secondary effects.\n\n"
             "Strictly return nested branching JSON:\n"
             "{\n"
             "  'findings': [\n"
             "    {\n"
             "      'entity_name': '...', \n"
             "      'impact_alpha': -5.0,\n"
-            "      'impact_summary': 'Direct Market Volatility',\n"
+            "      'impact_summary': '...', \n"
             "      'reasoning': '...', \n"
-            "      'cascading_impacts': [\n"
-            "        {\n"
-            "          'entity_name': '...', \n"
-            "          'impact_summary': 'Component Shortage',\n"
-            "          'cascading_impacts': [...] \n"
-            "        }\n"
-            "      ]\n"
+            "      'containment_action': '...', \n"
+            "      'time_to_impact': '...', \n"
+            "      'cascading_impacts': [...] \n"
             "    }\n"
             "  ]\n"
             "}"
@@ -79,7 +86,7 @@ class ImpactDiscoveryEngine:
         user_prompt = (
             f"SIGNAL TITLE: {title}\n"
             f"SIGNAL SUMMARY: {summary}\n\n"
-            f"KNOWN STAKEHOLDERS (Context):\n{json.dumps(stakeholder_context, indent=2)}"
+            f"SOCIOGRAPHIC BASELINE (Context):\n{json.dumps(stakeholder_context, indent=2)}"
         )
 
         try:
@@ -103,29 +110,51 @@ class ImpactDiscoveryEngine:
                 
                 s_id = finding.get("stakeholder_id")
                 stakeholder = None
-                if s_id and s_id != "null":
-                    try:
+                
+                # [v10.18] Quantum Metric Enrichment
+                # If we have a stakeholder, fetch their real-time sociographic indices
+                try:
+                    # 1. Coordinate & Metadata Enrichment
+                    if s_id and s_id != "null":
                         s_stmt = select(Stakeholder).where(Stakeholder.id == uuid.UUID(s_id))
                         stakeholder = (await self.db.execute(s_stmt)).scalar_one_or_none()
+                    elif not s_id and finding.get("entity_name"):
+                        # Fallback: Fuzzy Name Match if LLM didn't provide ID
+                        fuzzy_stmt = select(Stakeholder).where(Stakeholder.name.ilike(f"%{finding['entity_name']}%"))
+                        stakeholder = (await self.db.execute(fuzzy_stmt)).first()
+                        if stakeholder: stakeholder = stakeholder[0]
+
+                    if stakeholder:
+                        finding["stakeholder_id"] = str(stakeholder.id)
+                        finding["location_lat"] = stakeholder.location_lat
+                        finding["location_lng"] = stakeholder.location_lng
                         
-                        if stakeholder:
-                            finding["location_lat"] = stakeholder.location_lat
-                            finding["location_lng"] = stakeholder.location_lng
-                            
-                        # Create Prediction record for tracking
+                        # Calculate Indices
+                        indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, stakeholder.id)
+                        finding["quantum_metrics"] = indices
+
+                        # Create Prediction record
                         pred = Prediction(
                             prediction_id=f"PRED-{uuid.uuid4().hex[:8].upper()}",
                             trigger_event=f"{title}: {summary[:200]}...",
-                            target_id=uuid.UUID(s_id),
+                            target_id=stakeholder.id,
                             predicted_alpha=finding.get("impact_alpha", 0.0),
-                            confidence_score=finding.get("confidence", 0.0),
+                            confidence_score=finding.get("confidence", 0.7),
                             is_evaluated=False
                         )
                         self.db.add(pred)
-                    except Exception as ex:
-                        logger.warning(f"Failed to enrich stakeholder {s_id}: {ex}")
+                    else:
+                        # Fallback metrics for unknown entities
+                        finding["quantum_metrics"] = {
+                            "resilience": 45.0, 
+                            "contagion": 0.4, 
+                            "fragility": 0.5,
+                            "metrics_source": "probabilistic_estimation"
+                        }
+                except Exception as ex:
+                    logger.warning(f"Failed to enrich stakeholder {s_id}: {ex}")
 
-                # Recurse into children
+                # Recurse
                 children = finding.get("cascading_impacts", [])
                 for child in children:
                     await enrich_finding(child)
