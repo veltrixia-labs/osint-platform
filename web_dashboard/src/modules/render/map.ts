@@ -437,35 +437,47 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
     const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
     let cascadingImpacts = [...cascadingImpactsRaw];
 
-    // [v10.9] Runtime Fallback: If DB is empty (Past Alerts), generate virtual bridge to Strategic Assets
+    // [v10.21] BACKBONE-DRIVEN FALLBACK
+    // If cascading_impacts is empty, trigger on-demand AI analysis via the backbone DB.
+    // This replaces the old static STRATEGIC_ASSETS fallback with live DB-driven impact discovery.
     if (cascadingImpacts.length === 0) {
-        const rawTopic = alert.topic || (alert.metadata_json as any)?.topic;
+        console.log(`[Antigravity] No pre-computed impacts — triggering backbone analysis for: ${alert.id}`);
         
-        // Topic Normalization Bridge
-        const topicMap: Record<string, string> = {
-            'market': 'global_market_intelligence',
-            'energy': 'energy_resource_risk',
-            'tech': 'ai_semiconductor_intelligence',
-            'defense': 'defense_technology',
-            'supply_chain': 'supply_chain_intelligence',
-            'crypto': 'crypto_geopolitics'
-        };
-        const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
+        // Show analysis-in-progress HUD
+        renderTacticalStatusHud(layer, "BACKBONE ANALYSIS: RESOLVING CASCADE...");
 
-        if (effectiveTopic) {
-            const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.85);
-            cascadingImpacts = relatedAssets.slice(0, 3).map(asset => ({
-                stakeholder_id: asset.id,
-                entity_name: asset.name,
-                impact_alpha: -2.5,
-                source: 'statistical_model',
-                reasoning: `Strategic risk synchronization with ${asset.name}. Monitor for volatility spillover.`,
-                location_lat: asset.lat,
-                location_lng: asset.lng,
-                impact_direction: 'negative',
-                confidence: 0.8
-            }));
-        }
+        // Non-blocking: kick off analysis while map flies
+        fetch(`/api/alerts/${alert.id}/analyze`, { method: 'POST' })
+            .then(r => r.json())
+            .then(result => {
+                if (result.status === 'success' && result.cascading_impacts?.length > 0) {
+                    console.log(`[Antigravity] Backbone analysis complete: ${result.cascading_impacts.length} impacts found`);
+                    
+                    // Render impact chain with backbone-sourced data
+                    renderImpactChain(map, layer, coords, result.cascading_impacts, 2, intensity, alert);
+                    renderTacticalStatusHud(layer, "BACKBONE CASCADE: ACTIVE");
+                } else {
+                    // True last-resort: fall back to static assets only if API also returns empty
+                    console.warn(`[Antigravity] Backbone analysis returned no impacts, using static fallback`);
+                    const rawTopic = alert.topic || (alert.metadata_json as any)?.topic;
+                    const topicMap: Record<string, string> = {
+                        'market': 'global_market_intelligence', 'energy': 'energy_resource_risk',
+                        'tech': 'ai_semiconductor_intelligence', 'defense': 'defense_technology',
+                        'supply_chain': 'supply_chain_intelligence', 'crypto': 'crypto_geopolitics'
+                    };
+                    const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
+                    if (effectiveTopic) {
+                        const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.85);
+                        const staticFallback = relatedAssets.slice(0, 3).map(asset => ({
+                            stakeholder_id: asset.id, entity_name: asset.name, impact_alpha: -2.5,
+                            source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
+                            location_lat: asset.lat, location_lng: asset.lng
+                        }));
+                        if (staticFallback.length > 0) renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert);
+                    }
+                }
+            })
+            .catch(err => console.error(`[Antigravity] Backbone analysis error:`, err));
     }
 
     // [v10.8] Guaranteed Pipeline: Don't rely solely on flaky 'moveend'
@@ -478,18 +490,19 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                 renderTacticalStatusHud(layer, "TRACING CASCADE VECTORS...");
                 
                 // [v10.16.2] Branch from Level 1 (Alert) to Level 2 (Order 1 Findings)
+                // Only render immediately if pre-computed impacts exist (backbone analysis runs async above)
                 if (cascadingImpacts.length > 0) {
                     renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert);
                 }
                 
-                // Auto-dismiss HUD after 8s
+                // Auto-dismiss HUD after 12s (extended to allow backbone analysis to complete)
                 setTimeout(() => {
                     const hud = document.getElementById('tactical-discovery-hud');
                     if (hud) {
                         hud.classList.remove('active');
                         setTimeout(() => hud.remove(), 500);
                     }
-                }, 8000);
+                }, 12000);
              }
         };
 
