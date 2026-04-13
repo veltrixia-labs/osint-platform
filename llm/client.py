@@ -232,21 +232,21 @@ async def generate_with_retry(provider_name: str, system_prompt: str, user_promp
             async with p.gate:
                 if provider_name == "gemini":
                     model_cfg = get_gemini_model(model_name, system_prompt)
-                    response = await _gemini_client.aio.models.generate_content(
+                    response = await asyncio.wait_for(_gemini_client.aio.models.generate_content(
                         model=model_cfg["model"],
                         contents=user_prompt,
                         config=types.GenerateContentConfig(
                             system_instruction=model_cfg["system_instruction"],
                             temperature=0.7
                         )
-                    )
+                    ), timeout=45.0)
                     text = response.text
                 elif provider_name == "deepseek":
-                    response = await _deepseek_client.chat.completions.create(
+                    response = await asyncio.wait_for(_deepseek_client.chat.completions.create(
                         model=model_name,
                         messages=[{"role":"system","content":system_prompt},{"role":"user","content":user_prompt}],
                         temperature=0.7
-                    )
+                    ), timeout=45.0)
                     text = response.choices[0].message.content
                     cost_guard.add_cost(len(user_prompt)//4, len(text)//4, "deepseek")
                 elif provider_name == "ollama":

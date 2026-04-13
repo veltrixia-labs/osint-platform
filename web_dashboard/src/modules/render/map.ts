@@ -447,9 +447,13 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         renderTacticalStatusHud(layer, "BACKBONE ANALYSIS: RESOLVING CASCADE...");
 
         // Non-blocking: kick off analysis while map flies
-        fetch(`/api/alerts/${alert.id}/analyze`, { method: 'POST' })
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 55000);
+
+        fetch(`/api/alerts/${alert.id}/analyze`, { method: 'POST', signal: controller.signal })
             .then(r => r.json())
             .then(result => {
+                clearTimeout(timeoutId);
                 if (result.status === 'success' && result.cascading_impacts?.length > 0) {
                     console.log(`[Antigravity] Backbone analysis complete: ${result.cascading_impacts.length} impacts found`);
                     
@@ -477,7 +481,19 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                     }
                 }
             })
-            .catch(err => console.error(`[Antigravity] Backbone analysis error:`, err));
+            .catch(err => {
+                console.error(`[Antigravity] Backbone analysis error:`, err);
+                if (err.name === 'AbortError') {
+                    renderTacticalStatusHud(layer, "BACKBONE ANALYSIS: TIMEOUT");
+                    setTimeout(() => {
+                        const hud = document.getElementById('tactical-discovery-hud');
+                        if (hud) {
+                            hud.classList.remove('active');
+                            setTimeout(() => hud.remove(), 500);
+                        }
+                    }, 3000);
+                }
+            });
     }
 
     // [v10.8] Guaranteed Pipeline: Don't rely solely on flaky 'moveend'

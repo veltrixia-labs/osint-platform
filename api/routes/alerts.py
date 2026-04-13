@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 import uuid
 import json
 import logging
+import asyncio
 
 from db.models import AlertLog, AlertDelivery, AnalystProfile
 from db.database import get_db
@@ -256,11 +257,11 @@ async def upgrade_to_ai_analysis(
 
     try:
         engine = ImpactDiscoveryEngine(db)
-        discovery_results = await engine.run_discovery(
+        discovery_results = await asyncio.wait_for(engine.run_discovery(
             trigger_item_id=uuid.uuid4(), # Virtual trigger
             title=alert.target_label,
             summary=alert.description or f"Triggered on {alert.topic}"
-        )
+        ), timeout=50.0)
         
         if discovery_results:
             # Force update metadata

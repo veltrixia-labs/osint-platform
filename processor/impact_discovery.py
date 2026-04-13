@@ -18,8 +18,8 @@ class ImpactDiscoveryEngine:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all_stakeholders(self) -> List[Stakeholder]:
-        stmt = select(Stakeholder)
+    async def get_top_stakeholders(self, limit: int = 15) -> List[Stakeholder]:
+        stmt = select(Stakeholder).order_by(Stakeholder.strategic_score.desc()).limit(limit)
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
@@ -87,19 +87,21 @@ class ImpactDiscoveryEngine:
 
         logger.info(f"Running LLM Impact Discovery for: {title}")
         
-        # 1. Get known stakeholders and calculate Quantum Indices
+        # 1. Get known stakeholders and calculate Quantum Indices (Parallelized)
         from processor.impact_calculator import ImpactCalculator
-        known_stakes = await self.get_all_stakeholders()
-        stakeholder_context = []
+        import asyncio
+        known_stakes = await self.get_top_stakeholders(limit=15)
         
-        for s in known_stakes[:15]:  # Limit context to top 15 for token efficiency
+        async def fetch_indices(s: Stakeholder):
             indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, s.id)
-            stakeholder_context.append({
+            return {
                 "id": str(s.id),
                 "name": s.name,
                 "domain": s.domain,
                 "quantum_indices": indices
-            })
+            }
+            
+        stakeholder_context = await asyncio.gather(*(fetch_indices(s) for s in known_stakes))
 
         logger.info(f"[Antigravity] Quantum Baseline Injected: {len(stakeholder_context)} entities analyzed.")
         if stakeholder_context:
