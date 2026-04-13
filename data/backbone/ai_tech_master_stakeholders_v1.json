@@ -1,0 +1,2802 @@
+[
+  {
+    "name": "Taiwan Semiconductor Manufacturing Company Limited",
+    "ticker": "TSM",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 24.7828,
+      "lng": 121.005
+    },
+    "description": "World's largest dedicated semiconductor foundry and the central manufacturing bottleneck for advanced AI accelerators and leading-edge logic.",
+    "top_dependencies": [
+      {
+        "target": "ASML Holding N.V.",
+        "type": "supplier",
+        "weight": 0.96
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "customer",
+        "weight": 0.9
+      },
+      {
+        "target": "Apple Inc.",
+        "type": "customer",
+        "weight": 0.88
+      }
+    ]
+  },
+  {
+    "name": "Samsung Electronics Co., Ltd.",
+    "ticker": "005930",
+    "sector": "AI/TECH",
+    "country": "South Korea",
+    "location": {
+      "lat": 37.2636,
+      "lng": 127.0286
+    },
+    "description": "Korean electronics giant spanning leading-edge memory, foundry, advanced packaging, and AI device supply chains.",
+    "top_dependencies": [
+      {
+        "target": "ASML Holding N.V.",
+        "type": "supplier",
+        "weight": 0.93
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "customer",
+        "weight": 0.83
+      },
+      {
+        "target": "Qualcomm Incorporated",
+        "type": "customer",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Intel Corporation",
+    "ticker": "INTC",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3875,
+      "lng": -121.963
+    },
+    "description": "Major x86 and foundry player whose manufacturing, server CPUs, and packaging footprint remain systemically important for AI infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "ASML Holding N.V.",
+        "type": "supplier",
+        "weight": 0.9
+      },
+      {
+        "target": "Applied Materials, Inc.",
+        "type": "supplier",
+        "weight": 0.78
+      },
+      {
+        "target": "Amazon.com, Inc.",
+        "type": "customer",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "GlobalFoundries Inc.",
+    "ticker": "GFS",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 42.9897,
+      "lng": -73.7929
+    },
+    "description": "Large specialty foundry with strategic exposure to RF, connectivity, industrial, and defense-adjacent semiconductors.",
+    "top_dependencies": [
+      {
+        "target": "Applied Materials, Inc.",
+        "type": "supplier",
+        "weight": 0.76
+      },
+      {
+        "target": "Qualcomm Incorporated",
+        "type": "customer",
+        "weight": 0.72
+      },
+      {
+        "target": "Advanced Micro Devices, Inc.",
+        "type": "customer",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "United Microelectronics Corporation",
+    "ticker": "UMC",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 24.7739,
+      "lng": 121.0171
+    },
+    "description": "Major mature-node foundry with broad exposure to display, networking, automotive, and embedded semiconductor demand.",
+    "top_dependencies": [
+      {
+        "target": "Applied Materials, Inc.",
+        "type": "supplier",
+        "weight": 0.73
+      },
+      {
+        "target": "MediaTek Inc.",
+        "type": "customer",
+        "weight": 0.75
+      },
+      {
+        "target": "Qualcomm Incorporated",
+        "type": "customer",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "Semiconductor Manufacturing International Corporation",
+    "ticker": "00981",
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 31.2036,
+      "lng": 121.5977
+    },
+    "description": "China's flagship foundry and a key node for domestic semiconductor substitution under technology restrictions.",
+    "top_dependencies": [
+      {
+        "target": "Advanced Micro-Fabrication Equipment Inc. China",
+        "type": "supplier",
+        "weight": 0.84
+      },
+      {
+        "target": "NAURA Technology Group Co., Ltd.",
+        "type": "supplier",
+        "weight": 0.82
+      },
+      {
+        "target": "Huawei Technologies Co., Ltd.",
+        "type": "customer",
+        "weight": 0.8
+      }
+    ]
+  },
+  {
+    "name": "Hua Hong Semiconductor Limited",
+    "ticker": "01347",
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 31.2304,
+      "lng": 121.4737
+    },
+    "description": "Important Chinese foundry focused on power devices, embedded memory, and specialty process nodes.",
+    "top_dependencies": [
+      {
+        "target": "NAURA Technology Group Co., Ltd.",
+        "type": "supplier",
+        "weight": 0.78
+      },
+      {
+        "target": "Advanced Micro-Fabrication Equipment Inc. China",
+        "type": "supplier",
+        "weight": 0.75
+      },
+      {
+        "target": "Huawei Technologies Co., Ltd.",
+        "type": "customer",
+        "weight": 0.57
+      }
+    ]
+  },
+  {
+    "name": "Tower Semiconductor Ltd.",
+    "ticker": "TSEM",
+    "sector": "AI/TECH",
+    "country": "Israel",
+    "location": {
+      "lat": 32.675,
+      "lng": 35.2406
+    },
+    "description": "Specialty foundry with strategic relevance in analog, RF, image-sensor, and power-management manufacturing.",
+    "top_dependencies": [
+      {
+        "target": "Applied Materials, Inc.",
+        "type": "supplier",
+        "weight": 0.66
+      },
+      {
+        "target": "Broadcom Inc.",
+        "type": "customer",
+        "weight": 0.61
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "partner",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Vanguard International Semiconductor Corporation",
+    "ticker": "5347",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 24.8138,
+      "lng": 120.9675
+    },
+    "description": "Mature-node foundry with significant exposure to power management ICs and display-driver supply chains.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "ecosystem",
+        "weight": 0.78
+      },
+      {
+        "target": "MediaTek Inc.",
+        "type": "customer",
+        "weight": 0.62
+      },
+      {
+        "target": "Applied Materials, Inc.",
+        "type": "supplier",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Powerchip Semiconductor Manufacturing Corporation",
+    "ticker": "6770",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 24.805,
+      "lng": 120.97
+    },
+    "description": "Taiwanese foundry and memory-linked manufacturer with strategic exposure to mature-node capacity and industrial chips.",
+    "top_dependencies": [
+      {
+        "target": "Applied Materials, Inc.",
+        "type": "supplier",
+        "weight": 0.62
+      },
+      {
+        "target": "MediaTek Inc.",
+        "type": "customer",
+        "weight": 0.56
+      },
+      {
+        "target": "Powertech Technology Inc.",
+        "type": "packaging_partner",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "X-FAB Silicon Foundries SE",
+    "ticker": "XFAB",
+    "sector": "AI/TECH",
+    "country": "Belgium",
+    "location": {
+      "lat": 51.0651,
+      "lng": 5.0918
+    },
+    "description": "European specialty foundry important for automotive, industrial, and mixed-signal semiconductor resilience.",
+    "top_dependencies": [
+      {
+        "target": "Applied Materials, Inc.",
+        "type": "supplier",
+        "weight": 0.55
+      },
+      {
+        "target": "Siltronic AG",
+        "type": "wafer_supplier",
+        "weight": 0.54
+      },
+      {
+        "target": "Keysight Technologies, Inc.",
+        "type": "test_ecosystem",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Rapidus Corporation",
+    "ticker": null,
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6906,
+      "lng": 139.7536
+    },
+    "description": "Japanese state-backed advanced logic manufacturing project positioned to reduce concentration risk in leading-edge supply.",
+    "top_dependencies": [
+      {
+        "target": "ASML Holding N.V.",
+        "type": "supplier",
+        "weight": 0.91
+      },
+      {
+        "target": "International Business Machines Corporation",
+        "type": "research_partner",
+        "weight": 0.82
+      },
+      {
+        "target": "Synopsys, Inc.",
+        "type": "design_enablement",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "SK hynix Inc.",
+    "ticker": "000660",
+    "sector": "AI/TECH",
+    "country": "South Korea",
+    "location": {
+      "lat": 37.2795,
+      "lng": 127.4427
+    },
+    "description": "HBM and DRAM leader at the center of AI memory bottlenecks for GPU clusters and accelerator systems.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "customer",
+        "weight": 0.92
+      },
+      {
+        "target": "ASML Holding N.V.",
+        "type": "supplier",
+        "weight": 0.84
+      },
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "advanced_packaging_ecosystem",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Micron Technology, Inc.",
+    "ticker": "MU",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 43.615,
+      "lng": -116.2023
+    },
+    "description": "Strategic U.S. memory supplier spanning HBM, DRAM, NAND, and data-center storage demand.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "customer",
+        "weight": 0.85
+      },
+      {
+        "target": "ASML Holding N.V.",
+        "type": "supplier",
+        "weight": 0.74
+      },
+      {
+        "target": "Advanced Micro Devices, Inc.",
+        "type": "customer",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Kioxia Holdings Corporation",
+    "ticker": null,
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6804,
+      "lng": 139.769
+    },
+    "description": "Major NAND flash producer whose output is deeply tied to enterprise storage, mobile, and solid-state supply chains.",
+    "top_dependencies": [
+      {
+        "target": "Western Digital Corporation",
+        "type": "joint_venture_partner",
+        "weight": 0.93
+      },
+      {
+        "target": "Apple Inc.",
+        "type": "customer",
+        "weight": 0.56
+      },
+      {
+        "target": "Dell Technologies Inc.",
+        "type": "customer",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "name": "Western Digital Corporation",
+    "ticker": "WDC",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3874,
+      "lng": -121.972
+    },
+    "description": "Key HDD and flash storage vendor with systemic exposure to cloud, enterprise, and edge-storage infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "Kioxia Holdings Corporation",
+        "type": "joint_venture_partner",
+        "weight": 0.9
+      },
+      {
+        "target": "Dell Technologies Inc.",
+        "type": "customer",
+        "weight": 0.61
+      },
+      {
+        "target": "Hewlett Packard Enterprise Company",
+        "type": "customer",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Yangtze Memory Technologies Co., Ltd.",
+    "ticker": null,
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 30.5928,
+      "lng": 114.3055
+    },
+    "description": "China's most important NAND champion and a critical target of semiconductor self-sufficiency policy.",
+    "top_dependencies": [
+      {
+        "target": "NAURA Technology Group Co., Ltd.",
+        "type": "supplier",
+        "weight": 0.79
+      },
+      {
+        "target": "Semiconductor Manufacturing International Corporation",
+        "type": "ecosystem",
+        "weight": 0.63
+      },
+      {
+        "target": "Huawei Technologies Co., Ltd.",
+        "type": "customer",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "ChangXin Memory Technologies, Inc.",
+    "ticker": null,
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 31.8206,
+      "lng": 117.2272
+    },
+    "description": "Chinese DRAM producer with growing strategic relevance to domestic memory independence and compute supply.",
+    "top_dependencies": [
+      {
+        "target": "NAURA Technology Group Co., Ltd.",
+        "type": "supplier",
+        "weight": 0.75
+      },
+      {
+        "target": "Advanced Micro-Fabrication Equipment Inc. China",
+        "type": "supplier",
+        "weight": 0.72
+      },
+      {
+        "target": "Huawei Technologies Co., Ltd.",
+        "type": "customer",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Nanya Technology Corporation",
+    "ticker": "2408",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.059,
+      "lng": 121.431
+    },
+    "description": "Taiwanese DRAM manufacturer that remains relevant to broader memory-market balance and supply elasticity.",
+    "top_dependencies": [
+      {
+        "target": "Micron Technology, Inc.",
+        "type": "market_benchmark",
+        "weight": 0.76
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "platform_demand",
+        "weight": 0.55
+      },
+      {
+        "target": "Lenovo Group Limited",
+        "type": "customer",
+        "weight": 0.47
+      }
+    ]
+  },
+  {
+    "name": "ASE Technology Holding Co., Ltd.",
+    "ticker": "ASX",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 22.6273,
+      "lng": 120.3014
+    },
+    "description": "Largest outsourced semiconductor assembly and test group, central to back-end bottlenecks and advanced packaging throughput.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.86
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "customer",
+        "weight": 0.82
+      },
+      {
+        "target": "Apple Inc.",
+        "type": "customer",
+        "weight": 0.75
+      }
+    ]
+  },
+  {
+    "name": "Amkor Technology, Inc.",
+    "ticker": "AMKR",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 33.4255,
+      "lng": -111.94
+    },
+    "description": "Global OSAT leader with broad exposure to mobile, automotive, networking, and increasingly advanced AI packaging.",
+    "top_dependencies": [
+      {
+        "target": "Apple Inc.",
+        "type": "customer",
+        "weight": 0.78
+      },
+      {
+        "target": "Qualcomm Incorporated",
+        "type": "customer",
+        "weight": 0.73
+      },
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "ecosystem",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "JCET Group Co., Ltd.",
+    "ticker": "600584",
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 31.92,
+      "lng": 120.276
+    },
+    "description": "China's leading packaging and test house and a strategic back-end node in domestic semiconductor substitution.",
+    "top_dependencies": [
+      {
+        "target": "Semiconductor Manufacturing International Corporation",
+        "type": "ecosystem",
+        "weight": 0.73
+      },
+      {
+        "target": "Huawei Technologies Co., Ltd.",
+        "type": "customer",
+        "weight": 0.68
+      },
+      {
+        "target": "Advanced Micro Devices, Inc.",
+        "type": "customer",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "Powertech Technology Inc.",
+    "ticker": "6239",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 24.8138,
+      "lng": 120.9675
+    },
+    "description": "Important memory-focused packaging and testing specialist integrated into DRAM and flash supply chains.",
+    "top_dependencies": [
+      {
+        "target": "Micron Technology, Inc.",
+        "type": "customer",
+        "weight": 0.8
+      },
+      {
+        "target": "SK hynix Inc.",
+        "type": "customer",
+        "weight": 0.77
+      },
+      {
+        "target": "Powerchip Semiconductor Manufacturing Corporation",
+        "type": "ecosystem",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Unimicron Technology Corporation",
+    "ticker": "3037",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 24.9937,
+      "lng": 121.3009
+    },
+    "description": "Critical substrate and PCB supplier for high-performance computing, networking gear, and AI accelerators.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "customer",
+        "weight": 0.84
+      },
+      {
+        "target": "Apple Inc.",
+        "type": "customer",
+        "weight": 0.7
+      },
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "ecosystem",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "Ibiden Co., Ltd.",
+    "ticker": "4062",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.3606,
+      "lng": 136.612
+    },
+    "description": "Japanese substrate supplier central to advanced package build-up films and high-end processor packaging.",
+    "top_dependencies": [
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.84
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "customer",
+        "weight": 0.73
+      },
+      {
+        "target": "Apple Inc.",
+        "type": "customer",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "name": "Kinsus Interconnect Technology Corp.",
+    "ticker": "3189",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 24.973,
+      "lng": 121.296
+    },
+    "description": "ABF substrate specialist deeply exposed to GPU, AI server, and networking package demand.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "customer",
+        "weight": 0.8
+      },
+      {
+        "target": "Advanced Micro Devices, Inc.",
+        "type": "customer",
+        "weight": 0.64
+      },
+      {
+        "target": "Broadcom Inc.",
+        "type": "customer",
+        "weight": 0.61
+      }
+    ]
+  },
+  {
+    "name": "Shinko Electric Industries Co., Ltd.",
+    "ticker": "6967",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 36.6486,
+      "lng": 138.1948
+    },
+    "description": "Advanced packaging and substrate supplier embedded in CPU, GPU, and high-end server processor ecosystems.",
+    "top_dependencies": [
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.75
+      },
+      {
+        "target": "Advanced Micro Devices, Inc.",
+        "type": "customer",
+        "weight": 0.66
+      },
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "ecosystem",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Ajinomoto Co., Inc.",
+    "ticker": "2802",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Producer of ABF insulation materials that remain foundational to advanced substrates used in AI processors and servers.",
+    "top_dependencies": [
+      {
+        "target": "Ibiden Co., Ltd.",
+        "type": "customer",
+        "weight": 0.81
+      },
+      {
+        "target": "Unimicron Technology Corporation",
+        "type": "customer",
+        "weight": 0.79
+      },
+      {
+        "target": "Kinsus Interconnect Technology Corp.",
+        "type": "customer",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "Entegris, Inc.",
+    "ticker": "ENTG",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 42.5584,
+      "lng": -71.2689
+    },
+    "description": "Supplier of specialty materials, filtration, and contamination-control systems indispensable to advanced fabs.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.85
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.72
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.71
+      }
+    ]
+  },
+  {
+    "name": "Linde plc",
+    "ticker": "LIN",
+    "sector": "AI/TECH",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.319,
+      "lng": -0.558
+    },
+    "description": "Industrial gas supplier essential to semiconductor fabrication, advanced manufacturing, and high-purity process operations.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.82
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.76
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Air Liquide S.A.",
+    "ticker": "AI",
+    "sector": "AI/TECH",
+    "country": "France",
+    "location": {
+      "lat": 48.8566,
+      "lng": 2.3522
+    },
+    "description": "Major supplier of electronic gases and process chemicals serving fabs, materials production, and data-center industries.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.79
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.7
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.69
+      }
+    ]
+  },
+  {
+    "name": "JSR Corporation",
+    "ticker": null,
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Strategic Japanese supplier of photoresists and advanced materials used across leading-edge lithography stacks.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.86
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.77
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "Shin-Etsu Chemical Co., Ltd.",
+    "ticker": "4063",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Top supplier of silicon wafers and specialty materials underpinning semiconductor fabrication at scale.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.88
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.73
+      },
+      {
+        "target": "Micron Technology, Inc.",
+        "type": "customer",
+        "weight": 0.65
+      }
+    ]
+  },
+  {
+    "name": "SUMCO Corporation",
+    "ticker": "3436",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Global silicon wafer producer with direct exposure to leading-edge logic and memory capacity expansion.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.87
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.69
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "GlobalWafers Co., Ltd.",
+    "ticker": "6488",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 24.8138,
+      "lng": 120.9675
+    },
+    "description": "Important wafer supplier to foundries and IDMs across the logic, analog, and specialty manufacturing spectrum.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.76
+      },
+      {
+        "target": "United Microelectronics Corporation",
+        "type": "customer",
+        "weight": 0.66
+      },
+      {
+        "target": "GlobalFoundries Inc.",
+        "type": "customer",
+        "weight": 0.59
+      }
+    ]
+  },
+  {
+    "name": "Siltronic AG",
+    "ticker": "WAF",
+    "sector": "AI/TECH",
+    "country": "Germany",
+    "location": {
+      "lat": 48.1351,
+      "lng": 11.582
+    },
+    "description": "European silicon wafer producer relevant to geographic diversification of upstream semiconductor materials.",
+    "top_dependencies": [
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.62
+      },
+      {
+        "target": "GlobalFoundries Inc.",
+        "type": "customer",
+        "weight": 0.57
+      },
+      {
+        "target": "X-FAB Silicon Foundries SE",
+        "type": "customer",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Resonac Holdings Corporation",
+    "ticker": "4004",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Advanced materials supplier spanning semiconductor packaging compounds, substrates, and specialty chemicals.",
+    "top_dependencies": [
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.68
+      },
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.57
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "demand_driver",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "DuPont de Nemours, Inc.",
+    "ticker": "DD",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 39.7447,
+      "lng": -75.5484
+    },
+    "description": "Supplier of semiconductor process materials, laminates, and specialty inputs connected to electronics manufacturing resilience.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.63
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.55
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.53
+      }
+    ]
+  },
+  {
+    "name": "ASML Holding N.V.",
+    "ticker": "ASML",
+    "sector": "AI/TECH",
+    "country": "Netherlands",
+    "location": {
+      "lat": 51.4183,
+      "lng": 5.406
+    },
+    "description": "EUV lithography monopolist and one of the single most critical chokepoints in the global semiconductor supply chain.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.95
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.88
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.87
+      }
+    ]
+  },
+  {
+    "name": "Applied Materials, Inc.",
+    "ticker": "AMAT",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3688,
+      "lng": -121.9635
+    },
+    "description": "Largest semiconductor equipment supplier spanning deposition, etch, metrology, and packaging process tools.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.87
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.82
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.79
+      }
+    ]
+  },
+  {
+    "name": "Lam Research Corporation",
+    "ticker": "LRCX",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.5483,
+      "lng": -121.9886
+    },
+    "description": "Core etch and deposition equipment vendor with deep exposure to both advanced logic and memory manufacturing.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.81
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.74
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "KLA Corporation",
+    "ticker": "KLAC",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.4323,
+      "lng": -121.8996
+    },
+    "description": "Inspection and metrology leader essential to defect control, yield ramp, and advanced-node process monitoring.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.84
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.77
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.75
+      }
+    ]
+  },
+  {
+    "name": "Tokyo Electron Limited",
+    "ticker": "8035",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Japanese semiconductor tool leader with heavy importance in coater/developer, etch, and deposition segments.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.83
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.78
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "SCREEN Holdings Co., Ltd.",
+    "ticker": "7735",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.0116,
+      "lng": 135.7681
+    },
+    "description": "Strategic supplier of cleaning and process equipment deeply tied to wafer-fab yield and advanced-node throughput.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.79
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.66
+      },
+      {
+        "target": "Micron Technology, Inc.",
+        "type": "customer",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "ASM International N.V.",
+    "ticker": "ASM",
+    "sector": "AI/TECH",
+    "country": "Netherlands",
+    "location": {
+      "lat": 52.3508,
+      "lng": 5.2647
+    },
+    "description": "Key supplier of deposition systems and advanced materials processes for leading-edge semiconductor manufacturing.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.78
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.64
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "BE Semiconductor Industries N.V.",
+    "ticker": "BESI",
+    "sector": "AI/TECH",
+    "country": "Netherlands",
+    "location": {
+      "lat": 51.946,
+      "lng": 6.013
+    },
+    "description": "Back-end equipment supplier exposed to hybrid bonding and advanced packaging transitions in AI chips.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.69
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.58
+      },
+      {
+        "target": "ASE Technology Holding Co., Ltd.",
+        "type": "customer",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Advantest Corporation",
+    "ticker": "6857",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Dominant semiconductor test-equipment supplier central to validating high-value CPUs, GPUs, and memory devices.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "ecosystem",
+        "weight": 0.69
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.66
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.61
+      }
+    ]
+  },
+  {
+    "name": "Teradyne, Inc.",
+    "ticker": "TER",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 42.5751,
+      "lng": -71.0787
+    },
+    "description": "Important semiconductor test supplier with additional exposure to industrial automation and electronics validation.",
+    "top_dependencies": [
+      {
+        "target": "Qualcomm Incorporated",
+        "type": "customer",
+        "weight": 0.58
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.57
+      },
+      {
+        "target": "Broadcom Inc.",
+        "type": "customer",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "DISCO Corporation",
+    "ticker": "6146",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Essential supplier of wafer dicing, grinding, and polishing tools used throughout advanced chip manufacturing.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "customer",
+        "weight": 0.74
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.6
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "customer",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Nikon Corporation",
+    "ticker": "7731",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Legacy lithography supplier that remains relevant in mature-node manufacturing and geographic diversification of tool supply.",
+    "top_dependencies": [
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.43
+      },
+      {
+        "target": "Semiconductor Manufacturing International Corporation",
+        "type": "customer",
+        "weight": 0.52
+      },
+      {
+        "target": "Hua Hong Semiconductor Limited",
+        "type": "customer",
+        "weight": 0.45
+      }
+    ]
+  },
+  {
+    "name": "Canon Inc.",
+    "ticker": "7751",
+    "sector": "AI/TECH",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Lithography and nanoimprint player with ongoing relevance to specialty, mature-node, and alternative patterning approaches.",
+    "top_dependencies": [
+      {
+        "target": "Semiconductor Manufacturing International Corporation",
+        "type": "customer",
+        "weight": 0.46
+      },
+      {
+        "target": "Hua Hong Semiconductor Limited",
+        "type": "customer",
+        "weight": 0.42
+      },
+      {
+        "target": "Tower Semiconductor Ltd.",
+        "type": "customer",
+        "weight": 0.38
+      }
+    ]
+  },
+  {
+    "name": "MKS Instruments, Inc.",
+    "ticker": "MKSI",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 42.6583,
+      "lng": -71.1409
+    },
+    "description": "Upstream supplier of subsystems, lasers, vacuum products, and process control components embedded across tool chains.",
+    "top_dependencies": [
+      {
+        "target": "Applied Materials, Inc.",
+        "type": "customer",
+        "weight": 0.67
+      },
+      {
+        "target": "Lam Research Corporation",
+        "type": "customer",
+        "weight": 0.64
+      },
+      {
+        "target": "KLA Corporation",
+        "type": "customer",
+        "weight": 0.45
+      }
+    ]
+  },
+  {
+    "name": "ACM Research, Inc.",
+    "ticker": "ACMR",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.5483,
+      "lng": -121.9886
+    },
+    "description": "Cleaning and process tool vendor whose importance has risen inside Chinese fab expansion and import-substitution efforts.",
+    "top_dependencies": [
+      {
+        "target": "Semiconductor Manufacturing International Corporation",
+        "type": "customer",
+        "weight": 0.7
+      },
+      {
+        "target": "Yangtze Memory Technologies Co., Ltd.",
+        "type": "customer",
+        "weight": 0.63
+      },
+      {
+        "target": "ChangXin Memory Technologies, Inc.",
+        "type": "customer",
+        "weight": 0.57
+      }
+    ]
+  },
+  {
+    "name": "NAURA Technology Group Co., Ltd.",
+    "ticker": "002371",
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "China's most important domestic semiconductor equipment champion across etch, deposition, and process subsystems.",
+    "top_dependencies": [
+      {
+        "target": "Semiconductor Manufacturing International Corporation",
+        "type": "customer",
+        "weight": 0.82
+      },
+      {
+        "target": "Yangtze Memory Technologies Co., Ltd.",
+        "type": "customer",
+        "weight": 0.78
+      },
+      {
+        "target": "ChangXin Memory Technologies, Inc.",
+        "type": "customer",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Advanced Micro-Fabrication Equipment Inc. China",
+    "ticker": "688012",
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 31.2304,
+      "lng": 121.4737
+    },
+    "description": "Leading Chinese etch and deposition equipment supplier central to domestic fabs facing export-control pressure.",
+    "top_dependencies": [
+      {
+        "target": "Semiconductor Manufacturing International Corporation",
+        "type": "customer",
+        "weight": 0.83
+      },
+      {
+        "target": "Yangtze Memory Technologies Co., Ltd.",
+        "type": "customer",
+        "weight": 0.76
+      },
+      {
+        "target": "ChangXin Memory Technologies, Inc.",
+        "type": "customer",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Synopsys, Inc.",
+    "ticker": "SNPS",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3688,
+      "lng": -122.0363
+    },
+    "description": "EDA and IP giant that forms a foundational software bottleneck for advanced chip design and verification.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "ecosystem",
+        "weight": 0.83
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "ecosystem",
+        "weight": 0.71
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "ecosystem",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "Cadence Design Systems, Inc.",
+    "ticker": "CDNS",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3349,
+      "lng": -121.8881
+    },
+    "description": "Core EDA supplier deeply embedded in design, simulation, packaging, and system-level verification for AI chips.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "ecosystem",
+        "weight": 0.79
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "customer",
+        "weight": 0.63
+      },
+      {
+        "target": "Qualcomm Incorporated",
+        "type": "customer",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Siemens AG",
+    "ticker": "SIE",
+    "sector": "AI/TECH",
+    "country": "Germany",
+    "location": {
+      "lat": 48.1351,
+      "lng": 11.582
+    },
+    "description": "Provider of Siemens EDA and industrial software important to semiconductor design, manufacturing automation, and digital twins.",
+    "top_dependencies": [
+      {
+        "target": "Intel Corporation",
+        "type": "customer",
+        "weight": 0.57
+      },
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "ecosystem",
+        "weight": 0.52
+      },
+      {
+        "target": "Advanced Micro Devices, Inc.",
+        "type": "customer",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Keysight Technologies, Inc.",
+    "ticker": "KEYS",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 38.4404,
+      "lng": -122.7141
+    },
+    "description": "Test and measurement provider linked to chip design validation, high-speed interconnects, and AI data-center networking.",
+    "top_dependencies": [
+      {
+        "target": "Qualcomm Incorporated",
+        "type": "customer",
+        "weight": 0.61
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "customer",
+        "weight": 0.53
+      },
+      {
+        "target": "Apple Inc.",
+        "type": "customer",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "Arm Holdings plc",
+    "ticker": "ARM",
+    "sector": "AI/TECH",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 52.2053,
+      "lng": 0.1218
+    },
+    "description": "CPU architecture licensor underlying most smartphones and a growing share of cloud and AI server silicon roadmaps.",
+    "top_dependencies": [
+      {
+        "target": "Apple Inc.",
+        "type": "customer",
+        "weight": 0.88
+      },
+      {
+        "target": "Amazon.com, Inc.",
+        "type": "customer",
+        "weight": 0.8
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "ecosystem",
+        "weight": 0.69
+      }
+    ]
+  },
+  {
+    "name": "NVIDIA Corporation",
+    "ticker": "NVDA",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3706,
+      "lng": -121.9621
+    },
+    "description": "Dominant AI accelerator vendor and the most important commercial compute node in today's global AI buildout.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "supplier",
+        "weight": 0.95
+      },
+      {
+        "target": "SK hynix Inc.",
+        "type": "supplier",
+        "weight": 0.9
+      },
+      {
+        "target": "CoreWeave, Inc.",
+        "type": "customer",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "Advanced Micro Devices, Inc.",
+    "ticker": "AMD",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3951,
+      "lng": -121.9633
+    },
+    "description": "Leading CPU and GPU vendor whose EPYC and Instinct lines matter for cloud, HPC, and AI competition.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "supplier",
+        "weight": 0.91
+      },
+      {
+        "target": "SK hynix Inc.",
+        "type": "supplier",
+        "weight": 0.62
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "customer",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Broadcom Inc.",
+    "ticker": "AVGO",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.4419,
+      "lng": -122.143
+    },
+    "description": "Critical supplier of networking silicon, custom AI accelerators, and data-center interconnect components.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "supplier",
+        "weight": 0.87
+      },
+      {
+        "target": "Alphabet Inc.",
+        "type": "customer",
+        "weight": 0.72
+      },
+      {
+        "target": "Meta Platforms, Inc.",
+        "type": "customer",
+        "weight": 0.69
+      }
+    ]
+  },
+  {
+    "name": "Qualcomm Incorporated",
+    "ticker": "QCOM",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 32.895,
+      "lng": -117.202
+    },
+    "description": "Mobile and edge-compute chip designer with strategic exposure to connectivity, PCs, automotive, and on-device AI.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "supplier",
+        "weight": 0.84
+      },
+      {
+        "target": "Arm Holdings plc",
+        "type": "ip_supplier",
+        "weight": 0.78
+      },
+      {
+        "target": "Samsung Electronics Co., Ltd.",
+        "type": "manufacturing_partner",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "Marvell Technology, Inc.",
+    "ticker": "MRVL",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3894,
+      "lng": -121.967
+    },
+    "description": "Networking, optical, and custom silicon supplier exposed to AI-cluster backplanes and cloud infrastructure buildout.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "supplier",
+        "weight": 0.8
+      },
+      {
+        "target": "Amazon.com, Inc.",
+        "type": "customer",
+        "weight": 0.6
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "customer",
+        "weight": 0.57
+      }
+    ]
+  },
+  {
+    "name": "MediaTek Inc.",
+    "ticker": "2454",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 24.783,
+      "lng": 121.005
+    },
+    "description": "High-volume fabless chip designer with major influence across mobile, connectivity, edge AI, and consumer electronics.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "supplier",
+        "weight": 0.88
+      },
+      {
+        "target": "Arm Holdings plc",
+        "type": "ip_supplier",
+        "weight": 0.8
+      },
+      {
+        "target": "United Microelectronics Corporation",
+        "type": "manufacturing_partner",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "Apple Inc.",
+    "ticker": "AAPL",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3349,
+      "lng": -122.009
+    },
+    "description": "High-volume custom silicon buyer whose product roadmap heavily shapes leading-edge foundry and packaging utilization.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "supplier",
+        "weight": 0.94
+      },
+      {
+        "target": "Arm Holdings plc",
+        "type": "ip_supplier",
+        "weight": 0.9
+      },
+      {
+        "target": "Broadcom Inc.",
+        "type": "supplier",
+        "weight": 0.65
+      }
+    ]
+  },
+  {
+    "name": "Huawei Technologies Co., Ltd.",
+    "ticker": null,
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 22.5431,
+      "lng": 114.0579
+    },
+    "description": "Chinese technology conglomerate driving domestic substitution across AI accelerators, networking, smartphones, and cloud.",
+    "top_dependencies": [
+      {
+        "target": "Semiconductor Manufacturing International Corporation",
+        "type": "supplier",
+        "weight": 0.83
+      },
+      {
+        "target": "Yangtze Memory Technologies Co., Ltd.",
+        "type": "supplier",
+        "weight": 0.59
+      },
+      {
+        "target": "NAURA Technology Group Co., Ltd.",
+        "type": "domestic_toolchain",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Alibaba Group Holding Limited",
+    "ticker": "9988",
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 30.2741,
+      "lng": 120.1551
+    },
+    "description": "Chinese platform and cloud operator whose custom silicon and model deployment needs materially affect regional AI demand.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.76
+      },
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "custom_silicon_supplier",
+        "weight": 0.61
+      },
+      {
+        "target": "Broadcom Inc.",
+        "type": "networking_supplier",
+        "weight": 0.41
+      }
+    ]
+  },
+  {
+    "name": "Tencent Holdings Limited",
+    "ticker": "0700",
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 22.5431,
+      "lng": 114.0579
+    },
+    "description": "Major Chinese internet and cloud platform whose gaming, social, and AI workloads drive large-scale compute demand.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.72
+      },
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "custom_silicon_supplier",
+        "weight": 0.52
+      },
+      {
+        "target": "Arista Networks, Inc.",
+        "type": "networking_ecosystem",
+        "weight": 0.35
+      }
+    ]
+  },
+  {
+    "name": "Baidu, Inc.",
+    "ticker": "9888",
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 39.9834,
+      "lng": 116.309
+    },
+    "description": "Chinese AI and cloud platform with significant model-training, autonomous-driving, and accelerator demand.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.73
+      },
+      {
+        "target": "Taiwan Semiconductor Manufacturing Company Limited",
+        "type": "custom_silicon_supplier",
+        "weight": 0.55
+      },
+      {
+        "target": "Arista Networks, Inc.",
+        "type": "networking_ecosystem",
+        "weight": 0.36
+      }
+    ]
+  },
+  {
+    "name": "Amazon.com, Inc.",
+    "ticker": "AMZN",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 47.6062,
+      "lng": -122.3321
+    },
+    "description": "AWS parent and one of the largest builders of AI data centers, custom silicon, and global cloud infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.85
+      },
+      {
+        "target": "Arista Networks, Inc.",
+        "type": "networking_supplier",
+        "weight": 0.56
+      },
+      {
+        "target": "Equinix, Inc.",
+        "type": "interconnection",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "Alphabet Inc.",
+    "ticker": "GOOGL",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.422,
+      "lng": -122.0841
+    },
+    "description": "Google parent controlling major cloud, TPU, networking, and model-inference infrastructure on a global scale.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.67
+      },
+      {
+        "target": "Broadcom Inc.",
+        "type": "custom_silicon_partner",
+        "weight": 0.61
+      },
+      {
+        "target": "Equinix, Inc.",
+        "type": "interconnection",
+        "weight": 0.39
+      }
+    ]
+  },
+  {
+    "name": "Microsoft Corporation",
+    "ticker": "MSFT",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 47.6396,
+      "lng": -122.128
+    },
+    "description": "Azure operator and a central orchestrator of enterprise AI deployment, frontier-model commercialization, and cloud capex.",
+    "top_dependencies": [
+      {
+        "target": "OpenAI, Inc.",
+        "type": "model_partner",
+        "weight": 0.92
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.87
+      },
+      {
+        "target": "Arista Networks, Inc.",
+        "type": "networking_supplier",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Meta Platforms, Inc.",
+    "ticker": "META",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.4847,
+      "lng": -122.1484
+    },
+    "description": "Massive AI infrastructure builder whose open-weight models and recommendation systems drive hyperscale compute demand.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.86
+      },
+      {
+        "target": "Broadcom Inc.",
+        "type": "custom_silicon_partner",
+        "weight": 0.63
+      },
+      {
+        "target": "Arista Networks, Inc.",
+        "type": "networking_supplier",
+        "weight": 0.59
+      }
+    ]
+  },
+  {
+    "name": "Oracle Corporation",
+    "ticker": "ORCL",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 30.2672,
+      "lng": -97.7431
+    },
+    "description": "Cloud and database platform that has become increasingly important in large-scale AI infrastructure and sovereign deployments.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.77
+      },
+      {
+        "target": "Arista Networks, Inc.",
+        "type": "networking_supplier",
+        "weight": 0.41
+      },
+      {
+        "target": "Equinix, Inc.",
+        "type": "interconnection",
+        "weight": 0.37
+      }
+    ]
+  },
+  {
+    "name": "International Business Machines Corporation",
+    "ticker": "IBM",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 41.1089,
+      "lng": -73.7239
+    },
+    "description": "Enterprise AI, hybrid-cloud, and research player whose ecosystem still matters for sovereign and regulated-sector deployments.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.46
+      },
+      {
+        "target": "Rapidus Corporation",
+        "type": "research_partner",
+        "weight": 0.43
+      },
+      {
+        "target": "Equinix, Inc.",
+        "type": "interconnection",
+        "weight": 0.34
+      }
+    ]
+  },
+  {
+    "name": "CoreWeave, Inc.",
+    "ticker": "CRWV",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 40.7959,
+      "lng": -74.3149
+    },
+    "description": "GPU-native cloud provider that has become a major transmission channel for AI compute demand and NVIDIA deployment cycles.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.94
+      },
+      {
+        "target": "Equinix, Inc.",
+        "type": "data_center_partner",
+        "weight": 0.72
+      },
+      {
+        "target": "Digital Realty Trust, Inc.",
+        "type": "data_center_partner",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "OpenAI, Inc.",
+    "ticker": null,
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "description": "Frontier AI lab whose model releases, enterprise adoption, and compute demand materially shape the global AI stack.",
+    "top_dependencies": [
+      {
+        "target": "Microsoft Corporation",
+        "type": "cloud_partner",
+        "weight": 0.93
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "compute_supplier",
+        "weight": 0.9
+      },
+      {
+        "target": "CoreWeave, Inc.",
+        "type": "compute_partner",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Anthropic PBC",
+    "ticker": null,
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.7898,
+      "lng": -122.396
+    },
+    "description": "Frontier model developer with strong enterprise traction and major dependence on hyperscale cloud partnerships.",
+    "top_dependencies": [
+      {
+        "target": "Amazon.com, Inc.",
+        "type": "cloud_partner",
+        "weight": 0.86
+      },
+      {
+        "target": "Alphabet Inc.",
+        "type": "cloud_partner",
+        "weight": 0.72
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "compute_supplier",
+        "weight": 0.79
+      }
+    ]
+  },
+  {
+    "name": "Google DeepMind",
+    "ticker": null,
+    "sector": "AI/TECH",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5238,
+      "lng": -0.1337
+    },
+    "description": "Research lab anchoring a substantial share of Google's frontier model, multimodal, and scientific-AI development.",
+    "top_dependencies": [
+      {
+        "target": "Alphabet Inc.",
+        "type": "parent_platform",
+        "weight": 0.95
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "compute_supplier",
+        "weight": 0.61
+      },
+      {
+        "target": "Broadcom Inc.",
+        "type": "accelerator_ecosystem",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "xAI",
+    "ticker": null,
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.4419,
+      "lng": -122.143
+    },
+    "description": "Rapidly scaling frontier AI company backed by one of the world's largest training-cluster buildouts.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "compute_supplier",
+        "weight": 0.94
+      },
+      {
+        "target": "Super Micro Computer, Inc.",
+        "type": "server_supplier",
+        "weight": 0.58
+      },
+      {
+        "target": "Delta Electronics, Inc.",
+        "type": "power_cooling_ecosystem",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "Super Micro Computer, Inc.",
+    "ticker": "SMCI",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3382,
+      "lng": -121.8863
+    },
+    "description": "Important AI server integrator translating GPU availability into deployable rack-scale infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.9
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "supplier",
+        "weight": 0.6
+      },
+      {
+        "target": "Advanced Micro Devices, Inc.",
+        "type": "supplier",
+        "weight": 0.59
+      }
+    ]
+  },
+  {
+    "name": "Dell Technologies Inc.",
+    "ticker": "DELL",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 30.5083,
+      "lng": -97.6789
+    },
+    "description": "Enterprise server and storage giant whose AI factory offerings connect hyperscale and regulated-market demand to hardware supply.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.83
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "supplier",
+        "weight": 0.62
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "go_to_market_partner",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "Hewlett Packard Enterprise Company",
+    "ticker": "HPE",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 30.0799,
+      "lng": -95.417
+    },
+    "description": "Server, networking, and supercomputing provider with strategic exposure to sovereign AI and enterprise clusters.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.8
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "supplier",
+        "weight": 0.63
+      },
+      {
+        "target": "Advanced Micro Devices, Inc.",
+        "type": "supplier",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Lenovo Group Limited",
+    "ticker": "0992",
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 22.3193,
+      "lng": 114.1694
+    },
+    "description": "Global PC and server manufacturer important to enterprise AI hardware dissemination across regions.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.67
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "supplier",
+        "weight": 0.63
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "platform_partner",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "Inspur Electronic Information Industry Co., Ltd.",
+    "ticker": "000977",
+    "sector": "AI/TECH",
+    "country": "China",
+    "location": {
+      "lat": 36.6512,
+      "lng": 117.1201
+    },
+    "description": "Chinese server manufacturer central to domestic cloud and AI hardware rollouts.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.59
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "supplier",
+        "weight": 0.54
+      },
+      {
+        "target": "Baidu, Inc.",
+        "type": "customer",
+        "weight": 0.47
+      }
+    ]
+  },
+  {
+    "name": "Quanta Computer Inc.",
+    "ticker": "2382",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.0121,
+      "lng": 121.2154
+    },
+    "description": "Top ODM whose manufacturing scale underpins hyperscale server and AI rack deployment.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.82
+      },
+      {
+        "target": "Amazon.com, Inc.",
+        "type": "customer",
+        "weight": 0.68
+      },
+      {
+        "target": "Meta Platforms, Inc.",
+        "type": "customer",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Wistron Corporation",
+    "ticker": "3231",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.033,
+      "lng": 121.5654
+    },
+    "description": "ODM and electronics manufacturer with meaningful exposure to servers, edge devices, and AI hardware assembly.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.58
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "customer",
+        "weight": 0.49
+      },
+      {
+        "target": "Intel Corporation",
+        "type": "supplier",
+        "weight": 0.47
+      }
+    ]
+  },
+  {
+    "name": "Inventec Corporation",
+    "ticker": "2356",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.033,
+      "lng": 121.5654
+    },
+    "description": "Key ODM in notebooks and servers with growing exposure to cloud infrastructure manufacturing.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.57
+      },
+      {
+        "target": "Amazon.com, Inc.",
+        "type": "customer",
+        "weight": 0.51
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "customer",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "name": "Hon Hai Precision Industry Co., Ltd.",
+    "ticker": "2317",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.012,
+      "lng": 121.4657
+    },
+    "description": "Foxconn parent and one of the world's most important electronics assemblers, extending deeply into AI server supply chains.",
+    "top_dependencies": [
+      {
+        "target": "Apple Inc.",
+        "type": "customer",
+        "weight": 0.84
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.64
+      },
+      {
+        "target": "Amazon.com, Inc.",
+        "type": "customer",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "Wiwynn Corporation",
+    "ticker": "6669",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.0618,
+      "lng": 121.6533
+    },
+    "description": "Specialized cloud-server ODM heavily exposed to hyperscale AI infrastructure deployment.",
+    "top_dependencies": [
+      {
+        "target": "Meta Platforms, Inc.",
+        "type": "customer",
+        "weight": 0.73
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "customer",
+        "weight": 0.66
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "Celestica Inc.",
+    "ticker": "CLS",
+    "sector": "AI/TECH",
+    "country": "Canada",
+    "location": {
+      "lat": 43.6532,
+      "lng": -79.3832
+    },
+    "description": "Electronics manufacturing and hardware design partner with rising exposure to data-center and networking platforms.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "supplier",
+        "weight": 0.54
+      },
+      {
+        "target": "Arista Networks, Inc.",
+        "type": "customer",
+        "weight": 0.53
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "customer",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Arista Networks, Inc.",
+    "ticker": "ANET",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3541,
+      "lng": -121.9552
+    },
+    "description": "High-performance Ethernet and AI-cluster networking vendor critical to scalable GPU fabrics and cloud backbones.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "ecosystem",
+        "weight": 0.7
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "customer",
+        "weight": 0.68
+      },
+      {
+        "target": "Meta Platforms, Inc.",
+        "type": "customer",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "Cisco Systems, Inc.",
+    "ticker": "CSCO",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.3875,
+      "lng": -121.963
+    },
+    "description": "Global networking incumbent repositioning around AI data-center fabrics, security, and service-provider backbones.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "ecosystem",
+        "weight": 0.55
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "customer",
+        "weight": 0.44
+      },
+      {
+        "target": "Amazon.com, Inc.",
+        "type": "customer",
+        "weight": 0.4
+      }
+    ]
+  },
+  {
+    "name": "Equinix, Inc.",
+    "ticker": "EQIX",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 37.4852,
+      "lng": -122.2364
+    },
+    "description": "Digital infrastructure and colocation giant enabling interconnection among clouds, carriers, enterprises, and AI workloads.",
+    "top_dependencies": [
+      {
+        "target": "Amazon.com, Inc.",
+        "type": "customer",
+        "weight": 0.59
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "customer",
+        "weight": 0.58
+      },
+      {
+        "target": "CoreWeave, Inc.",
+        "type": "customer",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Digital Realty Trust, Inc.",
+    "ticker": "DLR",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 30.2672,
+      "lng": -97.7431
+    },
+    "description": "Global data-center platform increasingly relevant to high-density, liquid-cooled AI deployments and cloud expansion.",
+    "top_dependencies": [
+      {
+        "target": "Oracle Corporation",
+        "type": "customer",
+        "weight": 0.46
+      },
+      {
+        "target": "CoreWeave, Inc.",
+        "type": "customer",
+        "weight": 0.5
+      },
+      {
+        "target": "Microsoft Corporation",
+        "type": "customer",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Vertiv Holdings Co",
+    "ticker": "VRT",
+    "sector": "AI/TECH",
+    "country": "United States",
+    "location": {
+      "lat": 40.1262,
+      "lng": -82.9291
+    },
+    "description": "Power and cooling infrastructure supplier tied directly to the densification limits of modern AI factories.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "demand_driver",
+        "weight": 0.72
+      },
+      {
+        "target": "Equinix, Inc.",
+        "type": "customer",
+        "weight": 0.52
+      },
+      {
+        "target": "Digital Realty Trust, Inc.",
+        "type": "customer",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Schneider Electric SE",
+    "ticker": "SU",
+    "sector": "AI/TECH",
+    "country": "France",
+    "location": {
+      "lat": 48.879,
+      "lng": 2.178
+    },
+    "description": "Global supplier of power distribution, controls, and data-center infrastructure central to AI facility reliability.",
+    "top_dependencies": [
+      {
+        "target": "Equinix, Inc.",
+        "type": "customer",
+        "weight": 0.54
+      },
+      {
+        "target": "Digital Realty Trust, Inc.",
+        "type": "customer",
+        "weight": 0.49
+      },
+      {
+        "target": "NVIDIA Corporation",
+        "type": "demand_driver",
+        "weight": 0.45
+      }
+    ]
+  },
+  {
+    "name": "Delta Electronics, Inc.",
+    "ticker": "2308",
+    "sector": "AI/TECH",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.033,
+      "lng": 121.5654
+    },
+    "description": "Power electronics and thermal-management supplier increasingly exposed to AI data-center power density and cooling shifts.",
+    "top_dependencies": [
+      {
+        "target": "NVIDIA Corporation",
+        "type": "demand_driver",
+        "weight": 0.65
+      },
+      {
+        "target": "Schneider Electric SE",
+        "type": "ecosystem",
+        "weight": 0.41
+      },
+      {
+        "target": "xAI",
+        "type": "ai_factory_demand",
+        "weight": 0.33
+      }
+    ]
+  }
+]

@@ -61,6 +61,10 @@ class ImpactDiscoveryEngine:
             description=f"Auto-provisioned by AI during impact discovery on {datetime.now(timezone.utc).strftime('%Y-%m-%d')}.",
             location_lat=float(entity_lat),
             location_lng=float(entity_lng),
+            is_auto_provisioned=True,   # [v10.21] Tactical node — subject to lifecycle pruning
+            strategic_score=0.0,
+            hit_count=1,
+            last_hit_at=datetime.now(timezone.utc),
         )
         self.db.add(new_stakeholder)
         logger.info(f"[Antigravity] AUTO-PROVISIONED Stakeholder: '{entity_name}' at ({entity_lat}, {entity_lng}) in domain '{domain}'")
@@ -169,16 +173,17 @@ class ImpactDiscoveryEngine:
                         s_stmt = select(Stakeholder).where(Stakeholder.id == uuid.UUID(s_id))
                         stakeholder = (await self.db.execute(s_stmt)).scalar_one_or_none()
                     
-                    # 2. Fuzzy name match if no ID
+                    # 2. [v10.21] Backbone-priority fuzzy name match
                     if not stakeholder and finding.get("entity_name"):
+                        # Prefer backbone (is_auto_provisioned=False) entities first
                         fuzzy_stmt = select(Stakeholder).where(
                             Stakeholder.name.ilike(f"%{finding['entity_name']}%")
-                        )
+                        ).order_by(Stakeholder.is_auto_provisioned.asc())  # False (backbone) comes first
                         result = (await self.db.execute(fuzzy_stmt)).first()
                         if result:
                             stakeholder = result[0]
 
-                    # 3. [v10.19] AUTO-PROVISIONING: If still not found, create new record
+                    # 3. [v10.19] AUTO-PROVISIONING: If still not found, create new tactical node
                     if not stakeholder:
                         stakeholder = await self._auto_provision_stakeholder(finding)
 
@@ -186,7 +191,10 @@ class ImpactDiscoveryEngine:
                         finding["stakeholder_id"] = str(stakeholder.id)
                         finding["location_lat"] = stakeholder.location_lat
                         finding["location_lng"] = stakeholder.location_lng
-                        
+
+                        # [v10.21] Activity tracking: update hit statistics
+                        stakeholder.hit_count = (stakeholder.hit_count or 0) + 1
+                        stakeholder.last_hit_at = datetime.now(timezone.utc)
                         # Re-calc Indices (may be zero if just created, will grow over time)
                         indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, stakeholder.id)
                         finding["quantum_metrics"] = indices

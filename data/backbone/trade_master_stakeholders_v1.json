@@ -1,0 +1,2802 @@
+[
+  {
+    "name": "Mediterranean Shipping Company S.A.",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Switzerland",
+    "location": {
+      "lat": 46.2044,
+      "lng": 6.1432
+    },
+    "description": "Largest global container carrier by capacity and a dominant operator on East-West, north-south, and transshipment-heavy trades.",
+    "top_dependencies": [
+      {
+        "target": "Terminal Investment Limited (TiL)",
+        "type": "terminal_operator",
+        "weight": 0.96
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "hub_port",
+        "weight": 0.93
+      },
+      {
+        "target": "Panama Canal Authority",
+        "type": "chokepoint",
+        "weight": 0.82
+      }
+    ]
+  },
+  {
+    "name": "A.P. Moller - Maersk A/S",
+    "ticker": "MAERSK-B",
+    "sector": "TRADE",
+    "country": "Denmark",
+    "location": {
+      "lat": 55.6761,
+      "lng": 12.5683
+    },
+    "description": "Integrated ocean carrier and logistics group with outsized influence over container shipping, terminals, and inland supply chains.",
+    "top_dependencies": [
+      {
+        "target": "APM Terminals B.V.",
+        "type": "terminal_operator",
+        "weight": 0.95
+      },
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "hub_port",
+        "weight": 0.88
+      },
+      {
+        "target": "Hapag-Lloyd AG",
+        "type": "alliance_partner",
+        "weight": 0.77
+      }
+    ]
+  },
+  {
+    "name": "CMA CGM S.A.",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "France",
+    "location": {
+      "lat": 43.2965,
+      "lng": 5.3698
+    },
+    "description": "Top-tier French container carrier with major exposure to Asia-Europe, trans-Pacific, Mediterranean, and logistics-linked flows.",
+    "top_dependencies": [
+      {
+        "target": "Suez Canal Authority",
+        "type": "chokepoint",
+        "weight": 0.91
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "hub_port",
+        "weight": 0.86
+      },
+      {
+        "target": "Tanger Med Port Authority",
+        "type": "transshipment_hub",
+        "weight": 0.83
+      }
+    ]
+  },
+  {
+    "name": "COSCO SHIPPING Holdings Co., Ltd.",
+    "ticker": "1919",
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 31.2304,
+      "lng": 121.4737
+    },
+    "description": "Chinese state-linked container shipping group anchoring a large share of China-origin liner capacity and associated terminal interests.",
+    "top_dependencies": [
+      {
+        "target": "Shanghai International Port (Group) Co., Ltd.",
+        "type": "hub_port",
+        "weight": 0.94
+      },
+      {
+        "target": "COSCO SHIPPING Ports Limited",
+        "type": "terminal_operator",
+        "weight": 0.9
+      },
+      {
+        "target": "Piraeus Port Authority S.A.",
+        "type": "gateway_port",
+        "weight": 0.81
+      }
+    ]
+  },
+  {
+    "name": "Port of Singapore",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2644,
+      "lng": 103.82
+    },
+    "description": "World-leading transshipment and bunkering node linking Asia-Europe, intra-Asia, and westbound rerouting across multiple alliances.",
+    "top_dependencies": [
+      {
+        "target": "PSA International Pte Ltd",
+        "type": "operator",
+        "weight": 0.97
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "chokepoint",
+        "weight": 0.87
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier",
+        "weight": 0.86
+      }
+    ]
+  },
+  {
+    "name": "Shanghai International Port (Group) Co., Ltd.",
+    "ticker": "600018",
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 30.615,
+      "lng": 122.063
+    },
+    "description": "Operator of the world's busiest container port and a foundational node for China-origin export manufacturing and feeder consolidation.",
+    "top_dependencies": [
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "carrier",
+        "weight": 0.9
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "transshipment_link",
+        "weight": 0.78
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier",
+        "weight": 0.77
+      }
+    ]
+  },
+  {
+    "name": "Panama Canal Authority",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Panama",
+    "location": {
+      "lat": 8.9516,
+      "lng": -79.5556
+    },
+    "description": "Manager of the Panama Canal, one of the most important inter-ocean chokepoints for all-water container and bulk trade routes.",
+    "top_dependencies": [
+      {
+        "target": "Panama Ports Company, S.A.",
+        "type": "port_interface",
+        "weight": 0.86
+      },
+      {
+        "target": "Port Authority of New York and New Jersey",
+        "type": "demand_gateway",
+        "weight": 0.79
+      },
+      {
+        "target": "Georgia Ports Authority",
+        "type": "demand_gateway",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Suez Canal Authority",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Egypt",
+    "location": {
+      "lat": 30.5965,
+      "lng": 32.2715
+    },
+    "description": "Manager of the Suez Canal, the critical corridor connecting Asia with Europe and the Mediterranean transshipment system.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "eastbound_hub",
+        "weight": 0.86
+      },
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "westbound_hub",
+        "weight": 0.82
+      },
+      {
+        "target": "CMA CGM S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "PSA International Pte Ltd",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2644,
+      "lng": 103.82
+    },
+    "description": "One of the world's largest global terminal operators and the operating backbone of Singapore's transshipment complex.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "flagship_port",
+        "weight": 0.98
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_customer",
+        "weight": 0.83
+      },
+      {
+        "target": "Port of Antwerp-Bruges",
+        "type": "terminal_network",
+        "weight": 0.71
+      }
+    ]
+  },
+  {
+    "name": "DP World Limited",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 25.2048,
+      "lng": 55.2708
+    },
+    "description": "Global terminal and logistics operator centered on Dubai with extensive port, free-zone, and inland trade infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "Jebel Ali Port",
+        "type": "flagship_port",
+        "weight": 0.97
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "route_chokepoint",
+        "weight": 0.79
+      },
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "terminal_network",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Hapag-Lloyd AG",
+    "ticker": "HLAG",
+    "sector": "TRADE",
+    "country": "Germany",
+    "location": {
+      "lat": 53.5511,
+      "lng": 9.9937
+    },
+    "description": "Leading German liner carrier with strong exposure to Europe, Atlantic, Latin America, and alliance-centered hub-and-spoke routes.",
+    "top_dependencies": [
+      {
+        "target": "A.P. Moller - Maersk A/S",
+        "type": "alliance_partner",
+        "weight": 0.82
+      },
+      {
+        "target": "Port of Hamburg",
+        "type": "home_gateway",
+        "weight": 0.78
+      },
+      {
+        "target": "Hanseatic Global Terminals GmbH",
+        "type": "terminal_operator",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "Terminal Investment Limited (TiL)",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Switzerland",
+    "location": {
+      "lat": 46.2044,
+      "lng": 6.1432
+    },
+    "description": "MSC-linked global terminal investor whose equity footprint makes it a major transmission node between carriers and container ports.",
+    "top_dependencies": [
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "sponsor_carrier",
+        "weight": 0.98
+      },
+      {
+        "target": "Panama Ports Company, S.A.",
+        "type": "terminal_asset",
+        "weight": 0.73
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "hub_exposure",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "APM Terminals B.V.",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Netherlands",
+    "location": {
+      "lat": 52.0705,
+      "lng": 4.3007
+    },
+    "description": "Maersk-linked global terminal operator embedded in many of the world's highest-volume gateway and transshipment ports.",
+    "top_dependencies": [
+      {
+        "target": "A.P. Moller - Maersk A/S",
+        "type": "parent_group",
+        "weight": 0.97
+      },
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "core_port",
+        "weight": 0.79
+      },
+      {
+        "target": "Port of Los Angeles",
+        "type": "gateway_exposure",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "Hutchison Ports",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.2783,
+      "lng": 114.1747
+    },
+    "description": "Historically one of the most geographically diversified private terminal groups with major exposure to Hong Kong and Panama-linked nodes.",
+    "top_dependencies": [
+      {
+        "target": "Port of Hong Kong",
+        "type": "home_port",
+        "weight": 0.83
+      },
+      {
+        "target": "Panama Ports Company, S.A.",
+        "type": "asset",
+        "weight": 0.79
+      },
+      {
+        "target": "Panama Canal Authority",
+        "type": "chokepoint_exposure",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "Port of Rotterdam Authority",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Netherlands",
+    "location": {
+      "lat": 51.9475,
+      "lng": 4.1339
+    },
+    "description": "Europe's largest seaport and the key maritime interface for Rhine-Scheldt industrial and inland logistics corridors.",
+    "top_dependencies": [
+      {
+        "target": "Suez Canal Authority",
+        "type": "maritime_route",
+        "weight": 0.84
+      },
+      {
+        "target": "Port of Antwerp-Bruges",
+        "type": "regional_system",
+        "weight": 0.79
+      },
+      {
+        "target": "duisport - Duisburger Hafen AG",
+        "type": "inland_distribution",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "Port of Los Angeles",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 33.7329,
+      "lng": -118.2728
+    },
+    "description": "Largest U.S. container gateway and a central node for trans-Pacific imports into the American consumer and intermodal rail network.",
+    "top_dependencies": [
+      {
+        "target": "Port of Long Beach",
+        "type": "adjacent_system",
+        "weight": 0.91
+      },
+      {
+        "target": "BNSF Railway Company",
+        "type": "rail_distribution",
+        "weight": 0.85
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Port of Long Beach",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 33.7542,
+      "lng": -118.2167
+    },
+    "description": "Twin-gateway counterpart to Los Angeles and one of the most consequential U.S. import gateways for containerized consumer goods.",
+    "top_dependencies": [
+      {
+        "target": "Port of Los Angeles",
+        "type": "adjacent_system",
+        "weight": 0.91
+      },
+      {
+        "target": "Union Pacific Railroad Company",
+        "type": "rail_distribution",
+        "weight": 0.84
+      },
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "carrier_traffic",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Port of Antwerp-Bruges",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Belgium",
+    "location": {
+      "lat": 51.2897,
+      "lng": 4.3055
+    },
+    "description": "Major northwest European gateway for containers, chemicals, and inland barge distribution across the Rhine-Scheldt economy.",
+    "top_dependencies": [
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "regional_system",
+        "weight": 0.82
+      },
+      {
+        "target": "PSA International Pte Ltd",
+        "type": "terminal_operator",
+        "weight": 0.75
+      },
+      {
+        "target": "duisport - Duisburger Hafen AG",
+        "type": "inland_distribution",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Ningbo-Zhoushan Port Co., Ltd.",
+    "ticker": "601018",
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 29.9167,
+      "lng": 122.1833
+    },
+    "description": "High-volume Chinese port cluster and major manufacturing export outlet with strong hinterland links to the Yangtze and Zhejiang economy.",
+    "top_dependencies": [
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "carrier",
+        "weight": 0.76
+      },
+      {
+        "target": "Shanghai International Port (Group) Co., Ltd.",
+        "type": "regional_system",
+        "weight": 0.73
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "transshipment_link",
+        "weight": 0.69
+      }
+    ]
+  },
+  {
+    "name": "Ocean Network Express Pte. Ltd.",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.28,
+      "lng": 103.85
+    },
+    "description": "Large Japanese-backed liner carrier and one of the key operators in east-west container alliance networks.",
+    "top_dependencies": [
+      {
+        "target": "HMM Co., Ltd.",
+        "type": "alliance_partner",
+        "weight": 0.78
+      },
+      {
+        "target": "Yang Ming Marine Transport Corporation",
+        "type": "alliance_partner",
+        "weight": 0.77
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "hub_port",
+        "weight": 0.75
+      }
+    ]
+  },
+  {
+    "name": "Evergreen Marine Corporation (Taiwan) Ltd.",
+    "ticker": "2603",
+    "sector": "TRADE",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.033,
+      "lng": 121.5654
+    },
+    "description": "Major Taiwanese container carrier with large trans-Pacific and Asia-Europe exposure and deep integration into alliance routing.",
+    "top_dependencies": [
+      {
+        "target": "Taiwan International Ports Corporation (Port of Kaohsiung)",
+        "type": "home_gateway",
+        "weight": 0.79
+      },
+      {
+        "target": "Port of Los Angeles",
+        "type": "gateway_market",
+        "weight": 0.74
+      },
+      {
+        "target": "Orient Overseas (International) Limited / OOCL",
+        "type": "alliance_partner",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "HMM Co., Ltd.",
+    "ticker": "011200",
+    "sector": "TRADE",
+    "country": "South Korea",
+    "location": {
+      "lat": 37.5665,
+      "lng": 126.978
+    },
+    "description": "Nationally strategic South Korean liner carrier centered on east-west long-haul trades and Busan transshipment flows.",
+    "top_dependencies": [
+      {
+        "target": "Busan Port Authority",
+        "type": "hub_port",
+        "weight": 0.87
+      },
+      {
+        "target": "Ocean Network Express Pte. Ltd.",
+        "type": "alliance_partner",
+        "weight": 0.78
+      },
+      {
+        "target": "Yang Ming Marine Transport Corporation",
+        "type": "alliance_partner",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "Yang Ming Marine Transport Corporation",
+    "ticker": "2609",
+    "sector": "TRADE",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.1276,
+      "lng": 121.7392
+    },
+    "description": "Large Taiwanese liner operator with meaningful trans-Pacific and intra-Asia exposure across alliance-based service loops.",
+    "top_dependencies": [
+      {
+        "target": "Ocean Network Express Pte. Ltd.",
+        "type": "alliance_partner",
+        "weight": 0.78
+      },
+      {
+        "target": "HMM Co., Ltd.",
+        "type": "alliance_partner",
+        "weight": 0.77
+      },
+      {
+        "target": "Taiwan International Ports Corporation (Port of Kaohsiung)",
+        "type": "home_gateway",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Orient Overseas (International) Limited / OOCL",
+    "ticker": "0316",
+    "sector": "TRADE",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.2783,
+      "lng": 114.1747
+    },
+    "description": "Globally significant container carrier whose network is tightly linked to COSCO, Hong Kong, and Asia-Europe mainline services.",
+    "top_dependencies": [
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "group_link",
+        "weight": 0.94
+      },
+      {
+        "target": "Port of Hong Kong",
+        "type": "home_gateway",
+        "weight": 0.78
+      },
+      {
+        "target": "Port of Long Beach",
+        "type": "gateway_market",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "ZIM Integrated Shipping Services Ltd.",
+    "ticker": "ZIM",
+    "sector": "TRADE",
+    "country": "Israel",
+    "location": {
+      "lat": 32.794,
+      "lng": 34.9896
+    },
+    "description": "Israeli liner carrier with high exposure to trans-Pacific, Mediterranean, and niche regional services.",
+    "top_dependencies": [
+      {
+        "target": "Port Authority of New York and New Jersey",
+        "type": "market_gateway",
+        "weight": 0.69
+      },
+      {
+        "target": "Panama Canal Authority",
+        "type": "route_option",
+        "weight": 0.63
+      },
+      {
+        "target": "Port of Los Angeles",
+        "type": "market_gateway",
+        "weight": 0.61
+      }
+    ]
+  },
+  {
+    "name": "Wan Hai Lines Ltd.",
+    "ticker": "2615",
+    "sector": "TRADE",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.0478,
+      "lng": 121.5319
+    },
+    "description": "Large intra-Asia-focused container carrier with growing long-haul exposure and strong dependence on Asian hub ports.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "hub_port",
+        "weight": 0.74
+      },
+      {
+        "target": "Taiwan International Ports Corporation (Port of Kaohsiung)",
+        "type": "home_gateway",
+        "weight": 0.72
+      },
+      {
+        "target": "Port of Los Angeles",
+        "type": "gateway_market",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Pacific International Lines Pte Ltd",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.28,
+      "lng": 103.85
+    },
+    "description": "Major Singapore-headquartered carrier with strong Asia-Africa, intra-Asia, and emerging-market trade exposure.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "home_hub",
+        "weight": 0.84
+      },
+      {
+        "target": "Sri Lanka Ports Authority (Port of Colombo)",
+        "type": "transshipment_hub",
+        "weight": 0.67
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "route_chokepoint",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "X-Press Feeders Group",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2796,
+      "lng": 103.8494
+    },
+    "description": "Largest independent common feeder operator, important for short-sea transshipment connectivity and secondary port access.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "feeder_hub",
+        "weight": 0.85
+      },
+      {
+        "target": "Sri Lanka Ports Authority (Port of Colombo)",
+        "type": "feeder_hub",
+        "weight": 0.73
+      },
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "regional_hub",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Matson, Inc.",
+    "ticker": "MATX",
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 21.3069,
+      "lng": -157.8583
+    },
+    "description": "U.S.-focused ocean transportation group with critical roles in Hawaii, Alaska, Guam, and selected China-U.S. express services.",
+    "top_dependencies": [
+      {
+        "target": "Port of Los Angeles",
+        "type": "gateway_port",
+        "weight": 0.8
+      },
+      {
+        "target": "Port of Long Beach",
+        "type": "gateway_port",
+        "weight": 0.71
+      },
+      {
+        "target": "Shanghai International Port (Group) Co., Ltd.",
+        "type": "transpacific_origin",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "COSCO SHIPPING Ports Limited",
+    "ticker": "1199",
+    "sector": "TRADE",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.3193,
+      "lng": 114.1694
+    },
+    "description": "Global terminal arm of COSCO and an important bridge between Chinese carrier capacity and port infrastructure equity.",
+    "top_dependencies": [
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "sponsor_carrier",
+        "weight": 0.97
+      },
+      {
+        "target": "Piraeus Port Authority S.A.",
+        "type": "flagship_gateway",
+        "weight": 0.82
+      },
+      {
+        "target": "Shanghai International Port (Group) Co., Ltd.",
+        "type": "china_network",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "China Merchants Port Holdings Company Limited",
+    "ticker": "0144",
+    "sector": "TRADE",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.2793,
+      "lng": 114.1655
+    },
+    "description": "Chinese port investor with strategic stakes across mainland China and selected Belt-and-Road maritime gateways.",
+    "top_dependencies": [
+      {
+        "target": "Sri Lanka Ports Authority (Port of Colombo)",
+        "type": "terminal_asset",
+        "weight": 0.7
+      },
+      {
+        "target": "Kenya Ports Authority (Port of Mombasa)",
+        "type": "regional_corridor",
+        "weight": 0.55
+      },
+      {
+        "target": "Yantian International Container Terminals",
+        "type": "china_network",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "AD Ports Group",
+    "ticker": "ADPORTS",
+    "sector": "TRADE",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 24.4539,
+      "lng": 54.3773
+    },
+    "description": "Abu Dhabi-based ports and industrial-zone operator connecting Gulf maritime trade with logistics corridors and free zones.",
+    "top_dependencies": [
+      {
+        "target": "Jebel Ali Port",
+        "type": "regional_competition",
+        "weight": 0.68
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "westbound_route",
+        "weight": 0.63
+      },
+      {
+        "target": "Adani Ports and Special Economic Zone Limited (Mundra Port)",
+        "type": "india_gulf_link",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "International Container Terminal Services, Inc. (ICTSI)",
+    "ticker": "ICT",
+    "sector": "TRADE",
+    "country": "Philippines",
+    "location": {
+      "lat": 14.5995,
+      "lng": 120.9842
+    },
+    "description": "Highly international terminal operator with a portfolio concentrated in emerging-market gateways and transshipment-sensitive ports.",
+    "top_dependencies": [
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_customer",
+        "weight": 0.74
+      },
+      {
+        "target": "ASIPONA Manzanillo",
+        "type": "americas_gateway",
+        "weight": 0.6
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "longhaul_route",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "name": "Eurogate GmbH & Co. KGaA, KG",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Germany",
+    "location": {
+      "lat": 53.0793,
+      "lng": 8.8017
+    },
+    "description": "Major German terminal operator spanning key North Range ports and deeply connected to hinterland rail and feeder flows.",
+    "top_dependencies": [
+      {
+        "target": "Port of Hamburg",
+        "type": "north_range_port",
+        "weight": 0.74
+      },
+      {
+        "target": "Port of Antwerp-Bruges",
+        "type": "north_range_port",
+        "weight": 0.63
+      },
+      {
+        "target": "Hapag-Lloyd AG",
+        "type": "carrier_customer",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Hamburger Hafen und Logistik AG (HHLA)",
+    "ticker": "HHFA",
+    "sector": "TRADE",
+    "country": "Germany",
+    "location": {
+      "lat": 53.5461,
+      "lng": 9.9661
+    },
+    "description": "Hamburg-based terminal and intermodal operator linking maritime cargo with rail distribution into Central and Eastern Europe.",
+    "top_dependencies": [
+      {
+        "target": "Port of Hamburg",
+        "type": "home_port",
+        "weight": 0.92
+      },
+      {
+        "target": "Hapag-Lloyd AG",
+        "type": "carrier_customer",
+        "weight": 0.64
+      },
+      {
+        "target": "duisport - Duisburger Hafen AG",
+        "type": "inland_link",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Ports America, Inc.",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 40.7178,
+      "lng": -74.0431
+    },
+    "description": "Large U.S. terminal operator with broad exposure to American gateway ports, labor-sensitive cargo flows, and import distribution.",
+    "top_dependencies": [
+      {
+        "target": "Port of Los Angeles",
+        "type": "gateway_port",
+        "weight": 0.72
+      },
+      {
+        "target": "Port of Long Beach",
+        "type": "gateway_port",
+        "weight": 0.69
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_customer",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "SSA Marine, Inc.",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 47.6062,
+      "lng": -122.3321
+    },
+    "description": "Major privately held terminal and intermodal operator with strong positions on the U.S. West Coast and Latin American trades.",
+    "top_dependencies": [
+      {
+        "target": "Port of Los Angeles",
+        "type": "gateway_port",
+        "weight": 0.69
+      },
+      {
+        "target": "Port of Long Beach",
+        "type": "gateway_port",
+        "weight": 0.67
+      },
+      {
+        "target": "Matson, Inc.",
+        "type": "carrier_customer",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Hanseatic Global Terminals GmbH",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Germany",
+    "location": {
+      "lat": 53.5511,
+      "lng": 9.9937
+    },
+    "description": "Hapag-Lloyd's stand-alone terminal arm and an increasingly important node between liner strategy and port infrastructure control.",
+    "top_dependencies": [
+      {
+        "target": "Hapag-Lloyd AG",
+        "type": "sponsor_carrier",
+        "weight": 0.97
+      },
+      {
+        "target": "Port of Hamburg",
+        "type": "home_gateway",
+        "weight": 0.71
+      },
+      {
+        "target": "Port Authority of Algeciras Bay",
+        "type": "med_gateway",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "YILPORT Holding Inc.",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Türkiye",
+    "location": {
+      "lat": 41.0082,
+      "lng": 28.9784
+    },
+    "description": "Diversified terminal operator with exposure across Europe, Latin America, and feeder-oriented trade gateways.",
+    "top_dependencies": [
+      {
+        "target": "Port Authority of Algeciras Bay",
+        "type": "regional_port",
+        "weight": 0.51
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_customer",
+        "weight": 0.46
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "route_exposure",
+        "weight": 0.43
+      }
+    ]
+  },
+  {
+    "name": "Global Container Terminals Inc.",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Canada",
+    "location": {
+      "lat": 43.6532,
+      "lng": -79.3832
+    },
+    "description": "North American terminal operator controlling important container assets in the New York/New Jersey and Canadian gateway systems.",
+    "top_dependencies": [
+      {
+        "target": "Port Authority of New York and New Jersey",
+        "type": "flagship_port",
+        "weight": 0.84
+      },
+      {
+        "target": "Canadian National Railway Company",
+        "type": "rail_link",
+        "weight": 0.55
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_customer",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "name": "St. Lawrence Seaway Management Corporation",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Canada",
+    "location": {
+      "lat": 45.0181,
+      "lng": -74.7281
+    },
+    "description": "Manager of the Canadian section of the St. Lawrence Seaway, a strategic inland waterway for Great Lakes trade and bulk logistics.",
+    "top_dependencies": [
+      {
+        "target": "Canadian National Railway Company",
+        "type": "rail_interface",
+        "weight": 0.6
+      },
+      {
+        "target": "Canadian Pacific Kansas City Limited",
+        "type": "rail_interface",
+        "weight": 0.55
+      },
+      {
+        "target": "Port Authority of New York and New Jersey",
+        "type": "atlantic_interface",
+        "weight": 0.33
+      }
+    ]
+  },
+  {
+    "name": "Waterways and Shipping Office Nord-Ostsee-Kanal",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Germany",
+    "location": {
+      "lat": 54.3233,
+      "lng": 10.1228
+    },
+    "description": "German authority responsible for the Kiel Canal, a major shortcut for feeder, ro-ro, and short-sea traffic between the North and Baltic Seas.",
+    "top_dependencies": [
+      {
+        "target": "Port of Hamburg",
+        "type": "north_sea_link",
+        "weight": 0.62
+      },
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "north_range_link",
+        "weight": 0.44
+      },
+      {
+        "target": "Hapag-Lloyd AG",
+        "type": "feeder_traffic",
+        "weight": 0.35
+      }
+    ]
+  },
+  {
+    "name": "Panama Ports Company, S.A.",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Panama",
+    "location": {
+      "lat": 8.9498,
+      "lng": -79.5666
+    },
+    "description": "Operator of key canal-adjacent container facilities at the Pacific entrance of the Panama Canal system.",
+    "top_dependencies": [
+      {
+        "target": "Panama Canal Authority",
+        "type": "adjacent_chokepoint",
+        "weight": 0.94
+      },
+      {
+        "target": "Hutchison Ports",
+        "type": "owner_operator",
+        "weight": 0.85
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.57
+      }
+    ]
+  },
+  {
+    "name": "Yantian International Container Terminals",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 22.555,
+      "lng": 114.2708
+    },
+    "description": "One of South China's most important deepwater export gateways for Pearl River Delta manufacturing and long-haul mainline calls.",
+    "top_dependencies": [
+      {
+        "target": "Port of Hong Kong",
+        "type": "regional_system",
+        "weight": 0.61
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.6
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "westbound_route",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Qingdao Port International Co., Ltd.",
+    "ticker": "6198",
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 36.0796,
+      "lng": 120.3188
+    },
+    "description": "Large Bohai Rim gateway with strong container, dry bulk, and industrial-corridor relevance for northern China trade.",
+    "top_dependencies": [
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "carrier_traffic",
+        "weight": 0.67
+      },
+      {
+        "target": "Busan Port Authority",
+        "type": "regional_link",
+        "weight": 0.49
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "transshipment_link",
+        "weight": 0.47
+      }
+    ]
+  },
+  {
+    "name": "Guangzhou Port Company Limited",
+    "ticker": "601228",
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 22.771,
+      "lng": 113.649
+    },
+    "description": "Major Pearl River Delta gateway centered on Nansha and a core export outlet for southern China's manufacturing base.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "transshipment_link",
+        "weight": 0.59
+      },
+      {
+        "target": "CMA CGM S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.55
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "westbound_route",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "Tianjin Port Holdings Co., Ltd.",
+    "ticker": "3382",
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 38.9896,
+      "lng": 117.7104
+    },
+    "description": "Strategic northern Chinese gateway serving Beijing-Tianjin-Hebei industry and containerized imports into the Bohai region.",
+    "top_dependencies": [
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "carrier_traffic",
+        "weight": 0.6
+      },
+      {
+        "target": "Qingdao Port International Co., Ltd.",
+        "type": "regional_system",
+        "weight": 0.51
+      },
+      {
+        "target": "Busan Port Authority",
+        "type": "regional_link",
+        "weight": 0.47
+      }
+    ]
+  },
+  {
+    "name": "Busan Port Authority",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "South Korea",
+    "location": {
+      "lat": 35.1015,
+      "lng": 129.0403
+    },
+    "description": "Northeast Asia's leading transshipment hub outside China and the anchor port for South Korea's ocean trade system.",
+    "top_dependencies": [
+      {
+        "target": "HMM Co., Ltd.",
+        "type": "national_carrier",
+        "weight": 0.84
+      },
+      {
+        "target": "Ocean Network Express Pte. Ltd.",
+        "type": "alliance_traffic",
+        "weight": 0.66
+      },
+      {
+        "target": "Port of Los Angeles",
+        "type": "transpacific_link",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "Port of Hong Kong",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.3118,
+      "lng": 114.1277
+    },
+    "description": "Historically pivotal Pearl River Delta container gateway whose role still matters for finance-linked cargo and regional feeder networks.",
+    "top_dependencies": [
+      {
+        "target": "Hutchison Ports",
+        "type": "terminal_operator",
+        "weight": 0.8
+      },
+      {
+        "target": "Orient Overseas (International) Limited / OOCL",
+        "type": "home_carrier",
+        "weight": 0.67
+      },
+      {
+        "target": "Yantian International Container Terminals",
+        "type": "regional_system",
+        "weight": 0.61
+      }
+    ]
+  },
+  {
+    "name": "Port Authority of New York and New Jersey",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 40.664,
+      "lng": -74.1515
+    },
+    "description": "Largest container gateway on the U.S. East Coast and a critical endpoint for all-water Asia-U.S. services via Panama or Suez.",
+    "top_dependencies": [
+      {
+        "target": "Panama Canal Authority",
+        "type": "all_water_route",
+        "weight": 0.72
+      },
+      {
+        "target": "Global Container Terminals Inc.",
+        "type": "terminal_operator",
+        "weight": 0.66
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "Georgia Ports Authority",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 32.1279,
+      "lng": -81.1407
+    },
+    "description": "Operator of Savannah, one of the fastest-growing U.S. gateway systems for retail imports and inland Southeast distribution.",
+    "top_dependencies": [
+      {
+        "target": "Panama Canal Authority",
+        "type": "all_water_route",
+        "weight": 0.68
+      },
+      {
+        "target": "Port Authority of New York and New Jersey",
+        "type": "east_coast_system",
+        "weight": 0.55
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Port Houston",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 29.7294,
+      "lng": -95.262
+    },
+    "description": "Texas gateway linking petrochemical production, Gulf trade, and expanding containerized imports into the U.S. interior.",
+    "top_dependencies": [
+      {
+        "target": "Panama Canal Authority",
+        "type": "all_water_route",
+        "weight": 0.55
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.49
+      },
+      {
+        "target": "CMA CGM S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.47
+      }
+    ]
+  },
+  {
+    "name": "Jebel Ali Port",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 25.0191,
+      "lng": 55.041
+    },
+    "description": "The Gulf's premier container and free-zone gateway, critical for transshipment, re-export, and regional inventory positioning.",
+    "top_dependencies": [
+      {
+        "target": "DP World Limited",
+        "type": "operator",
+        "weight": 0.98
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "westbound_route",
+        "weight": 0.67
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "eastbound_link",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "Port Klang Authority",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Malaysia",
+    "location": {
+      "lat": 3.0004,
+      "lng": 101.3927
+    },
+    "description": "Major Malaysian gateway on the Strait of Malacca and a key alternative to Singapore for regional transshipment and hinterland cargo.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "regional_competition",
+        "weight": 0.77
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.55
+      },
+      {
+        "target": "CMA CGM S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.51
+      }
+    ]
+  },
+  {
+    "name": "Port of Tanjung Pelepas",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Malaysia",
+    "location": {
+      "lat": 1.3644,
+      "lng": 103.5489
+    },
+    "description": "Large Malacca Strait transshipment hub whose fortunes are closely tied to alliance routing and Singapore-adjacent network design.",
+    "top_dependencies": [
+      {
+        "target": "A.P. Moller - Maersk A/S",
+        "type": "carrier_customer",
+        "weight": 0.66
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "regional_system",
+        "weight": 0.81
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "westbound_route",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "Sri Lanka Ports Authority (Port of Colombo)",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Sri Lanka",
+    "location": {
+      "lat": 6.9467,
+      "lng": 79.8428
+    },
+    "description": "The Indian Ocean's most important transshipment hub for South Asia and a critical relay point on Asia-Europe and regional services.",
+    "top_dependencies": [
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.75
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "eastbound_link",
+        "weight": 0.72
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "westbound_route",
+        "weight": 0.61
+      }
+    ]
+  },
+  {
+    "name": "Tanger Med Port Authority",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Morocco",
+    "location": {
+      "lat": 35.8879,
+      "lng": -5.5039
+    },
+    "description": "Mega-transshipment and gateway complex at the Strait of Gibraltar, strategically placed between Atlantic and Mediterranean flows.",
+    "top_dependencies": [
+      {
+        "target": "CMA CGM S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.66
+      },
+      {
+        "target": "Port Authority of Algeciras Bay",
+        "type": "strait_system",
+        "weight": 0.74
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "mediterranean_route",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Piraeus Port Authority S.A.",
+    "ticker": "PPA",
+    "sector": "TRADE",
+    "country": "Greece",
+    "location": {
+      "lat": 37.9421,
+      "lng": 23.6465
+    },
+    "description": "Eastern Mediterranean gateway and COSCO-linked bridgehead for China-Europe maritime and inland cargo corridors.",
+    "top_dependencies": [
+      {
+        "target": "COSCO SHIPPING Ports Limited",
+        "type": "terminal_operator",
+        "weight": 0.87
+      },
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "carrier_traffic",
+        "weight": 0.82
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "route_chokepoint",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "Port Authority of Algeciras Bay",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Spain",
+    "location": {
+      "lat": 36.1408,
+      "lng": -5.4537
+    },
+    "description": "Key Strait of Gibraltar hub for transshipment, bunkering, ro-ro, and short-sea links between Europe, Africa, and the Mediterranean.",
+    "top_dependencies": [
+      {
+        "target": "Tanger Med Port Authority",
+        "type": "strait_system",
+        "weight": 0.75
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "mediterranean_route",
+        "weight": 0.57
+      },
+      {
+        "target": "Hapag-Lloyd AG",
+        "type": "carrier_traffic",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "Port of Hamburg",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Germany",
+    "location": {
+      "lat": 53.5439,
+      "lng": 9.9666
+    },
+    "description": "Germany's largest seaport and a politically important gateway for Central European imports, exports, and inland rail cargo.",
+    "top_dependencies": [
+      {
+        "target": "Hapag-Lloyd AG",
+        "type": "home_carrier",
+        "weight": 0.71
+      },
+      {
+        "target": "Hamburger Hafen und Logistik AG (HHLA)",
+        "type": "terminal_operator",
+        "weight": 0.69
+      },
+      {
+        "target": "Waterways and Shipping Office Nord-Ostsee-Kanal",
+        "type": "feeder_route",
+        "weight": 0.45
+      }
+    ]
+  },
+  {
+    "name": "Port Authority of Valencia",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Spain",
+    "location": {
+      "lat": 39.448,
+      "lng": -0.316
+    },
+    "description": "Spain's largest container gateway and a crucial western Mediterranean node for Iberian imports, exports, and transshipment.",
+    "top_dependencies": [
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.63
+      },
+      {
+        "target": "CMA CGM S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.52
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "route_exposure",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "HAROPA PORT",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "France",
+    "location": {
+      "lat": 49.4828,
+      "lng": 0.1098
+    },
+    "description": "Le Havre-centered gateway for the Paris basin and one of the most systemically important French maritime access points.",
+    "top_dependencies": [
+      {
+        "target": "CMA CGM S.A.",
+        "type": "home_market_carrier",
+        "weight": 0.61
+      },
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "north_range_system",
+        "weight": 0.57
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.51
+      }
+    ]
+  },
+  {
+    "name": "Medcenter Container Terminal S.p.A. (Gioia Tauro)",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Italy",
+    "location": {
+      "lat": 38.423,
+      "lng": 15.8944
+    },
+    "description": "Major central Mediterranean transshipment node positioned on east-west mainline routes and exposed to alliance network shifts.",
+    "top_dependencies": [
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.72
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "east_west_route",
+        "weight": 0.62
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "route_link",
+        "weight": 0.41
+      }
+    ]
+  },
+  {
+    "name": "Jawaharlal Nehru Port Authority",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "India",
+    "location": {
+      "lat": 18.9402,
+      "lng": 72.9493
+    },
+    "description": "India's largest container port complex and a critical node for manufacturing imports, exports, and western India demand.",
+    "top_dependencies": [
+      {
+        "target": "Suez Canal Authority",
+        "type": "westbound_route",
+        "weight": 0.52
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "eastbound_link",
+        "weight": 0.46
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.45
+      }
+    ]
+  },
+  {
+    "name": "Adani Ports and Special Economic Zone Limited (Mundra Port)",
+    "ticker": "ADANIPORTS",
+    "sector": "TRADE",
+    "country": "India",
+    "location": {
+      "lat": 22.7486,
+      "lng": 69.6997
+    },
+    "description": "India's largest private port operator and the anchor infrastructure node for Mundra's fast-growing container and energy trade flows.",
+    "top_dependencies": [
+      {
+        "target": "Suez Canal Authority",
+        "type": "westbound_route",
+        "weight": 0.47
+      },
+      {
+        "target": "Jebel Ali Port",
+        "type": "gulf_link",
+        "weight": 0.41
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.4
+      }
+    ]
+  },
+  {
+    "name": "Santos Port Authority",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Brazil",
+    "location": {
+      "lat": -23.9535,
+      "lng": -46.3336
+    },
+    "description": "Brazil's most important port complex and the leading maritime outlet for the country's industrial and agricultural economy.",
+    "top_dependencies": [
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.46
+      },
+      {
+        "target": "CMA CGM S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.43
+      },
+      {
+        "target": "Panama Canal Authority",
+        "type": "route_option",
+        "weight": 0.34
+      }
+    ]
+  },
+  {
+    "name": "ASIPONA Manzanillo",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Mexico",
+    "location": {
+      "lat": 19.0522,
+      "lng": -104.3165
+    },
+    "description": "Mexico's largest Pacific container gateway and a strategic node for Asian imports into western and central Mexico.",
+    "top_dependencies": [
+      {
+        "target": "Panama Canal Authority",
+        "type": "regional_route",
+        "weight": 0.35
+      },
+      {
+        "target": "Port of Los Angeles",
+        "type": "pacific_gateway_system",
+        "weight": 0.52
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.38
+      }
+    ]
+  },
+  {
+    "name": "Administration of the National Port System Lázaro Cárdenas (ASIPONA Lázaro Cárdenas)",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Mexico",
+    "location": {
+      "lat": 17.9583,
+      "lng": -102.1947
+    },
+    "description": "Deepwater Pacific gateway serving Mexican industry and intermodal cargo with growing significance for North American nearshoring.",
+    "top_dependencies": [
+      {
+        "target": "Panama Canal Authority",
+        "type": "regional_route",
+        "weight": 0.36
+      },
+      {
+        "target": "A.P. Moller - Maersk A/S",
+        "type": "carrier_traffic",
+        "weight": 0.39
+      },
+      {
+        "target": "Canadian Pacific Kansas City Limited",
+        "type": "rail_interface",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "Transnet National Ports Authority (Port of Durban)",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "South Africa",
+    "location": {
+      "lat": -29.8697,
+      "lng": 31.0267
+    },
+    "description": "Southern Africa's most consequential container gateway and a chokepoint for regional imports, exports, and equipment availability.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "eastbound_link",
+        "weight": 0.42
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "longhaul_route",
+        "weight": 0.38
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.37
+      }
+    ]
+  },
+  {
+    "name": "Kenya Ports Authority (Port of Mombasa)",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Kenya",
+    "location": {
+      "lat": -4.0622,
+      "lng": 39.6663
+    },
+    "description": "Primary maritime gateway for Kenya and the wider East African hinterland, with spillover importance into regional rail and road corridors.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "longhaul_link",
+        "weight": 0.39
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "route_exposure",
+        "weight": 0.36
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.34
+      }
+    ]
+  },
+  {
+    "name": "Port of Salalah",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Oman",
+    "location": {
+      "lat": 16.9496,
+      "lng": 54.0096
+    },
+    "description": "Strategically positioned Arabian Sea transshipment hub exposed to Red Sea, Gulf, and Indian Ocean route realignments.",
+    "top_dependencies": [
+      {
+        "target": "Suez Canal Authority",
+        "type": "route_exposure",
+        "weight": 0.49
+      },
+      {
+        "target": "A.P. Moller - Maersk A/S",
+        "type": "carrier_traffic",
+        "weight": 0.45
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "eastbound_link",
+        "weight": 0.43
+      }
+    ]
+  },
+  {
+    "name": "Pelabuhan Indonesia (Pelindo) - Tanjung Priok",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Indonesia",
+    "location": {
+      "lat": -6.1044,
+      "lng": 106.8866
+    },
+    "description": "Indonesia's principal container gateway and a key demand-side node for Southeast Asia's largest domestic market.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "regional_link",
+        "weight": 0.63
+      },
+      {
+        "target": "Mediterranean Shipping Company S.A.",
+        "type": "carrier_traffic",
+        "weight": 0.37
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "longhaul_route",
+        "weight": 0.31
+      }
+    ]
+  },
+  {
+    "name": "Taiwan International Ports Corporation (Port of Kaohsiung)",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Taiwan",
+    "location": {
+      "lat": 22.6163,
+      "lng": 120.3004
+    },
+    "description": "Taiwan's largest port complex and a vital hub for island manufacturing exports, feeder distribution, and trans-Pacific liner services.",
+    "top_dependencies": [
+      {
+        "target": "Evergreen Marine Corporation (Taiwan) Ltd.",
+        "type": "national_carrier",
+        "weight": 0.68
+      },
+      {
+        "target": "Yang Ming Marine Transport Corporation",
+        "type": "national_carrier",
+        "weight": 0.66
+      },
+      {
+        "target": "Port of Los Angeles",
+        "type": "transpacific_link",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "Xiamen Port Holdings Co., Ltd.",
+    "ticker": "3378",
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 24.4732,
+      "lng": 118.0124
+    },
+    "description": "Important southeast China gateway serving Fujian manufacturing and cross-strait container networks.",
+    "top_dependencies": [
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "carrier_traffic",
+        "weight": 0.48
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "transshipment_link",
+        "weight": 0.43
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "westbound_route",
+        "weight": 0.35
+      }
+    ]
+  },
+  {
+    "name": "Liaoning Port Co., Ltd. (Port of Dalian)",
+    "ticker": "2880",
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 38.921,
+      "lng": 121.6599
+    },
+    "description": "Northeast China gateway with strategic relevance for industrial cargo, feeder systems, and links to the Bohai and Korean corridors.",
+    "top_dependencies": [
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "carrier_traffic",
+        "weight": 0.46
+      },
+      {
+        "target": "Busan Port Authority",
+        "type": "regional_link",
+        "weight": 0.42
+      },
+      {
+        "target": "Qingdao Port International Co., Ltd.",
+        "type": "regional_system",
+        "weight": 0.38
+      }
+    ]
+  },
+  {
+    "name": "Port Authority of Thailand (Laem Chabang Port)",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Thailand",
+    "location": {
+      "lat": 13.0827,
+      "lng": 100.883
+    },
+    "description": "Thailand's main deepwater container gateway and a critical export interface for automotive, electronics, and industrial supply chains.",
+    "top_dependencies": [
+      {
+        "target": "Port of Singapore",
+        "type": "regional_link",
+        "weight": 0.53
+      },
+      {
+        "target": "Ocean Network Express Pte. Ltd.",
+        "type": "carrier_traffic",
+        "weight": 0.42
+      },
+      {
+        "target": "Suez Canal Authority",
+        "type": "westbound_route",
+        "weight": 0.33
+      }
+    ]
+  },
+  {
+    "name": "duisport - Duisburger Hafen AG",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Germany",
+    "location": {
+      "lat": 51.4556,
+      "lng": 6.7612
+    },
+    "description": "World's largest inland port and the key river-rail-road distribution hub connecting North Range seaports to continental Europe.",
+    "top_dependencies": [
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "seaport_interface",
+        "weight": 0.86
+      },
+      {
+        "target": "Port of Antwerp-Bruges",
+        "type": "seaport_interface",
+        "weight": 0.81
+      },
+      {
+        "target": "Hamburger Hafen und Logistik AG (HHLA)",
+        "type": "rail_inland_link",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Chicago Intermodal Terminal Cluster",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 41.8781,
+      "lng": -87.6298
+    },
+    "description": "North America's most important inland rail-intermodal junction, where coastal imports are redistributed across the U.S. consumer economy.",
+    "top_dependencies": [
+      {
+        "target": "BNSF Railway Company",
+        "type": "rail_operator",
+        "weight": 0.89
+      },
+      {
+        "target": "Union Pacific Railroad Company",
+        "type": "rail_operator",
+        "weight": 0.86
+      },
+      {
+        "target": "Port of Los Angeles",
+        "type": "maritime_origin",
+        "weight": 0.77
+      }
+    ]
+  },
+  {
+    "name": "FedEx Express World Hub (Memphis)",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 35.0424,
+      "lng": -89.9767
+    },
+    "description": "FedEx's core overnight sorting complex and one of the most important global air-cargo transfer points for time-critical freight.",
+    "top_dependencies": [
+      {
+        "target": "FedEx Corporation",
+        "type": "operator",
+        "weight": 0.99
+      },
+      {
+        "target": "Ted Stevens Anchorage International Airport",
+        "type": "air_route_link",
+        "weight": 0.61
+      },
+      {
+        "target": "Hong Kong Air Cargo Terminals Limited",
+        "type": "asia_link",
+        "weight": 0.57
+      }
+    ]
+  },
+  {
+    "name": "UPS Worldport (Louisville)",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 38.1744,
+      "lng": -85.736
+    },
+    "description": "UPS's flagship global air hub and a critical node for express parcels, medical shipments, and high-value just-in-time logistics.",
+    "top_dependencies": [
+      {
+        "target": "United Parcel Service, Inc.",
+        "type": "operator",
+        "weight": 0.99
+      },
+      {
+        "target": "Ted Stevens Anchorage International Airport",
+        "type": "air_route_link",
+        "weight": 0.56
+      },
+      {
+        "target": "Hong Kong Air Cargo Terminals Limited",
+        "type": "asia_link",
+        "weight": 0.47
+      }
+    ]
+  },
+  {
+    "name": "DHL Express Hub Leipzig",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Germany",
+    "location": {
+      "lat": 51.4239,
+      "lng": 12.2364
+    },
+    "description": "DHL's principal European air hub and a major node for express freight connecting Europe with Asia and North America.",
+    "top_dependencies": [
+      {
+        "target": "DHL Group",
+        "type": "operator",
+        "weight": 0.99
+      },
+      {
+        "target": "Hong Kong Air Cargo Terminals Limited",
+        "type": "asia_link",
+        "weight": 0.53
+      },
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "multimodal_interface",
+        "weight": 0.38
+      }
+    ]
+  },
+  {
+    "name": "Hong Kong Air Cargo Terminals Limited",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.308,
+      "lng": 113.9185
+    },
+    "description": "Operator at the world's premier international cargo airport, central to Asia-bound and Asia-origin high-value air freight.",
+    "top_dependencies": [
+      {
+        "target": "DHL Group",
+        "type": "express_customer",
+        "weight": 0.57
+      },
+      {
+        "target": "FedEx Corporation",
+        "type": "express_customer",
+        "weight": 0.54
+      },
+      {
+        "target": "Port of Hong Kong",
+        "type": "regional_trade_system",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Ted Stevens Anchorage International Airport",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 61.1744,
+      "lng": -149.9964
+    },
+    "description": "A crucial technical and sorting stop in trans-Pacific air cargo, bridging Asia-North America express and freight networks.",
+    "top_dependencies": [
+      {
+        "target": "FedEx Corporation",
+        "type": "express_operator",
+        "weight": 0.6
+      },
+      {
+        "target": "United Parcel Service, Inc.",
+        "type": "express_operator",
+        "weight": 0.56
+      },
+      {
+        "target": "Hong Kong Air Cargo Terminals Limited",
+        "type": "asia_link",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "Khorgos Gateway",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Kazakhstan",
+    "location": {
+      "lat": 44.2286,
+      "lng": 80.4142
+    },
+    "description": "Flagship dry port on the China-Kazakhstan border and one of the best-known Eurasian rail chokepoints for overland container trade.",
+    "top_dependencies": [
+      {
+        "target": "Sinotrans Limited",
+        "type": "forwarding_link",
+        "weight": 0.47
+      },
+      {
+        "target": "duisport - Duisburger Hafen AG",
+        "type": "eurasian_corridor",
+        "weight": 0.44
+      },
+      {
+        "target": "Alashankou Port",
+        "type": "corridor_alternative",
+        "weight": 0.41
+      }
+    ]
+  },
+  {
+    "name": "Alashankou Port",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 45.1709,
+      "lng": 82.5723
+    },
+    "description": "Important Xinjiang border crossing for China-Europe rail flows and an operational valve for overland Eurasian trade capacity.",
+    "top_dependencies": [
+      {
+        "target": "Khorgos Gateway",
+        "type": "corridor_link",
+        "weight": 0.46
+      },
+      {
+        "target": "Sinotrans Limited",
+        "type": "forwarding_link",
+        "weight": 0.43
+      },
+      {
+        "target": "duisport - Duisburger Hafen AG",
+        "type": "european_destination",
+        "weight": 0.36
+      }
+    ]
+  },
+  {
+    "name": "Dostyk Railway Junction",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "Kazakhstan",
+    "location": {
+      "lat": 45.253,
+      "lng": 82.4817
+    },
+    "description": "Rail gauge-break and border node complementing Khorgos in Eurasian overland freight movements between China and Europe.",
+    "top_dependencies": [
+      {
+        "target": "Khorgos Gateway",
+        "type": "corridor_system",
+        "weight": 0.54
+      },
+      {
+        "target": "Alashankou Port",
+        "type": "adjacent_border_link",
+        "weight": 0.51
+      },
+      {
+        "target": "duisport - Duisburger Hafen AG",
+        "type": "european_destination",
+        "weight": 0.31
+      }
+    ]
+  },
+  {
+    "name": "DHL Group",
+    "ticker": "DHL",
+    "sector": "TRADE",
+    "country": "Germany",
+    "location": {
+      "lat": 50.7374,
+      "lng": 7.0982
+    },
+    "description": "Global parcel, express, freight forwarding, and contract logistics giant with a uniquely broad cross-border trade footprint.",
+    "top_dependencies": [
+      {
+        "target": "DHL Express Hub Leipzig",
+        "type": "air_hub",
+        "weight": 0.93
+      },
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "seafreight_gateway",
+        "weight": 0.57
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "asia_gateway",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "United Parcel Service, Inc.",
+    "ticker": "UPS",
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 33.749,
+      "lng": -84.388
+    },
+    "description": "One of the world's largest parcel and logistics companies, deeply embedded in North American and international time-definite trade flows.",
+    "top_dependencies": [
+      {
+        "target": "UPS Worldport (Louisville)",
+        "type": "air_hub",
+        "weight": 0.95
+      },
+      {
+        "target": "Ted Stevens Anchorage International Airport",
+        "type": "air_route",
+        "weight": 0.47
+      },
+      {
+        "target": "Port of Los Angeles",
+        "type": "ocean_freight_interface",
+        "weight": 0.35
+      }
+    ]
+  },
+  {
+    "name": "FedEx Corporation",
+    "ticker": "FDX",
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 35.1495,
+      "lng": -90.049
+    },
+    "description": "Global express transportation company whose aviation network and customs capabilities make it central to high-velocity trade.",
+    "top_dependencies": [
+      {
+        "target": "FedEx Express World Hub (Memphis)",
+        "type": "air_hub",
+        "weight": 0.96
+      },
+      {
+        "target": "Ted Stevens Anchorage International Airport",
+        "type": "air_route",
+        "weight": 0.51
+      },
+      {
+        "target": "Hong Kong Air Cargo Terminals Limited",
+        "type": "asia_air_gateway",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "DSV A/S",
+    "ticker": "DSV",
+    "sector": "TRADE",
+    "country": "Denmark",
+    "location": {
+      "lat": 55.6492,
+      "lng": 12.198
+    },
+    "description": "Top-tier freight forwarder and contract logistics operator with an enlarged global network after absorbing DB Schenker.",
+    "top_dependencies": [
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "seafreight_gateway",
+        "weight": 0.49
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "asia_gateway",
+        "weight": 0.45
+      },
+      {
+        "target": "Jebel Ali Port",
+        "type": "middle_east_gateway",
+        "weight": 0.38
+      }
+    ]
+  },
+  {
+    "name": "Kuehne + Nagel International AG",
+    "ticker": "KNIN",
+    "sector": "TRADE",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.1753,
+      "lng": 8.7072
+    },
+    "description": "Swiss forwarding leader with major exposure to ocean freight procurement, customs brokerage, and pharma-sensitive air cargo.",
+    "top_dependencies": [
+      {
+        "target": "Port of Rotterdam Authority",
+        "type": "seafreight_gateway",
+        "weight": 0.52
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "asia_gateway",
+        "weight": 0.47
+      },
+      {
+        "target": "Hong Kong Air Cargo Terminals Limited",
+        "type": "air_cargo_gateway",
+        "weight": 0.33
+      }
+    ]
+  },
+  {
+    "name": "Nippon Express Holdings, Inc.",
+    "ticker": "9147",
+    "sector": "TRADE",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6804,
+      "lng": 139.769
+    },
+    "description": "Japanese logistics group with strong positions in air, ocean, and project cargo serving advanced manufacturing supply chains.",
+    "top_dependencies": [
+      {
+        "target": "Port of Los Angeles",
+        "type": "transpacific_gateway",
+        "weight": 0.31
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "asia_gateway",
+        "weight": 0.36
+      },
+      {
+        "target": "Hong Kong Air Cargo Terminals Limited",
+        "type": "air_cargo_gateway",
+        "weight": 0.34
+      }
+    ]
+  },
+  {
+    "name": "Sinotrans Limited",
+    "ticker": "0598",
+    "sector": "TRADE",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "Major Chinese state-linked logistics and forwarding group linking maritime trade, customs handling, and Eurasian rail corridors.",
+    "top_dependencies": [
+      {
+        "target": "COSCO SHIPPING Holdings Co., Ltd.",
+        "type": "shipping_link",
+        "weight": 0.42
+      },
+      {
+        "target": "Shanghai International Port (Group) Co., Ltd.",
+        "type": "maritime_gateway",
+        "weight": 0.39
+      },
+      {
+        "target": "Khorgos Gateway",
+        "type": "rail_corridor",
+        "weight": 0.35
+      }
+    ]
+  },
+  {
+    "name": "Expeditors International of Washington, Inc.",
+    "ticker": "EXPD",
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 47.6062,
+      "lng": -122.3321
+    },
+    "description": "Asset-light freight forwarder with broad customs and trade-management exposure across air and ocean logistics networks.",
+    "top_dependencies": [
+      {
+        "target": "Port of Los Angeles",
+        "type": "ocean_gateway",
+        "weight": 0.34
+      },
+      {
+        "target": "Hong Kong Air Cargo Terminals Limited",
+        "type": "air_gateway",
+        "weight": 0.33
+      },
+      {
+        "target": "Port of Singapore",
+        "type": "asia_gateway",
+        "weight": 0.31
+      }
+    ]
+  },
+  {
+    "name": "C.H. Robinson Worldwide, Inc.",
+    "ticker": "CHRW",
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 44.8547,
+      "lng": -93.4708
+    },
+    "description": "Large North American third-party logistics provider with significant truck brokerage and intermodal coordination power.",
+    "top_dependencies": [
+      {
+        "target": "Chicago Intermodal Terminal Cluster",
+        "type": "inland_node",
+        "weight": 0.61
+      },
+      {
+        "target": "BNSF Railway Company",
+        "type": "rail_partner",
+        "weight": 0.48
+      },
+      {
+        "target": "Union Pacific Railroad Company",
+        "type": "rail_partner",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "BNSF Railway Company",
+    "ticker": null,
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 32.7555,
+      "lng": -97.3308
+    },
+    "description": "Critical U.S. freight railroad for west-coast import distribution, especially from Southern California into inland consumer markets.",
+    "top_dependencies": [
+      {
+        "target": "Port of Los Angeles",
+        "type": "import_origin",
+        "weight": 0.84
+      },
+      {
+        "target": "Chicago Intermodal Terminal Cluster",
+        "type": "inland_hub",
+        "weight": 0.82
+      },
+      {
+        "target": "J.B. Hunt Transport Services, Inc.",
+        "type": "intermodal_partner",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Union Pacific Railroad Company",
+    "ticker": "UNP",
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 41.2565,
+      "lng": -95.9345
+    },
+    "description": "Major western U.S. freight railroad with central importance for intermodal cargo moving inland from Pacific and Gulf gateways.",
+    "top_dependencies": [
+      {
+        "target": "Port of Long Beach",
+        "type": "import_origin",
+        "weight": 0.79
+      },
+      {
+        "target": "Chicago Intermodal Terminal Cluster",
+        "type": "inland_hub",
+        "weight": 0.76
+      },
+      {
+        "target": "J.B. Hunt Transport Services, Inc.",
+        "type": "intermodal_partner",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "Canadian National Railway Company",
+    "ticker": "CNR",
+    "sector": "TRADE",
+    "country": "Canada",
+    "location": {
+      "lat": 45.5019,
+      "lng": -73.5674
+    },
+    "description": "Transcontinental Canadian railroad tying Atlantic, central, and prairie freight flows to ports, inland hubs, and U.S. markets.",
+    "top_dependencies": [
+      {
+        "target": "St. Lawrence Seaway Management Corporation",
+        "type": "waterway_interface",
+        "weight": 0.46
+      },
+      {
+        "target": "Global Container Terminals Inc.",
+        "type": "port_interface",
+        "weight": 0.42
+      },
+      {
+        "target": "Port Authority of New York and New Jersey",
+        "type": "market_link",
+        "weight": 0.28
+      }
+    ]
+  },
+  {
+    "name": "Canadian Pacific Kansas City Limited",
+    "ticker": "CP",
+    "sector": "TRADE",
+    "country": "Canada",
+    "location": {
+      "lat": 51.0447,
+      "lng": -114.0719
+    },
+    "description": "North American railroad connecting Canada, the U.S., and Mexico, with rising strategic value for nearshoring and intermodal trade.",
+    "top_dependencies": [
+      {
+        "target": "Administration of the National Port System Lázaro Cárdenas (ASIPONA Lázaro Cárdenas)",
+        "type": "mexico_gateway",
+        "weight": 0.43
+      },
+      {
+        "target": "Chicago Intermodal Terminal Cluster",
+        "type": "inland_hub",
+        "weight": 0.39
+      },
+      {
+        "target": "ASIPONA Manzanillo",
+        "type": "mexico_gateway",
+        "weight": 0.34
+      }
+    ]
+  },
+  {
+    "name": "J.B. Hunt Transport Services, Inc.",
+    "ticker": "JBHT",
+    "sector": "TRADE",
+    "country": "United States",
+    "location": {
+      "lat": 36.2554,
+      "lng": -94.1379
+    },
+    "description": "Leading intermodal trucking and logistics provider whose network helps translate rail and port disruptions into retail supply impacts.",
+    "top_dependencies": [
+      {
+        "target": "BNSF Railway Company",
+        "type": "intermodal_partner",
+        "weight": 0.74
+      },
+      {
+        "target": "Chicago Intermodal Terminal Cluster",
+        "type": "inland_hub",
+        "weight": 0.58
+      },
+      {
+        "target": "Port of Los Angeles",
+        "type": "maritime_origin",
+        "weight": 0.43
+      }
+    ]
+  }
+]

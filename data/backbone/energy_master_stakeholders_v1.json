@@ -1,0 +1,2802 @@
+[
+  {
+    "name": "Saudi Arabian Oil Company (Saudi Aramco)",
+    "ticker": "2222",
+    "sector": "ENERGY",
+    "country": "Saudi Arabia",
+    "location": {
+      "lat": 26.236111,
+      "lng": 50.039722
+    },
+    "description": "State-controlled integrated oil and chemicals giant and one of the world’s most consequential crude suppliers.",
+    "top_dependencies": [
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "policy",
+        "weight": 0.92
+      },
+      {
+        "target": "Abqaiq Plants",
+        "type": "processing",
+        "weight": 0.98
+      },
+      {
+        "target": "Ras Tanura Refinery and Terminal",
+        "type": "export_terminal",
+        "weight": 0.97
+      }
+    ]
+  },
+  {
+    "name": "Exxon Mobil Corporation",
+    "ticker": "XOM",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 30.1635,
+      "lng": -95.461
+    },
+    "description": "Major integrated energy company with global upstream, refining, LNG and chemicals exposure.",
+    "top_dependencies": [
+      {
+        "target": "Cushing Oil Hub",
+        "type": "oil_pricing",
+        "weight": 0.72
+      },
+      {
+        "target": "Enterprise Products Partners L.P.",
+        "type": "midstream",
+        "weight": 0.7
+      },
+      {
+        "target": "Henry Hub",
+        "type": "gas_pricing",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Shell plc",
+    "ticker": "SHEL",
+    "sector": "ENERGY",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5073,
+      "lng": -0.1277
+    },
+    "description": "Global integrated energy company with deep LNG, trading and refining reach.",
+    "top_dependencies": [
+      {
+        "target": "QatarEnergy LNG",
+        "type": "lng_supply",
+        "weight": 0.68
+      },
+      {
+        "target": "National Grid Electricity Transmission plc",
+        "type": "market_access",
+        "weight": 0.58
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Chevron Corporation",
+    "ticker": "CVX",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 37.7799,
+      "lng": -121.978
+    },
+    "description": "Large integrated oil and gas major with major upstream, refining and downstream positions.",
+    "top_dependencies": [
+      {
+        "target": "Cushing Oil Hub",
+        "type": "oil_pricing",
+        "weight": 0.72
+      },
+      {
+        "target": "Colonial Pipeline Company",
+        "type": "downstream_logistics",
+        "weight": 0.63
+      },
+      {
+        "target": "Energy Transfer LP",
+        "type": "midstream",
+        "weight": 0.65
+      }
+    ]
+  },
+  {
+    "name": "TotalEnergies SE",
+    "ticker": "TTE",
+    "sector": "ENERGY",
+    "country": "France",
+    "location": {
+      "lat": 48.8956,
+      "lng": 2.25
+    },
+    "description": "Integrated energy company spanning oil, LNG, power and renewables across Europe, Africa and Asia.",
+    "top_dependencies": [
+      {
+        "target": "QatarEnergy LNG",
+        "type": "lng_supply",
+        "weight": 0.74
+      },
+      {
+        "target": "Trans Adriatic Pipeline AG",
+        "type": "gas_transport",
+        "weight": 0.57
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.65
+      }
+    ]
+  },
+  {
+    "name": "BP p.l.c.",
+    "ticker": "BP",
+    "sector": "ENERGY",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5099,
+      "lng": -0.1327
+    },
+    "description": "Integrated supermajor with material trading, refining, upstream and power exposure.",
+    "top_dependencies": [
+      {
+        "target": "National Grid Electricity Transmission plc",
+        "type": "market_access",
+        "weight": 0.56
+      },
+      {
+        "target": "QatarEnergy LNG",
+        "type": "lng_supply",
+        "weight": 0.62
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "PetroChina Company Limited",
+    "ticker": "0857",
+    "sector": "ENERGY",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "One of China’s largest listed oil and gas companies with major upstream and pipeline exposure.",
+    "top_dependencies": [
+      {
+        "target": "Saudi Arabian Oil Company (Saudi Aramco)",
+        "type": "crude_supply",
+        "weight": 0.74
+      },
+      {
+        "target": "State Grid Corporation of China",
+        "type": "downstream_demand",
+        "weight": 0.78
+      },
+      {
+        "target": "China Southern Power Grid",
+        "type": "downstream_demand",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "China Petroleum & Chemical Corporation (Sinopec)",
+    "ticker": "00386",
+    "sector": "ENERGY",
+    "country": "China",
+    "location": {
+      "lat": 39.917,
+      "lng": 116.418
+    },
+    "description": "Vertically integrated Chinese refining, chemicals and fuels giant with global import dependence.",
+    "top_dependencies": [
+      {
+        "target": "Saudi Arabian Oil Company (Saudi Aramco)",
+        "type": "crude_supply",
+        "weight": 0.78
+      },
+      {
+        "target": "QatarEnergy LNG",
+        "type": "gas_supply",
+        "weight": 0.62
+      },
+      {
+        "target": "State Grid Corporation of China",
+        "type": "downstream_demand",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "CNOOC Limited",
+    "ticker": "00883",
+    "sector": "ENERGY",
+    "country": "China",
+    "location": {
+      "lat": 39.921,
+      "lng": 116.42
+    },
+    "description": "China’s largest offshore oil and gas producer and a major LNG buyer and offshore investor.",
+    "top_dependencies": [
+      {
+        "target": "State Grid Corporation of China",
+        "type": "downstream_demand",
+        "weight": 0.74
+      },
+      {
+        "target": "China Southern Power Grid",
+        "type": "downstream_demand",
+        "weight": 0.68
+      },
+      {
+        "target": "QatarEnergy LNG",
+        "type": "lng_market_linkage",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Petróleo Brasileiro S.A. - Petrobras",
+    "ticker": "PBR",
+    "sector": "ENERGY",
+    "country": "Brazil",
+    "location": {
+      "lat": -22.9068,
+      "lng": -43.1729
+    },
+    "description": "Brazil’s dominant state-influenced integrated producer and a core Atlantic offshore supplier.",
+    "top_dependencies": [
+      {
+        "target": "China Petroleum & Chemical Corporation (Sinopec)",
+        "type": "customer",
+        "weight": 0.62
+      },
+      {
+        "target": "State Grid Corporation of China",
+        "type": "demand_proxy",
+        "weight": 0.54
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.57
+      }
+    ]
+  },
+  {
+    "name": "Abu Dhabi National Oil Company (ADNOC)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 24.4539,
+      "lng": 54.3773
+    },
+    "description": "State-owned producer and exporter central to Gulf crude flows and downstream expansion.",
+    "top_dependencies": [
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "policy",
+        "weight": 0.9
+      },
+      {
+        "target": "China Petroleum & Chemical Corporation (Sinopec)",
+        "type": "customer",
+        "weight": 0.6
+      },
+      {
+        "target": "Jamnagar Refining Complex",
+        "type": "refining_demand",
+        "weight": 0.65
+      }
+    ]
+  },
+  {
+    "name": "QatarEnergy",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Qatar",
+    "location": {
+      "lat": 25.2854,
+      "lng": 51.531
+    },
+    "description": "State-owned energy company that anchors Qatar’s LNG complex and long-term Asian gas supply.",
+    "top_dependencies": [
+      {
+        "target": "QatarEnergy LNG",
+        "type": "liquefaction",
+        "weight": 0.98
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "policy",
+        "weight": 0.84
+      },
+      {
+        "target": "JERA Co., Inc.",
+        "type": "customer",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Rosneft Oil Company",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Russia",
+    "location": {
+      "lat": 55.7558,
+      "lng": 37.6173
+    },
+    "description": "Major Russian oil producer with export dependence on state pipeline and maritime routes.",
+    "top_dependencies": [
+      {
+        "target": "Transneft",
+        "type": "pipeline",
+        "weight": 0.92
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "opec_plus_coordination",
+        "weight": 0.58
+      },
+      {
+        "target": "PetroChina Company Limited",
+        "type": "customer",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Gazprom",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Russia",
+    "location": {
+      "lat": 59.987,
+      "lng": 30.177
+    },
+    "description": "State-controlled gas giant shaping Eurasian pipeline flows and European gas security.",
+    "top_dependencies": [
+      {
+        "target": "TurkStream",
+        "type": "export_pipeline",
+        "weight": 0.84
+      },
+      {
+        "target": "Nord Stream AG",
+        "type": "export_pipeline",
+        "weight": 0.82
+      },
+      {
+        "target": "RWE AG",
+        "type": "customer",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Equinor ASA",
+    "ticker": "EQNR",
+    "sector": "ENERGY",
+    "country": "Norway",
+    "location": {
+      "lat": 58.969,
+      "lng": 5.7331
+    },
+    "description": "Norwegian producer central to European gas supply, offshore development and energy transition projects.",
+    "top_dependencies": [
+      {
+        "target": "TenneT Holding B.V.",
+        "type": "offshore_power_market",
+        "weight": 0.58
+      },
+      {
+        "target": "National Grid Electricity Transmission plc",
+        "type": "uk_market_access",
+        "weight": 0.62
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Eni S.p.A.",
+    "ticker": "E",
+    "sector": "ENERGY",
+    "country": "Italy",
+    "location": {
+      "lat": 41.8933,
+      "lng": 12.483
+    },
+    "description": "Italian integrated energy company with strong Mediterranean gas and African upstream positions.",
+    "top_dependencies": [
+      {
+        "target": "Trans Adriatic Pipeline AG",
+        "type": "gas_transport",
+        "weight": 0.78
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.6
+      },
+      {
+        "target": "Terna S.p.A.",
+        "type": "domestic_power_system",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "ConocoPhillips",
+    "ticker": "COP",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 29.7604,
+      "lng": -95.3698
+    },
+    "description": "Large independent upstream company with material exposure to North American price hubs and export infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "Henry Hub",
+        "type": "gas_pricing",
+        "weight": 0.66
+      },
+      {
+        "target": "Cushing Oil Hub",
+        "type": "oil_pricing",
+        "weight": 0.68
+      },
+      {
+        "target": "Enbridge Inc.",
+        "type": "midstream",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Occidental Petroleum Corporation",
+    "ticker": "OXY",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 29.7501,
+      "lng": -95.3661
+    },
+    "description": "Large U.S. producer with major Permian and chemicals exposure tied to Gulf Coast infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "Energy Transfer LP",
+        "type": "midstream",
+        "weight": 0.68
+      },
+      {
+        "target": "Cushing Oil Hub",
+        "type": "oil_pricing",
+        "weight": 0.63
+      },
+      {
+        "target": "Henry Hub",
+        "type": "gas_pricing",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Canadian Natural Resources Limited",
+    "ticker": "CNQ",
+    "sector": "ENERGY",
+    "country": "Canada",
+    "location": {
+      "lat": 51.0447,
+      "lng": -114.0719
+    },
+    "description": "Major Canadian upstream producer whose export economics hinge on takeaway capacity.",
+    "top_dependencies": [
+      {
+        "target": "Enbridge Inc.",
+        "type": "pipeline",
+        "weight": 0.85
+      },
+      {
+        "target": "TC Energy Corporation",
+        "type": "pipeline",
+        "weight": 0.68
+      },
+      {
+        "target": "Cushing Oil Hub",
+        "type": "benchmark",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "EOG Resources, Inc.",
+    "ticker": "EOG",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 29.7604,
+      "lng": -95.3698
+    },
+    "description": "Large U.S. shale producer with strong sensitivity to Gulf Coast midstream and gas pricing.",
+    "top_dependencies": [
+      {
+        "target": "Enterprise Products Partners L.P.",
+        "type": "midstream",
+        "weight": 0.74
+      },
+      {
+        "target": "Energy Transfer LP",
+        "type": "midstream",
+        "weight": 0.72
+      },
+      {
+        "target": "Henry Hub",
+        "type": "gas_pricing",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Suncor Energy Inc.",
+    "ticker": "SU",
+    "sector": "ENERGY",
+    "country": "Canada",
+    "location": {
+      "lat": 51.0477,
+      "lng": -114.0674
+    },
+    "description": "Integrated Canadian oil sands producer and refiner dependent on export pipeline availability.",
+    "top_dependencies": [
+      {
+        "target": "Enbridge Inc.",
+        "type": "pipeline",
+        "weight": 0.83
+      },
+      {
+        "target": "TC Energy Corporation",
+        "type": "pipeline",
+        "weight": 0.72
+      },
+      {
+        "target": "Trans Mountain Corporation",
+        "type": "export_access",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Cheniere Energy, Inc.",
+    "ticker": "LNG",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 29.7604,
+      "lng": -95.3698
+    },
+    "description": "Leading U.S. LNG exporter with direct leverage over Atlantic and Pacific basin gas balances.",
+    "top_dependencies": [
+      {
+        "target": "Sabine Pass LNG",
+        "type": "liquefaction",
+        "weight": 0.98
+      },
+      {
+        "target": "Henry Hub",
+        "type": "feedgas_pricing",
+        "weight": 0.88
+      },
+      {
+        "target": "The Williams Companies, Inc.",
+        "type": "pipeline_supply",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "EQT Corporation",
+    "ticker": "EQT",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 40.4406,
+      "lng": -79.9959
+    },
+    "description": "Largest U.S. natural gas producer with heavy sensitivity to Appalachian transport and benchmark gas pricing.",
+    "top_dependencies": [
+      {
+        "target": "Henry Hub",
+        "type": "gas_pricing",
+        "weight": 0.96
+      },
+      {
+        "target": "The Williams Companies, Inc.",
+        "type": "pipeline",
+        "weight": 0.82
+      },
+      {
+        "target": "PJM Interconnection, L.L.C.",
+        "type": "gas_to_power_demand",
+        "weight": 0.57
+      }
+    ]
+  },
+  {
+    "name": "Woodside Energy Group Ltd",
+    "ticker": "WDS",
+    "sector": "ENERGY",
+    "country": "Australia",
+    "location": {
+      "lat": -31.9523,
+      "lng": 115.8613
+    },
+    "description": "Australian LNG heavyweight with portfolio exposure to Northeast Asian utilities and LNG benchmarks.",
+    "top_dependencies": [
+      {
+        "target": "JERA Co., Inc.",
+        "type": "customer",
+        "weight": 0.72
+      },
+      {
+        "target": "China Southern Power Grid",
+        "type": "demand_proxy",
+        "weight": 0.58
+      },
+      {
+        "target": "QatarEnergy LNG",
+        "type": "lng_benchmark",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "OMV Aktiengesellschaft",
+    "ticker": "OMV",
+    "sector": "ENERGY",
+    "country": "Austria",
+    "location": {
+      "lat": 48.2082,
+      "lng": 16.3738
+    },
+    "description": "Integrated Central European producer, refiner and gas trader exposed to European import routes.",
+    "top_dependencies": [
+      {
+        "target": "Trans Adriatic Pipeline AG",
+        "type": "gas_transport",
+        "weight": 0.6
+      },
+      {
+        "target": "TurkStream",
+        "type": "gas_supply_route",
+        "weight": 0.58
+      },
+      {
+        "target": "RWE AG",
+        "type": "market_linkage",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "name": "Repsol, S.A.",
+    "ticker": "REP",
+    "sector": "ENERGY",
+    "country": "Spain",
+    "location": {
+      "lat": 40.4168,
+      "lng": -3.7038
+    },
+    "description": "Spanish integrated energy company with Iberian refining, marketing and low-carbon power exposure.",
+    "top_dependencies": [
+      {
+        "target": "Rede Eléctrica de España, S.A.U. (Redeia)",
+        "type": "grid_access",
+        "weight": 0.58
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.6
+      },
+      {
+        "target": "QatarEnergy LNG",
+        "type": "lng_supply",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Ecopetrol S.A.",
+    "ticker": "EC",
+    "sector": "ENERGY",
+    "country": "Colombia",
+    "location": {
+      "lat": 4.711,
+      "lng": -74.0721
+    },
+    "description": "Colombia’s dominant oil and gas producer and a major Latin American export-oriented state firm.",
+    "top_dependencies": [
+      {
+        "target": "China Petroleum & Chemical Corporation (Sinopec)",
+        "type": "customer",
+        "weight": 0.55
+      },
+      {
+        "target": "Cushing Oil Hub",
+        "type": "oil_pricing",
+        "weight": 0.52
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "YPF S.A.",
+    "ticker": "YPF",
+    "sector": "ENERGY",
+    "country": "Argentina",
+    "location": {
+      "lat": -34.6037,
+      "lng": -58.3816
+    },
+    "description": "Argentina’s national energy champion, central to Vaca Muerta development and regional fuel supply.",
+    "top_dependencies": [
+      {
+        "target": "Petróleo Brasileiro S.A. - Petrobras",
+        "type": "regional_market_linkage",
+        "weight": 0.5
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.55
+      },
+      {
+        "target": "State Grid Corporation of China",
+        "type": "demand_proxy",
+        "weight": 0.45
+      }
+    ]
+  },
+  {
+    "name": "Sonatrach",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Algeria",
+    "location": {
+      "lat": 36.7538,
+      "lng": 3.0588
+    },
+    "description": "Algeria’s state hydrocarbon company and a strategic supplier into Southern Europe.",
+    "top_dependencies": [
+      {
+        "target": "Trans Adriatic Pipeline AG",
+        "type": "european_market_linkage",
+        "weight": 0.56
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "policy",
+        "weight": 0.7
+      },
+      {
+        "target": "ENGIE SA",
+        "type": "customer",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Organization of the Petroleum Exporting Countries (OPEC)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Austria",
+    "location": {
+      "lat": 48.2082,
+      "lng": 16.3738
+    },
+    "description": "Intergovernmental producer group whose supply signaling remains a core driver of oil risk transmission.",
+    "top_dependencies": [
+      {
+        "target": "Saudi Arabian Oil Company (Saudi Aramco)",
+        "type": "member_production",
+        "weight": 0.93
+      },
+      {
+        "target": "Abu Dhabi National Oil Company (ADNOC)",
+        "type": "member_production",
+        "weight": 0.74
+      },
+      {
+        "target": "QatarEnergy",
+        "type": "regional_supply_influence",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Transneft",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Russia",
+    "location": {
+      "lat": 55.7512,
+      "lng": 37.6184
+    },
+    "description": "Russia’s principal oil pipeline monopoly and a central conduit for Eurasian crude exports.",
+    "top_dependencies": [
+      {
+        "target": "Rosneft Oil Company",
+        "type": "upstream_supply",
+        "weight": 0.84
+      },
+      {
+        "target": "Gazprom",
+        "type": "state_energy_complex",
+        "weight": 0.5
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "TC Energy Corporation",
+    "ticker": "TRP",
+    "sector": "ENERGY",
+    "country": "Canada",
+    "location": {
+      "lat": 51.045,
+      "lng": -114.0575
+    },
+    "description": "North American energy infrastructure company with major gas pipeline and power assets.",
+    "top_dependencies": [
+      {
+        "target": "Canadian Natural Resources Limited",
+        "type": "upstream_supply",
+        "weight": 0.6
+      },
+      {
+        "target": "Suncor Energy Inc.",
+        "type": "upstream_supply",
+        "weight": 0.55
+      },
+      {
+        "target": "Henry Hub",
+        "type": "gas_pricing",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "Enbridge Inc.",
+    "ticker": "ENB",
+    "sector": "ENERGY",
+    "country": "Canada",
+    "location": {
+      "lat": 51.045,
+      "lng": -114.0575
+    },
+    "description": "One of North America’s most important crude and gas pipeline operators.",
+    "top_dependencies": [
+      {
+        "target": "Canadian Natural Resources Limited",
+        "type": "upstream_supply",
+        "weight": 0.72
+      },
+      {
+        "target": "Suncor Energy Inc.",
+        "type": "upstream_supply",
+        "weight": 0.7
+      },
+      {
+        "target": "Cushing Oil Hub",
+        "type": "benchmark_linkage",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "Kinder Morgan, Inc.",
+    "ticker": "KMI",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 29.7604,
+      "lng": -95.3698
+    },
+    "description": "Major U.S. energy infrastructure operator spanning gas, products, CO2 and terminal assets.",
+    "top_dependencies": [
+      {
+        "target": "Henry Hub",
+        "type": "gas_pricing",
+        "weight": 0.8
+      },
+      {
+        "target": "Cheniere Energy, Inc.",
+        "type": "customer",
+        "weight": 0.62
+      },
+      {
+        "target": "Cushing Oil Hub",
+        "type": "oil_logistics",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "The Williams Companies, Inc.",
+    "ticker": "WMB",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 36.154,
+      "lng": -95.9928
+    },
+    "description": "Critical U.S. gas infrastructure company anchored by the Transco pipeline system.",
+    "top_dependencies": [
+      {
+        "target": "Henry Hub",
+        "type": "gas_pricing",
+        "weight": 0.84
+      },
+      {
+        "target": "EQT Corporation",
+        "type": "upstream_supply",
+        "weight": 0.78
+      },
+      {
+        "target": "Cheniere Energy, Inc.",
+        "type": "customer",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Energy Transfer LP",
+    "ticker": "ET",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 32.7767,
+      "lng": -96.797
+    },
+    "description": "Large diversified U.S. midstream operator linking producing basins to Gulf Coast demand and export hubs.",
+    "top_dependencies": [
+      {
+        "target": "Henry Hub",
+        "type": "gas_pricing",
+        "weight": 0.62
+      },
+      {
+        "target": "Occidental Petroleum Corporation",
+        "type": "upstream_supply",
+        "weight": 0.68
+      },
+      {
+        "target": "EOG Resources, Inc.",
+        "type": "upstream_supply",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "Enterprise Products Partners L.P.",
+    "ticker": "EPD",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 29.7604,
+      "lng": -95.3698
+    },
+    "description": "Major Gulf Coast midstream network for crude, NGLs, gas and petrochemical logistics.",
+    "top_dependencies": [
+      {
+        "target": "EOG Resources, Inc.",
+        "type": "upstream_supply",
+        "weight": 0.7
+      },
+      {
+        "target": "Exxon Mobil Corporation",
+        "type": "customer",
+        "weight": 0.6
+      },
+      {
+        "target": "Cushing Oil Hub",
+        "type": "benchmark_linkage",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Colonial Pipeline Company",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 34.0754,
+      "lng": -84.2941
+    },
+    "description": "Largest refined-products pipeline system in the United States and a key East Coast fuel artery.",
+    "top_dependencies": [
+      {
+        "target": "Exxon Mobil Corporation",
+        "type": "shipper",
+        "weight": 0.52
+      },
+      {
+        "target": "Chevron Corporation",
+        "type": "shipper",
+        "weight": 0.5
+      },
+      {
+        "target": "Cushing Oil Hub",
+        "type": "benchmark_linkage",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Plains All American Pipeline, L.P.",
+    "ticker": "PAA",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 29.7604,
+      "lng": -95.3698
+    },
+    "description": "Large crude pipeline and terminal operator tightly linked to U.S. inland and Gulf Coast oil flows.",
+    "top_dependencies": [
+      {
+        "target": "Cushing Oil Hub",
+        "type": "storage_and_benchmark",
+        "weight": 0.8
+      },
+      {
+        "target": "Occidental Petroleum Corporation",
+        "type": "upstream_supply",
+        "weight": 0.72
+      },
+      {
+        "target": "Exxon Mobil Corporation",
+        "type": "customer",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Pembina Pipeline Corporation",
+    "ticker": "PBA",
+    "sector": "ENERGY",
+    "country": "Canada",
+    "location": {
+      "lat": 51.045,
+      "lng": -114.0575
+    },
+    "description": "Canadian pipeline and midstream company connecting Western Canadian production to markets.",
+    "top_dependencies": [
+      {
+        "target": "Canadian Natural Resources Limited",
+        "type": "upstream_supply",
+        "weight": 0.64
+      },
+      {
+        "target": "Suncor Energy Inc.",
+        "type": "upstream_supply",
+        "weight": 0.62
+      },
+      {
+        "target": "Enbridge Inc.",
+        "type": "interconnection",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Trans Mountain Corporation",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Canada",
+    "location": {
+      "lat": 51.0447,
+      "lng": -114.0719
+    },
+    "description": "Strategic export pipeline giving Western Canadian crude marine access on the Pacific coast.",
+    "top_dependencies": [
+      {
+        "target": "Suncor Energy Inc.",
+        "type": "upstream_supply",
+        "weight": 0.7
+      },
+      {
+        "target": "Canadian Natural Resources Limited",
+        "type": "upstream_supply",
+        "weight": 0.66
+      },
+      {
+        "target": "Enbridge Inc.",
+        "type": "network_interaction",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "Caspian Pipeline Consortium",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Russia",
+    "location": {
+      "lat": 44.6617,
+      "lng": 37.9357
+    },
+    "description": "Export corridor moving Caspian crude to the Black Sea, with disproportionate sensitivity to Russia-linked disruption.",
+    "top_dependencies": [
+      {
+        "target": "Rosneft Oil Company",
+        "type": "upstream_linkage",
+        "weight": 0.55
+      },
+      {
+        "target": "Transneft",
+        "type": "port_and_network_linkage",
+        "weight": 0.8
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "Baku–Tbilisi–Ceyhan Pipeline",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Azerbaijan",
+    "location": {
+      "lat": 40.258,
+      "lng": 49.979
+    },
+    "description": "Cross-border export pipeline linking Caspian production to the Mediterranean via Turkey.",
+    "top_dependencies": [
+      {
+        "target": "Southern Gas Corridor CJSC",
+        "type": "corridor_synergy",
+        "weight": 0.58
+      },
+      {
+        "target": "TotalEnergies SE",
+        "type": "shipper_partner",
+        "weight": 0.54
+      },
+      {
+        "target": "Trans Adriatic Pipeline AG",
+        "type": "regional_corridor_linkage",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Southern Gas Corridor CJSC",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Azerbaijan",
+    "location": {
+      "lat": 40.4093,
+      "lng": 49.8671
+    },
+    "description": "Azerbaijan-backed corridor entity central to Caspian gas delivery into Europe.",
+    "top_dependencies": [
+      {
+        "target": "Trans Adriatic Pipeline AG",
+        "type": "downstream_pipeline",
+        "weight": 0.9
+      },
+      {
+        "target": "Eni S.p.A.",
+        "type": "market_offtake",
+        "weight": 0.58
+      },
+      {
+        "target": "OMV Aktiengesellschaft",
+        "type": "market_offtake",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Trans Adriatic Pipeline AG",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Italy",
+    "location": {
+      "lat": 40.2725,
+      "lng": 18.4265
+    },
+    "description": "Strategic import route landing Caspian gas into Southern Europe.",
+    "top_dependencies": [
+      {
+        "target": "Southern Gas Corridor CJSC",
+        "type": "upstream_supply_route",
+        "weight": 0.95
+      },
+      {
+        "target": "Eni S.p.A.",
+        "type": "market_linkage",
+        "weight": 0.7
+      },
+      {
+        "target": "Terna S.p.A.",
+        "type": "power_market_linkage",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "TurkStream",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Turkey",
+    "location": {
+      "lat": 41.6309,
+      "lng": 28.0909
+    },
+    "description": "Black Sea gas pipeline system shaping Southeast European import optionality.",
+    "top_dependencies": [
+      {
+        "target": "Gazprom",
+        "type": "upstream_supply",
+        "weight": 0.92
+      },
+      {
+        "target": "Terna S.p.A.",
+        "type": "regional_demand_linkage",
+        "weight": 0.5
+      },
+      {
+        "target": "RWE AG",
+        "type": "regional_market_linkage",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Nord Stream AG",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Germany",
+    "location": {
+      "lat": 54.1454,
+      "lng": 13.6185
+    },
+    "description": "Baltic gas pipeline infrastructure whose disruption reshaped European gas risk pricing.",
+    "top_dependencies": [
+      {
+        "target": "Gazprom",
+        "type": "upstream_supply",
+        "weight": 0.95
+      },
+      {
+        "target": "RWE AG",
+        "type": "market_linkage",
+        "weight": 0.62
+      },
+      {
+        "target": "ENGIE SA",
+        "type": "equity_and_market_linkage",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "Sabine Pass LNG",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 29.7336,
+      "lng": -93.8819
+    },
+    "description": "Flagship U.S. LNG export terminal on the Gulf Coast and one of the world’s most watched gas assets.",
+    "top_dependencies": [
+      {
+        "target": "Cheniere Energy, Inc.",
+        "type": "operator",
+        "weight": 0.98
+      },
+      {
+        "target": "Henry Hub",
+        "type": "feedgas_pricing",
+        "weight": 0.86
+      },
+      {
+        "target": "JERA Co., Inc.",
+        "type": "customer",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Freeport LNG",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 28.9507,
+      "lng": -95.3411
+    },
+    "description": "Major U.S. LNG export plant with outsized market impact during outages and restarts.",
+    "top_dependencies": [
+      {
+        "target": "Henry Hub",
+        "type": "feedgas_pricing",
+        "weight": 0.84
+      },
+      {
+        "target": "JERA Co., Inc.",
+        "type": "customer",
+        "weight": 0.58
+      },
+      {
+        "target": "State Grid Corporation of China",
+        "type": "demand_proxy",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "name": "QatarEnergy LNG",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Qatar",
+    "location": {
+      "lat": 25.9114,
+      "lng": 51.5782
+    },
+    "description": "Ras Laffan-based LNG champion and cornerstone supplier for Asian and European utilities.",
+    "top_dependencies": [
+      {
+        "target": "QatarEnergy",
+        "type": "operator",
+        "weight": 0.98
+      },
+      {
+        "target": "JERA Co., Inc.",
+        "type": "customer",
+        "weight": 0.78
+      },
+      {
+        "target": "State Grid Corporation of China",
+        "type": "demand_proxy",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "Ras Tanura Refinery and Terminal",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Saudi Arabia",
+    "location": {
+      "lat": 26.6438,
+      "lng": 50.1594
+    },
+    "description": "One of the world’s most consequential crude export and refining complexes.",
+    "top_dependencies": [
+      {
+        "target": "Saudi Arabian Oil Company (Saudi Aramco)",
+        "type": "operator",
+        "weight": 0.98
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.55
+      },
+      {
+        "target": "China Petroleum & Chemical Corporation (Sinopec)",
+        "type": "customer",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Abqaiq Plants",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Saudi Arabia",
+    "location": {
+      "lat": 25.936,
+      "lng": 49.6892
+    },
+    "description": "Critical Saudi oil processing center whose outages have repeatedly moved global markets.",
+    "top_dependencies": [
+      {
+        "target": "Saudi Arabian Oil Company (Saudi Aramco)",
+        "type": "operator",
+        "weight": 0.99
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.6
+      },
+      {
+        "target": "Ras Tanura Refinery and Terminal",
+        "type": "export_linkage",
+        "weight": 0.88
+      }
+    ]
+  },
+  {
+    "name": "Henry Hub",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 29.713,
+      "lng": -92.0327
+    },
+    "description": "Benchmark U.S. natural gas pricing node with global LNG spillover relevance.",
+    "top_dependencies": [
+      {
+        "target": "EQT Corporation",
+        "type": "supply",
+        "weight": 0.62
+      },
+      {
+        "target": "Cheniere Energy, Inc.",
+        "type": "demand",
+        "weight": 0.76
+      },
+      {
+        "target": "The Williams Companies, Inc.",
+        "type": "transport",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Cushing Oil Hub",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 35.9851,
+      "lng": -96.7669
+    },
+    "description": "Principal WTI storage and settlement hub at the center of U.S. crude price formation.",
+    "top_dependencies": [
+      {
+        "target": "Exxon Mobil Corporation",
+        "type": "shipper",
+        "weight": 0.54
+      },
+      {
+        "target": "Chevron Corporation",
+        "type": "shipper",
+        "weight": 0.54
+      },
+      {
+        "target": "Plains All American Pipeline, L.P.",
+        "type": "storage_and_transport",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "Jamnagar Refining Complex",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "India",
+    "location": {
+      "lat": 22.4707,
+      "lng": 70.0675
+    },
+    "description": "Massive Indian refining hub influencing clean-product balances from Asia to Europe.",
+    "top_dependencies": [
+      {
+        "target": "Saudi Arabian Oil Company (Saudi Aramco)",
+        "type": "crude_supply",
+        "weight": 0.62
+      },
+      {
+        "target": "Abu Dhabi National Oil Company (ADNOC)",
+        "type": "crude_supply",
+        "weight": 0.58
+      },
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "price_environment",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "State Grid Corporation of China",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "China",
+    "location": {
+      "lat": 39.9075,
+      "lng": 116.397
+    },
+    "description": "World-scale transmission and distribution giant anchoring China’s power demand and cross-regional balancing.",
+    "top_dependencies": [
+      {
+        "target": "China Southern Power Grid",
+        "type": "interconnection",
+        "weight": 0.72
+      },
+      {
+        "target": "China Three Gorges Corporation",
+        "type": "generation_supply",
+        "weight": 0.64
+      },
+      {
+        "target": "State Power Investment Corporation Limited",
+        "type": "generation_supply",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "China Southern Power Grid",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "China",
+    "location": {
+      "lat": 23.1291,
+      "lng": 113.2644
+    },
+    "description": "Major Chinese grid operator covering the southern load centers and Greater Bay Area.",
+    "top_dependencies": [
+      {
+        "target": "State Grid Corporation of China",
+        "type": "interconnection",
+        "weight": 0.7
+      },
+      {
+        "target": "State Power Investment Corporation Limited",
+        "type": "generation_supply",
+        "weight": 0.58
+      },
+      {
+        "target": "Huaneng Power International, Inc.",
+        "type": "generation_supply",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Power Grid Corporation of India Limited",
+    "ticker": "POWERGRID",
+    "sector": "ENERGY",
+    "country": "India",
+    "location": {
+      "lat": 28.4595,
+      "lng": 77.0266
+    },
+    "description": "One of the world’s largest power transmission utilities and the backbone of India’s interstate grid.",
+    "top_dependencies": [
+      {
+        "target": "NTPC Limited",
+        "type": "generation_supply",
+        "weight": 0.72
+      },
+      {
+        "target": "Adani Green Energy Limited",
+        "type": "renewable_integration",
+        "weight": 0.68
+      },
+      {
+        "target": "State Grid Corporation of China",
+        "type": "technology_benchmark",
+        "weight": 0.45
+      }
+    ]
+  },
+  {
+    "name": "PJM Interconnection, L.L.C.",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 40.0906,
+      "lng": -75.4105
+    },
+    "description": "Largest U.S. wholesale electricity market and grid operator by load served.",
+    "top_dependencies": [
+      {
+        "target": "Exelon Corporation",
+        "type": "generation_and_load",
+        "weight": 0.76
+      },
+      {
+        "target": "Duke Energy Corporation",
+        "type": "generation_and_load",
+        "weight": 0.58
+      },
+      {
+        "target": "NextEra Energy, Inc.",
+        "type": "renewable_integration",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Electric Reliability Council of Texas (ERCOT)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 30.2672,
+      "lng": -97.7431
+    },
+    "description": "Independent Texas grid and market operator central to U.S. power reliability and renewable volatility.",
+    "top_dependencies": [
+      {
+        "target": "NextEra Energy, Inc.",
+        "type": "renewable_supply",
+        "weight": 0.58
+      },
+      {
+        "target": "Energy Transfer LP",
+        "type": "gas_supply",
+        "weight": 0.56
+      },
+      {
+        "target": "Kinder Morgan, Inc.",
+        "type": "gas_supply",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "California Independent System Operator (CAISO)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 38.678,
+      "lng": -121.1761
+    },
+    "description": "California’s system operator, critical for renewable integration, storage dispatch and Western balancing.",
+    "top_dependencies": [
+      {
+        "target": "NextEra Energy, Inc.",
+        "type": "renewable_supply",
+        "weight": 0.56
+      },
+      {
+        "target": "Brookfield Renewable Partners L.P.",
+        "type": "renewable_supply",
+        "weight": 0.4
+      },
+      {
+        "target": "ENGIE SA",
+        "type": "renewable_supply",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Midcontinent Independent System Operator, Inc. (MISO)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 39.9784,
+      "lng": -86.118
+    },
+    "description": "Regional transmission organization spanning the U.S. Midwest and parts of the South.",
+    "top_dependencies": [
+      {
+        "target": "Exelon Corporation",
+        "type": "generation_and_load",
+        "weight": 0.56
+      },
+      {
+        "target": "NextEra Energy, Inc.",
+        "type": "renewable_supply",
+        "weight": 0.5
+      },
+      {
+        "target": "Duke Energy Corporation",
+        "type": "regional_linkage",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "ISO New England Inc.",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 42.2043,
+      "lng": -72.6162
+    },
+    "description": "New England grid and market operator whose adequacy is closely tied to gas and imports.",
+    "top_dependencies": [
+      {
+        "target": "Hydro-Québec",
+        "type": "imports",
+        "weight": 0.74
+      },
+      {
+        "target": "NextEra Energy, Inc.",
+        "type": "generation_supply",
+        "weight": 0.44
+      },
+      {
+        "target": "Brookfield Renewable Partners L.P.",
+        "type": "imports_and_supply",
+        "weight": 0.4
+      }
+    ]
+  },
+  {
+    "name": "New York Independent System Operator, Inc. (NYISO)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 42.635,
+      "lng": -73.7429
+    },
+    "description": "New York’s wholesale electricity market and bulk-system operator with major import dependence.",
+    "top_dependencies": [
+      {
+        "target": "Hydro-Québec",
+        "type": "imports",
+        "weight": 0.62
+      },
+      {
+        "target": "Exelon Corporation",
+        "type": "market_linkage",
+        "weight": 0.42
+      },
+      {
+        "target": "NextEra Energy, Inc.",
+        "type": "renewable_supply",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "National Grid Electricity Transmission plc",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 52.2823,
+      "lng": -1.5849
+    },
+    "description": "Owner of the high-voltage transmission network in England and Wales, central to British power flows.",
+    "top_dependencies": [
+      {
+        "target": "Ørsted A/S",
+        "type": "offshore_wind_supply",
+        "weight": 0.58
+      },
+      {
+        "target": "BP p.l.c.",
+        "type": "market_linkage",
+        "weight": 0.46
+      },
+      {
+        "target": "National Energy System Operator",
+        "type": "system_operation",
+        "weight": 0.92
+      }
+    ]
+  },
+  {
+    "name": "National Energy System Operator",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.4105,
+      "lng": -0.8339
+    },
+    "description": "Great Britain’s system operator coordinating balancing, dispatch and transmission planning.",
+    "top_dependencies": [
+      {
+        "target": "National Grid Electricity Transmission plc",
+        "type": "transmission_network",
+        "weight": 0.95
+      },
+      {
+        "target": "Ørsted A/S",
+        "type": "offshore_wind_supply",
+        "weight": 0.54
+      },
+      {
+        "target": "SSE plc",
+        "type": "generation_supply",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Réseau de Transport d'Électricité (RTE)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "France",
+    "location": {
+      "lat": 48.8566,
+      "lng": 2.3522
+    },
+    "description": "France’s transmission system operator and the core interface for the country’s nuclear-heavy power system.",
+    "top_dependencies": [
+      {
+        "target": "Électricité de France (EDF)",
+        "type": "generation_supply",
+        "weight": 0.86
+      },
+      {
+        "target": "ENGIE SA",
+        "type": "generation_supply",
+        "weight": 0.5
+      },
+      {
+        "target": "RWE AG",
+        "type": "cross_border_trade",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "TenneT Holding B.V.",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Netherlands",
+    "location": {
+      "lat": 51.9851,
+      "lng": 5.8987
+    },
+    "description": "Dutch-German TSO central to North Sea offshore buildout and continental interconnection.",
+    "top_dependencies": [
+      {
+        "target": "RWE AG",
+        "type": "generation_supply",
+        "weight": 0.62
+      },
+      {
+        "target": "Ørsted A/S",
+        "type": "offshore_wind_supply",
+        "weight": 0.56
+      },
+      {
+        "target": "Equinor ASA",
+        "type": "offshore_linkage",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "name": "Terna S.p.A.",
+    "ticker": "TRN",
+    "sector": "ENERGY",
+    "country": "Italy",
+    "location": {
+      "lat": 41.9028,
+      "lng": 12.4964
+    },
+    "description": "Italy’s transmission system operator and a key balancing point for Mediterranean power and gas-linked generation.",
+    "top_dependencies": [
+      {
+        "target": "Enel S.p.A.",
+        "type": "generation_supply",
+        "weight": 0.82
+      },
+      {
+        "target": "Eni S.p.A.",
+        "type": "fuel_supply_linkage",
+        "weight": 0.46
+      },
+      {
+        "target": "Trans Adriatic Pipeline AG",
+        "type": "gas_to_power_linkage",
+        "weight": 0.4
+      }
+    ]
+  },
+  {
+    "name": "Elia Group SA/NV",
+    "ticker": "ELI",
+    "sector": "ENERGY",
+    "country": "Belgium",
+    "location": {
+      "lat": 50.8503,
+      "lng": 4.3517
+    },
+    "description": "Belgian TSO group with growing cross-border and offshore network centrality in Northwest Europe.",
+    "top_dependencies": [
+      {
+        "target": "RWE AG",
+        "type": "generation_supply",
+        "weight": 0.54
+      },
+      {
+        "target": "ENGIE SA",
+        "type": "generation_supply",
+        "weight": 0.48
+      },
+      {
+        "target": "TenneT Holding B.V.",
+        "type": "cross_border_interconnection",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Rede Eléctrica de España, S.A.U. (Redeia)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Spain",
+    "location": {
+      "lat": 40.4168,
+      "lng": -3.7038
+    },
+    "description": "Spanish transmission operator controlling the backbone grid and interconnection strategy.",
+    "top_dependencies": [
+      {
+        "target": "Iberdrola, S.A.",
+        "type": "generation_supply",
+        "weight": 0.78
+      },
+      {
+        "target": "Repsol, S.A.",
+        "type": "power_market_linkage",
+        "weight": 0.44
+      },
+      {
+        "target": "EDP Renováveis, S.A.",
+        "type": "renewable_integration",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Statnett SF",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Norway",
+    "location": {
+      "lat": 59.9139,
+      "lng": 10.7522
+    },
+    "description": "Norway’s TSO, pivotal for hydro balancing and Nordic interconnection.",
+    "top_dependencies": [
+      {
+        "target": "Equinor ASA",
+        "type": "market_linkage",
+        "weight": 0.54
+      },
+      {
+        "target": "Hydro-Québec",
+        "type": "hydro_system_benchmark",
+        "weight": 0.36
+      },
+      {
+        "target": "Svenska kraftnät",
+        "type": "interconnection",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Svenska kraftnät",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Sweden",
+    "location": {
+      "lat": 59.3612,
+      "lng": 17.971
+    },
+    "description": "Sweden’s transmission system operator and a major node in Nordic power balancing.",
+    "top_dependencies": [
+      {
+        "target": "Statnett SF",
+        "type": "interconnection",
+        "weight": 0.6
+      },
+      {
+        "target": "Fingrid Oyj",
+        "type": "interconnection",
+        "weight": 0.58
+      },
+      {
+        "target": "Ørsted A/S",
+        "type": "offshore_linkage",
+        "weight": 0.4
+      }
+    ]
+  },
+  {
+    "name": "Fingrid Oyj",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Finland",
+    "location": {
+      "lat": 60.1699,
+      "lng": 24.9384
+    },
+    "description": "Finnish TSO that anchors system adequacy at the eastern edge of the Nordic market.",
+    "top_dependencies": [
+      {
+        "target": "Svenska kraftnät",
+        "type": "interconnection",
+        "weight": 0.58
+      },
+      {
+        "target": "Statnett SF",
+        "type": "interconnection",
+        "weight": 0.54
+      },
+      {
+        "target": "Hydro-Québec",
+        "type": "hydro_benchmark",
+        "weight": 0.28
+      }
+    ]
+  },
+  {
+    "name": "Energinet",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Denmark",
+    "location": {
+      "lat": 55.5659,
+      "lng": 9.7526
+    },
+    "description": "Danish transmission and gas system operator central to Baltic Sea and North Sea energy integration.",
+    "top_dependencies": [
+      {
+        "target": "Ørsted A/S",
+        "type": "offshore_wind_supply",
+        "weight": 0.74
+      },
+      {
+        "target": "TenneT Holding B.V.",
+        "type": "interconnection",
+        "weight": 0.56
+      },
+      {
+        "target": "Elia Group SA/NV",
+        "type": "regional_market_linkage",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "NextEra Energy, Inc.",
+    "ticker": "NEE",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 26.8798,
+      "lng": -80.0559
+    },
+    "description": "North America’s largest electric power and energy infrastructure company with major renewables exposure.",
+    "top_dependencies": [
+      {
+        "target": "Electric Reliability Council of Texas (ERCOT)",
+        "type": "market_access",
+        "weight": 0.54
+      },
+      {
+        "target": "California Independent System Operator (CAISO)",
+        "type": "market_access",
+        "weight": 0.5
+      },
+      {
+        "target": "PJM Interconnection, L.L.C.",
+        "type": "market_access",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "Iberdrola, S.A.",
+    "ticker": "IBE",
+    "sector": "ENERGY",
+    "country": "Spain",
+    "location": {
+      "lat": 43.263,
+      "lng": -2.935
+    },
+    "description": "Global utility and renewable leader with major grid, offshore wind and retail positions.",
+    "top_dependencies": [
+      {
+        "target": "Rede Eléctrica de España, S.A.U. (Redeia)",
+        "type": "grid_access",
+        "weight": 0.72
+      },
+      {
+        "target": "National Grid Electricity Transmission plc",
+        "type": "uk_grid_access",
+        "weight": 0.58
+      },
+      {
+        "target": "EDP Renováveis, S.A.",
+        "type": "peer_and_development_linkage",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "Enel S.p.A.",
+    "ticker": "ENEL",
+    "sector": "ENERGY",
+    "country": "Italy",
+    "location": {
+      "lat": 41.9028,
+      "lng": 12.4964
+    },
+    "description": "Major multinational utility and one of the world’s largest private renewable operators.",
+    "top_dependencies": [
+      {
+        "target": "Terna S.p.A.",
+        "type": "grid_access",
+        "weight": 0.82
+      },
+      {
+        "target": "Rede Eléctrica de España, S.A.U. (Redeia)",
+        "type": "iberian_grid_linkage",
+        "weight": 0.42
+      },
+      {
+        "target": "National Grid Electricity Transmission plc",
+        "type": "uk_market_linkage",
+        "weight": 0.36
+      }
+    ]
+  },
+  {
+    "name": "Électricité de France (EDF)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "France",
+    "location": {
+      "lat": 48.8566,
+      "lng": 2.3522
+    },
+    "description": "State-owned French power incumbent whose nuclear fleet remains systemically important in Europe.",
+    "top_dependencies": [
+      {
+        "target": "Réseau de Transport d'Électricité (RTE)",
+        "type": "grid_access",
+        "weight": 0.92
+      },
+      {
+        "target": "ENGIE SA",
+        "type": "market_linkage",
+        "weight": 0.42
+      },
+      {
+        "target": "International Energy Agency (IEA)",
+        "type": "policy_and_scenario_linkage",
+        "weight": 0.32
+      }
+    ]
+  },
+  {
+    "name": "Duke Energy Corporation",
+    "ticker": "DUK",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 35.2271,
+      "lng": -80.8431
+    },
+    "description": "Large regulated U.S. utility with strong sensitivity to gas supply, demand growth and regional market rules.",
+    "top_dependencies": [
+      {
+        "target": "PJM Interconnection, L.L.C.",
+        "type": "market_linkage",
+        "weight": 0.54
+      },
+      {
+        "target": "Henry Hub",
+        "type": "fuel_pricing",
+        "weight": 0.6
+      },
+      {
+        "target": "Midcontinent Independent System Operator, Inc. (MISO)",
+        "type": "regional_linkage",
+        "weight": 0.4
+      }
+    ]
+  },
+  {
+    "name": "The Southern Company",
+    "ticker": "SO",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 33.749,
+      "lng": -84.388
+    },
+    "description": "Major Southeastern U.S. utility with broad load growth and gas-linked generation exposure.",
+    "top_dependencies": [
+      {
+        "target": "Henry Hub",
+        "type": "fuel_pricing",
+        "weight": 0.64
+      },
+      {
+        "target": "PJM Interconnection, L.L.C.",
+        "type": "regional_market_signal",
+        "weight": 0.36
+      },
+      {
+        "target": "Colonial Pipeline Company",
+        "type": "fuel_logistics_linkage",
+        "weight": 0.34
+      }
+    ]
+  },
+  {
+    "name": "Exelon Corporation",
+    "ticker": "EXC",
+    "sector": "ENERGY",
+    "country": "United States",
+    "location": {
+      "lat": 41.8781,
+      "lng": -87.6298
+    },
+    "description": "Large U.S. utility and generation-linked network player with strong Northeastern and Mid-Atlantic exposure.",
+    "top_dependencies": [
+      {
+        "target": "PJM Interconnection, L.L.C.",
+        "type": "market_access",
+        "weight": 0.74
+      },
+      {
+        "target": "New York Independent System Operator, Inc. (NYISO)",
+        "type": "market_linkage",
+        "weight": 0.42
+      },
+      {
+        "target": "Midcontinent Independent System Operator, Inc. (MISO)",
+        "type": "market_linkage",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "ENGIE SA",
+    "ticker": "ENGI",
+    "sector": "ENERGY",
+    "country": "France",
+    "location": {
+      "lat": 48.8566,
+      "lng": 2.3522
+    },
+    "description": "Global power, gas and energy services group with meaningful European gas and renewables exposure.",
+    "top_dependencies": [
+      {
+        "target": "Réseau de Transport d'Électricité (RTE)",
+        "type": "grid_access",
+        "weight": 0.68
+      },
+      {
+        "target": "National Grid Electricity Transmission plc",
+        "type": "uk_market_linkage",
+        "weight": 0.46
+      },
+      {
+        "target": "Trans Adriatic Pipeline AG",
+        "type": "gas_supply_route",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "RWE AG",
+    "ticker": "RWE",
+    "sector": "ENERGY",
+    "country": "Germany",
+    "location": {
+      "lat": 51.4556,
+      "lng": 7.0116
+    },
+    "description": "Large German utility and renewables developer central to Northwest European power markets.",
+    "top_dependencies": [
+      {
+        "target": "TenneT Holding B.V.",
+        "type": "grid_access",
+        "weight": 0.66
+      },
+      {
+        "target": "Elia Group SA/NV",
+        "type": "cross_border_access",
+        "weight": 0.52
+      },
+      {
+        "target": "Trans Adriatic Pipeline AG",
+        "type": "gas_market_linkage",
+        "weight": 0.38
+      }
+    ]
+  },
+  {
+    "name": "Ørsted A/S",
+    "ticker": "ORSTED",
+    "sector": "ENERGY",
+    "country": "Denmark",
+    "location": {
+      "lat": 55.6761,
+      "lng": 12.5683
+    },
+    "description": "Global leader in offshore wind development, construction and operation.",
+    "top_dependencies": [
+      {
+        "target": "Energinet",
+        "type": "grid_connection",
+        "weight": 0.82
+      },
+      {
+        "target": "TenneT Holding B.V.",
+        "type": "offshore_grid_connection",
+        "weight": 0.58
+      },
+      {
+        "target": "National Grid Electricity Transmission plc",
+        "type": "uk_offshore_grid_connection",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Brookfield Renewable Partners L.P.",
+    "ticker": "BEP",
+    "sector": "ENERGY",
+    "country": "Canada",
+    "location": {
+      "lat": 43.6532,
+      "lng": -79.3832
+    },
+    "description": "Global renewable and storage owner with diversified hydro, wind, solar and distributed assets.",
+    "top_dependencies": [
+      {
+        "target": "California Independent System Operator (CAISO)",
+        "type": "market_access",
+        "weight": 0.44
+      },
+      {
+        "target": "New York Independent System Operator, Inc. (NYISO)",
+        "type": "market_access",
+        "weight": 0.46
+      },
+      {
+        "target": "Hydro-Québec",
+        "type": "hydro_system_linkage",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Adani Green Energy Limited",
+    "ticker": "ADANIGREEN",
+    "sector": "ENERGY",
+    "country": "India",
+    "location": {
+      "lat": 23.0225,
+      "lng": 72.5714
+    },
+    "description": "India’s large-scale renewable developer with strong dependence on grid buildout and offtake policy.",
+    "top_dependencies": [
+      {
+        "target": "Power Grid Corporation of India Limited",
+        "type": "grid_integration",
+        "weight": 0.78
+      },
+      {
+        "target": "NTPC Limited",
+        "type": "market_linkage",
+        "weight": 0.4
+      },
+      {
+        "target": "ACWA Power Company",
+        "type": "peer_project_linkage",
+        "weight": 0.32
+      }
+    ]
+  },
+  {
+    "name": "ACWA Power Company",
+    "ticker": "2082",
+    "sector": "ENERGY",
+    "country": "Saudi Arabia",
+    "location": {
+      "lat": 24.7136,
+      "lng": 46.6753
+    },
+    "description": "Large Middle East-based power and desalination developer with growing renewables and hydrogen ambitions.",
+    "top_dependencies": [
+      {
+        "target": "Saudi Arabian Oil Company (Saudi Aramco)",
+        "type": "domestic_energy_ecosystem",
+        "weight": 0.38
+      },
+      {
+        "target": "Power Grid Corporation of India Limited",
+        "type": "market_linkage",
+        "weight": 0.34
+      },
+      {
+        "target": "Masdar (Abu Dhabi Future Energy Company)",
+        "type": "regional_peer_linkage",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "NTPC Limited",
+    "ticker": "NTPC",
+    "sector": "ENERGY",
+    "country": "India",
+    "location": {
+      "lat": 28.6139,
+      "lng": 77.209
+    },
+    "description": "India’s largest power utility by generation, central to system balancing and coal-to-renewables transition.",
+    "top_dependencies": [
+      {
+        "target": "Power Grid Corporation of India Limited",
+        "type": "grid_access",
+        "weight": 0.86
+      },
+      {
+        "target": "Adani Green Energy Limited",
+        "type": "renewable_market_linkage",
+        "weight": 0.42
+      },
+      {
+        "target": "ACWA Power Company",
+        "type": "peer_project_linkage",
+        "weight": 0.28
+      }
+    ]
+  },
+  {
+    "name": "JERA Co., Inc.",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6762,
+      "lng": 139.6503
+    },
+    "description": "Japan’s dominant thermal power and LNG procurement company with major Pacific basin influence.",
+    "top_dependencies": [
+      {
+        "target": "QatarEnergy LNG",
+        "type": "lng_supply",
+        "weight": 0.82
+      },
+      {
+        "target": "Sabine Pass LNG",
+        "type": "lng_supply",
+        "weight": 0.68
+      },
+      {
+        "target": "Freeport LNG",
+        "type": "lng_supply",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "Masdar (Abu Dhabi Future Energy Company)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 24.4273,
+      "lng": 54.6236
+    },
+    "description": "State-backed clean energy developer expanding across solar, wind, storage and hydrogen projects.",
+    "top_dependencies": [
+      {
+        "target": "Abu Dhabi National Oil Company (ADNOC)",
+        "type": "state_energy_ecosystem",
+        "weight": 0.5
+      },
+      {
+        "target": "ACWA Power Company",
+        "type": "regional_peer_linkage",
+        "weight": 0.46
+      },
+      {
+        "target": "TenneT Holding B.V.",
+        "type": "european_grid_market_linkage",
+        "weight": 0.3
+      }
+    ]
+  },
+  {
+    "name": "SSE plc",
+    "ticker": "SSE",
+    "sector": "ENERGY",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 56.395,
+      "lng": -3.431
+    },
+    "description": "Major UK utility with material networks and renewables exposure, especially in offshore wind and transmission.",
+    "top_dependencies": [
+      {
+        "target": "National Energy System Operator",
+        "type": "system_operation",
+        "weight": 0.78
+      },
+      {
+        "target": "National Grid Electricity Transmission plc",
+        "type": "grid_access",
+        "weight": 0.72
+      },
+      {
+        "target": "Ørsted A/S",
+        "type": "offshore_market_linkage",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "EDP Renováveis, S.A.",
+    "ticker": "EDPR",
+    "sector": "ENERGY",
+    "country": "Spain",
+    "location": {
+      "lat": 40.4168,
+      "lng": -3.7038
+    },
+    "description": "Global wind and solar developer with heavy dependence on transmission access and policy stability.",
+    "top_dependencies": [
+      {
+        "target": "Rede Eléctrica de España, S.A.U. (Redeia)",
+        "type": "grid_access",
+        "weight": 0.64
+      },
+      {
+        "target": "Iberdrola, S.A.",
+        "type": "market_linkage",
+        "weight": 0.44
+      },
+      {
+        "target": "California Independent System Operator (CAISO)",
+        "type": "market_access",
+        "weight": 0.3
+      }
+    ]
+  },
+  {
+    "name": "International Energy Agency (IEA)",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "France",
+    "location": {
+      "lat": 48.8566,
+      "lng": 2.3522
+    },
+    "description": "Paris-based intergovernmental energy agency whose scenarios, demand balances and emergency coordination shape policy and market expectations.",
+    "top_dependencies": [
+      {
+        "target": "Organization of the Petroleum Exporting Countries (OPEC)",
+        "type": "market_counterpart",
+        "weight": 0.52
+      },
+      {
+        "target": "State Grid Corporation of China",
+        "type": "demand_data_weight",
+        "weight": 0.42
+      },
+      {
+        "target": "Saudi Arabian Oil Company (Saudi Aramco)",
+        "type": "supply_data_weight",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "China Three Gorges Corporation",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "Major state generator and hydro developer with influence across Chinese and overseas power systems.",
+    "top_dependencies": [
+      {
+        "target": "State Grid Corporation of China",
+        "type": "grid_offtake",
+        "weight": 0.78
+      },
+      {
+        "target": "China Southern Power Grid",
+        "type": "grid_offtake",
+        "weight": 0.52
+      },
+      {
+        "target": "State Power Investment Corporation Limited",
+        "type": "policy_and_project_linkage",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "State Power Investment Corporation Limited",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "Large Chinese state power group active across coal, nuclear, hydro, solar and wind generation.",
+    "top_dependencies": [
+      {
+        "target": "State Grid Corporation of China",
+        "type": "grid_offtake",
+        "weight": 0.72
+      },
+      {
+        "target": "China Southern Power Grid",
+        "type": "grid_offtake",
+        "weight": 0.56
+      },
+      {
+        "target": "Huaneng Power International, Inc.",
+        "type": "peer_dispatch_linkage",
+        "weight": 0.4
+      }
+    ]
+  },
+  {
+    "name": "Huaneng Power International, Inc.",
+    "ticker": "HNP",
+    "sector": "ENERGY",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "Large Chinese listed generator with national fleet exposure across thermal and renewable assets.",
+    "top_dependencies": [
+      {
+        "target": "State Grid Corporation of China",
+        "type": "grid_offtake",
+        "weight": 0.74
+      },
+      {
+        "target": "China Southern Power Grid",
+        "type": "grid_offtake",
+        "weight": 0.56
+      },
+      {
+        "target": "State Power Investment Corporation Limited",
+        "type": "peer_dispatch_linkage",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Korea Electric Power Corporation (KEPCO)",
+    "ticker": "KEP",
+    "sector": "ENERGY",
+    "country": "South Korea",
+    "location": {
+      "lat": 35.015,
+      "lng": 126.7108
+    },
+    "description": "South Korea’s electric utility backbone with substantial fuel-import and demand-management sensitivity.",
+    "top_dependencies": [
+      {
+        "target": "QatarEnergy LNG",
+        "type": "lng_supply",
+        "weight": 0.62
+      },
+      {
+        "target": "Saudi Arabian Oil Company (Saudi Aramco)",
+        "type": "oil_supply_linkage",
+        "weight": 0.46
+      },
+      {
+        "target": "JERA Co., Inc.",
+        "type": "regional_market_linkage",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Tokyo Electric Power Company Holdings, Incorporated (TEPCO)",
+    "ticker": "9501",
+    "sector": "ENERGY",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Japan’s largest utility holding company, deeply tied to LNG procurement, thermal balancing and nuclear risk.",
+    "top_dependencies": [
+      {
+        "target": "JERA Co., Inc.",
+        "type": "generation_and_procurement",
+        "weight": 0.86
+      },
+      {
+        "target": "QatarEnergy LNG",
+        "type": "lng_supply",
+        "weight": 0.52
+      },
+      {
+        "target": "Sabine Pass LNG",
+        "type": "lng_supply",
+        "weight": 0.4
+      }
+    ]
+  },
+  {
+    "name": "Hydro-Québec",
+    "ticker": null,
+    "sector": "ENERGY",
+    "country": "Canada",
+    "location": {
+      "lat": 45.5017,
+      "lng": -73.5673
+    },
+    "description": "State-owned hydroelectric giant and a major balancing and export resource for Northeast North America.",
+    "top_dependencies": [
+      {
+        "target": "ISO New England Inc.",
+        "type": "export_market",
+        "weight": 0.74
+      },
+      {
+        "target": "New York Independent System Operator, Inc. (NYISO)",
+        "type": "export_market",
+        "weight": 0.62
+      },
+      {
+        "target": "Brookfield Renewable Partners L.P.",
+        "type": "hydro_market_linkage",
+        "weight": 0.4
+      }
+    ]
+  }
+]

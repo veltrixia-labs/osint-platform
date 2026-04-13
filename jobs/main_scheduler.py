@@ -21,6 +21,7 @@ from jobs.cleanup_job import (
     enforce_metadata_limits, audit_metadata_sizes, update_system_metric, 
     run_retention_audit, run_trend_cleanup, run_visual_cleanup
 )
+from jobs.entity_lifecycle import run_entity_lifecycle  # [v10.21]
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -154,6 +155,9 @@ async def run_ops_monitoring():
     retention = int(os.getenv("CLEANUP_RETENTION_DAYS", "14"))
     
     await run_visual_cleanup(dry_run=dry_run, archive_only=archive_only, retention=retention)
+    
+    # [v10.21] Entity Lifecycle: recalculate scores and prune obsolete tactical nodes
+    await run_entity_lifecycle(db_pressure_critical=False)
 
 def register_jobs():
     logger.info("Registering job schedules (Async Native Mapping)...")
@@ -177,6 +181,9 @@ def register_jobs():
 
     # Operational Monitoring
     schedule.every().day.at("00:00").do(schedule_async, "ops_monitoring", run_ops_monitoring)
+
+    # [v10.21] Entity Lifecycle Management (Strategic Score + Pruning @ 03:00 daily)
+    schedule.every().day.at("03:00").do(schedule_async, "entity_lifecycle", run_entity_lifecycle)
 
     # Phase 4: Self-Learning Feedback Loop (Daily at 02:00)
     schedule.every().day.at("02:00").do(schedule_async, "learning_loop", run_learning_wrapper)

@@ -1,0 +1,2802 @@
+[
+  {
+    "name": "Binance",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 25.2048,
+      "lng": 55.2708
+    },
+    "description": "Largest global crypto exchange by spot and derivatives activity, with outsized influence on listings, liquidity, and BNB-linked infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "BNB Chain",
+        "type": "ecosystem",
+        "weight": 0.96
+      },
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.88
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "Coinbase Global, Inc.",
+    "ticker": "COIN",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.7903,
+      "lng": -122.4001
+    },
+    "description": "Public U.S. crypto platform central to institutional custody, market access, and the Base ecosystem.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "issuer_partner",
+        "weight": 0.95
+      },
+      {
+        "target": "Base",
+        "type": "ecosystem",
+        "weight": 0.9
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "OKX",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 25.2048,
+      "lng": 55.2708
+    },
+    "description": "Global exchange and Web3 platform with major derivatives, spot, and wallet reach.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.84
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.72
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "market_access",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Kraken (Payward, Inc.)",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "description": "Long-standing exchange with strong spot, derivatives, and institutional services.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "benchmark_asset",
+        "weight": 0.74
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.68
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.57
+      }
+    ]
+  },
+  {
+    "name": "Bybit Fintech Limited",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 25.2048,
+      "lng": 55.2708
+    },
+    "description": "Dubai-based exchange with a large offshore derivatives and retail trading footprint.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.88
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.67
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "market_access",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Bitget",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2868,
+      "lng": 103.85
+    },
+    "description": "High-volume global exchange with strong retail derivatives distribution.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.85
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "market_access",
+        "weight": 0.59
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Crypto.com",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2834,
+      "lng": 103.8519
+    },
+    "description": "Consumer-facing exchange and payments brand with significant global retail reach.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.71
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "payments_chain",
+        "weight": 0.6
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Dunamu Inc. (Upbit)",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "South Korea",
+    "location": {
+      "lat": 37.5665,
+      "lng": 126.978
+    },
+    "description": "South Korea’s dominant crypto exchange operator and a major won-denominated liquidity hub.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "benchmark_asset",
+        "weight": 0.62
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.58
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "retail_flow",
+        "weight": 0.51
+      }
+    ]
+  },
+  {
+    "name": "Gate Group (Gate.io)",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Cayman Islands",
+    "location": {
+      "lat": 19.2866,
+      "lng": -81.3674
+    },
+    "description": "Global exchange group with broad long-tail token listing and offshore liquidity footprint.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.86
+      },
+      {
+        "target": "TRON DAO",
+        "type": "stablecoin_rail",
+        "weight": 0.59
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "HTX",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Seychelles",
+    "location": {
+      "lat": -4.6191,
+      "lng": 55.4513
+    },
+    "description": "Large exchange brand with strong Asia-facing trading flows and close TRON ecosystem ties.",
+    "top_dependencies": [
+      {
+        "target": "TRON DAO",
+        "type": "ecosystem",
+        "weight": 0.76
+      },
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.71
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.47
+      }
+    ]
+  },
+  {
+    "name": "KuCoin",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Seychelles",
+    "location": {
+      "lat": -4.6191,
+      "lng": 55.4513
+    },
+    "description": "Global exchange with extensive altcoin coverage and a distributed retail user base.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.84
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.57
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "market_access",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Gemini Trust Company, LLC",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7414,
+      "lng": -73.9897
+    },
+    "description": "Regulated U.S. exchange and custodian with institutional and stablecoin relevance.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.59
+      },
+      {
+        "target": "Bitcoin Network",
+        "type": "benchmark_asset",
+        "weight": 0.55
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Deribit",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 25.2048,
+      "lng": 55.2708
+    },
+    "description": "Dominant crypto options venue and a key volatility-price-discovery node.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "benchmark_underlier",
+        "weight": 0.77
+      },
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "margin_liquidity",
+        "weight": 0.61
+      },
+      {
+        "target": "FalconX",
+        "type": "institutional_flow",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "Bitfinex",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.3193,
+      "lng": 114.1694
+    },
+    "description": "Exchange closely linked to Tether and historically important to offshore dollar liquidity.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "issuer_link",
+        "weight": 0.95
+      },
+      {
+        "target": "Bitcoin Network",
+        "type": "benchmark_asset",
+        "weight": 0.63
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_layer",
+        "weight": 0.43
+      }
+    ]
+  },
+  {
+    "name": "Robinhood Markets, Inc.",
+    "ticker": "HOOD",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.4847,
+      "lng": -122.1484
+    },
+    "description": "Large U.S. retail brokerage that channels mainstream crypto order flow.",
+    "top_dependencies": [
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "market_access",
+        "weight": 0.52
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.41
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "asset_support",
+        "weight": 0.36
+      }
+    ]
+  },
+  {
+    "name": "CME Group Inc.",
+    "ticker": "CME",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 41.8781,
+      "lng": -87.6298
+    },
+    "description": "Core venue for regulated U.S. crypto futures and institutional hedging.",
+    "top_dependencies": [
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "reference_market",
+        "weight": 0.51
+      },
+      {
+        "target": "Bitcoin Network",
+        "type": "benchmark_asset",
+        "weight": 0.49
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "benchmark_asset",
+        "weight": 0.45
+      }
+    ]
+  },
+  {
+    "name": "Hyperliquid Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Fast-growing onchain derivatives venue and native-L1 liquidity center.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "collateral",
+        "weight": 0.63
+      },
+      {
+        "target": "Arbitrum Foundation",
+        "type": "bridged_liquidity",
+        "weight": 0.44
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "settlement_anchor",
+        "weight": 0.41
+      }
+    ]
+  },
+  {
+    "name": "Uniswap Labs",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Leading DEX developer shaping onchain liquidity routing across Ethereum ecosystems.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.94
+      },
+      {
+        "target": "Arbitrum Foundation",
+        "type": "scaling",
+        "weight": 0.63
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_pairing",
+        "weight": 0.61
+      }
+    ]
+  },
+  {
+    "name": "dYdX Trading Inc.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Important decentralized derivatives venue with exchange-to-chain migration dynamics.",
+    "top_dependencies": [
+      {
+        "target": "Interchain Foundation",
+        "type": "appchain_stack",
+        "weight": 0.68
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "collateral",
+        "weight": 0.54
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "liquidity_origin",
+        "weight": 0.47
+      }
+    ]
+  },
+  {
+    "name": "FalconX",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.563,
+      "lng": -122.3255
+    },
+    "description": "Institutional crypto prime brokerage linking exchanges, market makers, and large clients.",
+    "top_dependencies": [
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "execution_venue",
+        "weight": 0.67
+      },
+      {
+        "target": "Binance",
+        "type": "execution_venue",
+        "weight": 0.62
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "collateral",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Wintermute Trading Ltd.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5074,
+      "lng": -0.1278
+    },
+    "description": "Major algorithmic trading firm and liquidity provider across CEX, DEX, and OTC markets.",
+    "top_dependencies": [
+      {
+        "target": "Binance",
+        "type": "venue_access",
+        "weight": 0.72
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "venue_access",
+        "weight": 0.61
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "onchain_liquidity",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Cumberland DRW LLC",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 41.8781,
+      "lng": -87.6298
+    },
+    "description": "Systemic OTC and liquidity provider connecting traditional capital and crypto venues.",
+    "top_dependencies": [
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "venue_access",
+        "weight": 0.59
+      },
+      {
+        "target": "CME Group Inc.",
+        "type": "hedging",
+        "weight": 0.58
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "collateral",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Galaxy Digital Holdings Ltd.",
+    "ticker": "GLXY",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Public digital-assets financial firm spanning trading, asset management, and financing.",
+    "top_dependencies": [
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "execution_venue",
+        "weight": 0.54
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.47
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "asset_support",
+        "weight": 0.43
+      }
+    ]
+  },
+  {
+    "name": "GSR Markets",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5074,
+      "lng": -0.1278
+    },
+    "description": "Global market maker and OTC intermediary active across tokens, exchanges, and venture flows.",
+    "top_dependencies": [
+      {
+        "target": "Binance",
+        "type": "venue_access",
+        "weight": 0.67
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "token_market_making",
+        "weight": 0.45
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "collateral",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Tether Operations, S.A. de C.V.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "El Salvador",
+    "location": {
+      "lat": 13.6929,
+      "lng": -89.2182
+    },
+    "description": "Issuer of USD₮, the world’s largest stablecoin and a core rail for offshore crypto liquidity.",
+    "top_dependencies": [
+      {
+        "target": "TRON DAO",
+        "type": "issuance_rail",
+        "weight": 0.99
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "issuance_rail",
+        "weight": 0.88
+      },
+      {
+        "target": "Bitfinex",
+        "type": "distribution",
+        "weight": 0.92
+      }
+    ]
+  },
+  {
+    "name": "Circle Internet Group, Inc.",
+    "ticker": "CRCL",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7115,
+      "lng": -74.0134
+    },
+    "description": "Issuer of USDC and a key bridge between regulated finance and public blockchains.",
+    "top_dependencies": [
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "distribution",
+        "weight": 0.95
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "issuance_rail",
+        "weight": 0.92
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "payments_rail",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "Paxos Trust Company, LLC",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.758,
+      "lng": -73.9855
+    },
+    "description": "Regulated U.S. trust company issuing and servicing institutional stablecoin infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "PayPal Holdings, Inc.",
+        "type": "issuer_partner",
+        "weight": 0.93
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "issuance_rail",
+        "weight": 0.74
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "issuer_expansion",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "Ripple Labs Inc.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.7906,
+      "lng": -122.3999
+    },
+    "description": "Digital asset infrastructure firm driving RLUSD, XRPL-based settlement, and enterprise tokenization.",
+    "top_dependencies": [
+      {
+        "target": "XRPL Foundation",
+        "type": "ecosystem",
+        "weight": 0.88
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "multichain_issuance",
+        "weight": 0.72
+      },
+      {
+        "target": "Wormhole Foundation",
+        "type": "interoperability",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "First Digital Trust Limited",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.2783,
+      "lng": 114.1747
+    },
+    "description": "Hong Kong trust and stablecoin operator behind FDUSD and Asia-linked onchain dollar rails.",
+    "top_dependencies": [
+      {
+        "target": "Binance",
+        "type": "distribution",
+        "weight": 0.84
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "issuance_rail",
+        "weight": 0.65
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "issuer_expansion",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "Ethena GmbH",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Germany",
+    "location": {
+      "lat": 50.1109,
+      "lng": 8.6821
+    },
+    "description": "Issuer of USDe and synthetic-dollar infrastructure deeply tied to centralized derivatives markets.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.92
+      },
+      {
+        "target": "Binance",
+        "type": "hedging_venue",
+        "weight": 0.81
+      },
+      {
+        "target": "Deribit",
+        "type": "hedging_venue",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "Sky Ecosystem",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Ethereum-native decentralized stablecoin system centered on USDS and onchain credit.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.96
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "collateral_mix",
+        "weight": 0.73
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Frax Finance",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 34.0522,
+      "lng": -118.2437
+    },
+    "description": "Stablecoin and onchain monetary system spanning Frax-linked assets, liquidity, and DeFi infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.94
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.64
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "liquidity_pairing",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "PayPal Holdings, Inc.",
+    "ticker": "PYPL",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.3382,
+      "lng": -121.8863
+    },
+    "description": "Global payments platform distributing PYUSD into mainstream consumer and merchant channels.",
+    "top_dependencies": [
+      {
+        "target": "Paxos Trust Company, LLC",
+        "type": "issuer",
+        "weight": 0.93
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "token_rail",
+        "weight": 0.66
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "payments_rail",
+        "weight": 0.61
+      }
+    ]
+  },
+  {
+    "name": "Ondo Finance",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Leading RWA platform bringing tokenized Treasuries, funds, and securities onchain.",
+    "top_dependencies": [
+      {
+        "target": "Securitize, Inc.",
+        "type": "tokenization_partner",
+        "weight": 0.82
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.78
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "distribution_expansion",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Securitize, Inc.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 25.7617,
+      "lng": -80.1918
+    },
+    "description": "Tokenization platform and transfer-agent stack used for institution-grade digital securities.",
+    "top_dependencies": [
+      {
+        "target": "BlackRock USD Institutional Digital Liquidity Fund (BUIDL)",
+        "type": "flagship_product",
+        "weight": 0.93
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "token_rail",
+        "weight": 0.76
+      },
+      {
+        "target": "Avalanche Foundation",
+        "type": "tokenization_network",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "BlackRock USD Institutional Digital Liquidity Fund (BUIDL)",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.758,
+      "lng": -73.9787
+    },
+    "description": "Systemically important tokenized money-market fund and collateral source for crypto-native finance.",
+    "top_dependencies": [
+      {
+        "target": "Securitize, Inc.",
+        "type": "transfer_agent",
+        "weight": 0.95
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "settlement_asset",
+        "weight": 0.71
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "Anchorage Digital Bank N.A.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "description": "Federally chartered U.S. crypto bank central to institutional custody and staking.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "custody_demand",
+        "weight": 0.68
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "staking_demand",
+        "weight": 0.57
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "market_connectivity",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "BitGo Holdings, Inc.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.4419,
+      "lng": -122.143
+    },
+    "description": "Major crypto custodian and settlement infrastructure provider for exchanges, funds, and treasuries.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "asset_support",
+        "weight": 0.74
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "asset_support",
+        "weight": 0.72
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "custody_demand",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "Fireblocks Inc.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Widely used digital-asset operations layer for custody workflows, transfers, and treasury orchestration.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "settlement_asset",
+        "weight": 0.71
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "exchange_connectivity",
+        "weight": 0.61
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "network_support",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Chainalysis Inc.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Leading blockchain intelligence platform used by exchanges, banks, and governments.",
+    "top_dependencies": [
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "client_base",
+        "weight": 0.68
+      },
+      {
+        "target": "Binance",
+        "type": "client_base",
+        "weight": 0.65
+      },
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "risk_monitoring",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "TRM Labs, Inc.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "description": "Blockchain intelligence and compliance platform embedded in risk monitoring across crypto finance.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "risk_monitoring",
+        "weight": 0.66
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "risk_monitoring",
+        "weight": 0.62
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "client_base",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Copper Technologies Ltd.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5074,
+      "lng": -0.1278
+    },
+    "description": "Institutional custody and collateral-management provider important to off-exchange trading.",
+    "top_dependencies": [
+      {
+        "target": "Binance",
+        "type": "venue_connectivity",
+        "weight": 0.73
+      },
+      {
+        "target": "Deribit",
+        "type": "collateral_routing",
+        "weight": 0.66
+      },
+      {
+        "target": "Bybit Fintech Limited",
+        "type": "venue_connectivity",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "Hex Trust",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.2783,
+      "lng": 114.1747
+    },
+    "description": "Asia-focused licensed custodian supporting institutions, protocols, and token issuers.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "custody_demand",
+        "weight": 0.62
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "staking_demand",
+        "weight": 0.58
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_support",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Zodia Custody",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5074,
+      "lng": -0.1278
+    },
+    "description": "Bank-backed institutional custodian connecting regulated finance and digital assets.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_support",
+        "weight": 0.63
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "asset_support",
+        "weight": 0.57
+      },
+      {
+        "target": "Ripple Labs Inc.",
+        "type": "institutional_tokenization",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Global Dollar Network",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2868,
+      "lng": 103.85
+    },
+    "description": "Consortium distribution layer around USDG, expanding regulated dollar liquidity across exchanges and fintechs.",
+    "top_dependencies": [
+      {
+        "target": "Paxos Trust Company, LLC",
+        "type": "issuer",
+        "weight": 0.84
+      },
+      {
+        "target": "Kraken (Payward, Inc.)",
+        "type": "distribution_partner",
+        "weight": 0.62
+      },
+      {
+        "target": "Robinhood Markets, Inc.",
+        "type": "distribution_partner",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Bitcoin Network",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 30.2672,
+      "lng": -97.7431
+    },
+    "description": "The base monetary layer of crypto and the anchor asset for mining, treasury, and ETF-linked flows.",
+    "top_dependencies": [
+      {
+        "target": "Foundry USA Pool",
+        "type": "mining_pool",
+        "weight": 0.92
+      },
+      {
+        "target": "AntPool",
+        "type": "mining_pool",
+        "weight": 0.87
+      },
+      {
+        "target": "F2Pool",
+        "type": "mining_pool",
+        "weight": 0.82
+      }
+    ]
+  },
+  {
+    "name": "Ethereum Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.1662,
+      "lng": 8.5155
+    },
+    "description": "Non-profit steward of Ethereum, the dominant settlement layer for DeFi, stablecoins, and tokenization.",
+    "top_dependencies": [
+      {
+        "target": "Lido Ecosystem Foundation",
+        "type": "staking",
+        "weight": 0.85
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "market_access",
+        "weight": 0.76
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Solana Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.1662,
+      "lng": 8.5155
+    },
+    "description": "Core stewardship body for Solana, a high-throughput chain central to retail trading and payments.",
+    "top_dependencies": [
+      {
+        "target": "Jito Foundation",
+        "type": "staking_and_mev",
+        "weight": 0.83
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.71
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "market_access",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "BNB Chain",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 25.2048,
+      "lng": 55.2708
+    },
+    "description": "High-throughput chain closely tied to Binance distribution and mass-market DeFi activity.",
+    "top_dependencies": [
+      {
+        "target": "Binance",
+        "type": "distribution",
+        "weight": 0.96
+      },
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.67
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "TRON DAO",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2868,
+      "lng": 103.85
+    },
+    "description": "Blockchain ecosystem central to cross-border stablecoin payments, especially USD₮ flows.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_dominance",
+        "weight": 0.99
+      },
+      {
+        "target": "HTX",
+        "type": "distribution",
+        "weight": 0.64
+      },
+      {
+        "target": "Binance",
+        "type": "exchange_access",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Avalanche Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Ecosystem steward for Avalanche, used in subnet, RWA, and institutional experiments.",
+    "top_dependencies": [
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.66
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.62
+      },
+      {
+        "target": "Securitize, Inc.",
+        "type": "tokenization",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Polygon Labs",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Major Ethereum-scaling developer with strong enterprise, payments, and RWA positioning.",
+    "top_dependencies": [
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.66
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.64
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "distribution",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "The Open Network Foundation (TON Foundation)",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.1662,
+      "lng": 8.5155
+    },
+    "description": "Steward of TON, a fast-growing Telegram-linked network with consumer distribution advantages.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.74
+      },
+      {
+        "target": "Binance",
+        "type": "exchange_access",
+        "weight": 0.53
+      },
+      {
+        "target": "LayerZero Labs",
+        "type": "interoperability",
+        "weight": 0.41
+      }
+    ]
+  },
+  {
+    "name": "Sui Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.4419,
+      "lng": -122.143
+    },
+    "description": "Backer of Sui, a high-performance L1 aiming at consumer apps, gaming, and finance.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.61
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "exchange_access",
+        "weight": 0.52
+      },
+      {
+        "target": "Wormhole Foundation",
+        "type": "interoperability",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "Aptos Labs",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.4419,
+      "lng": -122.143
+    },
+    "description": "Builder of Aptos, a Move-based chain focused on low-latency execution and institutional use cases.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.59
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "exchange_access",
+        "weight": 0.49
+      },
+      {
+        "target": "LayerZero Labs",
+        "type": "interoperability",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "Stellar Development Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "description": "Non-profit behind Stellar, a payments-focused network with stablecoin and remittance relevance.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.67
+      },
+      {
+        "target": "Ripple Labs Inc.",
+        "type": "payments_comparison",
+        "weight": 0.48
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "exchange_access",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "Cardano Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.1662,
+      "lng": 8.5155
+    },
+    "description": "Governance and ecosystem body for Cardano, a major global proof-of-stake network.",
+    "top_dependencies": [
+      {
+        "target": "Binance",
+        "type": "exchange_access",
+        "weight": 0.55
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "exchange_access",
+        "weight": 0.49
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle_expansion",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "NEAR Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.1662,
+      "lng": 8.5155
+    },
+    "description": "Steward of NEAR, a scalable proof-of-stake network focused on usability and chain abstraction.",
+    "top_dependencies": [
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "exchange_access",
+        "weight": 0.45
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle_expansion",
+        "weight": 0.43
+      },
+      {
+        "target": "Binance",
+        "type": "exchange_access",
+        "weight": 0.41
+      }
+    ]
+  },
+  {
+    "name": "Hedera",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 32.7767,
+      "lng": -96.797
+    },
+    "description": "Enterprise-oriented distributed-ledger network with governing-council architecture and tokenization ambitions.",
+    "top_dependencies": [
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle_and_data",
+        "weight": 0.47
+      },
+      {
+        "target": "Securitize, Inc.",
+        "type": "tokenization",
+        "weight": 0.42
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_support",
+        "weight": 0.38
+      }
+    ]
+  },
+  {
+    "name": "Algorand Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2868,
+      "lng": 103.85
+    },
+    "description": "Ecosystem body for Algorand, a high-throughput chain used in payments and tokenized assets.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_support",
+        "weight": 0.54
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "exchange_access",
+        "weight": 0.43
+      },
+      {
+        "target": "Securitize, Inc.",
+        "type": "tokenization_interest",
+        "weight": 0.41
+      }
+    ]
+  },
+  {
+    "name": "Sei Development Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "U.S.-based foundation backing Sei, a performance-optimized L1 for trading and high-frequency apps.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.58
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "exchange_access",
+        "weight": 0.49
+      },
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Interchain Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.1662,
+      "lng": 8.5155
+    },
+    "description": "Steward of Cosmos/Interchain core software, interoperability, and app-chain security primitives.",
+    "top_dependencies": [
+      {
+        "target": "dYdX Trading Inc.",
+        "type": "appchain_usage",
+        "weight": 0.62
+      },
+      {
+        "target": "Binance",
+        "type": "exchange_access",
+        "weight": 0.49
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.38
+      }
+    ]
+  },
+  {
+    "name": "Monad Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Backer of Monad, a high-performance EVM chain positioned for new trading and consumer apps.",
+    "top_dependencies": [
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "distribution",
+        "weight": 0.42
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.39
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_support",
+        "weight": 0.36
+      }
+    ]
+  },
+  {
+    "name": "Berachain Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Cayman Islands",
+    "location": {
+      "lat": 19.2866,
+      "lng": -81.3674
+    },
+    "description": "Foundation for Berachain, an EVM L1 aligning liquidity and validator incentives through PoL.",
+    "top_dependencies": [
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.46
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "exchange_access",
+        "weight": 0.39
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_support",
+        "weight": 0.35
+      }
+    ]
+  },
+  {
+    "name": "XRPL Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "France",
+    "location": {
+      "lat": 48.8566,
+      "lng": 2.3522
+    },
+    "description": "Community foundation supporting the XRP Ledger’s validator coordination, tooling, and ecosystem growth.",
+    "top_dependencies": [
+      {
+        "target": "Ripple Labs Inc.",
+        "type": "ecosystem_sponsor",
+        "weight": 0.86
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_interop",
+        "weight": 0.38
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "exchange_access",
+        "weight": 0.31
+      }
+    ]
+  },
+  {
+    "name": "Arbitrum Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Cayman Islands",
+    "location": {
+      "lat": 19.2866,
+      "lng": -81.3674
+    },
+    "description": "Governance and ecosystem node for one of the most important Ethereum rollup clusters in DeFi.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.96
+      },
+      {
+        "target": "Uniswap Labs",
+        "type": "liquidity",
+        "weight": 0.68
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "Optimism Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Cayman Islands",
+    "location": {
+      "lat": 19.2866,
+      "lng": -81.3674
+    },
+    "description": "Steward of the OP Stack ecosystem and a major scaling layer for Ethereum-linked apps.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.95
+      },
+      {
+        "target": "Base",
+        "type": "stack_adoption",
+        "weight": 0.61
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Base",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.7903,
+      "lng": -122.4001
+    },
+    "description": "Coinbase-incubated Ethereum layer-2 serving as a major retail and developer distribution channel.",
+    "top_dependencies": [
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "distribution",
+        "weight": 0.98
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.93
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.79
+      }
+    ]
+  },
+  {
+    "name": "StarkWare Industries Ltd.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Israel",
+    "location": {
+      "lat": 32.0853,
+      "lng": 34.7818
+    },
+    "description": "Zero-knowledge infrastructure company behind Starknet and core scaling technology.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.91
+      },
+      {
+        "target": "dYdX Trading Inc.",
+        "type": "historical_usage",
+        "weight": 0.58
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_support",
+        "weight": 0.38
+      }
+    ]
+  },
+  {
+    "name": "Matter Labs",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Developer of zkSync and a key builder of zero-knowledge Ethereum scaling infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.92
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.47
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_support",
+        "weight": 0.41
+      }
+    ]
+  },
+  {
+    "name": "Consensys Software Inc.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Ethereum infrastructure heavyweight spanning Linea, Infura, developer tooling, and enterprise integration.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.96
+      },
+      {
+        "target": "Base",
+        "type": "ecosystem_interop",
+        "weight": 0.44
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle_and_data",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Scroll",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.3193,
+      "lng": 114.1694
+    },
+    "description": "zkEVM rollup project focused on Ethereum equivalence and scalable onchain applications.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.93
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.39
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_support",
+        "weight": 0.36
+      }
+    ]
+  },
+  {
+    "name": "Mantle",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2868,
+      "lng": 103.85
+    },
+    "description": "Treasury-backed layer-2 ecosystem with growing DeFi, staking, and exchange-adjacent liquidity links.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.86
+      },
+      {
+        "target": "Bybit Fintech Limited",
+        "type": "exchange_distribution",
+        "weight": 0.62
+      },
+      {
+        "target": "Ethena GmbH",
+        "type": "defi_collateral",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Celestia Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.1662,
+      "lng": 8.5155
+    },
+    "description": "Core steward of modular data-availability infrastructure used by new rollups and app-chains.",
+    "top_dependencies": [
+      {
+        "target": "Eigen Labs",
+        "type": "shared_security_adjacent",
+        "weight": 0.41
+      },
+      {
+        "target": "Monad Foundation",
+        "type": "modular_interest",
+        "weight": 0.37
+      },
+      {
+        "target": "Berachain Foundation",
+        "type": "ecosystem_connectivity",
+        "weight": 0.33
+      }
+    ]
+  },
+  {
+    "name": "Wormhole Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Cayman Islands",
+    "location": {
+      "lat": 19.2866,
+      "lng": -81.3674
+    },
+    "description": "Cross-chain messaging and asset-transfer network linking major chains, stablecoins, and tokenized assets.",
+    "top_dependencies": [
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "asset_routing",
+        "weight": 0.69
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "core_route",
+        "weight": 0.63
+      },
+      {
+        "target": "Uniswap Labs",
+        "type": "multichain_connectivity",
+        "weight": 0.57
+      }
+    ]
+  },
+  {
+    "name": "LayerZero Labs",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Canada",
+    "location": {
+      "lat": 49.2827,
+      "lng": -123.1207
+    },
+    "description": "Omnichain messaging provider embedded in asset bridging and multichain application design.",
+    "top_dependencies": [
+      {
+        "target": "Tether Operations, S.A. de C.V.",
+        "type": "omnichain_assets",
+        "weight": 0.56
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "omnichain_assets",
+        "weight": 0.54
+      },
+      {
+        "target": "Binance",
+        "type": "ecosystem_connectivity",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Chainlink Labs",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 40.7128,
+      "lng": -74.006
+    },
+    "description": "Dominant oracle and interoperability provider for DeFi, tokenization, and onchain data integrity.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.88
+      },
+      {
+        "target": "Securitize, Inc.",
+        "type": "tokenization_clients",
+        "weight": 0.51
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "network_expansion",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "Alchemy Insights, Inc.",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "description": "One of the most important node, API, and developer tooling providers for Web3 applications.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "core_demand",
+        "weight": 0.79
+      },
+      {
+        "target": "Base",
+        "type": "client_demand",
+        "weight": 0.68
+      },
+      {
+        "target": "Polygon Labs",
+        "type": "client_demand",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "QuickNode",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 25.7617,
+      "lng": -80.1918
+    },
+    "description": "Major node and API infrastructure provider supporting chains, wallets, and trading apps.",
+    "top_dependencies": [
+      {
+        "target": "Solana Foundation",
+        "type": "core_demand",
+        "weight": 0.74
+      },
+      {
+        "target": "Ethereum Foundation",
+        "type": "core_demand",
+        "weight": 0.71
+      },
+      {
+        "target": "Base",
+        "type": "client_demand",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Blockdaemon",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 34.0522,
+      "lng": -118.2437
+    },
+    "description": "Institutional staking, node, and blockchain infrastructure provider with broad protocol exposure.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "staking_demand",
+        "weight": 0.67
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "validator_demand",
+        "weight": 0.58
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "institutional_connectivity",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "Figment",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Canada",
+    "location": {
+      "lat": 43.6532,
+      "lng": -79.3832
+    },
+    "description": "Large staking and validator operator serving institutions and protocol foundations.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "staking_demand",
+        "weight": 0.65
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "staking_demand",
+        "weight": 0.55
+      },
+      {
+        "target": "Interchain Foundation",
+        "type": "cosmos_staking",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Kiln",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "France",
+    "location": {
+      "lat": 48.8566,
+      "lng": 2.3522
+    },
+    "description": "Institutional staking and validator infrastructure provider with strong European fintech integration.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "staking_demand",
+        "weight": 0.63
+      },
+      {
+        "target": "Solana Foundation",
+        "type": "staking_demand",
+        "weight": 0.41
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_treasury_clients",
+        "weight": 0.34
+      }
+    ]
+  },
+  {
+    "name": "Lido Ecosystem Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "Cayman Islands",
+    "location": {
+      "lat": 19.2866,
+      "lng": -81.3674
+    },
+    "description": "Key coordination node for liquid staking on Ethereum and related DeFi collateral flows.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "base_layer",
+        "weight": 0.98
+      },
+      {
+        "target": "Chainlink Labs",
+        "type": "oracle",
+        "weight": 0.62
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "market_access",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "Jito Foundation",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "description": "Core Solana staking/MEV infrastructure provider and a major validator-economics node.",
+    "top_dependencies": [
+      {
+        "target": "Solana Foundation",
+        "type": "base_layer",
+        "weight": 0.97
+      },
+      {
+        "target": "Coinbase Global, Inc.",
+        "type": "market_access",
+        "weight": 0.43
+      },
+      {
+        "target": "Circle Internet Group, Inc.",
+        "type": "stablecoin_liquidity",
+        "weight": 0.36
+      }
+    ]
+  },
+  {
+    "name": "Eigen Labs",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 47.6062,
+      "lng": -122.3321
+    },
+    "description": "Builder of EigenLayer and restaking infrastructure extending Ethereum security to new services.",
+    "top_dependencies": [
+      {
+        "target": "Ethereum Foundation",
+        "type": "security_source",
+        "weight": 0.95
+      },
+      {
+        "target": "Lido Ecosystem Foundation",
+        "type": "restaked_collateral",
+        "weight": 0.69
+      },
+      {
+        "target": "Base",
+        "type": "application_demand",
+        "weight": 0.41
+      }
+    ]
+  },
+  {
+    "name": "MARA Holdings, Inc.",
+    "ticker": "MARA",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 26.1224,
+      "lng": -80.1373
+    },
+    "description": "One of the largest public Bitcoin miners and treasury-heavy proxies for network economics.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "revenue_base",
+        "weight": 0.98
+      },
+      {
+        "target": "Foundry USA Pool",
+        "type": "pooling",
+        "weight": 0.82
+      },
+      {
+        "target": "Bitmain Technologies",
+        "type": "hardware",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Riot Platforms, Inc.",
+    "ticker": "RIOT",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 30.6558,
+      "lng": -97.0011
+    },
+    "description": "Large public Bitcoin miner with power-market exposure and major Texas operations.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "revenue_base",
+        "weight": 0.98
+      },
+      {
+        "target": "Foundry USA Pool",
+        "type": "pooling",
+        "weight": 0.83
+      },
+      {
+        "target": "MicroBT",
+        "type": "hardware",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "CleanSpark, Inc.",
+    "ticker": "CLSK",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 36.0395,
+      "lng": -114.9817
+    },
+    "description": "Public miner focused on operational efficiency and a large U.S. data-center footprint.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "revenue_base",
+        "weight": 0.98
+      },
+      {
+        "target": "Foundry USA Pool",
+        "type": "pooling",
+        "weight": 0.78
+      },
+      {
+        "target": "Bitmain Technologies",
+        "type": "hardware",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Core Scientific, Inc.",
+    "ticker": "CORZ",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 30.2672,
+      "lng": -97.7431
+    },
+    "description": "Major public mining and hosting operator with important power and HPC crossover relevance.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "revenue_base",
+        "weight": 0.97
+      },
+      {
+        "target": "Foundry USA Pool",
+        "type": "pooling",
+        "weight": 0.72
+      },
+      {
+        "target": "Bitmain Technologies",
+        "type": "hardware",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "Bitdeer Technologies Group",
+    "ticker": "BTDR",
+    "sector": "CRYPTO",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2868,
+      "lng": 103.85
+    },
+    "description": "Public mining and compute operator with global data-center and ASIC supply-chain exposure.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "revenue_base",
+        "weight": 0.96
+      },
+      {
+        "target": "Bitmain Technologies",
+        "type": "supply_chain",
+        "weight": 0.79
+      },
+      {
+        "target": "AntPool",
+        "type": "pooling",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "Hut 8 Corp.",
+    "ticker": "HUT",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 25.7617,
+      "lng": -80.1918
+    },
+    "description": "Public Bitcoin miner and digital infrastructure operator spanning mining, hosting, and power assets.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "revenue_base",
+        "weight": 0.97
+      },
+      {
+        "target": "Foundry USA Pool",
+        "type": "pooling",
+        "weight": 0.69
+      },
+      {
+        "target": "MicroBT",
+        "type": "hardware",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "TeraWulf Inc.",
+    "ticker": "WULF",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 43.2598,
+      "lng": -78.7092
+    },
+    "description": "Public miner notable for power-linked operations and U.S. infrastructure exposure.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "revenue_base",
+        "weight": 0.97
+      },
+      {
+        "target": "Foundry USA Pool",
+        "type": "pooling",
+        "weight": 0.68
+      },
+      {
+        "target": "Bitmain Technologies",
+        "type": "hardware",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "Cipher Mining Inc.",
+    "ticker": "CIFR",
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 31.8457,
+      "lng": -102.3676
+    },
+    "description": "Public mining company concentrated in large Texas energy-linked facilities.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "revenue_base",
+        "weight": 0.97
+      },
+      {
+        "target": "Foundry USA Pool",
+        "type": "pooling",
+        "weight": 0.74
+      },
+      {
+        "target": "Bitmain Technologies",
+        "type": "hardware",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "Canaan Inc.",
+    "ticker": "CAN",
+    "sector": "CRYPTO",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2868,
+      "lng": 103.85
+    },
+    "description": "Public ASIC designer and mining-hardware company central to Bitcoin hash supply.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "end_market",
+        "weight": 0.92
+      },
+      {
+        "target": "MARA Holdings, Inc.",
+        "type": "customer_demand",
+        "weight": 0.49
+      },
+      {
+        "target": "Riot Platforms, Inc.",
+        "type": "customer_demand",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "ViaBTC",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "China",
+    "location": {
+      "lat": 22.5431,
+      "lng": 114.0579
+    },
+    "description": "Large mining pool and service provider coordinating significant Bitcoin hashpower.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "block_rewards",
+        "weight": 0.96
+      },
+      {
+        "target": "Bitmain Technologies",
+        "type": "hardware_ecosystem",
+        "weight": 0.53
+      },
+      {
+        "target": "Canaan Inc.",
+        "type": "hardware_supply",
+        "weight": 0.34
+      }
+    ]
+  },
+  {
+    "name": "Bitmain Technologies",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "Dominant Bitcoin ASIC and mining-pool ecosystem supplier via Bitmain and AntPool.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "end_market",
+        "weight": 0.94
+      },
+      {
+        "target": "AntPool",
+        "type": "pooling",
+        "weight": 0.88
+      },
+      {
+        "target": "Bitdeer Technologies Group",
+        "type": "distribution",
+        "weight": 0.61
+      }
+    ]
+  },
+  {
+    "name": "MicroBT",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "China",
+    "location": {
+      "lat": 22.5431,
+      "lng": 114.0579
+    },
+    "description": "Major ASIC hardware manufacturer behind WhatsMiner, critical to global Bitcoin fleet upgrades.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "end_market",
+        "weight": 0.93
+      },
+      {
+        "target": "MARA Holdings, Inc.",
+        "type": "customer_demand",
+        "weight": 0.52
+      },
+      {
+        "target": "Riot Platforms, Inc.",
+        "type": "customer_demand",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Foundry USA Pool",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "United States",
+    "location": {
+      "lat": 43.1566,
+      "lng": -77.6088
+    },
+    "description": "Leading U.S. mining pool and an important concentration point for Bitcoin block production.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "block_rewards",
+        "weight": 0.99
+      },
+      {
+        "target": "MARA Holdings, Inc.",
+        "type": "hashrate_supply",
+        "weight": 0.58
+      },
+      {
+        "target": "Riot Platforms, Inc.",
+        "type": "hashrate_supply",
+        "weight": 0.57
+      }
+    ]
+  },
+  {
+    "name": "AntPool",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "Bitmain-linked mining pool that remains a major Bitcoin hashpower coordinator.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "block_rewards",
+        "weight": 0.99
+      },
+      {
+        "target": "Bitmain Technologies",
+        "type": "pool_operator",
+        "weight": 0.95
+      },
+      {
+        "target": "Bitdeer Technologies Group",
+        "type": "hashrate_supply",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "F2Pool",
+    "ticker": null,
+    "sector": "CRYPTO",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "Long-running multinational mining pool with significant influence over Bitcoin block production.",
+    "top_dependencies": [
+      {
+        "target": "Bitcoin Network",
+        "type": "block_rewards",
+        "weight": 0.98
+      },
+      {
+        "target": "Bitmain Technologies",
+        "type": "hardware_ecosystem",
+        "weight": 0.44
+      },
+      {
+        "target": "Canaan Inc.",
+        "type": "hardware_supply",
+        "weight": 0.31
+      }
+    ]
+  }
+]

@@ -1,0 +1,2802 @@
+[
+  {
+    "name": "Board of Governors of the Federal Reserve System",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 38.8938,
+      "lng": -77.0452
+    },
+    "description": "The U.S. central bank’s governing board and one of the most consequential policy nodes for dollar liquidity, rates and global risk appetite.",
+    "top_dependencies": [
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "market_operations",
+        "weight": 0.97
+      },
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "sovereign_market_interface",
+        "weight": 0.92
+      },
+      {
+        "target": "U.S. Bureau of Labor Statistics",
+        "type": "inflation_employment_data",
+        "weight": 0.9
+      }
+    ]
+  },
+  {
+    "name": "Federal Reserve Bank of New York",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.707,
+      "lng": -74.0088
+    },
+    "description": "The Fed’s core market-operations hub, central to Treasury, repo, SOFR and emergency-liquidity transmission.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "governance",
+        "weight": 0.97
+      },
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "treasury_market",
+        "weight": 0.95
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "post_trade_plumbing",
+        "weight": 0.86
+      }
+    ]
+  },
+  {
+    "name": "European Central Bank",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Germany",
+    "location": {
+      "lat": 50.1109,
+      "lng": 8.6821
+    },
+    "description": "The central bank of the euro area and a primary driver of European sovereign, funding and FX conditions.",
+    "top_dependencies": [
+      {
+        "target": "Deutsche Bundesbank",
+        "type": "eurosystem_execution",
+        "weight": 0.9
+      },
+      {
+        "target": "Banque de France",
+        "type": "eurosystem_execution",
+        "weight": 0.87
+      },
+      {
+        "target": "Eurostat",
+        "type": "macro_data",
+        "weight": 0.88
+      }
+    ]
+  },
+  {
+    "name": "Deutsche Bundesbank",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Germany",
+    "location": {
+      "lat": 50.1444,
+      "lng": 8.6512
+    },
+    "description": "Germany’s central bank and a key Eurosystem node for collateral, payments and euro-area policy transmission.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "policy_alignment",
+        "weight": 0.94
+      },
+      {
+        "target": "Eurostat",
+        "type": "macro_data",
+        "weight": 0.78
+      },
+      {
+        "target": "Eurex Clearing AG",
+        "type": "collateral_and_rates_market",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Banque de France",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "France",
+    "location": {
+      "lat": 48.8665,
+      "lng": 2.3331
+    },
+    "description": "France’s central bank and a major Eurosystem execution, collateral and supervisory node.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "policy_alignment",
+        "weight": 0.94
+      },
+      {
+        "target": "Euroclear SA/NV",
+        "type": "settlement_and_collateral",
+        "weight": 0.74
+      },
+      {
+        "target": "Eurostat",
+        "type": "macro_data",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "Bank of England",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5142,
+      "lng": -0.0876
+    },
+    "description": "The UK central bank and a pivotal node for sterling rates, gilt markets and London-based clearing resilience.",
+    "top_dependencies": [
+      {
+        "target": "Office for National Statistics",
+        "type": "macro_data",
+        "weight": 0.84
+      },
+      {
+        "target": "LCH Limited",
+        "type": "derivatives_clearing",
+        "weight": 0.86
+      },
+      {
+        "target": "ICE Benchmark Administration Limited",
+        "type": "benchmark_rates",
+        "weight": 0.79
+      }
+    ]
+  },
+  {
+    "name": "Bank of Japan",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Japan",
+    "location": {
+      "lat": 35.686,
+      "lng": 139.7705
+    },
+    "description": "Japan’s central bank and a dominant influence on JGBs, yen liquidity and global carry conditions.",
+    "top_dependencies": [
+      {
+        "target": "Japan Exchange Group, Inc.",
+        "type": "market_access",
+        "weight": 0.64
+      },
+      {
+        "target": "Mitsubishi UFJ Financial Group, Inc.",
+        "type": "banking_transmission",
+        "weight": 0.78
+      },
+      {
+        "target": "Mizuho Financial Group, Inc.",
+        "type": "banking_transmission",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "People's Bank of China",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "China",
+    "location": {
+      "lat": 39.915,
+      "lng": 116.3674
+    },
+    "description": "China’s central bank and the primary policy node for onshore liquidity, RMB conditions and state-bank transmission.",
+    "top_dependencies": [
+      {
+        "target": "National Bureau of Statistics of China",
+        "type": "macro_data",
+        "weight": 0.84
+      },
+      {
+        "target": "Industrial and Commercial Bank of China Limited",
+        "type": "banking_transmission",
+        "weight": 0.82
+      },
+      {
+        "target": "Bank of China Limited",
+        "type": "banking_transmission",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "Swiss National Bank",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.3668,
+      "lng": 8.5389
+    },
+    "description": "Switzerland’s central bank and a major stabilizer for CHF funding, reserves and safe-haven flows.",
+    "top_dependencies": [
+      {
+        "target": "UBS Group AG",
+        "type": "domestic_systemic_bank",
+        "weight": 0.86
+      },
+      {
+        "target": "SIX Group Ltd",
+        "type": "market_infrastructure",
+        "weight": 0.71
+      },
+      {
+        "target": "Bank for International Settlements",
+        "type": "policy_coordination",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Bank of Canada",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Canada",
+    "location": {
+      "lat": 45.4216,
+      "lng": -75.7026
+    },
+    "description": "Canada’s central bank and the anchor for CAD rates, sovereign funding conditions and domestic market plumbing.",
+    "top_dependencies": [
+      {
+        "target": "Royal Bank of Canada",
+        "type": "banking_transmission",
+        "weight": 0.77
+      },
+      {
+        "target": "TMX Group Limited",
+        "type": "market_access",
+        "weight": 0.67
+      },
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "cross_border_rates_environment",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Reserve Bank of India",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "India",
+    "location": {
+      "lat": 18.9322,
+      "lng": 72.8363
+    },
+    "description": "India’s central bank and the central node for rupee liquidity, sovereign markets and payment-system stability.",
+    "top_dependencies": [
+      {
+        "target": "National Stock Exchange of India Limited",
+        "type": "market_access",
+        "weight": 0.74
+      },
+      {
+        "target": "Ministry of Statistics and Programme Implementation (India)",
+        "type": "macro_data",
+        "weight": 0.77
+      },
+      {
+        "target": "Clearing Corporation of India Limited",
+        "type": "money_and_bond_market_plumbing",
+        "weight": 0.85
+      }
+    ]
+  },
+  {
+    "name": "Monetary Authority of Singapore",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2762,
+      "lng": 103.849
+    },
+    "description": "Singapore’s central bank and integrated regulator, central to SGD funding, FX policy and regional market connectivity.",
+    "top_dependencies": [
+      {
+        "target": "Singapore Exchange Limited",
+        "type": "market_access",
+        "weight": 0.72
+      },
+      {
+        "target": "Hong Kong Monetary Authority",
+        "type": "regional_linkage",
+        "weight": 0.69
+      },
+      {
+        "target": "CLS Group Holdings AG",
+        "type": "fx_settlement",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Hong Kong Monetary Authority",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.2798,
+      "lng": 114.162
+    },
+    "description": "Hong Kong’s de facto central bank and a critical conduit between global capital and Chinese financial markets.",
+    "top_dependencies": [
+      {
+        "target": "People's Bank of China",
+        "type": "mainland_linkage",
+        "weight": 0.9
+      },
+      {
+        "target": "Hong Kong Exchanges and Clearing Limited",
+        "type": "market_access",
+        "weight": 0.82
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_payments",
+        "weight": 0.73
+      }
+    ]
+  },
+  {
+    "name": "Banco Central do Brasil",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Brazil",
+    "location": {
+      "lat": -15.799,
+      "lng": -47.864
+    },
+    "description": "Brazil’s central bank and the main stabilizer for BRL liquidity, inflation policy and domestic financial-system resilience.",
+    "top_dependencies": [
+      {
+        "target": "B3 S.A. - Brasil, Bolsa, Balcão",
+        "type": "market_access",
+        "weight": 0.79
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "data_distribution",
+        "weight": 0.55
+      },
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "external_rates_environment",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "Reserve Bank of Australia",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Australia",
+    "location": {
+      "lat": -33.8652,
+      "lng": 151.209
+    },
+    "description": "Australia’s central bank and a key node for AUD rates, payment-system stability and Asia-Pacific risk pricing.",
+    "top_dependencies": [
+      {
+        "target": "ASX Limited",
+        "type": "market_access",
+        "weight": 0.72
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "data_distribution",
+        "weight": 0.53
+      },
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "global_rates_environment",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "Saudi Central Bank",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Saudi Arabia",
+    "location": {
+      "lat": 24.6489,
+      "lng": 46.7082
+    },
+    "description": "Saudi Arabia’s central bank and a major regional node for dollar-pegged liquidity and payments supervision.",
+    "top_dependencies": [
+      {
+        "target": "Saudi Tadawul Group Holding Company",
+        "type": "domestic_market_access",
+        "weight": 0.72
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_payments",
+        "weight": 0.67
+      },
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "peg_anchor_environment",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Central Bank of the United Arab Emirates",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 24.4879,
+      "lng": 54.3569
+    },
+    "description": "The UAE’s central bank and a growing regional anchor for cross-border payments, reserves and wholesale finance.",
+    "top_dependencies": [
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_payments",
+        "weight": 0.78
+      },
+      {
+        "target": "Hong Kong Monetary Authority",
+        "type": "market_connectivity",
+        "weight": 0.64
+      },
+      {
+        "target": "CLS Group Holdings AG",
+        "type": "fx_settlement",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "Bank of Korea",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "South Korea",
+    "location": {
+      "lat": 37.561,
+      "lng": 126.9815
+    },
+    "description": "South Korea’s central bank and a key policy node for won liquidity, FX management and local-market stability.",
+    "top_dependencies": [
+      {
+        "target": "Korea Exchange",
+        "type": "market_access",
+        "weight": 0.74
+      },
+      {
+        "target": "MSCI Inc.",
+        "type": "equity_flow_sensitivity",
+        "weight": 0.61
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "data_distribution",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Bank for International Settlements",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.5544,
+      "lng": 7.589
+    },
+    "description": "The BIS is the principal forum for central-bank cooperation and a major standards and data node for global finance.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "major_member_influence",
+        "weight": 0.72
+      },
+      {
+        "target": "European Central Bank",
+        "type": "major_member_influence",
+        "weight": 0.7
+      },
+      {
+        "target": "Bank of England",
+        "type": "major_member_influence",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "International Monetary Fund",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 38.894,
+      "lng": -77.0428
+    },
+    "description": "The IMF is a core sovereign-stability node for crisis lending, surveillance and cross-border macro coordination.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "quota_and_governance_weight",
+        "weight": 0.82
+      },
+      {
+        "target": "European Central Bank",
+        "type": "european_crisis_interface",
+        "weight": 0.62
+      },
+      {
+        "target": "People's Bank of China",
+        "type": "major_shareholder_and_policy_interface",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "U.S. Department of the Treasury",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 38.8977,
+      "lng": -77.0365
+    },
+    "description": "The U.S. fiscal authority and the anchor issuer of the world’s deepest sovereign benchmark market.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "monetary_fiscal_interface",
+        "weight": 0.92
+      },
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "auction_and_repo_execution",
+        "weight": 0.95
+      },
+      {
+        "target": "Fixed Income Clearing Corporation",
+        "type": "treasury_clearing",
+        "weight": 0.89
+      }
+    ]
+  },
+  {
+    "name": "Banco de México",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Mexico",
+    "location": {
+      "lat": 19.4326,
+      "lng": -99.1332
+    },
+    "description": "Mexico’s central bank and a significant node for MXN, local sovereign debt and North American rates spillovers.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "external_rates_environment",
+        "weight": 0.76
+      },
+      {
+        "target": "CLS Group Holdings AG",
+        "type": "fx_settlement",
+        "weight": 0.72
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "data_distribution",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "U.S. Bureau of Labor Statistics",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 38.8454,
+      "lng": -76.9299
+    },
+    "description": "The principal U.S. labor and inflation statistics agency; its releases regularly reprice rates, FX and equities.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "policy_reaction_function",
+        "weight": 0.88
+      },
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "rates_market_transmission",
+        "weight": 0.82
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "market_distribution",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "U.S. Bureau of Economic Analysis",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 38.9056,
+      "lng": -77.0434
+    },
+    "description": "The U.S. national-accounts producer whose GDP, income and trade releases move macro expectations and policy paths.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "policy_reaction_function",
+        "weight": 0.84
+      },
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "rates_market_transmission",
+        "weight": 0.78
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "market_distribution",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "Eurostat",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Luxembourg",
+    "location": {
+      "lat": 49.6116,
+      "lng": 6.1319
+    },
+    "description": "The statistical office of the EU and the reference producer for many euro-area releases watched by global markets.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "policy_reaction_function",
+        "weight": 0.86
+      },
+      {
+        "target": "Deutsche Bundesbank",
+        "type": "member_state_data_pipeline",
+        "weight": 0.62
+      },
+      {
+        "target": "Euronext N.V.",
+        "type": "equity_rates_transmission",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Office for National Statistics",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.578,
+      "lng": -3.0076
+    },
+    "description": "The UK’s official statistics authority, central to market-moving inflation, labor and GDP releases.",
+    "top_dependencies": [
+      {
+        "target": "Bank of England",
+        "type": "policy_reaction_function",
+        "weight": 0.86
+      },
+      {
+        "target": "London Stock Exchange Group plc",
+        "type": "market_distribution",
+        "weight": 0.58
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "market_distribution",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "National Bureau of Statistics of China",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "China",
+    "location": {
+      "lat": 39.9082,
+      "lng": 116.4194
+    },
+    "description": "China’s official statistics producer and a major source of globally scrutinized growth, industry and price data.",
+    "top_dependencies": [
+      {
+        "target": "People's Bank of China",
+        "type": "policy_reaction_function",
+        "weight": 0.81
+      },
+      {
+        "target": "Shanghai Stock Exchange",
+        "type": "equity_transmission",
+        "weight": 0.55
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "global_distribution",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Ministry of Statistics and Programme Implementation (India)",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "India",
+    "location": {
+      "lat": 28.6169,
+      "lng": 77.2123
+    },
+    "description": "India’s central statistical ministry, whose CPI, IIP and GDP releases increasingly shape EM and global macro positioning.",
+    "top_dependencies": [
+      {
+        "target": "Reserve Bank of India",
+        "type": "policy_reaction_function",
+        "weight": 0.8
+      },
+      {
+        "target": "National Stock Exchange of India Limited",
+        "type": "equity_transmission",
+        "weight": 0.58
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "global_distribution",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "S&P Global Inc.",
+    "ticker": "SPGI",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7069,
+      "lng": -74.0113
+    },
+    "description": "Provider of ratings, benchmarks and market intelligence, including the S&P index franchise that anchors global asset allocation.",
+    "top_dependencies": [
+      {
+        "target": "New York Stock Exchange",
+        "type": "price_discovery_input",
+        "weight": 0.66
+      },
+      {
+        "target": "CME Group Inc.",
+        "type": "derivatives_linkage",
+        "weight": 0.6
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "index_constituent_plumbing",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "MSCI Inc.",
+    "ticker": "MSCI",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7574,
+      "lng": -73.9727
+    },
+    "description": "Major index and analytics provider whose benchmarks influence international asset allocation and passive flows.",
+    "top_dependencies": [
+      {
+        "target": "Bloomberg L.P.",
+        "type": "data_distribution",
+        "weight": 0.62
+      },
+      {
+        "target": "Hong Kong Exchanges and Clearing Limited",
+        "type": "em_asia_market_access",
+        "weight": 0.56
+      },
+      {
+        "target": "Taiwan Stock Exchange Corporation",
+        "type": "benchmark_constituent_exposure",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Bloomberg L.P.",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7616,
+      "lng": -73.9718
+    },
+    "description": "One of the dominant global market-data and analytics platforms, central to price dissemination and macro-event workflows.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "policy_data_demand",
+        "weight": 0.58
+      },
+      {
+        "target": "European Central Bank",
+        "type": "policy_data_demand",
+        "weight": 0.52
+      },
+      {
+        "target": "CME Group Inc.",
+        "type": "real_time_market_data",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "ICE Benchmark Administration Limited",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5145,
+      "lng": -0.0812
+    },
+    "description": "Benchmark administrator within ICE that operates key rates and benchmark infrastructure used across global markets.",
+    "top_dependencies": [
+      {
+        "target": "Intercontinental Exchange, Inc.",
+        "type": "parent_infrastructure",
+        "weight": 0.95
+      },
+      {
+        "target": "Bank of England",
+        "type": "benchmark_oversight_environment",
+        "weight": 0.69
+      },
+      {
+        "target": "LCH Limited",
+        "type": "rates_market_usage",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "JPMorgan Chase & Co.",
+    "ticker": "JPM",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7566,
+      "lng": -73.9752
+    },
+    "description": "The most systemically important global dealer-bank, spanning dollar funding, investment banking, payments and market making.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.88
+      },
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "market_operations_interface",
+        "weight": 0.9
+      },
+      {
+        "target": "Fixed Income Clearing Corporation",
+        "type": "treasury_and_repo_clearing",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "Citigroup Inc.",
+    "ticker": "C",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.721,
+      "lng": -74.0107
+    },
+    "description": "A globally connected dealer-bank with outsized exposure to cross-border payments, sovereigns and emerging-market finance.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.86
+      },
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "market_operations_interface",
+        "weight": 0.82
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.8
+      }
+    ]
+  },
+  {
+    "name": "HSBC Holdings plc",
+    "ticker": "HSBA",
+    "sector": "MARKET",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5054,
+      "lng": -0.0235
+    },
+    "description": "A UK-headquartered global bank whose balance sheet bridges London, Hong Kong and dollar markets.",
+    "top_dependencies": [
+      {
+        "target": "Bank of England",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.84
+      },
+      {
+        "target": "Hong Kong Monetary Authority",
+        "type": "asia_franchise_interface",
+        "weight": 0.82
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.79
+      }
+    ]
+  },
+  {
+    "name": "Agricultural Bank of China Limited",
+    "ticker": "1288",
+    "sector": "MARKET",
+    "country": "China",
+    "location": {
+      "lat": 39.9128,
+      "lng": 116.4039
+    },
+    "description": "One of China’s largest state banks and a major transmission channel for domestic credit and sovereign priorities.",
+    "top_dependencies": [
+      {
+        "target": "People's Bank of China",
+        "type": "policy_and_liquidity_regime",
+        "weight": 0.9
+      },
+      {
+        "target": "Shanghai Stock Exchange",
+        "type": "onshore_market_access",
+        "weight": 0.55
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "Bank of America Corporation",
+    "ticker": "BAC",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 35.2271,
+      "lng": -80.8431
+    },
+    "description": "A major U.S. universal bank with systemic importance across credit creation, payments and dealer activities.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.86
+      },
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "market_operations_interface",
+        "weight": 0.8
+      },
+      {
+        "target": "Fixed Income Clearing Corporation",
+        "type": "treasury_and_repo_clearing",
+        "weight": 0.73
+      }
+    ]
+  },
+  {
+    "name": "Bank of China Limited",
+    "ticker": "3988",
+    "sector": "MARKET",
+    "country": "China",
+    "location": {
+      "lat": 39.9151,
+      "lng": 116.4207
+    },
+    "description": "China’s most internationally oriented state bank and a crucial RMB and trade-finance conduit.",
+    "top_dependencies": [
+      {
+        "target": "People's Bank of China",
+        "type": "policy_and_liquidity_regime",
+        "weight": 0.9
+      },
+      {
+        "target": "Hong Kong Exchanges and Clearing Limited",
+        "type": "offshore_capital_market_linkage",
+        "weight": 0.6
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "Barclays PLC",
+    "ticker": "BARC",
+    "sector": "MARKET",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5047,
+      "lng": -0.0164
+    },
+    "description": "A major UK dealer-bank central to sterling markets, global fixed income and prime brokerage flows.",
+    "top_dependencies": [
+      {
+        "target": "Bank of England",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.84
+      },
+      {
+        "target": "LCH Limited",
+        "type": "derivatives_clearing",
+        "weight": 0.73
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "BNP Paribas S.A.",
+    "ticker": "BNP",
+    "sector": "MARKET",
+    "country": "France",
+    "location": {
+      "lat": 48.8715,
+      "lng": 2.3361
+    },
+    "description": "A leading euro-area bank with systemic reach across derivatives, custody, rates and corporate finance.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.86
+      },
+      {
+        "target": "Euroclear SA/NV",
+        "type": "settlement_and_collateral",
+        "weight": 0.67
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "China Construction Bank Corporation",
+    "ticker": "0939",
+    "sector": "MARKET",
+    "country": "China",
+    "location": {
+      "lat": 39.9159,
+      "lng": 116.3563
+    },
+    "description": "A giant Chinese state bank critical to domestic credit intermediation and government-linked financing channels.",
+    "top_dependencies": [
+      {
+        "target": "People's Bank of China",
+        "type": "policy_and_liquidity_regime",
+        "weight": 0.9
+      },
+      {
+        "target": "Hong Kong Exchanges and Clearing Limited",
+        "type": "offshore_capital_market_linkage",
+        "weight": 0.58
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.53
+      }
+    ]
+  },
+  {
+    "name": "Deutsche Bank AG",
+    "ticker": "DBK",
+    "sector": "MARKET",
+    "country": "Germany",
+    "location": {
+      "lat": 50.1149,
+      "lng": 8.6694
+    },
+    "description": "Germany’s largest global dealer-bank and a major node in European fixed income, FX and derivatives markets.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.86
+      },
+      {
+        "target": "Eurex Clearing AG",
+        "type": "euro_derivatives_clearing",
+        "weight": 0.72
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.75
+      }
+    ]
+  },
+  {
+    "name": "The Goldman Sachs Group, Inc.",
+    "ticker": "GS",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7144,
+      "lng": -74.0134
+    },
+    "description": "A core U.S. dealer-broker with high centrality in rates, equities, financing and prime services.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.84
+      },
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "market_operations_interface",
+        "weight": 0.82
+      },
+      {
+        "target": "CME Group Inc.",
+        "type": "derivatives_and_futures_market_access",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Crédit Agricole S.A.",
+    "ticker": "ACA",
+    "sector": "MARKET",
+    "country": "France",
+    "location": {
+      "lat": 48.8196,
+      "lng": 2.3184
+    },
+    "description": "A major French banking group with systemic importance in euro funding, retail deposits and wholesale markets.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.84
+      },
+      {
+        "target": "Euroclear SA/NV",
+        "type": "settlement_and_collateral",
+        "weight": 0.61
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Industrial and Commercial Bank of China Limited",
+    "ticker": "1398",
+    "sector": "MARKET",
+    "country": "China",
+    "location": {
+      "lat": 39.9156,
+      "lng": 116.4077
+    },
+    "description": "The world’s largest commercial bank by assets and a primary conduit for China’s financial-state transmission.",
+    "top_dependencies": [
+      {
+        "target": "People's Bank of China",
+        "type": "policy_and_liquidity_regime",
+        "weight": 0.92
+      },
+      {
+        "target": "Hong Kong Exchanges and Clearing Limited",
+        "type": "offshore_capital_market_linkage",
+        "weight": 0.57
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "UBS Group AG",
+    "ticker": "UBSG",
+    "sector": "MARKET",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.3769,
+      "lng": 8.5417
+    },
+    "description": "Switzerland’s dominant global wealth and investment bank, highly relevant to CHF funding and offshore capital flows.",
+    "top_dependencies": [
+      {
+        "target": "Swiss National Bank",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.85
+      },
+      {
+        "target": "SIX Group Ltd",
+        "type": "domestic_market_infrastructure",
+        "weight": 0.66
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Bank of Communications Co., Ltd.",
+    "ticker": "3328",
+    "sector": "MARKET",
+    "country": "China",
+    "location": {
+      "lat": 31.2333,
+      "lng": 121.4797
+    },
+    "description": "A major Chinese state-backed bank connecting onshore balance-sheet expansion with market financing channels.",
+    "top_dependencies": [
+      {
+        "target": "People's Bank of China",
+        "type": "policy_and_liquidity_regime",
+        "weight": 0.88
+      },
+      {
+        "target": "Shanghai Stock Exchange",
+        "type": "onshore_market_access",
+        "weight": 0.59
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.51
+      }
+    ]
+  },
+  {
+    "name": "The Bank of New York Mellon Corporation",
+    "ticker": "BK",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7127,
+      "lng": -74.0109
+    },
+    "description": "A globally important custody and asset-servicing bank central to collateral, safekeeping and settlement workflows.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.82
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "custody_and_settlement_interlock",
+        "weight": 0.8
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.75
+      }
+    ]
+  },
+  {
+    "name": "BPCE S.A.",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "France",
+    "location": {
+      "lat": 48.8425,
+      "lng": 2.3692
+    },
+    "description": "A major French banking group with material systemic relevance to euro funding and domestic financial intermediation.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.83
+      },
+      {
+        "target": "Euroclear SA/NV",
+        "type": "settlement_and_collateral",
+        "weight": 0.58
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "ING Groep N.V.",
+    "ticker": "INGA",
+    "sector": "MARKET",
+    "country": "Netherlands",
+    "location": {
+      "lat": 52.338,
+      "lng": 4.8731
+    },
+    "description": "A major Dutch bank with strong cross-border retail and wholesale funding linkages across Europe.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.83
+      },
+      {
+        "target": "Euronext N.V.",
+        "type": "equity_and_funding_market_access",
+        "weight": 0.56
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Mizuho Financial Group, Inc.",
+    "ticker": "8411",
+    "sector": "MARKET",
+    "country": "Japan",
+    "location": {
+      "lat": 35.688,
+      "lng": 139.7639
+    },
+    "description": "A major Japanese megabank central to JGB distribution, syndicated lending and regional dollar funding.",
+    "top_dependencies": [
+      {
+        "target": "Bank of Japan",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.84
+      },
+      {
+        "target": "Japan Exchange Group, Inc.",
+        "type": "market_access",
+        "weight": 0.57
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Morgan Stanley",
+    "ticker": "MS",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7589,
+      "lng": -73.9851
+    },
+    "description": "A major U.S. dealer-bank with systemic relevance across capital markets, wealth management and prime brokerage.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.84
+      },
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "market_operations_interface",
+        "weight": 0.81
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "post_trade_plumbing",
+        "weight": 0.69
+      }
+    ]
+  },
+  {
+    "name": "Royal Bank of Canada",
+    "ticker": "RY",
+    "sector": "MARKET",
+    "country": "Canada",
+    "location": {
+      "lat": 43.6505,
+      "lng": -79.3827
+    },
+    "description": "Canada’s largest bank and a key transmission channel for North American funding and domestic sovereign markets.",
+    "top_dependencies": [
+      {
+        "target": "Bank of Canada",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.84
+      },
+      {
+        "target": "TMX Group Limited",
+        "type": "domestic_market_access",
+        "weight": 0.6
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Banco Santander, S.A.",
+    "ticker": "SAN",
+    "sector": "MARKET",
+    "country": "Spain",
+    "location": {
+      "lat": 40.4047,
+      "lng": -3.8792
+    },
+    "description": "A globally active Spanish bank with systemic importance across euro retail banking and cross-border capital flows.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.84
+      },
+      {
+        "target": "Euroclear SA/NV",
+        "type": "settlement_and_collateral",
+        "weight": 0.57
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Société Générale S.A.",
+    "ticker": "GLE",
+    "sector": "MARKET",
+    "country": "France",
+    "location": {
+      "lat": 48.8917,
+      "lng": 2.2381
+    },
+    "description": "A major French dealer-bank with strong exposure to euro rates, structured products and funding markets.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.84
+      },
+      {
+        "target": "LCH Limited",
+        "type": "derivatives_clearing",
+        "weight": 0.66
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Standard Chartered PLC",
+    "ticker": "STAN",
+    "sector": "MARKET",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5149,
+      "lng": -0.0808
+    },
+    "description": "A cross-border wholesale bank with outsized connectivity across Asia, the Middle East and trade finance corridors.",
+    "top_dependencies": [
+      {
+        "target": "Hong Kong Monetary Authority",
+        "type": "asia_franchise_interface",
+        "weight": 0.76
+      },
+      {
+        "target": "Monetary Authority of Singapore",
+        "type": "regional_policy_interface",
+        "weight": 0.7
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.82
+      }
+    ]
+  },
+  {
+    "name": "State Street Corporation",
+    "ticker": "STT",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 42.355,
+      "lng": -71.0554
+    },
+    "description": "A globally important custody, ETF-servicing and securities-finance bank embedded in market infrastructure flows.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.8
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "custody_and_settlement_interlock",
+        "weight": 0.79
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Sumitomo Mitsui Financial Group, Inc.",
+    "ticker": "8316",
+    "sector": "MARKET",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6811,
+      "lng": 139.7671
+    },
+    "description": "A major Japanese megabank central to domestic credit, dollar funding and capital-markets intermediation.",
+    "top_dependencies": [
+      {
+        "target": "Bank of Japan",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.83
+      },
+      {
+        "target": "Japan Exchange Group, Inc.",
+        "type": "market_access",
+        "weight": 0.55
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.69
+      }
+    ]
+  },
+  {
+    "name": "The Toronto-Dominion Bank",
+    "ticker": "TD",
+    "sector": "MARKET",
+    "country": "Canada",
+    "location": {
+      "lat": 43.6476,
+      "lng": -79.3791
+    },
+    "description": "A systemically important North American bank with strong retail and wholesale linkages across Canada and the U.S.",
+    "top_dependencies": [
+      {
+        "target": "Bank of Canada",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.82
+      },
+      {
+        "target": "TMX Group Limited",
+        "type": "domestic_market_access",
+        "weight": 0.58
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "Wells Fargo & Company",
+    "ticker": "WFC",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 37.7937,
+      "lng": -122.3962
+    },
+    "description": "A large U.S. banking group with systemic relevance to domestic credit transmission and payment flows.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.82
+      },
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "market_operations_interface",
+        "weight": 0.72
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "post_trade_plumbing",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Mitsubishi UFJ Financial Group, Inc.",
+    "ticker": "8306",
+    "sector": "MARKET",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6828,
+      "lng": 139.7669
+    },
+    "description": "Japan’s largest megabank and a critical conduit for yen funding, dollar liquidity and cross-border capital markets.",
+    "top_dependencies": [
+      {
+        "target": "Bank of Japan",
+        "type": "prudential_and_liquidity_regime",
+        "weight": 0.85
+      },
+      {
+        "target": "Japan Exchange Group, Inc.",
+        "type": "market_access",
+        "weight": 0.58
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.71
+      }
+    ]
+  },
+  {
+    "name": "CME Group Inc.",
+    "ticker": "CME",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 41.8783,
+      "lng": -87.6305
+    },
+    "description": "The world’s leading listed derivatives marketplace and a central venue for rates, equity index and commodity risk transfer.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "policy_sensitivity",
+        "weight": 0.7
+      },
+      {
+        "target": "U.S. Bureau of Labor Statistics",
+        "type": "macro_release_sensitivity",
+        "weight": 0.68
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "market_data_distribution",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "CME Clearing",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 41.8783,
+      "lng": -87.6305
+    },
+    "description": "CME’s clearing engine for listed and OTC products, central to margin transmission and default management.",
+    "top_dependencies": [
+      {
+        "target": "CME Group Inc.",
+        "type": "parent_market",
+        "weight": 0.98
+      },
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "liquidity_environment",
+        "weight": 0.63
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "adjacent_post_trade_linkage",
+        "weight": 0.52
+      }
+    ]
+  },
+  {
+    "name": "Intercontinental Exchange, Inc.",
+    "ticker": "ICE",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 33.7553,
+      "lng": -84.39
+    },
+    "description": "A global exchange and data group spanning futures, clearing, benchmarks and the NYSE franchise.",
+    "top_dependencies": [
+      {
+        "target": "New York Stock Exchange",
+        "type": "equities_platform",
+        "weight": 0.88
+      },
+      {
+        "target": "ICE Clear Europe Limited",
+        "type": "clearing_layer",
+        "weight": 0.86
+      },
+      {
+        "target": "ICE Benchmark Administration Limited",
+        "type": "benchmark_layer",
+        "weight": 0.8
+      }
+    ]
+  },
+  {
+    "name": "New York Stock Exchange",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7069,
+      "lng": -74.0113
+    },
+    "description": "One of the world’s most influential equity-listing and price-discovery venues.",
+    "top_dependencies": [
+      {
+        "target": "Intercontinental Exchange, Inc.",
+        "type": "owner_operator",
+        "weight": 0.88
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "equities_post_trade",
+        "weight": 0.82
+      },
+      {
+        "target": "S&P Global Inc.",
+        "type": "benchmark_and_index_linkage",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "ICE Clear Europe Limited",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5145,
+      "lng": -0.0803
+    },
+    "description": "A major futures and credit-derivatives clearing house embedded in European and transatlantic risk management.",
+    "top_dependencies": [
+      {
+        "target": "Intercontinental Exchange, Inc.",
+        "type": "parent_market",
+        "weight": 0.92
+      },
+      {
+        "target": "Bank of England",
+        "type": "oversight_and_liquidity_environment",
+        "weight": 0.75
+      },
+      {
+        "target": "LCH Limited",
+        "type": "shared_clearing_ecosystem",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Nasdaq, Inc.",
+    "ticker": "NDAQ",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7576,
+      "lng": -73.9857
+    },
+    "description": "A global exchange and technology group central to equity listing, options, market data and index services.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "policy_sensitivity",
+        "weight": 0.56
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "equities_post_trade",
+        "weight": 0.8
+      },
+      {
+        "target": "MSCI Inc.",
+        "type": "index_and_data_linkage",
+        "weight": 0.49
+      }
+    ]
+  },
+  {
+    "name": "Cboe Global Markets, Inc.",
+    "ticker": "CBOE",
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 41.8812,
+      "lng": -87.6364
+    },
+    "description": "A leading options and volatility marketplace with broad influence on hedging, ETF options and risk sentiment.",
+    "top_dependencies": [
+      {
+        "target": "Options Clearing Corporation",
+        "type": "options_clearing",
+        "weight": 0.92
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "equities_post_trade",
+        "weight": 0.58
+      },
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "policy_sensitivity",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "The Depository Trust & Clearing Corporation",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7061,
+      "lng": -74.0062
+    },
+    "description": "The core U.S. post-trade utility for securities clearance, settlement and trade processing.",
+    "top_dependencies": [
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "liquidity_and_settlement_environment",
+        "weight": 0.72
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_messaging",
+        "weight": 0.6
+      },
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "oversight_environment",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "Fixed Income Clearing Corporation",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7061,
+      "lng": -74.0062
+    },
+    "description": "DTCC subsidiary central to U.S. Treasury and agency securities clearing and repo market resilience.",
+    "top_dependencies": [
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "parent_infrastructure",
+        "weight": 0.97
+      },
+      {
+        "target": "U.S. Department of the Treasury",
+        "type": "treasury_market_flow",
+        "weight": 0.86
+      },
+      {
+        "target": "Federal Reserve Bank of New York",
+        "type": "repo_and_cash_management_environment",
+        "weight": 0.84
+      }
+    ]
+  },
+  {
+    "name": "National Securities Clearing Corporation",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 40.7061,
+      "lng": -74.0062
+    },
+    "description": "DTCC subsidiary central to U.S. equity and corporate-bond trade clearance and netting.",
+    "top_dependencies": [
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "parent_infrastructure",
+        "weight": 0.97
+      },
+      {
+        "target": "New York Stock Exchange",
+        "type": "equities_flow",
+        "weight": 0.7
+      },
+      {
+        "target": "Nasdaq, Inc.",
+        "type": "equities_flow",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Options Clearing Corporation",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United States",
+    "location": {
+      "lat": 41.8827,
+      "lng": -87.6302
+    },
+    "description": "The principal U.S. listed-options clearing house and a key stabilizer for equity-derivatives markets.",
+    "top_dependencies": [
+      {
+        "target": "Cboe Global Markets, Inc.",
+        "type": "options_market_flow",
+        "weight": 0.88
+      },
+      {
+        "target": "The Depository Trust & Clearing Corporation",
+        "type": "adjacent_post_trade_linkage",
+        "weight": 0.54
+      },
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "oversight_environment",
+        "weight": 0.48
+      }
+    ]
+  },
+  {
+    "name": "London Stock Exchange Group plc",
+    "ticker": "LSEG",
+    "sector": "MARKET",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5157,
+      "lng": -0.0993
+    },
+    "description": "A major financial-market infrastructure and data group spanning cash markets, post-trade, analytics and indices.",
+    "top_dependencies": [
+      {
+        "target": "LCH Limited",
+        "type": "clearing_layer",
+        "weight": 0.86
+      },
+      {
+        "target": "Bank of England",
+        "type": "oversight_and_liquidity_environment",
+        "weight": 0.67
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "market_data_ecosystem",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "LCH Limited",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5142,
+      "lng": -0.0868
+    },
+    "description": "One of the world’s most systemically important clearing houses for rates and other derivatives.",
+    "top_dependencies": [
+      {
+        "target": "London Stock Exchange Group plc",
+        "type": "parent_infrastructure",
+        "weight": 0.9
+      },
+      {
+        "target": "Bank of England",
+        "type": "oversight_and_liquidity_environment",
+        "weight": 0.8
+      },
+      {
+        "target": "European Central Bank",
+        "type": "euro_clearing_environment",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Euronext N.V.",
+    "ticker": "ENX",
+    "sector": "MARKET",
+    "country": "Netherlands",
+    "location": {
+      "lat": 52.374,
+      "lng": 4.8897
+    },
+    "description": "The leading pan-European exchange group across cash equities, derivatives and listings.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "policy_sensitivity",
+        "weight": 0.58
+      },
+      {
+        "target": "Euroclear SA/NV",
+        "type": "settlement_layer",
+        "weight": 0.71
+      },
+      {
+        "target": "Eurostat",
+        "type": "macro_release_sensitivity",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "name": "Euronext Clearing",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Italy",
+    "location": {
+      "lat": 41.8991,
+      "lng": 12.4768
+    },
+    "description": "Euronext’s clearing arm and an important European CCP for cash and derivatives markets.",
+    "top_dependencies": [
+      {
+        "target": "Euronext N.V.",
+        "type": "parent_market",
+        "weight": 0.94
+      },
+      {
+        "target": "European Central Bank",
+        "type": "liquidity_environment",
+        "weight": 0.6
+      },
+      {
+        "target": "Euroclear SA/NV",
+        "type": "post_trade_linkage",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Deutsche Börse AG",
+    "ticker": "DB1",
+    "sector": "MARKET",
+    "country": "Germany",
+    "location": {
+      "lat": 50.1429,
+      "lng": 8.5715
+    },
+    "description": "Germany’s leading exchange and post-trade group, central to European derivatives and settlement infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "Eurex Clearing AG",
+        "type": "clearing_layer",
+        "weight": 0.88
+      },
+      {
+        "target": "Clearstream Banking S.A.",
+        "type": "settlement_layer",
+        "weight": 0.86
+      },
+      {
+        "target": "European Central Bank",
+        "type": "policy_sensitivity",
+        "weight": 0.56
+      }
+    ]
+  },
+  {
+    "name": "Eurex Clearing AG",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Germany",
+    "location": {
+      "lat": 50.1429,
+      "lng": 8.5715
+    },
+    "description": "A systemically important European CCP for rates, futures and other derivatives.",
+    "top_dependencies": [
+      {
+        "target": "Deutsche Börse AG",
+        "type": "parent_market",
+        "weight": 0.9
+      },
+      {
+        "target": "European Central Bank",
+        "type": "liquidity_environment",
+        "weight": 0.66
+      },
+      {
+        "target": "Clearstream Banking S.A.",
+        "type": "collateral_and_settlement",
+        "weight": 0.58
+      }
+    ]
+  },
+  {
+    "name": "Euroclear SA/NV",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Belgium",
+    "location": {
+      "lat": 50.8438,
+      "lng": 4.3674
+    },
+    "description": "A major international securities settlement and collateral utility spanning domestic and cross-border markets.",
+    "top_dependencies": [
+      {
+        "target": "European Central Bank",
+        "type": "liquidity_and_collateral_environment",
+        "weight": 0.7
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "messaging_layer",
+        "weight": 0.66
+      },
+      {
+        "target": "Banque de France",
+        "type": "eurosystem_interface",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Clearstream Banking S.A.",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Luxembourg",
+    "location": {
+      "lat": 49.62,
+      "lng": 6.1328
+    },
+    "description": "A core international CSD and collateral-management node within the Deutsche Börse group.",
+    "top_dependencies": [
+      {
+        "target": "Deutsche Börse AG",
+        "type": "parent_infrastructure",
+        "weight": 0.92
+      },
+      {
+        "target": "European Central Bank",
+        "type": "liquidity_and_collateral_environment",
+        "weight": 0.66
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "messaging_layer",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "CLS Group Holdings AG",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.5154,
+      "lng": -0.0858
+    },
+    "description": "The core global utility for PvP settlement in the foreign exchange market, reducing principal risk across major currencies.",
+    "top_dependencies": [
+      {
+        "target": "Swift SCRL",
+        "type": "messaging_and_instruction_layer",
+        "weight": 0.7
+      },
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "dollar_system_environment",
+        "weight": 0.56
+      },
+      {
+        "target": "European Central Bank",
+        "type": "euro_system_environment",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "name": "Swift SCRL",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Belgium",
+    "location": {
+      "lat": 50.7316,
+      "lng": 4.4874
+    },
+    "description": "The global cooperative messaging network underpinning a large share of cross-border payments and securities instructions.",
+    "top_dependencies": [
+      {
+        "target": "Board of Governors of the Federal Reserve System",
+        "type": "dollar_network_centrality",
+        "weight": 0.56
+      },
+      {
+        "target": "European Central Bank",
+        "type": "euro_network_centrality",
+        "weight": 0.5
+      },
+      {
+        "target": "CLS Group Holdings AG",
+        "type": "fx_settlement_ecosystem",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "Hong Kong Exchanges and Clearing Limited",
+    "ticker": "0388",
+    "sector": "MARKET",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.2855,
+      "lng": 114.1577
+    },
+    "description": "Hong Kong’s exchange and clearing group, central to China-access channels such as Stock Connect and Bond Connect.",
+    "top_dependencies": [
+      {
+        "target": "Hong Kong Monetary Authority",
+        "type": "financial_stability_environment",
+        "weight": 0.64
+      },
+      {
+        "target": "People's Bank of China",
+        "type": "mainland_market_connectivity",
+        "weight": 0.78
+      },
+      {
+        "target": "Hong Kong Securities Clearing Company Limited",
+        "type": "post_trade_layer",
+        "weight": 0.82
+      }
+    ]
+  },
+  {
+    "name": "Japan Exchange Group, Inc.",
+    "ticker": "8697",
+    "sector": "MARKET",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6824,
+      "lng": 139.7707
+    },
+    "description": "Japan’s exchange group and the main hub for Japanese equity, derivatives and commodity price discovery.",
+    "top_dependencies": [
+      {
+        "target": "Japan Securities Clearing Corporation",
+        "type": "clearing_layer",
+        "weight": 0.88
+      },
+      {
+        "target": "Bank of Japan",
+        "type": "policy_and_liquidity_environment",
+        "weight": 0.58
+      },
+      {
+        "target": "Mizuho Financial Group, Inc.",
+        "type": "dealer_and_member_flow",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Singapore Exchange Limited",
+    "ticker": "S68",
+    "sector": "MARKET",
+    "country": "Singapore",
+    "location": {
+      "lat": 1.2836,
+      "lng": 103.8511
+    },
+    "description": "A regional multi-asset exchange with important roles in FX, rates, equity and commodity derivatives in Asia.",
+    "top_dependencies": [
+      {
+        "target": "Monetary Authority of Singapore",
+        "type": "oversight_and_liquidity_environment",
+        "weight": 0.62
+      },
+      {
+        "target": "CLS Group Holdings AG",
+        "type": "fx_ecosystem_linkage",
+        "weight": 0.48
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "market_data_distribution",
+        "weight": 0.44
+      }
+    ]
+  },
+  {
+    "name": "SIX Group Ltd",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Switzerland",
+    "location": {
+      "lat": 47.3769,
+      "lng": 8.5402
+    },
+    "description": "Switzerland’s market infrastructure group, central to domestic exchange, payments and settlement services.",
+    "top_dependencies": [
+      {
+        "target": "Swiss National Bank",
+        "type": "system_environment",
+        "weight": 0.72
+      },
+      {
+        "target": "UBS Group AG",
+        "type": "major_member_flow",
+        "weight": 0.46
+      },
+      {
+        "target": "Clearstream Banking S.A.",
+        "type": "cross_border_post_trade_linkage",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "TMX Group Limited",
+    "ticker": "X",
+    "sector": "MARKET",
+    "country": "Canada",
+    "location": {
+      "lat": 43.649,
+      "lng": -79.3801
+    },
+    "description": "Canada’s main exchange-group hub for equities, derivatives and fixed-income market access.",
+    "top_dependencies": [
+      {
+        "target": "Bank of Canada",
+        "type": "policy_and_liquidity_environment",
+        "weight": 0.56
+      },
+      {
+        "target": "Royal Bank of Canada",
+        "type": "major_member_flow",
+        "weight": 0.48
+      },
+      {
+        "target": "The Toronto-Dominion Bank",
+        "type": "major_member_flow",
+        "weight": 0.46
+      }
+    ]
+  },
+  {
+    "name": "ASX Limited",
+    "ticker": "ASX",
+    "sector": "MARKET",
+    "country": "Australia",
+    "location": {
+      "lat": -33.8665,
+      "lng": 151.2058
+    },
+    "description": "Australia’s dominant exchange and clearing hub for equities, rates and futures markets.",
+    "top_dependencies": [
+      {
+        "target": "Reserve Bank of Australia",
+        "type": "liquidity_and_payment_environment",
+        "weight": 0.6
+      },
+      {
+        "target": "CME Group Inc.",
+        "type": "global_derivatives_linkage",
+        "weight": 0.36
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "market_data_distribution",
+        "weight": 0.4
+      }
+    ]
+  },
+  {
+    "name": "BSE Limited",
+    "ticker": "BSE",
+    "sector": "MARKET",
+    "country": "India",
+    "location": {
+      "lat": 18.9299,
+      "lng": 72.833
+    },
+    "description": "One of India’s principal stock exchanges and a key venue for domestic equity price discovery.",
+    "top_dependencies": [
+      {
+        "target": "Reserve Bank of India",
+        "type": "financial_stability_environment",
+        "weight": 0.54
+      },
+      {
+        "target": "Clearing Corporation of India Limited",
+        "type": "domestic_market_plumbing",
+        "weight": 0.42
+      },
+      {
+        "target": "Ministry of Statistics and Programme Implementation (India)",
+        "type": "macro_release_sensitivity",
+        "weight": 0.34
+      }
+    ]
+  },
+  {
+    "name": "National Stock Exchange of India Limited",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "India",
+    "location": {
+      "lat": 19.0596,
+      "lng": 72.8656
+    },
+    "description": "India’s dominant equities and derivatives venue and a critical node in the country’s capital-market architecture.",
+    "top_dependencies": [
+      {
+        "target": "Reserve Bank of India",
+        "type": "financial_stability_environment",
+        "weight": 0.6
+      },
+      {
+        "target": "Clearing Corporation of India Limited",
+        "type": "domestic_market_plumbing",
+        "weight": 0.46
+      },
+      {
+        "target": "Ministry of Statistics and Programme Implementation (India)",
+        "type": "macro_release_sensitivity",
+        "weight": 0.38
+      }
+    ]
+  },
+  {
+    "name": "Shanghai Stock Exchange",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "China",
+    "location": {
+      "lat": 31.2383,
+      "lng": 121.515
+    },
+    "description": "A core onshore Chinese exchange central to domestic equity and ETF price discovery.",
+    "top_dependencies": [
+      {
+        "target": "People's Bank of China",
+        "type": "policy_and_liquidity_environment",
+        "weight": 0.56
+      },
+      {
+        "target": "National Bureau of Statistics of China",
+        "type": "macro_release_sensitivity",
+        "weight": 0.4
+      },
+      {
+        "target": "China Securities Depository and Clearing Corporation Limited",
+        "type": "post_trade_layer",
+        "weight": 0.84
+      }
+    ]
+  },
+  {
+    "name": "Shenzhen Stock Exchange",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "China",
+    "location": {
+      "lat": 22.5381,
+      "lng": 114.0642
+    },
+    "description": "A key onshore Chinese exchange with strong exposure to growth, technology and retail-driven equity flows.",
+    "top_dependencies": [
+      {
+        "target": "People's Bank of China",
+        "type": "policy_and_liquidity_environment",
+        "weight": 0.54
+      },
+      {
+        "target": "National Bureau of Statistics of China",
+        "type": "macro_release_sensitivity",
+        "weight": 0.38
+      },
+      {
+        "target": "China Securities Depository and Clearing Corporation Limited",
+        "type": "post_trade_layer",
+        "weight": 0.84
+      }
+    ]
+  },
+  {
+    "name": "Korea Exchange",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "South Korea",
+    "location": {
+      "lat": 35.1781,
+      "lng": 129.0748
+    },
+    "description": "South Korea’s principal exchange and a critical node for equity, derivatives and KOSPI-linked risk transfer.",
+    "top_dependencies": [
+      {
+        "target": "Bank of Korea",
+        "type": "liquidity_and_policy_environment",
+        "weight": 0.58
+      },
+      {
+        "target": "MSCI Inc.",
+        "type": "benchmark_flow_sensitivity",
+        "weight": 0.46
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "market_data_distribution",
+        "weight": 0.42
+      }
+    ]
+  },
+  {
+    "name": "Taiwan Stock Exchange Corporation",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Taiwan",
+    "location": {
+      "lat": 25.0478,
+      "lng": 121.517
+    },
+    "description": "Taiwan’s main equity exchange and a high-sensitivity node for semiconductor-linked global portfolio flows.",
+    "top_dependencies": [
+      {
+        "target": "MSCI Inc.",
+        "type": "benchmark_flow_sensitivity",
+        "weight": 0.5
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "market_data_distribution",
+        "weight": 0.44
+      },
+      {
+        "target": "S&P Global Inc.",
+        "type": "index_and_data_ecosystem",
+        "weight": 0.32
+      }
+    ]
+  },
+  {
+    "name": "Saudi Tadawul Group Holding Company",
+    "ticker": "1111",
+    "sector": "MARKET",
+    "country": "Saudi Arabia",
+    "location": {
+      "lat": 24.6877,
+      "lng": 46.685
+    },
+    "description": "Saudi Arabia’s exchange group and the central venue for local equity and ETF access to the Kingdom.",
+    "top_dependencies": [
+      {
+        "target": "Saudi Central Bank",
+        "type": "financial_stability_environment",
+        "weight": 0.54
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "global_data_distribution",
+        "weight": 0.4
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_market_participation",
+        "weight": 0.28
+      }
+    ]
+  },
+  {
+    "name": "B3 S.A. - Brasil, Bolsa, Balcão",
+    "ticker": "B3SA3",
+    "sector": "MARKET",
+    "country": "Brazil",
+    "location": {
+      "lat": -23.5462,
+      "lng": -46.637
+    },
+    "description": "Brazil’s integrated exchange and post-trade hub for equities, rates, FX and central-bank-linked markets.",
+    "top_dependencies": [
+      {
+        "target": "Banco Central do Brasil",
+        "type": "policy_and_liquidity_environment",
+        "weight": 0.62
+      },
+      {
+        "target": "Bloomberg L.P.",
+        "type": "market_data_distribution",
+        "weight": 0.4
+      },
+      {
+        "target": "Swift SCRL",
+        "type": "cross_border_market_participation",
+        "weight": 0.3
+      }
+    ]
+  },
+  {
+    "name": "Japan Securities Clearing Corporation",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6817,
+      "lng": 139.7675
+    },
+    "description": "Japan’s main CCP for listed products and an essential layer of the country’s market-risk infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "Japan Exchange Group, Inc.",
+        "type": "parent_market",
+        "weight": 0.92
+      },
+      {
+        "target": "Bank of Japan",
+        "type": "liquidity_environment",
+        "weight": 0.54
+      },
+      {
+        "target": "Mizuho Financial Group, Inc.",
+        "type": "major_member_flow",
+        "weight": 0.36
+      }
+    ]
+  },
+  {
+    "name": "Hong Kong Securities Clearing Company Limited",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "Hong Kong",
+    "location": {
+      "lat": 22.2855,
+      "lng": 114.1577
+    },
+    "description": "HKEX’s central securities clearing node and a key operational layer for Hong Kong and China-connect equities flows.",
+    "top_dependencies": [
+      {
+        "target": "Hong Kong Exchanges and Clearing Limited",
+        "type": "parent_market",
+        "weight": 0.96
+      },
+      {
+        "target": "Hong Kong Monetary Authority",
+        "type": "system_environment",
+        "weight": 0.46
+      },
+      {
+        "target": "People's Bank of China",
+        "type": "mainland_connectivity",
+        "weight": 0.54
+      }
+    ]
+  },
+  {
+    "name": "Clearing Corporation of India Limited",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "India",
+    "location": {
+      "lat": 19.076,
+      "lng": 72.8777
+    },
+    "description": "A critical Indian post-trade utility for money, bond, FX and derivatives market settlement and risk management.",
+    "top_dependencies": [
+      {
+        "target": "Reserve Bank of India",
+        "type": "money_market_environment",
+        "weight": 0.78
+      },
+      {
+        "target": "National Stock Exchange of India Limited",
+        "type": "market_flow_linkage",
+        "weight": 0.42
+      },
+      {
+        "target": "BSE Limited",
+        "type": "market_flow_linkage",
+        "weight": 0.36
+      }
+    ]
+  },
+  {
+    "name": "China Securities Depository and Clearing Corporation Limited",
+    "ticker": null,
+    "sector": "MARKET",
+    "country": "China",
+    "location": {
+      "lat": 39.9087,
+      "lng": 116.4701
+    },
+    "description": "China’s central securities depository and clearing node for the mainland exchanges, crucial to domestic post-trade resilience.",
+    "top_dependencies": [
+      {
+        "target": "People's Bank of China",
+        "type": "policy_and_liquidity_environment",
+        "weight": 0.48
+      },
+      {
+        "target": "Shanghai Stock Exchange",
+        "type": "market_flow_linkage",
+        "weight": 0.84
+      },
+      {
+        "target": "Shenzhen Stock Exchange",
+        "type": "market_flow_linkage",
+        "weight": 0.84
+      }
+    ]
+  }
+]

@@ -1,0 +1,2802 @@
+[
+  {
+    "name": "Lockheed Martin Corporation",
+    "ticker": "LMT",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.9807,
+      "lng": -77.0942
+    },
+    "description": "Largest U.S. defense prime and a central node for tactical aircraft, missiles, missile defense, and military space systems.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.98
+      },
+      {
+        "target": "Defense Logistics Agency",
+        "type": "logistics",
+        "weight": 0.87
+      },
+      {
+        "target": "RTX Corporation",
+        "type": "supplier",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "RTX Corporation",
+    "ticker": "RTX",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.8816,
+      "lng": -77.0866
+    },
+    "description": "Major U.S. defense and aerospace group spanning missiles, sensors, propulsion, and secure communications.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.97
+      },
+      {
+        "target": "Defense Logistics Agency",
+        "type": "logistics",
+        "weight": 0.88
+      },
+      {
+        "target": "Lockheed Martin Corporation",
+        "type": "program-partner",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Northrop Grumman Corporation",
+    "ticker": "NOC",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.885,
+      "lng": -77.1711
+    },
+    "description": "Prime contractor with systemic importance in strategic bombers, missile defense, solid rockets, and national-security space payloads.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.98
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.86
+      },
+      {
+        "target": "Defense Logistics Agency",
+        "type": "logistics",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "The Boeing Company",
+    "ticker": "BA",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.8809,
+      "lng": -77.1103
+    },
+    "description": "Large aerospace and defense integrator whose military aircraft, rotorcraft, munitions, and satellite programs remain globally consequential.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.92
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.82
+      },
+      {
+        "target": "RTX Corporation",
+        "type": "supplier",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "General Dynamics Corporation",
+    "ticker": "GD",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.9586,
+      "lng": -77.357
+    },
+    "description": "U.S. prime central to armored vehicles, nuclear submarines, Gulfstream special missions, and mission IT.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.96
+      },
+      {
+        "target": "Defense Logistics Agency",
+        "type": "logistics",
+        "weight": 0.86
+      },
+      {
+        "target": "Huntington Ingalls Industries, Inc.",
+        "type": "shipbuilding-peer",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "BAE Systems plc",
+    "ticker": "BA.",
+    "sector": "DEFENSE",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.2753,
+      "lng": -0.753
+    },
+    "description": "UK-headquartered defense major spanning combat vehicles, naval systems, combat air, electronic warfare, and munitions.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.9
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.82
+      },
+      {
+        "target": "MBDA",
+        "type": "program-partner",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "L3Harris Technologies, Inc.",
+    "ticker": "LHX",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 28.0836,
+      "lng": -80.6081
+    },
+    "description": "Mission-systems and communications specialist with large exposure to ISR, tactical radios, EW, and national-security space payloads.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.94
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.82
+      },
+      {
+        "target": "Leidos Holdings, Inc.",
+        "type": "integrator-partner",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Huntington Ingalls Industries, Inc.",
+    "ticker": "HII",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 36.9798,
+      "lng": -76.4291
+    },
+    "description": "The dominant U.S. naval shipbuilder for aircraft carriers, amphibious ships, and key nuclear-submarine work.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.96
+      },
+      {
+        "target": "General Dynamics Corporation",
+        "type": "shipbuilding-peer",
+        "weight": 0.81
+      },
+      {
+        "target": "Defense Logistics Agency",
+        "type": "logistics",
+        "weight": 0.77
+      }
+    ]
+  },
+  {
+    "name": "Leidos Holdings, Inc.",
+    "ticker": "LDOS",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.9586,
+      "lng": -77.357
+    },
+    "description": "Government technology integrator central to defense IT, ISR analytics, logistics systems, and cyber operations support.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.94
+      },
+      {
+        "target": "Defense Advanced Research Projects Agency",
+        "type": "research-transition",
+        "weight": 0.8
+      },
+      {
+        "target": "United States Cyber Command",
+        "type": "mission-support",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "Booz Allen Hamilton Holding Corporation",
+    "ticker": "BAH",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.9339,
+      "lng": -77.1773
+    },
+    "description": "Consulting and engineering contractor deeply embedded in U.S. defense, intelligence, cyber, and digital modernization programs.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.94
+      },
+      {
+        "target": "National Security Agency",
+        "type": "mission-support",
+        "weight": 0.85
+      },
+      {
+        "target": "United States Cyber Command",
+        "type": "mission-support",
+        "weight": 0.82
+      }
+    ]
+  },
+  {
+    "name": "CACI International Inc",
+    "ticker": "CACI",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.9586,
+      "lng": -77.357
+    },
+    "description": "Defense IT and mission-technology contractor with importance in EW, ISR, secure communications, and defense digital systems.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.93
+      },
+      {
+        "target": "United States Cyber Command",
+        "type": "mission-support",
+        "weight": 0.8
+      },
+      {
+        "target": "Leidos Holdings, Inc.",
+        "type": "integrator-peer",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Science Applications International Corporation",
+    "ticker": "SAIC",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.96,
+      "lng": -77.36
+    },
+    "description": "Major government services contractor supporting defense engineering, systems integration, enterprise IT, and mission readiness programs.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.93
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.79
+      },
+      {
+        "target": "Defense Logistics Agency",
+        "type": "logistics-IT",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "KBR, Inc.",
+    "ticker": "KBR",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 29.7604,
+      "lng": -95.3698
+    },
+    "description": "Engineering and support-services contractor exposed to defense logistics, base operations, and military space and ISR programs.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.9
+      },
+      {
+        "target": "Defense Logistics Agency",
+        "type": "logistics",
+        "weight": 0.82
+      },
+      {
+        "target": "Parsons Corporation",
+        "type": "program-partner",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Parsons Corporation",
+    "ticker": "PSN",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.8404,
+      "lng": -77.4289
+    },
+    "description": "Engineering and cyber-enabled infrastructure contractor active in missile defense, critical infrastructure, and defense mission systems.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.92
+      },
+      {
+        "target": "Defense Advanced Research Projects Agency",
+        "type": "research-customer",
+        "weight": 0.75
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Oshkosh Corporation",
+    "ticker": "OSK",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 44.0247,
+      "lng": -88.5426
+    },
+    "description": "Systemically important producer of tactical wheeled vehicles and sustainment platforms for U.S. and allied forces.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.91
+      },
+      {
+        "target": "Defense Logistics Agency",
+        "type": "logistics",
+        "weight": 0.85
+      },
+      {
+        "target": "RTX Corporation",
+        "type": "subsystem-supplier",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "Textron Inc.",
+    "ticker": "TXT",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 41.824,
+      "lng": -71.4128
+    },
+    "description": "Diversified aerospace and defense manufacturer spanning military rotorcraft, UAVs, armored systems, and precision weapons.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.89
+      },
+      {
+        "target": "Lockheed Martin Corporation",
+        "type": "program-partner",
+        "weight": 0.68
+      },
+      {
+        "target": "Defense Logistics Agency",
+        "type": "logistics",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "AeroVironment, Inc.",
+    "ticker": "AVAV",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.8895,
+      "lng": -77.0793
+    },
+    "description": "Key unmanned-systems supplier whose loitering munitions and tactical drones have become important battlefield diffusion nodes.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.9
+      },
+      {
+        "target": "Anduril Industries, Inc.",
+        "type": "autonomy-peer",
+        "weight": 0.72
+      },
+      {
+        "target": "Palantir Technologies Inc.",
+        "type": "software-partner",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Kratos Defense & Security Solutions, Inc.",
+    "ticker": "KTOS",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 32.7157,
+      "lng": -117.1611
+    },
+    "description": "Defense technology company focused on tactical drones, microwave electronics, space ground systems, and hypersonic support infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.9
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.75
+      },
+      {
+        "target": "Anduril Industries, Inc.",
+        "type": "autonomy-peer",
+        "weight": 0.69
+      }
+    ]
+  },
+  {
+    "name": "Mercury Systems, Inc.",
+    "ticker": "MRCY",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 42.6584,
+      "lng": -71.137
+    },
+    "description": "Trusted-electronics supplier whose processing modules and secure components sit deep inside U.S. defense platforms.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.88
+      },
+      {
+        "target": "Lockheed Martin Corporation",
+        "type": "customer",
+        "weight": 0.76
+      },
+      {
+        "target": "Northrop Grumman Corporation",
+        "type": "customer",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Curtiss-Wright Corporation",
+    "ticker": "CW",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 35.4993,
+      "lng": -80.8487
+    },
+    "description": "Subsystem supplier with broad exposure to naval nuclear propulsion, defense electronics, actuation, and secure industrial controls.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.88
+      },
+      {
+        "target": "General Dynamics Corporation",
+        "type": "customer",
+        "weight": 0.72
+      },
+      {
+        "target": "Northrop Grumman Corporation",
+        "type": "customer",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Palantir Technologies Inc.",
+    "ticker": "PLTR",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 25.9565,
+      "lng": -80.1392
+    },
+    "description": "Defense software and data-fusion platform provider central to battlefield decision support, ISR fusion, and command analytics.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.95
+      },
+      {
+        "target": "United States Cyber Command",
+        "type": "mission-support",
+        "weight": 0.86
+      },
+      {
+        "target": "Anduril Industries, Inc.",
+        "type": "autonomy-partner",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "Anduril Industries, Inc.",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 33.6903,
+      "lng": -117.917
+    },
+    "description": "Private defense-tech firm building autonomous systems, loitering weapons, sensors, and software-defined defense infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.92
+      },
+      {
+        "target": "Palantir Technologies Inc.",
+        "type": "software-partner",
+        "weight": 0.76
+      },
+      {
+        "target": "Defense Advanced Research Projects Agency",
+        "type": "research-customer",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Shield AI, Inc.",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 32.7157,
+      "lng": -117.1611
+    },
+    "description": "Autonomy-focused defense company known for AI pilots, tactical drones, and software layers for autonomous combat systems.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.9
+      },
+      {
+        "target": "Anduril Industries, Inc.",
+        "type": "autonomy-peer",
+        "weight": 0.74
+      },
+      {
+        "target": "Palantir Technologies Inc.",
+        "type": "software-partner",
+        "weight": 0.71
+      }
+    ]
+  },
+  {
+    "name": "Airbus SE",
+    "ticker": "AIR",
+    "sector": "DEFENSE",
+    "country": "France",
+    "location": {
+      "lat": 43.6047,
+      "lng": 1.4442
+    },
+    "description": "European aerospace and defense giant spanning military airlift, satellites, secure communications, and missile consortium exposure.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.84
+      },
+      {
+        "target": "MBDA",
+        "type": "program-partner",
+        "weight": 0.82
+      },
+      {
+        "target": "Thales S.A.",
+        "type": "subsystem-partner",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Leonardo S.p.A.",
+    "ticker": "LDO",
+    "sector": "DEFENSE",
+    "country": "Italy",
+    "location": {
+      "lat": 41.9028,
+      "lng": 12.4964
+    },
+    "description": "Italian defense and aerospace group active in helicopters, electronics, cyber, training aircraft, and missile programs.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.84
+      },
+      {
+        "target": "Thales S.A.",
+        "type": "electronics-partner",
+        "weight": 0.74
+      },
+      {
+        "target": "MBDA",
+        "type": "missile-consortium",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Thales S.A.",
+    "ticker": "HO",
+    "sector": "DEFENSE",
+    "country": "France",
+    "location": {
+      "lat": 48.8918,
+      "lng": 2.2381
+    },
+    "description": "French defense-electronics leader central to radars, avionics, cyber, secure communications, and air-defense architectures.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.86
+      },
+      {
+        "target": "Airbus SE",
+        "type": "platform-partner",
+        "weight": 0.77
+      },
+      {
+        "target": "NATO Communications and Information Agency",
+        "type": "network-partner",
+        "weight": 0.75
+      }
+    ]
+  },
+  {
+    "name": "Safran SA",
+    "ticker": "SAF",
+    "sector": "DEFENSE",
+    "country": "France",
+    "location": {
+      "lat": 48.8566,
+      "lng": 2.3522
+    },
+    "description": "Aerospace propulsion and equipment company important to military engines, optronics, navigation, and resilient avionics supply chains.",
+    "top_dependencies": [
+      {
+        "target": "Airbus SE",
+        "type": "platform-partner",
+        "weight": 0.79
+      },
+      {
+        "target": "Dassault Aviation SA",
+        "type": "engine-and-systems-partner",
+        "weight": 0.74
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Dassault Aviation SA",
+    "ticker": "AM",
+    "sector": "DEFENSE",
+    "country": "France",
+    "location": {
+      "lat": 48.8451,
+      "lng": 2.219
+    },
+    "description": "Combat-air manufacturer whose Rafale ecosystem is strategically important across Europe, the Middle East, and Asia.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.82
+      },
+      {
+        "target": "Safran SA",
+        "type": "engine-supplier",
+        "weight": 0.78
+      },
+      {
+        "target": "Thales S.A.",
+        "type": "sensor-supplier",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "Rheinmetall AG",
+    "ticker": "RHM",
+    "sector": "DEFENSE",
+    "country": "Germany",
+    "location": {
+      "lat": 51.2277,
+      "lng": 6.7735
+    },
+    "description": "German defense group at the center of Europe's ammunition, air-defense, armored-vehicle, and land-systems expansion.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.89
+      },
+      {
+        "target": "KNDS N.V.",
+        "type": "land-systems-peer",
+        "weight": 0.78
+      },
+      {
+        "target": "Hensoldt AG",
+        "type": "sensor-partner",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Saab AB",
+    "ticker": "SAAB B",
+    "sector": "DEFENSE",
+    "country": "Sweden",
+    "location": {
+      "lat": 59.3293,
+      "lng": 18.0686
+    },
+    "description": "Nordic defense prime with importance in fighter aircraft, sensors, underwater systems, and anti-armor and air-defense portfolios.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.84
+      },
+      {
+        "target": "BAE Systems plc",
+        "type": "program-partner",
+        "weight": 0.71
+      },
+      {
+        "target": "Kongsberg Gruppen ASA",
+        "type": "missile-partner",
+        "weight": 0.69
+      }
+    ]
+  },
+  {
+    "name": "Rolls-Royce Holdings plc",
+    "ticker": "RR.",
+    "sector": "DEFENSE",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 52.9225,
+      "lng": -1.4746
+    },
+    "description": "Critical propulsion supplier to military aviation and naval nuclear programs, especially across UK and allied fleets.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.7
+      },
+      {
+        "target": "BAE Systems plc",
+        "type": "platform-partner",
+        "weight": 0.68
+      },
+      {
+        "target": "Airbus SE",
+        "type": "platform-partner",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "Hensoldt AG",
+    "ticker": "HAG",
+    "sector": "DEFENSE",
+    "country": "Germany",
+    "location": {
+      "lat": 48.0485,
+      "lng": 11.6184
+    },
+    "description": "German sensor and electronics specialist central to radars, optronics, EW payloads, and integrated air-defense architectures.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.81
+      },
+      {
+        "target": "Rheinmetall AG",
+        "type": "land-systems-partner",
+        "weight": 0.75
+      },
+      {
+        "target": "Airbus SE",
+        "type": "platform-partner",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "QinetiQ Group plc",
+    "ticker": "QQ.",
+    "sector": "DEFENSE",
+    "country": "United Kingdom",
+    "location": {
+      "lat": 51.2755,
+      "lng": -0.7558
+    },
+    "description": "Defense technology and test-services group with influence over experimentation ranges, robotics, and mission systems integration.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.8
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.72
+      },
+      {
+        "target": "BAE Systems plc",
+        "type": "program-partner",
+        "weight": 0.69
+      }
+    ]
+  },
+  {
+    "name": "MBDA",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "France",
+    "location": {
+      "lat": 48.7831,
+      "lng": 2.266
+    },
+    "description": "Europe's main missile consortium and a cross-border bottleneck for air-defense, anti-ship, and precision-strike inventories.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.9
+      },
+      {
+        "target": "Airbus SE",
+        "type": "shareholder-partner",
+        "weight": 0.82
+      },
+      {
+        "target": "Leonardo S.p.A.",
+        "type": "shareholder-partner",
+        "weight": 0.8
+      }
+    ]
+  },
+  {
+    "name": "KNDS N.V.",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Netherlands",
+    "location": {
+      "lat": 52.3676,
+      "lng": 4.9041
+    },
+    "description": "Franco-German land-systems group important to tanks, artillery, armored vehicles, and European rearmament throughput.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.87
+      },
+      {
+        "target": "Rheinmetall AG",
+        "type": "land-systems-peer",
+        "weight": 0.82
+      },
+      {
+        "target": "Thales S.A.",
+        "type": "electronics-partner",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Naval Group",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "France",
+    "location": {
+      "lat": 48.8566,
+      "lng": 2.3522
+    },
+    "description": "French naval prime central to submarines, surface combatants, naval combat systems, and associated sovereign industrial capacity.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.83
+      },
+      {
+        "target": "Thales S.A.",
+        "type": "combat-systems-partner",
+        "weight": 0.72
+      },
+      {
+        "target": "Safran SA",
+        "type": "naval-systems-supplier",
+        "weight": 0.65
+      }
+    ]
+  },
+  {
+    "name": "Fincantieri S.p.A.",
+    "ticker": "FCT",
+    "sector": "DEFENSE",
+    "country": "Italy",
+    "location": {
+      "lat": 45.6495,
+      "lng": 13.7768
+    },
+    "description": "Major naval builder with expanding exposure to frigates, submarines, and maritime defense programs across allied fleets.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.78
+      },
+      {
+        "target": "Leonardo S.p.A.",
+        "type": "combat-systems-partner",
+        "weight": 0.71
+      },
+      {
+        "target": "Naval Group",
+        "type": "shipbuilding-peer",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Kongsberg Gruppen ASA",
+    "ticker": "KOG",
+    "sector": "DEFENSE",
+    "country": "Norway",
+    "location": {
+      "lat": 59.6686,
+      "lng": 9.6502
+    },
+    "description": "Norwegian defense and aerospace group important to naval missiles, air defense, remote weapon stations, and space systems.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.84
+      },
+      {
+        "target": "Saab AB",
+        "type": "missile-partner",
+        "weight": 0.72
+      },
+      {
+        "target": "RTX Corporation",
+        "type": "program-partner",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Elbit Systems Ltd.",
+    "ticker": "ESLT",
+    "sector": "DEFENSE",
+    "country": "Israel",
+    "location": {
+      "lat": 32.794,
+      "lng": 34.9896
+    },
+    "description": "Israeli defense electronics and systems house active in UAVs, artillery, EW, optronics, and battlefield networking.",
+    "top_dependencies": [
+      {
+        "target": "Rafael Advanced Defense Systems Ltd.",
+        "type": "program-partner",
+        "weight": 0.76
+      },
+      {
+        "target": "Israel Aerospace Industries Ltd.",
+        "type": "program-partner",
+        "weight": 0.72
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.65
+      }
+    ]
+  },
+  {
+    "name": "Israel Aerospace Industries Ltd.",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Israel",
+    "location": {
+      "lat": 31.951,
+      "lng": 34.895
+    },
+    "description": "State-owned aerospace and defense manufacturer central to UAVs, missile defense subsystems, special mission aircraft, and satellites.",
+    "top_dependencies": [
+      {
+        "target": "Rafael Advanced Defense Systems Ltd.",
+        "type": "program-partner",
+        "weight": 0.78
+      },
+      {
+        "target": "Elbit Systems Ltd.",
+        "type": "electronics-partner",
+        "weight": 0.74
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "Rafael Advanced Defense Systems Ltd.",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Israel",
+    "location": {
+      "lat": 32.8064,
+      "lng": 34.9769
+    },
+    "description": "Missile and air-defense specialist whose interceptors and precision weapons are strategically important to multiple allied inventories.",
+    "top_dependencies": [
+      {
+        "target": "Israel Aerospace Industries Ltd.",
+        "type": "program-partner",
+        "weight": 0.8
+      },
+      {
+        "target": "Elbit Systems Ltd.",
+        "type": "electronics-partner",
+        "weight": 0.75
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "ASELSAN Elektronik Sanayi ve Ticaret A.S.",
+    "ticker": "ASELS",
+    "sector": "DEFENSE",
+    "country": "Turkey",
+    "location": {
+      "lat": 39.9208,
+      "lng": 32.8541
+    },
+    "description": "Turkish defense electronics leader providing radars, communications, EO sensors, and fire-control systems across Ankara's defense stack.",
+    "top_dependencies": [
+      {
+        "target": "Turkish Aerospace Industries, Inc.",
+        "type": "platform-customer",
+        "weight": 0.8
+      },
+      {
+        "target": "Roketsan Roket Sanayii ve Ticaret A.S.",
+        "type": "subsystem-partner",
+        "weight": 0.76
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-standards",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Turkish Aerospace Industries, Inc.",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Turkey",
+    "location": {
+      "lat": 39.9208,
+      "lng": 32.8541
+    },
+    "description": "Turkey's main military aerospace integrator for trainers, helicopters, UAVs, and combat-air development programs.",
+    "top_dependencies": [
+      {
+        "target": "ASELSAN Elektronik Sanayi ve Ticaret A.S.",
+        "type": "avionics-supplier",
+        "weight": 0.8
+      },
+      {
+        "target": "Roketsan Roket Sanayii ve Ticaret A.S.",
+        "type": "weapons-partner",
+        "weight": 0.73
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-standards",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Roketsan Roket Sanayii ve Ticaret A.S.",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Turkey",
+    "location": {
+      "lat": 39.9246,
+      "lng": 32.854
+    },
+    "description": "Turkey's main rocket and missile producer, central to guided munitions, air defense, and strike-system supply chains.",
+    "top_dependencies": [
+      {
+        "target": "ASELSAN Elektronik Sanayi ve Ticaret A.S.",
+        "type": "electronics-partner",
+        "weight": 0.8
+      },
+      {
+        "target": "Turkish Aerospace Industries, Inc.",
+        "type": "platform-partner",
+        "weight": 0.76
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-standards",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Baykar Technologies",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Turkey",
+    "location": {
+      "lat": 41.0082,
+      "lng": 28.9784
+    },
+    "description": "Drone manufacturer whose combat UAV exports have made it a major diffusion node in the global defense technology market.",
+    "top_dependencies": [
+      {
+        "target": "Turkish Aerospace Industries, Inc.",
+        "type": "aerospace-peer",
+        "weight": 0.71
+      },
+      {
+        "target": "ASELSAN Elektronik Sanayi ve Ticaret A.S.",
+        "type": "subsystem-supplier",
+        "weight": 0.69
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-standards",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "EDGE Group PJSC",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United Arab Emirates",
+    "location": {
+      "lat": 24.4539,
+      "lng": 54.3773
+    },
+    "description": "UAE state-backed defense conglomerate spanning precision weapons, autonomous systems, naval programs, and sovereign electronics.",
+    "top_dependencies": [
+      {
+        "target": "Thales S.A.",
+        "type": "technology-partner",
+        "weight": 0.6
+      },
+      {
+        "target": "Airbus SE",
+        "type": "aerospace-partner",
+        "weight": 0.58
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "export-market",
+        "weight": 0.55
+      }
+    ]
+  },
+  {
+    "name": "Hindustan Aeronautics Limited",
+    "ticker": "HAL",
+    "sector": "DEFENSE",
+    "country": "India",
+    "location": {
+      "lat": 12.9716,
+      "lng": 77.5946
+    },
+    "description": "India's core aerospace manufacturer for fighters, helicopters, engines, and military aviation maintenance capacity.",
+    "top_dependencies": [
+      {
+        "target": "Defence Research and Development Organisation",
+        "type": "R&D-partner",
+        "weight": 0.86
+      },
+      {
+        "target": "Bharat Electronics Limited",
+        "type": "avionics-partner",
+        "weight": 0.8
+      },
+      {
+        "target": "Bharat Dynamics Limited",
+        "type": "weapons-integration",
+        "weight": 0.74
+      }
+    ]
+  },
+  {
+    "name": "Bharat Electronics Limited",
+    "ticker": "BEL",
+    "sector": "DEFENSE",
+    "country": "India",
+    "location": {
+      "lat": 12.9716,
+      "lng": 77.5946
+    },
+    "description": "Indian state defense electronics champion producing radars, communications, EW, and command-system hardware at scale.",
+    "top_dependencies": [
+      {
+        "target": "Defence Research and Development Organisation",
+        "type": "R&D-partner",
+        "weight": 0.82
+      },
+      {
+        "target": "Hindustan Aeronautics Limited",
+        "type": "platform-customer",
+        "weight": 0.79
+      },
+      {
+        "target": "Bharat Dynamics Limited",
+        "type": "missile-integration",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Bharat Dynamics Limited",
+    "ticker": "BDL",
+    "sector": "DEFENSE",
+    "country": "India",
+    "location": {
+      "lat": 17.385,
+      "lng": -78.4867
+    },
+    "description": "India's key missile manufacturer and a production bridge between DRDO development and deployable inventory.",
+    "top_dependencies": [
+      {
+        "target": "Defence Research and Development Organisation",
+        "type": "R&D-source",
+        "weight": 0.88
+      },
+      {
+        "target": "Bharat Electronics Limited",
+        "type": "electronics-supplier",
+        "weight": 0.75
+      },
+      {
+        "target": "Hindustan Aeronautics Limited",
+        "type": "platform-partner",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Defence Research and Development Organisation",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "India",
+    "location": {
+      "lat": 28.6139,
+      "lng": 77.209
+    },
+    "description": "India's premier defense R&D institution and a major upstream node for domestic missiles, sensors, and aerospace platforms.",
+    "top_dependencies": [
+      {
+        "target": "Hindustan Aeronautics Limited",
+        "type": "industrialization",
+        "weight": 0.84
+      },
+      {
+        "target": "Bharat Electronics Limited",
+        "type": "electronics-industrialization",
+        "weight": 0.82
+      },
+      {
+        "target": "Bharat Dynamics Limited",
+        "type": "missile-industrialization",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "Mitsubishi Heavy Industries, Ltd.",
+    "ticker": "7011",
+    "sector": "DEFENSE",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Japanese industrial giant central to shipbuilding, missiles, combat aviation workshare, and national space and defense manufacturing.",
+    "top_dependencies": [
+      {
+        "target": "Lockheed Martin Corporation",
+        "type": "program-partner",
+        "weight": 0.74
+      },
+      {
+        "target": "RTX Corporation",
+        "type": "subsystem-partner",
+        "weight": 0.68
+      },
+      {
+        "target": "IHI Corporation",
+        "type": "engine-partner",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "IHI Corporation",
+    "ticker": "7013",
+    "sector": "DEFENSE",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Japanese heavy-industry and aero-engine supplier with strategic importance to propulsion, naval systems, and industrial resilience.",
+    "top_dependencies": [
+      {
+        "target": "Mitsubishi Heavy Industries, Ltd.",
+        "type": "industrial-partner",
+        "weight": 0.73
+      },
+      {
+        "target": "Lockheed Martin Corporation",
+        "type": "program-partner",
+        "weight": 0.66
+      },
+      {
+        "target": "Kawasaki Heavy Industries, Ltd.",
+        "type": "industrial-peer",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "Kawasaki Heavy Industries, Ltd.",
+    "ticker": "7012",
+    "sector": "DEFENSE",
+    "country": "Japan",
+    "location": {
+      "lat": 35.6895,
+      "lng": 139.6917
+    },
+    "description": "Defense-capable industrial group involved in aircraft, helicopters, maritime systems, and mobility platforms.",
+    "top_dependencies": [
+      {
+        "target": "Mitsubishi Heavy Industries, Ltd.",
+        "type": "industrial-peer",
+        "weight": 0.71
+      },
+      {
+        "target": "The Boeing Company",
+        "type": "aerospace-partner",
+        "weight": 0.69
+      },
+      {
+        "target": "Lockheed Martin Corporation",
+        "type": "program-partner",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "Hanwha Aerospace Co., Ltd.",
+    "ticker": "012450",
+    "sector": "DEFENSE",
+    "country": "South Korea",
+    "location": {
+      "lat": 35.2281,
+      "lng": 128.6811
+    },
+    "description": "Fast-growing Korean defense company central to artillery, aero-engines, armored systems, and munitions export expansion.",
+    "top_dependencies": [
+      {
+        "target": "Korea Aerospace Industries, Ltd.",
+        "type": "platform-partner",
+        "weight": 0.77
+      },
+      {
+        "target": "LIG Nex1 Co., Ltd.",
+        "type": "missile-and-sensor-partner",
+        "weight": 0.75
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "export-demand",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Korea Aerospace Industries, Ltd.",
+    "ticker": "047810",
+    "sector": "DEFENSE",
+    "country": "South Korea",
+    "location": {
+      "lat": 35.0039,
+      "lng": 128.064
+    },
+    "description": "Korea's core aerospace integrator for trainers, helicopters, fighters, and military aircraft sustainment.",
+    "top_dependencies": [
+      {
+        "target": "Hanwha Aerospace Co., Ltd.",
+        "type": "engine-and-systems-partner",
+        "weight": 0.78
+      },
+      {
+        "target": "LIG Nex1 Co., Ltd.",
+        "type": "avionics-and-weapons-partner",
+        "weight": 0.72
+      },
+      {
+        "target": "Lockheed Martin Corporation",
+        "type": "program-partner",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Hyundai Rotem Company",
+    "ticker": "064350",
+    "sector": "DEFENSE",
+    "country": "South Korea",
+    "location": {
+      "lat": 37.3447,
+      "lng": 126.9689
+    },
+    "description": "South Korean land-systems producer important to tanks, armored vehicles, and allied recapitalization programs.",
+    "top_dependencies": [
+      {
+        "target": "Hanwha Aerospace Co., Ltd.",
+        "type": "subsystem-partner",
+        "weight": 0.76
+      },
+      {
+        "target": "LIG Nex1 Co., Ltd.",
+        "type": "sensor-and-fire-control",
+        "weight": 0.71
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "export-demand",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "LIG Nex1 Co., Ltd.",
+    "ticker": "079550",
+    "sector": "DEFENSE",
+    "country": "South Korea",
+    "location": {
+      "lat": 37.4449,
+      "lng": 127.1389
+    },
+    "description": "Korean missile, radar, and defense-electronics specialist embedded across Seoul's strike and air-defense stack.",
+    "top_dependencies": [
+      {
+        "target": "Hanwha Aerospace Co., Ltd.",
+        "type": "platform-partner",
+        "weight": 0.78
+      },
+      {
+        "target": "Korea Aerospace Industries, Ltd.",
+        "type": "platform-partner",
+        "weight": 0.73
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "export-demand",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Aviation Industry Corporation of China, Ltd. (AVIC)",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "China's flagship aerospace conglomerate controlling major military aircraft, helicopters, avionics, and upstream aviation industrial capacity.",
+    "top_dependencies": [
+      {
+        "target": "China Aerospace Science and Technology Corporation",
+        "type": "space-systems-link",
+        "weight": 0.78
+      },
+      {
+        "target": "China Aerospace Science and Industry Corporation Limited",
+        "type": "missile-link",
+        "weight": 0.76
+      },
+      {
+        "target": "China North Industries Group Corporation Limited (NORINCO Group)",
+        "type": "defense-industrial-link",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "China North Industries Group Corporation Limited (NORINCO Group)",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "China's main land-systems and munitions conglomerate with major influence over armor, artillery, missiles, and industrial materials.",
+    "top_dependencies": [
+      {
+        "target": "Aviation Industry Corporation of China, Ltd. (AVIC)",
+        "type": "industrial-link",
+        "weight": 0.74
+      },
+      {
+        "target": "China Aerospace Science and Industry Corporation Limited",
+        "type": "missile-link",
+        "weight": 0.72
+      },
+      {
+        "target": "China State Shipbuilding Corporation Limited",
+        "type": "industrial-link",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "China Aerospace Science and Technology Corporation",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "China's principal space contractor spanning launch vehicles, strategic missiles, satellites, and deep-state aerospace programs.",
+    "top_dependencies": [
+      {
+        "target": "China Aerospace Science and Industry Corporation Limited",
+        "type": "missile-link",
+        "weight": 0.8
+      },
+      {
+        "target": "Aviation Industry Corporation of China, Ltd. (AVIC)",
+        "type": "industrial-link",
+        "weight": 0.74
+      },
+      {
+        "target": "China State Shipbuilding Corporation Limited",
+        "type": "industrial-link",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "China Aerospace Science and Industry Corporation Limited",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "Chinese missile and defense-electronics group central to air defense, cruise missiles, and strategic industrial R&D.",
+    "top_dependencies": [
+      {
+        "target": "China Aerospace Science and Technology Corporation",
+        "type": "program-link",
+        "weight": 0.82
+      },
+      {
+        "target": "Aviation Industry Corporation of China, Ltd. (AVIC)",
+        "type": "industrial-link",
+        "weight": 0.74
+      },
+      {
+        "target": "China North Industries Group Corporation Limited (NORINCO Group)",
+        "type": "industrial-link",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "China State Shipbuilding Corporation Limited",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "China",
+    "location": {
+      "lat": 39.9042,
+      "lng": 116.4074
+    },
+    "description": "State shipbuilding champion with strategic weight in naval production, marine engineering, and wartime industrial surge capacity.",
+    "top_dependencies": [
+      {
+        "target": "Aviation Industry Corporation of China, Ltd. (AVIC)",
+        "type": "industrial-link",
+        "weight": 0.68
+      },
+      {
+        "target": "China North Industries Group Corporation Limited (NORINCO Group)",
+        "type": "industrial-link",
+        "weight": 0.66
+      },
+      {
+        "target": "China Aerospace Science and Technology Corporation",
+        "type": "industrial-link",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "State Corporation Rostec",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Russia",
+    "location": {
+      "lat": 55.7558,
+      "lng": 37.6173
+    },
+    "description": "Russian state defense-industrial conglomerate that anchors a large share of the country's aerospace, electronics, and armaments capacity.",
+    "top_dependencies": [
+      {
+        "target": "JSC Concern VKO Almaz-Antey",
+        "type": "air-defense-supplier",
+        "weight": 0.8
+      },
+      {
+        "target": "United Aircraft Corporation",
+        "type": "aerospace-subsidiary",
+        "weight": 0.78
+      },
+      {
+        "target": "Rosoboronexport JSC",
+        "type": "export-channel",
+        "weight": 0.76
+      }
+    ]
+  },
+  {
+    "name": "JSC Concern VKO Almaz-Antey",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Russia",
+    "location": {
+      "lat": 55.7558,
+      "lng": 37.6173
+    },
+    "description": "Russia's core air-defense and missile-systems conglomerate with centrality in SAM networks, radars, and strategic aerospace systems.",
+    "top_dependencies": [
+      {
+        "target": "State Corporation Rostec",
+        "type": "state-parent",
+        "weight": 0.82
+      },
+      {
+        "target": "Rosoboronexport JSC",
+        "type": "export-channel",
+        "weight": 0.7
+      },
+      {
+        "target": "United Aircraft Corporation",
+        "type": "platform-partner",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "United Aircraft Corporation",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Russia",
+    "location": {
+      "lat": 55.7558,
+      "lng": 37.6173
+    },
+    "description": "Russian military-aircraft holding responsible for much of the country's fighter, bomber, and transport-aircraft industrial base.",
+    "top_dependencies": [
+      {
+        "target": "State Corporation Rostec",
+        "type": "state-parent",
+        "weight": 0.82
+      },
+      {
+        "target": "JSC Concern VKO Almaz-Antey",
+        "type": "sensor-and-weapons-partner",
+        "weight": 0.68
+      },
+      {
+        "target": "Rosoboronexport JSC",
+        "type": "export-channel",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "United Shipbuilding Corporation",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Russia",
+    "location": {
+      "lat": 59.9311,
+      "lng": 30.3609
+    },
+    "description": "Main Russian naval shipbuilder and a critical capacity node for submarines, surface combatants, and repair infrastructure.",
+    "top_dependencies": [
+      {
+        "target": "State Corporation Rostec",
+        "type": "state-partner",
+        "weight": 0.78
+      },
+      {
+        "target": "Rosoboronexport JSC",
+        "type": "export-channel",
+        "weight": 0.7
+      },
+      {
+        "target": "JSC Concern VKO Almaz-Antey",
+        "type": "combat-systems-link",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Rosoboronexport JSC",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Russia",
+    "location": {
+      "lat": 55.7558,
+      "lng": 37.6173
+    },
+    "description": "Russia's state arms-export intermediary and a key transmission node between domestic factories and foreign buyers.",
+    "top_dependencies": [
+      {
+        "target": "State Corporation Rostec",
+        "type": "state-parent",
+        "weight": 0.84
+      },
+      {
+        "target": "JSC Concern VKO Almaz-Antey",
+        "type": "exported-systems",
+        "weight": 0.72
+      },
+      {
+        "target": "United Aircraft Corporation",
+        "type": "exported-systems",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Czechoslovak Group a.s.",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Czech Republic",
+    "location": {
+      "lat": 50.0755,
+      "lng": 14.4378
+    },
+    "description": "Fast-growing Central European defense industrial group expanding in ammunition, armored vehicles, and artillery supply chains.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.82
+      },
+      {
+        "target": "Rheinmetall AG",
+        "type": "industrial-partner",
+        "weight": 0.74
+      },
+      {
+        "target": "Saab AB",
+        "type": "regional-partner",
+        "weight": 0.67
+      }
+    ]
+  },
+  {
+    "name": "Nammo AS",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Norway",
+    "location": {
+      "lat": 60.7268,
+      "lng": 10.6136
+    },
+    "description": "Nordic munitions and propulsion producer important to European ammo, shoulder-launched weapons, and rocket motor resilience.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "alliance-demand",
+        "weight": 0.82
+      },
+      {
+        "target": "Rheinmetall AG",
+        "type": "ammo-peer",
+        "weight": 0.72
+      },
+      {
+        "target": "Kongsberg Gruppen ASA",
+        "type": "national-partner",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Space Exploration Technologies Corp. (SpaceX)",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 33.9164,
+      "lng": -118.3517
+    },
+    "description": "Commercial launch and satellite operator whose scale now makes it a major military-space, ISR, and transport resilience node.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.92
+      },
+      {
+        "target": "National Reconnaissance Office",
+        "type": "mission-customer",
+        "weight": 0.88
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.78
+      }
+    ]
+  },
+  {
+    "name": "Rocket Lab USA, Inc.",
+    "ticker": "RKLB",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 33.7701,
+      "lng": -118.1937
+    },
+    "description": "Responsive-launch and spacecraft contractor increasingly relevant to tactical launch, defense satellites, and space-access diversification.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.84
+      },
+      {
+        "target": "National Reconnaissance Office",
+        "type": "mission-customer",
+        "weight": 0.74
+      },
+      {
+        "target": "Space Exploration Technologies Corp. (SpaceX)",
+        "type": "market-reference",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "Blue Origin, LLC",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 47.3809,
+      "lng": -122.2348
+    },
+    "description": "Private space company that matters to defense because of heavy-lift launch, engines, and future military-space transport capacity.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.82
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "customer",
+        "weight": 0.72
+      },
+      {
+        "target": "National Reconnaissance Office",
+        "type": "mission-customer",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "SES S.A.",
+    "ticker": "SESG",
+    "sector": "DEFENSE",
+    "country": "Luxembourg",
+    "location": {
+      "lat": 49.6837,
+      "lng": 6.3445
+    },
+    "description": "Major satellite operator whose government communications role expanded further after completing the Intelsat acquisition.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "government-demand",
+        "weight": 0.78
+      },
+      {
+        "target": "NATO Communications and Information Agency",
+        "type": "network-customer",
+        "weight": 0.74
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-demand",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Eutelsat Group",
+    "ticker": "ETL",
+    "sector": "DEFENSE",
+    "country": "France",
+    "location": {
+      "lat": 48.8232,
+      "lng": 2.273
+    },
+    "description": "European satellite operator central to resilient communications, mobility, and dual-use connectivity including OneWeb capacity.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "government-demand",
+        "weight": 0.72
+      },
+      {
+        "target": "NATO Communications and Information Agency",
+        "type": "network-customer",
+        "weight": 0.7
+      },
+      {
+        "target": "Space Exploration Technologies Corp. (SpaceX)",
+        "type": "launch-provider",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "Viasat, Inc.",
+    "ticker": "VSAT",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 33.1581,
+      "lng": -117.3506
+    },
+    "description": "Satcom provider with deep defense exposure across military communications, mobility links, and resilient network services.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-demand",
+        "weight": 0.82
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "government-demand",
+        "weight": 0.72
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.65
+      }
+    ]
+  },
+  {
+    "name": "Iridium Communications Inc.",
+    "ticker": "IRDM",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.9339,
+      "lng": -77.1773
+    },
+    "description": "Provider of global L-band connectivity used heavily in military and remote operations where resilient beyond-line-of-sight links matter.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-demand",
+        "weight": 0.84
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.72
+      },
+      {
+        "target": "Space Exploration Technologies Corp. (SpaceX)",
+        "type": "launch-provider",
+        "weight": 0.65
+      }
+    ]
+  },
+  {
+    "name": "MDA Space Ltd.",
+    "ticker": "MDA",
+    "sector": "DEFENSE",
+    "country": "Canada",
+    "location": {
+      "lat": 43.7315,
+      "lng": -79.7624
+    },
+    "description": "Canadian space systems company important in robotics, sensors, satellite subsystems, and sovereign allied space manufacturing.",
+    "top_dependencies": [
+      {
+        "target": "Maxar Technologies Inc.",
+        "type": "customer-and-peer",
+        "weight": 0.68
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.66
+      },
+      {
+        "target": "Space Exploration Technologies Corp. (SpaceX)",
+        "type": "launch-provider",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Redwire Corporation",
+    "ticker": "RDW",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 30.3322,
+      "lng": -81.6557
+    },
+    "description": "Space infrastructure supplier with increasing relevance to in-space manufacturing, satellite components, and national-security payload support.",
+    "top_dependencies": [
+      {
+        "target": "Space Exploration Technologies Corp. (SpaceX)",
+        "type": "launch-and-integration",
+        "weight": 0.74
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "mission-customer",
+        "weight": 0.68
+      },
+      {
+        "target": "Maxar Technologies Inc.",
+        "type": "space-systems-peer",
+        "weight": 0.64
+      }
+    ]
+  },
+  {
+    "name": "Arianespace SA",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "France",
+    "location": {
+      "lat": 48.6327,
+      "lng": 2.4404
+    },
+    "description": "European launch-services provider that remains strategically important for sovereign access to space and allied payload assurance.",
+    "top_dependencies": [
+      {
+        "target": "Airbus SE",
+        "type": "industrial-shareholder",
+        "weight": 0.77
+      },
+      {
+        "target": "Safran SA",
+        "type": "industrial-shareholder",
+        "weight": 0.74
+      },
+      {
+        "target": "Eutelsat Group",
+        "type": "satellite-customer",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "OHB SE",
+    "ticker": "OHB",
+    "sector": "DEFENSE",
+    "country": "Germany",
+    "location": {
+      "lat": 53.0793,
+      "lng": 8.8017
+    },
+    "description": "German space and defense company active in satellites, reconnaissance systems, and European sovereign space capabilities.",
+    "top_dependencies": [
+      {
+        "target": "Arianespace SA",
+        "type": "launch-provider",
+        "weight": 0.76
+      },
+      {
+        "target": "Airbus SE",
+        "type": "industrial-peer",
+        "weight": 0.68
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "government-demand",
+        "weight": 0.63
+      }
+    ]
+  },
+  {
+    "name": "Planet Labs PBC",
+    "ticker": "PL",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "description": "Daily-imagery provider whose commercial EO data has become an OSINT and battlefield-awareness multiplier.",
+    "top_dependencies": [
+      {
+        "target": "Space Exploration Technologies Corp. (SpaceX)",
+        "type": "launch-provider",
+        "weight": 0.8
+      },
+      {
+        "target": "National Reconnaissance Office",
+        "type": "mission-customer",
+        "weight": 0.76
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-demand",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "Maxar Technologies Inc.",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 39.8367,
+      "lng": -105.0372
+    },
+    "description": "Commercial geospatial and satellite manufacturer whose imagery and spacecraft supply chain are deeply embedded in national-security workflows.",
+    "top_dependencies": [
+      {
+        "target": "National Reconnaissance Office",
+        "type": "mission-customer",
+        "weight": 0.88
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-demand",
+        "weight": 0.78
+      },
+      {
+        "target": "Space Exploration Technologies Corp. (SpaceX)",
+        "type": "launch-provider",
+        "weight": 0.72
+      }
+    ]
+  },
+  {
+    "name": "U.S. Space Force",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.8796,
+      "lng": -77.106
+    },
+    "description": "U.S. military service responsible for organizing and defending national-security space capabilities and orbital support architectures.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "parent",
+        "weight": 0.98
+      },
+      {
+        "target": "National Reconnaissance Office",
+        "type": "intel-partner",
+        "weight": 0.84
+      },
+      {
+        "target": "Space Exploration Technologies Corp. (SpaceX)",
+        "type": "launch-partner",
+        "weight": 0.8
+      }
+    ]
+  },
+  {
+    "name": "Palo Alto Networks, Inc.",
+    "ticker": "PANW",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 37.3541,
+      "lng": -121.9552
+    },
+    "description": "Major cyber-defense platform supplier to governments and critical infrastructure with growing importance in AI-enabled defense security stacks.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-customer",
+        "weight": 0.74
+      },
+      {
+        "target": "National Security Agency",
+        "type": "threat-intelligence-ecosystem",
+        "weight": 0.7
+      },
+      {
+        "target": "Cisco Systems, Inc.",
+        "type": "network-ecosystem",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "CrowdStrike Holdings, Inc.",
+    "ticker": "CRWD",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 30.2672,
+      "lng": -97.7431
+    },
+    "description": "Endpoint and cloud-security company with strategic relevance to federal cyber defense, incident response, and adversary intelligence.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-customer",
+        "weight": 0.72
+      },
+      {
+        "target": "National Security Agency",
+        "type": "threat-intelligence-ecosystem",
+        "weight": 0.7
+      },
+      {
+        "target": "United States Cyber Command",
+        "type": "mission-ecosystem",
+        "weight": 0.69
+      }
+    ]
+  },
+  {
+    "name": "Fortinet, Inc.",
+    "ticker": "FTNT",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 37.3688,
+      "lng": -122.0363
+    },
+    "description": "Network-security vendor whose appliances and OT-security footprint matter across defense and critical infrastructure environments.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-customer",
+        "weight": 0.7
+      },
+      {
+        "target": "Cisco Systems, Inc.",
+        "type": "network-ecosystem",
+        "weight": 0.67
+      },
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "government-customer",
+        "weight": 0.65
+      }
+    ]
+  },
+  {
+    "name": "Check Point Software Technologies Ltd.",
+    "ticker": "CHKP",
+    "sector": "DEFENSE",
+    "country": "Israel",
+    "location": {
+      "lat": 32.0853,
+      "lng": 34.7818
+    },
+    "description": "Long-standing cyber-defense vendor with large installed bases in firewalls, gateways, and zero-trust network security.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "government-customer",
+        "weight": 0.66
+      },
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-customer",
+        "weight": 0.64
+      },
+      {
+        "target": "Cloudflare, Inc.",
+        "type": "internet-security-ecosystem",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Cisco Systems, Inc.",
+    "ticker": "CSCO",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 37.3382,
+      "lng": -121.8863
+    },
+    "description": "Network infrastructure giant whose hardware, security stack, and federal presence make it a foundational cyber-defense node.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-customer",
+        "weight": 0.72
+      },
+      {
+        "target": "National Security Agency",
+        "type": "security-ecosystem",
+        "weight": 0.69
+      },
+      {
+        "target": "NATO Communications and Information Agency",
+        "type": "network-customer",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "Cloudflare, Inc.",
+    "ticker": "NET",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 37.7749,
+      "lng": -122.4194
+    },
+    "description": "Internet-edge security and DDoS-mitigation provider that has become relevant to public-sector resilience and wartime information defense.",
+    "top_dependencies": [
+      {
+        "target": "National Security Agency",
+        "type": "security-ecosystem",
+        "weight": 0.64
+      },
+      {
+        "target": "United States Cyber Command",
+        "type": "mission-ecosystem",
+        "weight": 0.62
+      },
+      {
+        "target": "Cisco Systems, Inc.",
+        "type": "network-ecosystem",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Zscaler, Inc.",
+    "ticker": "ZS",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 37.3382,
+      "lng": -121.8863
+    },
+    "description": "Zero-trust cloud-security provider increasingly embedded in federal modernization and secure remote-access architectures.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-customer",
+        "weight": 0.68
+      },
+      {
+        "target": "National Security Agency",
+        "type": "security-ecosystem",
+        "weight": 0.66
+      },
+      {
+        "target": "CrowdStrike Holdings, Inc.",
+        "type": "integration-ecosystem",
+        "weight": 0.6
+      }
+    ]
+  },
+  {
+    "name": "Akamai Technologies, Inc.",
+    "ticker": "AKAM",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 42.3736,
+      "lng": -71.1097
+    },
+    "description": "Edge-cloud and application-security operator whose CDN and DDoS defenses matter to government and defense-facing digital resilience.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-customer",
+        "weight": 0.66
+      },
+      {
+        "target": "Cloudflare, Inc.",
+        "type": "internet-edge-peer",
+        "weight": 0.64
+      },
+      {
+        "target": "National Security Agency",
+        "type": "security-ecosystem",
+        "weight": 0.62
+      }
+    ]
+  },
+  {
+    "name": "SentinelOne, Inc.",
+    "ticker": "S",
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 37.3861,
+      "lng": -122.0839
+    },
+    "description": "AI-driven endpoint-security vendor relevant to federal cyber defense and machine-speed response architectures.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "government-customer",
+        "weight": 0.65
+      },
+      {
+        "target": "CrowdStrike Holdings, Inc.",
+        "type": "market-reference",
+        "weight": 0.63
+      },
+      {
+        "target": "National Security Agency",
+        "type": "security-ecosystem",
+        "weight": 0.61
+      }
+    ]
+  },
+  {
+    "name": "National Security Agency",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 39.1079,
+      "lng": -76.7431
+    },
+    "description": "U.S. signals-intelligence and cyber-security institution that shapes threat understanding, standards, and operational defensive posture.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "parent",
+        "weight": 0.95
+      },
+      {
+        "target": "United States Cyber Command",
+        "type": "operational-partner",
+        "weight": 0.88
+      },
+      {
+        "target": "Cisco Systems, Inc.",
+        "type": "network-ecosystem",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "U.S. Department of Defense",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.8719,
+      "lng": -77.0563
+    },
+    "description": "Largest single defense customer and organizing node for U.S. procurement, force structure, military demand, and alliance spillovers.",
+    "top_dependencies": [
+      {
+        "target": "Defense Logistics Agency",
+        "type": "logistics-arm",
+        "weight": 0.9
+      },
+      {
+        "target": "Defense Advanced Research Projects Agency",
+        "type": "research-arm",
+        "weight": 0.84
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "service-branch",
+        "weight": 0.82
+      }
+    ]
+  },
+  {
+    "name": "Defense Logistics Agency",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.7189,
+      "lng": -77.148
+    },
+    "description": "The U.S. military's core combat-logistics agency and a major bottleneck for sustainment, fuel, parts, and industrial mobilization.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "parent",
+        "weight": 0.96
+      },
+      {
+        "target": "Lockheed Martin Corporation",
+        "type": "industrial-base",
+        "weight": 0.68
+      },
+      {
+        "target": "RTX Corporation",
+        "type": "industrial-base",
+        "weight": 0.66
+      }
+    ]
+  },
+  {
+    "name": "Defense Advanced Research Projects Agency",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.8948,
+      "lng": -77.0726
+    },
+    "description": "High-end U.S. defense R&D agency that pushes frontier technologies into future operational and industrial pipelines.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "parent",
+        "weight": 0.97
+      },
+      {
+        "target": "Palantir Technologies Inc.",
+        "type": "transition-partner",
+        "weight": 0.72
+      },
+      {
+        "target": "Anduril Industries, Inc.",
+        "type": "transition-partner",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "North Atlantic Treaty Organization",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Belgium",
+    "location": {
+      "lat": 50.8503,
+      "lng": 4.3517
+    },
+    "description": "The central transatlantic defense alliance and a primary demand, standards, and interoperability node for the Western defense base.",
+    "top_dependencies": [
+      {
+        "target": "NATO Communications and Information Agency",
+        "type": "technical-arm",
+        "weight": 0.84
+      },
+      {
+        "target": "Airbus SE",
+        "type": "industrial-base",
+        "weight": 0.72
+      },
+      {
+        "target": "Rheinmetall AG",
+        "type": "industrial-base",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "NATO Communications and Information Agency",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "Belgium",
+    "location": {
+      "lat": 50.895,
+      "lng": 4.4297
+    },
+    "description": "NATO's executive CIS and cyber agency, central to allied command networks, secure digital infrastructure, and procurement interfaces.",
+    "top_dependencies": [
+      {
+        "target": "North Atlantic Treaty Organization",
+        "type": "parent",
+        "weight": 0.95
+      },
+      {
+        "target": "Cisco Systems, Inc.",
+        "type": "network-supplier",
+        "weight": 0.72
+      },
+      {
+        "target": "Thales S.A.",
+        "type": "systems-supplier",
+        "weight": 0.68
+      }
+    ]
+  },
+  {
+    "name": "United States Cyber Command",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 39.1079,
+      "lng": -76.7431
+    },
+    "description": "Unified U.S. combatant command for cyberspace operations and a key orchestrator of operational cyber defense and offense.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "parent",
+        "weight": 0.96
+      },
+      {
+        "target": "National Security Agency",
+        "type": "co-located-partner",
+        "weight": 0.9
+      },
+      {
+        "target": "Palantir Technologies Inc.",
+        "type": "software-ecosystem",
+        "weight": 0.7
+      }
+    ]
+  },
+  {
+    "name": "National Reconnaissance Office",
+    "ticker": null,
+    "sector": "DEFENSE",
+    "country": "United States",
+    "location": {
+      "lat": 38.8943,
+      "lng": -77.4311
+    },
+    "description": "The U.S. national-security space intelligence operator that anchors demand for reconnaissance satellites, launches, and geospatial supply chains.",
+    "top_dependencies": [
+      {
+        "target": "U.S. Department of Defense",
+        "type": "parent",
+        "weight": 0.95
+      },
+      {
+        "target": "Space Exploration Technologies Corp. (SpaceX)",
+        "type": "launch-provider",
+        "weight": 0.82
+      },
+      {
+        "target": "U.S. Space Force",
+        "type": "space-partner",
+        "weight": 0.8
+      }
+    ]
+  }
+]

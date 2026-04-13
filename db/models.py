@@ -325,6 +325,11 @@ class Stakeholder(Base):
     location_lat = Column(Float)
     location_lng = Column(Float)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    # [v10.21] Entity Lifecycle Management — Hybrid Backbone/Tactical Architecture
+    is_auto_provisioned = Column(Boolean, default=True)   # False = backbone (永続保護), True = AI auto-added (削除候補)
+    strategic_score = Column(Float, default=0.0)          # 多次元優先スコア (0.0〜1.0)
+    hit_count = Column(Integer, default=0)                 # 波及予測で参照された累計回数
+    last_hit_at = Column(DateTime(timezone=True), nullable=True)  # 最終参照日時
 
 class Dependency(Base):
     __tablename__ = "dependencies"
