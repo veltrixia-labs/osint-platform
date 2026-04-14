@@ -397,21 +397,24 @@ window.addEventListener('map-status-update', (e: any) => {
 });
 
 export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert) {
-    let rawCoords = getAlertCoords(alert);
-    
-    // [v10.12] Geographic Fallback: If no explicit coords, use first Strategic Asset for topic
-    if (!rawCoords && alert.topic) {
-        const topicAsset = STRATEGIC_ASSETS.find(a => a.topic_code === alert.topic);
-        if (topicAsset) {
-            rawCoords = { lat: topicAsset.lat, lng: topicAsset.lng, source: 'Topic-Asset-Fallback' };
-            console.log(`[Antigravity] No Alert coords. Falling back to Topic Asset: ${topicAsset.name}`);
+    // [v10.35] FATAL CRASH PROTECTION
+    try {
+        let rawCoords = getAlertCoords(alert);
+        
+        // [v10.12] Geographic Fallback: If no explicit coords, use first Strategic Asset for topic
+        if (!rawCoords && alert.topic) {
+            const topicAsset = STRATEGIC_ASSETS.find(a => a.topic_code === alert.topic);
+            if (topicAsset) {
+                rawCoords = { lat: topicAsset.lat, lng: topicAsset.lng, source: 'Topic-Asset-Fallback' };
+                console.log(`[Antigravity] No Alert coords. Falling back to Topic Asset: ${topicAsset.name}`);
+            }
         }
-    }
 
-    if (!rawCoords) {
-        console.error(`[Antigravity] Map Engine Halt: Could not resolve coordinates for ${alert.id}`);
-        return;
-    }
+        if (!rawCoords || isNaN(Number(rawCoords.lat)) || isNaN(Number(rawCoords.lng))) {
+            console.error(`[Antigravity] Map Engine Halt: Invalid coordinates for ${alert.id}`, rawCoords);
+            renderTacticalStatusHud(layer, "ERROR: POSITION_INVALID");
+            return;
+        }
 
     const coords = { lat: Number(rawCoords.lat), lng: Number(rawCoords.lng) };
 
@@ -433,145 +436,125 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
     };
     renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
 
-    // [v10.12] Modern API Path (Top-level) vs Legacy Path (Nested)
-    const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
-    let cascadingImpacts = [...cascadingImpactsRaw];
+        const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
+        let cascadingImpacts = [...cascadingImpactsRaw];
 
-    // [v10.21] BACKBONE-DRIVEN FALLBACK
-    // If cascading_impacts is empty, trigger on-demand AI analysis via the backbone DB.
-    // This replaces the old static STRATEGIC_ASSETS fallback with live DB-driven impact discovery.
-    if (cascadingImpacts.length === 0) {
-        // [v10.32] RESTORATION: Instant Static Render (Wave 1)
-        const currentStatus = alert.backbone_discovery_status || 'idle';
-        console.log(`[Antigravity] Backbone State Check for ${alert.id}: ${currentStatus}`);
+        // [v10.21] BACKBONE-DRIVEN FALLBACK
+        if (cascadingImpacts.length === 0) {
+            // [v10.32] RESTORATION: Instant Static Render (Wave 1)
+            const currentStatus = alert.backbone_discovery_status || 'idle';
+            console.log(`[Antigravity] Backbone State Check for ${alert.id}: ${currentStatus}`);
 
-        // Ensure the backbone appears immediately while AI deep-dives in background.
-        const rawTopic = alert.topic || (alert.metadata_json as any)?.topic;
-        const topicMap: Record<string, string> = {
-            'market': 'global_market_intelligence', 'energy': 'energy_resource_risk',
-            'tech': 'ai_semiconductor_intelligence', 'defense': 'defense_technology',
-            'supply_chain': 'supply_chain_intelligence', 'crypto': 'crypto_geopolitics'
-        };
-        const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
-        if (effectiveTopic) {
-            const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.85);
-            const staticFallback = relatedAssets.slice(0, 3).map(asset => ({
-                stakeholder_id: asset.id, entity_name: asset.name, impact_alpha: -2.5,
-                source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
-                location_lat: asset.lat, location_lng: asset.lng
-            }));
-            if (staticFallback.length > 0) {
-                renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert);
-                // initial HUD set happens inside startPoller or analyze fetch
+            const rawTopic = alert.topic || (alert.metadata_json as any)?.topic;
+            const topicMap: Record<string, string> = {
+                'market': 'global_market_intelligence', 'energy': 'energy_resource_risk',
+                'tech': 'ai_semiconductor_intelligence', 'defense': 'defense_technology',
+                'supply_chain': 'supply_chain_intelligence', 'crypto': 'crypto_geopolitics'
+            };
+            const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
+            
+            if (effectiveTopic) {
+                const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.85);
+                const staticFallback = relatedAssets.slice(0, 3).map(asset => ({
+                    stakeholder_id: asset.id, entity_name: asset.name, impact_alpha: -2.5,
+                    source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
+                    location_lat: asset.lat, location_lng: asset.lng
+                }));
+                if (staticFallback.length > 0) {
+                    renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert, new Set());
+                }
             }
-        }
 
-        const hasDirectImpacts = alert.cascading_impacts && alert.cascading_impacts.length > 0;
-        const hasMetaImpacts = (alert.metadata_json as any)?.cascading_impacts?.length > 0;
-        
-        if (currentStatus === 'complete' && (hasDirectImpacts || hasMetaImpacts)) {
-            const finalImpacts = alert.cascading_impacts || (alert.metadata_json as any).cascading_impacts;
-            // Already analyzed proactively, just draw.
-            layer.clearLayers();
-            renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
-            // [v10.33] Increased depth to 3 for multi-order AI results
-            renderImpactChain(map, layer, coords, finalImpacts, 3, intensity, alert);
-            return;
-        }
+            const hasDirectImpacts = alert.cascading_impacts && alert.cascading_impacts.length > 0;
+            const hasMetaImpacts = (alert.metadata_json as any)?.cascading_impacts?.length > 0;
+            
+            if (currentStatus === 'complete' && (hasDirectImpacts || hasMetaImpacts)) {
+                const finalImpacts = alert.cascading_impacts || (alert.metadata_json as any).cascading_impacts;
+                layer.clearLayers();
+                renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
+                renderImpactChain(map, layer, coords, finalImpacts, 3, intensity, alert, new Set());
+                return;
+            }
 
-        // Start Poller immediately if already processing or starting
-        const startPoller = (initialMsg: string) => {
-            renderTacticalStatusHud(layer, initialMsg);
-            let pollCount = 0;
-            const poller = setInterval(() => {
-                pollCount++;
-                if (pollCount > 36) { 
-                    clearInterval(poller); 
-                    renderTacticalStatusHud(layer, "AI REFINING: TASK TIMED OUT");
-                    setTimeout(() => {
-                        const hud = document.getElementById('tactical-discovery-hud');
-                        if (hud) hud.classList.remove('active');
-                    }, 5000);
-                    return; 
-                }
-                renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/36]...`);
-                fetch(`/api/alerts/${alert.id}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.backbone_discovery_status === 'complete') {
-                            const updatedImpacts = data.cascading_impacts || data.metadata_json?.cascading_impacts;
-                            const hasResults = updatedImpacts && updatedImpacts.length > 0;
-                            
-                            clearInterval(poller);
-                            if (hasResults) {
-                                console.log(`[Antigravity] AI Enrichment Received. Upgrading map nodes to Order 3 depth...`);
-                                renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
-                                layer.clearLayers();
-                                renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
-                                renderImpactChain(map, layer, coords, updatedImpacts, 3, intensity, alert);
-                            } else {
-                                console.warn(`[Antigravity] AI Analysis completed but returned no data.`);
-                                renderTacticalStatusHud(layer, "AI REFINING: NO ADDITIONAL DATA FOUND");
-                            }
-                            
-                            setTimeout(() => {
-                                const hud = document.getElementById('tactical-discovery-hud');
-                                if (hud) {
-                                    hud.classList.remove('active');
-                                    setTimeout(() => hud.remove(), 500);
+            const startPoller = (initialMsg: string) => {
+                renderTacticalStatusHud(layer, initialMsg);
+                let pollCount = 0;
+                const poller = setInterval(() => {
+                    pollCount++;
+                    if (pollCount > 36) { 
+                        clearInterval(poller); 
+                        renderTacticalStatusHud(layer, "AI REFINING: TASK TIMED OUT");
+                        setTimeout(() => {
+                            const hud = document.getElementById('tactical-discovery-hud');
+                            if (hud) hud.classList.remove('active');
+                        }, 5000);
+                        return; 
+                    }
+                    renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/36]...`);
+                    fetch(`/api/alerts/${alert.id}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.backbone_discovery_status === 'complete') {
+                                const updatedImpacts = data.cascading_impacts || data.metadata_json?.cascading_impacts;
+                                const hasResults = updatedImpacts && updatedImpacts.length > 0;
+                                
+                                clearInterval(poller);
+                                if (hasResults) {
+                                    renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
+                                    layer.clearLayers();
+                                    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
+                                    renderImpactChain(map, layer, coords, updatedImpacts, 3, intensity, alert, new Set());
+                                } else {
+                                    renderTacticalStatusHud(layer, "AI REFINING: NO ADDITIONAL DATA FOUND");
                                 }
-                            }, 5000);
-                        } else if (data.backbone_discovery_status === 'failed') {
-                            clearInterval(poller);
-                            renderTacticalStatusHud(layer, "AI REFINING: ANALYSIS FAILED");
-                             setTimeout(() => {
-                                const hud = document.getElementById('tactical-discovery-hud');
-                                if (hud) hud.classList.remove('active');
-                            }, 5000);
-                        }
-                    });
-            }, 5000);
-        };
+                                
+                                setTimeout(() => {
+                                    const hud = document.getElementById('tactical-discovery-hud');
+                                    if (hud) {
+                                        hud.classList.remove('active');
+                                        setTimeout(() => hud.remove(), 500);
+                                    }
+                                }, 5000);
+                            } else if (data.backbone_discovery_status === 'failed') {
+                                clearInterval(poller);
+                                renderTacticalStatusHud(layer, "AI REFINING: ANALYSIS FAILED");
+                                setTimeout(() => {
+                                    const hud = document.getElementById('tactical-discovery-hud');
+                                    if (hud) hud.classList.remove('active');
+                                }, 5000);
+                            }
+                        });
+                }, 5000);
+            };
 
-        if (currentStatus === 'processing') {
-            console.log(`[Antigravity] Analysis already running (Proactive). Joining task...`);
-            startPoller("AI REFINING: JOINING PROACTIVE TASK...");
-            return;
+            if (currentStatus === 'processing') {
+                startPoller("AI REFINING: JOINING PROACTIVE TASK...");
+                return;
+            }
+
+            fetch(`/api/alerts/${alert.id}/analyze`, { method: 'POST' })
+                .then(r => r.json())
+                .then(result => {
+                    if (result.status === 'processing' || result.status === 'success') {
+                        startPoller("AI REFINING: REQUESTING BACKBONE UPGRADE...");
+                    }
+                });
         }
 
-        // Only if IDLE, trigger the upgrade
-        fetch(`/api/alerts/${alert.id}/analyze`, { method: 'POST' })
-            .then(r => r.json())
-            .then(result => {
-                if (result.status === 'processing' || result.status === 'success') {
-                    console.log(`[Antigravity] Backbone analysis initiated: ${result.message}`);
-                    startPoller("AI REFINING: REQUESTING BACKBONE UPGRADE...");
-                }
-            })
-            .catch(err => {
-                console.warn("[Antigravity] Background analysis trigger warning:", err);
-            });
-    }
-
-    // [v10.8] Guaranteed Pipeline: Don't rely solely on flaky 'moveend'
-    setTimeout(() => {
-        map.flyTo([coords.lat, coords.lng], 4, { duration: 1.5 });
-        
-        const startNarrative = () => {
-             const currentHud = document.getElementById('tactical-discovery-hud');
-             if (currentHud) {
-                // If we aren't in backbone analysis mode, transition to tracing
-                if (currentHud.innerText.includes("POSITION")) {
+        // --- Narrative Animation Guaranteed Pipeline ---
+        setTimeout(() => {
+            map.flyTo([coords.lat, coords.lng], 4, { duration: 1.5 });
+            
+            const startNarrative = () => {
+                const currentHud = document.getElementById('tactical-discovery-hud');
+                if (currentHud && currentHud.innerText.includes("POSITION")) {
                     renderTacticalStatusHud(layer, "TRACING CASCADE VECTORS...");
                 }
                 
-                // [v10.16.2] Branch from Level 1 (Alert) to Level 2 (Order 1 Findings)
-                // Only render immediately if pre-computed impacts exist (backbone analysis runs async above)
                 if (cascadingImpacts.length > 0) {
-                    renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert);
+                    renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert, new Set());
                 }
                 
-                // Auto-dismiss HUD after 12s (extended to allow backbone analysis to complete)
                 setTimeout(() => {
                     const hud = document.getElementById('tactical-discovery-hud');
                     if (hud) {
@@ -579,13 +562,16 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                         setTimeout(() => hud.remove(), 500);
                     }
                 }, 12000);
-             }
-        };
+            };
 
-        map.once('moveend', startNarrative);
-        setTimeout(startNarrative, 3000); // Safety fallback
+            map.once('moveend', startNarrative);
+            setTimeout(startNarrative, 3000);
+        }, 300);
 
-    }, 300);
+    } catch (e) {
+        console.error("[Antigravity] FATAL MAP ERROR:", e);
+        renderTacticalStatusHud(layer, "MAP_ENGINE_FAULT: RENDER_ABORTED");
+    }
 }
 
 function createTacticalPopup(alert: Alert, color: string, detailed = false): string {
@@ -773,7 +759,7 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], 
     }
 }
 
-function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number, originalAlert: Alert) {
+function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number, originalAlert: Alert, visited: Set<string> = new Set()) {
     if (level > 4 || !impacts || impacts.length === 0) {
         if (level > 1) setTimeout(() => renderTacticalStatusHud(layer, "CASCADING ANALYSIS COMPLETE"), 2000);
         return;
@@ -885,10 +871,14 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
 
                     // Branching Recursion: Sync level increment (Alert=1, Order1=2, Order2=3...)
                     const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
-                    if (subImpacts && subImpacts.length > 0 && level < 3) {
-                        console.log(`[Antigravity] Propagating Wave ${level}...`);
+                    
+                    // [v10.35] Recursion Guard: Prevent infinite loops from circular AI data
+                    const nodeId = finding.stakeholder_id || finding.entity_name;
+                    if (subImpacts && subImpacts.length > 0 && level < 4 && !visited.has(nodeId)) {
+                        visited.add(nodeId);
+                        console.log(`[Antigravity] Propagating Wave ${level} to ${nodeId}...`);
                         setTimeout(() => {
-                           renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert);
+                           renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert, visited);
                         }, 500); 
                     }
                 }, arrivalDelay);
