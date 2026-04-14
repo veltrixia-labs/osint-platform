@@ -131,8 +131,12 @@ class AlertManager:
             # --- Phase 4: Cascading Impact Discovery [v10.31 - Proactive] ---
             # Automatically trigger analysis for ALL alerts (Critical, Elevated, Watch)
             # This ensures results are ready before the user even clicks the map.
+            from sqlalchemy.orm.attributes import flag_modified
             alert_log.metadata_json["backbone_discovery_status"] = "processing"
             alert_log.metadata_json["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
+            flag_modified(alert_log, "metadata_json")
+            await db.commit() # Critical: persistent 'processing' state for frontend polling
+            await db.refresh(alert_log)
             
             async def proactive_discovery_worker(aid: uuid.UUID, title: str, desc: str):
                 from db.database import AsyncSessionLocal

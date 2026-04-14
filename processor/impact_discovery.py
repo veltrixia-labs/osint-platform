@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm.attributes import flag_modified
 from db.models import Stakeholder, Dependency, Prediction
 from llm.client import generate_analysis
 
@@ -286,6 +287,7 @@ class ImpactDiscoveryEngine:
                     meta["backbone_discovery_status"] = "complete"
                     meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
                     alert.metadata_json = meta
+                    flag_modified(alert, "metadata_json")
                     await self.db.commit()
                     logger.info(f"[Antigravity] Background analysis persisted for Alert {alert_id}")
             

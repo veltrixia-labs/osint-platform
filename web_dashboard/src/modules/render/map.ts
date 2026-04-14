@@ -485,25 +485,48 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
             let pollCount = 0;
             const poller = setInterval(() => {
                 pollCount++;
-                if (pollCount > 36) { clearInterval(poller); return; }
+                if (pollCount > 36) { 
+                    clearInterval(poller); 
+                    renderTacticalStatusHud(layer, "AI REFINING: TASK TIMED OUT");
+                    setTimeout(() => {
+                        const hud = document.getElementById('tactical-discovery-hud');
+                        if (hud) hud.classList.remove('active');
+                    }, 5000);
+                    return; 
+                }
                 renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/36]...`);
                 fetch(`/api/alerts/${alert.id}`)
                     .then(r => r.json())
                     .then(data => {
-                        if (data.backbone_discovery_status === 'complete' && (data.cascading_impacts?.length > 0 || data.metadata_json?.cascading_impacts?.length > 0)) {
+                        if (data.backbone_discovery_status === 'complete') {
+                            const updatedImpacts = data.cascading_impacts || data.metadata_json?.cascading_impacts;
+                            const hasResults = updatedImpacts && updatedImpacts.length > 0;
+                            
                             clearInterval(poller);
-                            const updatedImpacts = data.cascading_impacts || data.metadata_json.cascading_impacts;
-                            console.log(`[Antigravity] AI Enrichment Received. Upgrading map nodes to Order 3 depth...`);
-                            renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
-                            layer.clearLayers();
-                            renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
-                            renderImpactChain(map, layer, coords, updatedImpacts, 3, intensity, alert);
+                            if (hasResults) {
+                                console.log(`[Antigravity] AI Enrichment Received. Upgrading map nodes to Order 3 depth...`);
+                                renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
+                                layer.clearLayers();
+                                renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
+                                renderImpactChain(map, layer, coords, updatedImpacts, 3, intensity, alert);
+                            } else {
+                                console.warn(`[Antigravity] AI Analysis completed but returned no data.`);
+                                renderTacticalStatusHud(layer, "AI REFINING: NO ADDITIONAL DATA FOUND");
+                            }
+                            
                             setTimeout(() => {
                                 const hud = document.getElementById('tactical-discovery-hud');
                                 if (hud) {
                                     hud.classList.remove('active');
                                     setTimeout(() => hud.remove(), 500);
                                 }
+                            }, 5000);
+                        } else if (data.backbone_discovery_status === 'failed') {
+                            clearInterval(poller);
+                            renderTacticalStatusHud(layer, "AI REFINING: ANALYSIS FAILED");
+                             setTimeout(() => {
+                                const hud = document.getElementById('tactical-discovery-hud');
+                                if (hud) hud.classList.remove('active');
                             }, 5000);
                         }
                     });
