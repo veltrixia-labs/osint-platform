@@ -441,13 +441,40 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
     // If cascading_impacts is empty, trigger on-demand AI analysis via the backbone DB.
     // This replaces the old static STRATEGIC_ASSETS fallback with live DB-driven impact discovery.
     if (cascadingImpacts.length === 0) {
-        // [v10.31] PROACTIVE DETECTION: Check if analysis was already triggered by the scheduler
+        // [v10.32] RESTORATION: Instant Static Render (Wave 1)
         const currentStatus = alert.backbone_discovery_status || 'idle';
         console.log(`[Antigravity] Backbone State Check for ${alert.id}: ${currentStatus}`);
 
-        if (currentStatus === 'complete' && cascadingImpacts.length > 0) {
+        // Ensure the backbone appears immediately while AI deep-dives in background.
+        const rawTopic = alert.topic || (alert.metadata_json as any)?.topic;
+        const topicMap: Record<string, string> = {
+            'market': 'global_market_intelligence', 'energy': 'energy_resource_risk',
+            'tech': 'ai_semiconductor_intelligence', 'defense': 'defense_technology',
+            'supply_chain': 'supply_chain_intelligence', 'crypto': 'crypto_geopolitics'
+        };
+        const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
+        if (effectiveTopic) {
+            const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.85);
+            const staticFallback = relatedAssets.slice(0, 3).map(asset => ({
+                stakeholder_id: asset.id, entity_name: asset.name, impact_alpha: -2.5,
+                source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
+                location_lat: asset.lat, location_lng: asset.lng
+            }));
+            if (staticFallback.length > 0) {
+                renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert);
+                // initial HUD set happens inside startPoller or analyze fetch
+            }
+        }
+
+        const hasDirectImpacts = alert.cascading_impacts && alert.cascading_impacts.length > 0;
+        const hasMetaImpacts = (alert.metadata_json as any)?.cascading_impacts?.length > 0;
+        
+        if (currentStatus === 'complete' && (hasDirectImpacts || hasMetaImpacts)) {
+            const finalImpacts = alert.cascading_impacts || (alert.metadata_json as any).cascading_impacts;
             // Already analyzed proactively, just draw.
-            renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert);
+            layer.clearLayers();
+            renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
+            renderImpactChain(map, layer, coords, finalImpacts, 2, intensity, alert);
             return;
         }
 
