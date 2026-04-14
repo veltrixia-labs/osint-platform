@@ -89,6 +89,7 @@ export interface Alert {
     location_lng?: number;
     cascading_impacts?: StakeholderImpact[];
     is_locked?: boolean;
+    backbone_discovery_status?: string;
     delivery?: {
         analyst_id: string;
         relevance_score: number;

@@ -441,66 +441,60 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
     // If cascading_impacts is empty, trigger on-demand AI analysis via the backbone DB.
     // This replaces the old static STRATEGIC_ASSETS fallback with live DB-driven impact discovery.
     if (cascadingImpacts.length === 0) {
-        // [v10.29] INSTANT STATIC RENDER: Don't wait for AI to show the backbone.
-        const rawTopic = alert.topic || (alert.metadata_json as any)?.topic;
-        const topicMap: Record<string, string> = {
-            'market': 'global_market_intelligence', 'energy': 'energy_resource_risk',
-            'tech': 'ai_semiconductor_intelligence', 'defense': 'defense_technology',
-            'supply_chain': 'supply_chain_intelligence', 'crypto': 'crypto_geopolitics'
-        };
-        const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
-        if (effectiveTopic) {
-            const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.85);
-            const staticFallback = relatedAssets.slice(0, 3).map(asset => ({
-                stakeholder_id: asset.id, entity_name: asset.name, impact_alpha: -2.5,
-                source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
-                location_lat: asset.lat, location_lng: asset.lng
-            }));
-            if (staticFallback.length > 0) {
-                renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert);
-                renderTacticalStatusHud(layer, "BACKBONE ACTIVE: AI REFINING...");
-            }
+        // [v10.31] PROACTIVE DETECTION: Check if analysis was already triggered by the scheduler
+        const currentStatus = alert.backbone_discovery_status || 'idle';
+        console.log(`[Antigravity] Backbone State Check for ${alert.id}: ${currentStatus}`);
+
+        if (currentStatus === 'complete' && cascadingImpacts.length > 0) {
+            // Already analyzed proactively, just draw.
+            renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert);
+            return;
         }
 
-        // Background analysis trigger (Non-blocking)
+        // Start Poller immediately if already processing or starting
+        const startPoller = (initialMsg: string) => {
+            renderTacticalStatusHud(layer, initialMsg);
+            let pollCount = 0;
+            const poller = setInterval(() => {
+                pollCount++;
+                if (pollCount > 36) { clearInterval(poller); return; }
+                renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/36]...`);
+                fetch(`/api/alerts/${alert.id}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.backbone_discovery_status === 'complete' && (data.cascading_impacts?.length > 0 || data.metadata_json?.cascading_impacts?.length > 0)) {
+                            clearInterval(poller);
+                            const updatedImpacts = data.cascading_impacts || data.metadata_json.cascading_impacts;
+                            console.log(`[Antigravity] AI Enrichment Received. Upgrading map nodes...`);
+                            renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
+                            layer.clearLayers();
+                            renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
+                            renderImpactChain(map, layer, coords, updatedImpacts, 2, intensity, alert);
+                            setTimeout(() => {
+                                const hud = document.getElementById('tactical-discovery-hud');
+                                if (hud) {
+                                    hud.classList.remove('active');
+                                    setTimeout(() => hud.remove(), 500);
+                                }
+                            }, 5000);
+                        }
+                    });
+            }, 5000);
+        };
+
+        if (currentStatus === 'processing') {
+            console.log(`[Antigravity] Analysis already running (Proactive). Joining task...`);
+            startPoller("AI REFINING: JOINING PROACTIVE TASK...");
+            return;
+        }
+
+        // Only if IDLE, trigger the upgrade
         fetch(`/api/alerts/${alert.id}/analyze`, { method: 'POST' })
             .then(r => r.json())
             .then(result => {
                 if (result.status === 'processing' || result.status === 'success') {
                     console.log(`[Antigravity] Backbone analysis initiated: ${result.message}`);
-                    
-                    // Polling logic for AI enrichment
-                    let pollCount = 0;
-                    const poller = setInterval(() => {
-                        pollCount++;
-                        if (pollCount > 12) { // Max 60s
-                           clearInterval(poller);
-                           return;
-                        }
-
-                        fetch(`/api/alerts/${alert.id}`)
-                            .then(r => r.json())
-                            .then(data => {
-                                if (data.backbone_discovery_status === 'complete' && data.cascading_impacts?.length > 0) {
-                                    clearInterval(poller);
-                                    console.log(`[Antigravity] AI Enrichment Received. Upgrading map nodes...`);
-                                    renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
-                                    // Wipe and redraw with AI precision
-                                    layer.clearLayers();
-                                    // Re-render origin
-                                    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
-                                    renderImpactChain(map, layer, coords, data.cascading_impacts, 2, intensity, alert);
-                                    
-                                    setTimeout(() => {
-                                        const hud = document.getElementById('tactical-discovery-hud');
-                                        if (hud) {
-                                            hud.classList.remove('active');
-                                            setTimeout(() => hud.remove(), 500);
-                                        }
-                                    }, 5000);
-                                }
-                            });
-                    }, 5000);
+                    startPoller("AI REFINING: REQUESTING BACKBONE UPGRADE...");
                 }
             })
             .catch(err => {

@@ -128,24 +128,34 @@ class AlertManager:
             db.add(alert_log)
             await db.flush() # Need actual ID for delivery logs
 
-            # --- Phase 4: Cascading Impact Discovery ---
-            # [v10.9] Tiered Intelligence Logic:
-            # Proactive AI for high-priority alerts; others use on-demand upgrades.
-            if severity in ["critical", "elevated"]: 
-                try:
-                    from processor.impact_discovery import ImpactDiscoveryEngine
-                    engine = ImpactDiscoveryEngine(db)
-                    discovery_results = await engine.run_discovery(
-                        trigger_item_id=sig.id,
-                        title=sig.target_label,
-                        summary=sig.description or f"Triggered on {sig.topic}"
-                    )
-                    if discovery_results:
-                        logger.info(f"Discovered {len(discovery_results)} cascading impacts for {sig.target_label}")
-                        # Attach discovery metadata to the alert log for UI rendering
-                        alert_log.metadata_json["cascading_impacts"] = discovery_results
-                except Exception as e:
-                    logger.error(f"Failed Phase 4 impact discovery: {e}")
+            # --- Phase 4: Cascading Impact Discovery [v10.31 - Proactive] ---
+            # Automatically trigger analysis for ALL alerts (Critical, Elevated, Watch)
+            # This ensures results are ready before the user even clicks the map.
+            alert_log.metadata_json["backbone_discovery_status"] = "processing"
+            alert_log.metadata_json["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
+            
+            async def proactive_discovery_worker(aid: uuid.UUID, title: str, desc: str):
+                from db.database import AsyncSessionLocal
+                from processor.impact_discovery import ImpactDiscoveryEngine
+                async with AsyncSessionLocal() as session:
+                    try:
+                        engine = ImpactDiscoveryEngine(session)
+                        await engine.run_discovery(
+                            trigger_item_id=uuid.uuid4(),
+                            title=title,
+                            summary=desc,
+                            alert_id=aid
+                        )
+                        logger.info(f"[Antigravity] Proactive Background Discovery SUCCESS for Alert: {aid}")
+                    except Exception as ex:
+                        logger.error(f"[Antigravity] Proactive Background Discovery FAILED for Alert {aid}: {ex}")
+
+            # Kick off worker in background (non-blocking for the scheduler loop)
+            asyncio.create_task(proactive_discovery_worker(
+                alert_log.id, 
+                alert_log.target_label, 
+                sig.description or f"Triggered on {sig.topic}"
+            ))
 
             if not targets:
                 logger.info(f"Alert for {sig.target_label} logged as system-wide (No matched analysts).")

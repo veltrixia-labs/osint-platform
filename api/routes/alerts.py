@@ -6,7 +6,7 @@ import asyncio
 import uuid
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Query, HTTPException, Depends, BackgroundTasks
@@ -246,6 +246,7 @@ async def run_background_discovery(alert_id: uuid.UUID, title: str, summary: str
         try:
             from processor.impact_discovery import ImpactDiscoveryEngine
             engine = ImpactDiscoveryEngine(session)
+            logging.getLogger(__name__).info(f"[Antigravity] Spawning Background Discovery Engine for Alert: {alert_id}")
             # Use specific alert_id to enable internal persistence
             await engine.run_discovery(
                 trigger_item_id=uuid.uuid4(),
@@ -253,6 +254,7 @@ async def run_background_discovery(alert_id: uuid.UUID, title: str, summary: str
                 summary=summary,
                 alert_id=alert_id
             )
+            logging.getLogger(__name__).info(f"[Antigravity] Background Discovery Engine SUCCESS for Alert: {alert_id}")
         except Exception as e:
             logging.getLogger(__name__).error(f"[Antigravity] Background analysis failed for {alert_id}: {e}")
             # Mark as failed in DB
@@ -288,10 +290,24 @@ async def upgrade_to_ai_analysis(
         return {"status": "success", "message": "Retrieving cached deep analysis", "cascading_impacts": existing_impacts}
 
     if status == "processing":
-        return {"status": "processing", "message": "Analysis is already in progress"}
+        # [v10.30] Stale analysis check: if stuck in processing for > 5 mins, allow manual retry
+        last_ts_str = meta.get("backbone_discovery_ts")
+        if last_ts_str:
+            try:
+                last_ts = datetime.fromisoformat(last_ts_str)
+                if last_ts.tzinfo is None: last_ts = last_ts.replace(tzinfo=timezone.utc)
+                if datetime.now(timezone.utc) - last_ts < timedelta(minutes=5):
+                    return {"status": "processing", "message": "Analysis is already in progress"}
+                else:
+                    logger.warning(f"[Antigravity] Alert {alert_id} analysis STALE — Restarting.")
+            except:
+                pass # Default to blocking if parse fails
+        else:
+            return {"status": "processing", "message": "Analysis is already in progress"}
 
     # Set status to processing and trigger background task
     meta["backbone_discovery_status"] = "processing"
+    meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
     alert.metadata_json = meta
     await db.commit()
 
