@@ -87,21 +87,19 @@ class ImpactDiscoveryEngine:
 
         logger.info(f"Running LLM Impact Discovery for: {title}")
         
-        # 1. Get known stakeholders and calculate Quantum Indices (Parallelized)
+        # 1. Get known stakeholders and calculate Quantum Indices (Serial to avoid Session concurrency issues)
         from processor.impact_calculator import ImpactCalculator
-        import asyncio
         known_stakes = await self.get_top_stakeholders(limit=15)
         
-        async def fetch_indices(s: Stakeholder):
+        stakeholder_context = []
+        for s in known_stakes:
             indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, s.id)
-            return {
+            stakeholder_context.append({
                 "id": str(s.id),
                 "name": s.name,
                 "domain": s.domain,
                 "quantum_indices": indices
-            }
-            
-        stakeholder_context = await asyncio.gather(*(fetch_indices(s) for s in known_stakes))
+            })
 
         logger.info(f"[Antigravity] Quantum Baseline Injected: {len(stakeholder_context)} entities analyzed.")
         if stakeholder_context:
@@ -222,15 +220,16 @@ class ImpactDiscoveryEngine:
                 except Exception as ex:
                     logger.warning(f"Failed to enrich stakeholder '{finding.get('entity_name')}': {ex}")
 
-                # Recurse into children (Parallelized)
+                # Recurse into children (Serial to avoid Session concurrency issues)
                 children = finding.get("cascading_impacts", [])
-                if children:
-                    await asyncio.gather(*(enrich_finding(child) for child in children))
+                for child in children:
+                    await enrich_finding(child)
 
             processed_findings = []
-            # Parallelize enrichment across all top-level findings
-            await asyncio.gather(*(enrich_finding(f) for f in findings))
-            processed_findings = findings
+            # Serial enrichment across all top-level findings
+            for f in findings:
+                await enrich_finding(f)
+                processed_findings.append(f)
 
             await self.db.commit()
             
