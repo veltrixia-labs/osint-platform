@@ -103,10 +103,23 @@ class ImpactDiscoveryEngine:
             "defense_technology": "defense",
             "supply_chain_intelligence": "supply_chain"
         }
-        # Inferred from title/summary if topic is missing
-        target_domain = topic_to_domain.get(title.lower(), "global")
-        if target_domain == "global":
-            # Fallback check against known keywords in title
+        # --- Topic Resolution [v10.36] ---
+        target_domain = "global"
+        
+        # 1. Attempt lookup if alert_id is provided
+        from db.models import AlertLog
+        alert_topic = None
+        if alert_id:
+            stmt = select(AlertLog).where(AlertLog.id == alert_id)
+            alert = (await self.db.execute(stmt)).scalar_one_or_none()
+            if alert:
+                alert_topic = alert.topic
+        
+        # 2. Map topic to domain
+        if alert_topic:
+            target_domain = topic_to_domain.get(alert_topic, "global")
+        else:
+            # Fallback to Title/Summary inference if no alert_id or no topic
             for key, val in topic_to_domain.items():
                 if val in title.lower() or val in summary.lower():
                     target_domain = val
@@ -296,4 +309,23 @@ class ImpactDiscoveryEngine:
         except Exception as e:
             logger.error(f"Error in ImpactDiscoveryEngine: {e}")
             await self.db.rollback()
+            
+            # [v10.36] Ensure status is updated to 'failed' to stop UI polling
+            if alert_id:
+                try:
+                    from db.models import AlertLog
+                    from db.database import AsyncSessionLocal
+                    async with AsyncSessionLocal() as session:
+                        stmt = select(AlertLog).where(AlertLog.id == alert_id)
+                        alert = (await session.execute(stmt)).scalar_one_or_none()
+                        if alert:
+                            meta = dict(alert.metadata_json) if alert.metadata_json else {}
+                            meta["backbone_discovery_status"] = "failed"
+                            alert.metadata_json = meta
+                            flag_modified(alert, "metadata_json")
+                            await session.commit()
+                            logger.info(f"[Antigravity] Status marked as FAILED for Alert {alert_id}")
+                except Exception as status_ex:
+                    logger.error(f"Failed to persist failure status: {status_ex}")
+
             return []

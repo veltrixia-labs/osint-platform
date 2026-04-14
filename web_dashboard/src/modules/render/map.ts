@@ -551,8 +551,11 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                     renderTacticalStatusHud(layer, "TRACING CASCADE VECTORS...");
                 }
                 
-                if (cascadingImpacts.length > 0) {
-                    renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert, new Set());
+                // [v10.36] LATE BINDING: Pull latest results from the alert reference
+                // This ensures that if the poller finished while flyTo was zooming, we use the results.
+                const latestImpacts = alert.cascading_impacts || (alert.metadata_json as any)?.cascading_impacts || [];
+                if (latestImpacts.length > 0) {
+                    renderImpactChain(map, layer, coords, latestImpacts, 2, intensity, alert, new Set());
                 }
                 
                 setTimeout(() => {
