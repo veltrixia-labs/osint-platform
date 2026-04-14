@@ -460,6 +460,13 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                     // Render impact chain with backbone-sourced data
                     renderImpactChain(map, layer, coords, result.cascading_impacts, 2, intensity, alert);
                     renderTacticalStatusHud(layer, "BACKBONE CASCADE: ACTIVE");
+                    setTimeout(() => {
+                        const hud = document.getElementById('tactical-discovery-hud');
+                        if (hud) {
+                            hud.classList.remove('active');
+                            setTimeout(() => hud.remove(), 500);
+                        }
+                    }, 8000);
                 } else {
                     // True last-resort: fall back to static assets only if API also returns empty
                     console.warn(`[Antigravity] Backbone analysis returned no impacts, using static fallback`);
@@ -477,20 +484,27 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                             source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
                             location_lat: asset.lat, location_lng: asset.lng
                         }));
-                        if (staticFallback.length > 0) renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert);
-                    }
-                }
-            })
-            .catch(err => {
-                console.error(`[Antigravity] Backbone analysis error:`, err);
-                if (err.name === 'AbortError') {
-                    renderTacticalStatusHud(layer, "BACKBONE ANALYSIS: TIMEOUT");
+                    if (staticFallback.length > 0) renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert);
+                    // Cleanup HUD after fallback rendering
                     setTimeout(() => {
                         const hud = document.getElementById('tactical-discovery-hud');
                         if (hud) {
                             hud.classList.remove('active');
                             setTimeout(() => hud.remove(), 500);
                         }
+                    }, 2000);
+                }
+            }
+        })
+        .catch(err => {
+                console.error(`[Antigravity] Backbone analysis error:`, err);
+                const hud = document.getElementById('tactical-discovery-hud');
+                if (hud) {
+                    const errorMsg = err.name === 'AbortError' ? "BACKBONE ANALYSIS: TIMEOUT" : "BACKBONE ANALYSIS: ERROR";
+                    renderTacticalStatusHud(layer, errorMsg);
+                    setTimeout(() => {
+                        hud.classList.remove('active');
+                        setTimeout(() => hud.remove(), 500);
                     }, 3000);
                 }
             });
@@ -502,8 +516,11 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         
         const startNarrative = () => {
              const currentHud = document.getElementById('tactical-discovery-hud');
-             if (currentHud && currentHud.innerText.includes("POSITION")) {
-                renderTacticalStatusHud(layer, "TRACING CASCADE VECTORS...");
+             if (currentHud) {
+                // If we aren't in backbone analysis mode, transition to tracing
+                if (currentHud.innerText.includes("POSITION")) {
+                    renderTacticalStatusHud(layer, "TRACING CASCADE VECTORS...");
+                }
                 
                 // [v10.16.2] Branch from Level 1 (Alert) to Level 2 (Order 1 Findings)
                 // Only render immediately if pre-computed impacts exist (backbone analysis runs async above)

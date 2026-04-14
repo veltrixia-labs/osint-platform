@@ -222,15 +222,15 @@ class ImpactDiscoveryEngine:
                 except Exception as ex:
                     logger.warning(f"Failed to enrich stakeholder '{finding.get('entity_name')}': {ex}")
 
-                # Recurse into children
+                # Recurse into children (Parallelized)
                 children = finding.get("cascading_impacts", [])
-                for child in children:
-                    await enrich_finding(child)
+                if children:
+                    await asyncio.gather(*(enrich_finding(child) for child in children))
 
             processed_findings = []
-            for f in findings:
-                await enrich_finding(f)
-                processed_findings.append(f)
+            # Parallelize enrichment across all top-level findings
+            await asyncio.gather(*(enrich_finding(f) for f in findings))
+            processed_findings = findings
 
             await self.db.commit()
             
