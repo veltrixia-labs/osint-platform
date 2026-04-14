@@ -260,7 +260,7 @@ async def upgrade_to_ai_analysis(
         discovery_results = await asyncio.wait_for(engine.run_discovery(
             trigger_item_id=uuid.uuid4(), # Virtual trigger
             title=alert.target_label,
-            summary=alert.description or f"Triggered on {alert.topic}"
+            summary=(alert.metadata_json.get("description") if alert.metadata_json else None) or f"Triggered on {alert.topic}"
         ), timeout=50.0)
         
         if discovery_results:

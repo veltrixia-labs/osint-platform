@@ -146,7 +146,20 @@ class ImpactDiscoveryEngine:
         )
 
         try:
-            analysis = await generate_analysis(system_prompt, user_prompt, is_batch=False)
+            analysis_raw = await generate_analysis(system_prompt, user_prompt, is_batch=False)
+            analysis = {}
+            if isinstance(analysis_raw, str):
+                import re
+                # Robustly find JSON block in case LLM adds conversational text
+                match = re.search(r'\{.*\}', analysis_raw, re.DOTALL)
+                if match:
+                    try:
+                        analysis = json.loads(match.group(0))
+                    except json.JSONDecodeError:
+                        logger.error("Failed to parse JSON from LLM response.")
+            elif isinstance(analysis_raw, dict):
+                analysis = analysis_raw
+
             findings = analysis.get("findings", [])
             
             # [v10.9] Statistical Fallback: If AI is empty or degraded, use numerical model
