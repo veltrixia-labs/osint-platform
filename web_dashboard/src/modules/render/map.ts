@@ -454,8 +454,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
             .then(r => r.json())
             .then(result => {
                 clearTimeout(timeoutId);
-                if (result.status === 'success' && result.cascading_impacts?.length > 0) {
-                    console.log(`[Antigravity] Backbone analysis complete: ${result.cascading_impacts.length} impacts found`);
+                if ((result.status === 'success' || result.status === 'skipped') && result.cascading_impacts?.length > 0) {
+                    console.log(`[Antigravity] Backbone analysis resolved (${result.status}): ${result.cascading_impacts.length} impacts found`);
                     
                     // Render impact chain with backbone-sourced data
                     renderImpactChain(map, layer, coords, result.cascading_impacts, 2, intensity, alert);
@@ -743,6 +743,12 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
         setTimeout(() => {
             try {
                 let nodeCoords = getNodeCoords(finding);
+                
+                // [v10.27] Strict Validation: If coordinates remain invalid after all fallbacks, skip this branch
+                if (!nodeCoords || isNaN(nodeCoords.lat) || isNaN(nodeCoords.lng)) {
+                    console.warn(`[Antigravity] Skipping node rendering: Invalid coordinates for ${finding.entity_name}`);
+                    return;
+                }
 
                 // [v9.10] Coordinate Resolution Fallback
                 if (!nodeCoords && finding.entity_name) {

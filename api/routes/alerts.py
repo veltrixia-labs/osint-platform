@@ -251,9 +251,9 @@ async def upgrade_to_ai_analysis(
         raise HTTPException(status_code=404, detail="Alert not found")
 
     # [v10.9] Efficiency Check: Only run if not already deep-analyzed
-    existing_impacts = alert.metadata_json.get("cascading_impacts", [])
+    existing_impacts = alert.metadata_json.get("cascading_impacts", []) if alert.metadata_json else []
     if any(i.get("source") == "ai_reasoning" for i in existing_impacts):
-        return {"status": "skipped", "message": "Deep analysis already exists", "cascading_impacts": existing_impacts}
+        return {"status": "success", "message": "Retrieving cached deep analysis", "cascading_impacts": existing_impacts}
 
     try:
         engine = ImpactDiscoveryEngine(db)
