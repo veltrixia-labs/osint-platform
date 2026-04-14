@@ -18,8 +18,11 @@ class ImpactDiscoveryEngine:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_top_stakeholders(self, limit: int = 15) -> List[Stakeholder]:
-        stmt = select(Stakeholder).order_by(Stakeholder.strategic_score.desc()).limit(limit)
+    async def get_top_stakeholders(self, limit: int = 15, domain: Optional[str] = None) -> List[Stakeholder]:
+        stmt = select(Stakeholder)
+        if domain and domain != "global":
+            stmt = stmt.where(Stakeholder.domain == domain)
+        stmt = stmt.order_by(Stakeholder.strategic_score.desc()).limit(limit)
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
@@ -87,9 +90,29 @@ class ImpactDiscoveryEngine:
 
         logger.info(f"Running LLM Impact Discovery for: {title}")
         
-        # 1. Get known stakeholders and calculate Quantum Indices (Serial to avoid Session concurrency issues)
+        # 1. Get known stakeholders and calculate Quantum Indices (Topic-Aware)
         from processor.impact_calculator import ImpactCalculator
-        known_stakes = await self.get_top_stakeholders(limit=15)
+        
+        # [v10.33] Domain Mapping: Map alert topic to stakeholder domain
+        topic_to_domain = {
+            "energy_resource_risk": "energy",
+            "global_market_intelligence": "market",
+            "ai_semiconductor_intelligence": "ai_semi",
+            "crypto_geopolitics": "crypto",
+            "defense_technology": "defense",
+            "supply_chain_intelligence": "supply_chain"
+        }
+        # Inferred from title/summary if topic is missing
+        target_domain = topic_to_domain.get(title.lower(), "global")
+        if target_domain == "global":
+            # Fallback check against known keywords in title
+            for key, val in topic_to_domain.items():
+                if val in title.lower() or val in summary.lower():
+                    target_domain = val
+                    break
+
+        logger.info(f"[Antigravity] Injecting Context for Domain: {target_domain}")
+        known_stakes = await self.get_top_stakeholders(limit=15, domain=target_domain)
         
         stakeholder_context = []
         for s in known_stakes:
@@ -116,7 +139,10 @@ class ImpactDiscoveryEngine:
             "1. METRIC-DRIVEN JUSTIFICATION: In 'reasoning', EXPLICITLY cite the Omega/Delta-C values from the context to explain the magnitude. e.g. 'Given a low Omega of 35%, disruption is expected to persist over 2 weeks.'\n"
             "2. ACTIONABLE ADVICE: For every finding, provide a specific 'containment_action'.\n"
             "3. TIMELINE: Estimate 'time_to_impact' (e.g., 'Immediate', '3-5 Days', '2-4 Weeks').\n"
-            "4. FAN-OUT: Identify 3 distinct Level 1 entities, and branch at least 1-2 secondary effects per entity.\n"
+            "4. CASCADING RIPPLE EFFECTS (MANDATORY): For every finding, identify AT LEAST ONE secondary cascading impact. "
+            "e.g. If TSMC is Order 1, Order 2 could be Apple or NVIDIA semiconductor shortages. "
+            "Link your discovery where possible to the Known Stakeholders provided.\n"
+            "5. FAN-OUT: Identify 3 distinct Level 1 entities, and branch level 2 for each.\n"
             "5. GEO-ENRICHMENT: For each entity (ESPECIALLY unknown ones not in the context list), "
             "provide 'entity_lat', 'entity_lng' (decimal degrees), 'entity_sector', and 'entity_country'.\n\n"
             "Strictly return nested branching JSON with this exact schema:\n"

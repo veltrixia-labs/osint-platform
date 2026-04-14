@@ -474,7 +474,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
             // Already analyzed proactively, just draw.
             layer.clearLayers();
             renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
-            renderImpactChain(map, layer, coords, finalImpacts, 2, intensity, alert);
+            // [v10.33] Increased depth to 3 for multi-order AI results
+            renderImpactChain(map, layer, coords, finalImpacts, 3, intensity, alert);
             return;
         }
 
@@ -492,11 +493,11 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                         if (data.backbone_discovery_status === 'complete' && (data.cascading_impacts?.length > 0 || data.metadata_json?.cascading_impacts?.length > 0)) {
                             clearInterval(poller);
                             const updatedImpacts = data.cascading_impacts || data.metadata_json.cascading_impacts;
-                            console.log(`[Antigravity] AI Enrichment Received. Upgrading map nodes...`);
+                            console.log(`[Antigravity] AI Enrichment Received. Upgrading map nodes to Order 3 depth...`);
                             renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
                             layer.clearLayers();
                             renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
-                            renderImpactChain(map, layer, coords, updatedImpacts, 2, intensity, alert);
+                            renderImpactChain(map, layer, coords, updatedImpacts, 3, intensity, alert);
                             setTimeout(() => {
                                 const hud = document.getElementById('tactical-discovery-hud');
                                 if (hud) {
