@@ -484,7 +484,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                             source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
                             location_lat: asset.lat, location_lng: asset.lng
                         }));
-                    if (staticFallback.length > 0) renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert);
+                        if (staticFallback.length > 0) renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert);
+                    }
                     // Cleanup HUD after fallback rendering
                     setTimeout(() => {
                         const hud = document.getElementById('tactical-discovery-hud');
@@ -494,7 +495,6 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                         }
                     }, 2000);
                 }
-            }
         })
         .catch(err => {
                 console.error(`[Antigravity] Backbone analysis error:`, err);

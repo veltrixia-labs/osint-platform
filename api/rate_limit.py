@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 from fastapi import HTTPException, Request, Depends
 from api.auth import blacklist_manager
 from api.gating import get_effective_tier, TIER_GUEST, TIER_FREE, TIER_PRO, TIER_ENTERPRISE

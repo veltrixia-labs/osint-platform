@@ -2,6 +2,7 @@
 api/routes/analysts.py
 Analyst endpoints: GET /api/analysts, POST /api/analysts/{id}/watchlist
 """
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
