@@ -441,72 +441,70 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
     // If cascading_impacts is empty, trigger on-demand AI analysis via the backbone DB.
     // This replaces the old static STRATEGIC_ASSETS fallback with live DB-driven impact discovery.
     if (cascadingImpacts.length === 0) {
-        console.log(`[Antigravity] No pre-computed impacts — triggering backbone analysis for: ${alert.id}`);
-        
-        // Show analysis-in-progress HUD
-        renderTacticalStatusHud(layer, "BACKBONE ANALYSIS: RESOLVING CASCADE...");
+        // [v10.29] INSTANT STATIC RENDER: Don't wait for AI to show the backbone.
+        const rawTopic = alert.topic || (alert.metadata_json as any)?.topic;
+        const topicMap: Record<string, string> = {
+            'market': 'global_market_intelligence', 'energy': 'energy_resource_risk',
+            'tech': 'ai_semiconductor_intelligence', 'defense': 'defense_technology',
+            'supply_chain': 'supply_chain_intelligence', 'crypto': 'crypto_geopolitics'
+        };
+        const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
+        if (effectiveTopic) {
+            const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.85);
+            const staticFallback = relatedAssets.slice(0, 3).map(asset => ({
+                stakeholder_id: asset.id, entity_name: asset.name, impact_alpha: -2.5,
+                source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
+                location_lat: asset.lat, location_lng: asset.lng
+            }));
+            if (staticFallback.length > 0) {
+                renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert);
+                renderTacticalStatusHud(layer, "BACKBONE ACTIVE: AI REFINING...");
+            }
+        }
 
-        // Non-blocking: kick off analysis while map flies
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 55000);
-
-        fetch(`/api/alerts/${alert.id}/analyze`, { method: 'POST', signal: controller.signal })
+        // Background analysis trigger (Non-blocking)
+        fetch(`/api/alerts/${alert.id}/analyze`, { method: 'POST' })
             .then(r => r.json())
             .then(result => {
-                clearTimeout(timeoutId);
-                if ((result.status === 'success' || result.status === 'skipped') && result.cascading_impacts?.length > 0) {
-                    console.log(`[Antigravity] Backbone analysis resolved (${result.status}): ${result.cascading_impacts.length} impacts found`);
+                if (result.status === 'processing' || result.status === 'success') {
+                    console.log(`[Antigravity] Backbone analysis initiated: ${result.message}`);
                     
-                    // Render impact chain with backbone-sourced data
-                    renderImpactChain(map, layer, coords, result.cascading_impacts, 2, intensity, alert);
-                    renderTacticalStatusHud(layer, "BACKBONE CASCADE: ACTIVE");
-                    setTimeout(() => {
-                        const hud = document.getElementById('tactical-discovery-hud');
-                        if (hud) {
-                            hud.classList.remove('active');
-                            setTimeout(() => hud.remove(), 500);
+                    // Polling logic for AI enrichment
+                    let pollCount = 0;
+                    const poller = setInterval(() => {
+                        pollCount++;
+                        if (pollCount > 12) { // Max 60s
+                           clearInterval(poller);
+                           return;
                         }
-                    }, 8000);
-                } else {
-                    // True last-resort: fall back to static assets only if API also returns empty
-                    console.warn(`[Antigravity] Backbone analysis returned no impacts, using static fallback`);
-                    const rawTopic = alert.topic || (alert.metadata_json as any)?.topic;
-                    const topicMap: Record<string, string> = {
-                        'market': 'global_market_intelligence', 'energy': 'energy_resource_risk',
-                        'tech': 'ai_semiconductor_intelligence', 'defense': 'defense_technology',
-                        'supply_chain': 'supply_chain_intelligence', 'crypto': 'crypto_geopolitics'
-                    };
-                    const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
-                    if (effectiveTopic) {
-                        const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.85);
-                        const staticFallback = relatedAssets.slice(0, 3).map(asset => ({
-                            stakeholder_id: asset.id, entity_name: asset.name, impact_alpha: -2.5,
-                            source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
-                            location_lat: asset.lat, location_lng: asset.lng
-                        }));
-                        if (staticFallback.length > 0) renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert);
-                    }
-                    // Cleanup HUD after fallback rendering
-                    setTimeout(() => {
-                        const hud = document.getElementById('tactical-discovery-hud');
-                        if (hud) {
-                            hud.classList.remove('active');
-                            setTimeout(() => hud.remove(), 500);
-                        }
-                    }, 2000);
+
+                        fetch(`/api/alerts/${alert.id}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.backbone_discovery_status === 'complete' && data.cascading_impacts?.length > 0) {
+                                    clearInterval(poller);
+                                    console.log(`[Antigravity] AI Enrichment Received. Upgrading map nodes...`);
+                                    renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
+                                    // Wipe and redraw with AI precision
+                                    layer.clearLayers();
+                                    // Re-render origin
+                                    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
+                                    renderImpactChain(map, layer, coords, data.cascading_impacts, 2, intensity, alert);
+                                    
+                                    setTimeout(() => {
+                                        const hud = document.getElementById('tactical-discovery-hud');
+                                        if (hud) {
+                                            hud.classList.remove('active');
+                                            setTimeout(() => hud.remove(), 500);
+                                        }
+                                    }, 5000);
+                                }
+                            });
+                    }, 5000);
                 }
-        })
-        .catch(err => {
-                console.error(`[Antigravity] Backbone analysis error:`, err);
-                const hud = document.getElementById('tactical-discovery-hud');
-                if (hud) {
-                    const errorMsg = err.name === 'AbortError' ? "BACKBONE ANALYSIS: TIMEOUT" : "BACKBONE ANALYSIS: ERROR";
-                    renderTacticalStatusHud(layer, errorMsg);
-                    setTimeout(() => {
-                        hud.classList.remove('active');
-                        setTimeout(() => hud.remove(), 500);
-                    }, 3000);
-                }
+            })
+            .catch(err => {
+                console.warn("[Antigravity] Background analysis trigger warning:", err);
             });
     }
 

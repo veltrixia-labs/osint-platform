@@ -70,7 +70,7 @@ class ImpactDiscoveryEngine:
         logger.info(f"[Antigravity] AUTO-PROVISIONED Stakeholder: '{entity_name}' at ({entity_lat}, {entity_lng}) in domain '{domain}'")
         return new_stakeholder
 
-    async def run_discovery(self, trigger_item_id: uuid.UUID, title: str, summary: str) -> List[Dict[str, Any]]:
+    async def run_discovery(self, trigger_item_id: uuid.UUID, title: str, summary: str, alert_id: Optional[uuid.UUID] = None) -> List[Dict[str, Any]]:
         """
         Extract stakeholders and predict impacts from a news/alert signal.
         Includes a deduplication cache to preserve LLM quota.
@@ -248,6 +248,20 @@ class ImpactDiscoveryEngine:
             
             # Store in Cache
             _discovery_cache[event_hash] = (datetime.now(timezone.utc), processed_findings)
+
+            # [v10.29] INTERNAL DB UPDATE: If alert_id provided, persist status and results
+            if alert_id:
+                from db.models import AlertLog
+                stmt = select(AlertLog).where(AlertLog.id == alert_id)
+                alert = (await self.db.execute(stmt)).scalar_one_or_none()
+                if alert:
+                    meta = dict(alert.metadata_json) if alert.metadata_json else {}
+                    meta["cascading_impacts"] = processed_findings
+                    meta["backbone_discovery_status"] = "complete"
+                    meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
+                    alert.metadata_json = meta
+                    await self.db.commit()
+                    logger.info(f"[Antigravity] Background analysis persisted for Alert {alert_id}")
             
             return processed_findings
 

@@ -2,19 +2,20 @@
 api/routes/alerts.py
 Alert endpoints: GET /api/alerts, /api/alerts/live, POST /api/alerts/{id}/feedback
 """
-from fastapi import APIRouter, Query, HTTPException, Depends
-from sqlalchemy.future import select
-from sqlalchemy import desc
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
-from datetime import datetime, timezone
+import asyncio
 import uuid
 import json
 import logging
-import asyncio
+from datetime import datetime, timezone
+from typing import Optional, List, Dict, Any
+
+from fastapi import APIRouter, Query, HTTPException, Depends, BackgroundTasks
+from sqlalchemy.future import select
+from sqlalchemy import desc
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import AlertLog, AlertDelivery, AnalystProfile
-from db.database import get_db
+from db.database import get_db, AsyncSessionLocal
 from processor.impact_discovery import ImpactDiscoveryEngine
 from api.gating import get_effective_tier, is_topic_allowed, _gate_cascading_impacts
 from api.auth import blacklist_manager
@@ -212,7 +213,8 @@ async def get_alert(
         "location_lng": a.location_lng,
         "description": (a.metadata_json.get("description") if a.metadata_json else None) if is_allowed else "Forensic intelligence restricted.",
         "country": a.metadata_json.get("country") if a.metadata_json else None,
-        "is_locked": not is_allowed
+        "is_locked": not is_allowed,
+        "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle"
     }
 
     return data
@@ -237,47 +239,66 @@ async def submit_feedback(
     alert.feedback_score = score
     await db.commit()
     return {"status": "success"}
+
+async def run_background_discovery(alert_id: uuid.UUID, title: str, summary: str):
+    """Internal worker to execute LLM analysis out-of-band."""
+    async with AsyncSessionLocal() as session:
+        try:
+            from processor.impact_discovery import ImpactDiscoveryEngine
+            engine = ImpactDiscoveryEngine(session)
+            # Use specific alert_id to enable internal persistence
+            await engine.run_discovery(
+                trigger_item_id=uuid.uuid4(),
+                title=title,
+                summary=summary,
+                alert_id=alert_id
+            )
+        except Exception as e:
+            logging.getLogger(__name__).error(f"[Antigravity] Background analysis failed for {alert_id}: {e}")
+            # Mark as failed in DB
+            stmt = select(AlertLog).where(AlertLog.id == alert_id)
+            res = await session.execute(stmt)
+            alert = res.scalar_one_or_none()
+            if alert:
+                meta = dict(alert.metadata_json) if alert.metadata_json else {}
+                meta["backbone_discovery_status"] = "failed"
+                alert.metadata_json = meta
+                await session.commit()
+
 @router.post("/alerts/{alert_id}/analyze")
 async def upgrade_to_ai_analysis(
     alert_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/alerts/analyze")),
     db: AsyncSession = Depends(get_db)
 ):
-    """Triggers real-time AI impact discovery for an alert (On-Demand Upgrade)."""
+    """Triggers real-time AI impact discovery for an alert (Asynchronous Background Job)."""
     stmt = select(AlertLog).where(AlertLog.id == alert_id)
     alert = (await db.execute(stmt)).scalar_one_or_none()
     
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
 
-    # [v10.9] Efficiency Check: Only run if not already deep-analyzed
-    existing_impacts = alert.metadata_json.get("cascading_impacts", []) if alert.metadata_json else []
-    if any(i.get("source") == "ai_reasoning" for i in existing_impacts):
+    # [v10.29] Efficiency Check: Only run if not already processing or complete
+    meta = dict(alert.metadata_json) if alert.metadata_json else {}
+    status = meta.get("backbone_discovery_status", "idle")
+    existing_impacts = meta.get("cascading_impacts", [])
+
+    if any(i.get("source") == "ai_reasoning" for i in existing_impacts) or status == "complete":
         return {"status": "success", "message": "Retrieving cached deep analysis", "cascading_impacts": existing_impacts}
 
-    try:
-        engine = ImpactDiscoveryEngine(db)
-        discovery_results = await asyncio.wait_for(engine.run_discovery(
-            trigger_item_id=uuid.uuid4(), # Virtual trigger
-            title=alert.target_label,
-            summary=(alert.metadata_json.get("description") if alert.metadata_json else None) or f"Triggered on {alert.topic}"
-        ), timeout=50.0)
-        
-        if discovery_results:
-            # Force update metadata
-            updated_meta = dict(alert.metadata_json)
-            updated_meta["cascading_impacts"] = discovery_results
-            alert.metadata_json = updated_meta
-            await db.commit()
-            
-            return {
-                "status": "success",
-                "message": "AI analysis complete",
-                "cascading_impacts": discovery_results
-            }
-        else:
-            return {"status": "warning", "message": "AI discovery returned no new insights"}
-            
-    except Exception as e:
-        logger.error(f"On-demand AI upgrade failed for {alert_id}: {e}")
-        raise HTTPException(status_code=500, detail="Intelligence engine failed to respond.")
+    if status == "processing":
+        return {"status": "processing", "message": "Analysis is already in progress"}
+
+    # Set status to processing and trigger background task
+    meta["backbone_discovery_status"] = "processing"
+    alert.metadata_json = meta
+    await db.commit()
+
+    summary = (meta.get("description") if meta else None) or f"Triggered on {alert.topic}"
+    background_tasks.add_task(run_background_discovery, alert.id, alert.target_label, summary)
+
+    return {
+        "status": "processing",
+        "message": "AI backbone discovery initiated in background"
+    }
