@@ -37,9 +37,24 @@ class AlertManager:
         # Original: if not ALERT_ENABLED: return
 
         ALLOWED_TYPES = ["risk_pattern", "risk_acceleration", "entity_heat", "sector_surge", "sustained_event"]
+        
+        # [v10.37] STRATEGIC THINK-TANK CALIBRATION: Only allow 6 core sectors
+        STRATEGIC_TOPICS = [
+            "energy_resource_risk",
+            "global_market_intelligence",
+            "crypto_geopolitics",
+            "ai_semiconductor_intelligence",
+            "defense_technology",
+            "supply_chain_intelligence"
+        ]
 
         for sig in new_signals:
             if sig.trend_type not in ALLOWED_TYPES:
+                continue
+
+            # Skip general news or non-strategic topics for Tactical Alerts
+            if sig.topic not in STRATEGIC_TOPICS:
+                logger.info(f"Signal suppressed: Topic '{sig.topic}' falls outside the 6 Strategic OSINT Sectors.")
                 continue
 
             # Map the signal's trend_type to an appropriate display trigger_type

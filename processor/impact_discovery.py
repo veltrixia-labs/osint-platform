@@ -19,10 +19,19 @@ class ImpactDiscoveryEngine:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_top_stakeholders(self, limit: int = 15, domain: Optional[str] = None) -> List[Stakeholder]:
+    async def get_top_stakeholders(self, limit: int = 15, domain: Optional[str] = None, exclude_domain: Optional[str] = None) -> List[Stakeholder]:
         stmt = select(Stakeholder)
+        
+        # [v10.37] STRATEGIC THINK-TANK CALIBRATION
+        STRATEGIC_DOMAINS = ["energy", "market", "crypto", "ai_semi", "defense", "supply_chain"]
+        
         if domain and domain != "global":
             stmt = stmt.where(Stakeholder.domain == domain)
+        elif exclude_domain:
+            # Pull 'anchors' from across the strategic spectrum to encourage cross-sector analysis
+            stmt = stmt.where(Stakeholder.domain.in_(STRATEGIC_DOMAINS))
+            stmt = stmt.where(Stakeholder.domain != exclude_domain)
+            
         stmt = stmt.order_by(Stakeholder.strategic_score.desc()).limit(limit)
         result = await self.db.execute(stmt)
         return result.scalars().all()
@@ -125,8 +134,16 @@ class ImpactDiscoveryEngine:
                     target_domain = val
                     break
 
-        logger.info(f"[Antigravity] Injecting Context for Domain: {target_domain}")
-        known_stakes = await self.get_top_stakeholders(limit=15, domain=target_domain)
+        # [v10.37] DYNAMIC CROSS-SECTOR CONTEXT
+        # We pull 7 stakeholders from the target domain (Local Focus)
+        # And 8 stakeholders from across ALL other domains (Strategic Anchors)
+        # This ensures the AI can discover cross-sector ripples (e.g. Energy -> Trade).
+        logger.info(f"[Antigravity] Injecting Dynamic Strategic Context for Domain: {target_domain}")
+        
+        local_stakes = await self.get_top_stakeholders(limit=7, domain=target_domain)
+        anchor_stakes = await self.get_top_stakeholders(limit=8, exclude_domain=target_domain)
+        
+        known_stakes = local_stakes + anchor_stakes
         
         stakeholder_context = []
         for s in known_stakes:
@@ -143,22 +160,24 @@ class ImpactDiscoveryEngine:
             logger.info(f"[Antigravity] Sample Baseline: {stakeholder_context[0]['name']} -> {stakeholder_context[0]['quantum_indices']}")
 
         system_prompt = (
-            "You are an OSINT Intelligence Architect. Your task is to analyze cascading ripple effects "
-            "as a DIVERGENT BRANCHING CAUSAL TREE (Order 1 -> Order 2 -> Order 3).\n\n"
-            "CONTEXTUAL DATA: You are provided with SOCIOGRAPHIC INDICATORS for known stakeholders:\n"
+            "You are an OSINT Strategic Intelligence Architect for a high-fidelity Think Tank. "
+            "Your task is to analyze cascading ripple effects as a DIVERGENT BRANCHING CAUSAL TREE.\n\n"
+            "STRATEGIC SCOPE (MANDATORY):\n"
+            "You focus ONLY on 6 strategic sectors: Energy, Markets, Crypto, AI/Semiconductors, Defense, and Supply Chain/Trade.\n"
+            "Exclude general news, celebrity gossip, or localized events without global strategic significance.\n\n"
+            "CONTEXTUAL DATA: You are provided with SOCIOGRAPHIC INDICATORS for known Strategic Backbone Entities:\n"
             "- Resilience (Omega): Ability to substitute/recover. Lower = more vulnerable.\n"
             "- Contagion (Delta-C): Probability of impact transfer to next node.\n"
             "- Fragility (FRG): Structural vulnerability from concentrated dependencies.\n\n"
             "COGNITIVE DIRECTIVES:\n"
-            "1. METRIC-DRIVEN JUSTIFICATION: In 'reasoning', EXPLICITLY cite the Omega/Delta-C values from the context to explain the magnitude. e.g. 'Given a low Omega of 35%, disruption is expected to persist over 2 weeks.'\n"
-            "2. ACTIONABLE ADVICE: For every finding, provide a specific 'containment_action'.\n"
-            "3. TIMELINE: Estimate 'time_to_impact' (e.g., 'Immediate', '3-5 Days', '2-4 Weeks').\n"
-            "4. CASCADING RIPPLE EFFECTS (MANDATORY): For every finding, identify AT LEAST ONE secondary cascading impact. "
-            "e.g. If TSMC is Order 1, Order 2 could be Apple or NVIDIA semiconductor shortages. "
-            "Link your discovery where possible to the Known Stakeholders provided.\n"
-            "5. FAN-OUT: Identify 3 distinct Level 1 entities, and branch level 2 for each.\n"
-            "5. GEO-ENRICHMENT: For each entity (ESPECIALLY unknown ones not in the context list), "
-            "provide 'entity_lat', 'entity_lng' (decimal degrees), 'entity_sector', and 'entity_country'.\n\n"
+            "1. MASTER PIVOT ANALYSIS: Use the provided Backbone Entities as 'Connective Hubs'. "
+            "e.g. If an Energy risk occurs, analyze how it pivots into the 'Trade' sector via specific Backbone shipping ports or 'Market' sectors via energy-indexed funds.\n"
+            "2. METRIC-DRIVEN JUSTIFICATION: In 'reasoning', EXPLICITLY cite the Omega/Delta-C values from the context. "
+            "e.g. 'Given TSMC's Fragility (FRG) of 0.85, this localized technical failure poses a systemic contagion risk to the global AI sector.'\n"
+            "3. ACTIONABLE ADVICE: For every finding, provide an OSINT-grade 'containment_action'.\n"
+            "4. CASCADING RIPPLE EFFECTS: For every finding, identify AT LEAST ONE secondary cascading impact. "
+            "Link findings where possible to the Known Backbone Stakeholders provided.\n"
+            "5. GEO-ENRICHMENT: For each entity (especially unknown ones), provide 'entity_lat', 'entity_lng', 'entity_sector', and 'entity_country'.\n\n"
             "Strictly return nested branching JSON with this exact schema:\n"
             "{\n"
             "  'findings': [\n"
