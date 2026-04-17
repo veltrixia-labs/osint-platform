@@ -8,7 +8,7 @@ import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { Alert } from '../api';
-import { fetchAlerts, fetchAlert } from '../api';
+import { fetchAlerts, fetchAlert, apiClient } from '../api';
 import { getTopicDef } from '../topics';
 import { STRATEGIC_ASSETS } from '../infrastructure';
 import { getAlertCoords, getNodeCoords } from './utils';
@@ -472,7 +472,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                 const finalImpacts = alert.cascading_impacts || (alert.metadata_json as any).cascading_impacts;
                 layer.clearLayers();
                 renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
-                renderImpactChain(map, layer, coords, finalImpacts, 3, intensity, alert, new Set());
+                // [v10.36] Correct Entry level: Level 2 = WAVE 1
+                renderImpactChain(map, layer, coords, finalImpacts, 2, intensity, alert, new Set());
                 return;
             }
 
@@ -491,20 +492,26 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                         return; 
                     }
                     renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/36]...`);
-                    fetch(`/api/alerts/${alert.id}`)
-                        .then(r => r.json())
+                    fetchAlert(alert.id)
                         .then(data => {
-                            if (data.backbone_discovery_status === 'complete') {
-                                const updatedImpacts = data.cascading_impacts || data.metadata_json?.cascading_impacts;
-                                const hasResults = updatedImpacts && updatedImpacts.length > 0;
-                                
-                                clearInterval(poller);
-                                if (hasResults) {
-                                    renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
-                                    layer.clearLayers();
-                                    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
-                                    renderImpactChain(map, layer, coords, updatedImpacts, 3, intensity, alert, new Set());
-                                } else {
+            // 2. [v10.36] RECONCILIATION: Update the local alert reference with fetched data
+            // This ensures that the "Guaranteed Pipeline" (which handles animation stagger) 
+            // has access to the newly discovered impacts without a full map re-render.
+            if (data.backbone_discovery_status === 'complete') {
+                alert.cascading_impacts = data.cascading_impacts || data.metadata_json?.cascading_impacts;
+                alert.backbone_discovery_status = 'complete';
+                
+                const updatedImpacts = alert.cascading_impacts;
+                const hasResults = updatedImpacts && updatedImpacts.length > 0;
+                
+                clearInterval(poller);
+                if (hasResults) {
+                    renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
+                    layer.clearLayers();
+                    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
+                    // [v10.36] Correct Entry level: Level 2 = WAVE 1
+                    renderImpactChain(map, layer, coords, updatedImpacts, 2, intensity, alert, new Set());
+                } else {
                                     renderTacticalStatusHud(layer, "AI REFINING: NO ADDITIONAL DATA FOUND");
                                 }
                                 
@@ -532,7 +539,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                 return;
             }
 
-            fetch(`/api/alerts/${alert.id}/analyze`, { method: 'POST' })
+            apiClient.post(`/alerts/${alert.id}/analyze`)
                 .then(r => r.json())
                 .then(result => {
                     if (result.status === 'processing' || result.status === 'success') {
@@ -776,13 +783,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
             try {
                 let nodeCoords = getNodeCoords(finding);
                 
-                // [v10.27] Strict Validation: If coordinates remain invalid after all fallbacks, skip this branch
-                if (!nodeCoords || isNaN(nodeCoords.lat) || isNaN(nodeCoords.lng)) {
-                    console.warn(`[Antigravity] Skipping node rendering: Invalid coordinates for ${finding.entity_name}`);
-                    return;
-                }
-
-                // [v9.10] Coordinate Resolution Fallback
+                // [v9.10] Coordinate Resolution Fallback (Look up by entity name in Strategic Assets)
                 if (!nodeCoords && finding.entity_name) {
                     const asset = STRATEGIC_ASSETS.find(a => 
                         a.name.toLowerCase().includes(finding.entity_name.toLowerCase()) ||
@@ -791,19 +792,30 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     if (asset) nodeCoords = { lat: asset.lat, lng: asset.lng, source: 'Name-Lookup' };
                 }
 
+                // [v10.36] Narrative Continuity: Carry over parent coordinates if still unresolved
+                // Identify with 'Abstract-Carryover' for debugging/traceability
+                if (!nodeCoords) {
+                    nodeCoords = { lat: parentCoords.lat, lng: parentCoords.lng, source: 'Abstract-Carryover' };
+                    finding._is_carryover = true; // Internal tag for verification
+                }
+
+                // [v10.27] Final Safety Guard: Only return if coordinates remain null after all fallbacks
+                if (!nodeCoords || isNaN(nodeCoords.lat) || isNaN(nodeCoords.lng)) {
+                    console.warn(`[Antigravity] Fatal Positional Error for ${finding.entity_name}: Aborting branch.`);
+                    return;
+                }
+
                 const pathColor = (finding.impact_alpha || 0) < 0 ? '#f43f5e' : '#10b981';
 
-                // [v10.16] RESTORED CORE FLOW: Source node is NOT suppressed.
-                // We draw lines from Alert (A) -> Finding 1 (B, C, D) -> Finding 2
-                
-                if (!nodeCoords) {
+                // [v10.16] Propagation Path Render
+                if (finding._is_carryover) {
+                    // Carryover nodes use a local ripple instead of a long-distance arc
                     renderTacticalRipple(layer, L.latLng(parentCoords.lat, parentCoords.lng), pathColor, level);
-                    nodeCoords = { lat: parentCoords.lat, lng: parentCoords.lng, source: 'Abstract-Carryover' };
                 } else {
                     const start = L.latLng(parentCoords.lat, parentCoords.lng);
                     const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
                     
-                    // Don't draw arc if it's the exact same spot (rare but possible if LLM recurses on same entity)
+                    // Don't draw arc if it's the exact same spot
                     const distance = L.latLng(start).distanceTo(end);
                     if (distance > 1000) {
                         const points: L.LatLng[] = [];
@@ -834,7 +846,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                             opacity: 0.8,
                             smoothFactor: 1.5,
                             interactive: false,
-                            pane: 'vlt-arc-pane'  // [v10.19] Arc stays in lower pane
+                            pane: 'vlt-arc-pane'
                         }).addTo(layer);
 
                         setTimeout(() => {

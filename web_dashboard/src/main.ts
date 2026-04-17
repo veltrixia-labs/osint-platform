@@ -784,11 +784,9 @@ async function initDashboard() {
             window.dispatchEvent(new CustomEvent('map-status-update', { detail: { message: 'ENHANCING SIGNAL...' } }));
             
             // 2. Call Backend Analyze Endpoint
-            const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-            const response = await fetch(`${baseUrl}/alerts/${alertId}/analyze`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
+
+            const response = await apiClient.post(`/alerts/${alertId}/analyze`);
+
             
             const result = await response.json();
             

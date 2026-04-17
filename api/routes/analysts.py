@@ -34,11 +34,13 @@ async def get_analysts(
     return [
         {
             "id": str(a.id),
+            "email": a.email,
             "chat_id": a.telegram_chat_id,
             "watch_keywords": a.watch_keywords,
             "watch_entities": a.watch_entities,
             "watch_sectors": a.watch_sectors
         } for a in analysts
+
     ]
 
 

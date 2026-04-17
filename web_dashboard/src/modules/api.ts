@@ -120,7 +120,8 @@ export interface Report {
 export interface AnalystProfile {
     id: string;
     email: string;
-    telegram_chat_id: string;
+    chat_id: string;
+
     user_role: string;
     subscription_tier: string;
     watch_keywords: string[];
