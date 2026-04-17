@@ -6,7 +6,7 @@ console.log(`[Antigravity] Build Version: 7.5-FINAL-SYNC`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
 import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderMap, renderLegal } from './modules/render/index'
-import { login, signup, fetchMe, logout, fetchUsage, fetchReports, fetchReport } from './modules/api'
+import { login, signup, fetchMe, logout, fetchUsage, fetchReports, fetchReport, apiClient } from './modules/api'
 import type { UserMe, AnalystProfile, Report } from './modules/api'
 import {
     renderTierBadge,
