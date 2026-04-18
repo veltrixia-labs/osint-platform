@@ -231,131 +231,165 @@ class ImpactDiscoveryEngine:
                     intensity=5.0
                 )
 
-            async def enrich_finding(finding: Dict[str, Any], depth: int = 1, visited_entities: Optional[set] = None):
-                """
-                Enrich finding with DB data, auto-provisioning new entities as needed.
-                [v10.38] RECURSION GUARD: Protect against deep or circular AI trees.
-                """
-                if visited_entities is None:
-                    visited_entities = set()
-
-                if depth > 4: 
-                    logger.warning(f"[Antigravity] Max depth (4) reached for '{finding.get('entity_name')}'. Pruning children.")
-                    finding["cascading_impacts"] = []
-                    return
-
-                if "source" not in finding:
-                    finding["source"] = "ai_reasoning"
-                
-                s_id = finding.get("stakeholder_id")
-                stakeholder = None
-                
-                entity_name = finding.get("entity_name", "Unknown")
-                node_uuid = f"{entity_name}:{finding.get('entity_lat')}:{finding.get('entity_lng')}"
-                
-                if node_uuid in visited_entities:
-                    logger.warning(f"[Antigravity] Circular reference detected for '{entity_name}'. Skipping enrichment.")
-                    finding["cascading_impacts"] = []
-                    return
-                
-                visited_entities.add(node_uuid)
-
-                try:
-                    # 1. Attempt exact ID match
-                    if s_id and s_id != "null":
-                        try:
-                            s_stmt = select(Stakeholder).where(Stakeholder.id == uuid.UUID(s_id))
-                            stakeholder = (await self.db.execute(s_stmt)).scalar_one_or_none()
-                        except:
-                            pass
-                    
-                    # 2. Backbone-priority fuzzy name match
-                    if not stakeholder and entity_name != "Unknown":
-                        fuzzy_stmt = select(Stakeholder).where(
-                            Stakeholder.name.ilike(f"%{entity_name}%")
-                        ).order_by(Stakeholder.is_auto_provisioned.asc())
-                        result = (await self.db.execute(fuzzy_stmt)).first()
-                        if result:
-                            stakeholder = result[0]
-
-                    # 3. AUTO-PROVISIONING
-                    if not stakeholder:
-                        stakeholder = await self._auto_provision_stakeholder(finding)
-
-                    if stakeholder:
-                        finding["stakeholder_id"] = str(stakeholder.id)
-                        finding["location_lat"] = stakeholder.location_lat
-                        finding["location_lng"] = stakeholder.location_lng
-                        finding["entity_name"] = stakeholder.name # Sync name if fuzzy matched
-                        
-                        stakeholder.hit_count = (stakeholder.hit_count or 0) + 1
-                        stakeholder.last_hit_at = datetime.now(timezone.utc)
-                        indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, stakeholder.id)
-                        finding["quantum_metrics"] = indices
-                    else:
-                        finding["quantum_metrics"] = {"resilience": 45, "contagion": 0.4, "fragility": 0.5, "metrics_source": "probabilistic"}
-
-                except Exception as ex:
-                    logger.warning(f"Failed to enrich stakeholder '{entity_name}': {ex}")
-
-                # Recurse into children
-                children = finding.get("cascading_impacts", [])
-                for child in children:
-                    await enrich_finding(child, depth + 1, visited_entities)
-
+            # [v10.45] HIGH-FIDELITY PARALLEL PIPELINE
+            import asyncio
+            from db.database import AsyncSessionLocal
+            
+            # Use Semaphore to avoid DB connection exhaustion
+            semaphore = asyncio.Semaphore(5)
             processed_findings = []
-            # Global visited set across all top-level findings for this alert
             global_visited = set()
-            
-            for f in findings:
-                try:
-                    await enrich_finding(f, 1, global_visited)
-                    processed_findings.append(f)
-                except Exception as loop_ex:
-                    logger.error(f"Fault in enrichment loop for finding: {loop_ex}")
 
-            await self.db.commit()
-            
+            async def parallel_enrich(finding: Dict[str, Any]):
+                async with semaphore:
+                    async with AsyncSessionLocal() as branch_session:
+                        try:
+                            # Re-initialize engine with local session for safety
+                            branch_engine = ImpactDiscoveryEngine(branch_session)
+                            await branch_engine._enrich_finding_recursive(finding, 1, global_visited)
+                            
+                            # [v10.46] Incremental Sync: Persist finding immediately after enrichment
+                            if alert_id:
+                                # Update locally to avoid too many global commits, 
+                                # but we'll do a partial update of the alert metadata
+                                await branch_engine._append_partial_discovery(alert_id, finding)
+                                
+                            return finding
+                        except Exception as e:
+                            logger.error(f"Failed to enrich finding branch: {e}")
+                            return finding 
+
+            # Phase 1: AI Reasoning (Completed above)
+            # Phase 2: Parallel Graph Enrichment
+            if findings:
+                tasks = [parallel_enrich(f) for f in findings]
+                completed = await asyncio.gather(*tasks)
+                processed_findings = [c for c in completed if c]
+            else:
+                processed_findings = []
+
             # Store in Cache
             _discovery_cache[event_hash] = (datetime.now(timezone.utc), processed_findings)
 
-            # [v10.29] INTERNAL DB UPDATE
+            # [v10.36] TERMINAL STATE PERSISTENCE
             if alert_id:
-                from db.models import AlertLog
-                stmt = select(AlertLog).where(AlertLog.id == alert_id)
-                alert = (await self.db.execute(stmt)).scalar_one_or_none()
-                if alert:
-                    meta = dict(alert.metadata_json) if alert.metadata_json else {}
-                    meta["cascading_impacts"] = processed_findings
-                    meta["backbone_discovery_status"] = "complete"
-                    meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
-                    alert.metadata_json = meta
-                    flag_modified(alert, "metadata_json")
-                    await self.db.commit()
-                    logger.info(f"[Antigravity] Background analysis persisted for Alert {alert_id}")
+                await self._persist_final_state(alert_id, processed_findings, "complete")
             
             return processed_findings
 
         except Exception as e:
-            logger.error(f"Error in ImpactDiscoveryEngine: {e}")
-            await self.db.rollback()
-            
-            # [v10.36] Ensure status is updated to 'failed' to stop UI polling
+            logger.error(f"CRITICAL FAULT in ImpactDiscoveryEngine: {e}")
             if alert_id:
-                try:
-                    from db.models import AlertLog
-                    from db.database import AsyncSessionLocal
-                    async with AsyncSessionLocal() as session:
-                        stmt = select(AlertLog).where(AlertLog.id == alert_id)
-                        alert = (await session.execute(stmt)).scalar_one_or_none()
-                        if alert:
-                            meta = dict(alert.metadata_json) if alert.metadata_json else {}
-                            meta["backbone_discovery_status"] = "failed"
-                            alert.metadata_json = meta
-                            flag_modified(alert, "metadata_json")
-                            await session.commit()
-                            logger.info(f"[Antigravity] Status marked as FAILED for Alert {alert_id}")
-                except Exception as status_ex:
-                    logger.error(f"Failed to persist failure status: {status_ex}")
-
+                await self._persist_final_state(alert_id, [], "failed")
             return []
+
+    async def _enrich_finding_recursive(self, finding: Dict[str, Any], depth: int, visited_entities: set):
+        """
+        Internal recursive worker for high-fidelity enrichment.
+        """
+        if depth > 4:
+            finding["cascading_impacts"] = []
+            return
+
+        entity_name = finding.get("entity_name", "Unknown")
+        # Robust node ID
+        e_lat = finding.get("entity_lat", finding.get("location_lat", "0"))
+        e_lng = finding.get("entity_lng", finding.get("location_lng", "0"))
+        node_id = f"{entity_name}:{e_lat}:{e_lng}"
+        
+        if node_id in visited_entities:
+            finding["cascading_impacts"] = []
+            return
+        visited_entities.add(node_id)
+
+        try:
+            from processor.impact_calculator import ImpactCalculator
+            s_id = finding.get("stakeholder_id")
+            stakeholder = None
+            
+            # 1. DB Lookup
+            if s_id and s_id != "null":
+                try:
+                    stmt = select(Stakeholder).where(Stakeholder.id == uuid.UUID(s_id))
+                    stakeholder = (await self.db.execute(stmt)).scalar_one_or_none()
+                except: pass
+            
+            if not stakeholder and entity_name != "Unknown":
+                fuzzy_stmt = select(Stakeholder).where(Stakeholder.name.ilike(f"%{entity_name}%")).order_by(Stakeholder.is_auto_provisioned.asc())
+                res = await self.db.execute(fuzzy_stmt)
+                stakeholder = res.scalars().first()
+
+            # 2. Provisioning
+            if not stakeholder:
+                stakeholder = await self._auto_provision_stakeholder(finding)
+
+            # 3. Metrics Calculation
+            if stakeholder:
+                finding["stakeholder_id"] = str(stakeholder.id)
+                finding["location_lat"] = stakeholder.location_lat
+                finding["location_lng"] = stakeholder.location_lng
+                finding["entity_name"] = stakeholder.name
+                
+                indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, stakeholder.id)
+                finding["quantum_metrics"] = indices
+                
+                stakeholder.hit_count = (stakeholder.hit_count or 0) + 1
+                stakeholder.last_hit_at = datetime.now(timezone.utc)
+                await self.db.commit()
+            else:
+                finding["quantum_metrics"] = {"resilience": 50, "contagion": 0.4, "metrics_source": "probabilistic"}
+
+            # 4. Recursion into next wave (breadth-first-within-serial-recursion for clarity)
+            children = finding.get("cascading_impacts", [])
+            if children:
+                for child in children:
+                    await self._enrich_finding_recursive(child, depth + 1, visited_entities)
+
+        except Exception as ex:
+            logger.warning(f"Branch enrichment stalled for {entity_name}: {ex}")
+
+    async def _persist_final_state(self, alert_id: uuid.UUID, findings: list, status: str):
+        """Atomic update of the alert metadata to terminal or partial states."""
+        try:
+            from db.database import AsyncSessionLocal
+            from db.models import AlertLog
+            async with AsyncSessionLocal() as session:
+                stmt = select(AlertLog).where(AlertLog.id == alert_id)
+                alert = (await session.execute(stmt)).scalar_one_or_none()
+                if alert:
+                    meta = dict(alert.metadata_json) if alert.metadata_json else {}
+                    if findings:
+                        meta["cascading_impacts"] = findings
+                    meta["backbone_discovery_status"] = status
+                    meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
+                    alert.metadata_json = meta
+                    flag_modified(alert, "metadata_json")
+                    await session.commit()
+                    logger.info(f"[Antigravity] Alert {alert_id} state -> {status}")
+        except Exception as e:
+            logger.error(f"Failed to persist state for alert {alert_id}: {e}")
+
+    async def _append_partial_discovery(self, alert_id: uuid.UUID, finding: Dict[str, Any]):
+        """Append a single finding branch to the AlertLog in real-time."""
+        try:
+            from db.database import AsyncSessionLocal
+            from db.models import AlertLog
+            async with AsyncSessionLocal() as session:
+                stmt = select(AlertLog).where(AlertLog.id == alert_id)
+                alert = (await session.execute(stmt)).scalar_one_or_none()
+                if alert:
+                    meta = dict(alert.metadata_json) if alert.metadata_json else {}
+                    impacts = meta.get("cascading_impacts", [])
+                    # Append or Update finding (avoiding duplicates if possible)
+                    match_idx = next((i for i, f in enumerate(impacts) if f.get('entity_name') == finding.get('entity_name')), -1)
+                    if match_idx >= 0:
+                        impacts[match_idx] = finding
+                    else:
+                        impacts.append(finding)
+                    
+                    meta["cascading_impacts"] = impacts
+                    alert.metadata_json = meta
+                    flag_modified(alert, "metadata_json")
+                    await session.commit()
+        except:
+            pass # Non-critical if partial persistence fails

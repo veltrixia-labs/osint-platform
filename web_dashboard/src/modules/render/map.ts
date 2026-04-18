@@ -481,6 +481,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                         return; 
                     }
                     renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/60]...`);
+                    
                     fetchAlert(alert.id)
                         .then(data => {
                             if (!data || (data as any).status === 401) {
@@ -489,29 +490,38 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                                 return;
                             }
 
-                            // [v10.40] STALE WORKER RECOVERY: If stuck in processing for too long, kick it
+                            // [v10.40] STALE WORKER RECOVERY
                             if (data.backbone_discovery_status === 'processing' && pollCount === 30) {
                                 console.warn("[Antigravity] Analysis seems slow. Sending heartbeat kick...");
                                 apiClient.post(`/alerts/${alert.id}/analyze`).catch(() => {});
                             }
 
+                            // [v10.50] Incremental Sync: Handle partial data growth
+                            const newImpacts = data.cascading_impacts || [];
+                            const currentImpacts = alert.cascading_impacts || [];
+                            
+                            if (newImpacts.length > currentImpacts.length && data.backbone_discovery_status === 'processing') {
+                                alert.cascading_impacts = newImpacts;
+                                renderImpactChain(map, layer, coords, newImpacts, 2, intensity, alert, new Set());
+                            }
+
                             if (data.backbone_discovery_status === 'complete') {
                                 clearInterval(poller);
                                 renderTacticalStatusHud(layer, "AI REFINEMENT COMPLETE");
-                                
                                 alert.cascading_impacts = data.cascading_impacts;
                                 alert.backbone_discovery_status = 'complete';
-                                if (alert.metadata_json) {
-                                    alert.metadata_json.cascading_impacts = data.cascading_impacts;
-                                }
-
-                                const impacts = data.cascading_impacts || [];
-                                renderImpactChain(map, layer, coords, impacts, 2, intensity, alert, new Set());
+                                
+                                layer.clearLayers();
+                                renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, pathColor, 1, 0);
+                                renderImpactChain(map, layer, coords, data.cascading_impacts, 2, intensity, alert, new Set());
                                 
                                 setTimeout(() => {
                                     const hud = document.getElementById('tactical-discovery-hud');
                                     if (hud) hud.classList.remove('active');
                                 }, 3000);
+                            } else if (data.backbone_discovery_status === 'failed') {
+                                clearInterval(poller);
+                                renderTacticalStatusHud(layer, "AI DISCOVERY OFFLINE");
                             }
                         }).catch(err => {
                             console.error("[Antigravity] Poller encounter fault:", err);
