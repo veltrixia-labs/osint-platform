@@ -460,6 +460,11 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                     source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
                     location_lat: asset.lat, location_lng: asset.lng
                 }));
+                if (staticFallback.length > 0) {
+                    renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert, new Set());
+                }
+            }
+
             const startPoller = (initialMsg: string) => {
                 renderTacticalStatusHud(layer, initialMsg);
                 let pollCount = 0;
