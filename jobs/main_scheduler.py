@@ -163,7 +163,7 @@ def register_jobs():
     logger.info("Registering job schedules (Async Native Mapping)...")
     
     # Core Pipeline
-    schedule.every(30).minutes.do(schedule_async, "pipeline", pipeline_full_processing)
+    schedule.every(5).minutes.do(schedule_async, "pipeline", pipeline_full_processing)
 
     # Threads publisher (Polling)
     schedule.every(10).minutes.do(schedule_async, "threads_publisher", run_threads_publisher_wrapper)

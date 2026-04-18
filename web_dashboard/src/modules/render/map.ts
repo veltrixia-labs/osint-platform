@@ -460,23 +460,6 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                     source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
                     location_lat: asset.lat, location_lng: asset.lng
                 }));
-                if (staticFallback.length > 0) {
-                    renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert, new Set());
-                }
-            }
-
-            const hasDirectImpacts = alert.cascading_impacts && alert.cascading_impacts.length > 0;
-            const hasMetaImpacts = (alert.metadata_json as any)?.cascading_impacts?.length > 0;
-            
-            if (currentStatus === 'complete' && (hasDirectImpacts || hasMetaImpacts)) {
-                const finalImpacts = alert.cascading_impacts || (alert.metadata_json as any).cascading_impacts;
-                layer.clearLayers();
-                renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
-                // [v10.36] Correct Entry level: Level 2 = WAVE 1
-                renderImpactChain(map, layer, coords, finalImpacts, 2, intensity, alert, new Set());
-                return;
-            }
-
             const startPoller = (initialMsg: string) => {
                 renderTacticalStatusHud(layer, initialMsg);
                 let pollCount = 0;
@@ -494,77 +477,62 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                     renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/36]...`);
                     fetchAlert(alert.id)
                         .then(data => {
-            // 2. [v10.36] RECONCILIATION: Update the local alert reference with fetched data
-            // This ensures that the "Guaranteed Pipeline" (which handles animation stagger) 
-            // has access to the newly discovered impacts without a full map re-render.
-            if (data.backbone_discovery_status === 'complete') {
-                alert.cascading_impacts = data.cascading_impacts || data.metadata_json?.cascading_impacts;
-                alert.backbone_discovery_status = 'complete';
-                
-                const updatedImpacts = alert.cascading_impacts;
-                const hasResults = updatedImpacts && updatedImpacts.length > 0;
-                
-                clearInterval(poller);
-                if (hasResults) {
-                    renderTacticalStatusHud(layer, "BACKBONE ANALYTICS: OPTIMIZED");
-                    layer.clearLayers();
-                    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
-                    // [v10.36] Correct Entry level: Level 2 = WAVE 1
-                    renderImpactChain(map, layer, coords, updatedImpacts, 2, intensity, alert, new Set());
-                } else {
-                                    renderTacticalStatusHud(layer, "AI REFINING: NO ADDITIONAL DATA FOUND");
+                            if (!data || (data as any).status === 401) {
+                                clearInterval(poller);
+                                renderTacticalStatusHud(layer, "SESSION EXPIRED: RE-LOGIN REQUIRED");
+                                return;
+                            }
+
+                            if (data.backbone_discovery_status === 'complete') {
+                                clearInterval(poller);
+                                renderTacticalStatusHud(layer, "AI REFINEMENT COMPLETE");
+                                
+                                alert.cascading_impacts = data.cascading_impacts;
+                                alert.backbone_discovery_status = 'complete';
+                                if (alert.metadata_json) {
+                                    alert.metadata_json.cascading_impacts = data.cascading_impacts;
                                 }
+
+                                const impacts = data.cascading_impacts || [];
+                                renderImpactChain(map, layer, coords, impacts, 2, intensity, alert, new Set());
                                 
                                 setTimeout(() => {
                                     const hud = document.getElementById('tactical-discovery-hud');
-                                    if (hud) {
-                                        hud.classList.remove('active');
-                                        setTimeout(() => hud.remove(), 500);
-                                    }
-                                }, 5000);
-                            } else if (data.backbone_discovery_status === 'failed') {
-                                clearInterval(poller);
-                                renderTacticalStatusHud(layer, "AI REFINING: ANALYSIS FAILED");
-                                setTimeout(() => {
-                                    const hud = document.getElementById('tactical-discovery-hud');
                                     if (hud) hud.classList.remove('active');
-                                }, 5000);
+                                }, 3000);
                             }
+                        }).catch(err => {
+                            console.error("[Antigravity] Poller encounter fault:", err);
                         });
                 }, 5000);
+                (window as any)._activeTacticalPoller = poller;
             };
 
             if (currentStatus === 'processing') {
-                startPoller("AI REFINING: JOINING PROACTIVE TASK...");
-                return;
+                console.log("[Antigravity] Analysis already in progress (Proactive). Starting poller directly.");
+                startPoller("REFINING PROACTIVE ANALYSIS...");
+            } else {
+                console.log("[Antigravity] Analysis idle. Triggering on-demand discovery.");
+                apiClient.post(`/alerts/${alert.id}/analyze`)
+                    .then(() => startPoller("AI DISCOVERY TRIGGERED..."))
+                    .catch(err => {
+                        console.error("[Antigravity] Failed to trigger AI analysis:", err);
+                        renderTacticalStatusHud(layer, "ANALYSIS TRIGGER FAILED");
+                    });
             }
-
-            apiClient.post(`/alerts/${alert.id}/analyze`)
-                .then(r => r.json())
-                .then(result => {
-                    if (result.status === 'processing' || result.status === 'success') {
-                        startPoller("AI REFINING: REQUESTING BACKBONE UPGRADE...");
-                    }
-                });
         }
 
-        // --- Narrative Animation Guaranteed Pipeline ---
         setTimeout(() => {
             map.flyTo([coords.lat, coords.lng], 4, { duration: 1.5 });
-            
             const startNarrative = () => {
                 const currentHud = document.getElementById('tactical-discovery-hud');
                 if (currentHud && currentHud.innerText.includes("POSITION")) {
                     renderTacticalStatusHud(layer, "TRACING CASCADE VECTORS...");
                 }
-                
-                // [v10.36] LATE BINDING: Pull latest results from the alert reference
-                // This ensures that if the poller finished while flyTo was zooming, we use the results.
                 const latestImpacts = alert.cascading_impacts || (alert.metadata_json as any)?.cascading_impacts || [];
                 if (latestImpacts.length > 0) {
                     renderImpactChain(map, layer, coords, latestImpacts, 2, intensity, alert, new Set());
                 }
-                
                 setTimeout(() => {
                     const hud = document.getElementById('tactical-discovery-hud');
                     if (hud) {
@@ -573,11 +541,9 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                     }
                 }, 12000);
             };
-
             map.once('moveend', startNarrative);
             setTimeout(startNarrative, 3000);
         }, 300);
-
     } catch (e) {
         console.error("[Antigravity] FATAL MAP ERROR:", e);
         renderTacticalStatusHud(layer, "MAP_ENGINE_FAULT: RENDER_ABORTED");
@@ -659,113 +625,68 @@ function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, c
 }
 
 /**
- * [v10.14] High-Fidelity Tactical Card.
- * Includes vertical offset for collision avoidance.
+ * [v53] Robust Tactical Node Label Rendering
  */
-function renderTacticalNodeLabel(layer: L.LayerGroup, latLng: [number, number], finding: any, _color: string, level: number, index: number, total: number) {
-    const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 80) || 'Strategic Impact Detected';
-    
-    // [v10.19] Sentiment-driven color: positive = blue, negative = red
-    const alpha = finding.impact_alpha ?? 0;
-    const sentimentColor = alpha >= 0 ? '#388bfd' : '#ff7b72';
-    const alphaFormatted = `${alpha >= 0 ? '+' : ''}${alpha.toFixed(1)}%`;
-    const sentimentClass = alpha >= 0 ? 'sentiment-positive' : 'sentiment-negative';
+function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, level: number, index: number, total: number) {
+    try {
+        const arrivalDelay = 1200;
+        const alpha = finding.impact_alpha ?? 0;
+        const alphaFormatted = `${alpha >= 0 ? '+' : ''}${alpha.toFixed(1)}%`;
+        const sentimentColor = alpha >= 0 ? '#388bfd' : '#ff7b72';
+        const sentimentClass = alpha >= 0 ? 'positive' : 'negative';
+        
+        const resilience = finding.quantum_metrics?.resilience?.toFixed(1) ?? '50.0';
+        const contagion = finding.quantum_metrics?.contagion?.toFixed(2) ?? '0.30';
+        const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 80) || 'Strategic Impact Detected';
 
-    // Smart Radial Placement
-    const distance = 95; 
-    const angleStep = (2 * Math.PI) / Math.max(1, total);
-    const angle = (index * angleStep) - (Math.PI / 4);
-    const xOffset = Math.cos(angle) * distance;
-    const yOffset = Math.sin(angle) * distance;
-
-    const isOrigin = level === 1;
-    const initialClass = isOrigin ? 'expanded' : 'collapsed';
-
-    // Quantum metrics
-    const resilience = finding.quantum_metrics?.resilience?.toFixed(1) ?? '50.0';
-    const contagion = finding.quantum_metrics?.contagion?.toFixed(2) ?? '0.30';
-    const metricsSource = finding.quantum_metrics?.metrics_source ?? 'probabilistic_estimation';
-    const metricsLabel = metricsSource === 'graph_tensor' ? '📊 Graph Tensor' : 
-                         metricsSource === 'sector_baseline' ? '📐 Sector Baseline' : '🔢 Estimated';
-
-    const icon = L.divIcon({
-        className: 'none',
-        html: `
-            <div id="tnode-${finding.stakeholder_id || index}-${level}" 
-                 class="tactical-node-wrapper ${initialClass} ${sentimentClass}" 
-                 style="--node-color: ${sentimentColor}; --x-off: ${xOffset}px; --y-off: ${yOffset}px">
-                
-                <div class="tactical-node-trigger">
-                    <div class="node-type-dot"></div>
-                    <div class="node-name-mini">${finding.entity_name || 'Node'}</div>
-                </div>
-
-                <div class="node-label-inner card-high-fidelity">
-                    <div class="node-label-header">
-                        <span class="node-type-dot"></span>
-                        <span class="node-name">${finding.entity_name || 'Strategic Hub'}</span>
-                        <span class="node-time-tag">${finding.time_to_impact || 'Immediate'}</span>
+        const labelHtml = `
+            <div class="tactical-node-label-container" style="--node-color: ${color}; --sentiment-color: ${sentimentColor}">
+                <div class="node-branch-tag">WAVE ${level-1 || 'ORD'} • B-${String.fromCharCode(64 + index + 1)}</div>
+                <div class="node-main-box">
+                    <div class="node-header">
+                        <span class="node-entity-title">${finding.entity_name || 'Strategic Hub'}</span>
+                        <span class="node-alpha-badge ${sentimentClass}">${alphaFormatted}</span>
                     </div>
-
-                    <div class="node-impact-summary">${impactSummary}</div>
-
-                    <!-- [v10.19] Quantum Metrics Grid with source label -->
-                    <div class="node-metrics-grid">
-                        <div class="metric-item">
-                            <span class="metric-label">Resilience (Ω)</span>
-                            <span class="metric-value">${resilience}%</span>
+                    <div class="node-summary-line">${impactSummary}</div>
+                    <div class="node-metrics-bar">
+                        <div class="metric-segment">
+                            <span class="m-label">RESILIENCE (Ω)</span>
+                            <span class="m-val">${resilience}%</span>
                         </div>
-                        <div class="metric-item">
-                            <span class="metric-label">Contagion (ΔC)</span>
-                            <span class="metric-value">${contagion}</span>
+                        <div class="metric-divider"></div>
+                        <div class="metric-segment">
+                            <span class="m-label">CONTAGION (ΔC)</span>
+                            <span class="m-val">${contagion}</span>
                         </div>
-                    </div>
-                    <div class="metrics-source-tag">${metricsLabel}</div>
-
-                    <!-- [v10.18] Tactical Recommendation -->
-                    <div class="node-action-container">
-                        <div class="action-header">CONTAINMENT ACTION</div>
-                        <div class="action-text">${finding.containment_action || 'Monitor for volatility spillover.'}</div>
-                    </div>
-
-                    <div class="node-footer">
-                        <span class="node-level-tag">${isOrigin ? 'ORIGIN' : `ORDER ${level - 1}`}</span>
-                        <span class="node-impact-alpha">${alphaFormatted}</span>
                     </div>
                 </div>
             </div>
-        `,
-        iconSize: [240, 140],
-        iconAnchor: [120, 70] 
-    });
+        `;
 
-    const marker = L.marker(latLng, { 
-        icon, 
-        interactive: true,
-        pane: 'vlt-tactical-pane' 
-    }).addTo(layer);
+        const labelIcon = L.divIcon({
+            className: 'none',
+            html: labelHtml,
+            iconSize: [260, 100],
+            iconAnchor: [-20, 50]
+        });
 
-    marker.on('click', (e) => {
-        L.DomEvent.stopPropagation(e);
-        const el = document.getElementById(`tnode-${finding.stakeholder_id || index}-${level}`);
-        if (el) {
-            const isExpanding = el.classList.contains('collapsed');
-            
-            if (isExpanding) {
-                document.querySelectorAll('.tactical-node-wrapper.expanded').forEach(other => {
-                    if (other.id !== el.id && !other.classList.contains('origin-permanent')) {
-                       other.classList.remove('expanded');
-                       other.classList.add('collapsed');
-                    }
-                });
+        const labelMarker = L.marker(coords, { icon: labelIcon, pane: 'vlt-tactical-pane' });
+        
+        setTimeout(() => {
+            labelMarker.addTo(layer);
+            const el = labelMarker.getElement();
+            if (el) {
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(-10px)';
+                el.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateX(0)';
+                }, 50);
             }
-            el.classList.toggle('collapsed');
-            el.classList.toggle('expanded');
-        }
-    });
-
-    if (isOrigin) {
-        marker.getElement()?.classList.add('origin-permanent');
+        }, level === 1 ? 0 : arrivalDelay);
+    } catch (err) {
+        console.error("[Antigravity] FAILED to render tactical node label:", err, finding);
     }
 }
 
