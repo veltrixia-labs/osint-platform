@@ -434,7 +434,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         impact_summary: alert.description || alert.target_label || "Strategic Signal Detected",
         impact_alpha: alert.intensity || 5
     };
-    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1);
+    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0);
 
         const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
         let cascadingImpacts = [...cascadingImpactsRaw];
@@ -632,7 +632,7 @@ function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, c
 /**
  * [v53] Robust Tactical Node Label Rendering
  */
-function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, level: number, index: number, total: number) {
+function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, level: number, index: number) {
     try {
         const arrivalDelay = 1200;
         const alpha = finding.impact_alpha ?? 0;
@@ -807,7 +807,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                         console.log(`[Antigravity] Quantum baseline for ${entityName}:`, finding.quantum_metrics);
                     }
 
-                    renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index, impacts.length);
+                    renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index);
                     renderTacticalStatusHud(layer, `WAVE ${level - 1}: ANALYZING ${entityName.toUpperCase()}...`);
 
                     // Branching Recursion: Sync level increment (Alert=1, Order1=2, Order2=3...)
