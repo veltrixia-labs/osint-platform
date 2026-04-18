@@ -470,7 +470,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                 let pollCount = 0;
                 const poller = setInterval(() => {
                     pollCount++;
-                    if (pollCount > 36) { 
+                    // [v10.39] EXTENDED TIMEOUT: 5 minutes (60 * 5s) for deep-chain AI analysis
+                    if (pollCount > 60) { 
                         clearInterval(poller); 
                         renderTacticalStatusHud(layer, "AI REFINING: TASK TIMED OUT");
                         setTimeout(() => {
@@ -479,13 +480,19 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                         }, 5000);
                         return; 
                     }
-                    renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/36]...`);
+                    renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/60]...`);
                     fetchAlert(alert.id)
                         .then(data => {
                             if (!data || (data as any).status === 401) {
                                 clearInterval(poller);
                                 renderTacticalStatusHud(layer, "SESSION EXPIRED: RE-LOGIN REQUIRED");
                                 return;
+                            }
+
+                            // [v10.40] STALE WORKER RECOVERY: If stuck in processing for too long, kick it
+                            if (data.backbone_discovery_status === 'processing' && pollCount === 30) {
+                                console.warn("[Antigravity] Analysis seems slow. Sending heartbeat kick...");
+                                apiClient.post(`/alerts/${alert.id}/analyze`).catch(() => {});
                             }
 
                             if (data.backbone_discovery_status === 'complete') {

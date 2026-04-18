@@ -231,31 +231,54 @@ class ImpactDiscoveryEngine:
                     intensity=5.0
                 )
 
-            async def enrich_finding(finding: Dict[str, Any]):
-                """Enrich finding with DB data, auto-provisioning new entities as needed."""
+            async def enrich_finding(finding: Dict[str, Any], depth: int = 1, visited_entities: Optional[set] = None):
+                """
+                Enrich finding with DB data, auto-provisioning new entities as needed.
+                [v10.38] RECURSION GUARD: Protect against deep or circular AI trees.
+                """
+                if visited_entities is None:
+                    visited_entities = set()
+
+                if depth > 4: 
+                    logger.warning(f"[Antigravity] Max depth (4) reached for '{finding.get('entity_name')}'. Pruning children.")
+                    finding["cascading_impacts"] = []
+                    return
+
                 if "source" not in finding:
                     finding["source"] = "ai_reasoning"
                 
                 s_id = finding.get("stakeholder_id")
                 stakeholder = None
                 
+                entity_name = finding.get("entity_name", "Unknown")
+                node_uuid = f"{entity_name}:{finding.get('entity_lat')}:{finding.get('entity_lng')}"
+                
+                if node_uuid in visited_entities:
+                    logger.warning(f"[Antigravity] Circular reference detected for '{entity_name}'. Skipping enrichment.")
+                    finding["cascading_impacts"] = []
+                    return
+                
+                visited_entities.add(node_uuid)
+
                 try:
                     # 1. Attempt exact ID match
                     if s_id and s_id != "null":
-                        s_stmt = select(Stakeholder).where(Stakeholder.id == uuid.UUID(s_id))
-                        stakeholder = (await self.db.execute(s_stmt)).scalar_one_or_none()
+                        try:
+                            s_stmt = select(Stakeholder).where(Stakeholder.id == uuid.UUID(s_id))
+                            stakeholder = (await self.db.execute(s_stmt)).scalar_one_or_none()
+                        except:
+                            pass
                     
-                    # 2. [v10.21] Backbone-priority fuzzy name match
-                    if not stakeholder and finding.get("entity_name"):
-                        # Prefer backbone (is_auto_provisioned=False) entities first
+                    # 2. Backbone-priority fuzzy name match
+                    if not stakeholder and entity_name != "Unknown":
                         fuzzy_stmt = select(Stakeholder).where(
-                            Stakeholder.name.ilike(f"%{finding['entity_name']}%")
-                        ).order_by(Stakeholder.is_auto_provisioned.asc())  # False (backbone) comes first
+                            Stakeholder.name.ilike(f"%{entity_name}%")
+                        ).order_by(Stakeholder.is_auto_provisioned.asc())
                         result = (await self.db.execute(fuzzy_stmt)).first()
                         if result:
                             stakeholder = result[0]
 
-                    # 3. [v10.19] AUTO-PROVISIONING: If still not found, create new tactical node
+                    # 3. AUTO-PROVISIONING
                     if not stakeholder:
                         stakeholder = await self._auto_provision_stakeholder(finding)
 
@@ -263,52 +286,40 @@ class ImpactDiscoveryEngine:
                         finding["stakeholder_id"] = str(stakeholder.id)
                         finding["location_lat"] = stakeholder.location_lat
                         finding["location_lng"] = stakeholder.location_lng
-
-                        # [v10.21] Activity tracking: update hit statistics
+                        finding["entity_name"] = stakeholder.name # Sync name if fuzzy matched
+                        
                         stakeholder.hit_count = (stakeholder.hit_count or 0) + 1
                         stakeholder.last_hit_at = datetime.now(timezone.utc)
-                        # Re-calc Indices (may be zero if just created, will grow over time)
                         indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, stakeholder.id)
                         finding["quantum_metrics"] = indices
-
-                        # Create Prediction record for self-learning
-                        pred = Prediction(
-                            prediction_id=f"PRED-{uuid.uuid4().hex[:8].upper()}",
-                            trigger_event=f"{title}: {summary[:200]}...",
-                            target_id=stakeholder.id,
-                            predicted_alpha=finding.get("impact_alpha", 0.0),
-                            confidence_score=finding.get("confidence", 0.7),
-                            is_evaluated=False
-                        )
-                        self.db.add(pred)
                     else:
-                        # Final fallback: probabilistic estimation
-                        finding["quantum_metrics"] = {
-                            "resilience": 45.0, 
-                            "contagion": 0.4, 
-                            "fragility": 0.5,
-                            "metrics_source": "probabilistic_estimation"
-                        }
-                except Exception as ex:
-                    logger.warning(f"Failed to enrich stakeholder '{finding.get('entity_name')}': {ex}")
+                        finding["quantum_metrics"] = {"resilience": 45, "contagion": 0.4, "fragility": 0.5, "metrics_source": "probabilistic"}
 
-                # Recurse into children (Serial to avoid Session concurrency issues)
+                except Exception as ex:
+                    logger.warning(f"Failed to enrich stakeholder '{entity_name}': {ex}")
+
+                # Recurse into children
                 children = finding.get("cascading_impacts", [])
                 for child in children:
-                    await enrich_finding(child)
+                    await enrich_finding(child, depth + 1, visited_entities)
 
             processed_findings = []
-            # Serial enrichment across all top-level findings
+            # Global visited set across all top-level findings for this alert
+            global_visited = set()
+            
             for f in findings:
-                await enrich_finding(f)
-                processed_findings.append(f)
+                try:
+                    await enrich_finding(f, 1, global_visited)
+                    processed_findings.append(f)
+                except Exception as loop_ex:
+                    logger.error(f"Fault in enrichment loop for finding: {loop_ex}")
 
             await self.db.commit()
             
             # Store in Cache
             _discovery_cache[event_hash] = (datetime.now(timezone.utc), processed_findings)
 
-            # [v10.29] INTERNAL DB UPDATE: If alert_id provided, persist status and results
+            # [v10.29] INTERNAL DB UPDATE
             if alert_id:
                 from db.models import AlertLog
                 stmt = select(AlertLog).where(AlertLog.id == alert_id)
