@@ -3424,3 +3424,28 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
     margin-top: -4px;
     margin-bottom: 6px;
 }
+
+/* [v10.40] Tactical Utility & Fallbacks */
+.none {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Legacy Bridge for tactical-node-label-container */
+.tactical-node-label-container {
+    pointer-events: auto;
+}
+
+/* Ensure Leaflet panes don't clip tactical animations */
+.leaflet-pane {
+    z-index: 400;
+}
+
+.leaflet-vlt-arc-pane {
+    z-index: 350 !important;
+}
+
+.leaflet-vlt-tactical-pane {
+    z-index: 900 !important;
+}

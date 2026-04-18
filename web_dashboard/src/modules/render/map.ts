@@ -609,6 +609,94 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
 }
 
 /**
+ * [v53] Robust Tactical Node Label Rendering (High-Fidelity Sync)
+ */
+function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, level: number, index: number) {
+    try {
+        const arrivalDelay = 1200;
+        const alpha = finding.impact_alpha ?? 0;
+        const alphaFormatted = `${alpha >= 0 ? '+' : ''}${alpha.toFixed(1)}%`;
+        const sentimentClass = alpha >= 0 ? 'sentiment-positive' : 'sentiment-negative';
+        
+        const resilience = finding.quantum_metrics?.resilience?.toFixed(1) ?? '50.0';
+        const contagion = finding.quantum_metrics?.contagion?.toFixed(2) ?? '0.30';
+        const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 100) || 'Strategic Impact Detected';
+        const recommendation = finding.recommendation || finding.action_recommendation || "Monitor for volatility spillover.";
+
+        // Convert hex color to RGB for box-shadow effects
+        const hexToRgb = (hex: string) => {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '88, 166, 255';
+        };
+        const colorRgb = hexToRgb(color);
+
+        const labelHtml = `
+            <div class="tactical-node-wrapper expanded ${sentimentClass}" style="--node-color: ${color}; --node-color-rgb: ${colorRgb}">
+                <div class="node-label-inner card-high-fidelity">
+                    <div class="node-label-header">
+                        <span class="node-name">${finding.entity_name || 'Strategic Hub'}</span>
+                        <span class="node-time-tag">ORDER ${level-1}</span>
+                    </div>
+                    <div class="node-impact-summary">${impactSummary}</div>
+                    
+                    <div class="node-metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-label">RESILIENCE (Ω)</span>
+                            <span class="metric-value">${resilience}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">CONTAGION (ΔC)</span>
+                            <span class="metric-value">${contagion}</span>
+                        </div>
+                    </div>
+
+                    <div class="node-action-container">
+                        <div class="action-header">CONTAINMENT ACTION</div>
+                        <div class="action-text">${recommendation}</div>
+                    </div>
+
+                    <div class="node-footer">
+                        <span class="node-level-tag">B-${String.fromCharCode(64 + index + 1)} • BRANCH CASCADE</span>
+                        <span class="node-impact-alpha">${alphaFormatted} ALPHA</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const labelIcon = L.divIcon({
+            className: 'none',
+            html: labelHtml,
+            iconSize: [260, 180],
+            iconAnchor: [-20, 90]
+        });
+
+        const labelMarker = L.marker(coords, { 
+            icon: labelIcon, 
+            pane: 'vlt-tactical-pane',
+            zIndexOffset: 1000 
+        });
+        
+        setTimeout(() => {
+            labelMarker.addTo(layer);
+            // vlt-tactical-pane has pointer-events: none, but markers inside can be interactive if we reset them
+            const el = labelMarker.getElement();
+            if (el) {
+                el.style.pointerEvents = 'auto';
+                el.style.opacity = '0';
+                el.style.transform = 'scale(0.9) translateX(-10px)';
+                el.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'scale(1) translateX(0)';
+                }, 50);
+            }
+        }, level === 1 ? 0 : arrivalDelay);
+    } catch (err) {
+        console.error("[Antigravity] FAILED to render tactical node label:", err, finding);
+    }
+}
+
+/**
  * [v10.5] Renders a tactical expanding pulse to represent abstract impact waves.
  */
 function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, color: string, level: number) {
@@ -636,72 +724,6 @@ function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, c
     }, duration);
 }
 
-/**
- * [v53] Robust Tactical Node Label Rendering
- */
-function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, level: number, index: number) {
-    try {
-        const arrivalDelay = 1200;
-        const alpha = finding.impact_alpha ?? 0;
-        const alphaFormatted = `${alpha >= 0 ? '+' : ''}${alpha.toFixed(1)}%`;
-        const sentimentColor = alpha >= 0 ? '#388bfd' : '#ff7b72';
-        const sentimentClass = alpha >= 0 ? 'positive' : 'negative';
-        
-        const resilience = finding.quantum_metrics?.resilience?.toFixed(1) ?? '50.0';
-        const contagion = finding.quantum_metrics?.contagion?.toFixed(2) ?? '0.30';
-        const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 80) || 'Strategic Impact Detected';
-
-        const labelHtml = `
-            <div class="tactical-node-label-container" style="--node-color: ${color}; --sentiment-color: ${sentimentColor}">
-                <div class="node-branch-tag">WAVE ${level-1 || 'ORD'} • B-${String.fromCharCode(64 + index + 1)}</div>
-                <div class="node-main-box">
-                    <div class="node-header">
-                        <span class="node-entity-title">${finding.entity_name || 'Strategic Hub'}</span>
-                        <span class="node-alpha-badge ${sentimentClass}">${alphaFormatted}</span>
-                    </div>
-                    <div class="node-summary-line">${impactSummary}</div>
-                    <div class="node-metrics-bar">
-                        <div class="metric-segment">
-                            <span class="m-label">RESILIENCE (Ω)</span>
-                            <span class="m-val">${resilience}%</span>
-                        </div>
-                        <div class="metric-divider"></div>
-                        <div class="metric-segment">
-                            <span class="m-label">CONTAGION (ΔC)</span>
-                            <span class="m-val">${contagion}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        const labelIcon = L.divIcon({
-            className: 'none',
-            html: labelHtml,
-            iconSize: [260, 100],
-            iconAnchor: [-20, 50]
-        });
-
-        const labelMarker = L.marker(coords, { icon: labelIcon, pane: 'vlt-tactical-pane' });
-        
-        setTimeout(() => {
-            labelMarker.addTo(layer);
-            const el = labelMarker.getElement();
-            if (el) {
-                el.style.opacity = '0';
-                el.style.transform = 'translateX(-10px)';
-                el.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
-                setTimeout(() => {
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateX(0)';
-                }, 50);
-            }
-        }, level === 1 ? 0 : arrivalDelay);
-    } catch (err) {
-        console.error("[Antigravity] FAILED to render tactical node label:", err, finding);
-    }
-}
-
 function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number, originalAlert: Alert, visited: Set<string> = new Set()) {
     if (level > 4 || !impacts || impacts.length === 0) {
         if (level > 1) setTimeout(() => renderTacticalStatusHud(layer, "CASCADING ANALYSIS COMPLETE"), 2000);
@@ -710,13 +732,12 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
 
     // [v10.14] Staggered Wave Propagation
     impacts.forEach((finding, index) => {
-        const branchDelay = index * 350; // Simultaneous-but-staggered fan-out
+        const branchDelay = index * 350; 
 
         setTimeout(() => {
             try {
                 let nodeCoords = getNodeCoords(finding);
                 
-                // [v9.10] Coordinate Resolution Fallback (Look up by entity name in Strategic Assets)
                 if (!nodeCoords && finding.entity_name) {
                     const asset = STRATEGIC_ASSETS.find(a => 
                         a.name.toLowerCase().includes(finding.entity_name.toLowerCase()) ||
@@ -725,42 +746,30 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     if (asset) nodeCoords = { lat: asset.lat, lng: asset.lng, source: 'Name-Lookup' };
                 }
 
-                // [v10.36] Narrative Continuity: Carry over parent coordinates if still unresolved
-                // Identify with 'Abstract-Carryover' for debugging/traceability
                 if (!nodeCoords) {
                     nodeCoords = { lat: parentCoords.lat, lng: parentCoords.lng, source: 'Abstract-Carryover' };
-                    finding._is_carryover = true; // Internal tag for verification
+                    finding._is_carryover = true;
                 }
 
-                // [v10.27] Final Safety Guard: Only return if coordinates remain null after all fallbacks
-                if (!nodeCoords || isNaN(nodeCoords.lat) || isNaN(nodeCoords.lng)) {
-                    console.warn(`[Antigravity] Fatal Positional Error for ${finding.entity_name}: Aborting branch.`);
-                    return;
-                }
+                if (!nodeCoords || isNaN(nodeCoords.lat) || isNaN(nodeCoords.lng)) return;
 
                 const pathColor = (finding.impact_alpha || 0) < 0 ? '#f43f5e' : '#10b981';
 
                 // [v10.16] Propagation Path Render
                 if (finding._is_carryover) {
-                    // Carryover nodes use a local ripple instead of a long-distance arc
                     renderTacticalRipple(layer, L.latLng(parentCoords.lat, parentCoords.lng), pathColor, level);
                 } else {
                     const start = L.latLng(parentCoords.lat, parentCoords.lng);
                     const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
-                    
-                    // Don't draw arc if it's the exact same spot
                     const distance = L.latLng(start).distanceTo(end);
+
                     if (distance > 1000) {
                         const points: L.LatLng[] = [];
-                        const steps = Math.max(30, Math.min(60, Math.floor(distance / 50000)));
-                        
+                        const steps = 40;
                         const dLat = end.lat - start.lat;
                         const dLng = end.lng - start.lng;
                         const dist = Math.sqrt(dLat*dLat + dLng*dLng);
-                        
-                        const offsetBase = (0.15 + (Math.min(dist, 40) / 200)) * (1.0 - (level - 1) * 0.2);
-                        const siblingOffset = (index % 2 === 0 ? 0.08 : -0.08) * (index + 1);
-                        const offsetFactor = offsetBase + siblingOffset;
+                        const offsetFactor = 0.15 + (Math.min(dist, 40) / 200);
 
                         const cpLat = (start.lat + end.lat) / 2 - dLng * offsetFactor;
                         const cpLng = (start.lng + end.lng) / 2 + dLat * offsetFactor;
@@ -772,32 +781,25 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                             points.push(L.latLng(lat, lng));
                         }
 
-                        const arc = L.polyline(points, {
+                        L.polyline(points, {
                             className: `propagation-arc-curved`,
                             color: pathColor,
-                            weight: 3.5,
-                            opacity: 0.8,
-                            smoothFactor: 1.5,
+                            weight: 3,
+                            opacity: 0.6,
                             interactive: false,
                             pane: 'vlt-arc-pane'
                         }).addTo(layer);
-
-                        setTimeout(() => {
-                            const el = arc.getElement() as HTMLElement;
-                            if (el) el.style.setProperty('--ring-color', pathColor);
-                        }, 50);
                     }
 
                     if (level === 2 && index === 0) {
-                        const centerPoint = L.latLng((start.lat + end.lat)/2, (start.lng + end.lng)/2);
-                        map.panTo(centerPoint, { animate: true, duration: 1.2 });
+                        map.panTo(L.latLng((start.lat+end.lat)/2, (start.lng+end.lng)/2), { animate: true });
                     }
                 }
 
                 // Wave Arrival Narrative
                 const arrivalDelay = 1200; 
                 setTimeout(() => {
-                    const baseSize = 10;
+                    const baseSize = 12;
                     const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level, 3)} node-ignite`;
                     const nodeIcon = L.divIcon({
                         className: 'none',
@@ -806,25 +808,20 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                         iconAnchor: [baseSize/2, baseSize/2]
                     });
 
-                    L.marker([nodeCoords!.lat, nodeCoords!.lng], { icon: nodeIcon, pane: 'vlt-tactical-pane' }).addTo(layer);
-
-                    const entityName = finding.entity_name || 'Strategic Node';
-                    console.log(`[Antigravity] Map Node Arrival: ${entityName} (Level ${level})`);
-                    if (finding.quantum_metrics) {
-                        console.log(`[Antigravity] Quantum baseline for ${entityName}:`, finding.quantum_metrics);
-                    }
+                    // Ensure marker is in tactical pane
+                    L.marker([nodeCoords!.lat, nodeCoords!.lng], { 
+                        icon: nodeIcon, 
+                        pane: 'vlt-tactical-pane',
+                        zIndexOffset: 500
+                    }).addTo(layer);
 
                     renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index);
-                    renderTacticalStatusHud(layer, `WAVE ${level - 1}: ANALYZING ${entityName.toUpperCase()}...`);
-
-                    // Branching Recursion: Sync level increment (Alert=1, Order1=2, Order2=3...)
-                    const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
                     
-                    // [v10.35] Recursion Guard: Prevent infinite loops from circular AI data
+                    // Recursive Chain
+                    const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
                     const nodeId = finding.stakeholder_id || finding.entity_name;
                     if (subImpacts && subImpacts.length > 0 && level < 4 && !visited.has(nodeId)) {
                         visited.add(nodeId);
-                        console.log(`[Antigravity] Propagating Wave ${level} to ${nodeId}...`);
                         setTimeout(() => {
                            renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert, visited);
                         }, 500); 
