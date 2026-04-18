@@ -510,10 +510,10 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                                 renderTacticalStatusHud(layer, "AI REFINEMENT COMPLETE");
                                 alert.cascading_impacts = data.cascading_impacts;
                                 alert.backbone_discovery_status = 'complete';
-                                
+                                // Final high-fidelity render
                                 layer.clearLayers();
-                                renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, pathColor, 1, 0);
-                                renderImpactChain(map, layer, coords, data.cascading_impacts, 2, intensity, alert, new Set());
+                                renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, topicColor, 1, 0);
+                                renderImpactChain(map, layer, coords, data.cascading_impacts || [], 2, intensity, alert, new Set());
                                 
                                 setTimeout(() => {
                                     const hud = document.getElementById('tactical-discovery-hud');
