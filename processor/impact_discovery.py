@@ -257,6 +257,12 @@ class ImpactDiscoveryEngine:
                                     timeout=120
                                 )
                                 
+                                # [v10.46] Incremental Sync: Persist finding immediately after enrichment
+                                if alert_id:
+                                    await branch_engine._append_partial_discovery(alert_id, finding)
+                            except Exception as e:
+                                logger.error(f"[Stall Protection] Branch enrichment failed: {e}")
+                            
                             return finding 
 
             # Phase 1: AI Reasoning (Completed above)
