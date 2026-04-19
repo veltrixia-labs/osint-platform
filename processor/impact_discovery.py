@@ -240,26 +240,23 @@ class ImpactDiscoveryEngine:
             
             # Use Semaphore to avoid DB connection exhaustion
             semaphore = asyncio.Semaphore(5)
-            processed_findings = []
             global_visited = set()
 
-            async def parallel_enrich(finding: Dict[str, Any]):
-                async with semaphore:
-                    async with AsyncSessionLocal() as branch_session:
-                        try:
-                            # Re-initialize engine with local session for safety
-                            branch_engine = ImpactDiscoveryEngine(branch_session)
-                            await branch_engine._enrich_finding_recursive(finding, 1, global_visited)
-                            
-                            # [v10.46] Incremental Sync: Persist finding immediately after enrichment
-                            if alert_id:
-                                # Update locally to avoid too many global commits, 
-                                # but we'll do a partial update of the alert metadata
-                                await branch_engine._append_partial_discovery(alert_id, finding)
+            # [v10.50] Global Timeout Protection: Ensure a single alert never stalls the pipeline
+            async with asyncio.timeout(300): # 5 min total budget per alert Analysis
+                async def parallel_enrich(finding: Dict[str, Any]):
+                    async with semaphore:
+                        # [v10.50] Isolated Session: Session created OUTSIDE of any metadata locks
+                        async with AsyncSessionLocal() as branch_session:
+                            try:
+                                # Re-initialize engine with local session for safety
+                                branch_engine = ImpactDiscoveryEngine(branch_session)
+                                # [v10.50] Individual timeout for LLM branch refinement
+                                await asyncio.wait_for(
+                                    branch_engine._enrich_finding_recursive(finding, 1, global_visited),
+                                    timeout=120
+                                )
                                 
-                            return finding
-                        except Exception as e:
-                            logger.error(f"Failed to enrich finding branch: {e}")
                             return finding 
 
             # Phase 1: AI Reasoning (Completed above)
@@ -353,11 +350,12 @@ class ImpactDiscoveryEngine:
 
     async def _persist_final_state(self, alert_id: uuid.UUID, findings: list, status: str):
         """Atomic update of the alert metadata to terminal or partial states."""
-        async with _meta_lock:
-            try:
-                from db.database import AsyncSessionLocal
-                from db.models import AlertLog
-                async with AsyncSessionLocal() as session:
+        try:
+            from db.database import AsyncSessionLocal
+            from db.models import AlertLog
+            # [v10.50] Session OUTSIDE lock to avoid connection pool deadlock
+            async with AsyncSessionLocal() as session:
+                async with _meta_lock:
                     stmt = select(AlertLog).where(AlertLog.id == alert_id)
                     alert = (await session.execute(stmt)).scalar_one_or_none()
                     if alert:
@@ -370,16 +368,17 @@ class ImpactDiscoveryEngine:
                         flag_modified(alert, "metadata_json")
                         await session.commit()
                         logger.info(f"[Antigravity] Alert {alert_id} state -> {status}")
-            except Exception as e:
-                logger.error(f"Failed to persist state for alert {alert_id}: {e}")
+        except Exception as e:
+            logger.error(f"Failed to persist state for alert {alert_id}: {e}")
 
     async def _append_partial_discovery(self, alert_id: uuid.UUID, finding: Dict[str, Any]):
         """Append a single finding branch to the AlertLog in real-time with lock protection."""
-        async with _meta_lock:
-            try:
-                from db.database import AsyncSessionLocal
-                from db.models import AlertLog
-                async with AsyncSessionLocal() as session:
+        try:
+            from db.database import AsyncSessionLocal
+            from db.models import AlertLog
+            # [v10.50] Session OUTSIDE lock to avoid connection pool deadlock
+            async with AsyncSessionLocal() as session:
+                async with _meta_lock:
                     stmt = select(AlertLog).where(AlertLog.id == alert_id)
                     alert = (await session.execute(stmt)).scalar_one_or_none()
                     if alert:
@@ -396,5 +395,5 @@ class ImpactDiscoveryEngine:
                         alert.metadata_json = meta
                         flag_modified(alert, "metadata_json")
                         await session.commit()
-            except Exception as e:
-                logger.error(f"Failed to append partial discovery: {e}")
+        except Exception as e:
+            logger.error(f"Failed to append partial discovery: {e}")
