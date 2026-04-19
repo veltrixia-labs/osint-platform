@@ -496,12 +496,15 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                                 apiClient.post(`/alerts/${alert.id}/analyze`).catch(() => {});
                             }
 
-                            // [v10.50] Incremental Sync: Handle partial data growth
+                            // [v10.51] Enhanced Update Detection: Check content hash/string to detect AI reasoning updates
                             const newImpacts = data.cascading_impacts || [];
                             const currentImpacts = alert.cascading_impacts || [];
+                            const hasChanged = JSON.stringify(newImpacts) !== JSON.stringify(currentImpacts);
                             
-                            if (newImpacts.length > currentImpacts.length && data.backbone_discovery_status === 'processing') {
+                            if (hasChanged && data.backbone_discovery_status === 'processing') {
+                                console.info(`[Antigravity] Streaming update detected: ${newImpacts.length} nodes refined.`);
                                 alert.cascading_impacts = newImpacts;
+                                // Add to map (visited set prevents duplicate triggers)
                                 renderImpactChain(map, layer, coords, newImpacts, 2, intensity, alert, new Set());
                             }
 

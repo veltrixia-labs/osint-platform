@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 _discovery_cache = {}
 CACHE_TTL_HOURS = 6
 
+# Global Lock for Alert Metadata to prevent parallel overwrites during streaming
+_meta_lock = asyncio.Lock()
+
 class ImpactDiscoveryEngine:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -350,46 +353,48 @@ class ImpactDiscoveryEngine:
 
     async def _persist_final_state(self, alert_id: uuid.UUID, findings: list, status: str):
         """Atomic update of the alert metadata to terminal or partial states."""
-        try:
-            from db.database import AsyncSessionLocal
-            from db.models import AlertLog
-            async with AsyncSessionLocal() as session:
-                stmt = select(AlertLog).where(AlertLog.id == alert_id)
-                alert = (await session.execute(stmt)).scalar_one_or_none()
-                if alert:
-                    meta = dict(alert.metadata_json) if alert.metadata_json else {}
-                    if findings:
-                        meta["cascading_impacts"] = findings
-                    meta["backbone_discovery_status"] = status
-                    meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
-                    alert.metadata_json = meta
-                    flag_modified(alert, "metadata_json")
-                    await session.commit()
-                    logger.info(f"[Antigravity] Alert {alert_id} state -> {status}")
-        except Exception as e:
-            logger.error(f"Failed to persist state for alert {alert_id}: {e}")
+        async with _meta_lock:
+            try:
+                from db.database import AsyncSessionLocal
+                from db.models import AlertLog
+                async with AsyncSessionLocal() as session:
+                    stmt = select(AlertLog).where(AlertLog.id == alert_id)
+                    alert = (await session.execute(stmt)).scalar_one_or_none()
+                    if alert:
+                        meta = dict(alert.metadata_json) if alert.metadata_json else {}
+                        if findings:
+                            meta["cascading_impacts"] = findings
+                        meta["backbone_discovery_status"] = status
+                        meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
+                        alert.metadata_json = meta
+                        flag_modified(alert, "metadata_json")
+                        await session.commit()
+                        logger.info(f"[Antigravity] Alert {alert_id} state -> {status}")
+            except Exception as e:
+                logger.error(f"Failed to persist state for alert {alert_id}: {e}")
 
     async def _append_partial_discovery(self, alert_id: uuid.UUID, finding: Dict[str, Any]):
-        """Append a single finding branch to the AlertLog in real-time."""
-        try:
-            from db.database import AsyncSessionLocal
-            from db.models import AlertLog
-            async with AsyncSessionLocal() as session:
-                stmt = select(AlertLog).where(AlertLog.id == alert_id)
-                alert = (await session.execute(stmt)).scalar_one_or_none()
-                if alert:
-                    meta = dict(alert.metadata_json) if alert.metadata_json else {}
-                    impacts = meta.get("cascading_impacts", [])
-                    # Append or Update finding (avoiding duplicates if possible)
-                    match_idx = next((i for i, f in enumerate(impacts) if f.get('entity_name') == finding.get('entity_name')), -1)
-                    if match_idx >= 0:
-                        impacts[match_idx] = finding
-                    else:
-                        impacts.append(finding)
-                    
-                    meta["cascading_impacts"] = impacts
-                    alert.metadata_json = meta
-                    flag_modified(alert, "metadata_json")
-                    await session.commit()
-        except:
-            pass # Non-critical if partial persistence fails
+        """Append a single finding branch to the AlertLog in real-time with lock protection."""
+        async with _meta_lock:
+            try:
+                from db.database import AsyncSessionLocal
+                from db.models import AlertLog
+                async with AsyncSessionLocal() as session:
+                    stmt = select(AlertLog).where(AlertLog.id == alert_id)
+                    alert = (await session.execute(stmt)).scalar_one_or_none()
+                    if alert:
+                        meta = dict(alert.metadata_json) if alert.metadata_json else {}
+                        impacts = meta.get("cascading_impacts", [])
+                        # Append or Update finding (avoiding duplicates)
+                        match_idx = next((i for i, f in enumerate(impacts) if f.get('entity_name') == finding.get('entity_name')), -1)
+                        if match_idx >= 0:
+                            impacts[match_idx] = finding
+                        else:
+                            impacts.append(finding)
+                        
+                        meta["cascading_impacts"] = impacts
+                        alert.metadata_json = meta
+                        flag_modified(alert, "metadata_json")
+                        await session.commit()
+            except Exception as e:
+                logger.error(f"Failed to append partial discovery: {e}")
