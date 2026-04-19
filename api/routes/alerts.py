@@ -99,7 +99,8 @@ async def get_alerts(
             "location_lat": a.location_lat,
             "location_lng": a.location_lng,
             "description": a.metadata_json.get("description") if a.metadata_json else None,
-            "country": a.metadata_json.get("country") if a.metadata_json else None
+            "country": a.metadata_json.get("country") if a.metadata_json else None,
+            "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle"
         }
         for a in alerts
     ]
@@ -158,7 +159,8 @@ async def get_live_alerts(
             "location_lat": a.location_lat,
             "location_lng": a.location_lng,
             "description": a.metadata_json.get("description") if a.metadata_json else None,
-            "country": a.metadata_json.get("country") if a.metadata_json else None
+            "country": a.metadata_json.get("country") if a.metadata_json else None,
+            "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle"
         }
         for a in alerts
     ]

@@ -1686,6 +1686,45 @@ p { font-size: var(--font-s); color: var(--text-secondary); line-height: 1.6; }
   filter: grayscale(0.2);
 }
 
+/* AI Discovery Status Badges */
+.discovery-status-badge {
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid transparent;
+}
+
+.status-processing {
+  color: #58a6ff;
+  background: rgba(88, 166, 255, 0.1);
+  border-color: rgba(88, 166, 255, 0.2);
+  animation: discovery-pulse 2s infinite ease-in-out;
+}
+
+.status-complete {
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.1);
+  border-color: rgba(63, 185, 80, 0.2);
+}
+
+.status-failed {
+  color: #8b949e;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border);
+}
+
+@keyframes discovery-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.4); }
+  70% { box-shadow: 0 0 0 4px rgba(88, 166, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); }
+}
+
 /* Phase 2: Intelligence Pulse & Live Feed */
 .live-feed-header {
     display: flex;

@@ -74,10 +74,22 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         const triggerLabel = (alert.trigger_type || 'Pattern').replace(/_/g, ' ').toUpperCase();
 
         // [v50] Unified Mosaic Gating UI - DISABLED for Dev Release
+        const status = alert.backbone_discovery_status || 'idle';
+        const statusMap: Record<string, {label: string, class: string}> = {
+            'processing': { label: 'AI REFINING', class: 'status-processing' },
+            'complete': { label: 'ANALYSIS VERIFIED', class: 'status-complete' },
+            'failed': { label: 'STATISTICAL ONLY', class: 'status-failed' },
+            'idle': { label: 'DISCOVERY PENDING', class: 'status-failed' }
+        };
+        const statusCfg = statusMap[status] || statusMap['idle'];
+
         const cardContent = `
             <div class="alert-header u-flex-between">
-                <div class="u-flex" style="flex-wrap: wrap; row-gap: 0.5rem;">
+                <div class="u-flex" style="flex-wrap: wrap; row-gap: 0.5rem; align-items: center;">
                     <span class="severity-badge">${alert.severity}</span>
+                    <span class="discovery-status-badge ${statusCfg.class}" style="margin-right: 0.5rem;">
+                        ${status === 'complete' ? '<span>✓</span>' : ''} ${statusCfg.label}
+                    </span>
                     <span class="watchlist-tag">
                         ${triggerLabel}
                     </span>
