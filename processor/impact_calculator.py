@@ -27,53 +27,68 @@ class ImpactCalculator:
     
     @staticmethod
     async def evaluate_sociographic_indices(db: AsyncSession, stakeholder_id: uuid.UUID) -> Dict[str, Any]:
+        """[Legacy] Single-ID wrapper for compatibility."""
+        results = await ImpactCalculator.evaluate_bulk_indices(db, [stakeholder_id])
+        return results.get(stakeholder_id, {
+            "resilience": 50.0, "contagion": 0.3, "fragility": 0.4, "metrics_source": "fallback"
+        })
+
+    @staticmethod
+    async def evaluate_bulk_indices(db: AsyncSession, stakeholder_ids: List[uuid.UUID]) -> Dict[uuid.UUID, Dict[str, Any]]:
         """
-        Calculate Quantitative Baseline for a specific stakeholder.
-        - Omega (Resilience Factor)
-        - Delta-C (Contagion Probability)
-        - FRG (Fragility Index)
+        [v11.0.0] Bulk Quantum Analytics.
+        Calculates indices for multiple stakeholders in a single pass.
         """
+        if not stakeholder_ids: return {}
         try:
-            # Fetch dependencies where this stakeholder is a source or target
+            # 1. Fetch ALL relevant dependencies
             stmt = select(Dependency).where(
-                (Dependency.source_id == stakeholder_id) | (Dependency.target_id == stakeholder_id)
+                or_(
+                    Dependency.source_id.in_(stakeholder_ids),
+                    Dependency.target_id.in_(stakeholder_ids)
+                )
             )
             result = await db.execute(stmt)
-            deps = result.scalars().all()
+            all_deps = result.scalars().all()
             
-            if not deps:
-                return {
-                    "resilience": 50.0,
-                    "contagion": 0.3,
-                    "fragility": 0.4,
-                    "metrics_source": "sector_baseline"
+            # 2. Group by stakeholder
+            lookup = {sid: {"indices": [], "source_deps": [], "inbound_deps": []} for sid in stakeholder_ids}
+            for d in all_deps:
+                if d.source_id in lookup:
+                    lookup[d.source_id]["indices"].append(d)
+                    lookup[d.source_id]["source_deps"].append(d)
+                if d.target_id in lookup:
+                    lookup[d.target_id]["indices"].append(d)
+                    lookup[d.target_id]["inbound_deps"].append(d)
+
+            # 3. Calculate for each
+            final_results = {}
+            for sid in stakeholder_ids:
+                data = lookup[sid]
+                deps = data["indices"]
+                if not deps:
+                    final_results[sid] = {
+                        "resilience": 50.0, "contagion": 0.3, "fragility": 0.4, "metrics_source": "sector_baseline"
+                    }
+                    continue
+
+                avg_elasticity = sum(d.substitution_elasticity for d in deps) / len(deps)
+                source_deps = data["source_deps"]
+                avg_contagion = sum(d.beta_correlation * d.exposure_weight for d in source_deps) / len(source_deps) if source_deps else 0.3
+                inbound_deps = data["inbound_deps"]
+                fragility = len(inbound_deps) * 0.15 + (1 - avg_elasticity)
+
+                final_results[sid] = {
+                    "resilience": round(avg_elasticity * 100, 1),
+                    "contagion": min(1.0, round(avg_contagion, 2)),
+                    "fragility": min(1.0, round(fragility, 2)),
+                    "metrics_source": "graph_tensor"
                 }
 
-            # 1. Resilience Factor (Omega): Higher substitution_elasticity = Higher resilience
-            avg_elasticity = sum(d.substitution_elasticity for d in deps) / len(deps)
-            resilience = round(avg_elasticity * 100, 1)
-
-            # 2. Contagion Prob (Delta-C): beta_correlation * exposure_weight
-            source_deps = [d for d in deps if d.source_id == stakeholder_id]
-            if source_deps:
-                avg_contagion = sum(d.beta_correlation * d.exposure_weight for d in source_deps) / len(source_deps)
-            else:
-                avg_contagion = 0.3
-            contagion = round(avg_contagion, 2)
-
-            # 3. Fragility Index (FRG): Dependence on single sources
-            inbound_deps = [d for d in deps if d.target_id == stakeholder_id]
-            fragility = round(len(inbound_deps) * 0.15 + (1 - avg_elasticity), 2)
-
-            return {
-                "resilience": resilience,
-                "contagion": min(1.0, contagion),
-                "fragility": min(1.0, fragility),
-                "metrics_source": "graph_tensor"
-            }
+            return final_results
         except Exception as e:
-            logger.error(f"Failed to calculate indices for {stakeholder_id}: {e}")
-            return {"resilience": 50, "contagion": 0.5, "fragility": 0.5, "metrics_source": "fallback"}
+            logger.error(f"Bulk indices calculation failed: {e}")
+            return {sid: {"resilience": 50, "contagion": 0.5, "fragility": 0.5, "metrics_source": "fallback"} for sid in stakeholder_ids}
 
     @staticmethod
     def calculate_impacts(topic: str, lat: Optional[float], lng: Optional[float], intensity: float) -> List[Dict[str, Any]]:

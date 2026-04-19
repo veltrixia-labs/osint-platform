@@ -47,17 +47,17 @@ class ImpactDiscoveryEngine:
 
         try:
             # [v10.60] BATCH RATIONALIZATION PIPELINE
-            # Wrap entire process in a single high-level timeout
             async with asyncio.timeout(300):
                 # 1. Context Preparation
                 known_stakes = await self._get_strategic_context(title, summary, alert_id)
                 stakeholder_context = []
                 from processor.impact_calculator import ImpactCalculator
+                # Note: evaluate_bulk_indices is now preferred
+                indices_map = await ImpactCalculator.evaluate_bulk_indices(self.db, [s.id for s in known_stakes])
                 for s in known_stakes:
-                    indices = await ImpactCalculator.evaluate_sociographic_indices(self.db, s.id)
-                    stakeholder_context.append({"name": s.name, "domain": s.domain, "quantum_indices": indices})
+                    stakeholder_context.append({"name": s.name, "domain": s.domain, "quantum_indices": indices_map.get(s.id)})
 
-                # 2. AI Analytical Phase (Single Call)
+                # 2. AI Analytical Phase
                 system_prompt = self._get_system_prompt()
                 user_prompt = f"SIGNAL: {title}\nSUMMARY: {summary}\nCONTEXT:\n{json.dumps(stakeholder_context, indent=2)}"
                 
@@ -69,8 +69,7 @@ class ImpactDiscoveryEngine:
                     logger.info("Triggering Statistical Fallback.")
                     findings = ImpactCalculator.calculate_impacts(summary.split(' ')[0], None, None, 5.0)
 
-                # 3. BATCH ENRICHMENT (RATIONALIZED)
-                # No more parallel recursive DB commits. Processing in-memory one pass.
+                # 3. BATCH ENRICHMENT
                 processed_findings = await self._enrich_findings_batch(findings)
 
                 # 4. Atomic Terminal Persistence
@@ -81,14 +80,12 @@ class ImpactDiscoveryEngine:
                 return processed_findings
 
         except (asyncio.TimeoutError, TimeoutError):
-            logger.error(f"[Batch Stall] Analysis timed out for {alert_id}. Falling back to empty/partial.")
-            if alert_id:
-                await self._persist_terminal_state(alert_id, [], "failed")
+            logger.error(f"[Batch Stall] Analysis timed out for {alert_id}.")
+            if alert_id: await self._persist_terminal_state(alert_id, [], "failed")
             return []
         except Exception as e:
             logger.error(f"Critical Fault in Batch Pipeline: {e}")
-            if alert_id:
-                await self._persist_terminal_state(alert_id, [], "failed")
+            if alert_id: await self._persist_terminal_state(alert_id, [], "failed")
             return []
 
     async def _get_strategic_context(self, title: str, summary: str, alert_id: Optional[uuid.UUID]):
@@ -125,12 +122,14 @@ class ImpactDiscoveryEngine:
         return {}
 
     async def _enrich_findings_batch(self, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """[v10.60] The Core Batch Logic: Resolve all stakeholders in ONE PASS."""
+        """[v11.5] High-Efficiency Batch Enrichment."""
+        from processor.impact_calculator import ImpactCalculator
+        
         # 1. Flatten tree to find all unique entity names
         entities_to_resolve = set()
         def collect(fs):
             for f in fs:
-                if f.get("entity_name"): entities_to_resolve.add(f["entity_name"])
+                if f.get("entity_name"): entities_to_resolve.add(f["entity_name"].lower())
                 collect(f.get("cascading_impacts", []))
         collect(findings)
 
@@ -143,27 +142,27 @@ class ImpactDiscoveryEngine:
             for s in res.scalars().all():
                 registry[s.name.lower()] = s
 
-        # 3. In-Memory Decoration (No DB calls)
-        from processor.impact_calculator import ImpactCalculator
-        async def decorate(fs):
+        # 3. Bulk Index Calculation (The true efficiency winner)
+        stakeholder_ids = [s.id for s in registry.values()]
+        indices_map = await ImpactCalculator.evaluate_bulk_indices(self.db, stakeholder_ids)
+
+        # 4. In-Memory Decoration
+        def decorate(fs):
             for f in fs:
                 name = f.get("entity_name", "").lower()
                 s = registry.get(name)
                 if s:
                     f["stakeholder_id"] = str(s.id)
-                    f["quantum_metrics"] = await ImpactCalculator.evaluate_sociographic_indices(self.db, s.id)
+                    f["quantum_metrics"] = indices_map.get(s.id)
                 else:
                     f["quantum_metrics"] = {"resilience": 50, "contagion": 0.4, "metrics_source": "probabilistic"}
-                await decorate(f.get("cascading_impacts", []))
+                decorate(f.get("cascading_impacts", []))
 
-        await decorate(findings)
+        decorate(findings)
         return findings
 
     async def _persist_terminal_state(self, alert_id: uuid.UUID, findings: list, status: str):
-        """Atomic terminal update. Minimal lock window."""
         try:
-            # Note: Using session from __init__ if possible, or new one for isolation
-            # For simplicity, we use the engine's current session but we could use a local one.
             stmt = select(AlertLog).where(AlertLog.id == alert_id)
             res = await self.db.execute(stmt)
             alert = res.scalar_one_or_none()
@@ -175,5 +174,40 @@ class ImpactDiscoveryEngine:
                 alert.metadata_json = meta
                 flag_modified(alert, "metadata_json")
                 await self.db.commit()
+                logger.info(f"[Discovery] Alert {alert_id} terminal state -> {status}")
         except Exception as e:
             logger.error(f"Failed to persist terminal state: {e}")
+
+    @classmethod
+    async def run_discovery_scout(cls):
+        """[v12.0] Autonomous Scout: Processes pending or failed alerts in background."""
+        from db.database import AsyncSessionLocal
+        async with AsyncSessionLocal() as session:
+            try:
+                # Find top 5 recent alerts that are not complete
+                # We specifically target 'idle' (new alerts) or 'failed' (timed out/retry)
+                stmt = select(AlertLog).order_by(AlertLog.triggered_at.desc()).limit(20)
+                res = await session.execute(stmt)
+                alerts = res.scalars().all()
+                
+                scout_count = 0
+                for a in alerts:
+                    meta = a.metadata_json or {}
+                    status = meta.get("backbone_discovery_status", "idle")
+                    
+                    if status in ["idle", "failed"] and scout_count < 5:
+                        logger.info(f"[Scout] Picking up alert {a.id} (Status: {status})")
+                        # Mark as processing immediately to avoid double-pick
+                        meta["backbone_discovery_status"] = "processing"
+                        meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
+                        a.metadata_json = meta
+                        flag_modified(a, "metadata_json")
+                        await session.commit()
+                        
+                        engine = ImpactDiscoveryEngine(session)
+                        title = a.target_label
+                        summary = meta.get("description", f"Triggered on {a.topic}")
+                        await engine.run_discovery(uuid.uuid4(), title, summary, a.id)
+                        scout_count += 1
+            except Exception as e:
+                logger.error(f"[Scout] Execution failed: {e}")

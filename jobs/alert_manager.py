@@ -145,38 +145,15 @@ class AlertManager:
             db.add(alert_log)
             await db.flush() # Need actual ID for delivery logs
 
-            # --- Phase 4: Cascading Impact Discovery [v10.31 - Proactive] ---
-            # Automatically trigger analysis for ALL alerts (Critical, Elevated, Watch)
-            # This ensures results are ready before the user even clicks the map.
+            # --- Phase 4: Cascading Impact Discovery [v12.0 - Decoupled Scout] ---
+            # Alerts are created as 'idle'. The Autonomous Scout Job (main_scheduler)
+            # will detect these and perform AI analysis in the background.
             from sqlalchemy.orm.attributes import flag_modified
-            alert_log.metadata_json["backbone_discovery_status"] = "processing"
+            alert_log.metadata_json["backbone_discovery_status"] = "idle"
             alert_log.metadata_json["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
             flag_modified(alert_log, "metadata_json")
-            await db.commit() # Critical: persistent 'processing' state for frontend polling
+            await db.commit() 
             await db.refresh(alert_log)
-            
-            async def proactive_discovery_worker(aid: uuid.UUID, title: str, desc: str):
-                from db.database import AsyncSessionLocal
-                from processor.impact_discovery import ImpactDiscoveryEngine
-                async with AsyncSessionLocal() as session:
-                    try:
-                        engine = ImpactDiscoveryEngine(session)
-                        await engine.run_discovery(
-                            trigger_item_id=uuid.uuid4(),
-                            title=title,
-                            summary=desc,
-                            alert_id=aid
-                        )
-                        logger.info(f"[Antigravity] Proactive Discovery SUCCESS: {aid}")
-                    except Exception as ex:
-                        logger.error(f"[Antigravity] Proactive Discovery FAILED: {aid} -> {ex}")
-
-            # [v11.0.0] Await the task instead of fire-and-forget to prevent abortion on exit
-            await proactive_discovery_worker(
-                alert_log.id, 
-                alert_log.target_label, 
-                sig.description or f"Triggered on {sig.topic}"
-            )
 
             if not targets:
                 logger.info(f"Alert for {sig.target_label} logged as system-wide.")
