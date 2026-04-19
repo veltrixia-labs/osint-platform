@@ -209,81 +209,80 @@ class ImpactDiscoveryEngine:
         )
 
         try:
-            analysis_raw = await generate_analysis(system_prompt, user_prompt, is_batch=False)
-            analysis = {}
-            if isinstance(analysis_raw, str):
-                import re
-                # Robustly find JSON block in case LLM adds conversational text
-                match = re.search(r'\{.*\}', analysis_raw, re.DOTALL)
-                if match:
-                    try:
-                        analysis = json.loads(match.group(0))
-                    except json.JSONDecodeError:
-                        logger.error("Failed to parse JSON from LLM response.")
-            elif isinstance(analysis_raw, dict):
-                analysis = analysis_raw
+            # [v10.51] GLOBAL TIMEOUT PROTECTION
+            # Protect the entire lifecycle (LLM -> Parallel Logic -> DB Persistence)
+            async with asyncio.timeout(300):
+                # 1. Primary AI Reasoning
+                analysis_raw = await generate_analysis(system_prompt, user_prompt, is_batch=False)
+                analysis = {}
+                if isinstance(analysis_raw, str):
+                    import re
+                    match = re.search(r'\{.*\}', analysis_raw, re.DOTALL)
+                    if match:
+                        try:
+                            analysis = json.loads(match.group(0))
+                        except json.JSONDecodeError:
+                            logger.error("Failed to parse JSON from LLM response.")
+                elif isinstance(analysis_raw, dict):
+                    analysis = analysis_raw
 
-            findings = analysis.get("findings", [])
-            
-            # [v10.9] Statistical Fallback: If AI is empty or degraded, use numerical model
-            if not findings:
-                logger.info(f"AI returned empty findings for {title}. Triggering Statistical Fallback.")
-                from processor.impact_calculator import ImpactCalculator
-                findings = ImpactCalculator.calculate_impacts(
-                    topic=summary.split(' ')[0],
-                    lat=None, lng=None, 
-                    intensity=5.0
-                )
+                findings = analysis.get("findings", [])
+                
+                # 2. Statistical Fallback
+                if not findings:
+                    logger.info(f"AI returned empty findings for {title}. Triggering Statistical Fallback.")
+                    from processor.impact_calculator import ImpactCalculator
+                    findings = ImpactCalculator.calculate_impacts(
+                        topic=summary.split(' ')[0],
+                        lat=None, lng=None, 
+                        intensity=5.0
+                    )
 
-            # [v10.45] HIGH-FIDELITY PARALLEL PIPELINE
-            import asyncio
-            from db.database import AsyncSessionLocal
-            
-            # Use Semaphore to avoid DB connection exhaustion
-            semaphore = asyncio.Semaphore(5)
-            global_visited = set()
+                # 3. Parallel Graph Enrichment
+                semaphore = asyncio.Semaphore(5)
+                global_visited = set()
 
-            # [v10.50] Global Timeout Protection: Ensure a single alert never stalls the pipeline
-            async with asyncio.timeout(300): # 5 min total budget per alert Analysis
                 async def parallel_enrich(finding: Dict[str, Any]):
                     async with semaphore:
-                        # [v10.50] Isolated Session: Session created OUTSIDE of any metadata locks
-                        async with AsyncSessionLocal() as branch_session:
-                            try:
-                                # Re-initialize engine with local session for safety
-                                branch_engine = ImpactDiscoveryEngine(branch_session)
-                                # [v10.50] Individual timeout for LLM branch refinement
-                                await asyncio.wait_for(
-                                    branch_engine._enrich_finding_recursive(finding, 1, global_visited),
-                                    timeout=120
-                                )
-                                
-                                # [v10.46] Incremental Sync: Persist finding immediately after enrichment
-                                if alert_id:
-                                    await branch_engine._append_partial_discovery(alert_id, finding)
-                            except Exception as e:
-                                logger.error(f"[Stall Protection] Branch enrichment failed: {e}")
-                            
-                            return finding 
+                        # [v10.51] Session Acquisition Protection: Ensure DB wait doesn't hang forever
+                        try:
+                            async with asyncio.wait_for(AsyncSessionLocal(), timeout=30.0) as branch_session:
+                                try:
+                                    branch_engine = ImpactDiscoveryEngine(branch_session)
+                                    await asyncio.wait_for(
+                                        branch_engine._enrich_finding_recursive(finding, 1, global_visited),
+                                        timeout=120
+                                    )
+                                    if alert_id:
+                                        await branch_engine._append_partial_discovery(alert_id, finding)
+                                except Exception as e:
+                                    logger.error(f"[Stall Protection] Branch enrichment failed: {e}")
+                        except asyncio.TimeoutError:
+                            logger.error(f"[Critical] DB Connection Timeout during enrichment for {finding.get('entity_name')}")
+                        return finding 
 
-            # Phase 1: AI Reasoning (Completed above)
-            # Phase 2: Parallel Graph Enrichment
-            if findings:
-                tasks = [parallel_enrich(f) for f in findings]
-                completed = await asyncio.gather(*tasks)
-                processed_findings = [c for c in completed if c]
-            else:
-                processed_findings = []
+                if findings:
+                    tasks = [parallel_enrich(f) for f in findings]
+                    completed = await asyncio.gather(*tasks)
+                    processed_findings = [c for c in completed if c]
+                else:
+                    processed_findings = []
 
-            # Store in Cache
-            _discovery_cache[event_hash] = (datetime.now(timezone.utc), processed_findings)
+                # Store in Cache
+                _discovery_cache[event_hash] = (datetime.now(timezone.utc), processed_findings)
 
-            # [v10.36] TERMINAL STATE PERSISTENCE
+                # 4. Terminal State Persistence
+                if alert_id:
+                    await self._persist_final_state(alert_id, processed_findings, "complete")
+                
+                return processed_findings
+
+        except (asyncio.TimeoutError, TimeoutError):
+            logger.error(f"[CRITICAL TIMEOUT] Analysis STALLED for alert {alert_id}. Rescuing pipeline.")
             if alert_id:
-                await self._persist_final_state(alert_id, processed_findings, "complete")
-            
-            return processed_findings
-
+                # Mark as failed so UI shows 'STATISTICAL ONLY' rather than 'REFINING'
+                await self._persist_final_state(alert_id, [], "failed")
+            return []
         except Exception as e:
             logger.error(f"CRITICAL FAULT in ImpactDiscoveryEngine: {e}")
             if alert_id:
