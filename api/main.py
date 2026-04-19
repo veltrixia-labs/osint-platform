@@ -39,8 +39,8 @@ from api.routes.system import router as system_router
 from api.routes.analytics import router as analytics_router
 
 # Production Traceability
-COMMIT_HASH = "V10.31-PROACTIVE"
-DEPLOY_TIMESTAMP = "2026-04-14T16:15:00Z"
+COMMIT_HASH = "v11.0.0-LUMINA-SYNC"
+DEPLOY_TIMESTAMP = "2026-04-20T01:57:00Z"
 
 app = FastAPI(title="OSINT Risk Analytics API")
 logger = logging.getLogger(__name__)

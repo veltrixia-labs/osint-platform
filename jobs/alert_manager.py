@@ -37,7 +37,9 @@ class AlertManager:
         # Original: if not ALERT_ENABLED: return
 
         ALLOWED_TYPES = ["risk_pattern", "risk_acceleration", "entity_heat", "sector_surge", "sustained_event"]
-        
+        # [v11.0.0-LUMINA-SYNC] Hardening: Clean up old stalls before new processing
+        await cls._reap_stale_tasks(db)
+
         # [v10.37] STRATEGIC THINK-TANK CALIBRATION: Only allow 6 core sectors
         STRATEGIC_TOPICS = [
             "energy_resource_risk",
@@ -165,23 +167,53 @@ class AlertManager:
                             summary=desc,
                             alert_id=aid
                         )
-                        logger.info(f"[Antigravity] Proactive Background Discovery SUCCESS for Alert: {aid}")
+                        logger.info(f"[Antigravity] Proactive Discovery SUCCESS: {aid}")
                     except Exception as ex:
-                        logger.error(f"[Antigravity] Proactive Background Discovery FAILED for Alert {aid}: {ex}")
+                        logger.error(f"[Antigravity] Proactive Discovery FAILED: {aid} -> {ex}")
 
-            # Kick off worker in background (non-blocking for the scheduler loop)
-            asyncio.create_task(proactive_discovery_worker(
+            # [v11.0.0] Await the task instead of fire-and-forget to prevent abortion on exit
+            await proactive_discovery_worker(
                 alert_log.id, 
                 alert_log.target_label, 
                 sig.description or f"Triggered on {sig.topic}"
-            ))
+            )
 
             if not targets:
-                logger.info(f"Alert for {sig.target_label} logged as system-wide (No matched analysts).")
+                logger.info(f"Alert for {sig.target_label} logged as system-wide.")
             else:
-                # 8. Route to Targeted Analysts
                 for profile, personal_score, is_broadcast in targets:
                     await cls._send_personalized_alert(db, profile, alert_log, sig, personal_score, is_broadcast)
+
+    @classmethod
+    async def _reap_stale_tasks(cls, db: AsyncSession):
+        """[v11.0.0] Reaper job to reset alerts stuck in 'processing' for > 15 mins."""
+        from sqlalchemy.orm.attributes import flag_modified
+        # We scan the most recent alerts for the stuck refining badge
+        limit_ts = datetime.now(timezone.utc) - timedelta(minutes=15)
+        stmt = select(AlertLog).order_by(AlertLog.triggered_at.desc()).limit(50)
+        res = await db.execute(stmt)
+        alerts = res.scalars().all()
+        
+        reaped_count = 0
+        for a in alerts:
+            meta = dict(a.metadata_json) if a.metadata_json else {}
+            if meta.get("backbone_discovery_status") == "processing":
+                ts_str = meta.get("backbone_discovery_ts")
+                if ts_str:
+                    try:
+                        ts = datetime.fromisoformat(ts_str)
+                        if ts.tzinfo is None: ts = ts.replace(tzinfo=timezone.utc)
+                        if datetime.now(timezone.utc) - ts > timedelta(minutes=15):
+                            logger.warning(f"[Antigravity] Reaper: Rescuing stuck alert {a.id}")
+                            meta["backbone_discovery_status"] = "failed"
+                            a.metadata_json = meta
+                            flag_modified(a, "metadata_json")
+                            reaped_count += 1
+                    except Exception: pass
+        
+        if reaped_count > 0:
+            await db.commit()
+            logger.info(f"[Antigravity] Reaper finished: {reaped_count} alerts rescued.")
 
     @classmethod
     def _determine_severity(cls, intensity: float, spike: float, domains: int) -> Optional[str]:
