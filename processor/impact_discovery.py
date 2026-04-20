@@ -180,13 +180,39 @@ class ImpactDiscoveryEngine:
 
     @classmethod
     async def run_discovery_scout(cls):
-        """[v12.0] Autonomous Scout: Processes pending or failed alerts in background."""
+        """[v13.0] Autonomous Scout: Rescues stuck alerts and processes pending discovery."""
         from db.database import AsyncSessionLocal
         async with AsyncSessionLocal() as session:
             try:
-                # Find top 5 recent alerts that are not complete
-                # We specifically target 'idle' (new alerts) or 'failed' (timed out/retry)
-                stmt = select(AlertLog).order_by(AlertLog.triggered_at.desc()).limit(20)
+                # 1. Rescue Phase: Reset alerts stuck in 'processing' for > 10 mins
+                threshold = datetime.now(timezone.utc) - timedelta(minutes=10)
+                stmt = select(AlertLog).where(AlertLog.triggered_at > (datetime.now(timezone.utc) - timedelta(hours=6)))
+                res = await session.execute(stmt)
+                all_recent = res.scalars().all()
+                
+                rescue_count = 0
+                for a in all_recent:
+                    meta = dict(a.metadata_json) if a.metadata_json else {}
+                    if meta.get("backbone_discovery_status") == "processing":
+                        ts_str = meta.get("backbone_discovery_ts")
+                        if ts_str:
+                            try:
+                                ts = datetime.fromisoformat(ts_str)
+                                if ts.tzinfo is None: ts = ts.replace(tzinfo=timezone.utc)
+                                if datetime.now(timezone.utc) - ts > timedelta(minutes=10):
+                                    logger.warning(f"[Scout] Rescuing stuck alert {a.id} (Started: {ts_str})")
+                                    meta["backbone_discovery_status"] = "failed"
+                                    a.metadata_json = meta
+                                    flag_modified(a, "metadata_json")
+                                    rescue_count += 1
+                            except: pass
+                
+                if rescue_count > 0:
+                    await session.commit()
+                    logger.info(f"[Scout] Rescue complete. {rescue_count} alerts reset to 'failed'.")
+
+                # 2. Discovery Phase: Pick up pending/failed alerts
+                stmt = select(AlertLog).order_by(AlertLog.triggered_at.desc()).limit(25)
                 res = await session.execute(stmt)
                 alerts = res.scalars().all()
                 
@@ -196,8 +222,7 @@ class ImpactDiscoveryEngine:
                     status = meta.get("backbone_discovery_status", "idle")
                     
                     if status in ["idle", "failed"] and scout_count < 5:
-                        logger.info(f"[Scout] Picking up alert {a.id} (Status: {status})")
-                        # Mark as processing immediately to avoid double-pick
+                        logger.info(f"[Scout] Processing alert {a.id} (Status: {status})")
                         meta["backbone_discovery_status"] = "processing"
                         meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
                         a.metadata_json = meta

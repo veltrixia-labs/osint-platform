@@ -37,9 +37,7 @@ class AlertManager:
         # Original: if not ALERT_ENABLED: return
 
         ALLOWED_TYPES = ["risk_pattern", "risk_acceleration", "entity_heat", "sector_surge", "sustained_event"]
-        # [v11.0.0-LUMINA-SYNC] Hardening: Clean up old stalls before new processing
-        await cls._reap_stale_tasks(db)
-
+        
         # [v10.37] STRATEGIC THINK-TANK CALIBRATION: Only allow 6 core sectors
         STRATEGIC_TOPICS = [
             "energy_resource_risk",
@@ -160,37 +158,6 @@ class AlertManager:
             else:
                 for profile, personal_score, is_broadcast in targets:
                     await cls._send_personalized_alert(db, profile, alert_log, sig, personal_score, is_broadcast)
-
-    @classmethod
-    async def _reap_stale_tasks(cls, db: AsyncSession):
-        """[v11.0.0] Reaper job to reset alerts stuck in 'processing' for > 15 mins."""
-        from sqlalchemy.orm.attributes import flag_modified
-        # We scan the most recent alerts for the stuck refining badge
-        limit_ts = datetime.now(timezone.utc) - timedelta(minutes=15)
-        stmt = select(AlertLog).order_by(AlertLog.triggered_at.desc()).limit(50)
-        res = await db.execute(stmt)
-        alerts = res.scalars().all()
-        
-        reaped_count = 0
-        for a in alerts:
-            meta = dict(a.metadata_json) if a.metadata_json else {}
-            if meta.get("backbone_discovery_status") == "processing":
-                ts_str = meta.get("backbone_discovery_ts")
-                if ts_str:
-                    try:
-                        ts = datetime.fromisoformat(ts_str)
-                        if ts.tzinfo is None: ts = ts.replace(tzinfo=timezone.utc)
-                        if datetime.now(timezone.utc) - ts > timedelta(minutes=15):
-                            logger.warning(f"[Antigravity] Reaper: Rescuing stuck alert {a.id}")
-                            meta["backbone_discovery_status"] = "failed"
-                            a.metadata_json = meta
-                            flag_modified(a, "metadata_json")
-                            reaped_count += 1
-                    except Exception: pass
-        
-        if reaped_count > 0:
-            await db.commit()
-            logger.info(f"[Antigravity] Reaper finished: {reaped_count} alerts rescued.")
 
     @classmethod
     def _determine_severity(cls, intensity: float, spike: float, domains: int) -> Optional[str]:
@@ -355,7 +322,7 @@ class AlertManager:
     @classmethod
     async def _send_personalized_alert(cls, db, profile: AnalystProfile, alert_log: AlertLog, sig: TrendSignal, personal_score: float, is_broadcast: bool):
         """Formats and sends a personalized alert to a specific analyst (Phase 25)."""
-        from db.models import AnalystProfile, AlertDelivery
+        from db.models import AlertDelivery
         icons = {"critical": "🚨🚨 CRITICAL", "elevated": "🚨 ELEVATED", "watch": "👀 WATCH"}
         severity = alert_log.severity
         header = icons.get(severity, "WATCH")
@@ -372,21 +339,6 @@ class AlertManager:
         msg += f"<b>System Intensity</b>: {sig.intensity_score}/10.0\n"
         msg += f"<b>Evidence</b>: {source_count} signals\n\n"
         
-        # Substack Deep Link (Disabled - Phase 14 Decoupling)
-        # if alert_log.related_report_id:
-        #     try:
-        #         from integrations.substack_client import get_substack_url
-        #         stmt = select(Report).where(Report.id == alert_log.related_report_id)
-        #         report = (await db.execute(stmt)).scalar_one_or_none()
-        #         
-        #         if report and report.substack_slug:
-        #             direct_url = get_substack_url(report.substack_slug, utm_source="telegram_alert", utm_medium="alert")
-        #             msg += f"<b>Deep Link</b>: <a href='{direct_url}{alert_log.section_anchor}'>View in Report</a>\n\n"
-        #     except (ImportError, AttributeError):
-        #         logger.warning("Substack client or get_substack_url not available for deep linking.")
-        #     except Exception as e:
-        #         logger.error(f"Error generating deep link: {e}")
-            
         msg += f"<b>Key Signals</b>:\n{signals_md}\n\n"
         msg += f"#OSINT #RiskIntel #{sig.target_label.replace(' ', '')} #{severity}"
 
