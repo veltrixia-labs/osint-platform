@@ -406,7 +406,6 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
             const topicAsset = STRATEGIC_ASSETS.find(a => a.topic_code === alert.topic);
             if (topicAsset) {
                 rawCoords = { lat: topicAsset.lat, lng: topicAsset.lng, source: 'Topic-Asset-Fallback' };
-                console.log(`[Antigravity] No Alert coords. Falling back to Topic Asset: ${topicAsset.name}`);
             }
         }
 
@@ -416,35 +415,33 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
             return;
         }
 
-    const coords = { lat: Number(rawCoords.lat), lng: Number(rawCoords.lng) };
+        const coords = { lat: Number(rawCoords.lat), lng: Number(rawCoords.lng) };
+        _isTacticalDiscoveryActive = true; 
+        _activeDiscoveryId = alert.id;
+        
+        const intensity = alert.intensity || 5;
+        const topicDef = getTopicDef(alert.topic);
+        const topicColor = topicDef?.color || '#58a6ff';
 
-    _isTacticalDiscoveryActive = true; 
-    _activeDiscoveryId = alert.id;
-    
-    const intensity = alert.intensity || 5;
-    const topicDef = getTopicDef(alert.topic);
-    const topicColor = topicDef?.color || '#58a6ff';
+        renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...");
 
-    renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...");
-    console.log(`[Antigravity] Narrative Start: ${alert.target_label} @ ${coords.lat},${coords.lng} (Src: ${rawCoords.source})`);
-
-    // [v10.16.2] Origin Card: No symbols (A/B), just the facts.
-    const alertFinding = {
-        entity_name: alert.target_label || "Active Event",
-        impact_summary: alert.description || alert.target_label || "Strategic Signal Detected",
-        impact_alpha: alert.intensity || 5
-    };
-    renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0);
+        const alertFinding = {
+            entity_name: alert.target_label || "Active Event",
+            impact_summary: alert.description || alert.target_label || "Strategic Signal Detected",
+            impact_alpha: alert.intensity || 5
+        };
+        renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0);
 
         const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
         let cascadingImpacts = [...cascadingImpactsRaw];
 
-        // [v10.21] BACKBONE-DRIVEN FALLBACK
-        if (cascadingImpacts.length === 0) {
-            // [v10.32] RESTORATION: Instant Static Render (Wave 1)
-            const currentStatus = alert.backbone_discovery_status || 'idle';
-            console.log(`[Antigravity] Backbone State Check for ${alert.id}: ${currentStatus}`);
-
+        // [v13.5] Instant Swap: If analysis is already complete, skip poller and fallback
+        const currentStatus = alert.backbone_discovery_status || 'idle';
+        if (currentStatus === 'complete' && cascadingImpacts.length > 0) {
+            console.log(`[Antigravity] AI Analysis already complete for ${alert.id}. Rendering high-fidelity chain.`);
+            renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert, new Set());
+        } else {
+            // Render Fallback if not complete
             const rawTopic = alert.topic || (alert.metadata_json as any)?.topic;
             const topicMap: Record<string, string> = {
                 'market': 'global_market_intelligence', 'energy': 'energy_resource_risk',
@@ -465,15 +462,13 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                 }
             }
 
+            // Start Poller
             const startPoller = (initialMsg: string) => {
-                if ((window as any)._activeTacticalPoller) {
-                    clearInterval((window as any)._activeTacticalPoller);
-                }
+                if ((window as any)._activeTacticalPoller) clearInterval((window as any)._activeTacticalPoller);
                 renderTacticalStatusHud(layer, initialMsg);
                 let pollCount = 0;
                 const poller = setInterval(() => {
                     pollCount++;
-                    // [v10.39] EXTENDED TIMEOUT: 5 minutes (60 * 5s) for deep-chain AI analysis
                     if (pollCount > 60) { 
                         clearInterval(poller); 
                         renderTacticalStatusHud(layer, "AI REFINING: TASK TIMED OUT");
@@ -485,96 +480,47 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                     }
                     renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/60]...`);
                     
-                    fetchAlert(alert.id)
-                        .then(data => {
-                            if (!data || (data as any).status === 401) {
-                                clearInterval(poller);
-                                renderTacticalStatusHud(layer, "SESSION EXPIRED: RE-LOGIN REQUIRED");
-                                return;
-                            }
-
-                            // [v10.40] STALE WORKER RECOVERY
-                            if (data.backbone_discovery_status === 'processing' && pollCount === 30) {
-                                console.warn("[Antigravity] Analysis seems slow. Sending heartbeat kick...");
-                                apiClient.post(`/alerts/${alert.id}/analyze`).catch(() => {});
-                            }
-
-                            // [v10.51] Enhanced Update Detection: Check content hash/string to detect AI reasoning updates
-                            const newImpacts = data.cascading_impacts || [];
-                            const currentImpacts = alert.cascading_impacts || [];
-                            const hasChanged = JSON.stringify(newImpacts) !== JSON.stringify(currentImpacts);
-                            
-                            if (hasChanged && data.backbone_discovery_status === 'processing') {
-                                console.info(`[Antigravity] Streaming update detected: ${newImpacts.length} nodes refined.`);
-                                alert.cascading_impacts = newImpacts;
-                                // Add to map (visited set prevents duplicate triggers)
-                                renderImpactChain(map, layer, coords, newImpacts, 2, intensity, alert, new Set());
-                            }
-
-                            if (data.backbone_discovery_status === 'complete') {
-                                clearInterval(poller);
-                                renderTacticalStatusHud(layer, "AI REFINEMENT COMPLETE");
-                                alert.cascading_impacts = data.cascading_impacts;
-                                alert.backbone_discovery_status = 'complete';
-                                
-                                // [v10.55] Explicitly cleanup fallback static visual data before final tree render
-                                layer.clearLayers();
-                                
-                                // Final high-fidelity render
-                                renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, topicColor, 1, 0);
-                                renderImpactChain(map, layer, coords, data.cascading_impacts || [], 2, intensity, alert, new Set());
-                                
-                                setTimeout(() => {
-                                    const hud = document.getElementById('tactical-discovery-hud');
-                                    if (hud) hud.classList.remove('active');
-                                }, 3000);
-                            } else if (data.backbone_discovery_status === 'failed') {
-                                clearInterval(poller);
-                                renderTacticalStatusHud(layer, "AI DISCOVERY OFFLINE");
-                            }
-                        }).catch(err => {
-                            console.error("[Antigravity] Poller encounter fault:", err);
-                        });
+                    fetchAlert(alert.id).then(data => {
+                        if (!data) return;
+                        if (data.backbone_discovery_status === 'complete') {
+                            clearInterval(poller);
+                            renderTacticalStatusHud(layer, "AI REFINEMENT COMPLETE");
+                            alert.cascading_impacts = data.cascading_impacts;
+                            alert.backbone_discovery_status = 'complete';
+                            layer.clearLayers();
+                            renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, topicColor, 1, 0);
+                            renderImpactChain(map, layer, coords, data.cascading_impacts || [], 2, intensity, alert, new Set());
+                            setTimeout(() => {
+                                const hud = document.getElementById('tactical-discovery-hud');
+                                if (hud) hud.classList.remove('active');
+                            }, 2000);
+                        } else if (data.backbone_discovery_status === 'failed') {
+                            clearInterval(poller);
+                            renderTacticalStatusHud(layer, "AI DISCOVERY OFFLINE");
+                        }
+                    });
                 }, 5000);
                 (window as any)._activeTacticalPoller = poller;
             };
 
             if (currentStatus === 'processing') {
-                console.log("[Antigravity] Analysis already in progress (Proactive). Starting poller directly.");
                 startPoller("REFINING PROACTIVE ANALYSIS...");
             } else {
-                console.log("[Antigravity] Analysis idle. Triggering on-demand discovery.");
-                apiClient.post(`/alerts/${alert.id}/analyze`)
-                    .then(() => startPoller("AI DISCOVERY TRIGGERED..."))
-                    .catch(err => {
-                        console.error("[Antigravity] Failed to trigger AI analysis:", err);
-                        renderTacticalStatusHud(layer, "ANALYSIS TRIGGER FAILED");
-                    });
+                apiClient.post(`/alerts/${alert.id}/analyze`).then(() => startPoller("AI DISCOVERY TRIGGERED..."));
             }
         }
 
+        // Camera Animation
         setTimeout(() => {
             map.flyTo([coords.lat, coords.lng], 4, { duration: 1.5 });
-            const startNarrative = () => {
-                const currentHud = document.getElementById('tactical-discovery-hud');
-                if (currentHud && currentHud.innerText.includes("POSITION")) {
-                    renderTacticalStatusHud(layer, "TRACING CASCADE VECTORS...");
-                }
+            map.once('moveend', () => {
                 const latestImpacts = alert.cascading_impacts || (alert.metadata_json as any)?.cascading_impacts || [];
-                if (latestImpacts.length > 0) {
+                if (latestImpacts.length > 0 && currentStatus !== 'complete') {
                     renderImpactChain(map, layer, coords, latestImpacts, 2, intensity, alert, new Set());
                 }
-                setTimeout(() => {
-                    const hud = document.getElementById('tactical-discovery-hud');
-                    if (hud) {
-                        hud.classList.remove('active');
-                        setTimeout(() => hud.remove(), 500);
-                    }
-                }, 12000);
-            };
-            map.once('moveend', startNarrative);
-            setTimeout(startNarrative, 3000);
+            });
         }, 300);
+
     } catch (e) {
         console.error("[Antigravity] FATAL MAP ERROR:", e);
         renderTacticalStatusHud(layer, "MAP_ENGINE_FAULT: RENDER_ABORTED");

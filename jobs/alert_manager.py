@@ -143,15 +143,22 @@ class AlertManager:
             db.add(alert_log)
             await db.flush() # Need actual ID for delivery logs
 
-            # --- Phase 4: Cascading Impact Discovery [v12.0 - Decoupled Scout] ---
-            # Alerts are created as 'idle'. The Autonomous Scout Job (main_scheduler)
-            # will detect these and perform AI analysis in the background.
+            # --- Phase 4: Cascading Impact Discovery [v13.5 - Autonomous Push] ---
+            # Instead of waiting for a scout, we trigger the AI discovery pipeline IMMEDIATELY.
             from sqlalchemy.orm.attributes import flag_modified
-            alert_log.metadata_json["backbone_discovery_status"] = "idle"
+            from processor.impact_discovery import ImpactDiscoveryEngine
+            
+            alert_log.metadata_json["backbone_discovery_status"] = "processing"
             alert_log.metadata_json["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
             flag_modified(alert_log, "metadata_json")
             await db.commit() 
             await db.refresh(alert_log)
+
+            # Fire-and-forget background task
+            title = alert_log.target_label
+            summary = alert_log.metadata_json.get("description", f"Automated trigger on {alert_log.topic}")
+            asyncio.create_task(ImpactDiscoveryEngine(None).run_discovery(uuid.uuid4(), title, summary, alert_log.id))
+            logger.info(f"[Antigravity] Direct AI Analysis triggered for {alert_log.id}")
 
             if not targets:
                 logger.info(f"Alert for {sig.target_label} logged as system-wide.")

@@ -18,7 +18,7 @@ _discovery_cache = {}
 CACHE_TTL_HOURS = 6
 
 class ImpactDiscoveryEngine:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Optional[AsyncSession] = None):
         self.db = db
 
     async def get_top_stakeholders(self, limit: int = 15, domain: Optional[str] = None, exclude_domain: Optional[str] = None) -> List[Stakeholder]:
@@ -37,6 +37,14 @@ class ImpactDiscoveryEngine:
 
     async def run_discovery(self, trigger_item_id: uuid.UUID, title: str, summary: str, alert_id: Optional[uuid.UUID] = None) -> List[Dict[str, Any]]:
         import hashlib
+        from db.database import AsyncSessionLocal
+        
+        # [v13.6] Detached Session Management
+        own_session = False
+        if self.db is None:
+            self.db = AsyncSessionLocal()
+            own_session = True
+
         event_hash = hashlib.md5(f"{title}:{summary[:100]}".encode()).hexdigest()
         cached_result = _discovery_cache.get(event_hash)
         if cached_result:
@@ -89,6 +97,10 @@ class ImpactDiscoveryEngine:
             logger.error(f"Critical Fault in Batch Pipeline: {e}")
             if alert_id: await self._persist_terminal_state(alert_id, [], "failed")
             return []
+        finally:
+            if own_session and self.db:
+                await self.db.close()
+                self.db = None # Reset for future use if engine is reused
 
     async def _get_strategic_context(self, title: str, summary: str, alert_id: Optional[uuid.UUID]):
         topic_to_domain = {
