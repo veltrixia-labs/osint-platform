@@ -43,6 +43,8 @@ class ImpactDiscoveryEngine:
             ts, data = cached_result
             if datetime.now(timezone.utc) - ts < timedelta(hours=CACHE_TTL_HOURS):
                 logger.info(f"Using cached impact discovery for event hash: {event_hash}")
+                if alert_id:
+                    await self._persist_terminal_state(alert_id, data, "complete")
                 return data
 
         try:

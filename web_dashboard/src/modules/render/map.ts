@@ -513,8 +513,11 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                                 renderTacticalStatusHud(layer, "AI REFINEMENT COMPLETE");
                                 alert.cascading_impacts = data.cascading_impacts;
                                 alert.backbone_discovery_status = 'complete';
-                                // Final high-fidelity render
+                                
+                                // [v10.55] Explicitly cleanup fallback static visual data before final tree render
                                 layer.clearLayers();
+                                
+                                // Final high-fidelity render
                                 renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, topicColor, 1, 0);
                                 renderImpactChain(map, layer, coords, data.cascading_impacts || [], 2, intensity, alert, new Set());
                                 
@@ -760,8 +763,17 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 }
 
                 if (!nodeCoords) {
-                    nodeCoords = { lat: parentCoords.lat, lng: parentCoords.lng, source: 'Abstract-Carryover' };
+                    // Deterministic offset to prevent visual overlapping 
+                    const latOffset = (index >= 0 ? index + 1 : 1) * 0.45 * (index % 2 === 0 ? 1 : -1);
+                    const lngOffset = (level + index) * 0.55 * ((level + index) % 2 === 0 ? 1 : -1);
+                    
+                    nodeCoords = { 
+                        lat: parentCoords.lat + latOffset, 
+                        lng: parentCoords.lng + lngOffset, 
+                        source: 'Abstract-Carryover' 
+                    };
                     finding._is_carryover = true;
+                    finding._derived_from_parent_coords = true;
                 }
 
                 if (!nodeCoords || isNaN(nodeCoords.lat) || isNaN(nodeCoords.lng)) return;
