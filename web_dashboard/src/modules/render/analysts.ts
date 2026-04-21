@@ -60,7 +60,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
                 <a href="#legal" style="color: inherit; text-decoration: none;">Privacy</a>
             </div>
             <div style="font-size: 0.65rem; opacity: 0.8; text-align: center; margin-top: 1rem; color: var(--accent);">
-                API Version: v11.0.0-LUMINA-SYNC | <span id="data-pulse" style="color: #3fb950;">📡 Connected</span>
+                API Version: v11.1.2-AURORA-SYNC | <span id="data-pulse" style="color: #3fb950;">📡 Connected</span>
             </div>
             <div style="font-size: 0.6rem; opacity: 0.4; text-align: center; margin-top: 0.5rem; line-height: 1.4;">
                 System Status: <span style="color:#3fb950;">Stable</span><br>

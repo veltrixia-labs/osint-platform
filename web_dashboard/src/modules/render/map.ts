@@ -373,7 +373,7 @@ function renderTacticalStatusHud(_layer: L.LayerGroup, text: string) {
     const HUD_HTML = `
         <div class="hud-inner">
             <span class="hud-pulse"></span>
-            <span class="hud-text">${text} [v11.1.2]</span>
+            <span class="hud-text">${text} [v11.1.2-AURORA]</span>
         </div>
     `;
 
