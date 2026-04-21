@@ -128,9 +128,15 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                         </div>
                     </div>
                     <div style="display:flex; align-items:flex-end;">
+                        ${status === 'processing' ? `
+                        <span style="color: #8b949e; font-size: var(--font-s); font-weight: 600; cursor: not-allowed;">
+                            ⏳ Incoming Strategic Signal...
+                        </span>
+                        ` : `
                         <a href="#" class="map-track-link" data-id="${alert.id}" style="color: var(--accent); font-size: var(--font-s); text-decoration: none; font-weight: 600; border-bottom: 1px solid transparent; transition: all 0.2s;" onmouseover="this.style.borderBottom='1px solid var(--accent)'" onmouseout="this.style.borderBottom='1px solid transparent'">
                             Visualize & Track on Global Map —
                         </a>
+                        `}
                     </div>
                 </div>
                 
@@ -150,6 +156,15 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                             </div>
                         `).join('')}
                     </div>
+                ` : (status === 'processing' ? `
+                    <div class="impact-chain-system u-m-top-1" style="background: rgba(255,255,255,0.02); border: 1px dashed var(--border); border-radius: 8px; padding: 0.75rem; opacity: 0.7;">
+                        <div style="font-weight: 800; font-size: 0.65rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 8px;">
+                            ⚙️ AI Refining Active
+                        </div>
+                        <div style="font-size: 0.7rem; color: #8b949e;">
+                            High-fidelity impact analysis is currently running in the background. Actionable intelligence will appear automatically when complete.
+                        </div>
+                    </div>
                 ` : `
                     <div class="impact-chain-system u-m-top-1" style="background: rgba(255,255,255,0.02); border: 1px dashed var(--border); border-radius: 8px; padding: 0.75rem; opacity: 0.7;">
                         <div style="font-weight: 800; font-size: 0.65rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem;">
@@ -160,7 +175,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                             <span style="color: var(--accent); font-weight: 600;">Visualize on map</span> to trigger real-time AI discovery.
                         </div>
                     </div>
-                `}
+                `)}
 
                 <div class="u-flex-between u-m-top-1">
                     <div style="font-size: var(--font-xs); color: #8b949e; opacity: 0.8;">
@@ -172,9 +187,15 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 </div>
                 
                 <div class="u-m-top-1" style="border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                    ${status === 'processing' ? `
+                    <span style="font-size: 0.8rem; color: #8b949e; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: not-allowed; opacity: 0.7;">
+                        Incoming Strategic Signal... [AI Refining]
+                    </span>
+                    ` : `
                     <a class="map-viz-link ${!accessible ? 'btn--locked' : ''}" data-id="${alert.id}" style="font-size: 0.8rem; color: var(--accent); cursor: pointer; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
                         Visualize & Track on Global Map &rarr;
                     </a>
+                    `}
                 </div>
             </div>
         `;

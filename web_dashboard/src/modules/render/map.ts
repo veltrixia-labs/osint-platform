@@ -441,26 +441,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
             console.log(`[Antigravity] AI Analysis already complete for ${alert.id}. Rendering high-fidelity chain.`);
             renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert, new Set());
         } else {
-            // Render Fallback if not complete
-            const rawTopic = alert.topic || (alert.metadata_json as any)?.topic;
-            const topicMap: Record<string, string> = {
-                'market': 'global_market_intelligence', 'energy': 'energy_resource_risk',
-                'tech': 'ai_semiconductor_intelligence', 'defense': 'defense_technology',
-                'supply_chain': 'supply_chain_intelligence', 'crypto': 'crypto_geopolitics'
-            };
-            const effectiveTopic = topicMap[rawTopic || ''] || rawTopic;
-            
-            if (effectiveTopic) {
-                const relatedAssets = STRATEGIC_ASSETS.filter(a => a.topic_code === effectiveTopic && a.importance >= 0.85);
-                const staticFallback = relatedAssets.slice(0, 3).map(asset => ({
-                    stakeholder_id: asset.id, entity_name: asset.name, impact_alpha: -2.5,
-                    source: 'static_fallback', reasoning: `Strategic risk synchronization with ${asset.name}.`,
-                    location_lat: asset.lat, location_lng: asset.lng
-                }));
-                if (staticFallback.length > 0) {
-                    renderImpactChain(map, layer, coords, staticFallback, 2, intensity, alert, new Set());
-                }
-            }
+            // [v14.1] Static fallback (dummy data) completely removed.
+            // Map will stay clean (just the origin node) while waiting for real AI data.
 
             // Start Poller
             const startPoller = (initialMsg: string) => {
