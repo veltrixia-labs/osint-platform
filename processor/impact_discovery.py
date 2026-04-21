@@ -47,22 +47,6 @@ class ImpactDiscoveryEngine:
 
         event_hash = hashlib.md5(f"{title}:{summary[:100]}".encode()).hexdigest()
         
-        # [v13.7] Deduplication Guard: If already processing (and not stale), don't spawn another
-        if alert_id:
-            stmt = select(AlertLog).where(AlertLog.id == alert_id)
-            res = await self.db.execute(stmt)
-            alert = res.scalar_one_or_none()
-            if alert:
-                meta = alert.metadata_json or {}
-                status = meta.get("backbone_discovery_status")
-                if status == "processing":
-                    ts_str = meta.get("backbone_discovery_ts")
-                    if ts_str:
-                        ts = datetime.fromisoformat(ts_str)
-                        if ts.tzinfo is None: ts = ts.replace(tzinfo=timezone.utc)
-                        if datetime.now(timezone.utc) - ts < timedelta(minutes=4):
-                            logger.info(f"[Discovery] Alert {alert_id} already being handled by another worker. Skipping.")
-                            return []
         cached_result = _discovery_cache.get(event_hash)
         if cached_result:
             ts, data = cached_result
