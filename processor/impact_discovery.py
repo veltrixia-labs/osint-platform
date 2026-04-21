@@ -216,7 +216,7 @@ class ImpactDiscoveryEngine:
                                 if ts.tzinfo is None: ts = ts.replace(tzinfo=timezone.utc)
                                 if datetime.now(timezone.utc) - ts > timedelta(minutes=10):
                                     logger.warning(f"[Scout] Rescuing stuck alert {a.id} (Started: {ts_str})")
-                                    meta["backbone_discovery_status"] = "failed"
+                                    meta["backbone_discovery_status"] = "idle"
                                     a.metadata_json = meta
                                     flag_modified(a, "metadata_json")
                                     rescue_count += 1
@@ -224,9 +224,9 @@ class ImpactDiscoveryEngine:
                 
                 if rescue_count > 0:
                     await session.commit()
-                    logger.info(f"[Scout] Rescue complete. {rescue_count} alerts reset to 'failed'.")
+                    logger.info(f"[Scout] Rescue complete. {rescue_count} alerts reset to 'idle'.")
 
-                # 2. Discovery Phase: Pick up pending/failed alerts in PARALLEL [v13.8]
+                # 2. Discovery Phase: Pick up pending/idle alerts in PARALLEL [v13.8]
                 stmt = select(AlertLog).order_by(AlertLog.triggered_at.desc()).limit(25)
                 res = await session.execute(stmt)
                 alerts = res.scalars().all()
@@ -236,7 +236,7 @@ class ImpactDiscoveryEngine:
                     meta = a.metadata_json or {}
                     status = meta.get("backbone_discovery_status", "idle")
                     
-                    if status in ["idle", "failed"] and len(scout_tasks) < 5:
+                    if status == "idle" and len(scout_tasks) < 5:
                         logger.info(f"[Scout] Queueing alert {a.id} for parallel analysis (Status: {status})")
                         meta["backbone_discovery_status"] = "processing"
                         meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()

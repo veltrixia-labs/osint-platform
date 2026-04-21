@@ -4,6 +4,7 @@ import uuid
 from typing import List, Dict, Any, Optional
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import or_
 from db.models import Stakeholder, Dependency
 
 logger = logging.getLogger(__name__)
