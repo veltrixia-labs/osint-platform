@@ -790,10 +790,12 @@ async function initDashboard() {
             
             const result = await response.json();
             
-            if (result.status === 'success' || result.status === 'skipped') {
-                console.log("[Antigravity] AI Analysis Synced. Re-rendering focus...");
+            // [Fix] Treat 'processing' as a normal state for asynchronous AI jobs
+            if (result.status === 'success' || result.status === 'skipped' || result.status === 'processing') {
+                console.log(`[Antigravity] AI Analysis state: ${result.status}. Delegating to map engine...`);
                 // 3. Force Re-render of focused alert on map
-                window.dispatchEvent(new CustomEvent('map-status-update', { detail: { message: 'INTELLIGENCE SYNCED' } }));
+                const msg = result.status === 'processing' ? 'AI REFINING...' : 'INTELLIGENCE SYNCED';
+                window.dispatchEvent(new CustomEvent('map-status-update', { detail: { message: msg } }));
                 
                 // We re-trigger focus-map with the same ID to force a fresh fetch/render
                 window.dispatchEvent(new CustomEvent('focus-map', { detail: { alertId } }));
