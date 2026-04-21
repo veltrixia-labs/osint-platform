@@ -469,7 +469,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                 let pollCount = 0;
                 const poller = setInterval(() => {
                     pollCount++;
-                    if (pollCount > 60) { 
+                    // [v13.9] EXTENDED TIMEOUT: 10 minutes (120 * 5s) to allow for parallel queueing and deep reasoning
+                    if (pollCount > 120) { 
                         clearInterval(poller); 
                         renderTacticalStatusHud(layer, "AI REFINING: TASK TIMED OUT");
                         setTimeout(() => {
@@ -478,7 +479,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                         }, 5000);
                         return; 
                     }
-                    renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/60]...`);
+                    renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/120]...`);
                     
                     fetchAlert(alert.id).then(data => {
                         if (!data) return;
@@ -487,6 +488,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                             renderTacticalStatusHud(layer, "AI REFINEMENT COMPLETE");
                             alert.cascading_impacts = data.cascading_impacts;
                             alert.backbone_discovery_status = 'complete';
+                            
+                            // [v14.0] Immediate Visual Swap: Purge fallback and render AI-verified nodes
                             layer.clearLayers();
                             renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, topicColor, 1, 0);
                             renderImpactChain(map, layer, coords, data.cascading_impacts || [], 2, intensity, alert, new Set());

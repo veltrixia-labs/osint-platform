@@ -46,6 +46,23 @@ class ImpactDiscoveryEngine:
             own_session = True
 
         event_hash = hashlib.md5(f"{title}:{summary[:100]}".encode()).hexdigest()
+        
+        # [v13.7] Deduplication Guard: If already processing (and not stale), don't spawn another
+        if alert_id:
+            stmt = select(AlertLog).where(AlertLog.id == alert_id)
+            res = await self.db.execute(stmt)
+            alert = res.scalar_one_or_none()
+            if alert:
+                meta = alert.metadata_json or {}
+                status = meta.get("backbone_discovery_status")
+                if status == "processing":
+                    ts_str = meta.get("backbone_discovery_ts")
+                    if ts_str:
+                        ts = datetime.fromisoformat(ts_str)
+                        if ts.tzinfo is None: ts = ts.replace(tzinfo=timezone.utc)
+                        if datetime.now(timezone.utc) - ts < timedelta(minutes=4):
+                            logger.info(f"[Discovery] Alert {alert_id} already being handled by another worker. Skipping.")
+                            return []
         cached_result = _discovery_cache.get(event_hash)
         if cached_result:
             ts, data = cached_result
@@ -225,28 +242,32 @@ class ImpactDiscoveryEngine:
                     await session.commit()
                     logger.info(f"[Scout] Rescue complete. {rescue_count} alerts reset to 'failed'.")
 
-                # 2. Discovery Phase: Pick up pending/failed alerts
+                # 2. Discovery Phase: Pick up pending/failed alerts in PARALLEL [v13.8]
                 stmt = select(AlertLog).order_by(AlertLog.triggered_at.desc()).limit(25)
                 res = await session.execute(stmt)
                 alerts = res.scalars().all()
                 
-                scout_count = 0
+                scout_tasks = []
                 for a in alerts:
                     meta = a.metadata_json or {}
                     status = meta.get("backbone_discovery_status", "idle")
                     
-                    if status in ["idle", "failed"] and scout_count < 5:
-                        logger.info(f"[Scout] Processing alert {a.id} (Status: {status})")
+                    if status in ["idle", "failed"] and len(scout_tasks) < 5:
+                        logger.info(f"[Scout] Queueing alert {a.id} for parallel analysis (Status: {status})")
                         meta["backbone_discovery_status"] = "processing"
                         meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
                         a.metadata_json = meta
                         flag_modified(a, "metadata_json")
-                        await session.commit()
                         
                         engine = ImpactDiscoveryEngine(session)
                         title = a.target_label
                         summary = meta.get("description", f"Triggered on {a.topic}")
-                        await engine.run_discovery(uuid.uuid4(), title, summary, a.id)
-                        scout_count += 1
+                        scout_tasks.append(engine.run_discovery(uuid.uuid4(), title, summary, a.id))
+                
+                if scout_tasks:
+                    await session.commit() # Commit statuses before spawning tasks
+                    logger.info(f"[Scout] Spawning {len(scout_tasks)} parallel AI analyses.")
+                    await asyncio.gather(*scout_tasks)
+                    logger.info(f"[Scout] Batch of {len(scout_tasks)} parallel analyses finished.")
             except Exception as e:
                 logger.error(f"[Scout] Execution failed: {e}")
