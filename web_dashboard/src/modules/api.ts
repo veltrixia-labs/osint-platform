@@ -205,7 +205,10 @@ export async function logout() {
  */
 export const apiClient = {
     async get(path: string, options: RequestInit = {}) {
-        return fetchWithAuth(`${API_BASE}${path}`, { ...options, method: 'GET' });
+        // [v10.61] Anti-caching guard to prevent polling staleness
+        const separator = path.includes('?') ? '&' : '?';
+        const url = `${API_BASE}${path}${separator}_t=${Date.now()}`;
+        return fetchWithAuth(url, { ...options, method: 'GET', cache: 'no-store' });
     },
     async post(path: string, body?: any, options: RequestInit = {}) {
         return fetchWithAuth(`${API_BASE}${path}`, {

@@ -466,6 +466,9 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
             }
 
             const startPoller = (initialMsg: string) => {
+                if ((window as any)._activeTacticalPoller) {
+                    clearInterval((window as any)._activeTacticalPoller);
+                }
                 renderTacticalStatusHud(layer, initialMsg);
                 let pollCount = 0;
                 const poller = setInterval(() => {
@@ -764,8 +767,8 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
 
                 if (!nodeCoords) {
                     // Deterministic offset to prevent visual overlapping 
-                    const latOffset = (index >= 0 ? index + 1 : 1) * 0.45 * (index % 2 === 0 ? 1 : -1);
-                    const lngOffset = (level + index) * 0.55 * ((level + index) % 2 === 0 ? 1 : -1);
+                    const latOffset = (index >= 0 ? index + 1 : 1) * 12.0 * (index % 2 === 0 ? 1 : -1);
+                    const lngOffset = (level + index) * 16.0 * ((level + index) % 2 === 0 ? 1 : -1);
                     
                     nodeCoords = { 
                         lat: parentCoords.lat + latOffset, 
