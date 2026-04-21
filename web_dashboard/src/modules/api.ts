@@ -216,10 +216,13 @@ export const apiClient = {
         });
     },
     async post(path: string, body?: any, options: RequestInit = {}) {
-        return fetchWithAuth(`${API_BASE}${path}`, {
+        // [v10.66] POST Cache Busting (Force freshness on AI triggers)
+        const separator = path.includes('?') ? '&' : '?';
+        const url = `${API_BASE}${path}${separator}_burst=${Date.now()}`;
+        return fetchWithAuth(url, {
             ...options,
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...options.headers },
+            headers: { 'Content-Type': 'application/json', ...options.headers, 'Cache-Control': 'no-cache' },
             body: body ? JSON.stringify(body) : undefined
         });
     }
