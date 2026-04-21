@@ -12,6 +12,8 @@ from urllib.parse import urlparse
 from processor.location_resolver import LocationResolver
 
 resolver = LocationResolver()
+# [v14.3] Global set to prevent weak-reference garbage collection of background asyncio tasks
+_bg_tasks = set()
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +159,12 @@ class AlertManager:
             # Fire-and-forget background task
             title = alert_log.target_label
             summary = alert_log.metadata_json.get("description", f"Automated trigger on {alert_log.topic}")
-            asyncio.create_task(ImpactDiscoveryEngine(None).run_discovery(uuid.uuid4(), title, summary, alert_log.id))
+            task = asyncio.create_task(ImpactDiscoveryEngine(None).run_discovery(uuid.uuid4(), title, summary, alert_log.id))
+            
+            # [v14.3] Add to global set and bind callback to prevent premature garbage collection
+            _bg_tasks.add(task)
+            task.add_done_callback(_bg_tasks.discard)
+            
             logger.info(f"[Antigravity] Direct AI Analysis triggered for {alert_log.id}")
 
             if not targets:

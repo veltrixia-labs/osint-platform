@@ -243,7 +243,8 @@ class ImpactDiscoveryEngine:
                         a.metadata_json = meta
                         flag_modified(a, "metadata_json")
                         
-                        engine = ImpactDiscoveryEngine(session)
+                        # [v14.3] MUST USE None to spawn unique isolated sessions per parallel task to avoid SQLAlchemy concurrent violation
+                        engine = ImpactDiscoveryEngine(None)
                         title = a.target_label
                         summary = meta.get("description", f"Triggered on {a.topic}")
                         scout_tasks.append(engine.run_discovery(uuid.uuid4(), title, summary, a.id))
