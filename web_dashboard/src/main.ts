@@ -2,7 +2,7 @@ import './style.css'
 declare const __APP_BUILD_INFO__: string;
 console.log(`[Antigravity] API Base URL configured: ${import.meta.env.VITE_API_BASE_URL || '/api'}`);
 console.log(`[Antigravity] Mode: ${import.meta.env.MODE}`);
-console.log(`[Antigravity] Build Version: v11.0.0-LUMINA-SYNC`);
+console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
 import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderMap, renderLegal } from './modules/render/index'

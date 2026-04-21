@@ -205,10 +205,15 @@ export async function logout() {
  */
 export const apiClient = {
     async get(path: string, options: RequestInit = {}) {
-        // [v10.61] Anti-caching guard to prevent polling staleness
+        // [v10.65] FORCE CLOUD REVOCATION: Explicitly bust edge/browser caches
         const separator = path.includes('?') ? '&' : '?';
-        const url = `${API_BASE}${path}${separator}_t=${Date.now()}`;
-        return fetchWithAuth(url, { ...options, method: 'GET', cache: 'no-store' });
+        const url = `${API_BASE}${path}${separator}_t=${Date.now()}_v=1112`;
+        return fetchWithAuth(url, { 
+            ...options, 
+            method: 'GET', 
+            cache: 'no-cache', // Forces verification with server
+            headers: { ...options.headers, 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+        });
     },
     async post(path: string, body?: any, options: RequestInit = {}) {
         return fetchWithAuth(`${API_BASE}${path}`, {
