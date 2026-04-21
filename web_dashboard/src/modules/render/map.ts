@@ -765,19 +765,34 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     if (asset) nodeCoords = { lat: asset.lat, lng: asset.lng, source: 'Name-Lookup' };
                 }
 
+                // [v11.2] High-Fidelity Polar Spread: Resolves visual overlapping regardless of geographic proximity
+                const impactCount = impacts.length;
+                const fanAngle = 140; // Total arc in degrees
+                const startAngle = -70; // Start offset
+                const angleStep = impactCount > 1 ? fanAngle / (impactCount - 1) : 0;
+                const currentAngle = startAngle + (index * angleStep);
+                
+                // Convert angle to radians for trigonometric displacement
+                const rad = (currentAngle * Math.PI) / 180;
+                const radius = 18.0 + (level * 4); // Adaptive radius based on recursion level
+                
+                const dispLat = radius * Math.cos(rad);
+                const dispLng = radius * Math.sin(rad);
+
                 if (!nodeCoords) {
-                    // Deterministic offset to prevent visual overlapping 
-                    const latOffset = (index >= 0 ? index + 1 : 1) * 12.0 * (index % 2 === 0 ? 1 : -1);
-                    const lngOffset = (level + index) * 16.0 * ((level + index) % 2 === 0 ? 1 : -1);
-                    
                     nodeCoords = { 
-                        lat: parentCoords.lat + latOffset, 
-                        lng: parentCoords.lng + lngOffset, 
-                        source: 'Abstract-Carryover' 
+                        lat: parentCoords.lat + dispLat, 
+                        lng: parentCoords.lng + dispLng, 
+                        source: 'Polar-Spread-Abstract' 
                     };
                     finding._is_carryover = true;
-                    finding._derived_from_parent_coords = true;
+                } else {
+                    // Even if coords are direct, apply a slight 'Visual Jitter' if siblings exist to prevent stacking
+                    nodeCoords.lat += (dispLat * 0.4); 
+                    nodeCoords.lng += (dispLng * 0.4);
                 }
+
+                finding._derived_from_parent_coords = true;
 
                 if (!nodeCoords || isNaN(nodeCoords.lat) || isNaN(nodeCoords.lng)) return;
 

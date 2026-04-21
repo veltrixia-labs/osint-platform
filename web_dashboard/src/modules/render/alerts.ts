@@ -1,4 +1,4 @@
-import type { Alert } from '../api';
+import { apiClient, type Alert } from '../api';
 import { getTopicDef, canAccessTopic } from '../topics';
 import { formatIntensity } from './utils';
 
@@ -185,6 +185,20 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             </div>
         `;
     }).join('');
+    
+    // [v11.3] Background Pre-Warming: Automate AI analysis for high-priority signals
+    alerts.forEach(alert => {
+        if (alert.intensity >= 6.5 && (alert.backbone_discovery_status === 'idle' || !alert.backbone_discovery_status)) {
+            const topicDef = getTopicDef(alert.topic);
+            const accessible = canAccessTopic(userTier, topicDef);
+            if (accessible) {
+                console.log(`[Antigravity] Auto-Promoting high-intensity alert to AI analysis: ${alert.id}`);
+                apiClient.post(`/alerts/${alert.id}/analyze`).catch(err => {
+                    console.warn(`[Antigravity] Background analysis trigger failed for ${alert.id}:`, err);
+                });
+            }
+        }
+    });
 
     // Attach Visualize & Track events
     container.querySelectorAll('.map-viz-link').forEach(link => {
