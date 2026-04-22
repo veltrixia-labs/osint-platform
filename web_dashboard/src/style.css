@@ -251,6 +251,151 @@ body.no-scroll {
   padding-left: calc(1.25rem - 3px); /* Offset border to prevent text jump */
 }
 
+/* [Phase 3] Nav Item Layout */
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-item-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.nav-item-label {
+  flex: 1;
+  font-size: var(--font-s);
+}
+
+.nav-lock-icon {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+/* Locked state */
+.sidebar-nav-link--locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.sidebar-nav-link--locked:hover {
+  background: rgba(248, 81, 73, 0.05);
+  color: var(--text-secondary);
+  border-left: 3px solid rgba(248, 81, 73, 0.3);
+  padding-left: calc(1.25rem - 3px);
+}
+
+.sidebar-nav-link--locked:hover .nav-lock-icon {
+  opacity: 1;
+}
+
+/* Nav groups */
+.nav-group {
+  margin-bottom: 0.5rem;
+}
+
+.nav-group-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #8b949e;
+  text-transform: uppercase;
+  padding: 0.75rem 1.25rem 0.35rem;
+  opacity: 0.6;
+}
+
+.nav-groups {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Role-Based Access Footer */
+.nav-role-footer {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.nav-role-tier {
+  padding: 0.6rem 0.75rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.05);
+  border-left-width: 3px;
+}
+
+.nav-role-tier-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.nav-role-email {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-upgrade-btn {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.nav-upgrade-btn:hover {
+  opacity: 0.85;
+}
+
+.nav-upgrade-btn--ghost {
+  background: transparent;
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  color: var(--accent);
+}
+
+.nav-upgrade-btn--ghost:hover {
+  background: rgba(88, 166, 255, 0.08);
+  opacity: 1;
+}
+
+.nav-legal-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding-bottom: 0.25rem;
+  font-size: 0.6rem;
+  opacity: 0.4;
+}
+
+.nav-legal-row a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.nav-legal-row a:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+
 /* ==============================
    Main Layout & Typo
    ============================== */

@@ -6,11 +6,10 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderHealth, renderSidebar, renderReportDetail, renderLiveFeed, renderMap, renderLegal } from './modules/render/index'
-import { login, signup, fetchMe, logout, fetchUsage, fetchReports, fetchReport, apiClient } from './modules/api'
-import type { UserMe, AnalystProfile, Report } from './modules/api'
+import { renderAlerts, renderHealth, renderReportDetail, renderLiveFeed, renderMap, renderLegal, renderNavigation, updateNavActiveState } from './modules/render/index'
+import { login, signup, fetchMe, logout, fetchReports, fetchReport, apiClient } from './modules/api'
+import type { UserMe, Report } from './modules/api'
 import {
-    renderTierBadge,
     renderGracePeriodBanner,
     renderSubscriptionTab,
 } from './modules/subscription'
@@ -137,7 +136,7 @@ export async function renderSignup() {
 
 
 
-type TabId = 'feed' | 'plans' | 'reports' | 'map' | 'legal'
+type TabId = 'feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'expert-intel'
 
 async function initDashboard() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -227,7 +226,6 @@ async function initDashboard() {
           <span style="opacity:0.5;">|</span>
           <span style="font-size:0.8rem; color:var(--text-secondary);">LABS</span>
         </div>
-        <div class="dev-mode-badge" style="margin-left:auto; margin-right:1rem; position:static;">Dev Mode: Unlocked</div>
         <button class="hamburger" id="mobile-menu-btn">☰</button>
       </div>
 
@@ -239,23 +237,8 @@ async function initDashboard() {
             <div style="width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">V</div>
             <h2>VELTRIXIA LABS</h2>
           </div>
-          
-          <nav class="u-m-top-1">
-            <div class="sidebar-nav-link sidebar-nav-link--active" id="nav-feed">Intelligence Feed</div>
-            <div class="sidebar-nav-link" id="nav-map">Global Map</div>
-            <div class="sidebar-nav-link" id="nav-reports">Expert Reports</div>
-            <div class="sidebar-nav-link" id="nav-plans">Subscription Plans</div>
-          </nav>
 
-          <div id="sidebar-watchlist" class="u-m-top-1" style="flex:1; overflow-y:auto; overflow-x:hidden; margin-bottom:1rem;"></div>
-
-          <div class="sidebar-footer u-m-top-1">
-            <div id="sync-hud" style="font-size: 0.65rem; color: #8b949e; margin-bottom: 0.75rem; letter-spacing: 0.05rem; font-family: monospace;">● SYNC: INITIALIZING...</div>
-            <div class="u-flex u-m-bottom-1">
-              <div id="user-tier-badge"></div>
-            </div>
-            <button id="logout-btn" style="width:100%; padding:0.6rem; background:rgba(248,81,73,0.1); color:#f85149; border:1px solid rgba(248,81,73,0.2); border-radius:6px; cursor:pointer;">Logout</button>
-          </div>
+          <div id="sidebar-nav-container" style="display:flex; flex-direction:column; flex:1; overflow-y:auto; overflow-x:hidden;"></div>
         </aside>
 
         <main class="main-content">
@@ -299,19 +282,16 @@ async function initDashboard() {
 
     const alertsContainer = document.querySelector<HTMLElement>('#alerts-container')!
     const healthContainer = document.querySelector<HTMLElement>('#health-container')!
-    const sidebarWatchlist = document.querySelector<HTMLElement>('#sidebar-watchlist')!
     const mainTitle = document.querySelector<HTMLElement>('#main-title')!
-    const logoutBtn = document.querySelector<HTMLElement>('#logout-btn')!
 
-    logoutBtn.addEventListener('click', () => {
-        (window as any).stopPolling?.();
-        logout();
-        renderLogin();
-    });
+    // [Phase 3] Render Role-Based Navigation
+    const navContainer = document.querySelector<HTMLElement>('#sidebar-nav-container')!;
+    if (navContainer && user) {
+        renderNavigation(user, navContainer, (tabId) => handleTabSwitch(tabId as TabId));
+    }
 
     const updateNavUI = (tab: TabId) => {
-      document.querySelectorAll('.sidebar-nav-link').forEach(el => el.classList.remove('sidebar-nav-link--active'));
-      document.querySelector(`#nav-${tab}`)?.classList.add('sidebar-nav-link--active');
+      updateNavActiveState('sidebar-nav-container', tab);
       document.querySelector('#sidebar')?.classList.remove('active');
       document.querySelector('#mobile-overlay')?.classList.remove('active');
       document.body.classList.remove('no-scroll');
@@ -322,7 +302,7 @@ async function initDashboard() {
         updateNavUI(tab);
         console.log(`[Antigravity] Viewport State: ${tab}${focusAlertId ? ` | Focus: ${focusAlertId}` : ''}`);
         
-        // Sync URL Hash (Phase 4)
+        // Sync URL Hash
         if (!skipPushState) {
             const newHash = `#${tab}${focusAlertId ? `?alert=${focusAlertId}` : ''}`;
             if (window.location.hash !== newHash) {
@@ -335,12 +315,11 @@ async function initDashboard() {
         const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
         const liveFeed = document.querySelector<HTMLElement>('#live-feed-container');
         
-        // Start fade-out
         if (mainContent) mainContent.style.opacity = '0';
 
         setTimeout(() => {
-            // Strict Toggle
-            if (feedContainer) feedContainer.style.display = (tab === 'feed' || tab === 'plans' || tab === 'reports' || tab === 'legal') ? 'block' : 'none';
+            const isFeedLike = ['feed', 'plans', 'reports', 'legal', 'pro-insights', 'expert-intel'].includes(tab);
+            if (feedContainer) feedContainer.style.display = isFeedLike ? 'block' : 'none';
             if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
             if (liveFeed) liveFeed.style.display = (tab === 'feed') ? 'block' : 'none';
 
@@ -348,12 +327,13 @@ async function initDashboard() {
             else if (tab === 'plans') renderPlans();
             else if (tab === 'reports') renderReports();
             else if (tab === 'map') renderMapPage(focusAlertId);
+            else if (tab === 'pro-insights') renderProInsights();
+            else if (tab === 'expert-intel') renderExpertIntel();
             else if (tab === 'legal' && feedContainer) {
                 mainTitle.textContent = 'Legal & Compliance';
                 renderLegal(feedContainer);
             }
 
-            // Fade-in
             if (mainContent) mainContent.style.opacity = '1';
         }, 50);
     };
@@ -366,7 +346,8 @@ async function initDashboard() {
         const [base, query] = hash.split('?');
         const params = new URLSearchParams(query || '');
         
-        if (base === 'feed' || base === 'map' || base === 'plans' || base === 'reports' || base === 'legal') {
+        const validTabs = ['feed', 'map', 'plans', 'reports', 'legal', 'pro-insights', 'expert-intel'];
+        if (validTabs.includes(base)) {
             if (currentTab !== base) {
                 handleTabSwitch(base as TabId, params.get('alert') || undefined, true);
             }
@@ -385,10 +366,6 @@ async function initDashboard() {
         }
     });
 
-    document.querySelector('#nav-feed')?.addEventListener('click', () => handleTabSwitch('feed'));
-    document.querySelector('#nav-map')?.addEventListener('click', () => handleTabSwitch('map'));
-    document.querySelector('#nav-plans')?.addEventListener('click', () => handleTabSwitch('plans'));
-    document.querySelector('#nav-reports')?.addEventListener('click', () => handleTabSwitch('reports'));
     document.querySelector('#quick-map-trigger')?.addEventListener('click', () => handleTabSwitch('map'));
 
     // New Event Listener: Switch to Map tab and focus on alert
@@ -711,19 +688,63 @@ async function initDashboard() {
         renderMap(mapContainer, user.tier, focusAlertId);
     };
 
-    const refreshWatchlist = async () => {
-        if (!user) return;
-        const usage = await fetchUsage();
-        (window as any).getCurrentUsage = () => usage;
-        const analysts = [user as unknown as AnalystProfile];
-        renderSidebar(analysts, sidebarWatchlist);
+    // [Phase 3] Placeholder views for gated premium tabs
+    const renderProInsights = () => {
+        (window as any).stopPolling?.();
+        mainTitle.textContent = 'Pro Insights';
+        healthContainer.innerHTML = '';
+        alertsContainer.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:400px; text-align:center; gap:1.5rem;">
+                <div style="font-size:3rem;">💎</div>
+                <h2 style="color:#58a6ff; margin:0;">Pro Insights</h2>
+                <p style="color:#8b949e; max-width:480px; line-height:1.6; margin:0;">
+                    Curated sector briefings, risk momentum summaries, and early-signal intelligence.<br/>
+                    Available exclusively to Pro-tier analysts.
+                </p>
+                <div style="background:rgba(88,166,255,0.05); border:1px solid rgba(88,166,255,0.2); padding:1.5rem 2rem; border-radius:12px; font-size:0.85rem; color:#c9d1d9; max-width:380px;">
+                    <div style="color:#58a6ff; font-weight:800; font-size:0.65rem; letter-spacing:1px; margin-bottom:0.75rem;">AVAILABLE IN PRO TIER</div>
+                    <div style="display:flex; flex-direction:column; gap:8px; text-align:left;">
+                        <div>✓ Sector risk briefings (daily)</div>
+                        <div>✓ Momentum summaries by domain</div>
+                        <div>✓ Early-warning signal dashboard</div>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem; color:#8b949e;">
+                    This module is under active development. Full rollout coming soon.
+                </div>
+            </div>
+        `;
     };
-    (window as any).refreshUsage = refreshWatchlist;
 
-    if (user) {
-        const badgeContainer = document.querySelector<HTMLElement>('#user-tier-badge')!;
-        badgeContainer.innerHTML = renderTierBadge(user);
-    }
+    const renderExpertIntel = () => {
+        (window as any).stopPolling?.();
+        mainTitle.textContent = 'Expert Intelligence';
+        healthContainer.innerHTML = '';
+        alertsContainer.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:400px; text-align:center; gap:1.5rem;">
+                <div style="font-size:3rem;">🔬</div>
+                <h2 style="color:#bc8cff; margin:0;">Expert Intelligence</h2>
+                <p style="color:#8b949e; max-width:480px; line-height:1.6; margin:0;">
+                    High-fidelity strategic assessments, cross-domain causal mapping, and classified-grade impact chains.<br/>
+                    Reserved for Expert-tier analysts.
+                </p>
+                <div style="background:rgba(188,140,255,0.05); border:1px solid rgba(188,140,255,0.2); padding:1.5rem 2rem; border-radius:12px; font-size:0.85rem; color:#c9d1d9; max-width:380px;">
+                    <div style="color:#bc8cff; font-weight:800; font-size:0.65rem; letter-spacing:1px; margin-bottom:0.75rem;">AVAILABLE IN EXPERT TIER</div>
+                    <div style="display:flex; flex-direction:column; gap:8px; text-align:left;">
+                        <div>✓ Full cascading impact chains</div>
+                        <div>✓ Cross-domain geopolitical modeling</div>
+                        <div>✓ Recursive risk curve analysis</div>
+                        <div>✓ Priority analyst support</div>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem; color:#8b949e;">
+                    This module is under active development. Full rollout coming soon.
+                </div>
+            </div>
+        `;
+    };
+
+    // [Phase 3] #user-tier-badge removed from sidebar; tier is shown in nav role footer.
 
     // Initial Route Handling (Phase 4)
     const initialHash = window.location.hash.slice(1);
@@ -809,7 +830,7 @@ async function initDashboard() {
         }
     });
 
-    refreshWatchlist();
+    // [Phase 3] Watchlist removed from sidebar; navigation rendered dynamically via renderNavigation.
 
     // [v8.4] Strategic Tracking Integration
     window.addEventListener('map-track-alert' as any, (e: CustomEvent) => {
