@@ -12,6 +12,7 @@ import { fetchAlerts, fetchAlert, apiClient } from '../api';
 import { getTopicDef } from '../topics';
 import { STRATEGIC_ASSETS } from '../infrastructure';
 import { getAlertCoords, getNodeCoords } from './utils';
+import { renderImpactSidebar, hideImpactSidebar } from './impact_panel';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Module State (Internal)
@@ -45,7 +46,12 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
     const existingMapEl = document.getElementById('map-instance');
     if (currentGlobalMap && !existingMapEl) {
         console.log("[Antigravity] Map Anchor Recovered: Restoring engine to DOM");
-        container.innerHTML = '<div id="map-instance" style="height:100%; width:100%; min-height:500px; background:#0b0e14;"></div>';
+        container.innerHTML = `
+            <div style="display:flex; height:100%; width:100%; position:relative;">
+                <div id="map-instance" style="flex:1; min-height:500px; background:#0b0e14; position:relative;"></div>
+                <div id="impact-panel-container" style="display:none; width:350px; min-width:350px; background:var(--bg-secondary); border-left:1px solid var(--border); overflow:hidden;"></div>
+            </div>
+        `;
         
         await new Promise(r => requestAnimationFrame(r));
         currentGlobalMap.invalidateSize();
@@ -55,7 +61,12 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
 
     // 2. Initial Setup: Create Persistent Map Canvas
     if (!currentGlobalMap) {
-        container.innerHTML = '<div id="map-instance" style="height:100%; width:100%; min-height:500px; background:#09111f;"></div>';
+        container.innerHTML = `
+            <div style="display:flex; height:100%; width:100%; position:relative;">
+                <div id="map-instance" style="flex:1; min-height:500px; background:#0b0e14; position:relative;"></div>
+                <div id="impact-panel-container" style="display:none; width:350px; min-width:350px; background:var(--bg-secondary); border-left:1px solid var(--border); overflow:hidden;"></div>
+            </div>
+        `;
         await new Promise(r => setTimeout(r, 100));
         
         const mapElement = document.getElementById('map-instance');
@@ -198,6 +209,8 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
         if (!focusAlertId) {
             // MODE A: GLOBAL MONITORING
             console.log("[Antigravity] Map Mode: GLOBAL_MONITOR");
+            
+            hideImpactSidebar('impact-panel-container');
             
             // 1. Plot Clustered Alerts
             alerts.forEach(alert => {
@@ -407,10 +420,13 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         let cascadingImpacts = [...cascadingImpactsRaw];
 
         const currentStatus = alert.backbone_discovery_status || 'idle';
+
         if (currentStatus === 'complete' && cascadingImpacts.length > 0) {
             renderTacticalStatusHud(layer, "AI ANALYSIS COMPLETE", "complete");
             renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert, new Set());
+            renderImpactSidebar('impact-panel-container', alert, map);
         } else if (currentStatus === 'failed') {
+            renderImpactSidebar('impact-panel-container', alert, map);
             renderTacticalStatusHud(layer, "AI ANALYSIS FAILED", "failed");
         } else {
             // Processing mode - poll but do not lock animations
@@ -423,6 +439,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                     if (pollCount > 120) { 
                         clearInterval(poller); 
                         renderTacticalStatusHud(layer, "TIMED OUT", "failed");
+                        alert.backbone_discovery_status = 'failed';
+                        renderImpactSidebar('impact-panel-container', alert, map);
                         return; 
                     }
                     
@@ -437,8 +455,11 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                             layer.clearLayers();
                             renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, topicColor, 1, 0);
                             renderImpactChain(map, layer, coords, data.cascading_impacts || [], 2, intensity, alert, new Set());
+                            renderImpactSidebar('impact-panel-container', alert, map);
                         } else if (data.backbone_discovery_status === 'failed') {
                             clearInterval(poller);
+                            alert.backbone_discovery_status = 'failed';
+                            renderImpactSidebar('impact-panel-container', alert, map);
                             renderTacticalStatusHud(layer, "AI ANALYSIS FAILED", "failed");
                         } else {
                             renderTacticalStatusHud(layer, `AI REFINING [${pollCount}]`, "processing");
@@ -449,8 +470,10 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
             };
 
             if (currentStatus === 'processing') {
+                renderImpactSidebar('impact-panel-container', alert, map);
                 startPoller("ANALYZING");
             } else {
+                renderImpactSidebar('impact-panel-container', alert, map);
                 apiClient.post(`/alerts/${alert.id}/analyze`).then(() => startPoller("DISCOVERY TRIGGERED"));
             }
         }
@@ -554,7 +577,21 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], 
         
         labelMarker.addTo(layer);
         const el = labelMarker.getElement();
-        if (el) el.style.pointerEvents = 'auto'; // allow hover/click if needed
+        if (el) {
+            el.style.pointerEvents = 'auto';
+            el.addEventListener('click', () => {
+                const nodeId = (finding.entity_name || '').replace(/\s+/g, '-');
+                const sidebarItem = document.querySelector(`.sidebar-item[data-id="${nodeId}"]`) as HTMLElement;
+                if (sidebarItem) {
+                    sidebarItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Prevent infinite bounce if already expanded
+                    const details = sidebarItem.querySelector('.sidebar-item-details') as HTMLElement;
+                    if (details && details.style.display === 'none') {
+                        sidebarItem.click();
+                    }
+                }
+            });
+        }
         
     } catch (err) {
         console.error("[Antigravity] FAILED to render tactical node label:", err, finding);
@@ -602,6 +639,9 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
             finding._derived_from_parent_coords = true;
 
             if (!nodeCoords || isNaN(nodeCoords.lat) || isNaN(nodeCoords.lng)) return;
+
+            finding._rendered_lat = nodeCoords.lat;
+            finding._rendered_lng = nodeCoords.lng;
 
             const pathColor = (finding.impact_alpha || 0) < 0 ? '#f43f5e' : '#10b981';
 
@@ -709,3 +749,10 @@ function initMapFilter(map: L.Map, _container: HTMLElement, onUpdate: () => void
     currentFilterControl = new (FilterControl as any)();
     currentFilterControl?.addTo(map);
 }
+
+// [Phase 2] Listen for sidebar item click to focus map
+window.addEventListener('sidebar-node-focus', (e: any) => {
+    if (currentGlobalMap && e.detail.lat && e.detail.lng) {
+        currentGlobalMap.setView([e.detail.lat, e.detail.lng], 5, { animate: true, duration: 0.5 });
+    }
+});
