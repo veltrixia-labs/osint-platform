@@ -22,7 +22,7 @@ const GRACE_PERIOD_DAYS = 3;
 /** Mapping internal tier IDs to user-facing display names */
 const PLAN_NAME_MAP: Record<string, string> = {
     guest: 'Guest',
-    free: 'Free Member',
+    free: 'Guest',
     pro: 'Pro',
     experts: 'Expert',
     enterprise: 'Enterprise',
@@ -30,11 +30,11 @@ const PLAN_NAME_MAP: Record<string, string> = {
 
 /** "Best For" labels for conversion guidance */
 const TIER_BEST_FOR: Record<string, string> = {
-    guest: 'Public risk monitoring (limited)',
-    free: 'Basic analyst access',
-    pro: 'Operational risk intelligence',
-    experts: 'Strategic risk intelligence',
-    enterprise: 'Organizations requiring onboarding & customization',
+    guest: 'Public Monitoring & Fast-News',
+    free: 'Public Monitoring & Fast-News',
+    pro: 'AI-Powered Insights',
+    experts: 'Strategic Intelligence',
+    enterprise: 'Enterprise Strategic Suite',
 };
 
 interface PlanConfig {
@@ -59,7 +59,7 @@ const PLANS: PlanConfig[] = [
     {
         id: 'free',
         name: PLAN_NAME_MAP.free,
-        subtitle: 'Foundational Awareness',
+        subtitle: 'Fast-News Briefing',
         bestFor: TIER_BEST_FOR.free,
         price: '$0',
         priceNote: 'forever',
@@ -67,10 +67,10 @@ const PLANS: PlanConfig[] = [
         directCheckout: false,
         contactUrl: '',
         features: [
-            '5 alerts/day',
-            'Daily intelligence reports',
-            '3 watchlist keywords',
-            'Real-time Signal Detection',
+            'Real-time global map (static)',
+            'Access to free alerts',
+            'Daily intelligence headlines',
+            'No login required',
             'Email support',
         ],
         ctaText: 'Start Monitoring',
@@ -78,8 +78,8 @@ const PLANS: PlanConfig[] = [
     {
         id: 'pro',
         name: PLAN_NAME_MAP.pro,
-        subtitle: 'Understand why signals matter',
-        explanation: 'Understand what signals mean and why they matter',
+        subtitle: 'Deep Asset Intelligence',
+        explanation: 'Understand exactly how signals impact your assets',
         bestFor: TIER_BEST_FOR.pro,
         price: '$19',
         priceNote: 'per month',
@@ -87,21 +87,21 @@ const PLANS: PlanConfig[] = [
         directCheckout: true,
         contactUrl: '',
         features: [
-            'Entity-level intelligence',
-            'AI-powered insight generation',
+            'Tier-based AI analysis',
+            'Pro-only strategic alerts',
+            'AI Insights Dashboard (/pro-insights)',
+            'Impact Depth: Level 2',
             'Full source traceability',
             '100 alerts/day',
             'Daily + Weekly reports',
-            'Core specialized topics',
-            'AI-generated analysis', // Microcopy
         ],
         ctaText: 'Unlock AI Insights',
     },
     {
         id: 'experts',
         name: PLAN_NAME_MAP.experts,
-        subtitle: 'Decision-grade intelligence for leads',
-        explanation: 'Turn insights into strategic action',
+        subtitle: 'Strategic Causal Analysis',
+        explanation: 'Expert foresight for risk leads',
         bestFor: TIER_BEST_FOR.experts,
         price: '$49',
         priceNote: 'per month',
@@ -109,20 +109,20 @@ const PLANS: PlanConfig[] = [
         directCheckout: true,
         contactUrl: '',
         features: [
-            'Strategic Scenarios',
-            'Cross-domain impact analysis',
-            '30–60 day outlook',
-            'Strategic decision support',
-            'Decision-Grade Intelligence',
+            'Strategic Intelligence Dashboard (/expert-intel)',
+            'Full impact chain visualization (Unlimited)',
+            'Cross-domain risk forecasting',
+            'Recommended Strategic Actions',
+            '30–60 day scenario outlook',
             'Unlimited alerts',
         ],
         ctaText: 'Unlock Strategic Intelligence',
-        highlight: 'Best for decision-makers',
+        highlight: 'Best for Decision-Makers',
     },
     {
         id: 'enterprise',
         name: PLAN_NAME_MAP.enterprise,
-        subtitle: 'Expert Intelligence + Priority Support',
+        subtitle: 'Expert Intelligence + Organization Controls',
         bestFor: TIER_BEST_FOR.enterprise,
         price: 'Custom',
         priceNote: 'contact us',
@@ -131,12 +131,12 @@ const PLANS: PlanConfig[] = [
         contactUrl: 'mailto:sales@osint-platform.com?subject=Enterprise%20Plan%20Inquiry',
         features: [
             'All Expert features',
+            'Team & Admin Management',
             'Custom topic configuration',
-            'Custom onboarding',
-            'Priority support escalation',
-            'Strategic Intelligence workflow',
+            'Dedicated onboarding & support',
+            'Enterprise strategic workflow',
         ],
-        ctaText: 'Contact Sales',
+        ctaText: 'Explore Enterprise Suite',
     },
 ];
 
@@ -291,19 +291,80 @@ export function renderGracePeriodBanner(user: UserMe): string {
  * Returns an overlay card for content the current user cannot access.
  * CTA always routes to the Plans & Billing tab (unified navigation).
  */
-export function renderLockedFeature(label: string, minTier: string): string {
+export function renderLockedFeature(label: string, minTier: string, context?: string): string {
     const minTierDisplay = PLAN_NAME_MAP[minTier] || minTier.charAt(0).toUpperCase() + minTier.slice(1);
+    
+    // Context-aware value proposition
+    let valueProp = context;
+    if (!valueProp) {
+        if (minTier === 'pro') {
+            valueProp = `Upgrade to Pro to unlock real-time sector intensity metrics and early-warning signals for ${label.toLowerCase()}.`;
+        } else if (minTier === 'experts') {
+            valueProp = `Expert access required to visualize recursive causal chains and 60-day strategic scenarios for ${label.toLowerCase()}.`;
+        } else {
+            valueProp = `This feature requires an ${minTierDisplay} subscription or higher.`;
+        }
+    }
+
     return `
     <div class="locked-feature-overlay">
         <div class="locked-feature-inner">
+            <div class="locked-tier-tag" style="background: ${PLAN_NAME_MAP[minTier] === 'Expert' ? '#bc8cff' : '#58a6ff'}">${minTierDisplay} Required</div>
             <div class="locked-icon">🔒</div>
             <h3>${label}</h3>
-            <p>This feature requires an <strong>${minTierDisplay}</strong> subscription or higher.</p>
+            <p>${valueProp}</p>
+            
+            <div class="locked-perks">
+                ${minTier === 'pro' ? `
+                    <div class="locked-perk"><span>✓</span> AI-Powered Sector Summaries</div>
+                    <div class="locked-perk"><span>✓</span> Signal Momentum Tracking</div>
+                ` : `
+                    <div class="locked-perk"><span>✓</span> Full Impact Chain Mapping</div>
+                    <div class="locked-perk"><span>✓</span> Strategic Recommended Actions</div>
+                `}
+            </div>
+
             <button class="plan-cta-btn" id="locked-goto-plans" data-target-tab="plans">
-                View Plans & Billing
+                View Plans & Upgrade
             </button>
         </div>
     </div>`;
+}
+
+/**
+ * Renders a full-screen or modal-style overlay for a locked topic.
+ */
+export function renderLockedTopicOverlay(container: HTMLElement, topic: TopicDef, onNavigatePlans: () => void) {
+    container.innerHTML = `
+    <div class="locked-topic-container" style="--topic-color: ${topic.color}">
+        <div class="locked-topic-inner">
+            <div class="topic-icon-large">${topic.icon}</div>
+            <div class="topic-tier-badge">${(PLAN_NAME_MAP[topic.minTier] || topic.minTier).toUpperCase()} ONLY</div>
+            <h2>${topic.label}</h2>
+            <p class="topic-description">${topic.description}</p>
+            
+            <div class="topic-value-card">
+                <div class="value-statement">${topic.valueProposition}</div>
+                <ul class="value-bullets">
+                    <li>✓ Exclusive real-time indicators</li>
+                    <li>✓ Deep forensic signal analysis</li>
+                    <li>✓ Strategic causal mapping</li>
+                </ul>
+            </div>
+
+            <div class="conversion-actions">
+                <button class="plan-cta-btn" id="locked-topic-upgrade">
+                    Upgrade to ${PLAN_NAME_MAP[topic.minTier] || topic.minTier} to Access
+                </button>
+                <button class="ghost-btn" id="locked-topic-back">Return to Feed</button>
+            </div>
+        </div>
+    </div>`;
+
+    container.querySelector('#locked-topic-upgrade')?.addEventListener('click', () => onNavigatePlans());
+    container.querySelector('#locked-topic-back')?.addEventListener('click', () => {
+        window.location.hash = '#feed';
+    });
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

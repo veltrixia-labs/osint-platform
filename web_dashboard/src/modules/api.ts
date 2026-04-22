@@ -115,6 +115,9 @@ export interface Report {
     location_lat?: number;
     location_lng?: number;
     locked?: boolean;
+    is_partial?: boolean;
+    intensity_label?: string;
+    intensity_display?: string;
 }
 
 export interface AnalystProfile {
@@ -126,6 +129,65 @@ export interface AnalystProfile {
     subscription_tier: string;
     watch_keywords: string[];
     watch_sectors: string[];
+}
+
+export interface ProInsights {
+    risk_summary: Record<string, {
+        intensity: number;
+        intensity_delta?: number;
+        spike_detected?: boolean;
+        why_it_matters: string;
+        top_signal?: string;
+        trend?: string;
+        anomaly_detected?: boolean;
+        anomaly_description?: string;
+        timestamp?: string;
+        status?: string;
+    }>;
+    momentum_alerts: {
+        id: string;
+        title: string;
+        intensity: number;
+        topic: string;
+    }[];
+    early_warnings: {
+        id: string;
+        title: string;
+        severity: string;
+        timestamp: string;
+    }[];
+    sector_distribution: Record<string, number>;
+    top_entities: {
+        name: string;
+        count: number;
+        entity_comment?: string;
+    }[];
+}
+
+export interface ExpertIntelligence {
+    full_impact_chains: {
+        alert_id: string;
+        title: string;
+        impacts: StakeholderImpact[];
+    }[];
+    scenario_outlook: {
+        alert_id: string;
+        title: string;
+        priority: string;
+        why_now?: string;
+        time_sensitivity?: 'IMMEDIATE' | 'SHORT TERM' | 'WATCH';
+        scenario_outlook: string;
+        recommended_actions: {
+            action: string;
+            priority: string;
+            category: 'Immediate' | 'Monitor' | 'No Action';
+        }[];
+    }[];
+    cross_domain_risks: {
+        origin: string;
+        target: string;
+        intensity: number;
+    }[];
 }
 
 export interface TriggerStat {
@@ -453,4 +515,16 @@ export async function logAnalyticsEvent(type: string, reportId?: string, metadat
     } catch (err) {
         console.warn('Analytics logging failed:', err);
     }
+}
+
+export async function fetchProInsights(): Promise<ProInsights> {
+    const resp = await apiClient.get('/insights/pro');
+    if (!resp.ok) throw new Error("Failed to fetch Pro Insights");
+    return await resp.json();
+}
+
+export async function fetchExpertIntelligence(): Promise<ExpertIntelligence> {
+    const resp = await apiClient.get('/insights/expert');
+    if (!resp.ok) throw new Error("Failed to fetch Expert Intelligence");
+    return await resp.json();
 }

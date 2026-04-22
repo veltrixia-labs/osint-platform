@@ -39,26 +39,34 @@ export function showEvidenceModal(title: string, evidenceList: any[]) {
 }
 
 export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
-    // Show top 8 most prioritized recent alerts
+    // [v16.0] Compact Pulse Bar: Single most critical/recent signal
     const severityMap: Record<string, number> = { critical: 3, elevated: 2, watch: 1 };
-    const recent = [...alerts].sort((a,b) => {
+    const latest = [...alerts].sort((a,b) => {
         const sevA = severityMap[a.severity?.toLowerCase() || ''] || 0;
         const sevB = severityMap[b.severity?.toLowerCase() || ''] || 0;
         if (sevA !== sevB) return sevB - sevA;
         return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
-    }).slice(0, 8);
+    })[0];
     
-    container.innerHTML = recent.map(alert => {
-        const severityClass = alert.severity.toLowerCase();
-        return `
-            <div class="live-feed-item ${severityClass}" style="padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
-                <span class="severity-dot ${severityClass}"></span>
-                <span style="font-weight:600; color:var(--accent); min-width: 60px;">${alert.topic?.toUpperCase() || 'GLBL'}</span>
-                <span style="flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #c9d1d9;">${alert.target_label}</span>
-                <span style="opacity:0.4; font-size: 0.7rem;">${new Date(alert.triggered_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-            </div>
-        `;
-    }).join('') || '<div class="u-p-1 u-text-center" style="opacity:0.5;">No active signals detected.</div>';
+    if (!latest) {
+        container.innerHTML = '<div class="pulse-content" style="opacity:0.4;">PULSE: Monitoring global signals...</div>';
+        return;
+    }
+
+    const severityClass = latest.severity.toLowerCase();
+    const timeStr = new Date(latest.triggered_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    
+    // Apply temporary fade class if container already had content (simulating update)
+    const isUpdate = container.innerHTML.length > 0;
+    
+    container.innerHTML = `
+        <div class="pulse-content ${isUpdate ? 'pulse-fade-update' : ''}" style="display: flex; align-items: center; gap: 10px; width: 100%; overflow: hidden;">
+            <span class="severity-dot ${severityClass}"></span>
+            <span style="font-weight:900; color:var(--accent); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px;">${latest.topic?.toUpperCase() || 'CORE'}</span>
+            <span style="flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.75rem; font-weight: 600; color: #fff;">${latest.target_label}</span>
+            <span style="opacity:0.5; font-size: 0.65rem; font-family: monospace;">[${timeStr}]</span>
+        </div>
+    `;
 }
 
 export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: string = 'free') {
@@ -108,6 +116,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                         ${triggerLabel}
                     </span>
                     <span style="color: #8b949e; font-size: var(--font-xs);">${displayDate}</span>
+                    ${alert.is_partial ? `<span class="partial-view-badge" style="background: rgba(210, 153, 34, 0.05); color: rgba(210, 153, 34, 0.75); border: 1px solid rgba(210, 153, 34, 0.15); font-size: 0.55rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; margin-left: auto;">LIMITED VIEW</span>` : ''}
                 </div>
                 <div class="u-text-right">
                     <div style="font-size: var(--font-xs); color:#8b949e;">Intelligence Priority</div>
@@ -127,7 +136,15 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 <div class="u-grid-2 u-p-1 u-m-top-1" style="background:rgba(255,255,255,0.03); border-radius: 8px; border:1px solid var(--border);">
                     <div>
                         <h4>Risk Momentum</h4>
-                        <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">${formatIntensity(alert.intensity) || '•.••'}</div>
+                        <div style="font-size:var(--font-m); color:#c9d1d9; font-weight:600;">
+                            ${alert.is_partial ? `
+                                <span style="color:rgba(88, 166, 255, 0.6); font-weight: 700;" title="Upgrade to Pro for precise intensity forensics">
+                                    ${alert.intensity_label}
+                                    ${alert.intensity_label === 'High' ? '<span style="font-size:0.6rem; opacity:0.6; margin-left:4px;">(Pro for details)</span>' : ''}
+                                </span>
+                                <span style="font-size: var(--font-xs); opacity: 0.4; margin-left: 4px;">(${alert.intensity_display})</span>
+                            ` : (formatIntensity(alert.intensity) || '•.••')}
+                        </div>
                     </div>
                     <div>
                         <h4>Evidence</h4>
@@ -215,7 +232,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         `;
 
         return `
-            <div class="alert-card ${severityClass} ${!accessible ? 'alert-card--locked' : ''}" data-id="${alert.id}" data-topic="${alert.topic || ''}">
+            <div class="alert-card ${severityClass} ${!accessible ? 'alert-card--locked' : ''}" data-id="${alert.id}" data-topic="${alert.topic || ''}" style="cursor: pointer;">
                 ${cardContent}
             </div>
         `;
@@ -243,6 +260,16 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             const alertId = target.dataset.id;
             console.log(`[Antigravity] Map Tracking Initiated for Alert: ${alertId}`);
             window.dispatchEvent(new CustomEvent('map-track-alert', { detail: { id: alertId } }));
+        });
+    });
+
+    // [v4.0] Card-level Map Interconnectivity (No page jump)
+    container.querySelectorAll('.alert-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target instanceof HTMLAnchorElement || e.target instanceof HTMLButtonElement || (e.target as HTMLElement).closest('a, button')) return;
+            const alertId = (card as HTMLElement).dataset.id;
+            console.log(`[Antigravity] Passive Map Sync Requested: Alert ${alertId}`);
+            window.dispatchEvent(new CustomEvent('map-track-alert', { detail: { id: alertId, silent: true } }));
         });
     });
 

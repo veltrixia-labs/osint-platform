@@ -100,27 +100,44 @@ async def get_alerts(
             "location_lng": a.location_lng,
             "description": a.metadata_json.get("description") if a.metadata_json else None,
             "country": a.metadata_json.get("country") if a.metadata_json else None,
+            "is_partial": False,
+            "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
+            "intensity_display": f"{a.intensity:.1f}",
             "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle"
         }
         for a in alerts
     ]
 
-    # Post-process for Mosaic/Masking
+    # Post-process for Mosaic/Masking/Simplification
+    is_at_least_pro = is_tier_sufficient(tier, PlanTier.PRO.value)
+    
     final_alerts = []
     for a in formatted:
-        is_allowed = is_topic_allowed(tier, a["topic"])
-        if is_allowed:
-            a["is_locked"] = False
-            final_alerts.append(a)
-        else:
-            # Mask sensitive forensic data
-            a["is_locked"] = True
+        is_topic_locked = not is_topic_allowed(tier, a["topic"])
+        a["is_locked"] = is_topic_locked
+
+        if not is_at_least_pro:
+            # --- Guest "Fast News" Restriction ---
+            # Mask AI forensic details, add labels, and simplify numbers
+            a["description"] = "Upgrade to Pro tier to unlock the full AI analytical brief and forensic intelligence."
+            a["cascading_impacts"] = []
+            a["is_partial"] = True
+            
+            # Label-centric masking
+            raw_val = a["intensity"]
+            a["intensity_display"] = f"~{int(raw_val)}" if raw_val < 9 else "10+"
+            
+            if is_topic_locked:
+                a["intensity_display"] = "~~"
+        
+        elif is_topic_locked:
+            # Fallback for any future tiers that might be above PRO but still topic-locked (if any)
             a["target_label"] = "🔒 [RESTRICTED]"
-            a["description"] = "Forensic intelligence for this event is restricted to Pro and Expert tiers. " \
-                              "Upgrade to unlock full-spectrum risk data and email notifications."
-            a["intensity"] = 0.0 # Clear intensity for locked
-            a["cascading_impacts"] = [] # Clear impacts for locked
-            final_alerts.append(a)
+            a["description"] = "Forensic intelligence for this event is restricted. Upgrade to unlock."
+            a["intensity"] = 0.0
+            a["cascading_impacts"] = []
+            
+        final_alerts.append(a)
 
     # Store in Cache (60s TTL)
     if await blacklist_manager._is_redis_available():
@@ -160,22 +177,32 @@ async def get_live_alerts(
             "location_lng": a.location_lng,
             "description": a.metadata_json.get("description") if a.metadata_json else None,
             "country": a.metadata_json.get("country") if a.metadata_json else None,
+            "is_partial": False,
+            "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
+            "intensity_display": f"{a.intensity:.1f}",
             "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle"
         }
         for a in alerts
     ]
     
     # Applied Mosaic to live stream too
+    is_at_least_pro = is_tier_sufficient(tier, PlanTier.PRO.value)
+    
     final_live = []
     for a in live_data:
-        is_allowed = is_topic_allowed(tier, a["topic"])
-        if is_allowed:
-            a["is_locked"] = False
-        else:
-            a["is_locked"] = True
+        is_topic_locked = not is_topic_allowed(tier, a["topic"])
+        a["is_locked"] = is_topic_locked
+        
+        if not is_at_least_pro:
+            a["description"] = "Detailed tactical signal restricted to Pro."
+            a["cascading_impacts"] = []
+            a["is_partial"] = True
+            a["intensity_display"] = f"~{int(a['intensity'])}" if a['intensity'] < 9 else "10+"
+        elif is_topic_locked:
             a["target_label"] = "🔒 [RESTRICTED]"
             a["description"] = "Detailed tactical signal is restricted."
             a["cascading_impacts"] = []
+            
         final_live.append(a)
 
     return final_live
@@ -195,29 +222,45 @@ async def get_alert(
         raise HTTPException(status_code=404, detail="Alert not found")
 
     tier = await get_effective_tier(current_user)
-    is_allowed = is_topic_allowed(tier, a.topic)
+    is_at_least_pro = is_tier_sufficient(tier, PlanTier.PRO.value)
+    is_topic_locked = not is_topic_allowed(tier, a.topic)
 
     data = {
         "id": str(a.id),
-        "target_label": a.target_label if is_allowed else "🔒 [RESTRICTED]",
+        "target_label": a.target_label, # Title is always shown in Fast News view
         "topic": a.topic,
         "trigger_type": a.trigger_type,
         "severity": a.severity,
         "triggered_at": a.triggered_at.isoformat(),
-        "intensity": a.intensity if is_allowed else 0.0,
+        "intensity": a.intensity,
         "feedback_score": a.feedback_score,
         "related_report_id": str(a.related_report_id) if a.related_report_id else None,
         "intelligence_score": a.intelligence_score,
         "fidelity_score": a.fidelity_score,
         "status": a.status,
-        "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if (a.metadata_json and is_allowed) else [],
+        "cascading_impacts": _gate_cascading_impacts(tier, a.metadata_json.get("cascading_impacts", [])) if (a.metadata_json) else [],
         "location_lat": a.location_lat,
         "location_lng": a.location_lng,
-        "description": (a.metadata_json.get("description") if a.metadata_json else None) if is_allowed else "Forensic intelligence restricted.",
-        "country": a.metadata_json.get("country") if a.metadata_json else None,
-        "is_locked": not is_allowed,
+        "is_locked": is_topic_locked,
+        "is_partial": False,
+        "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
+        "intensity_display": f"{a.intensity:.1f}",
         "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle"
     }
+
+    # Apply restrictions for non-Pro or locked topics
+    if not is_at_least_pro:
+        data["description"] = "Forensic intelligence restricted to Pro/Expert tiers."
+        data["cascading_impacts"] = []
+        data["is_partial"] = True
+        data["intensity_display"] = f"~{int(data['intensity'])}" if data['intensity'] < 9 else "10+"
+        if is_topic_locked:
+            data["intensity_display"] = "~~"
+    elif is_topic_locked:
+        data["target_label"] = "🔒 [RESTRICTED]"
+        data["description"] = "Forensic intelligence restricted."
+        data["cascading_impacts"] = []
+        data["intensity"] = 0.0
 
     return data
 

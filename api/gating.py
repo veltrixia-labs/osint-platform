@@ -113,8 +113,13 @@ def get_alert_limit(tier: str) -> Union[int, str]:
 
 
 def is_topic_allowed(tier: str, topic_code: str) -> bool:
-    """TEMPORARY: Returns True for all topics (De-gating phase)."""
-    return True
+    """Check if the tier is allowed to access the specific topic code."""
+    # Global topic and NULL/None are always allowed
+    if not topic_code or topic_code.lower() == "global":
+        return True
+    
+    # All other strategic topics require at least PRO tier
+    return is_tier_sufficient(tier, PlanTier.PRO.value)
 
 
 def get_allowed_topics(tier: str) -> List[str]:
@@ -128,8 +133,17 @@ def get_restricted_topics(tier: str) -> List[str]:
 
 
 def can_access_report_type(tier: str, report_type: str) -> bool:
-    """TEMPORARY: Returns True for all report types (De-gating phase)."""
-    return True
+    """Gate report access: Daily (Free), Weekly (Pro), Monthly (Expert)."""
+    # System mapping for report types
+    REPORT_TYPE_MIN_TIER = {
+        ReportType.DAILY.value: PlanTier.FREE.value,
+        ReportType.WEEKLY.value: PlanTier.PRO.value,
+        ReportType.MONTHLY.value: PlanTier.EXPERTS.value,
+        ReportType.SYSTEM_DIAGNOSTIC.value: PlanTier.ENTERPRISE.value,
+    }
+    
+    required = REPORT_TYPE_MIN_TIER.get(report_type.lower(), PlanTier.FREE.value)
+    return is_tier_sufficient(tier, required)
 
 
 def can_add_watchlist_keywords(tier: str, new_total: int) -> bool:
@@ -209,5 +223,18 @@ async def get_watchlist_limit_for_user(user: AnalystProfile) -> int:
 
 
 def _gate_cascading_impacts(tier: str, impacts: list) -> list:
-    # [Dev Phase Override] Always return full impacts to verify system completion
-    return impacts
+    """
+    Control the depth of cascading impact chains:
+    - Guest/Free: 0 (No impacts)
+    - Pro: Max depth = 2
+    - Expert/Enterprise: Unlimited (999)
+    """
+    if is_tier_sufficient(tier, PlanTier.EXPERTS.value):
+        return impacts
+        
+    if is_tier_sufficient(tier, PlanTier.PRO.value):
+        # Filter for first and second order impacts (depth <= 2)
+        return [i for i in impacts if (i.get("level") or i.get("order") or 1) <= 2]
+    
+    # Guest/Free users see 0 cascading impacts
+    return []

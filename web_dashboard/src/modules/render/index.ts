@@ -6,4 +6,5 @@ export * from './analysts';
 export * from './map';
 export * from './impact_panel';
 export * from './nav';
+export * from './insights';
 export { renderLegal } from './system';

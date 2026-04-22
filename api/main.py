@@ -27,7 +27,8 @@ from api.auth import (
 from api.payments import router as payments_router
 from api.gating import (
     get_effective_tier, get_watchlist_limit, can_add_watchlist_keywords,
-    TIER_PRO, TIER_EXPERTS, TIER_ORDER, is_tier_sufficient
+    TIER_PRO, TIER_EXPERTS, TIER_ORDER, is_tier_sufficient,
+    is_topic_allowed, can_access_report_type
 )
 from db.enums import ReportType
 
@@ -37,6 +38,7 @@ from api.routes.reports import router as reports_router
 from api.routes.analysts import router as analysts_router
 from api.routes.system import router as system_router
 from api.routes.analytics import router as analytics_router
+from api.routes.insights import router as insights_router
 
 # Production Traceability
 COMMIT_HASH = "v11.1.2-AURORA-SYNC"
@@ -212,6 +214,7 @@ app.include_router(reports_router, prefix="/api")
 app.include_router(analysts_router, prefix="/api")
 app.include_router(system_router, prefix="/api")
 app.include_router(analytics_router, prefix="/api")
+app.include_router(insights_router, prefix="/api")
 
 # ── Auth Endpoints ─────────────────────────────────────────────────────────────
 
@@ -310,13 +313,42 @@ async def logout(response: Response, request: Request, current_user_data: tuple 
 @app.get("/api/auth/me")
 async def get_me(current_user_data: tuple = Depends(get_current_user_from_access)):
     user, _, _ = current_user_data
+    tier = await get_effective_tier(user)
+    
+    # Feature flags for UI conditional rendering
+    features = {
+        "pro_insights": is_tier_sufficient(tier, PlanTier.PRO.value),
+        "expert_intelligence": is_tier_sufficient(tier, PlanTier.EXPERTS.value),
+        "team_admin": tier == PlanTier.ENTERPRISE.value,
+        "custom_topics": tier == PlanTier.ENTERPRISE.value,
+        "onboarding": tier == PlanTier.ENTERPRISE.value,
+        "support": tier == PlanTier.ENTERPRISE.value,
+    }
+    
+    # Operational limits based on the tier specification
+    impact_depth = 999 if is_tier_sufficient(tier, PlanTier.EXPERTS.value) else \
+                   2 if is_tier_sufficient(tier, PlanTier.PRO.value) else 0
+    
+    # Derived lists of allowed data domains
+    from api.gating import ALL_TOPIC_CODES
+    allowed_topics = [t for t in ALL_TOPIC_CODES if is_topic_allowed(tier, t)]
+    
+    all_reports = ["daily", "weekly", "monthly", "system_diagnostic"]
+    allowed_reports = [r for r in all_reports if can_access_report_type(tier, r)]
+
     return {
         "id": str(user.id),
         "email": user.email,
         "chat_id": user.telegram_chat_id,
         "role": user.user_role,
         "tier": user.subscription_tier,
-        "expires_at": user.subscription_expires_at.isoformat() if user.subscription_expires_at else None
+        "expires_at": user.subscription_expires_at.isoformat() if user.subscription_expires_at else None,
+        "features": features,
+        "limits": {
+            "impact_depth": impact_depth,
+            "topics": allowed_topics,
+            "reports": allowed_reports
+        }
     }
 
 # ── Static File Serving ────────────────────────────────────────────────────────

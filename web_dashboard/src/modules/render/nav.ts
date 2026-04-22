@@ -136,9 +136,11 @@ export function renderNavigation(
 
     container.innerHTML = `
         <div class="nav-groups">
-            ${renderGroup('CORE', groups.core)}
-            ${renderGroup('PREMIUM', groups.premium)}
-            ${renderGroup('ACCOUNT', groups.account)}
+            ${renderGroup('', groups.core)}
+            <hr class="nav-divider" />
+            ${renderGroup('', groups.premium)}
+            <hr class="nav-divider" />
+            ${renderGroup('', groups.account)}
         </div>
         ${footerHtml}
     `;

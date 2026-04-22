@@ -24,6 +24,8 @@ let currentGlobalMap: L.Map | null = null;
 let currentDynamicLayer: L.LayerGroup | null = null;
 let clusterLayer: L.MarkerClusterGroup | null = null;
 let isRendering = false; // Mutex to prevent infinite recursion
+let currentMapMode: 'public' | 'analysis' | 'strategic' = 'public';
+let lastFocusedAlert: Alert | null = null;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Primary Render Entry
@@ -33,7 +35,13 @@ let isRendering = false; // Mutex to prevent infinite recursion
  * Main entry point for the Global Intelligence Map.
  * Renders the persistent Leaflet instance and overlay layers.
  */
-export const renderMap = async (container: HTMLElement, _tier: string, focusAlertId?: string) => {
+export const renderMap = async (container: HTMLElement, tier: string, focusAlertId?: string) => {
+    // 0. Mode Initialization based on Tier
+    if (!currentGlobalMap) {
+        if (tier === 'guest' || tier === 'free') currentMapMode = 'public';
+        else if (tier === 'pro') currentMapMode = 'analysis';
+        else if (tier === 'experts' || tier === 'enterprise') currentMapMode = 'strategic';
+    }
     if (isRendering) return;
     isRendering = true;
 
@@ -113,6 +121,10 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
         }
 
         L.control.zoom({ position: 'bottomright' }).addTo(currentGlobalMap);
+        
+        // 2.2 Segmented Mode Control
+        renderMapModeControl(currentGlobalMap, tier);
+
         currentDynamicLayer = L.layerGroup().addTo(currentGlobalMap);
         
         clusterLayer = (L as any).markerClusterGroup({
@@ -383,6 +395,7 @@ window.addEventListener('map-status-update', (e: any) => {
 });
 
 export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert) {
+    lastFocusedAlert = alert;
     // [v10.35] FATAL CRASH PROTECTION
     try {
         let rawCoords = getAlertCoords(alert);
@@ -407,14 +420,14 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         const topicColor = topicDef?.color || '#58a6ff';
 
         // [v15.0] Instant Render Core
-        renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...", "processing");
+        renderTacticalStatusHud(layer, `Tracking: ${alert.title.split(' | ')[0]}`, "processing");
 
         const alertFinding = {
             entity_name: alert.target_label || "Active Event",
             impact_summary: alert.description || alert.target_label || "Strategic Signal Detected",
             impact_alpha: alert.intensity || 5
         };
-        renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0);
+        renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 0, 0, 1.0);
 
         const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
         let cascadingImpacts = [...cascadingImpactsRaw];
@@ -423,7 +436,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
 
         if (currentStatus === 'complete' && cascadingImpacts.length > 0) {
             renderTacticalStatusHud(layer, "AI ANALYSIS COMPLETE", "complete");
-            renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert, new Set());
+            renderImpactChain(map, layer, coords, cascadingImpacts, 1, intensity, alert, new Set());
             renderImpactSidebar('impact-panel-container', alert, map);
         } else if (currentStatus === 'failed') {
             renderImpactSidebar('impact-panel-container', alert, map);
@@ -474,8 +487,18 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                 startPoller("ANALYZING");
             } else {
                 renderImpactSidebar('impact-panel-container', alert, map);
-                apiClient.post(`/alerts/${alert.id}/analyze`).then(() => startPoller("DISCOVERY TRIGGERED"));
+                // Discovery HUD and API triggers only for Analysis+
+                if (currentMapMode !== 'public') {
+                    apiClient.post(`/alerts/${alert.id}/analyze`).then(() => startPoller("DISCOVERY TRIGGERED"));
+                }
             }
+        }
+        
+        // Final Filter: if Public mode, ensure all discovery layers are hidden
+        if (currentMapMode === 'public') {
+            layer.clearLayers();
+            renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0);
+            renderTacticalStatusHud(layer, "PUBLIC_DATA_SYNCED", "complete");
         }
 
         // Static Camera Snap
@@ -536,7 +559,7 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
 /**
  * [v53] Robust Tactical Node Label Rendering (High-Fidelity Sync)
  */
-function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, _level: number, _index: number) {
+function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, level: number, _index: number, opacity: number) {
     try {
         const alpha = finding.impact_alpha ?? 0;
         const alphaFormatted = `${alpha >= 0 ? '+' : ''}${alpha.toFixed(1)}%`;
@@ -548,11 +571,10 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], 
         };
         const colorRgb = hexToRgb(color);
 
-        // [v15.0] Collapsed, static card. No expansions or animations.
         const labelHtml = `
-            <div class="tactical-node-wrapper ${sentimentClass}" style="--node-color: ${color}; --node-color-rgb: ${colorRgb}; opacity: 1;">
+            <div class="tactical-node-wrapper ${sentimentClass}" style="--node-color: ${color}; --node-color-rgb: ${colorRgb}; opacity: ${opacity};">
                 <div class="node-label-inner card-high-fidelity" style="padding: 8px;">
-                    <div class="node-label-header" style="margin-bottom: 4px;">
+                    <div class="node-label-header" style="margin-bottom: 2px;">
                         <span class="node-name" style="font-weight: 800; font-size: 0.8rem;">${finding.entity_name || 'Strategic Hub'}</span>
                     </div>
                     <div class="node-footer" style="margin-top: 0; padding-top: 0; border-top: none;">
@@ -599,6 +621,9 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], 
 }
 
 function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number, originalAlert: Alert, visited: Set<string> = new Set()) {
+    // [v3.0] Tier-based Depth Enforcement
+    if (currentMapMode === 'public') return;
+    if (currentMapMode === 'analysis' && level > 2) return;
     if (level > 4 || !impacts || impacts.length === 0) return;
 
     // [v15.0] Synchronous Propagation
@@ -624,6 +649,13 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
             const rad = (currentAngle * Math.PI) / 180;
             const radius = 18.0 + (level * 4); 
             
+            const opacityLevels = [1.0, 0.8, 0.5, 0.3];
+            let currentOpacity = opacityLevels[Math.min(level, 3)];
+            
+            // [v15.1] Selection & Neighbor Boost
+            // If we are at level 1 (direct neighbors of root alert), boost to 0.85
+            if (level === 1) currentOpacity = 0.85;
+
             const dispLat = radius * Math.cos(rad);
             const dispLng = radius * Math.sin(rad);
 
@@ -655,10 +687,30 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                     className: `propagation-arc-static`,
                     color: pathColor,
                     weight: 2,
-                    opacity: 0.4,
+                    opacity: currentOpacity * 0.5,
                     interactive: false,
                     pane: 'vlt-arc-pane'
                 }).addTo(layer);
+
+                // [v15.2] Arc-based Impact Labeling (PRIMARY / SECONDARY IMPACT)
+                if (level <= 2) {
+                    const labelText = level === 1 ? 'PRIMARY IMPACT' : 'SECONDARY IMPACT';
+                    const midPoint = {
+                        lat: (parentCoords.lat + nodeCoords.lat) / 2,
+                        lng: (parentCoords.lng + nodeCoords.lng) / 2
+                    };
+                    const arcLabelIcon = L.divIcon({
+                        className: 'none',
+                        html: `<div style="color: ${pathColor}; font-size: 0.5rem; font-weight: 900; text-transform: uppercase; white-space: nowrap; opacity: ${currentOpacity * 0.7}; text-shadow: 0 0 4px #000;">${labelText}</div>`,
+                        iconSize: [80, 10],
+                        iconAnchor: [40, 5]
+                    });
+                    L.marker([midPoint.lat, midPoint.lng], { 
+                        icon: arcLabelIcon, 
+                        pane: 'vlt-tactical-pane',
+                        interactive: false 
+                    }).addTo(layer);
+                }
             }
 
             // Immediate Node Render
@@ -666,7 +718,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
             const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level, 3)}`;
             const nodeIcon = L.divIcon({
                 className: 'none',
-                html: `<div class="${markerClass}" style="width:${baseSize}px; height:${baseSize}px; --ring-color:${pathColor}; box-shadow: 0 0 8px ${pathColor}; border-radius: 50%;"><div class="glow-ring"></div></div>`,
+                html: `<div class="${markerClass}" style="width:${baseSize}px; height:${baseSize}px; --ring-color:${pathColor}; box-shadow: 0 0 8px ${pathColor}; border-radius: 50%; opacity: ${currentOpacity};"><div class="glow-ring"></div></div>`,
                 iconSize: [baseSize, baseSize],
                 iconAnchor: [baseSize/2, baseSize/2]
             });
@@ -677,7 +729,7 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
                 zIndexOffset: 500
             }).addTo(layer);
 
-            renderTacticalNodeLabel(layer, [nodeCoords.lat, nodeCoords.lng], finding, pathColor, level, index);
+            renderTacticalNodeLabel(layer, [nodeCoords.lat, nodeCoords.lng], finding, pathColor, level, index, currentOpacity);
             
             // Recursive Chain (Synchronous)
             const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
@@ -690,6 +742,71 @@ function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: 
             console.error("[v15.0] Static Map Error:", e);
         }
     });
+}
+
+/**
+ * [v3.0] Map Mode Segmented Control (Public / Analysis / Strategic)
+ */
+function renderMapModeControl(map: L.Map, userTier: string) {
+    const tiers: Record<string, number> = { 'guest': 0, 'free': 0, 'pro': 1, 'experts': 2, 'enterprise': 2 };
+    const userLv = tiers[userTier] || 0;
+
+    const ModeControl = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd: function() {
+            const container = L.DomUtil.create('div', 'map-mode-control');
+            L.DomEvent.disableClickPropagation(container);
+
+            const modes = [
+                { id: 'public', label: 'Monitor', icon: '🌐', level: 0 },
+                { id: 'analysis', label: 'Analysis', icon: '📊', level: 1 },
+                { id: 'strategic', label: 'Strategic', icon: '🎯', level: 2 }
+            ];
+
+            container.innerHTML = `
+                <div class="mode-control-header">Layer Profile</div>
+                <div class="mode-selector">
+                    ${modes.map(m => {
+                        const locked = userLv < m.level;
+                        const active = currentMapMode === m.id;
+                        return `
+                            <button class="mode-btn ${active ? 'active' : ''} ${locked ? 'locked' : ''}" 
+                                    data-mode="${m.id}" 
+                                    ${locked ? 'disabled' : ''}>
+                                <span class="mode-icon">${locked ? '🔒' : m.icon}</span>
+                                <span class="mode-label">${m.label}</span>
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            container.querySelectorAll('.mode-btn:not(.locked)').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const newMode = (e.currentTarget as HTMLElement).dataset.mode as any;
+                    if (newMode === currentMapMode) return;
+                    
+                    console.log(`[Antigravity] Map Mode Shift: ${currentMapMode} -> ${newMode}`);
+                    currentMapMode = newMode;
+                    
+                    // Visual Update
+                    container.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    (e.currentTarget as HTMLElement).classList.add('active');
+
+                    // Cascade refresh: Trigger a re-render of active focused alert
+                    if (currentDynamicLayer && lastFocusedAlert && currentGlobalMap) {
+                        currentDynamicLayer.clearLayers();
+                        renderFocusedAlert(currentGlobalMap, currentDynamicLayer, lastFocusedAlert);
+                    }
+                    window.dispatchEvent(new CustomEvent('map-mode-change', { detail: { mode: newMode } }));
+                });
+            });
+
+            return container;
+        }
+    });
+
+    new ModeControl().addTo(map);
 }
 
 function initMapFilter(map: L.Map, _container: HTMLElement, onUpdate: () => void) {
