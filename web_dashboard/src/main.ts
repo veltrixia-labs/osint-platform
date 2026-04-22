@@ -13,15 +13,7 @@ import {
     renderGracePeriodBanner,
     renderSubscriptionTab,
 } from './modules/subscription'
-import {
-    ACCESS_MAP,
-    canAccessTopic,
-    canAccessReport,
-    getTopicDef,
-    normalizeReportType,
-    REPORT_TYPE_LABELS,
-    REPORT_TYPE_MIN_TIER,
-} from './modules/topics'
+
 
 
 const app = document.querySelector<HTMLDivElement>('#app')!
@@ -88,8 +80,6 @@ export async function renderSignup() {
 type TabId = 'feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'expert-intel'
 
 async function initDashboard() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const reportId = urlParams.get('report_id');
     let user: UserMe | null = null;
     try { user = await fetchMe(); if (user && !user.email) { logout(); return; } } catch (e) {}
     
