@@ -90,6 +90,9 @@ export interface Alert {
     cascading_impacts?: StakeholderImpact[];
     is_locked?: boolean;
     backbone_discovery_status?: string;
+    intensity_label?: string;
+    intensity_display?: string;
+    is_partial?: boolean;
     delivery?: {
         analyst_id: string;
         relevance_score: number;

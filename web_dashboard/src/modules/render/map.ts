@@ -280,7 +280,7 @@ export const renderMap = async (container: HTMLElement, tier: string, focusAlert
 
         // [v9.9] UI Sync: Refresh Filter Panel on every render to ensure active states match
         initMapFilter(map, container, () => {
-            renderMap(container, _tier, focusAlertId);
+            renderMap(container, tier, focusAlertId);
         });
 
         isRendering = false;
@@ -420,7 +420,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         const topicColor = topicDef?.color || '#58a6ff';
 
         // [v15.0] Instant Render Core
-        renderTacticalStatusHud(layer, `Tracking: ${alert.title.split(' | ')[0]}`, "processing");
+        renderTacticalStatusHud(layer, `Tracking: ${alert.target_label.split(' | ')[0]}`, "processing");
 
         const alertFinding = {
             entity_name: alert.target_label || "Active Event",
@@ -466,7 +466,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                             alert.backbone_discovery_status = 'complete';
                             
                             layer.clearLayers();
-                            renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, topicColor, 1, 0);
+                            renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, topicColor, 1, 0, 1.0);
                             renderImpactChain(map, layer, coords, data.cascading_impacts || [], 2, intensity, alert, new Set());
                             renderImpactSidebar('impact-panel-container', alert, map);
                         } else if (data.backbone_discovery_status === 'failed') {
@@ -497,7 +497,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         // Final Filter: if Public mode, ensure all discovery layers are hidden
         if (currentMapMode === 'public') {
             layer.clearLayers();
-            renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0);
+            renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alertFinding, topicColor, 1, 0, 1.0);
             renderTacticalStatusHud(layer, "PUBLIC_DATA_SYNCED", "complete");
         }
 
@@ -559,7 +559,7 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
 /**
  * [v53] Robust Tactical Node Label Rendering (High-Fidelity Sync)
  */
-function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, level: number, _index: number, opacity: number) {
+function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, _level: number, _index: number, opacity: number) {
     try {
         const alpha = finding.impact_alpha ?? 0;
         const alphaFormatted = `${alpha >= 0 ? '+' : ''}${alpha.toFixed(1)}%`;

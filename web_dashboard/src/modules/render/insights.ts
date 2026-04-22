@@ -8,11 +8,11 @@
  * - Pure CSS/SVG components for "Speed of Judgment"
  */
 
-import { 
-    ProInsights, ExpertIntelligence, StakeholderImpact,
-    fetchProInsights, fetchExpertIntelligence, UserMe 
+import type { 
+    ProInsights, ExpertIntelligence, UserMe 
 } from '../api';
-import { getTopicDef, TopicDef } from '../topics';
+import { fetchProInsights, fetchExpertIntelligence } from '../api';
+import { getTopicDef } from '../topics';
 import { renderLockedFeature } from '../subscription';
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -46,24 +46,6 @@ function renderIntensityBar(value: number, label: string, color = '#58a6ff'): st
             <div class="intensity-bar-fill" style="width: ${percent}%; background: ${color}; box-shadow: 0 0 10px ${color}44;"></div>
         </div>
     </div>`;
-}
-
-/** Renders a minimal SVG Sparkline */
-function renderSparkline(data: number[], color = '#58a6ff'): string {
-    if (data.length < 2) return '';
-    const width = 100;
-    const height = 30;
-    const max = Math.max(...data, 1);
-    const points = data.map((v, i) => {
-        const x = (i / (data.length - 1)) * width;
-        const y = height - (v / max) * height;
-        return `${x},${y}`;
-    }).join(' ');
-
-    return `
-    <svg viewBox="0 0 ${width} ${height}" class="sparkline" preserveAspectRatio="none">
-        <polyline fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
-    </svg>`;
 }
 
 /** Renders a small priority badge */

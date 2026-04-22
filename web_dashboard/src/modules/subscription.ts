@@ -10,6 +10,7 @@
  */
 
 import type { UserMe } from './api';
+import type { TopicDef } from './topics';
 import { fetchCheckoutSession, cancelSubscription } from './api';
 import { ENTITLEMENT_MATRIX } from './topics';
 

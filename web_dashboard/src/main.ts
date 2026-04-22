@@ -6,13 +6,12 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderHealth, renderReportDetail, renderLiveFeed, renderMap, renderLegal, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert } from './modules/render/index'
-import { login, signup, fetchMe, logout, fetchReports, fetchReport, apiClient } from './modules/api'
-import type { UserMe, Report } from './modules/api'
+import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert } from './modules/render/index'
+import { login, signup, fetchMe, logout, fetchReports, fetchReport } from './modules/api'
+import type { UserMe } from './modules/api'
 import {
     renderGracePeriodBanner,
     renderSubscriptionTab,
-    renderLockedTopicOverlay,
 } from './modules/subscription'
 import {
     ACCESS_MAP,
@@ -141,7 +140,6 @@ async function initDashboard() {
     renderBaseUI();
     const alertsContainer = document.querySelector<HTMLElement>('#alerts-list')!
     const pulseBar = document.querySelector<HTMLElement>('#pulse-bar')!
-    const mainTitle = document.querySelector<HTMLElement>('#main-title')!
 
     renderNavigation(user, document.querySelector('#sidebar-nav-container')!, (tabId) => handleTabSwitch(tabId as TabId));
 
@@ -156,7 +154,6 @@ async function initDashboard() {
         const mainContent = document.querySelector<HTMLElement>('.main-content');
         const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
         const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
-        const liveFeed = document.querySelector<HTMLElement>('#live-feed-container');
 
         if (mainContent) mainContent.style.opacity = '0';
         setTimeout(() => {
