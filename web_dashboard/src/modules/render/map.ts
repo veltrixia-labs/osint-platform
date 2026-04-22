@@ -186,30 +186,11 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
             map.setView([20, 0], 2);
         }
 
-        // [v8.7] Discovery Lock: Prevent polling from cutting off active animations
-        const isReTrigger = (window as any)._mapTriggerTimestamp && (window as any)._mapTriggerTimestamp !== lastDiscoveryTrigger;
-        
-        // [v10.9] ID Switch Guard: If the focus ID has changed, we MUST break the lock
-        if (focusAlertId && focusAlertId !== _activeDiscoveryId) {
-            console.log(`[Antigravity] Focus Shift: ${_activeDiscoveryId} -> ${focusAlertId}. Resetting lock.`);
-            _isTacticalDiscoveryActive = false;
-        }
-
-        if (focusAlertId && _isTacticalDiscoveryActive && !isReTrigger) {
-            console.log("[Antigravity] Discovery Active - Skipping polling re-render to preserve narrative.");
-            isRendering = false;
-            return;
-        }
-
-        // [v10.8] Manual Reset: If switching to Global View, ensure lock is released
-        if (!focusAlertId) {
-            _isTacticalDiscoveryActive = false;
+        // [v15.0] Discovery Lock Removed: The static pipeline must always reflect the immediate state.
+        if (focusAlertId) {
+            _activeDiscoveryId = focusAlertId;
+        } else {
             _activeDiscoveryId = null;
-        }
-        
-        // Sync trigger state
-        if (isReTrigger) {
-            lastDiscoveryTrigger = (window as any)._mapTriggerTimestamp;
         }
 
         // [v8.9] Dynamic Strategy: Fetch all alerts from the last 24h (Maximum Visibility)
@@ -365,26 +346,26 @@ function renderStrategicInfrastructure(layer: L.LayerGroup) {
 /**
  * [v10.8] Displays a tactical status indicator on the map during discovery.
  */
-function renderTacticalStatusHud(_layer: L.LayerGroup, text: string) {
+function renderTacticalStatusHud(_layer: L.LayerGroup, text: string, status: string = 'processing') {
     const hudId = 'tactical-discovery-hud';
     const existing = document.getElementById(hudId);
     if (existing) existing.remove();
 
+    const colorMap: Record<string, string> = {
+        'processing': 'rgba(88, 166, 255, 0.2)',
+        'complete': 'rgba(46, 160, 67, 0.2)',
+        'failed': 'rgba(248, 81, 73, 0.2)'
+    };
+
     const HUD_HTML = `
-        <div class="hud-inner">
-            <span class="hud-pulse"></span>
-            <span class="hud-text">${text} [v11.1.2-AURORA]</span>
+        <div class="hud-inner" style="background: rgba(13, 17, 23, 0.95); border: 1px solid ${colorMap[status] || 'rgba(255,255,255,0.1)'}; padding: 8px 16px; border-radius: 4px;">
+            <span class="hud-text" style="font-weight: 800; font-family: monospace;">[${status.toUpperCase()}] ${text}</span>
         </div>
     `;
 
-    const hud = L.DomUtil.create('div', 'tactical-status-hud', document.getElementById('map-instance') || undefined);
+    const hud = L.DomUtil.create('div', `tactical-status-hud status-${status} active`, document.getElementById('map-instance') || undefined);
     hud.id = hudId;
     hud.innerHTML = HUD_HTML;
-    
-    // [v10.9] Visual Variants
-    if (text.includes('ENHANCING')) hud.classList.add('enhancing');
-    
-    setTimeout(() => hud.classList.add('active'), 100);
 }
 
 // [v10.9] Global HUD Controller
@@ -416,14 +397,8 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         }
 
         const coords = { lat: Number(rawCoords.lat), lng: Number(rawCoords.lng) };
-        _isTacticalDiscoveryActive = true; 
-        _activeDiscoveryId = alert.id;
-        
-        const intensity = alert.intensity || 5;
-        const topicDef = getTopicDef(alert.topic);
-        const topicColor = topicDef?.color || '#58a6ff';
-
-        renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...");
+        // [v15.0] Instant Render Core
+        renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...", "processing");
 
         const alertFinding = {
             entity_name: alert.target_label || "Active Event",
@@ -435,53 +410,42 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         const cascadingImpactsRaw = alert.cascading_impacts || alert.metadata_json?.cascading_impacts || [];
         let cascadingImpacts = [...cascadingImpactsRaw];
 
-        // [v13.5] Instant Swap: If analysis is already complete, skip poller and fallback
         const currentStatus = alert.backbone_discovery_status || 'idle';
         if (currentStatus === 'complete' && cascadingImpacts.length > 0) {
-            console.log(`[Antigravity] AI Analysis already complete for ${alert.id}. Rendering high-fidelity chain.`);
+            renderTacticalStatusHud(layer, "AI ANALYSIS COMPLETE", "complete");
             renderImpactChain(map, layer, coords, cascadingImpacts, 2, intensity, alert, new Set());
+        } else if (currentStatus === 'failed') {
+            renderTacticalStatusHud(layer, "AI ANALYSIS FAILED", "failed");
         } else {
-            // [v14.1] Static fallback (dummy data) completely removed.
-            // Map will stay clean (just the origin node) while waiting for real AI data.
-
-            // Start Poller
+            // Processing mode - poll but do not lock animations
             const startPoller = (initialMsg: string) => {
                 if ((window as any)._activeTacticalPoller) clearInterval((window as any)._activeTacticalPoller);
-                renderTacticalStatusHud(layer, initialMsg);
+                renderTacticalStatusHud(layer, initialMsg, "processing");
                 let pollCount = 0;
                 const poller = setInterval(() => {
                     pollCount++;
-                    // [v13.9] EXTENDED TIMEOUT: 10 minutes (120 * 5s) to allow for parallel queueing and deep reasoning
                     if (pollCount > 120) { 
                         clearInterval(poller); 
-                        renderTacticalStatusHud(layer, "AI REFINING: TASK TIMED OUT");
-                        setTimeout(() => {
-                            const hud = document.getElementById('tactical-discovery-hud');
-                            if (hud) hud.classList.remove('active');
-                        }, 5000);
+                        renderTacticalStatusHud(layer, "TIMED OUT", "failed");
                         return; 
                     }
-                    renderTacticalStatusHud(layer, `AI REFINING [${pollCount}/120]...`);
                     
                     fetchAlert(alert.id).then(data => {
                         if (!data) return;
                         if (data.backbone_discovery_status === 'complete') {
                             clearInterval(poller);
-                            renderTacticalStatusHud(layer, "AI REFINEMENT COMPLETE");
+                            renderTacticalStatusHud(layer, "AI ANALYSIS COMPLETE", "complete");
                             alert.cascading_impacts = data.cascading_impacts;
                             alert.backbone_discovery_status = 'complete';
                             
-                            // [v14.0] Immediate Visual Swap: Purge fallback and render AI-verified nodes
                             layer.clearLayers();
                             renderTacticalNodeLabel(layer, [coords.lat, coords.lng], alert, topicColor, 1, 0);
                             renderImpactChain(map, layer, coords, data.cascading_impacts || [], 2, intensity, alert, new Set());
-                            setTimeout(() => {
-                                const hud = document.getElementById('tactical-discovery-hud');
-                                if (hud) hud.classList.remove('active');
-                            }, 2000);
                         } else if (data.backbone_discovery_status === 'failed') {
                             clearInterval(poller);
-                            renderTacticalStatusHud(layer, "AI DISCOVERY OFFLINE");
+                            renderTacticalStatusHud(layer, "AI ANALYSIS FAILED", "failed");
+                        } else {
+                            renderTacticalStatusHud(layer, \`AI REFINING [\${pollCount}]\`, "processing");
                         }
                     });
                 }, 5000);
@@ -489,22 +453,14 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
             };
 
             if (currentStatus === 'processing') {
-                startPoller("REFINING PROACTIVE ANALYSIS...");
+                startPoller("ANALYZING");
             } else {
-                apiClient.post(`/alerts/${alert.id}/analyze`).then(() => startPoller("AI DISCOVERY TRIGGERED..."));
+                apiClient.post(\`/alerts/\${alert.id}/analyze\`).then(() => startPoller("DISCOVERY TRIGGERED"));
             }
         }
 
-        // Camera Animation
-        setTimeout(() => {
-            map.flyTo([coords.lat, coords.lng], 4, { duration: 1.5 });
-            map.once('moveend', () => {
-                const latestImpacts = alert.cascading_impacts || (alert.metadata_json as any)?.cascading_impacts || [];
-                if (latestImpacts.length > 0 && currentStatus !== 'complete') {
-                    renderImpactChain(map, layer, coords, latestImpacts, 2, intensity, alert, new Set());
-                }
-            });
-        }, 300);
+        // Static Camera Snap
+        map.setView([coords.lat, coords.lng], 4);
 
     } catch (e) {
         console.error("[Antigravity] FATAL MAP ERROR:", e);
@@ -563,51 +519,25 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
  */
 function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, level: number, index: number) {
     try {
-        const arrivalDelay = 1200;
         const alpha = finding.impact_alpha ?? 0;
         const alphaFormatted = `${alpha >= 0 ? '+' : ''}${alpha.toFixed(1)}%`;
         const sentimentClass = alpha >= 0 ? 'sentiment-positive' : 'sentiment-negative';
         
-        const resilience = finding.quantum_metrics?.resilience?.toFixed(1) ?? '50.0';
-        const contagion = finding.quantum_metrics?.contagion?.toFixed(2) ?? '0.30';
-        const impactSummary = finding.impact_summary || finding.reasoning?.split('.')[0]?.slice(0, 100) || 'Strategic Impact Detected';
-        const recommendation = finding.recommendation || finding.action_recommendation || "Monitor for volatility spillover.";
-
-        // Convert hex color to RGB for box-shadow effects
         const hexToRgb = (hex: string) => {
             const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
             return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '88, 166, 255';
         };
         const colorRgb = hexToRgb(color);
 
+        // [v15.0] Collapsed, static card. No expansions or animations.
         const labelHtml = `
-            <div class="tactical-node-wrapper expanded ${sentimentClass}" style="--node-color: ${color}; --node-color-rgb: ${colorRgb}">
-                <div class="node-label-inner card-high-fidelity">
-                    <div class="node-label-header">
-                        <span class="node-name">${finding.entity_name || 'Strategic Hub'}</span>
-                        <span class="node-time-tag">ORDER ${level-1}</span>
+            <div class="tactical-node-wrapper ${sentimentClass}" style="--node-color: ${color}; --node-color-rgb: ${colorRgb}; opacity: 1;">
+                <div class="node-label-inner card-high-fidelity" style="padding: 8px;">
+                    <div class="node-label-header" style="margin-bottom: 4px;">
+                        <span class="node-name" style="font-weight: 800; font-size: 0.8rem;">${finding.entity_name || 'Strategic Hub'}</span>
                     </div>
-                    <div class="node-impact-summary">${impactSummary}</div>
-                    
-                    <div class="node-metrics-grid">
-                        <div class="metric-item">
-                            <span class="metric-label">RESILIENCE (Ω)</span>
-                            <span class="metric-value">${resilience}%</span>
-                        </div>
-                        <div class="metric-item">
-                            <span class="metric-label">CONTAGION (ΔC)</span>
-                            <span class="metric-value">${contagion}</span>
-                        </div>
-                    </div>
-
-                    <div class="node-action-container">
-                        <div class="action-header">CONTAINMENT ACTION</div>
-                        <div class="action-text">${recommendation}</div>
-                    </div>
-
-                    <div class="node-footer">
-                        <span class="node-level-tag">B-${String.fromCharCode(64 + index + 1)} • BRANCH CASCADE</span>
-                        <span class="node-impact-alpha">${alphaFormatted} ALPHA</span>
+                    <div class="node-footer" style="margin-top: 0; padding-top: 0; border-top: none;">
+                        <span class="node-impact-alpha" style="font-size: 0.85rem;">${alphaFormatted} ALPHA</span>
                     </div>
                 </div>
             </div>
@@ -616,8 +546,8 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], 
         const labelIcon = L.divIcon({
             className: 'none',
             html: labelHtml,
-            iconSize: [260, 180],
-            iconAnchor: [-20, 90]
+            iconSize: [180, 60],
+            iconAnchor: [-15, 30]
         });
 
         const labelMarker = L.marker(coords, { 
@@ -626,186 +556,103 @@ function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], 
             zIndexOffset: 1000 
         });
         
-        setTimeout(() => {
-            labelMarker.addTo(layer);
-            // vlt-tactical-pane has pointer-events: none, but markers inside can be interactive if we reset them
-            const el = labelMarker.getElement();
-            if (el) {
-                el.style.pointerEvents = 'auto';
-                el.style.opacity = '0';
-                el.style.transform = 'scale(0.9) translateX(-10px)';
-                el.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
-                setTimeout(() => {
-                    el.style.opacity = '1';
-                    el.style.transform = 'scale(1) translateX(0)';
-                }, 50);
-            }
-        }, level === 1 ? 0 : arrivalDelay);
+        labelMarker.addTo(layer);
+        const el = labelMarker.getElement();
+        if (el) el.style.pointerEvents = 'auto'; // allow hover/click if needed
+        
     } catch (err) {
         console.error("[Antigravity] FAILED to render tactical node label:", err, finding);
     }
 }
 
-/**
- * [v10.5] Renders a tactical expanding pulse to represent abstract impact waves.
- */
-function renderTacticalRipple(layer: L.LayerGroup, latLng: L.LatLngExpression, color: string, level: number) {
-    const size = 30 + (level * 40);
-    const duration = 1500;
-    
-    const icon = L.divIcon({
-        className: 'none',
-        html: `
-            <div class="tactical-mesh-pulse" style="--ripple-color: ${color}; --ripple-size: ${size}px; --ripple-duration: ${duration}ms">
-                <div class="pulse-ring"></div>
-            </div>
-        `,
-        iconSize: [size, size],
-        iconAnchor: [size/2, size/2]
-    });
-
-    const marker = L.marker(latLng, { 
-        icon, 
-        interactive: false,
-        pane: 'vlt-tactical-pane' 
-    }).addTo(layer);
-    setTimeout(() => {
-        if (layer.hasLayer(marker)) layer.removeLayer(marker);
-    }, duration);
-}
-
 function renderImpactChain(map: L.Map, layer: L.LayerGroup, parentCoords: {lat: number, lng: number}, impacts: any[], level: number, baseIntensity: number, originalAlert: Alert, visited: Set<string> = new Set()) {
-    if (level > 4 || !impacts || impacts.length === 0) {
-        if (level > 1) setTimeout(() => renderTacticalStatusHud(layer, "CASCADING ANALYSIS COMPLETE"), 2000);
-        return;
-    }
+    if (level > 4 || !impacts || impacts.length === 0) return;
 
-    // [v10.14] Staggered Wave Propagation
+    // [v15.0] Synchronous Propagation
     impacts.forEach((finding, index) => {
-        const branchDelay = index * 350; 
-
-        setTimeout(() => {
-            try {
-                let nodeCoords = getNodeCoords(finding);
-                
-                if (!nodeCoords && finding.entity_name) {
-                    const asset = STRATEGIC_ASSETS.find(a => 
-                        a.name.toLowerCase().includes(finding.entity_name.toLowerCase()) ||
-                        finding.entity_name.toLowerCase().includes(a.name.toLowerCase())
-                    );
-                    if (asset) nodeCoords = { lat: asset.lat, lng: asset.lng, source: 'Name-Lookup' };
-                }
-
-                // [v11.2] High-Fidelity Polar Spread: Resolves visual overlapping regardless of geographic proximity
-                const impactCount = impacts.length;
-                const fanAngle = 140; // Total arc in degrees
-                const startAngle = -70; // Start offset
-                const angleStep = impactCount > 1 ? fanAngle / (impactCount - 1) : 0;
-                const currentAngle = startAngle + (index * angleStep);
-                
-                // Convert angle to radians for trigonometric displacement
-                const rad = (currentAngle * Math.PI) / 180;
-                const radius = 18.0 + (level * 4); // Adaptive radius based on recursion level
-                
-                const dispLat = radius * Math.cos(rad);
-                const dispLng = radius * Math.sin(rad);
-
-                if (!nodeCoords) {
-                    nodeCoords = { 
-                        lat: parentCoords.lat + dispLat, 
-                        lng: parentCoords.lng + dispLng, 
-                        source: 'Polar-Spread-Abstract' 
-                    };
-                    finding._is_carryover = true;
-                } else {
-                    // Even if coords are direct, apply a slight 'Visual Jitter' if siblings exist to prevent stacking
-                    nodeCoords.lat += (dispLat * 0.4); 
-                    nodeCoords.lng += (dispLng * 0.4);
-                }
-
-                finding._derived_from_parent_coords = true;
-
-                if (!nodeCoords || isNaN(nodeCoords.lat) || isNaN(nodeCoords.lng)) return;
-
-                const pathColor = (finding.impact_alpha || 0) < 0 ? '#f43f5e' : '#10b981';
-
-                // [v10.16] Propagation Path Render
-                if (finding._is_carryover) {
-                    renderTacticalRipple(layer, L.latLng(parentCoords.lat, parentCoords.lng), pathColor, level);
-                } else {
-                    const start = L.latLng(parentCoords.lat, parentCoords.lng);
-                    const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
-                    const distance = L.latLng(start).distanceTo(end);
-
-                    if (distance > 1000) {
-                        const points: L.LatLng[] = [];
-                        const steps = 40;
-                        const dLat = end.lat - start.lat;
-                        const dLng = end.lng - start.lng;
-                        const dist = Math.sqrt(dLat*dLat + dLng*dLng);
-                        const offsetFactor = 0.15 + (Math.min(dist, 40) / 200);
-
-                        const cpLat = (start.lat + end.lat) / 2 - dLng * offsetFactor;
-                        const cpLng = (start.lng + end.lng) / 2 + dLat * offsetFactor;
-
-                        for (let i = 0; i <= steps; i++) {
-                            const t = i / steps;
-                            const lat = (1-t)**2 * start.lat + 2*(1-t)*t * cpLat + t**2 * end.lat;
-                            const lng = (1-t)**2 * start.lng + 2*(1-t)*t * cpLng + t**2 * end.lng;
-                            points.push(L.latLng(lat, lng));
-                        }
-
-                        L.polyline(points, {
-                            className: `propagation-arc-curved`,
-                            color: pathColor,
-                            weight: 3,
-                            opacity: 0.6,
-                            interactive: false,
-                            pane: 'vlt-arc-pane'
-                        }).addTo(layer);
-                    }
-
-                    if (level === 2 && index === 0) {
-                        map.panTo(L.latLng((start.lat+end.lat)/2, (start.lng+end.lng)/2), { animate: true });
-                    }
-                }
-
-                // Wave Arrival Narrative
-                const arrivalDelay = 1200; 
-                setTimeout(() => {
-                    const baseSize = 12;
-                    const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level, 3)} node-ignite`;
-                    const nodeIcon = L.divIcon({
-                        className: 'none',
-                        html: `<div class="${markerClass}" style="width:${baseSize}px; height:${baseSize}px; --ring-color:${pathColor}"><div class="glow-ring"></div></div>`,
-                        iconSize: [baseSize, baseSize],
-                        iconAnchor: [baseSize/2, baseSize/2]
-                    });
-
-                    // Ensure marker is in tactical pane
-                    L.marker([nodeCoords!.lat, nodeCoords!.lng], { 
-                        icon: nodeIcon, 
-                        pane: 'vlt-tactical-pane',
-                        zIndexOffset: 500
-                    }).addTo(layer);
-
-                    renderTacticalNodeLabel(layer, [nodeCoords!.lat, nodeCoords!.lng], finding, pathColor, level, index);
-                    
-                    // Recursive Chain
-                    const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
-                    const nodeId = finding.stakeholder_id || finding.entity_name;
-                    if (subImpacts && subImpacts.length > 0 && level < 4 && !visited.has(nodeId)) {
-                        visited.add(nodeId);
-                        setTimeout(() => {
-                           renderImpactChain(map, layer, nodeCoords!, subImpacts, level + 1, baseIntensity, originalAlert, visited);
-                        }, 500); 
-                    }
-                }, arrivalDelay);
-
-            } catch (e) {
-                console.error("[v10.14] Branch fault:", e);
+        try {
+            let nodeCoords = getNodeCoords(finding);
+            
+            if (!nodeCoords && finding.entity_name) {
+                const asset = STRATEGIC_ASSETS.find(a => 
+                    a.name.toLowerCase().includes(finding.entity_name.toLowerCase()) ||
+                    finding.entity_name.toLowerCase().includes(a.name.toLowerCase())
+                );
+                if (asset) nodeCoords = { lat: asset.lat, lng: asset.lng, source: 'Name-Lookup' };
             }
-        }, branchDelay);
+
+            // Fixed Polar Offset (No random jitter)
+            const impactCount = impacts.length;
+            const fanAngle = 140; 
+            const startAngle = -70; 
+            const angleStep = impactCount > 1 ? fanAngle / (impactCount - 1) : 0;
+            const currentAngle = startAngle + (index * angleStep);
+            
+            const rad = (currentAngle * Math.PI) / 180;
+            const radius = 18.0 + (level * 4); 
+            
+            const dispLat = radius * Math.cos(rad);
+            const dispLng = radius * Math.sin(rad);
+
+            if (!nodeCoords) {
+                // Exact deterministic offset
+                nodeCoords = { 
+                    lat: parentCoords.lat + dispLat, 
+                    lng: parentCoords.lng + dispLng, 
+                    source: 'Polar-Fixed' 
+                };
+            }
+
+            finding._derived_from_parent_coords = true;
+
+            if (!nodeCoords || isNaN(nodeCoords.lat) || isNaN(nodeCoords.lng)) return;
+
+            const pathColor = (finding.impact_alpha || 0) < 0 ? '#f43f5e' : '#10b981';
+
+            // Immediate Path Render
+            const start = L.latLng(parentCoords.lat, parentCoords.lng);
+            const end = L.latLng(nodeCoords.lat, nodeCoords.lng);
+            const distance = L.latLng(start).distanceTo(end);
+
+            if (distance > 100) {
+                L.polyline([start, end], {
+                    className: `propagation-arc-static`,
+                    color: pathColor,
+                    weight: 2,
+                    opacity: 0.4,
+                    interactive: false,
+                    pane: 'vlt-arc-pane'
+                }).addTo(layer);
+            }
+
+            // Immediate Node Render
+            const baseSize = 12;
+            const markerClass = `marker-ring-tactical marker-ring-tactical--l${Math.min(level, 3)}`;
+            const nodeIcon = L.divIcon({
+                className: 'none',
+                html: `<div class="${markerClass}" style="width:${baseSize}px; height:${baseSize}px; --ring-color:${pathColor}; box-shadow: 0 0 8px ${pathColor}; border-radius: 50%;"><div class="glow-ring"></div></div>`,
+                iconSize: [baseSize, baseSize],
+                iconAnchor: [baseSize/2, baseSize/2]
+            });
+
+            L.marker([nodeCoords.lat, nodeCoords.lng], { 
+                icon: nodeIcon, 
+                pane: 'vlt-tactical-pane',
+                zIndexOffset: 500
+            }).addTo(layer);
+
+            renderTacticalNodeLabel(layer, [nodeCoords.lat, nodeCoords.lng], finding, pathColor, level, index);
+            
+            // Recursive Chain (Synchronous)
+            const subImpacts = finding.cascading_impacts || (finding.metadata_json as any)?.cascading_impacts;
+            const nodeId = finding.stakeholder_id || finding.entity_name;
+            if (subImpacts && subImpacts.length > 0 && level < 4 && !visited.has(nodeId)) {
+                visited.add(nodeId);
+                renderImpactChain(map, layer, nodeCoords, subImpacts, level + 1, baseIntensity, originalAlert, visited);
+            }
+        } catch (e) {
+            console.error("[v15.0] Static Map Error:", e);
+        }
     });
 }
 
