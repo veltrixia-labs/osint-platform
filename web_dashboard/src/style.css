@@ -395,6 +395,15 @@ body.no-scroll {
   color: var(--accent);
 }
 
+/* Sync Status HUD */
+.nav-sync-hud {
+  font-size: 0.65rem;
+  color: #8b949e;
+  letter-spacing: 0.05rem;
+  font-family: monospace;
+  padding: 0;
+}
+
 
 /* ==============================
    Main Layout & Typo

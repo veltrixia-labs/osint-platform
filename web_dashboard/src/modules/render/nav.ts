@@ -104,6 +104,11 @@ export function renderNavigation(
     // Role-Based Access footer
     const footerHtml = `
         <div class="nav-role-footer">
+            <div id="sync-hud" class="nav-sync-hud">
+                <span class="sync-dot sync-dot--init"></span>
+                <span class="sync-label">SYNC: INITIALIZING...</span>
+                <span class="sync-time"></span>
+            </div>
             <div class="nav-role-tier" style="border-left: 3px solid ${tierColor};">
                 <div class="nav-role-tier-label" style="color: ${tierColor};">${tierLabel.toUpperCase()}</div>
                 <div class="nav-role-email" title="${user.email}">${isGuest ? 'Guest Mode' : user.email}</div>
