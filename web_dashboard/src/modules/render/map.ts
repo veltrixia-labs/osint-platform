@@ -397,6 +397,10 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
         }
 
         const coords = { lat: Number(rawCoords.lat), lng: Number(rawCoords.lng) };
+        const intensity = alert.intensity || 5;
+        const topicDef = getTopicDef(alert.topic);
+        const topicColor = topicDef?.color || '#58a6ff';
+
         // [v15.0] Instant Render Core
         renderTacticalStatusHud(layer, "SYNCING GLOBAL POSITION...", "processing");
 
@@ -445,7 +449,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
                             clearInterval(poller);
                             renderTacticalStatusHud(layer, "AI ANALYSIS FAILED", "failed");
                         } else {
-                            renderTacticalStatusHud(layer, \`AI REFINING [\${pollCount}]\`, "processing");
+                            renderTacticalStatusHud(layer, `AI REFINING [${pollCount}]`, "processing");
                         }
                     });
                 }, 5000);
@@ -455,7 +459,7 @@ export function renderFocusedAlert(map: L.Map, layer: L.LayerGroup, alert: Alert
             if (currentStatus === 'processing') {
                 startPoller("ANALYZING");
             } else {
-                apiClient.post(\`/alerts/\${alert.id}/analyze\`).then(() => startPoller("DISCOVERY TRIGGERED"));
+                apiClient.post(`/alerts/${alert.id}/analyze`).then(() => startPoller("DISCOVERY TRIGGERED"));
             }
         }
 
