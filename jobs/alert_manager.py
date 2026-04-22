@@ -277,11 +277,9 @@ class AlertManager:
 
     @classmethod
     async def _check_suppression(cls, db, target_label: str, topic: str, trigger_type: str, new_severity: str, current_intensity: float) -> Tuple[bool, bool, float]:
-        """Escalation and intensification-aware suppression logic."""
+        """Simple exact-duplicate spam prevention."""
         cooldown_threshold = datetime.now(timezone.utc) - timedelta(hours=ALERT_COOLDOWN_HOURS)
         
-        # Find the most recent alert matching the composite key in the window
-        # We check both the base trigger_type and the spiked version
         stmt = select(AlertLog).where(
             AlertLog.target_label == target_label,
             AlertLog.topic == topic,
@@ -292,21 +290,10 @@ class AlertManager:
         if not last_alert:
             return False, False, 0.0 # Not suppressed
             
-        # Severity Order Map for comparison
-        ORDER = {"watch": 1, "elevated": 2, "critical": 3}
-        
-        # 1. ESCALATION: Allow only if new severity is STRICTLY HIGHER than last severity
-        if ORDER[new_severity] > ORDER.get(last_alert.severity, 0):
-            logger.info(f"Escalating alert for {target_label} ({topic}): {last_alert.severity} -> {new_severity}")
-            return False, False, last_alert.intensity
-
-        # 2. INTENSIFICATION: Allow if intensity increased by 1.5x
+        # Simplified Logic: If we already alerted for this recently, just suppress it to prevent UI flood.
+        # Removes opaque Escalation / Intensification logic to ensure a predictable base state.
         last_intensity = last_alert.intensity or 0.0
-        if current_intensity > (last_intensity * 1.5) and current_intensity > 2.0:
-            logger.info(f"Intensifying alert for {target_label}: {last_intensity} -> {current_intensity}")
-            return False, True, last_intensity
-            
-        logger.info(f"Alert suppressed for {target_label} ({topic}): Already issued {last_alert.severity} within cooldown.")
+        logger.info(f"Alert suppressed for {target_label} ({topic}): Already issued within cooldown.")
         return True, False, last_intensity
 
     @classmethod

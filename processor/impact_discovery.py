@@ -77,8 +77,9 @@ class ImpactDiscoveryEngine:
                 findings = analysis.get("findings", [])
 
                 if not findings:
-                    logger.info("Triggering Statistical Fallback.")
-                    findings = ImpactCalculator.calculate_impacts(summary.split(' ')[0], None, None, 5.0)
+                    logger.error("[Discovery] AI returned no findings. Failing fast.")
+                    if alert_id: await self._persist_terminal_state(alert_id, [], "failed")
+                    return []
 
                 # 3. BATCH ENRICHMENT
                 processed_findings = await self._enrich_findings_batch(findings)
@@ -199,32 +200,33 @@ class ImpactDiscoveryEngine:
         from db.database import AsyncSessionLocal
         async with AsyncSessionLocal() as session:
             try:
-                # 1. Rescue Phase: Reset alerts stuck in 'processing' for > 10 mins
-                threshold = datetime.now(timezone.utc) - timedelta(minutes=10)
-                stmt = select(AlertLog).where(AlertLog.triggered_at > (datetime.now(timezone.utc) - timedelta(hours=6)))
-                res = await session.execute(stmt)
-                all_recent = res.scalars().all()
-                
-                rescue_count = 0
-                for a in all_recent:
-                    meta = dict(a.metadata_json) if a.metadata_json else {}
-                    if meta.get("backbone_discovery_status") == "processing":
-                        ts_str = meta.get("backbone_discovery_ts")
-                        if ts_str:
-                            try:
-                                ts = datetime.fromisoformat(ts_str)
-                                if ts.tzinfo is None: ts = ts.replace(tzinfo=timezone.utc)
-                                if datetime.now(timezone.utc) - ts > timedelta(minutes=10):
-                                    logger.warning(f"[Scout] Rescuing stuck alert {a.id} (Started: {ts_str})")
-                                    meta["backbone_discovery_status"] = "idle"
-                                    a.metadata_json = meta
-                                    flag_modified(a, "metadata_json")
-                                    rescue_count += 1
-                            except: pass
-                
-                if rescue_count > 0:
-                    await session.commit()
-                    logger.info(f"[Scout] Rescue complete. {rescue_count} alerts reset to 'idle'.")
+                # 1. Rescue Phase (DISABLED: Stop automatic retry / let failed tasks stay failed)
+                if False:
+                    threshold = datetime.now(timezone.utc) - timedelta(minutes=10)
+                    stmt = select(AlertLog).where(AlertLog.triggered_at > (datetime.now(timezone.utc) - timedelta(hours=6)))
+                    res = await session.execute(stmt)
+                    all_recent = res.scalars().all()
+                    
+                    rescue_count = 0
+                    for a in all_recent:
+                        meta = dict(a.metadata_json) if a.metadata_json else {}
+                        if meta.get("backbone_discovery_status") == "processing":
+                            ts_str = meta.get("backbone_discovery_ts")
+                            if ts_str:
+                                try:
+                                    ts = datetime.fromisoformat(ts_str)
+                                    if ts.tzinfo is None: ts = ts.replace(tzinfo=timezone.utc)
+                                    if datetime.now(timezone.utc) - ts > timedelta(minutes=10):
+                                        logger.warning(f"[Scout] Rescuing stuck alert {a.id} (Started: {ts_str})")
+                                        meta["backbone_discovery_status"] = "idle"
+                                        a.metadata_json = meta
+                                        flag_modified(a, "metadata_json")
+                                        rescue_count += 1
+                                except: pass
+                    
+                    if rescue_count > 0:
+                        await session.commit()
+                        logger.info(f"[Scout] Rescue complete. {rescue_count} alerts reset to 'idle'.")
 
                 # 2. Discovery Phase: Pick up pending/idle alerts SEQUENTIALLY
                 severity_order = case(
