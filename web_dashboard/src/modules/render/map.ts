@@ -19,13 +19,10 @@ import { getAlertCoords, getNodeCoords } from './utils';
 
 let activeMapFilters = new Set(['global']);
 let currentFilterControl: L.Control | null = null;
-let lastDiscoveryTrigger: number = 0;
 let currentGlobalMap: L.Map | null = null;
 let currentDynamicLayer: L.LayerGroup | null = null;
 let clusterLayer: L.MarkerClusterGroup | null = null;
 let isRendering = false; // Mutex to prevent infinite recursion
-let _isTacticalDiscoveryActive = false; // [v10.8] Critical Polling Lock
-let _activeDiscoveryId: string | null = null; // [v10.9] Sticky State Guard
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Primary Render Entry
@@ -187,11 +184,6 @@ export const renderMap = async (container: HTMLElement, _tier: string, focusAler
         }
 
         // [v15.0] Discovery Lock Removed: The static pipeline must always reflect the immediate state.
-        if (focusAlertId) {
-            _activeDiscoveryId = focusAlertId;
-        } else {
-            _activeDiscoveryId = null;
-        }
 
         // [v8.9] Dynamic Strategy: Fetch all alerts from the last 24h (Maximum Visibility)
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -521,7 +513,7 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
 /**
  * [v53] Robust Tactical Node Label Rendering (High-Fidelity Sync)
  */
-function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, level: number, index: number) {
+function renderTacticalNodeLabel(layer: L.LayerGroup, coords: [number, number], finding: any, color: string, _level: number, _index: number) {
     try {
         const alpha = finding.impact_alpha ?? 0;
         const alphaFormatted = `${alpha >= 0 ? '+' : ''}${alpha.toFixed(1)}%`;
