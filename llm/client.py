@@ -246,7 +246,7 @@ async def generate_with_retry(provider_name: str, system_prompt: str, user_promp
                         model=model_name,
                         messages=[{"role":"system","content":system_prompt},{"role":"user","content":user_prompt}],
                         temperature=0.7
-                    ), timeout=45.0)
+                    ), timeout=10.0)
                     text = response.choices[0].message.content
                     cost_guard.add_cost(len(user_prompt)//4, len(text)//4, "deepseek")
                 elif provider_name == "ollama":
