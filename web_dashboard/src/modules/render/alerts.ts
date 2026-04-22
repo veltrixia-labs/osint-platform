@@ -39,8 +39,14 @@ export function showEvidenceModal(title: string, evidenceList: any[]) {
 }
 
 export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
-    // Show top 8 most recent alerts in a compact way
-    const recent = [...alerts].sort((a,b) => new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime()).slice(0, 8);
+    // Show top 8 most prioritized recent alerts
+    const severityMap: Record<string, number> = { critical: 3, elevated: 2, watch: 1 };
+    const recent = [...alerts].sort((a,b) => {
+        const sevA = severityMap[a.severity?.toLowerCase() || ''] || 0;
+        const sevB = severityMap[b.severity?.toLowerCase() || ''] || 0;
+        if (sevA !== sevB) return sevB - sevA;
+        return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
+    }).slice(0, 8);
     
     container.innerHTML = recent.map(alert => {
         const severityClass = alert.severity.toLowerCase();
@@ -61,7 +67,15 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         container.innerHTML = '<div class="u-p-2 u-text-center" style="color:#f85149;">Technical error: invalid alerts data.</div>';
         return;
     }
-    container.innerHTML = alerts.map(alert => {
+    const sortedAlerts = [...alerts].sort((a,b) => {
+        const sevMap: Record<string, number> = { critical: 3, elevated: 2, watch: 1 };
+        const sevA = sevMap[a.severity?.toLowerCase() || ''] || 0;
+        const sevB = sevMap[b.severity?.toLowerCase() || ''] || 0;
+        if (sevA !== sevB) return sevB - sevA;
+        return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
+    });
+
+    container.innerHTML = sortedAlerts.map(alert => {
         const topicDef = getTopicDef(alert.topic);
         const accessible = canAccessTopic(userTier, topicDef);
         const severityClass = alert.severity.toLowerCase();

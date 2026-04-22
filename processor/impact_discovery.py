@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import or_
+from sqlalchemy import or_, case
 from sqlalchemy.orm.attributes import flag_modified
 from db.models import Stakeholder, Dependency, AlertLog
 from llm.client import generate_analysis
@@ -226,8 +226,14 @@ class ImpactDiscoveryEngine:
                     await session.commit()
                     logger.info(f"[Scout] Rescue complete. {rescue_count} alerts reset to 'idle'.")
 
-                # 2. Discovery Phase: Pick up pending/idle alerts in PARALLEL [v13.8]
-                stmt = select(AlertLog).order_by(AlertLog.triggered_at.desc()).limit(25)
+                # 2. Discovery Phase: Pick up pending/idle alerts SEQUENTIALLY
+                severity_order = case(
+                    (AlertLog.severity == "critical", 1),
+                    (AlertLog.severity == "elevated", 2),
+                    else_=3
+                )
+                
+                stmt = select(AlertLog).order_by(severity_order, AlertLog.intelligence_score.desc(), AlertLog.triggered_at.desc()).limit(25)
                 res = await session.execute(stmt)
                 alerts = res.scalars().all()
                 
@@ -237,13 +243,13 @@ class ImpactDiscoveryEngine:
                     status = meta.get("backbone_discovery_status", "idle")
                     
                     if status == "idle" and len(scout_tasks) < 5:
-                        logger.info(f"[Scout] Queueing alert {a.id} for parallel analysis (Status: {status})")
+                        logger.info(f"[Scout] Queueing alert {a.id} for sequential analysis (Status: {status})")
                         meta["backbone_discovery_status"] = "processing"
                         meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
                         a.metadata_json = meta
                         flag_modified(a, "metadata_json")
                         
-                        # [v14.3] MUST USE None to spawn unique isolated sessions per parallel task to avoid SQLAlchemy concurrent violation
+                        # [v14.3] MUST USE None to spawn unique isolated sessions per task
                         engine = ImpactDiscoveryEngine(None)
                         title = a.target_label
                         summary = meta.get("description", f"Triggered on {a.topic}")
@@ -251,8 +257,9 @@ class ImpactDiscoveryEngine:
                 
                 if scout_tasks:
                     await session.commit() # Commit statuses before spawning tasks
-                    logger.info(f"[Scout] Spawning {len(scout_tasks)} parallel AI analyses.")
-                    await asyncio.gather(*scout_tasks)
-                    logger.info(f"[Scout] Batch of {len(scout_tasks)} parallel analyses finished.")
+                    logger.info(f"[Scout] Spawning {len(scout_tasks)} sequential AI analyses (Anti-Thundering Herd).")
+                    for task in scout_tasks:
+                        await task
+                    logger.info(f"[Scout] Batch of {len(scout_tasks)} sequential analyses finished.")
             except Exception as e:
                 logger.error(f"[Scout] Execution failed: {e}")

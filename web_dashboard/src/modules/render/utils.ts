@@ -6,9 +6,9 @@ import type { Alert } from '../api';
 export function formatIntensity(val: number | undefined | null): string | null {
     if (typeof val !== 'number' || isNaN(val) || val <= 0) return null;
     const rounded = val.toFixed(1);
-    let label = 'Low';
-    if (val >= 4) label = 'High';
-    else if (val >= 2) label = 'Medium';
+    let label = 'STABLE/WATCH';
+    if (val >= 8.0) label = 'CRITICAL';
+    else if (val >= 4.5) label = 'ELEVATED RISK';
     return `${rounded} (${label})`;
 }
 

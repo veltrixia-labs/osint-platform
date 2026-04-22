@@ -304,48 +304,54 @@ async def generate_batch_analysis(provider_name: str, system_prompt: str, user_p
     """Specific variant for batch processing to ensure failure doesn't block the whole pipeline if one provider fails."""
     return await generate_with_retry(provider_name, system_prompt, user_prompt, model_name)
 
-async def generate_analysis(system_prompt: str, user_prompt: str, preferred_model: str = "deepseek", is_batch: bool = False) -> str | List[Dict]:
-    # Health-based Scoring & Routing
-    scored_providers = []
-    for name, p in providers.items():
-        if await p.breaker.can_execute():
-            score = p.metrics.get_health_score()
-            if name == preferred_model: score *= 1.2
-            scored_providers.append((name, score))
-    
-    scored_providers.sort(key=lambda x: x[1], reverse=True)
-    
-    for p_name, score in scored_providers:
-        logger.info(f"Routing to {p_name} (Health Score: {score:.3f}, Batch: {is_batch})")
-        
-        # Model Selection Mapping
-        if p_name == "gemini": int_model = "gemini-2.0-flash"
-        elif p_name == "openai": int_model = "gpt-4o-mini"
-        elif p_name == "deepseek": int_model = "deepseek-chat"
-        elif p_name == "ollama": int_model = "llama3" # Default local model
-        else: int_model = "gpt-4o-mini"
-        
-        if is_batch:
-            res = await generate_batch_analysis(p_name, system_prompt, user_prompt, int_model)
-        else:
-            res = await generate_with_retry(p_name, system_prompt, user_prompt, int_model)
-            
-        if res:
-            if is_batch:
-                try:
-                    # Try to extract JSON from markdown if necessary
-                    cleaned = res.strip()
-                    if cleaned.startswith("```json"):
-                        cleaned = cleaned.split("```json")[1].split("```")[0].strip()
-                    elif cleaned.startswith("```"):
-                        cleaned = cleaned.split("```")[1].split("```")[0].strip()
-                    return json.loads(cleaned)
-                except Exception as e:
-                    logger.error(f"Failed to parse batch JSON: {e}")
-                    continue # Try next provider
-            return res
+# Strict Global Throttle to prevent Thundering Herd
+_global_llm_semaphore = asyncio.Semaphore(1)
 
-    return "__DEGRADED_MODE__" if is_batch else "## Mock Analysis\nSystem busy or quota exceeded.\n"
+async def generate_analysis(system_prompt: str, user_prompt: str, preferred_model: str = "deepseek", is_batch: bool = False) -> str | List[Dict]:
+    async with _global_llm_semaphore:
+        # Health-based Scoring & Routing
+        scored_providers = []
+        for name, p in providers.items():
+            if await p.breaker.can_execute():
+                score = p.metrics.get_health_score()
+                if name == preferred_model: score *= 1.2
+                scored_providers.append((name, score))
+        
+        scored_providers.sort(key=lambda x: x[1], reverse=True)
+        
+        for p_name, score in scored_providers:
+            logger.info(f"Routing to {p_name} (Health Score: {score:.3f}, Batch: {is_batch})")
+            
+            # Model Selection Mapping
+            if p_name == "gemini": int_model = "gemini-2.0-flash"
+            elif p_name == "openai": int_model = "gpt-4o-mini"
+            elif p_name == "deepseek": int_model = "deepseek-chat"
+            elif p_name == "ollama": int_model = "llama3" # Default local model
+            else: int_model = "gpt-4o-mini"
+            
+            if is_batch:
+                res = await generate_batch_analysis(p_name, system_prompt, user_prompt, int_model)
+            else:
+                res = await generate_with_retry(p_name, system_prompt, user_prompt, int_model)
+                
+            if res:
+                logger.info("AI Analysis successful. Pacing pipeline with 2.0s cooldown to respect TPM/RPM limits.")
+                await asyncio.sleep(2.0)
+                if is_batch:
+                    try:
+                        # Try to extract JSON from markdown if necessary
+                        cleaned = res.strip()
+                        if cleaned.startswith("```json"):
+                            cleaned = cleaned.split("```json")[1].split("```")[0].strip()
+                        elif cleaned.startswith("```"):
+                            cleaned = cleaned.split("```")[1].split("```")[0].strip()
+                        return json.loads(cleaned)
+                    except Exception as e:
+                        logger.error(f"Failed to parse batch JSON: {e}")
+                        continue # Try next provider
+                return res
+
+        return "__DEGRADED_MODE__" if is_batch else "## Mock Analysis\nSystem busy or quota exceeded.\n"
 
 def get_metrics_summary() -> str:
     summary = {name: asdict(p.metrics) for name, p in providers.items()}

@@ -27,8 +27,8 @@ ALERT_COOLDOWN_HOURS = 12
 # Evaluation Priority: Critical > Elevated > Watch
 SEVERITY_CONFIG = {
     "critical": {"min_intensity": 8.0, "min_spike": 4.0, "min_domains": 8},
-    "elevated": {"min_intensity": 6.0, "min_spike": 3.0, "min_domains": 5},
-    "watch":    {"min_intensity": 2.5, "min_spike": 0.0, "min_domains": 2} # Boosted signal (2.5) for release phase
+    "elevated": {"min_intensity": 4.5, "min_spike": 3.0, "min_domains": 3},
+    "watch":    {"min_intensity": 2.5, "min_spike": 0.0, "min_domains": 2} # Used as Report Source only
 }
 
 class AlertManager:
@@ -82,7 +82,8 @@ class AlertManager:
             
             # 2. Determine Severity (Priority: Critical > Elevated > Watch)
             severity = cls._determine_severity(sig.intensity_score, spike_delta, domain_count)
-            if not severity:
+            if not severity or severity == "watch":
+                logger.debug(f"Signal for {sig.target_label} kept as Report Source (Severity: {severity}).")
                 continue
 
             # 3. Escalation & Intensification-Aware Deduplication
