@@ -271,6 +271,10 @@ async function initDashboard() {
             handleTabSwitch('map', id);
         }
     });
+
+    window.addEventListener('trigger-tab' as any, (e: CustomEvent) => {
+        if (e.detail.tab) handleTabSwitch(e.detail.tab);
+    });
 }
 
 // Global Core
@@ -281,6 +285,3 @@ const startHeartbeat = () => {
 initDashboard().then(() => { startHeartbeat(); });
 
 window.addEventListener('trigger-login', () => renderLogin());
-window.addEventListener('trigger-tab' as any, (e: CustomEvent) => {
-    if (e.detail.tab) handleTabSwitch(e.detail.tab);
-});
