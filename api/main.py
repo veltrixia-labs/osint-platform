@@ -28,7 +28,7 @@ from api.payments import router as payments_router
 from api.gating import (
     get_effective_tier, get_watchlist_limit, can_add_watchlist_keywords,
     TIER_PRO, TIER_EXPERTS, TIER_ORDER, is_tier_sufficient,
-    is_topic_allowed, can_access_report_type
+    is_topic_allowed, can_access_report_type, PlanTier
 )
 from db.enums import ReportType
 

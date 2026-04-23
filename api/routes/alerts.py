@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import AlertLog, AlertDelivery, AnalystProfile
 from db.database import get_db, AsyncSessionLocal
 from processor.impact_discovery import ImpactDiscoveryEngine
-from api.gating import get_effective_tier, is_topic_allowed, _gate_cascading_impacts
+from api.gating import get_effective_tier, is_topic_allowed, _gate_cascading_impacts, is_tier_sufficient, PlanTier
 from api.auth import blacklist_manager
 from api.rate_limit import rate_limit
 
