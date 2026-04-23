@@ -64,9 +64,12 @@ export class DashboardState {
 
             const [alertsResp, healthResp, analystsResp] = await Promise.all(promises);
 
-            this.lastStatus = alertsResp?.status || 200;
-            if (alertsResp && !alertsResp.ok) {
-                this.error = `API Error: ${alertsResp.status}`;
+            // status 0 = synthetic network error from fetchWithAuth (not thrown anymore)
+            const alertStatus = alertsResp?.status ?? 0;
+            this.lastStatus = alertStatus;
+
+            if (alertStatus === 0 || (alertStatus >= 400 && alertStatus !== 429)) {
+                this.error = alertStatus === 0 ? 'Connection lost' : `API Error: ${alertStatus}`;
                 this.notify();
                 return;
             }
@@ -90,9 +93,10 @@ export class DashboardState {
             this.analysts = analysts;
             this.notify();
         } catch (err: any) {
-            console.error("Polling failed:", err);
-            this.error = "Connection lost";
-            this.lastStatus = 0; // Offline
+            // fetchWithAuth no longer throws - this is a fallback for unexpected errors only
+            console.error("Unexpected polling error:", err);
+            this.error = "Unexpected error";
+            this.lastStatus = 0;
             this.notify();
         }
     }

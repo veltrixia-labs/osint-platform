@@ -17,6 +17,11 @@ const setLoggingOut = (val: boolean) => {
  * Notifies the UI about API connectivity and auth health.
  */
 export type SyncStatus = 'stable' | 'retrying' | 'offline';
+
+// Track consecutive failures to avoid premature OFFLINE state
+let _consecutiveFailures = 0;
+const MAX_FAILURES_BEFORE_OFFLINE = 3;
+
 function dispatchSyncEvent(status: SyncStatus) {
     window.dispatchEvent(new CustomEvent('api-sync-status', { 
         detail: { status, timestamp: new Date() } 
@@ -269,7 +274,7 @@ export async function logout() {
  * apiClient - Unified authenticated request wrapper
  */
 export const apiClient = {
-    async get(path: string, options: RequestInit = {}) {
+    async get(path: string, options: RequestInit = {}, skipSyncEvent = false) {
         // [v10.65] FORCE CLOUD REVOCATION: Explicitly bust edge/browser caches
         const separator = path.includes('?') ? '&' : '?';
         const url = `${API_BASE}${path}${separator}_t=${Date.now()}_v=1112`;
@@ -278,9 +283,9 @@ export const apiClient = {
             method: 'GET', 
             cache: 'no-cache', // Forces verification with server
             headers: { ...options.headers, 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
-        });
+        }, skipSyncEvent);
     },
-    async post(path: string, body?: any, options: RequestInit = {}) {
+    async post(path: string, body?: any, options: RequestInit = {}, skipSyncEvent = false) {
         // [v10.66] POST Cache Busting (Force freshness on AI triggers)
         const separator = path.includes('?') ? '&' : '?';
         const url = `${API_BASE}${path}${separator}_burst=${Date.now()}`;
@@ -289,11 +294,11 @@ export const apiClient = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...options.headers, 'Cache-Control': 'no-cache' },
             body: body ? JSON.stringify(body) : undefined
-        });
+        }, skipSyncEvent);
     }
 };
 
-async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+async function fetchWithAuth(url: string, options: RequestInit = {}, skipSyncEvent = false): Promise<Response> {
     // A. Early Exit if logging out
     if (getLoggingOut()) {
         return new Response(null, { status: 401 });
@@ -315,15 +320,40 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
     let resp: Response;
     try {
         resp = await fetch(url, authOptions);
-        if (resp.ok) dispatchSyncEvent('stable');
+
+        if (!skipSyncEvent) {
+            if (resp.ok) {
+                // Clear failure counter on success
+                _consecutiveFailures = 0;
+                dispatchSyncEvent('stable');
+            } else if (resp.status >= 500) {
+                // Server error = temporary, signal retrying
+                _consecutiveFailures++;
+                if (_consecutiveFailures >= MAX_FAILURES_BEFORE_OFFLINE) {
+                    dispatchSyncEvent('offline');
+                } else {
+                    dispatchSyncEvent('retrying');
+                }
+            }
+            // 401/403/404 are NOT connectivity failures - no sync event dispatched
+        }
     } catch (e) {
-        dispatchSyncEvent('offline');
-        throw e;
+        // True network error (CORS failure, no connection, timeout)
+        _consecutiveFailures++;
+        if (_consecutiveFailures >= MAX_FAILURES_BEFORE_OFFLINE) {
+            dispatchSyncEvent('offline');
+        } else {
+            dispatchSyncEvent('retrying');
+        }
+        // Do NOT rethrow - return a synthetic offline response instead
+        return new Response(JSON.stringify({ error: 'network_error' }), { 
+            status: 0, 
+            statusText: 'Network Error' 
+        });
     }
 
-    // B. Refresh Logic (401 Handling)
-    if (resp.status === 401 && !url.includes('/auth/refresh') && !url.includes('/auth/login')) {
-        // If logging out, ignore any 401 errors
+    // B. Refresh Logic: Only attempt refresh when there WAS a valid token (never for guests)
+    if (resp.status === 401 && currentToken && !url.includes('/auth/refresh') && !url.includes('/auth/login')) {
         if (getLoggingOut()) {
             return resp;
         }
@@ -339,26 +369,17 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Re
                 accessToken = data.access_token;
                 localStorage.setItem('access_token', accessToken!);
                 
+                _consecutiveFailures = 0;
                 dispatchSyncEvent('stable');
 
                 // Retry original request
                 headers.set('Authorization', `Bearer ${accessToken}`);
                 resp = await fetch(url, { ...authOptions, headers });
             } else {
-                dispatchSyncEvent('retrying');
-                // [v37] DEFINITIVE SESSION EXPIRY
-                // If refresh fails, the session is truly dead. Notify UI and clear local tokens.
-                if (!getLoggingOut()) {
-                    accessToken = null;
-                    localStorage.removeItem('access_token');
-                    
-                    // [v38] Guest Mode Silence: Only redirect if an access_token previously existed
-                    // This prevents public users from seeing the login wall immediately.
-                    const hadToken = !!currentToken;
-                    if (hadToken) {
-                        window.dispatchEvent(new CustomEvent('session-expired'));
-                    }
-                }
+                // Refresh failed = session expired, not a connectivity issue
+                accessToken = null;
+                localStorage.removeItem('access_token');
+                window.dispatchEvent(new CustomEvent('session-expired'));
                 return resp;
             }
         } catch (err) {
@@ -426,7 +447,8 @@ export async function fetchHealth(): Promise<HealthData> {
 
 export async function fetchMe(): Promise<UserMe | null> {
     try {
-        const resp = await apiClient.get(`/auth/me`);
+        // skipSyncEvent=true: auth check 401 is EXPECTED for guests, not a connectivity failure
+        const resp = await apiClient.get(`/auth/me`, {}, true);
         if (!resp.ok) return null;
         return await resp.json();
     } catch {
