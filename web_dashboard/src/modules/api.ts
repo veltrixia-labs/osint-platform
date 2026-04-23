@@ -3,7 +3,11 @@
  * OSINT Risk Intelligence API Client
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+let rawBase = import.meta.env.VITE_API_BASE_URL || "/api";
+if (rawBase.startsWith('http') && !rawBase.endsWith('/api')) {
+    rawBase = rawBase.replace(/\/$/, '') + '/api';
+}
+const API_BASE = rawBase;
 
 // --- Types & Interfaces ---
 
