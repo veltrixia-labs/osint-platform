@@ -131,6 +131,29 @@ async function initDashboard() {
     const alertsContainer = document.querySelector<HTMLElement>('#alerts-list')!
     const pulseBar = document.querySelector<HTMLElement>('#pulse-bar')!
 
+    // [v42] Connectivity Sync Listener: Restores real-time HUD status updates
+    window.addEventListener('api-sync-status' as any, (e: CustomEvent) => {
+        const { status } = e.detail;
+        const hud = document.getElementById('sync-hud');
+        if (!hud) return;
+        
+        const dot = hud.querySelector('.sync-dot');
+        const label = hud.querySelector('.sync-label');
+        const time = hud.querySelector('.sync-time');
+        
+        if (dot) {
+            // Remove all possible status classes
+            dot.classList.remove('sync-dot--init', 'sync-dot--stable', 'sync-dot--retrying', 'sync-dot--offline');
+            dot.classList.add(`sync-dot--${status}`);
+        }
+        if (label) {
+            label.textContent = `SYNC: ${status.toUpperCase()}`;
+        }
+        if (time) {
+            time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+    });
+
     renderNavigation(user, document.querySelector('#sidebar-nav-container')!, (tabId) => handleTabSwitch(tabId as TabId));
 
     const handleTabSwitch = (tab: TabId, focusAlertId?: string, skipPushState = false) => {
@@ -177,9 +200,25 @@ async function initDashboard() {
     });
 
     const renderIntelligenceFeed = async () => {
-        const state = new DashboardState();
+        const state = new DashboardState(user!.tier);
         state.subscribe((data) => {
             if (currentTab !== 'feed') return;
+            
+            // [v12.0] Feed Error Separation Logic
+            if (data.error || data.lastStatus >= 400) {
+                alertsContainer.innerHTML = `
+                    <div class="u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 8px; background: rgba(255,123,114,0.05); margin-top: 2rem;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚠️</div>
+                        <div style="color: #ff7b72; font-weight: 600;">${data.lastStatus === 401 ? 'Intelligence Access Restricted' : 'Strategic Pipeline Offline'}</div>
+                        <div style="font-size: var(--font-xs); color: #8b949e; margin-top: 0.5rem;">
+                            ${data.lastStatus === 401 ? 'Your current tier does not have clearance for this signal stream.' : 'The analysis engine is currently unreachable. Reconnecting...'}
+                        </div>
+                        ${data.lastStatus === 401 ? `<button class="btn-fb u-m-top-1" onclick="window.dispatchEvent(new CustomEvent('trigger-tab', {detail:{tab:'plans'}}))">Upgrade Clearance</button>` : ''}
+                    </div>
+                `;
+                return;
+            }
+
             if (data.alerts) {
                 renderAlerts(data.alerts, alertsContainer, user!.tier);
                 renderLiveFeed(data.alerts, pulseBar);
@@ -190,8 +229,28 @@ async function initDashboard() {
     };
 
     const renderReports = async () => {
-        const reports = await fetchReports();
-        alertsContainer.innerHTML = `<div class="reports-list">${reports.map(r => `<div class="report-row" onclick="window.dispatchEvent(new CustomEvent('view-report', {detail:{reportId:'${r.id}'}}))">${r.title}</div>`).join('')}</div>`;
+        alertsContainer.innerHTML = '<div class="u-p-2 u-text-center" style="opacity:0.5;">Loading reports...</div>';
+        try {
+            const reports = await fetchReports();
+            if (reports.length === 0) {
+                alertsContainer.innerHTML = `
+                    <div class="u-p-2 u-text-center" style="opacity:0.5; border: 1px dashed var(--border); border-radius: 8px; margin-top: 2rem;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📑</div>
+                        <div style="font-size: var(--font-m); font-weight: 500;">No intelligence reports published yet.</div>
+                        <div style="font-size: var(--font-xs); margin-top: 0.25rem;">Reports are generated following significant strategic pivots.</div>
+                    </div>
+                `;
+                return;
+            }
+            alertsContainer.innerHTML = `<div class="reports-list">${reports.map(r => `<div class="report-row" onclick="window.dispatchEvent(new CustomEvent('view-report', {detail:{reportId:'${r.id}'}}))">${r.title}</div>`).join('')}</div>`;
+        } catch (err: any) {
+             alertsContainer.innerHTML = `
+                <div class="u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 8px; margin-top: 2rem;">
+                    <div style="color: #ff7b72; font-weight: 600;">Intelligence Retrieval Failed</div>
+                    <div style="font-size: var(--font-xs); color: #8b949e; margin-top: 0.5rem;">${err.message || 'Failed to sync with report repository.'}</div>
+                </div>
+            `;
+        }
     };
 
     const renderSingleReport = async (id: string, origin: TabId = 'feed') => {
@@ -222,3 +281,6 @@ const startHeartbeat = () => {
 initDashboard().then(() => { startHeartbeat(); });
 
 window.addEventListener('trigger-login', () => renderLogin());
+window.addEventListener('trigger-tab' as any, (e: CustomEvent) => {
+    if (e.detail.tab) handleTabSwitch(e.detail.tab);
+});

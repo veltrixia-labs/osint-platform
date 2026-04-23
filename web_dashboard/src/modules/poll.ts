@@ -9,15 +9,21 @@ export class DashboardState {
     isPaused: boolean;
     subscribers: ((state: DashboardState) => void)[];
     topic: string | null;
+    lastStatus: number;
+    error: string | null;
+    userTier: string;
 
-    constructor() {
+    constructor(tier: string = 'guest') {
         this.alerts = [];
         this.health = null;
         this.analysts = [];
         this.isPolling = false;
         this.isPaused = false;
         this.subscribers = [];
-        this.topic = null; // null means 'all' or default
+        this.topic = null;
+        this.lastStatus = 200;
+        this.error = null;
+        this.userTier = tier;
     }
 
     subscribe(callback: (state: DashboardState) => void) {
@@ -40,19 +46,38 @@ export class DashboardState {
             if (this.topic) params.topic = this.topic;
 
             const query = new URLSearchParams(params).toString();
-            const [alertsResp, healthResp, analystsResp] = await Promise.all([
-                apiClient.get(`/alerts?${query}`),
-                apiClient.get(`/system/health`),
-                apiClient.get(`/analysts`)
+            
+            // [v11.5] Guest Isolation: Skip protected endpoints for Guests
+            const isGuest = this.userTier === 'guest';
+            
+            const promises: Promise<Response | null>[] = [
+                apiClient.get(`/alerts?${query}`)
+            ];
+
+            if (!isGuest) {
+                promises.push(apiClient.get(`/system/health`));
+                promises.push(apiClient.get(`/analysts`));
+            } else {
+                promises.push(Promise.resolve(null));
+                promises.push(Promise.resolve(null));
+            }
+
+            const [alertsResp, healthResp, analystsResp] = await Promise.all(promises);
+
+            this.lastStatus = alertsResp?.status || 200;
+            if (alertsResp && !alertsResp.ok) {
+                this.error = `API Error: ${alertsResp.status}`;
+                this.notify();
+                return;
+            }
+
+            const [alertsRes, healthRes, analystsRes] = await Promise.all([
+                alertsResp ? alertsResp.json() : Promise.resolve([]),
+                healthResp && healthResp.ok ? healthResp.json() : Promise.resolve(null),
+                analystsResp && analystsResp.ok ? analystsResp.json() : Promise.resolve([])
             ]);
 
-            const [alertsRes, health, analystsRes] = await Promise.all([
-                alertsResp.json(),
-                healthResp.json(),
-                analystsResp.json()
-            ]);
-
-            // Robust validation to prevent crash on error objects (e.g. 401 Unauthorized)
+            this.error = null;
             const alerts = Array.isArray(alertsRes) ? alertsRes : [];
             const analysts = Array.isArray(analystsRes) ? analystsRes : [];
 
@@ -61,11 +86,14 @@ export class DashboardState {
                 if (!unique.has(a.id)) unique.set(a.id, a);
             });
             this.alerts = Array.from(unique.values());
-            this.health = health && health.status ? health : null;
+            this.health = healthRes && healthRes.status ? healthRes : null;
             this.analysts = analysts;
             this.notify();
-        } catch (err) {
+        } catch (err: any) {
             console.error("Polling failed:", err);
+            this.error = "Connection lost";
+            this.lastStatus = 0; // Offline
+            this.notify();
         }
     }
 

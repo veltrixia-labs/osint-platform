@@ -49,7 +49,12 @@ export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
     })[0];
     
     if (!latest) {
-        container.innerHTML = '<div class="pulse-content" style="opacity:0.4;">PULSE: Monitoring global signals...</div>';
+        container.innerHTML = `
+            <div class="pulse-content" style="opacity:0.6; font-size: 0.75rem; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
+                <span class="severity-dot" style="background: rgba(88, 166, 255, 0.4); box-shadow: 0 0 8px rgba(88, 166, 255, 0.2);"></span>
+                <span style="font-weight: 500;">PULSE: Monitoring global signal backbone...</span>
+            </div>
+        `;
         return;
     }
 
@@ -82,6 +87,17 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         if (sevA !== sevB) return sevB - sevA;
         return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
     });
+
+    if (sortedAlerts.length === 0) {
+        container.innerHTML = `
+            <div class="u-p-2 u-text-center" style="opacity:0.5; border: 1px dashed var(--border); border-radius: 8px; margin-top: 2rem;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📡</div>
+                <div style="font-size: var(--font-m); font-weight: 500;">No active signals detected in this sector.</div>
+                <div style="font-size: var(--font-xs); margin-top: 0.25rem;">The AI backbone is currently scanning for strategic momentum.</div>
+            </div>
+        `;
+        return;
+    }
 
     container.innerHTML = sortedAlerts.map(alert => {
         const topicDef = getTopicDef(alert.topic);
