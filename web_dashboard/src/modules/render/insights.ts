@@ -94,14 +94,14 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
     container.innerHTML = `<div class="intelligence-loader">Initializing Pro Suite...</div>`;
 
     try {
-        const data: ProInsights = await fetchProInsights();
+        const data: ProInsights = (await fetchProInsights())!;
         
         // 2. Build Dashboard Grid
         container.innerHTML = `
         <div class="insights-dashboard pro-dashboard">
             <!-- Row 1: BLUF Summary -->
             <div class="dashboard-row bluf-row">
-                ${Object.entries(data.risk_summary).map(([topic, stat]) => {
+                ${Object.entries((data.risk_summary || {}) as any).map(([topic, stat]: [string, any]) => {
                     const def = getTopicDef(topic === 'null' ? null : topic);
                     return `
                     <div class="bluf-stat-card" style="--accent: ${def.color}">
@@ -133,7 +133,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
                 <!-- Sector Distribution -->
                 ${renderCard('Sector Distribution', `
                     <div class="sector-dist-list">
-                        ${Object.entries(data.sector_distribution).map(([topic, count]) => {
+                        ${Object.entries((data.sector_distribution || {}) as any).map(([topic, count]: [string, any]) => {
                             const def = getTopicDef(topic === 'null' ? null : topic);
                             return renderIntensityBar(count, def.label, def.color);
                         }).join('')}
@@ -143,7 +143,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
                 <!-- Top Entities -->
                 ${renderCard('Exposed Entities', `
                     <div class="entity-list">
-                        ${data.top_entities.map(ent => `
+                        ${(data.top_entities as any[]).map((ent: any) => `
                             <div class="entity-item">
                                 <div class="entity-core u-flex-between">
                                     <span class="entity-name">${ent.name}</span>
@@ -158,7 +158,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
                 <!-- Momentum Alerts -->
                 ${renderCard('Momentum Alerts', `
                     <div class="momentum-list">
-                        ${data.momentum_alerts.map(alert => `
+                        ${(data.momentum_alerts as any[]).map((alert: any) => `
                             <div class="momentum-alert-item" style="border-left: 3px solid ${getTopicDef(alert.topic).color}">
                                 <div class="momentum-alert-title">${alert.title}</div>
                                 <div class="momentum-alert-meta">
@@ -193,7 +193,7 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
     container.innerHTML = `<div class="intelligence-loader">Decrypting Strategic Outlook...</div>`;
 
     try {
-        const data: ExpertIntelligence = await fetchExpertIntelligence();
+        const data: ExpertIntelligence = (await fetchExpertIntelligence())!;
 
         // 2. Build Expert-grade Layout
         container.innerHTML = `
@@ -203,7 +203,7 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
                 <!-- Column 1: Scenarios & Actions (Decision Center) -->
                 <div class="decision-center">
                     <h2 class="section-title">Strategic Outlook</h2>
-                    ${data.scenario_outlook.map(s => `
+                    ${(data.scenario_outlook as any[]).map((s: any) => `
                         <div class="scenario-card">
                             <div class="u-flex-between u-m-bottom-s">
                                 <h3 class="scenario-title">${s.title}</h3>
@@ -228,7 +228,7 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
                                         </div>
                                     ` : ''}
                                 </div>
-                                ${s.recommended_actions.map(a => `
+                                ${(s.recommended_actions as any[]).map((a: any) => `
                                     <div class="action-item ${a.priority.toLowerCase()}">
                                         <div class="u-flex-between">
                                             <span>${a.action}</span>
@@ -249,14 +249,14 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
                 <!-- Causal Impact Chains -->
                 ${renderCard('Active Causal Chains', `
                     <div class="impact-chain-preview-list">
-                        ${data.full_impact_chains.map(chain => `
+                        ${(data.full_impact_chains as any[]).map((chain: any) => `
                             <div class="impact-chain-item" data-alert-id="${chain.alert_id}">
                                 <div class="impact-chain-header">
                                     <span class="chain-title">${chain.title}</span>
                                     <span class="chain-count">${chain.impacts.length} nodes</span>
                                 </div>
                                 <div class="impact-chain-visual">
-                                    ${chain.impacts.slice(0, 5).map(i => `
+                                    ${(chain.impacts as any[]).slice(0, 5).map((i: any) => `
                                         <div class="impact-node-dot" title="${i.entity_name}" style="background: ${getTopicDef(i.topic || null).color}"></div>
                                     `).join('')}
                                     ${chain.impacts.length > 5 ? '<span class="chain-more">+</span>' : ''}
@@ -269,7 +269,7 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
                 <!-- Cross-Domain Risks -->
                 ${renderCard('Strategic Correlation', `
                     <div class="cross-domain-list">
-                        ${data.cross_domain_risks.map(r => `
+                        ${(data.cross_domain_risks as any[]).map((r: any) => `
                             <div class="cross-domain-item">
                                 <div class="domain-pair">
                                     <span>${getTopicDef(r.origin).label}</span>

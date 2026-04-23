@@ -1,18 +1,4 @@
-import { apiClient } from './api';
-
-export interface Alert {
-    id: string;
-    target_label: string;
-    topic: string;
-    severity: string;
-    triggered_at: string;
-    fidelity_score: number;
-    intensity: number;
-    is_locked: boolean;
-    description?: string;
-    intensity_display?: string;
-    country?: string;
-}
+import { apiClient, type Alert } from './api';
 
 export class DashboardState {
     alerts: Alert[] = [];
@@ -23,8 +9,13 @@ export class DashboardState {
     error: string | null = null;
     lastStatus = 200;
     userTier: string = 'guest';
+    currentTopic: string | null = null;
 
     private subscribers: ((state: DashboardState) => void)[] = [];
+
+    constructor(tier: string = 'guest') {
+        this.userTier = tier;
+    }
 
     subscribe(fn: (state: DashboardState) => void) {
         this.subscribers.push(fn);
@@ -43,34 +34,36 @@ export class DashboardState {
     }
 
     setTopic(topic: string | null) {
-        // Topic switching handled via re-fetch in main.ts
+        this.currentTopic = topic;
+        this.updateOnce();
     }
 
-    async updateOnce(topic: string | null = null) {
+    async updateOnce() {
         if (!this.isPolling || this.isPaused) return;
 
         try {
             const params: any = { limit: 15 };
-            if (topic) params.topic = topic;
+            if (this.currentTopic) params.topic = this.currentTopic;
             const query = new URLSearchParams(params).toString();
 
-            // Simple parallel fetch
             const [alertsResp, healthResp] = await Promise.all([
                 apiClient.get(`/alerts?${query}`),
                 this.userTier === 'guest' ? Promise.resolve(null) : apiClient.get('/system/health')
             ]);
 
-            this.lastStatus = alertsResp.status;
-            
-            if (!alertsResp.ok && alertsResp.status !== 0) {
-                this.error = `HTTP ${alertsResp.status}`;
-            } else if (alertsResp.status === 0) {
-                this.error = "Offline";
-            } else {
-                this.error = null;
-                const data = await alertsResp.json();
-                this.alerts = Array.isArray(data) ? data : [];
-                this.health = (healthResp && healthResp.ok) ? await healthResp.json() : null;
+            if (alertsResp) {
+                this.lastStatus = alertsResp.status;
+                
+                if (!alertsResp.ok && alertsResp.status !== 0) {
+                    this.error = `HTTP ${alertsResp.status}`;
+                } else if (alertsResp.status === 0) {
+                    this.error = "Offline";
+                } else {
+                    this.error = null;
+                    const data = await alertsResp.json();
+                    this.alerts = Array.isArray(data) ? data : [];
+                    this.health = (healthResp && healthResp.ok) ? await healthResp.json() : null;
+                }
             }
 
             this.notify();

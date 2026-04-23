@@ -73,7 +73,7 @@ export async function renderSignup() {
         const email = (document.querySelector('#signup-email') as HTMLInputElement).value
         const chatId = (document.querySelector('#signup-chat-id') as HTMLInputElement).value
         const pwd = (document.querySelector('#signup-password') as HTMLInputElement).value
-        try { await signup(email, pwd, chatId); renderLogin("Account created!", email); } catch (e: any) { (document.querySelector('#signup-error') as HTMLElement).textContent = "Registration failed."; }
+        try { await signup({ email, password: pwd, chat_id: chatId }); renderLogin("Account created!", email); } catch (e: any) { (document.querySelector('#signup-error') as HTMLElement).textContent = "Registration failed."; }
     })
 }
 
@@ -84,7 +84,27 @@ async function initDashboard() {
     try { user = await fetchMe(); if (user && !user.email) { logout(); return; } } catch (e) {}
     
     if (!user) {
-        user = { id: 'guest', email: 'Guest', chat_id: 'Guest', role: 'anonymous', tier: 'guest', expires_at: null };
+        user = { 
+            id: 'guest', 
+            email: 'Guest', 
+            chat_id: 'Guest', 
+            role: 'anonymous', 
+            tier: 'guest', 
+            expires_at: null,
+            features: {
+                pro_insights: false,
+                expert_intelligence: false,
+                team_admin: false,
+                custom_topics: false,
+                onboarding: false,
+                support: false
+            },
+            limits: {
+                impact_depth: 0,
+                topics: [],
+                reports: []
+            }
+        };
     }
 
     if (user) app.classList.remove('login-page');

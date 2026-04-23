@@ -1,20 +1,121 @@
+/**
+ * api.ts
+ * OSINT Risk Intelligence API Client
+ */
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
-let accessToken: string | null = localStorage.getItem('access_token');
+// --- Types & Interfaces ---
 
-/**
- * Global Logout Flag
- */
+export interface UserMe {
+    id: string;
+    email: string;
+    chat_id: string | null;
+    role: string;
+    tier: string;
+    expires_at: string | null;
+    features: {
+        pro_insights: boolean;
+        expert_intelligence: boolean;
+        team_admin: boolean;
+        custom_topics: boolean;
+        onboarding: boolean;
+        support: boolean;
+    };
+    limits: {
+        impact_depth: number;
+        topics: string[];
+        reports: string[];
+    };
+}
+
+export interface Alert {
+    id: string;
+    title?: string;
+    target_label: string;
+    topic: string;
+    severity: string;
+    triggered_at: string;
+    fidelity_score: number;
+    intensity: number;
+    is_locked: boolean;
+    description?: string;
+    country?: string;
+    intensity_display?: string;
+    intensity_label?: string;
+    location_lat?: number;
+    location_lng?: number;
+    cascading_impacts?: any[];
+    trigger_type?: string;
+    backbone_discovery_status?: string;
+    is_partial?: boolean;
+    intelligence_score?: number;
+    domain_count?: number;
+    spike_delta?: number;
+    delivery?: any;
+    related_report_id?: string;
+    evidence_list?: any[];
+    metadata_json?: any;
+}
+
+export interface Report {
+    id: string;
+    title: string;
+    summary: string;
+    content_markdown: string;
+    report_type: string;
+    topic_code: string;
+    created_at: string;
+}
+
+export interface AnalystProfile {
+    id: string;
+    email: string;
+    chat_id: string | null;
+    user_role: string;
+    subscription_tier: string;
+    watch_keywords: string[];
+}
+
+export interface HealthData {
+    review_rate: number;
+    suppression_ratio: number;
+    total_alerts: number;
+    high_fidelity_count: number;
+    status_summary: string;
+    last_week_total: number;
+}
+
+export interface ProInsights {
+    time_pressure: string;
+    causal_logic: string;
+    action_priority: string;
+    strategic_context: string;
+    risk_summary?: Record<string, any>;
+    sector_distribution?: Record<string, number>;
+    top_entities?: any[];
+    momentum_alerts?: Alert[];
+}
+
+export interface ExpertIntelligence {
+    counterfactuals: any[];
+    tail_risks: any[];
+    adversarial_take: string;
+    confidence_score: number;
+    scenario_outlook?: any[];
+    full_impact_chains?: any[];
+    cross_domain_risks?: any[];
+}
+
+export type SyncStatus = 'stable' | 'retrying' | 'offline';
+
+// --- State Management ---
+
 const getLoggingOut = () => sessionStorage.getItem("isLoggingOut") === "true";
 const setLoggingOut = (val: boolean) => {
     if (val) sessionStorage.setItem("isLoggingOut", "true");
     else sessionStorage.removeItem("isLoggingOut");
 };
-
-/**
- * Notifies the UI about API connectivity and auth health.
- */
-export type SyncStatus = 'stable' | 'retrying' | 'offline';
 
 function dispatchSyncEvent(status: SyncStatus) {
     window.dispatchEvent(new CustomEvent('api-sync-status', { 
@@ -22,10 +123,8 @@ function dispatchSyncEvent(status: SyncStatus) {
     }));
 }
 
-/**
- * [v11.9] Production Diagnostics: Standardized API Client
- * Stripped of redundant patch logic to isolate the root cause of connectivity failures.
- */
+// --- Core Fetch with Auth ---
+
 async function fetchWithAuth(url: string, options: RequestInit = {}, skipSyncEvent = false): Promise<Response> {
     if (getLoggingOut()) return new Response(null, { status: 401 });
 
@@ -47,6 +146,8 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, skipSyncEve
     }
 }
 
+// --- API Client ---
+
 export const apiClient = {
     async get(path: string, options: RequestInit = {}, skipSyncEvent = false) {
         const separator = path.includes('?') ? '&' : '?';
@@ -64,7 +165,31 @@ export const apiClient = {
     }
 };
 
-export async function fetchMe(): Promise<any | null> {
+// --- Exported API Functions ---
+
+export async function login(email: any, password?: string) { 
+    const data = typeof email === 'object' ? email : { email, password };
+    const resp = await apiClient.post('/auth/token', data); 
+    if (resp.ok) {
+        const body = await resp.json();
+        if (body.access_token) localStorage.setItem('access_token', body.access_token);
+    }
+    return resp;
+}
+
+export async function signup(email: any, password?: string, chat_id?: string) { 
+    const data = typeof email === 'object' ? email : { email, password, chat_id };
+    return await apiClient.post('/auth/signup', data); 
+}
+
+export async function logout() { 
+    setLoggingOut(true);
+    const resp = await apiClient.post('/auth/logout');
+    localStorage.removeItem('access_token');
+    return resp;
+}
+
+export async function fetchMe(_cache?: any): Promise<UserMe | null> {
     try {
         const resp = await apiClient.get('/auth/me', {}, true);
         if (!resp.ok) return null;
@@ -72,13 +197,64 @@ export async function fetchMe(): Promise<any | null> {
     } catch { return null; }
 }
 
-export async function fetchAlerts(params: Record<string, string> = {}): Promise<any[]> {
+export async function fetchAlerts(params: Record<string, string> = {}): Promise<Alert[]> {
     const query = new URLSearchParams(params).toString();
     const resp = await apiClient.get(`/alerts?${query}`);
     return resp.ok ? await resp.json() : [];
 }
 
-export async function fetchLiveAlerts(limit: number = 10): Promise<any[]> {
+export async function fetchAlert(id: string): Promise<Alert> {
+    const resp = await apiClient.get(`/alerts/${id}`);
+    if (!resp.ok) throw new Error("Alert not found");
+    return await resp.json();
+}
+
+export async function fetchLiveAlerts(limit: number = 10): Promise<Alert[]> {
     const resp = await apiClient.get(`/alerts/live?limit=${limit}`);
     return resp.ok ? await resp.json() : [];
+}
+
+export async function fetchReports(_cache?: any, _force?: boolean): Promise<Report[]> {
+    const resp = await apiClient.get('/reports');
+    return resp.ok ? await resp.json() : [];
+}
+
+export async function fetchReport(id: string): Promise<Report> {
+    const resp = await apiClient.get(`/reports/${id}`);
+    if (!resp.ok) throw new Error("Report not found");
+    return await resp.json();
+}
+
+export async function fetchAnalysts(): Promise<AnalystProfile[]> {
+    const resp = await apiClient.get('/analysts');
+    return resp.ok ? await resp.json() : [];
+}
+
+export async function updateWatchlist(id: string, kw: string[]) {
+    return await apiClient.post(`/analysts/${id}/watchlist`, { watchlist: kw });
+}
+
+export async function fetchProInsights(alertId?: string): Promise<ProInsights | null> {
+    const path = alertId ? `/alerts/${alertId}/insights/pro` : '/analytics/insights/pro';
+    const resp = await apiClient.get(path);
+    return resp.ok ? await resp.json() : null;
+}
+
+export async function fetchExpertIntelligence(alertId?: string): Promise<ExpertIntelligence | null> {
+    const path = alertId ? `/alerts/${alertId}/insights/expert` : '/analytics/insights/expert';
+    const resp = await apiClient.get(path);
+    return resp.ok ? await resp.json() : null;
+}
+
+export async function fetchCheckoutSession(tier: string, email?: string) {
+    const resp = await apiClient.post('/payments/create-checkout', { tier, email });
+    return await resp.json();
+}
+
+export async function cancelSubscription() {
+    return await apiClient.post('/payments/cancel');
+}
+
+export async function submitFeedback(alertId: string, score: number) {
+    return await apiClient.post(`/alerts/${alertId}/feedback`, { score });
 }
