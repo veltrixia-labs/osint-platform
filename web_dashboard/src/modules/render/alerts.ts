@@ -1,5 +1,5 @@
 import { type Alert } from '../api';
-import { getTopicDef, canAccessTopic } from '../topics';
+import { getTopicDef } from '../topics';
 
 /**
  * [v34] Simplified Evidence Modal for Live Alerts (Non-global)
