@@ -400,19 +400,6 @@ function getStrengthColor(value: number): string {
     return '#2ecc71'; // 緑
 }
 
-function getShortNodeLabel(node: BackboneNode): string {
-    if (node.ticker) return node.ticker;
-
-    return node.name
-        .replace('Corporation', 'Corp.')
-        .replace('Company', 'Co.')
-        .replace('Limited', 'Ltd.')
-        .replace('International', 'Intl.')
-        .replace('Incorporated', 'Inc.')
-        .replace('Authority', 'Auth.')
-        .replace('Organization', 'Org.');
-}
-
 function initMapFilter() {
     const container = document.getElementById('map-filter');
     if (!container) return;

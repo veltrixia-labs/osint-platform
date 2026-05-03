@@ -56,8 +56,8 @@ export interface Alert {
     intelligence_score?: number;
     is_high_fidelity?: boolean;
     is_partial?: boolean;
-    backbone_discovery_status?: string;
     is_locked: boolean;
+    metadata_json?: any;
 }
 
 export interface Report {

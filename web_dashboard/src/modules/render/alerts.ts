@@ -1,6 +1,5 @@
-import { apiClient, type Alert } from '../api';
+import { type Alert } from '../api';
 import { getTopicDef, canAccessTopic } from '../topics';
-import { formatIntensity } from './utils';
 
 /**
  * [v34] Simplified Evidence Modal for Live Alerts (Non-global)
@@ -112,7 +111,6 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
 
     container.innerHTML = sortedAlerts.map(alert => {
         const topicDef = getTopicDef(alert.topic);
-        const accessible = canAccessTopic(userTier, topicDef);
         const severityClass = alert.severity.toLowerCase();
         const date = new Date(alert.triggered_at);
 
@@ -133,12 +131,6 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         const isGuest = userTier === 'guest' || userTier === 'free';
         const isPro = userTier === 'pro';
         const isExpert = userTier === 'experts' || userTier === 'enterprise';
-
-        // Source Summary logic
-        const sourceSummary = alert.evidence_list && alert.evidence_list.length > 0
-            ? alert.evidence_list.map((e: any) => e.domain || 'OSINT').slice(0, 3).join(', ')
-            + (alert.evidence_list.length > 3 ? ` +${alert.evidence_list.length - 3}` : '')
-            : 'Internal Signal';
 
         const count = alert.evidence_list?.length || 0;
 
