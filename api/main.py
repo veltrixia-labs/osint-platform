@@ -39,6 +39,7 @@ from api.routes.analysts import router as analysts_router
 from api.routes.system import router as system_router
 from api.routes.analytics import router as analytics_router
 from api.routes.insights import router as insights_router
+from api.routes.backbone import router as backbone_router
 
 # Production Traceability
 COMMIT_HASH = "v11.1.2-AURORA-SYNC"
@@ -215,6 +216,7 @@ app.include_router(analysts_router, prefix="/api")
 app.include_router(system_router, prefix="/api")
 app.include_router(analytics_router, prefix="/api")
 app.include_router(insights_router, prefix="/api")
+app.include_router(backbone_router, prefix="/api")
 
 # ── Auth Endpoints ─────────────────────────────────────────────────────────────
 

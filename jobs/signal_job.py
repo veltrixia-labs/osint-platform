@@ -6,7 +6,7 @@ from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from db.database import AsyncSessionLocal
-from db.models import Item, ItemTopic, SignalRanking, AnalysisCache
+from db.models import Item, ItemTopic, SignalRanking, AnalysisCache, TrendSignal
 from llm.client import generate_analysis
 
 logging.basicConfig(level=logging.INFO)
@@ -27,16 +27,47 @@ TOPIC_SIGNAL_TYPES = [
     ("Top 10 Supply Chain Intelligence Signals", "supply_chain_intelligence"),
 ]
 
+VALID_STRATEGIC_TOPICS = {
+    "energy_resource_risk",
+    "global_market_intelligence",
+    "crypto_geopolitics",
+    "ai_semiconductor_intelligence",
+    "defense_technology",
+    "supply_chain_intelligence",
+}
+
+def normalize_strategic_topic(raw_topic=None, source_group=None, title=""):
+    if raw_topic in VALID_STRATEGIC_TOPICS:
+        return raw_topic
+
+    if source_group in VALID_STRATEGIC_TOPICS:
+        return source_group
+
+    text = (title or "").lower()
+
+    if any(k in text for k in ["oil", "gas", "lng", "energy", "pipeline", "mining", "crude"]):
+        return "energy_resource_risk"
+    if any(k in text for k in ["ship", "shipping", "port", "freight", "logistics", "supply chain", "container"]):
+        return "supply_chain_intelligence"
+    if any(k in text for k in ["defense", "military", "missile", "navy", "army", "drone", "nato"]):
+        return "defense_technology"
+    if any(k in text for k in ["ai", "semiconductor", "chip", "gpu", "data center"]):
+        return "ai_semiconductor_intelligence"
+    if any(k in text for k in ["bitcoin", "crypto", "stablecoin", "blockchain"]):
+        return "crypto_geopolitics"
+
+    return "global_market_intelligence"
+
 from analysis.clustering import cluster_items
 from analysis.signal_engine import run_signal_engine
 from sqlalchemy import delete
 
 async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_topic: str | None = None):
     now = datetime.now(timezone.utc)
-    start_time = now - timedelta(days=1)
+    start_time = now - timedelta(days=30)
     
     # 1. Fetch Candidates
-    stmt = select(Item).where(Item.published_at >= start_time)
+    stmt = select(Item).where((Item.published_at == None) | (Item.published_at >= start_time))
     if filter_topic:
         # Check topic via ItemTopic or rough_category
         stmt = stmt.where((Item.category == filter_topic) | (Item.rough_category == filter_topic))
@@ -69,7 +100,7 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
     from analysis.signal_engine import calculate_cluster_signal
     from db.models import EventCluster
     
-    cluster_stmt = select(EventCluster).where(EventCluster.created_at >= now - timedelta(hours=24))
+    cluster_stmt = select(EventCluster).where(EventCluster.created_at >= now - timedelta(days=30))
     clusters = (await db.execute(cluster_stmt)).scalars().all()
     
     if not clusters:
@@ -97,22 +128,50 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
             
         score = await calculate_cluster_signal(cluster, cluster_items_list)
         # Use the representative item for ranking pool
-        final_scored_pool.append((score, cluster_items_list[0]))
+        final_scored_pool.append((score, cluster_items_list))
 
     # 4. Rank and Store
     final_scored_pool.sort(key=lambda x: x[0], reverse=True)
     top_items = final_scored_pool[:10]
+    for score, items in top_items:
+        representative = items[0]
+
+        topic = normalize_strategic_topic(
+            raw_topic=representative.category,
+            source_group=representative.rough_category,
+            title=representative.title
+        )
+
+        sig = TrendSignal(
+            created_at=datetime.now(timezone.utc),
+            topic=topic,
+            trend_type="risk_acceleration",
+            target_label=representative.title,
+            intensity_score=float(score),
+            metrics_json={
+                "baseline": 0.0,
+                "recent": float(score),
+                "delta": float(score),
+                "supporting_cluster_count": len(items),
+                "cluster_id": str(representative.cluster_id) if representative.cluster_id else None,
+                "supporting_events": [item.title for item in items[:10]]
+            }
+        )
+
+        db.add(sig)
     
     # Clear existing rankings for this type
     await db.execute(delete(SignalRanking).where(SignalRanking.signal_type == signal_type))
     
-    for rank, (score, item) in enumerate(top_items, 1):
+    for rank, (score, items) in enumerate(top_items, 1):
+        representative = items[0]
+
         db.add(SignalRanking(
             signal_type=signal_type,
             period_start=start_time,
             period_end=now,
             rank=rank,
-            item_id=item.id,
+            item_id=representative.id,
             score=float(score)
         ))
         
@@ -124,13 +183,6 @@ async def run_signal(db: AsyncSession):
     for signal_type, topic_code in TOPIC_SIGNAL_TYPES:
         await generate_rankings_for_type(db, signal_type, filter_topic=topic_code)
     logger.info("Signal job finished.")
-
-if __name__ == "__main__":
-    async def main():
-        async with AsyncSessionLocal() as session:
-            await run_signal(session)
-    asyncio.run(main())
-
 
 if __name__ == "__main__":
     async def main():

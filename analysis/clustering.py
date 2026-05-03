@@ -104,7 +104,7 @@ def calculate_merge_confidence(group1: List[Item], group2: List[Item]) -> Dict[s
     
     # Base similarities
     lex_sim = calculate_similarity(t1, t2)
-    geo_sim = calculate_similarity(e1["geo"], e2["geo"])
+    geo_sim = calculate_similarity(e1["geo"], e2["geo"]) * 1.2
     org_sim = calculate_similarity(e1["org"], e2["org"])
     sector_sim = calculate_similarity(e1["sector"], e2["sector"])
     
@@ -121,9 +121,9 @@ def calculate_merge_confidence(group1: List[Item], group2: List[Item]) -> Dict[s
     
     # Agreement Bonus
     if match_points >= 2:
-        score += 0.25
+        score += 0.30
     if match_points >= 3:
-        score += 0.2
+        score += 0.25
         
     return {
         "score": min(score, 1.0),
@@ -155,12 +155,12 @@ def calculate_similarity(tokens1: Set[str], tokens2: Set[str]) -> float:
 
 # Category Threshold Mapping
 CATEGORY_THRESHOLDS = {
-    "geopolitics": 0.15,
-    "economy": 0.18,
-    "cyber": 0.22,
-    "supply_chain": 0.15,
-    "defense": 0.15,
-    "default": 0.18
+    "geopolitics": 0.12,
+    "economy": 0.14,
+    "cyber": 0.18,
+    "supply_chain": 0.12,
+    "defense": 0.12,
+    "default": 0.15
 }
 
 async def cluster_items(db: Session, items: List[Item], base_threshold: float = 0.18) -> Dict:
@@ -248,7 +248,13 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
     
     # 2. Divide existing into 1h (Fast Path) and 24h (Deep Path)
     limit_1h = datetime.now(timezone.utc) - timedelta(hours=1)
-    recent_1h = [c for c in existing_clusters if c.created_at >= limit_1h]
+    recent_1h = []
+    for c in existing_clusters:
+        dt = c.created_at
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        if dt >= limit_1h:
+            recent_1h.append(c)
     
     valid_clusters = []
     for cluster in clusters:

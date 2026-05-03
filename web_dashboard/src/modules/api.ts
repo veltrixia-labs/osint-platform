@@ -42,24 +42,22 @@ export interface Alert {
     triggered_at: string;
     fidelity_score: number;
     intensity: number;
-    is_locked: boolean;
-    description?: string;
+    intensity_label: string;
+    intensity_display: string;
+    status: string;
     country?: string;
-    intensity_display?: string;
-    intensity_label?: string;
+    description?: string;
+    source_url?: string;
+    evidence_list?: any[];
+    cascading_impacts?: any[];
     location_lat?: number;
     location_lng?: number;
-    cascading_impacts?: any[];
-    trigger_type?: string;
-    backbone_discovery_status?: string;
-    is_partial?: boolean;
-    intelligence_score?: number;
-    domain_count?: number;
-    spike_delta?: number;
-    delivery?: any;
     related_report_id?: string;
-    evidence_list?: any[];
-    metadata_json?: any;
+    intelligence_score?: number;
+    is_high_fidelity?: boolean;
+    is_partial?: boolean;
+    backbone_discovery_status?: string;
+    is_locked: boolean;
 }
 
 export interface Report {
@@ -122,8 +120,8 @@ const setLoggingOut = (val: boolean) => {
 };
 
 function dispatchSyncEvent(status: SyncStatus) {
-    window.dispatchEvent(new CustomEvent('api-sync-status', { 
-        detail: { status, timestamp: new Date() } 
+    window.dispatchEvent(new CustomEvent('api-sync-status', {
+        detail: { status, timestamp: new Date() }
     }));
 }
 
@@ -135,7 +133,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, skipSyncEve
     const headers = new Headers(options.headers || {});
     const token = localStorage.getItem('access_token');
     if (token) headers.set('Authorization', `Bearer ${token}`);
-    
+
     try {
         const resp = await fetch(url, { ...options, headers });
         if (!skipSyncEvent) {
@@ -171,9 +169,9 @@ export const apiClient = {
 
 // --- Exported API Functions ---
 
-export async function login(email: any, password?: string) { 
+export async function login(email: any, password?: string) {
     const data = typeof email === 'object' ? email : { email, password };
-    const resp = await apiClient.post('/auth/token', data); 
+    const resp = await apiClient.post('/auth/token', data);
     if (resp.ok) {
         const body = await resp.json();
         if (body.access_token) localStorage.setItem('access_token', body.access_token);
@@ -181,12 +179,12 @@ export async function login(email: any, password?: string) {
     return resp;
 }
 
-export async function signup(email: any, password?: string, chat_id?: string) { 
+export async function signup(email: any, password?: string, chat_id?: string) {
     const data = typeof email === 'object' ? email : { email, password, chat_id };
-    return await apiClient.post('/auth/signup', data); 
+    return await apiClient.post('/auth/signup', data);
 }
 
-export async function logout() { 
+export async function logout() {
     setLoggingOut(true);
     const resp = await apiClient.post('/auth/logout');
     localStorage.removeItem('access_token');
@@ -261,4 +259,33 @@ export async function cancelSubscription() {
 
 export async function submitFeedback(alertId: string, score: number) {
     return await apiClient.post(`/alerts/${alertId}/feedback`, { score });
+}
+
+export type BackboneDependency = {
+    target: string;
+    type: string;
+    weight: number;
+};
+
+export type BackboneNode = {
+    name: string;
+    ticker?: string | null;
+    sector: string;
+    country: string;
+    location: {
+        lat: number;
+        lng: number;
+    };
+    description: string;
+    top_dependencies: BackboneDependency[];
+};
+
+export async function fetchBackbone(sector: string): Promise<BackboneNode[]> {
+    const resp = await apiClient.get(`/backbone/${sector}`);
+
+    if (!resp.ok) {
+        throw new Error(`Failed to fetch backbone sector: ${sector}`);
+    }
+
+    return await resp.json();
 }

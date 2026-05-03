@@ -2,6 +2,8 @@ import asyncio
 import logging
 from jobs.main_scheduler import main as scheduler_main
 from db.database import engine, Base
+from api.routes.backbone import router as backbone_router
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -81,15 +81,15 @@ type TabId = 'feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | '
 
 async function initDashboard() {
     let user: UserMe | null = null;
-    try { user = await fetchMe(); if (user && !user.email) { logout(); return; } } catch (e) {}
-    
+    try { user = await fetchMe(); if (user && !user.email) { logout(); return; } } catch (e) { }
+
     if (!user) {
-        user = { 
-            id: 'guest', 
-            email: 'Guest', 
-            chat_id: 'Guest', 
-            role: 'anonymous', 
-            tier: 'guest', 
+        user = {
+            id: 'guest',
+            email: 'Guest',
+            chat_id: 'Guest',
+            role: 'anonymous',
+            tier: 'guest',
             expires_at: null,
             features: {
                 pro_insights: false,
@@ -116,10 +116,10 @@ async function initDashboard() {
     });
 
     let currentTab: TabId = 'feed';
-    
+
     const renderBaseUI = () => {
-      const graceBanner = user ? renderGracePeriodBanner(user) : '';
-      app.innerHTML = `
+        const graceBanner = user ? renderGracePeriodBanner(user) : '';
+        app.innerHTML = `
       <div class="mobile-header">
         <div class="u-flex"><span style="font-weight:700; color:var(--accent);">VELTRIXIA</span></div>
         <button class="hamburger" id="mobile-menu-btn">☰</button>
@@ -141,10 +141,10 @@ async function initDashboard() {
         </main>
       </div>
       `;
-      document.querySelector('#mobile-menu-btn')?.addEventListener('click', () => {
-        document.querySelector('#sidebar')?.classList.toggle('active');
-        document.querySelector('#mobile-overlay')?.classList.toggle('active');
-      });
+        document.querySelector('#mobile-menu-btn')?.addEventListener('click', () => {
+            document.querySelector('#sidebar')?.classList.toggle('active');
+            document.querySelector('#mobile-overlay')?.classList.toggle('active');
+        });
     };
 
     renderBaseUI();
@@ -156,11 +156,11 @@ async function initDashboard() {
         const { status } = e.detail;
         const hud = document.getElementById('sync-hud');
         if (!hud) return;
-        
+
         const dot = hud.querySelector('.sync-dot');
         const label = hud.querySelector('.sync-label');
         const time = hud.querySelector('.sync-time');
-        
+
         if (dot) {
             // Remove all possible status classes
             dot.classList.remove('sync-dot--init', 'sync-dot--stable', 'sync-dot--retrying', 'sync-dot--offline');
@@ -187,20 +187,26 @@ async function initDashboard() {
         const mainContent = document.querySelector<HTMLElement>('.main-content');
         const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
         const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
+        const mainTitle = document.querySelector<HTMLElement>('#main-title');
+        if (mainTitle) {
+            mainTitle.textContent = tab === 'map'
+                ? 'Global Intelligence Map'
+                : 'Analyst Intelligence';
+        }
 
         if (mainContent) mainContent.style.opacity = '0';
         setTimeout(() => {
             const isFeedLike = ['feed', 'plans', 'reports', 'legal', 'pro-insights', 'expert-intel'].includes(tab);
             if (feedContainer) feedContainer.style.display = isFeedLike ? 'block' : 'none';
             if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
-            
+
             if (tab === 'feed') renderIntelligenceFeed();
             else if (tab === 'plans') renderSubscriptionTab(user!, alertsContainer, () => handleTabSwitch('plans'));
             else if (tab === 'reports') renderReports();
             else if (tab === 'map') renderMap(mapContainer!, user!.tier, focusAlertId);
             else if (tab === 'pro-insights') renderPro(alertsContainer, user!, () => handleTabSwitch('plans'));
             else if (tab === 'expert-intel') renderExpert(alertsContainer, user!, () => handleTabSwitch('plans'));
-            
+
             if (mainContent) mainContent.style.opacity = '1';
         }, 50);
     };
@@ -223,7 +229,7 @@ async function initDashboard() {
         const state = new DashboardState(user!.tier);
         state.subscribe((data) => {
             if (currentTab !== 'feed') return;
-            
+
             // [v12.0] Feed Error Separation Logic
             if (data.error || data.lastStatus >= 400) {
                 alertsContainer.innerHTML = `
@@ -264,7 +270,7 @@ async function initDashboard() {
             }
             alertsContainer.innerHTML = `<div class="reports-list">${reports.map(r => `<div class="report-row" onclick="window.dispatchEvent(new CustomEvent('view-report', {detail:{reportId:'${r.id}'}}))">${r.title}</div>`).join('')}</div>`;
         } catch (err: any) {
-             alertsContainer.innerHTML = `
+            alertsContainer.innerHTML = `
                 <div class="u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 8px; margin-top: 2rem;">
                     <div style="color: #ff7b72; font-weight: 600;">Intelligence Retrieval Failed</div>
                     <div style="font-size: var(--font-xs); color: #8b949e; margin-top: 0.5rem;">${err.message || 'Failed to sync with report repository.'}</div>
@@ -299,7 +305,7 @@ async function initDashboard() {
 
 // Global Core
 const startHeartbeat = () => {
-    setInterval(async () => { try { await fetchMe(); } catch (e) {} }, 5 * 60 * 1000);
+    setInterval(async () => { try { await fetchMe(); } catch (e) { } }, 5 * 60 * 1000);
 };
 
 initDashboard().then(() => { startHeartbeat(); });

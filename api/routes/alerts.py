@@ -100,6 +100,7 @@ async def get_alerts(
             "location_lng": a.location_lng,
             "description": a.metadata_json.get("description") if a.metadata_json else None,
             "country": a.metadata_json.get("country") if a.metadata_json else None,
+            "source_url": next((e.get("url") or e.get("link") for e in a.metadata_json.get("evidence_list", []) if e.get("url") or e.get("link")), None) if a.metadata_json else None,
             "is_partial": False,
             "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
             "intensity_display": f"{a.intensity:.1f}",
@@ -177,6 +178,7 @@ async def get_live_alerts(
             "location_lng": a.location_lng,
             "description": a.metadata_json.get("description") if a.metadata_json else None,
             "country": a.metadata_json.get("country") if a.metadata_json else None,
+            "source_url": next((e.get("url") or e.get("link") for e in a.metadata_json.get("evidence_list", []) if e.get("url") or e.get("link")), None) if a.metadata_json else None,
             "is_partial": False,
             "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
             "intensity_display": f"{a.intensity:.1f}",
@@ -245,7 +247,8 @@ async def get_alert(
         "is_partial": False,
         "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
         "intensity_display": f"{a.intensity:.1f}",
-        "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle"
+        "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle",
+        "source_url": next((e.get("url") or e.get("link") for e in a.metadata_json.get("evidence_list", []) if e.get("url") or e.get("link")), None) if a.metadata_json else None
     }
 
     # Apply restrictions for non-Pro or locked topics

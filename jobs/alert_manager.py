@@ -11,6 +11,8 @@ from db.models import TrendSignal, EventCluster, Item, AlertLog, Report, Analyst
 from urllib.parse import urlparse
 from processor.location_resolver import LocationResolver
 
+logging.basicConfig(level=logging.INFO)
+
 resolver = LocationResolver()
 # [v14.3] Global set to prevent weak-reference garbage collection of background asyncio tasks
 _bg_tasks = set()
@@ -82,8 +84,8 @@ class AlertManager:
             
             # 2. Determine Severity (Priority: Critical > Elevated > Watch)
             severity = cls._determine_severity(sig.intensity_score, spike_delta, domain_count)
-            if not severity or severity == "watch":
-                logger.debug(f"Signal for {sig.target_label} kept as Report Source (Severity: {severity}).")
+            if not severity:
+                logger.debug(f"Signal for {sig.target_label} suppressed: no severity.")
                 continue
 
             # 3. Escalation & Intensification-Aware Deduplication
@@ -373,10 +375,26 @@ class AlertManager:
 
 async def run_alert_manager(db):
     """Refined entry point for Phase 22."""
-    limit = datetime.now(timezone.utc) - timedelta(minutes=15)
+    logger.info("Starting alert manager")
+
+    limit = datetime.now(timezone.utc) - timedelta(hours=30)
     stmt = select(TrendSignal).where(TrendSignal.created_at >= limit)
     new_sigs = (await db.execute(stmt)).scalars().all()
-    
+
+    logger.info(f"Found {len(new_sigs)} TrendSignals since {limit.isoformat()}")
+
     if new_sigs:
         await AlertManager.evaluate_and_send(db, new_sigs)
         await db.commit()
+        logger.info("Alert manager finished")
+    else:
+        logger.info("No TrendSignals found. Nothing to alert.")
+
+if __name__ == "__main__":
+    from db.database import AsyncSessionLocal
+
+    async def main():
+        async with AsyncSessionLocal() as session:
+            await run_alert_manager(session)
+
+    asyncio.run(main())
