@@ -1,3 +1,19 @@
+"""
+FastAPI application entrypoint.
+
+Ensures the repository root is on ``sys.path`` so ``from api.routes...`` resolves
+when the process cwd is not the repo root (e.g. some Render / container layouts).
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parent.parent
+_root_str = str(_ROOT)
+if _root_str not in sys.path:
+    sys.path.insert(0, _root_str)
+
 from fastapi import FastAPI, HTTPException, Depends, Request, Response, status
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
