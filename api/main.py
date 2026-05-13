@@ -6,13 +6,13 @@ when the process cwd is not the repo root (e.g. some Render / container layouts)
 """
 from __future__ import annotations
 
+import os
 import sys
-from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parent.parent
-_root_str = str(_ROOT)
-if _root_str not in sys.path:
-    sys.path.insert(0, _root_str)
+# プロジェクトのルート（api や jobs の一段上の階層）を検索パスの先頭に追加
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if root_path not in sys.path:
+    sys.path.insert(0, root_path)
 
 from fastapi import FastAPI, HTTPException, Depends, Request, Response, status
 from pydantic import BaseModel

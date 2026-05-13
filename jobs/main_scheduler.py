@@ -1,8 +1,16 @@
-import asyncio
 import os
+import sys
+
+# プロジェクトのルート（api や jobs の一段上の階層）を検索パスの先頭に追加
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if root_path not in sys.path:
+    sys.path.insert(0, root_path)
+
+import asyncio
 import schedule
 import logging
 from datetime import datetime, timezone
+
 from db.database import AsyncSessionLocal
 from db.seeding import seed_admin
 from jobs.ingest_job import run_ingest
@@ -23,6 +31,7 @@ from jobs.cleanup_job import (
 )
 from jobs.entity_lifecycle import run_entity_lifecycle  # [v10.21]
 from processor.impact_discovery import ImpactDiscoveryEngine # [v12.0]
+from jobs.pro_automation_manager import run_scheduled_pro_automation
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -164,6 +173,10 @@ async def run_ops_monitoring():
     # [v10.21] Entity Lifecycle: recalculate scores and prune obsolete tactical nodes
     await run_entity_lifecycle(db_pressure_critical=False)
 
+async def pro_automation_wrapper():
+    """Wrapper for Pro Structural Brief automation."""
+    await run_scheduled_pro_automation()
+
 def register_jobs():
     logger.info("Registering job schedules (Async Native Mapping)...")
     
@@ -195,6 +208,10 @@ def register_jobs():
 
     # Phase 4: Self-Learning Feedback Loop (Daily at 02:00)
     schedule.every().day.at("02:00").do(schedule_async, "learning_loop", run_learning_wrapper)
+
+    # Phase 7: Pro Structural Brief Automation
+    pro_interval = int(os.getenv("PRO_AUTOMATION_INTERVAL_HOURS", "6"))
+    schedule.every(pro_interval).hours.do(schedule_async, "pro_automation", pro_automation_wrapper)
 
 async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""
