@@ -5,6 +5,8 @@ import logging
 import httpx
 from dotenv import load_dotenv
 
+from integrations.threads_client import threads_mock_force_enabled
+
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
@@ -15,10 +17,19 @@ async def post_to_threads(text: str):
     Post to Threads using Meta Graph API with Mock fallback for local testing.
     Includes simplified duplicate prevention (logging based).
     """
-    token = os.getenv("THREADS_TOKEN")
+    if threads_mock_force_enabled():
+        logger.warning("THREADS_MOCK_FORCE enabled — skipping Graph API in post_to_threads.")
+        logger.info(f"[THREADS MOCK POST]: {text}")
+        return True
+
+    token = os.getenv("THREADS_ACCESS_TOKEN") or os.getenv("THREADS_TOKEN")
     user_id = os.getenv("THREADS_USER_ID")
+    env_name = os.getenv("ENV", "development").lower()
 
     if not all([token, user_id]):
+        if env_name == "production":
+            logger.error("Threads API credentials missing in production environment.")
+            return False
         logger.warning("Threads API credentials not found in .env. Using Mock mode.")
         logger.info(f"[THREADS MOCK POST]: {text}")
         return True

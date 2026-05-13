@@ -2,10 +2,54 @@ import os
 import asyncio
 import httpx
 import logging
+import uuid
 from datetime import datetime, timezone
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 logger = logging.getLogger(__name__)
+
+
+def threads_mock_force_enabled() -> bool:
+    """When true, never call the Threads Graph API (safe for Render / staging)."""
+    return os.getenv("THREADS_MOCK_FORCE", "").lower() in ("1", "true", "yes")
+
+
+class MockThreadsClient:
+    """
+    Deterministic no-network Threads client for THREADS_MOCK_FORCE or dry runs.
+    Same ``post_thread`` / ``refresh_access_token`` surface as ThreadsClient.
+    """
+
+    async def refresh_access_token(self) -> Optional[str]:
+        return None
+
+    async def post_thread(self, text: str, poll_interval: int = 2, max_retries: int = 15) -> Dict:
+        cid = f"mock-{uuid.uuid4().hex[:12]}"
+        mid = f"mock-media-{uuid.uuid4().hex[:12]}"
+        logger.info("[THREADS MOCK] post_thread success (no Graph API call). preview=%r", (text or "")[:80])
+        return {
+            "success": True,
+            "container_id": cid,
+            "media_id": mid,
+            "published_at": datetime.now(timezone.utc).isoformat(),
+            "error": None,
+        }
+
+
+def create_threads_posting_client(
+    access_token: str,
+    user_id: str,
+    app_id: Optional[str] = None,
+    app_secret: Optional[str] = None,
+) -> Union["ThreadsClient", MockThreadsClient]:
+    """
+    Returns MockThreadsClient when THREADS_MOCK_FORCE=true, regardless of real tokens.
+    """
+    if threads_mock_force_enabled():
+        logger.warning("THREADS_MOCK_FORCE is enabled — using MockThreadsClient.")
+        return MockThreadsClient()
+    return ThreadsClient(access_token, user_id, app_id, app_secret)
+
 
 class ThreadsClient:
     def __init__(

@@ -9,9 +9,7 @@ from sqlalchemy.future import select
 from db.database import AsyncSessionLocal
 from db.models import ExternalPost, Report
 from sqlalchemy import func
-from db.database import AsyncSessionLocal
-from db.models import ExternalPost, Report
-from integrations.threads_client import ThreadsClient
+from integrations.threads_client import create_threads_posting_client, threads_mock_force_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +79,7 @@ async def run_threads_publisher(db: AsyncSession):
     app_id = os.getenv("THREADS_APP_ID")
     app_secret = os.getenv("THREADS_APP_SECRET")
     dry_run = os.getenv("DRY_RUN_THREADS", "true").lower() == "true"
+    mock_force = threads_mock_force_enabled()
     
     async with httpx.AsyncClient() as client:
         for post in pending_posts:
@@ -120,15 +119,20 @@ async def run_threads_publisher(db: AsyncSession):
             # 5. Execute Thread Post
             logger.info(f"Report is LIVE! Attempting Threads post for Report {report.id}...")
             
-            if dry_run:
+            if dry_run and not mock_force:
                 logger.info(f"[DRY RUN] Would post to Threads: {normalized_text[:50]}...")
-                post.status = "success" # Just for mock advancement
+                post.status = "success"  # advance queue without network
             else:
                 try:
-                    t_client = ThreadsClient(access_token, user_id, app_id, app_secret)
-                    if app_secret:
+                    t_client = create_threads_posting_client(
+                        access_token or "",
+                        user_id or "",
+                        app_id,
+                        app_secret,
+                    )
+                    if app_secret and not mock_force:
                         await t_client.refresh_access_token()
-                    
+
                     result = await t_client.post_thread(normalized_text)
                     if result["success"]:
                         post.status = "success"

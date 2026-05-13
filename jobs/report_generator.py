@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Any, Dict, Set
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from db.database import AsyncSessionLocal
-from db.models import SignalRanking, Item, Report, EventCluster, TrendSignal, ExternalPost, ItemTopic
+from db.models import SignalRanking, Item, Report, EventCluster, TrendSignal, ExternalPost, ItemTopic, Stakeholder, Dependency
 from db.enums import PlanTier, ReportType
 from llm.prompts import SYSTEM_PROMPT, NEUTRAL_ANALYSIS_PROMPT, LLM_POLISH_PROMPT
 from llm.client import generate_analysis, get_metrics_summary
@@ -18,11 +18,12 @@ TREND_LOOKBACK_DAYS = 7
 from processor.location_resolver import LocationResolver
 
 resolver = LocationResolver()
-from integrations.threads_client import ThreadsClient
+from integrations.threads_client import create_threads_posting_client, threads_mock_force_enabled
 logger = logging.getLogger(__name__)
 
 from render.markdown_builder import build_publish_markdown, build_teaser_markdown, build_degraded_markdown
 from render.safety_checker import check_safety
+from analysis.free_company_matcher import match_news_to_companies
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Tiered Analysis Prompts
@@ -222,6 +223,7 @@ async def handle_threads_autopost(db: AsyncSession, report_id: uuid.UUID, teaser
     access_token = os.getenv("THREADS_ACCESS_TOKEN")
     user_id = os.getenv("THREADS_USER_ID")
     dry_run = os.getenv("DRY_RUN_THREADS", "true").lower() == "true"
+    mock_force = threads_mock_force_enabled()
     
     # 1. Topic Gating (Global only for now)
     if topic != "global":
@@ -272,7 +274,7 @@ async def handle_threads_autopost(db: AsyncSession, report_id: uuid.UUID, teaser
         return
 
     # 7. Execution (Guarded)
-    if dry_run:
+    if dry_run and not mock_force:
         logger.info(f"[DRY RUN] Would post to Threads: {normalized_text[:50]}...")
         return
 
@@ -280,11 +282,16 @@ async def handle_threads_autopost(db: AsyncSession, report_id: uuid.UUID, teaser
     
     app_id = os.getenv("THREADS_APP_ID")
     app_secret = os.getenv("THREADS_APP_SECRET")
-    client = ThreadsClient(access_token, user_id, app_id, app_secret)
+    client = create_threads_posting_client(
+        access_token or "",
+        user_id or "",
+        app_id,
+        app_secret,
+    )
     
     try:
         # 7.1 Token Refresh (Safety first)
-        if app_secret:
+        if app_secret and not mock_force:
             await client.refresh_access_token()
             # Note: client.access_token is updated internally
 
@@ -318,17 +325,22 @@ async def _should_generate_report_for_system(db: AsyncSession, report_type: str)
 
 async def run_report_generation(
     db: AsyncSession,
-    report_type: str = "daily",
-    period_days: int = 1,
+    report_type: str = "weekly",
+    period_days: int = 7,
     topic: str | None = None,
     auto_post_threads: bool = False
 ) -> Tuple[str, str, str]: # returns (teaser_md, status, reason)
     """
     Unified report generation: Fetches items, clusters them, extracts themes, 
-    and applies tiered LLM analysis (Pro/Expert) or Rule-based synthesis (Daily).
+    and applies tiered LLM analysis (Pro/Expert).
     """
     logger.info(f"Generating report: {report_type} | topic={topic}")
     
+    current_type = (report_type or "weekly").lower()
+    if current_type == ReportType.DAILY.value or current_type == "daily_global":
+        logger.info("Free daily reports are deprecated. Skipping generation.")
+        return "", "skipped", "Free daily reports deprecated. Use Free Alert Feed."
+        
     if not await _should_generate_report_for_system(db, report_type):
         logger.info(f"Skipping {report_type} report: No active users meet the tier requirements.")
         return "", "skipped", "Insufficient global tier"
@@ -440,34 +452,61 @@ async def run_report_generation(
     trend_context_str = "\n\n".join(trend_context_list) if trend_context_list else "No significant trends detected."
 
     # 4. Content Generation
-    forecasts = generate_forecasts([effective_topic] if effective_topic else ["global"], " ".join(themes), avg_score)
-    scenarios = generate_scenarios(avg_score, forecasts, domain=effective_topic)
-    
-    skeleton_content = build_substack_skeleton(
-        themes, [], forecasts, scenarios, [it.source_url for it in items],
-        trends=skeleton_trends, domain=effective_topic
-    )
-    
     current_type = (report_type or "daily").lower()
     plan_required = PlanTier.FREE.value
     status = "success"
-    final_content = skeleton_content
-    
-    # Tiered Analysis Logic
-    if current_type == ReportType.DAILY.value:
-        logger.info("Generating DAILY report: Rule-based (LLM bypassed).")
-    elif current_type == ReportType.WEEKLY.value:
+    final_content = ""
+    skeleton_content = ""
+
+    # Generate Forecasts & Scenarios for Weekly/Monthly/Event-Driven
+    if current_type in [ReportType.WEEKLY.value, ReportType.MONTHLY.value] or current_type.startswith("event_driven"):
+        forecasts = generate_forecasts(
+            [effective_topic] if effective_topic else ["global"],
+            " ".join(themes),
+            avg_score,
+        )
+        scenarios = generate_scenarios(
+            avg_score,
+            forecasts,
+            domain=effective_topic,
+        )
+        skeleton_content = build_substack_skeleton(
+            themes,
+            [],
+            forecasts,
+            scenarios,
+            [it.source_url for it in items],
+            trends=skeleton_trends,
+            domain=effective_topic,
+        )
+
+    if current_type == ReportType.WEEKLY.value:
         plan_required = PlanTier.PRO.value
         analysis_input = f"SKELETON DATA:\n{skeleton_content}\n\nCONTEXT:\n{cluster_context_str}"
         polished = await generate_analysis(WEEKLY_ANALYSIS_PROMPT, analysis_input)
-        if polished and polished != "__DEGRADED_MODE__":
-            final_content = polished
+        final_content = polished if polished and polished != "__DEGRADED_MODE__" else skeleton_content
+
     elif current_type == ReportType.MONTHLY.value:
         plan_required = PlanTier.EXPERTS.value
         analysis_input = f"MONTHLY DATA:\n{skeleton_content}\n\nBROADER CONTEXT:\n{trend_context_str}"
         expert_analysis = await generate_analysis(MONTHLY_EXPERTS_PROMPT, analysis_input)
-        if expert_analysis and expert_analysis != "__DEGRADED_MODE__":
-            final_content = expert_analysis
+        final_content = expert_analysis if expert_analysis and expert_analysis != "__DEGRADED_MODE__" else skeleton_content
+
+    elif current_type.startswith("event_driven"):
+        plan_required = PlanTier.PRO.value
+        final_content = skeleton_content
+        logger.info(f"Event-driven report generated for type: {current_type}")
+
+    else:
+        # Daily or unknown
+        logger.info(f"Generating standard report for type: {current_type}")
+        # Build a basic skeleton if not already built
+        if not skeleton_content:
+            skeleton_content = build_substack_skeleton(
+                themes, [], [], [], [it.source_url for it in items],
+                trends=skeleton_trends, domain=effective_topic
+            )
+        final_content = skeleton_content
 
     # 5. Metadata & Persistence
     major_theme = themes[0] if themes else (topic_str.capitalize() if topic_str else "Global")
@@ -519,7 +558,7 @@ if __name__ == "__main__":
     from jobs.report_utils import purge_report_history
 
     parser = argparse.ArgumentParser(description="OSINT Report Generation Job")
-    parser.add_argument("--type", type=str, default="daily", choices=["daily", "weekly", "monthly", "specialized"], help="Report type to generate")
+    parser.add_argument("--type", type=str, default="weekly", choices=["daily", "weekly", "monthly", "specialized"], help="Report type to generate")
     parser.add_argument("--purge", action="store_true", help="Perform Hard Cleanup (purge all history) before starting")
     parser.add_argument("--threads", action="store_true", help="Enable Threads auto-posting")
 
