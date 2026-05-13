@@ -1,0 +1,18 @@
+[Unit]
+Description=Veltrixia Scheduler Jobs
+After=network.target veltrixia-api.service
+
+[Service]
+Type=simple
+User=veltrixia
+Group=veltrixia
+WorkingDirectory=/opt/veltrixia
+Environment=PYTHONPATH=/opt/veltrixia
+EnvironmentFile=/opt/veltrixia/.env.production
+ExecStart=/opt/veltrixia/.venv/bin/python jobs/main_scheduler.py
+Restart=always
+RestartSec=8
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

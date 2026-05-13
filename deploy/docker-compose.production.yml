@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  api:
+    build: ..
+    container_name: veltrixia-api
+    restart: unless-stopped
+    env_file:
+      - ../.env.production
+    environment:
+      PYTHONPATH: .
+    command: gunicorn -k uvicorn.workers.UvicornWorker -w 3 -b 0.0.0.0:8000 api.main:app
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/system/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veltrixia
+
+  jobs:
+    build: ..
+    container_name: veltrixia-jobs
+    restart: unless-stopped
+    env_file:
+      - ../.env.production
+    environment:
+      PYTHONPATH: .
+    command: python jobs/main_scheduler.py
+    depends_on:
+      - api
+    networks:
+      - veltrixia
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: veltrixia-nginx
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/veltrixia.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../web_dashboard/dist:/usr/share/nginx/html:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+    networks:
+      - veltrixia
+
+networks:
+  veltrixia:
+    driver: bridge

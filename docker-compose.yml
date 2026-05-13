@@ -30,6 +30,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=prod-secret-placeholder
       - ENV=production
+      - PYTHONPATH=.
     ports:
       - "8000:8000"
     depends_on:
@@ -45,6 +46,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres_password@db/osint_platform
       - REDIS_URL=redis://redis:6379/0
       - TZ=UTC
+      - PYTHONPATH=.
     depends_on:
       - db
       - redis

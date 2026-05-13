@@ -1,0 +1,18 @@
+[Unit]
+Description=Veltrixia API (FastAPI/Gunicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=veltrixia
+Group=veltrixia
+WorkingDirectory=/opt/veltrixia
+Environment=PYTHONPATH=/opt/veltrixia
+EnvironmentFile=/opt/veltrixia/.env.production
+ExecStart=/opt/veltrixia/.venv/bin/gunicorn -k uvicorn.workers.UvicornWorker -w 3 -b 127.0.0.1:8000 api.main:app
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
