@@ -13,6 +13,8 @@ export default defineConfig({
   define: {
     __APP_BUILD_INFO__: JSON.stringify(new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }))
   },
+  // Load `.env*` from web_dashboard/ so `web_dashboard/.env.production` applies on `vite build`.
+  envDir: __dirname,
   server: {
     proxy: {
       '/api': {

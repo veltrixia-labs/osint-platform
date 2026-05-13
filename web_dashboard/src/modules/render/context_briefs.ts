@@ -627,8 +627,8 @@ export function renderFreeAlertFeed(
         container.innerHTML = `
             <div class="empty-state u-p-2 u-text-center">
                 <div class="empty-icon">📡</div>
-                <div class="empty-title">No Context Briefs available.</div>
-                <div class="empty-subtitle">Strategic context will appear as alerts are processed.</div>
+                <div class="empty-title">No alerts found</div>
+                <div class="empty-subtitle">There are no Context Briefs yet, or none match your filters. New briefs appear after alerts are processed and the free-feed job runs.</div>
             </div>`;
         return;
     }

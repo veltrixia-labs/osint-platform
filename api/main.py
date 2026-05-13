@@ -40,6 +40,8 @@ from api.routes.system import router as system_router
 from api.routes.analytics import router as analytics_router
 from api.routes.insights import router as insights_router
 from api.routes.backbone import router as backbone_router
+from api.routes.free_feed import router as free_feed_router
+from api.routes.pro_reports import router as pro_reports_router
 
 # Production Traceability
 COMMIT_HASH = "v11.1.2-AURORA-SYNC"
@@ -184,7 +186,8 @@ async def get_reports_sample(db: AsyncSession = Depends(get_db)):
 API_PORT = int(os.getenv("PORT", os.getenv("API_PORT", 8000)))
 WEB_PORT = int(os.getenv("WEB_PORT", 5173))
 
-# Dynamic Whitelist + Production Authority
+# Dynamic Whitelist + Production Authority (veltrixia.net apex + www).
+# Extend via ALLOWED_ORIGINS (comma-separated). See also Render "Extra origins" if using preview URLs.
 RAW_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",")
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -217,6 +220,8 @@ app.include_router(system_router, prefix="/api")
 app.include_router(analytics_router, prefix="/api")
 app.include_router(insights_router, prefix="/api")
 app.include_router(backbone_router, prefix="/api")
+app.include_router(free_feed_router, prefix="/api")
+app.include_router(pro_reports_router, prefix="/api")
 
 # ── Auth Endpoints ─────────────────────────────────────────────────────────────
 
@@ -343,7 +348,7 @@ async def get_me(current_user_data: tuple = Depends(get_current_user_from_access
         "email": user.email,
         "chat_id": user.telegram_chat_id,
         "role": user.user_role,
-        "tier": user.subscription_tier,
+        "tier": tier,
         "expires_at": user.subscription_expires_at.isoformat() if user.subscription_expires_at else None,
         "features": features,
         "limits": {

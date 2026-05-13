@@ -1,13 +1,14 @@
 import './style.css'
 declare const __APP_BUILD_INFO__: string;
-console.log(`[Antigravity] API Base URL configured: ${import.meta.env.VITE_API_BASE_URL || '/api'}`);
+console.log(`[Antigravity] Resolved API base: ${getResolvedApiBase()} (VITE_API_BASE_URL=${String(import.meta.env.VITE_API_BASE_URL ?? '')})`);
 console.log(`[Antigravity] Mode: ${import.meta.env.MODE}`);
 console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert } from './modules/render/index'
-import { login, signup, fetchMe, logout, fetchReports, fetchReport } from './modules/api'
+import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap } from './modules/render/index'
+// (Pro reports now handled within Pro Insights hub)
+import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, getResolvedApiBase } from './modules/api'
 import type { UserMe } from './modules/api'
 import {
     renderGracePeriodBanner,
@@ -77,7 +78,7 @@ export async function renderSignup() {
     })
 }
 
-type TabId = 'feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'expert-intel'
+type TabId = 'feed' | 'free-feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'pro-map' | 'expert-intel'
 
 async function initDashboard() {
     let user: UserMe | null = null;
@@ -85,11 +86,11 @@ async function initDashboard() {
 
     if (!user) {
         user = {
-            id: 'guest',
-            email: 'Guest',
-            chat_id: 'Guest',
+            id: 'free-access',
+            email: 'Free Access',
+            chat_id: '',
             role: 'anonymous',
-            tier: 'guest',
+            tier: 'free',
             expires_at: null,
             features: {
                 pro_insights: false,
@@ -138,6 +139,7 @@ async function initDashboard() {
             <div id="alerts-list"></div>
           </div>
           <div id="map-page-container" style="display:none;"></div>
+          <div id="pro-map-container" style="display:none;"></div>
         </main>
       </div>
       `;
@@ -187,24 +189,43 @@ async function initDashboard() {
         const mainContent = document.querySelector<HTMLElement>('.main-content');
         const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
         const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
+        const proMapContainer = document.querySelector<HTMLElement>('#pro-map-container');
         const mainTitle = document.querySelector<HTMLElement>('#main-title');
         if (mainTitle) {
-            mainTitle.textContent = tab === 'map'
-                ? 'Global Intelligence Map'
-                : 'Analyst Intelligence';
+            if (tab === 'map') mainTitle.textContent = 'Global Intelligence Map';
+            else if (tab === 'feed') mainTitle.textContent = 'Alert Stream';
+            else if (tab === 'free-feed') mainTitle.textContent = 'Context Briefs';
+            else if (tab === 'pro-map') mainTitle.textContent = 'Pro Interactive Map';
+            else mainTitle.textContent = 'Analyst Intelligence';
         }
+
+        const pulseBarEl = document.querySelector<HTMLElement>('#pulse-bar');
+        if (pulseBarEl) {
+            if (tab === 'feed') {
+                pulseBarEl.style.display = 'block';
+            } else {
+                pulseBarEl.style.display = 'none';
+                pulseBarEl.innerHTML = '';
+            }
+        }
+
+        // Stop any active DashboardState polling to prevent background /api/alerts requests
+        (window as any).stopPolling?.();
 
         if (mainContent) mainContent.style.opacity = '0';
         setTimeout(() => {
-            const isFeedLike = ['feed', 'plans', 'reports', 'legal', 'pro-insights', 'expert-intel'].includes(tab);
+            const isFeedLike = ['feed', 'free-feed', 'plans', 'reports', 'legal', 'pro-insights', 'expert-intel'].includes(tab);
             if (feedContainer) feedContainer.style.display = isFeedLike ? 'block' : 'none';
             if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
+            if (proMapContainer) proMapContainer.style.display = (tab === 'pro-map') ? 'flex' : 'none';
 
             if (tab === 'feed') renderIntelligenceFeed();
+            else if (tab === 'free-feed') renderFreeFeed();
             else if (tab === 'plans') renderSubscriptionTab(user!, alertsContainer, () => handleTabSwitch('plans'));
             else if (tab === 'reports') renderReports();
             else if (tab === 'map') renderMap(mapContainer!, user!.tier, focusAlertId);
             else if (tab === 'pro-insights') renderPro(alertsContainer, user!, () => handleTabSwitch('plans'));
+            else if (tab === 'pro-map') renderProMap();
             else if (tab === 'expert-intel') renderExpert(alertsContainer, user!, () => handleTabSwitch('plans'));
 
             if (mainContent) mainContent.style.opacity = '1';
@@ -215,9 +236,24 @@ async function initDashboard() {
         const hash = window.location.hash.slice(1);
         if (!hash) return;
         const [base, query] = hash.split('?');
+        let targetTab = base as TabId;
         const params = new URLSearchParams(query || '');
-        if (['feed', 'map', 'plans', 'reports', 'legal', 'pro-insights', 'expert-intel'].includes(base)) {
-            handleTabSwitch(base as TabId, params.get('alert') || undefined, true);
+        
+        // Handle #reports redirect
+        if (targetTab === 'reports') {
+            const isProOrExpert = ['pro', 'experts', 'enterprise'].includes(user!.tier);
+            if (isProOrExpert) {
+                targetTab = 'pro-insights';
+                history.replaceState(null, '', '#pro-insights');
+            } else {
+                targetTab = 'free-feed';
+                history.replaceState(null, '', '#free-feed');
+            }
+        }
+
+        const validTabs: TabId[] = ['feed', 'free-feed', 'map', 'plans', 'legal', 'pro-insights', 'pro-map', 'expert-intel'];
+        if (validTabs.includes(targetTab)) {
+            handleTabSwitch(targetTab, params.get('alert') || undefined, true);
         }
     });
 
@@ -246,12 +282,36 @@ async function initDashboard() {
             }
 
             if (data.alerts) {
+                pulseBar.style.display = 'block';
                 renderAlerts(data.alerts, alertsContainer, user!.tier);
                 renderLiveFeed(data.alerts, pulseBar);
             }
         });
         (window as any).stopPolling = () => state.stopPolling();
         state.startPolling();
+    };
+
+    const renderFreeFeed = async () => {
+        alertsContainer.innerHTML = '<div class="u-p-2 u-text-center" style="opacity:0.5;">Loading Context Briefs...</div>';
+        try {
+            const items = await fetchFreeAlerts({ limit: 20 });
+            if (!Array.isArray(items)) {
+                throw new Error('Unexpected server response (not a list).');
+            }
+            renderFreeAlertFeed(items, alertsContainer, user?.tier ?? 'free');
+        } catch (err: any) {
+            const msg = err?.message || 'Connection error';
+            alertsContainer.innerHTML = `
+                <div class="empty-state u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 12px; margin-top: 2rem; max-width: 520px; margin-left: auto; margin-right: auto;">
+                    <div class="empty-icon">⚠️</div>
+                    <div class="empty-title" style="color: #ff7b72;">Could not load Context Briefs</div>
+                    <div class="empty-subtitle" style="margin-top: 0.5rem;">${msg}</div>
+                    <div class="empty-subtitle" style="margin-top: 0.75rem; font-size: 0.8rem; color: #8b949e;">
+                        If this persists, confirm the API is reachable at <code style="color:#58a6ff;">${getResolvedApiBase()}</code>
+                        and that the database has AlertLog rows with <code>free_alert</code> payloads (see <code>scripts/check_dashboard_data.py</code>).
+                    </div>
+                </div>`;
+        }
     };
 
     const renderReports = async () => {
@@ -278,6 +338,8 @@ async function initDashboard() {
             `;
         }
     };
+
+    // (renderStructuralBriefs removed from top-level routing, now handled inside Pro Insights)
 
     const renderSingleReport = async (id: string, origin: TabId = 'feed') => {
         const report = await fetchReport(id);

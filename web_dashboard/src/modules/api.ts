@@ -3,11 +3,37 @@
  * OSINT Risk Intelligence API Client
  */
 
-let rawBase = import.meta.env.VITE_API_BASE_URL || "/api";
-if (rawBase.startsWith('http') && !rawBase.endsWith('/api')) {
-    rawBase = rawBase.replace(/\/$/, '') + '/api';
+/**
+ * Resolve API prefix for fetch():
+ * 1. VITE_API_BASE_URL when set at build time (Render / CI).
+ * 2. Same-origin `/api` when the dashboard is served from a non-local host (production).
+ * 3. `/api` for local dev (Vite proxy to the backend).
+ */
+function resolveApiBase(): string {
+    const fromEnv = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+    if (fromEnv) {
+        let raw = fromEnv;
+        if (raw.startsWith('http') && !raw.endsWith('/api')) {
+            raw = raw.replace(/\/$/, '') + '/api';
+        }
+        return raw;
+    }
+    if (typeof globalThis !== 'undefined' && 'location' in globalThis) {
+        const loc = (globalThis as unknown as Window).location;
+        if (loc?.hostname && loc.hostname !== 'localhost' && loc.hostname !== '127.0.0.1') {
+            const port = loc.port ? `:${loc.port}` : '';
+            return `${loc.protocol}//${loc.hostname}${port}/api`;
+        }
+    }
+    return '/api';
 }
-const API_BASE = rawBase;
+
+const API_BASE = resolveApiBase();
+
+/** Exposed for startup logging / debugging (no secrets). */
+export function getResolvedApiBase(): string {
+    return API_BASE;
+}
 
 // --- Types & Interfaces ---
 
@@ -299,8 +325,22 @@ export async function fetchFreeAlerts(
     if (params.limit) query.set('limit', String(params.limit));
     const qs = query.toString();
     const resp = await apiClient.get(`/free/alerts${qs ? `?${qs}` : ''}`);
-    const data = resp.ok ? await resp.json() : [];
-    console.log("[API] fetchFreeAlerts data:", data);
+    if (!resp.ok) {
+        const detail = await resp.text().catch(() => '');
+        console.error('[API] fetchFreeAlerts HTTP', resp.status, detail?.slice(0, 200));
+        throw new Error(
+            resp.status === 401
+                ? 'Sign in required to load Context Briefs.'
+                : resp.status === 429
+                  ? 'Rate limited. Try again in a minute.'
+                  : `Could not load alerts (HTTP ${resp.status}).`
+        );
+    }
+    const data = await resp.json();
+    if (!Array.isArray(data)) {
+        console.error('[API] fetchFreeAlerts: expected JSON array, got', typeof data);
+        throw new Error('Invalid response from server.');
+    }
     return data;
 }
 
