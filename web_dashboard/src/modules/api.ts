@@ -109,6 +109,70 @@ export interface ExpertIntelligence {
     cross_domain_risks?: any[];
 }
 
+export interface FreeAlertFeedItem {
+    alert_id: string;
+    title: string;
+    topic: string;
+    target_label: string;
+    triggered_at: string;
+    related_news_count: number;
+    related_news_source: string;
+    related_entities_count: number;
+    related_news?: {
+        title: string;
+        source: string;
+        category: string;
+        published: string;
+        url: string | null;
+    }[];
+    content_markdown: string;
+    generated_at?: string;
+    /** Registry / fallback context for location-linked rows (Context Briefs). */
+    location_context?: Record<string, unknown>;
+    /** Structured rows for Related Companies (preferred over markdown table parse). */
+    company_impacts?: {
+        company_name?: string | null;
+        ticker?: string | null;
+        entity_id?: string | null;
+        entity_type?: string | null;
+        sector?: string | null;
+        country?: string | null;
+        match_basis?: string[];
+        /** Location registry entity type: `country` → geopolitical bucket in UI */
+        registry_entity_type?: string | null;
+    }[];
+    /** Sector aggregates for Structural Exposure badges (sorted server-side). */
+    sector_impacts?: {
+        sector?: string | null;
+        matched_entities: number;
+        entity_id?: string | null;
+        entity_type?: string | null;
+        label?: string | null;
+        name?: string | null;
+    }[];
+    /** Entity rows not included in `company_impacts` on Free (Pro gate); 0 when paid tier. */
+    additional_pro_count?: number;
+}
+
+export interface ProStructuralReportItem {
+    id: string;
+    title: string;
+    report_type: string;
+    topic: string;
+    plan_required: string;
+    is_premium: boolean;
+    created_at: string;
+    content_markdown?: string;
+    teaser_md?: string;
+    structured_payload?: any;
+}
+
+/** Alias for Context Briefs feed responses (`fetchFreeAlerts`). */
+export type FreeAlertFeedList = FreeAlertFeedItem[];
+
+/** Alias for Pro structural brief collections (`fetchProStructuralReports`). */
+export type ProStructuralReportList = ProStructuralReportItem[];
+
 export type SyncStatus = 'stable' | 'retrying' | 'offline';
 
 // --- State Management ---
@@ -227,6 +291,25 @@ export async function fetchReport(id: string): Promise<Report> {
     return await resp.json();
 }
 
+export async function fetchFreeAlerts(
+    params: { topic?: string; limit?: number } = {}
+): Promise<FreeAlertFeedList> {
+    const query = new URLSearchParams();
+    if (params.topic) query.set('topic', params.topic);
+    if (params.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    const resp = await apiClient.get(`/free/alerts${qs ? `?${qs}` : ''}`);
+    const data = resp.ok ? await resp.json() : [];
+    console.log("[API] fetchFreeAlerts data:", data);
+    return data;
+}
+
+export async function fetchFreeAlert(id: string): Promise<FreeAlertFeedItem> {
+    const resp = await apiClient.get(`/free/alerts/${id}`);
+    if (!resp.ok) throw new Error('Free alert not found');
+    return await resp.json();
+}
+
 export async function fetchAnalysts(): Promise<AnalystProfile[]> {
     const resp = await apiClient.get('/analysts');
     return resp.ok ? await resp.json() : [];
@@ -287,5 +370,16 @@ export async function fetchBackbone(sector: string): Promise<BackboneNode[]> {
         throw new Error(`Failed to fetch backbone sector: ${sector}`);
     }
 
+    return await resp.json();
+}
+
+export async function fetchProStructuralReports(): Promise<ProStructuralReportList> {
+    const resp = await apiClient.get('/pro/reports');
+    return resp.ok ? await resp.json() : [];
+}
+
+export async function fetchProStructuralReport(id: string): Promise<ProStructuralReportItem> {
+    const resp = await apiClient.get(`/pro/reports/${id}`);
+    if (!resp.ok) throw new Error("Pro report not found");
     return await resp.json();
 }

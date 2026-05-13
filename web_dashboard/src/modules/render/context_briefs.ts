@@ -6,6 +6,21 @@
 import { simpleMarkdown, getDomainSlugClass } from './utils';
 import type { FreeAlertFeedItem } from '../api';
 
+type CompanyImpactSource = NonNullable<FreeAlertFeedItem['company_impacts']>[number];
+type SectorImpactSource = NonNullable<FreeAlertFeedItem['sector_impacts']>[number];
+type MarkdownTableRow = Record<string, string>;
+
+/** Related-news row from API or parsed markdown table. */
+type ContextNewsRow = {
+    title?: string;
+    news?: string;
+    source?: string;
+    category?: string;
+    published?: string;
+    url?: string | null;
+    source_url?: string | null;
+};
+
 function formatDate(iso: string): string {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return iso || '—';
@@ -18,7 +33,7 @@ function formatDate(iso: string): string {
 function topicLabel(topic: string): string {
     return (topic || 'unknown')
         .replace(/_/g, ' ')
-        .replace(/\b\w/g, c => c.toUpperCase());
+        .replace(/\b\w/g, (char: string) => char.toUpperCase());
 }
 
 /** Strip trigger-style prefixes (e.g. acceleration:, entity_surge:) for display titles. */
@@ -81,16 +96,16 @@ function escapeAttr(unsafe: string): string {
  * Parses markdown table content into a list of objects for card rendering.
  * Matches: | Col 1 | Col 2 | ...
  */
-function parseMarkdownTable(markdown: string): any[] {
+function parseMarkdownTable(markdown: string): MarkdownTableRow[] {
     const lines = markdown.trim().split('\n').filter(l => l.trim().includes('|'));
     if (lines.length < 3) return [];
 
-    const headers = lines[0].split('|').map(c => c.trim()).filter(c => c);
+    const headers = lines[0].split('|').map((cell: string) => cell.trim()).filter((cell: string) => cell);
     const dataRows = lines.slice(2);
 
     return dataRows.map(row => {
-        const cells = row.split('|').map(c => c.trim()).filter((_, i, arr) => i > 0 && i < arr.length - 1);
-        const obj: any = {};
+        const cells = row.split('|').map((cell: string) => cell.trim()).filter((_, i, arr) => i > 0 && i < arr.length - 1);
+        const obj: MarkdownTableRow = {};
         headers.forEach((h, i) => {
             const key = h.toLowerCase().replace(/\s+/g, '_');
             obj[key] = cells[i] || '';
@@ -260,8 +275,8 @@ function renderIndustryExpandableList(rows: ExposureRow[]): string {
     const hiddenCount = hidden.length;
 
     let html = `<div class="cb-compact-list">`;
-    visible.forEach(c => {
-        html += renderExposureRowHtml(c, 'industry');
+    visible.forEach((row: ExposureRow) => {
+        html += renderExposureRowHtml(row, 'industry');
     });
     html += `</div>`;
 
@@ -270,8 +285,8 @@ function renderIndustryExpandableList(rows: ExposureRow[]): string {
         <div class="cb-expand-wrap" data-cb-expand-wrap>
             <div class="cb-expand-hidden" data-cb-expand-hidden aria-hidden="true">
                 <div class="cb-compact-list">`;
-        hidden.forEach(c => {
-            html += renderExposureRowHtml(c, 'industry');
+        hidden.forEach((row: ExposureRow) => {
+            html += renderExposureRowHtml(row, 'industry');
         });
         html += `</div>
             </div>
@@ -295,19 +310,19 @@ function normalizeSectorImpacts(
 ): SectorImpactRow[] {
     if (apiRows && apiRows.length > 0) {
         return [...apiRows]
-            .map(r => ({
+            .map((r: SectorImpactSource) => ({
                 sector: String(r.sector || '').trim(),
                 matched: typeof r.matched_entities === 'number' ? r.matched_entities : 0,
-                entity_id: _normEntityId((r as any).entity_id) || null,
-                entity_type: String((r as any).entity_type || '').trim().toLowerCase() || null,
-                label: String((r as any).label || (r as any).name || r.sector || '').trim() || null,
+                entity_id: _normEntityId(r.entity_id) || null,
+                entity_type: String(r.entity_type || '').trim().toLowerCase() || null,
+                label: String(r.label ?? r.name ?? r.sector ?? '').trim() || null,
             }))
-            .filter(r => r.sector && !r.sector.toLowerCase().includes('no sector coverage'))
-            .sort((a, b) => b.matched - a.matched);
+            .filter((r: SectorImpactRow) => r.sector && !r.sector.toLowerCase().includes('no sector coverage'))
+            .sort((a: SectorImpactRow, b: SectorImpactRow) => b.matched - a.matched);
     }
     const raw = parseMarkdownTable(body);
     return raw
-        .map((obj: Record<string, string>) => {
+        .map((obj: MarkdownTableRow) => {
             const sector = obj.sector || obj.name || '';
             const rawN = obj.matched_entities ?? obj.entities ?? '0';
             const matched = parseInt(String(rawN).replace(/[^\d-]/g, ''), 10) || 0;
@@ -319,24 +334,24 @@ function normalizeSectorImpacts(
                 label: String(obj.name || obj.label || sector || '').trim() || null,
             };
         })
-        .filter(r => r.sector && !r.sector.toLowerCase().includes('no sector coverage'))
-        .sort((a, b) => b.matched - a.matched);
+        .filter((r: SectorImpactRow) => r.sector && !r.sector.toLowerCase().includes('no sector coverage'))
+        .sort((a: SectorImpactRow, b: SectorImpactRow) => b.matched - a.matched);
 }
 
-function renderExposureRowHtml(c: ExposureRow, mode: 'geo' | 'industry'): string {
+function renderExposureRowHtml(row: ExposureRow, mode: 'geo' | 'industry'): string {
     const meta =
         mode === 'geo'
             ? 'Geopolitical Actor'
-            : (c.sector && c.sector !== '—' ? c.sector : 'Industry & assets');
-    const basis = c.match_basis ? ` · ${escapeHtml(c.match_basis)}` : '';
-    const tk = (c.ticker || '').trim();
+            : (row.sector && row.sector !== '—' ? row.sector : 'Industry & assets');
+    const basis = row.match_basis ? ` · ${escapeHtml(row.match_basis)}` : '';
+    const tk = (row.ticker || '').trim();
     const tickerLine =
         mode === 'industry' && tk
             ? `<div class="cb-compact-item-ticker" aria-label="Ticker">${escapeHtml(tk)}</div>`
             : '';
     return `
         <div class="cb-compact-item cb-compact-item--exposure">
-            <div class="cb-compact-item-title">${escapeHtml(c.name)}</div>
+            <div class="cb-compact-item-title">${escapeHtml(row.name)}</div>
             ${tickerLine}
             <div class="cb-compact-item-meta cb-compact-item-meta--exposure">
                 <span class="cb-exposure-role">(${escapeHtml(meta)})</span>${basis}
@@ -375,7 +390,7 @@ function summaryValueClass(label: string): string {
  */
 function renderStructuredContent(
     markdown: string,
-    structuredNews?: any[],
+    structuredNews?: FreeAlertFeedItem['related_news'],
     structuredCompanyImpacts?: FreeAlertFeedItem['company_impacts'],
     topic?: string,
     structuredSectorImpacts?: FreeAlertFeedItem['sector_impacts'],
@@ -425,11 +440,14 @@ function renderStructuredContent(
             html += `<div class="cb-section">`;
             html += `<h4 class="cb-section-title">${displayTitle}</h4>`;
 
-            const newsList = structuredNews && structuredNews.length > 0 ? structuredNews : parseMarkdownTable(body);
+            const newsList: ContextNewsRow[] =
+                structuredNews && structuredNews.length > 0
+                    ? structuredNews
+                    : (parseMarkdownTable(body) as ContextNewsRow[]);
             
             if (newsList.length > 0 && !newsList[0].title?.toLowerCase().includes('no related news') && !newsList[0].news?.toLowerCase().includes('no related news')) {
                 html += `<div class="cb-compact-list">`;
-                newsList.forEach(n => {
+                newsList.forEach((n: ContextNewsRow) => {
                     const title = n.title || n.news || 'Untitled Signal';
                     const url = n.url || n.source_url || null;
                     
@@ -455,31 +473,35 @@ function renderStructuredContent(
             html += `<h4 class="cb-section-title">Related Companies &amp; Infrastructure</h4>`;
             let comps: ExposureRow[] = [];
             if (structuredCompanyImpacts && structuredCompanyImpacts.length > 0) {
-                comps = structuredCompanyImpacts.map(c => ({
-                    name: (c.company_name || '').trim() || 'Unknown Entity',
-                    ticker: c.ticker ?? null,
-                    entity_id: String((c as any).entity_id || '').trim() || null,
-                    entity_type: String((c as any).entity_type || '').trim().toLowerCase() || null,
-                    sector: (c.sector || 'Various').trim(),
-                    country: (c.country || 'Global').trim(),
-                    match_basis: Array.isArray(c.match_basis) ? c.match_basis.join(', ') : String(c.match_basis || ''),
-                    registry_entity_type: c.registry_entity_type ?? null,
+                comps = structuredCompanyImpacts.map((impact: CompanyImpactSource) => ({
+                    name: (impact.company_name || '').trim() || 'Unknown Entity',
+                    ticker: impact.ticker ?? null,
+                    entity_id: String(impact.entity_id || '').trim() || null,
+                    entity_type: String(impact.entity_type || '').trim().toLowerCase() || null,
+                    sector: (impact.sector || 'Various').trim(),
+                    country: (impact.country || 'Global').trim(),
+                    match_basis: Array.isArray(impact.match_basis)
+                        ? impact.match_basis.join(', ')
+                        : String(impact.match_basis || ''),
+                    registry_entity_type: impact.registry_entity_type ?? null,
                 }));
             } else {
                 const raw = parseMarkdownTable(body);
-                comps = raw.map((c: any) => ({
-                    name: (c.name || c.company_name || '').trim() || 'Unknown Entity',
-                    ticker: c.ticker || null,
-                    entity_id: String(c.entity_id || '').trim() || null,
-                    entity_type: String(c.entity_type || '').trim().toLowerCase() || null,
-                    sector: (c.sector || 'Various').trim(),
-                    country: (c.country || 'Global').trim(),
-                    match_basis: typeof c.match_basis === 'string' ? c.match_basis : '',
+                comps = raw.map((row: MarkdownTableRow) => ({
+                    name: (row.name || row.company_name || '').trim() || 'Unknown Entity',
+                    ticker: row.ticker || null,
+                    entity_id: String(row.entity_id || '').trim() || null,
+                    entity_type: String(row.entity_type || '').trim().toLowerCase() || null,
+                    sector: (row.sector || 'Various').trim(),
+                    country: (row.country || 'Global').trim(),
+                    match_basis: typeof row.match_basis === 'string' ? row.match_basis : '',
                     registry_entity_type: null,
                 }));
             }
-            const usable = dedupeExposureRowsByEntityId(comps).filter(c => c.name && !isPlaceholderCompanyRow(c));
-            const industryRows = usable.filter(c => !isGeopoliticalActorRow(c));
+            const usable = dedupeExposureRowsByEntityId(comps).filter(
+                (row: ExposureRow) => row.name && !isPlaceholderCompanyRow(row)
+            );
+            const industryRows = usable.filter((row: ExposureRow) => !isGeopoliticalActorRow(row));
             const paid = isPaidContextTier(viewerTier);
             const showProGate = !paid && additionalProCount > 0;
 
@@ -493,8 +515,8 @@ function renderStructuredContent(
                     } else {
                         const freeVisible = industryRows.slice(0, 1);
                         html += `<div class="cb-compact-list">`;
-                        freeVisible.forEach(c => {
-                            html += renderExposureRowHtml(c, 'industry');
+                        freeVisible.forEach((row: ExposureRow) => {
+                            html += renderExposureRowHtml(row, 'industry');
                         });
                         if (showProGate) {
                             html += `<div class="cb-inline-pro-gate">${renderProGateCard(additionalProCount)}</div>`;

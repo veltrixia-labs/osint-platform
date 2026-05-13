@@ -81,8 +81,36 @@ export function sanitizeMarkdownIntensities(text: string): string {
  */
 export function simpleMarkdown(md: string): string {
     if (!md) return "";
-    return md
+
+    // ── Pre-pass: extract and convert Markdown tables before line-level processing ──
+    // Matches a header row, a separator row (|---|), and one or more data rows.
+    const tableRegex = /(\|.+\|\n\|[-| :]+\|\n(?:\|.+\|\n?)+)/g;
+    const mdWithTables = md.replace(tableRegex, (tableBlock) => {
+        const lines = tableBlock.trim().split('\n').filter(l => l.trim());
+        if (lines.length < 3) return tableBlock; // need header + separator + at least 1 row
+
+        const parseRow = (line: string): string[] =>
+            line.split('|').map((cell: string) => cell.trim()).filter((_, i, arr) => i > 0 && i < arr.length - 1);
+
+        const headers = parseRow(lines[0]);
+        // lines[1] is separator — skip
+        const dataRows = lines.slice(2);
+
+        const thHtml = headers.map(h => `<th>${h}</th>`).join('');
+        const trHtml = dataRows.map(row => {
+            const cells = parseRow(row);
+            // Pad missing cells
+            while (cells.length < headers.length) cells.push('');
+            return `<tr>${cells.map((cell: string) => `<td>${cell}</td>`).join('')}</tr>`;
+        }).join('');
+
+        return `<div class="table-responsive"><table class="feed-table"><thead><tr>${thHtml}</tr></thead><tbody>${trHtml}</tbody></table></div>`;
+    });
+
+    return mdWithTables
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // Escape HTML
+        // Restore specific HTML that was already built or generated safely
+        .replace(/&lt;(\/?(table|thead|tbody|tr|th|td|details|summary|blockquote|div|ul|li|strong|em)[^&]*)&gt;/g, '<$1>')
         .replace(/^### (.*$)/gm, '<h4>$1</h4>')
         .replace(/^## (.*$)/gm, '<h3>$1</h3>')
         .replace(/^# (.*$)/gm, '<h2>$1</h2>')
@@ -127,4 +155,20 @@ export function simpleMarkdown(md: string): string {
         .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="report-visual u-m-top-1" style="max-width:100%; border-radius:8px; border:1px solid var(--border);">')
         .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:var(--tier-grace);">$1</a>')
         .replace(/\n/g, '<br>');
+}
+
+/**
+ * Maps a raw topic code to a standardized domain class for CSS styling.
+ */
+export function getDomainSlugClass(topicCode: string | null | undefined): string {
+    if (!topicCode) return 'domain-default';
+    const mapping: Record<string, string> = {
+        'energy_resource_risk': 'domain-energy',
+        'ai_semiconductor_intelligence': 'domain-ai-semi',
+        'global_market_intelligence': 'domain-global-market',
+        'supply_chain_intelligence': 'domain-supply-chain',
+        'crypto_geopolitics': 'domain-crypto',
+        'defense_technology': 'domain-defense'
+    };
+    return mapping[topicCode] || 'domain-default';
 }
