@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "veltrixia-osint-analytics"
+version = "0.1.0"
+description = "OSINT risk intelligence platform (API, jobs, dashboard assets)"
+requires-python = ">=3.11"
+readme = "README.md"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+    "api",
+    "analysis",
+    "jobs",
+    "db",
+    "processor",
+    "config",
+    "llm",
+    "integrations",
+    "reports",
+    "render",
+    "data_sources",
+    "classify",
+    "normalize",
+    "article",
+    "analyze",
+    "ingest",
+]

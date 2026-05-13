@@ -89,24 +89,30 @@ sudo systemctl enable --now veltrixia-api veltrixia-jobs
 
 ### Option C: Render (osint-platform Web Service)
 
-Python resolves the `api` package from **the process working directory** plus `PYTHONPATH`. On Render, set the **Start Command** so the repo root is on the module search path:
+Install the repo as a package so imports resolve without ``sys.path`` hacks:
 
-**Recommended Start Command (API service, e.g. `osint-platform`):**
+**Build command (example — adjust to your Render “Build” step):**
 
 ```bash
-alembic upgrade head && PYTHONPATH=. uvicorn api.main:app --host 0.0.0.0 --port $PORT
+pip install -r requirements.txt && pip install -e . --no-deps && cd web_dashboard && npm ci && npm run build
 ```
 
-- `PYTHONPATH=.` makes the **project root** (Render’s root directory for the service) importable, so `from api.routes.free_feed import ...` in `api/main.py` works even if the runtime’s default path list is minimal.
-- Ensure `Root Directory` (if set) is the repository root where the `api/` folder lives.
+**Start command (API service, e.g. `osint-platform`):**
+
+```bash
+alembic upgrade head && uvicorn api.main:app --host 0.0.0.0 --port $PORT
+```
+
+- After ``pip install -e .``, top-level packages ``api``, ``db``, ``jobs``, etc. are importable from any working directory.
+- Ensure **Root Directory** is the repository root (where ``pyproject.toml`` and ``api/`` live).
 
 **Scheduler service (e.g. `osint-scheduler`):**
 
 ```bash
-PYTHONPATH=. python jobs/main_scheduler.py
+python -m jobs.main_scheduler
 ```
 
-**Package markers:** the repo must include empty or minimal `api/__init__.py` and `api/routes/__init__.py` so `api` and `api.routes` are normal packages on all Python versions.
+**Package layout:** ``pyproject.toml`` declares discoverable packages; each of ``api``, ``analysis``, ``jobs``, ``db``, ``processor`` (and other listed roots) includes an ``__init__.py``.
 
 ## 6) Nginx and Stripe Webhook Routing
 

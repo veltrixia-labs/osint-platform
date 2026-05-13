@@ -32,6 +32,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Register workspace packages (api, jobs, db, …); deps already installed from requirements.txt
+RUN pip install --no-cache-dir -e . --no-deps
+
 # Copy built frontend assets from Stage 1
 COPY --from=frontend-builder /build/web_dashboard/dist/ /app/web_dashboard/dist/
 

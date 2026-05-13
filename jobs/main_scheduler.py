@@ -1,15 +1,9 @@
-import os
-import sys
-
-# プロジェクトのルート（api や jobs の一段上の階層）を検索パスの先頭に追加
-root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if root_path not in sys.path:
-    sys.path.insert(0, root_path)
-
 import asyncio
-import schedule
 import logging
+import os
 from datetime import datetime, timezone
+
+import schedule
 
 from db.database import AsyncSessionLocal
 from db.seeding import seed_admin

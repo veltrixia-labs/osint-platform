@@ -26,7 +26,7 @@ services:
       - ../.env.production
     environment:
       PYTHONPATH: .
-    command: python jobs/main_scheduler.py
+    command: python -m jobs.main_scheduler
     depends_on:
       - api
     networks:

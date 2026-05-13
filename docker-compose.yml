@@ -50,7 +50,7 @@ services:
     depends_on:
       - db
       - redis
-    command: python jobs/main_scheduler.py
+    command: python -m jobs.main_scheduler
 
   web:
     image: nginx:alpine

@@ -1,38 +1,30 @@
 """
 FastAPI application entrypoint.
 
-Ensures the repository root is on ``sys.path`` so ``from api.routes...`` resolves
-when the process cwd is not the repo root (e.g. some Render / container layouts).
+Run from the repository root (or install the workspace with ``pip install -e .``).
 """
 from __future__ import annotations
 
-import os
-import sys
-
-# プロジェクトのルート（api や jobs の一段上の階層）を検索パスの先頭に追加
-root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if root_path not in sys.path:
-    sys.path.insert(0, root_path)
-
-from fastapi import FastAPI, HTTPException, Depends, Request, Response, status
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.future import select
-from sqlalchemy import func
-from db.models import AnalystProfile, Report, SystemMetric
-from db.database import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
-from datetime import datetime, timezone, timedelta
+import json
+import logging
 import os
 import uuid
-import logging
-import json
+from datetime import datetime, timezone, timedelta
+from typing import Optional
+
 from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from db.database import get_db
+from db.enums import ReportType
+from db.models import AnalystProfile, Report, SystemMetric
 
 load_dotenv()
-
-# OSINT RISK INTELLIGENCE API
 
 from api.auth import (
     get_password_hash, verify_password, create_access_token,
@@ -46,7 +38,6 @@ from api.gating import (
     TIER_PRO, TIER_EXPERTS, TIER_ORDER, is_tier_sufficient,
     is_topic_allowed, can_access_report_type, PlanTier
 )
-from db.enums import ReportType
 
 # ── Feature Routers ────────────────────────────────────────────────────────────
 from api.routes.alerts import router as alerts_router

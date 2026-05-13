@@ -9,7 +9,7 @@ Group=veltrixia
 WorkingDirectory=/opt/veltrixia
 Environment=PYTHONPATH=/opt/veltrixia
 EnvironmentFile=/opt/veltrixia/.env.production
-ExecStart=/opt/veltrixia/.venv/bin/python jobs/main_scheduler.py
+ExecStart=/opt/veltrixia/.venv/bin/python -m jobs.main_scheduler
 Restart=always
 RestartSec=8
 TimeoutStopSec=30
