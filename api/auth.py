@@ -12,7 +12,8 @@ from db.models import AnalystProfile
 from api.auth_session import BlacklistManager, SessionManager, SecurityLogger
 
 # Secret configuration (Should be in .env)
-SECRET_KEY = os.getenv("SECRET_KEY", "osint-super-secret-dev-key")
+# Prefer JWT_SECRET_KEY in production; keep SECRET_KEY as backward-compatible fallback.
+SECRET_KEY = os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY", "osint-super-secret-dev-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7

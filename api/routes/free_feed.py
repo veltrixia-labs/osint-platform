@@ -10,15 +10,25 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Query, HTTPException, Depends
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import cast, String
+from sqlalchemy import cast, String, or_
 
 from db.models import AlertLog, AnalystProfile
 from db.database import get_db
 from api.rate_limit import rate_limit
-from api.auth import get_current_user_from_access
 
 router = APIRouter(tags=["free_feed"])
 logger = logging.getLogger(__name__)
+
+
+def _alertlog_has_free_alert_clause():
+    """
+    Match rows that carry a persisted free_alert payload.
+    JSON path + text fallback: some drivers/serializations differ from a plain
+    substring search on cast-to-text alone.
+    """
+    key = AlertLog.metadata_json["free_alert"]
+    text_blob = cast(AlertLog.metadata_json, String)
+    return or_(key.is_not(None), text_blob.contains('"free_alert"'))
 
 
 def _extract_free_alert(alert_log: AlertLog) -> Optional[dict]:
@@ -84,12 +94,9 @@ async def list_free_alerts(
     Only AlertLogs that have a persisted metadata_json.free_alert are returned.
     No LLM, forecast, or scenario logic is invoked.
     """
-    # ── Base query: only rows that have free_alert in metadata_json ──────────
-    # SQLite / Postgres JSON path check: cast to text and LIKE-filter as a
-    # lightweight existence check (avoids a full-table Python-side scan).
     stmt = (
         select(AlertLog)
-        .where(cast(AlertLog.metadata_json, String).contains('"free_alert"'))
+        .where(_alertlog_has_free_alert_clause())
         .order_by(AlertLog.triggered_at.desc())
         .limit(limit * 3)          # over-fetch to allow Python-side dedup / topic filter
     )
@@ -112,6 +119,14 @@ async def list_free_alerts(
         output.append(_serialize(row, fa, tier))
         if len(output) >= limit:
             break
+
+    if rows and not output:
+        logger.warning(
+            "list_free_alerts: %s DB rows matched free_alert filter but none serialized "
+            "(check metadata_json.free_alert shape / topic=%r)",
+            len(rows),
+            topic,
+        )
 
     return output
 

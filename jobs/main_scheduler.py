@@ -90,7 +90,11 @@ async def pipeline_full_processing():
             
             logger.info("[ALERT CHECK]")
             await run_alert_manager(session)
-            
+            logger.info(
+                "[CONTEXT BRIEFS] persist_free_alert_feed_item runs inside alert_manager for new alerts; "
+                "existing rows without free_alert need scripts/check_dashboard_data.py --backfill-free"
+            )
+
             logger.info("[TRIGGER CHECK]")
             await run_trigger_check(session)
             

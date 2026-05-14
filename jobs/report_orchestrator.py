@@ -50,8 +50,8 @@ async def report_worker(queue: asyncio.Queue, results_collector: Dict[str, str])
 
 async def run_all_reports(
     db,
-    report_type: str = "daily_global",
-    period_days: int = 1,
+    report_type: str = "weekly_global",
+    period_days: int = 7,
     auto_post_threads: bool = False
 ):
     """
@@ -60,6 +60,10 @@ async def run_all_reports(
     Each task tuple: (report_type, period_days, topic_or_None, auto_post_threads)
     """
     from llm.client import get_metrics_summary
+
+    if report_type in ("daily", "daily_global"):
+        logger.info("Free daily reports are deprecated. Skipping orchestration.")
+        return
 
     queue: asyncio.Queue = asyncio.Queue()
     results_collector: Dict[str, str] = {}

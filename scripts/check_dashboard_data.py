@@ -19,7 +19,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sqlalchemy import cast, String, func, select
+from sqlalchemy import cast, String, func, select, or_
 
 from db.database import AsyncSessionLocal
 from db.models import AlertLog, RawItem
@@ -31,10 +31,12 @@ logger = logging.getLogger("check_dashboard_data")
 async def counts(db) -> dict:
     n_alerts = (await db.execute(select(func.count()).select_from(AlertLog))).scalar_one()
     n_raw = (await db.execute(select(func.count()).select_from(RawItem))).scalar_one()
+    key = AlertLog.metadata_json["free_alert"]
+    text_blob = cast(AlertLog.metadata_json, String)
     stmt_fa = (
         select(func.count())
         .select_from(AlertLog)
-        .where(cast(AlertLog.metadata_json, String).contains('"free_alert"'))
+        .where(or_(key.is_not(None), text_blob.contains('"free_alert"')))
     )
     n_free = (await db.execute(stmt_fa)).scalar_one()
     return {"alert_logs": int(n_alerts or 0), "raw_items": int(n_raw or 0), "alert_logs_with_free_alert": int(n_free or 0)}
@@ -50,6 +52,14 @@ async def main() -> None:
     async with AsyncSessionLocal() as db:
         c = await counts(db)
         logger.info("DB snapshot: %s", c)
+        na, nf = c["alert_logs"], c["alert_logs_with_free_alert"]
+        if na:
+            logger.info(
+                "free_alert coverage: %s / %s (%.1f%%)",
+                nf,
+                na,
+                100.0 * nf / na,
+            )
 
         if c["alert_logs"] == 0:
             logger.warning(

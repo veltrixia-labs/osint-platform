@@ -72,7 +72,7 @@ class AlertManager:
             display_trigger_type = trigger_type_map.get(sig.trend_type, "pattern_risk")
 
             # 1. Gather Metrics for Severity
-            domain_count, evidence_list = await cls._get_evidence_metrics(db, sig)
+            domain_count, evidence_list, related_item_ids = await cls._get_evidence_metrics(db, sig)
             
             # CRITICAL: Suppress alerts ONLY if zero evidence AND intensity is low
             # (User Requirement: Relaxed filtering for high-signal alerts)
@@ -117,10 +117,32 @@ class AlertManager:
             # Mark as confirmed if we found evidence domains, otherwise pending
             status = "confirmed" if domain_count > 0 else "pending_evidence"
             
-            # Geotagging (Heuristic First)
-            coords = resolver.resolve_heuristically(f"{sig.target_label} {sig.description}")
+            # Geotagging (Heuristic First) + location entity for Context Briefs enrichment
+            loc_text = f"{sig.target_label} {sig.description or ''}"
+            loc_detail = resolver.resolve_heuristically_detailed(loc_text.strip())
+            if loc_detail:
+                coords = (loc_detail.lat, loc_detail.lng)
+            else:
+                coords = resolver.resolve_heuristically(loc_text.strip())
             lat, lng = coords if coords else (None, None)
-            
+
+            meta_base: dict = {
+                    "spike_delta": round(float(spike_delta), 2),
+                    "domain_count": domain_count,
+                    "evidence_list": evidence_list, # Requirement #2
+                    "scoring_breakdown": breakdown,
+                    "related_item_ids": related_item_ids,
+                    "description": sig.description or "",
+            }
+            if loc_detail:
+                meta_base["location_entity_id"] = loc_detail.entity_id
+                meta_base["location_resolution"] = {
+                    "entity_id": loc_detail.entity_id,
+                    "display_name": loc_detail.display_name,
+                    "confidence": loc_detail.confidence,
+                    "match_type": loc_detail.match_type,
+                    "matched_text": loc_detail.matched_text,
+                }
 
             alert_log = AlertLog(
                 target_label=sig.target_label,
@@ -138,12 +160,7 @@ class AlertManager:
                 supporting_events_count=len(evidence_list),
                 location_lat=lat,
                 location_lng=lng,
-                metadata_json={
-                    "spike_delta": round(float(spike_delta), 2),
-                    "domain_count": domain_count,
-                    "evidence_list": evidence_list, # Requirement #2
-                    "scoring_breakdown": breakdown
-                }
+                metadata_json=meta_base,
             )
             db.add(alert_log)
             await db.flush() # Need actual ID for delivery logs
@@ -160,15 +177,31 @@ class AlertManager:
             await db.refresh(alert_log)
 
             # Fire-and-forget background task
+            import os
             title = alert_log.target_label
             summary = alert_log.metadata_json.get("description", f"Automated trigger on {alert_log.topic}")
-            task = asyncio.create_task(ImpactDiscoveryEngine(None).run_discovery(uuid.uuid4(), title, summary, alert_log.id))
             
-            # [v14.3] Add to global set and bind callback to prevent premature garbage collection
-            _bg_tasks.add(task)
-            task.add_done_callback(_bg_tasks.discard)
+            enable_ai_discovery = os.getenv("ENABLE_AI_DISCOVERY", "false").lower() == "true"
             
-            logger.info(f"[Antigravity] Direct AI Analysis triggered for {alert_log.id}")
+            if enable_ai_discovery:
+                logger.info(f"[Antigravity] Direct AI Analysis triggered for {alert_log.id}")
+                task = asyncio.create_task(ImpactDiscoveryEngine(None).run_discovery(uuid.uuid4(), title, summary, alert_log.id))
+                
+                # [v14.3] Add to global set and bind callback to prevent premature garbage collection
+                _bg_tasks.add(task)
+                task.add_done_callback(_bg_tasks.discard)
+            else:
+                logger.info("AI discovery disabled; skipping ImpactDiscoveryEngine task.")
+            
+            # --- Auto-generate Free Alert Feed Markdown/JSON ---
+            try:
+                from jobs.free_alert_feed_generator import persist_free_alert_feed_item
+                await persist_free_alert_feed_item(db, alert_log)
+            except Exception as e:
+                logger.warning(f"Failed to persist Free Alert Feed item for alert {alert_log.id}: {e}")
+            # ---------------------------------------------------
+
+
 
             if not targets:
                 logger.info(f"Alert for {sig.target_label} logged as system-wide.")
@@ -212,13 +245,13 @@ class AlertManager:
         return sig.intensity_score - baseline_sig.intensity_score
 
     @classmethod
-    async def _get_evidence_metrics(cls, db, sig: TrendSignal) -> Tuple[int, List[Dict[str, str]]]:
-        """Counts unique media domains and returns list of source metadata with fallback matching."""
+    async def _get_evidence_metrics(cls, db, sig: TrendSignal) -> Tuple[int, List[Dict[str, str]], List[str]]:
+        """Counts unique media domains and returns list of source metadata and item IDs."""
         titles = sig.metrics_json.get("supporting_events", [])
         cluster_id = sig.metrics_json.get("cluster_id")
         
         if not titles and not cluster_id: 
-            return 0, []
+            return 0, [], []
         
         # 1. Cluster-ID Strategy (Most Reliable) - New for Restoration
         items = []
@@ -261,8 +294,12 @@ class AlertManager:
 
         evidence_list = []
         seen_urls = set()
+        related_item_ids = []
         
         for item in items:
+            if item.id and str(item.id) not in related_item_ids:
+                related_item_ids.append(str(item.id))
+                
             if not item.source_url or item.source_url in seen_urls:
                 continue
             
@@ -275,7 +312,7 @@ class AlertManager:
             })
             
         domain_count = len({e["domain"] for e in evidence_list})
-        return domain_count, evidence_list
+        return domain_count, evidence_list, related_item_ids
 
     @classmethod
     async def _check_suppression(cls, db, target_label: str, topic: str, trigger_type: str, new_severity: str, current_intensity: float) -> Tuple[bool, bool, float]:

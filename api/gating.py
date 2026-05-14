@@ -6,6 +6,7 @@ from fastapi import HTTPException, Depends
 from db.models import AnalystProfile
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.auth import get_current_user_from_access, get_optional_current_user
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,13 @@ ALL_TOPIC_CODES = [
 
 async def get_effective_tier(user: Optional[AnalystProfile]) -> str:
     """Determine the user's active tier, handling expiration, grace period, and Guests."""
+    # Local Dev Override for UI testing (MUST be disabled in production).
+    env_name = os.environ.get("ENV", "development").lower()
+    allow_dev_override = os.environ.get("ALLOW_DEV_TIER_OVERRIDE", "false").lower() == "true"
+    dev_tier = os.environ.get("LOCAL_DEV_TIER")
+    if env_name != "production" and allow_dev_override and dev_tier:
+        return dev_tier.lower()
+
     if not user:
         return TIER_GUEST
         

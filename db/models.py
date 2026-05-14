@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, JSON, Text, Enum, select, func, UniqueConstraint, Index
+from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, Date, ForeignKey, JSON, Text, Enum, select, func, UniqueConstraint, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from db.database import Base
 
@@ -85,6 +85,9 @@ class Report(Base):
     confidence_level = Column(String, default="Low") # High, Medium, Low
     location_lat = Column(Float)
     location_lng = Column(Float)
+    
+    # Intelligence UI payload
+    structured_payload = Column(JSONB, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -360,3 +363,278 @@ class Prediction(Base):
     actual_alpha = Column(Float)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     evaluated_at = Column(DateTime(timezone=True))
+
+# --- BEA Economic Data ---
+
+class BEAGDPByIndustry(Base):
+    """BEA GDP by Industry normalized data points.
+
+    Each row represents a single (dataset, table, frequency, year, quarter, industry)
+    data point from the BEA API.  The UNIQUE constraint enables safe UPSERT on
+    repeated fetches and BEA data revisions.
+    """
+    __tablename__ = "bea_gdp_by_industry"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_name = Column(String(64), nullable=False)           # e.g. "GDPbyIndustry"
+    table_id = Column(String(16), nullable=False)               # e.g. "1", "5", "25"
+    frequency = Column(String(4), nullable=False)               # "A" (Annual) / "Q" (Quarterly)
+    year = Column(String(8), nullable=False)                    # e.g. "2022"
+    quarter = Column(String(8), nullable=False)                 # Annual: "2022" / Quarterly: "2022Q1"
+    industry = Column(String(16), nullable=False)               # BEA industry code e.g. "11", "3361MV"
+    industry_description = Column(String(256))                  # Human-readable name
+    data_value = Column(Float)                                  # Numeric value; NULL if unparseable
+    note_ref = Column(String(32))                               # BEA NoteRef e.g. "1", "1;1.1.A"
+    note_text = Column(Text)                                    # Resolved note text
+    statistic = Column(String(128))                             # BEA Statistic field
+    utc_production_time = Column(String(32))                    # BEA response timestamp (raw string)
+    fetched_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    raw_json = Column(JSON)                                     # Original row dict for audit
+
+    __table_args__ = (
+        UniqueConstraint(
+            "dataset_name", "table_id", "frequency",
+            "year", "quarter", "industry",
+            name="uq_bea_gdp_data_point"
+        ),
+        Index("ix_bea_gdp_year_industry", "year", "industry"),
+        Index("ix_bea_gdp_fetched_at", "fetched_at"),
+    )
+
+
+class BEANIPAObservation(Base):
+    """BEA NIPA (National Income and Product Accounts) normalized data points.
+
+    Each row represents a single observation in a NIPA table.
+    The UNIQUE constraint is based on dataset, table, line number, and time period.
+    """
+    __tablename__ = "bea_nipa_observations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_name = Column(String(64), nullable=False)           # e.g. "NIPA"
+    table_name = Column(String(16), nullable=False)             # e.g. "T10101"
+    series_code = Column(String(16))                            # e.g. "A191RC"
+    line_number = Column(String(8), nullable=False)             # Row number in table
+    line_description = Column(String(256))                      # e.g. "Gross domestic product"
+    time_period = Column(String(16), nullable=False)            # e.g. "2024", "2024Q1"
+    frequency = Column(String(4), nullable=False)               # "A", "Q", "M"
+    metric_name = Column(String(64))                            # e.g. "Current Dollars"
+    cl_unit = Column(String(64))                                # e.g. "Level"
+    unit_mult = Column(Integer)                                 # Scale (6 = Millions)
+    data_value = Column(Float)                                  # Numeric value
+    note_ref = Column(String(32))                               # BEA NoteRef
+    statistic = Column(String(128))                             # BEA Statistic field
+    utc_production_time = Column(String(32))                    # BEA response timestamp
+    fetched_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    raw_json = Column(JSON)                                     # Original row dict
+
+    __table_args__ = (
+        UniqueConstraint(
+            "dataset_name", "table_name", "line_number",
+            "time_period", "frequency",
+            name="uq_bea_nipa_data_point"
+        ),
+        Index("ix_bea_nipa_table_line", "table_name", "line_number"),
+        Index("ix_bea_nipa_table_period", "table_name", "time_period"),
+        Index("ix_bea_nipa_series_code", "series_code"),
+        Index("ix_bea_nipa_fetched_at", "fetched_at"),
+    )
+
+
+class BLSPPIObservation(Base):
+    """BLS PPI (Producer Price Index) normalized data points.
+
+    Each row represents a single monthly observation for a specific PPI series.
+    The UNIQUE constraint is based on source, dataset, series, and date.
+    """
+    __tablename__ = "bls_ppi_observations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source = Column(String(16), nullable=False)                 # e.g. "BLS"
+    dataset_name = Column(String(32), nullable=False)           # e.g. "PPI"
+    series_id = Column(String(32), nullable=False)               # e.g. "WPUFD4"
+    series_name = Column(String(256))                            # e.g. "PPI Final demand"
+    year = Column(Integer, nullable=False)                       # e.g. 2024
+    period = Column(String(4), nullable=False)                   # e.g. "M12"
+    period_name = Column(String(16))                             # e.g. "December"
+    date = Column(String(10), nullable=False)                    # e.g. "2024-12"
+    value = Column(Float)                                        # Index value
+    footnotes = Column(JSON)                                     # BLS footnotes array
+    latest = Column(Boolean, nullable=False, default=False)      # True for most recent monthly value
+    fetched_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    raw_json = Column(JSON)                                     # Original observation dict
+
+    __table_args__ = (
+        UniqueConstraint(
+            "source", "dataset_name", "series_id", "date",
+            name="uq_bls_ppi_data_point"
+        ),
+        Index("ix_bls_ppi_series_date", "series_id", "date"),
+        Index("ix_bls_ppi_date", "date"),
+        Index("ix_bls_ppi_latest", "latest"),
+        Index("ix_bls_ppi_fetched_at", "fetched_at"),
+    )
+
+
+# --- Generic External Data Consolidation Layer ---
+
+class ExternalDataSeries(Base):
+    """Catalog of external data series (FRED, BLS, WB, etc.)"""
+    __tablename__ = "external_data_series"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source = Column(String, index=True, nullable=False) # e.g. "fred", "bls", "worldbank"
+    series_id = Column(String, index=True, nullable=False) # e.g. "FEDFUNDS"
+    name = Column(String, nullable=False)
+    unit = Column(String)
+    frequency = Column(String)
+    category = Column(String)
+    pro_use = Column(String)
+    geography = Column(String)
+    metadata_json = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("source", "series_id", name="uq_external_series_id"),
+    )
+
+class ExternalObservation(Base):
+    """Generic time-series observation for single-value points."""
+    __tablename__ = "external_observations"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    series_ref_id = Column(UUID(as_uuid=True), ForeignKey("external_data_series.id", ondelete="CASCADE"), nullable=False)
+    source = Column(String, index=True, nullable=False)
+    series_id = Column(String, index=True, nullable=False)
+    date = Column(Date, index=True, nullable=False)
+    period_label = Column(String) # e.g. "2024Q1", "M12"
+    value = Column(Float)
+    is_latest = Column(Boolean, default=False)
+    fetched_at = Column(DateTime(timezone=True), server_default=func.now())
+    raw_json = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("source", "series_id", "date", "period_label", name="uq_external_observation"),
+    )
+
+class ExternalTradeFlow(Base):
+    """Specialized trade data (Comtrade, Census Trade)."""
+    __tablename__ = "external_trade_flows"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source = Column(String, index=True, nullable=False)
+    reporter_id = Column(String, index=True, nullable=False)
+    reporter_name = Column(String)
+    partner_id = Column(String, index=True, nullable=False)
+    partner_name = Column(String)
+    flow_type = Column(String, index=True) # M (Import), X (Export)
+    commodity_id = Column(String, index=True) # HS Code
+    commodity_name = Column(String)
+    year = Column(Integer, index=True)
+    period = Column(String) # e.g. "2023", "2023-01"
+    trade_value = Column(Float)
+    quantity = Column(Float)
+    unit = Column(String)
+    fetched_at = Column(DateTime(timezone=True), server_default=func.now())
+    raw_json = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("source", "reporter_id", "partner_id", "flow_type", "commodity_id", "year", "period", name="uq_external_trade_flow"),
+    )
+
+class ExternalIndustryStat(Base):
+    """Cross-sectional industry and geo-based statistics (BEA, Census CBP)."""
+    __tablename__ = "external_industry_stats"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source = Column(String, index=True, nullable=False)
+    dataset = Column(String, index=True) # e.g. "GDPbyIndustry", "CBP"
+    geo_id = Column(String, index=True) # FIPS, ISO
+    geo_name = Column(String)
+    industry_id = Column(String, index=True) # NAICS, BEA Code
+    industry_name = Column(String)
+    metric_name = Column(String, index=True, nullable=False) # e.g. "GDP", "EMP"
+    year = Column(Integer, index=True)
+    period = Column(String)
+    value = Column(Float)
+    unit = Column(String)
+    metadata_json = Column(JSONB)
+    raw_json = Column(JSONB)
+    fetched_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("source", "dataset", "geo_id", "industry_id", "metric_name", "year", "period", name="uq_external_industry_stat"),
+    )
+
+class ExternalDataFetchLog(Base):
+    """Logging for external data acquisition jobs."""
+    __tablename__ = "external_data_fetch_logs"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source = Column(String, index=True, nullable=False)
+    job_name = Column(String, index=True, nullable=False)
+    status = Column(String, index=True) # success, failed, partial
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    finished_at = Column(DateTime(timezone=True))
+    rows_fetched = Column(Integer, default=0)
+    rows_saved = Column(Integer, default=0)
+    error_message = Column(Text)
+    metadata_json = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class MarketDataInstrument(Base):
+    """Catalog of market instruments (ETFs, Indices, FX pairs, Crypto, etc.)"""
+    __tablename__ = "market_data_instruments"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    provider = Column(String, index=True, nullable=False) # e.g. "alpha_vantage", "frankfurter"
+    symbol = Column(String, index=True, nullable=False) # e.g. "SPY", "USDJPY"
+    name = Column(String, nullable=False)
+    asset_class = Column(String, index=True, nullable=False) # equity, etf, index, fx, commodity, crypto, rates_proxy
+    domain_ids = Column(JSON, nullable=True) # List of domains this instrument is relevant for
+    quote_currency = Column(String) # e.g. "USD"
+    base_currency = Column(String) # For FX/Crypto
+    metadata_json = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("provider", "symbol", name="uq_market_instrument"),
+    )
+
+class MarketDataPrice(Base):
+    """Historical and daily market price data."""
+    __tablename__ = "market_data_prices"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    instrument_id = Column(UUID(as_uuid=True), ForeignKey("market_data_instruments.id", ondelete="CASCADE"), nullable=False)
+    provider = Column(String, index=True, nullable=False)
+    symbol = Column(String, index=True, nullable=False)
+    date = Column(Date, index=True, nullable=False)
+    interval = Column(String, index=True, default="daily") # daily, 15min, etc.
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    adjusted_close = Column(Float)
+    volume = Column(Float)
+    raw_json = Column(JSONB)
+    fetched_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("provider", "symbol", "date", "interval", name="uq_market_data_price"),
+    )
+
+class MarketDataFetchLog(Base):
+    """Logging for market data acquisition jobs."""
+    __tablename__ = "market_data_fetch_logs"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    provider = Column(String, index=True, nullable=False)
+    job_name = Column(String, index=True, nullable=False)
+    status = Column(String, index=True) # running, success, partial, failed
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    finished_at = Column(DateTime(timezone=True))
+    instruments_requested = Column(Integer, default=0)
+    rows_fetched = Column(Integer, default=0)
+    rows_saved = Column(Integer, default=0)
+    error_message = Column(Text)
+    metadata_json = Column(JSONB)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
