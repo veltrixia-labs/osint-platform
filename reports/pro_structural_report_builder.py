@@ -1,0 +1,822 @@
+"""
+Pro Structural Report Builder.
+
+Converts structured context (macro statistics and market data) into a 
+human-readable Markdown report for Pro users.
+"""
+
+from typing import Any, List, Optional, Dict
+import math
+
+def build_pro_structural_report(context: dict) -> str:
+    """
+    Generates a full Markdown report based on the provided context.
+    """
+    sections = [
+        "# Structural Impact Brief",
+        _build_executive_snapshot(context),
+        _build_signal_brief(context),
+        _build_market_relevance(context),
+        _build_transmission_channels(context),
+        _build_quantitative_context(context),
+        _build_market_confirmation_section(context),
+        _build_asset_sector_exposure(context),
+        _build_watch_indicators(context),
+        _build_balanced_interpretations(context),
+        _build_data_notes(context)
+    ]
+    
+    report = "\n\n".join(sections)
+    return _apply_compliance_guardrails(report)
+
+def _build_executive_snapshot(ctx: dict) -> str:
+    domain = ctx.get("domain", {})
+    sig = ctx.get("signal", {})
+    s_ctx = ctx.get("structural_context", {})
+    m_ctx = ctx.get("market_confirmation", {})
+    watch_inds = ctx.get("watch_indicators", [])
+    data_notes = ctx.get("data_notes", [])
+    
+    domain_name = domain.get("display_name", "N/A")
+    sig_title = sig.get("title", "N/A")
+    
+    macro_obs = s_ctx.get("macro_observations", [])
+    struct_pts = [f"{o['series_id']} ({format_percent(o.get('change_pct'))})" for o in macro_obs[:3]]
+    struct_str = ", ".join(struct_pts) if struct_pts else "N/A"
+    
+    prices = m_ctx.get("latest_prices", [])
+    market_pts = [f"{p['symbol']} ({format_percent(p.get('percent_change'))})" for p in prices[:3]]
+    market_str = ", ".join(market_pts) if market_pts else "N/A"
+    
+    limitation = data_notes[0] if data_notes else "None detected"
+    
+    lines = [
+        "## Executive Snapshot",
+        "<div class=\"snapshot-grid\">",
+        f"  <div class=\"snapshot-card\"><span class=\"snapshot-card-label\">Domain</span><span class=\"snapshot-card-value\">{domain_name}</span></div>",
+        f"  <div class=\"snapshot-card\"><span class=\"snapshot-card-label\">Primary Signal</span><span class=\"snapshot-card-value\">{sig_title}</span></div>",
+        f"  <div class=\"snapshot-card\"><span class=\"snapshot-card-label\">Structural Data</span><span class=\"snapshot-card-value\">{struct_str}</span></div>",
+        f"  <div class=\"snapshot-card\"><span class=\"snapshot-card-label\">Market Pricing</span><span class=\"snapshot-card-value\">{market_str}</span></div>",
+        f"  <div class=\"snapshot-card\"><span class=\"snapshot-card-label\">Watch Indicators</span><span class=\"snapshot-card-value\">{len(watch_inds)} Active</span></div>",
+        f"  <div class=\"snapshot-card\"><span class=\"snapshot-card-label\">Primary Limitation</span><span class=\"snapshot-card-value\">{limitation}</span></div>",
+        "</div>"
+    ]
+    return "\n".join(lines)
+
+def _build_signal_brief(ctx: dict) -> str:
+    sig = ctx.get("signal")
+    domain = ctx.get("domain", {})
+    
+    lines = ["## 1. Signal & Market Relevance"]
+    lines.append("<div class=\"signal-relevance-grid\">")
+    
+    # Left Column: Context
+    lines.append("  <div class=\"signal-context\">")
+    lines.append("    <h3>Signal Context</h3>")
+    if sig:
+        lines.append(f"    <p><strong>Alert:</strong> {sig.get('title', 'N/A')}<br>")
+        lines.append(f"    <strong>Triggered At:</strong> {sig.get('triggered_at', 'N/A')}<br>")
+        lines.append(f"    <strong>Analytical Question:</strong> {domain.get('primary_user_question', 'N/A')}</p>")
+        
+        news = sig.get("related_news", [])
+        if news:
+            lines.append("    <p><strong>Related Events:</strong><br>")
+            for n in news[:3]:
+                title = n.get("title", n.get("text", "Related Event"))
+                url = n.get("url")
+                lines.append(f"    <a href=\"{url}\" target=\"_blank\">{title}</a><br>" if url else f"    {title}<br>")
+            lines.append("    </p>")
+    lines.append("  </div>")
+    
+    # Right Column: Relevance
+    lines.append("  <div class=\"market-relevance\">")
+    lines.append("    <h3>Decision-Relevant Questions</h3>")
+    lines.append("    <ul>")
+    for q in domain.get("decision_relevant_questions", []):
+        lines.append(f"      <li>{q}</li>")
+    lines.append("    </ul>")
+    lines.append("  </div>")
+    
+    lines.append("</div>")
+    return "\n".join(lines)
+
+def _build_market_relevance(ctx: dict) -> str:
+    # Merged into _build_signal_brief
+    return ""
+
+def _build_transmission_channels(ctx: dict) -> str:
+    channels = ctx.get("transmission_channels", [])
+    lines = ["## 2. Transmission Channels"]
+    if channels:
+        lines.append("<div class=\"transmission-flow\">")
+        for i, c in enumerate(channels):
+            lines.append(f"  <div class=\"transmission-step\">{c}</div>")
+            if i < len(channels) - 1:
+                lines.append("  <div class=\"transmission-arrow\">→</div>")
+        lines.append("</div>")
+    else:
+        lines.append("<p>No specific transmission channels defined for this domain.</p>")
+    return "\n".join(lines)
+
+def _build_quantitative_context(ctx: dict) -> str:
+    s_ctx = ctx.get("structural_context", {})
+    lines = ["## 3. Quantitative Context"]
+    
+    # Summary Cards for Macro
+    obs = s_ctx.get("macro_observations", [])
+    if obs:
+        lines.append("<div class=\"metric-card-grid\">")
+        for o in obs[:4]:
+            val = format_value(o.get("latest_value"))
+            change = format_percent(o.get("change_pct"))
+            lines.append("  <div class=\"metric-card\">")
+            lines.append(f"    <div class=\"metric-label\">{o['series_id']}</div>")
+            lines.append(f"    <div class=\"metric-value\">{val}</div>")
+            lines.append(f"    <div class=\"metric-label\">{change} (Lookback)</div>")
+            lines.append("  </div>")
+        lines.append("</div>")
+
+    # Raw Tables hidden in details
+    lines.append("<details>")
+    lines.append("<summary>Show raw macroeconomic tables</summary>")
+    lines.append("<div class=\"u-m-top-1\">")
+    
+    # Macro Table
+    lines.append("### Macro / Structural Observations")
+    if obs:
+        lines.append("| Series ID | Source | Latest Value | Date | % Change (Lookback) |")
+        lines.append("| :--- | :--- | :--- | :--- | :--- |")
+        for o in obs:
+            val = format_value(o.get("latest_value"))
+            change = format_percent(o.get("change_pct"))
+            lines.append(f"| {o['series_id']} | {o['source']} | {val} | {o['latest_date']} | {change} |")
+    else:
+        lines.append("No macro observations available.")
+
+    # Trade Flows Table
+    lines.append("\n### Trade Flows")
+    flows = s_ctx.get("trade_flows", [])
+    if flows:
+        lines.append("| Reporter | Partner | Flow | Commodity | Value (USD) | Year |")
+        lines.append("| :--- | :--- | :--- | :--- | :--- | :--- |")
+        for f in flows[:10]:
+            val = compact_number(f.get("trade_value"))
+            lines.append(f"| {f['reporter_name']} | {f['partner_name']} | {f['flow_type']} | {f['commodity_id']} | {val} | {f['year']} |")
+    else:
+        lines.append("No recent trade flow data found.")
+
+    # Industry Stats Table
+    lines.append("\n### Industry / Regional Stats")
+    stats = s_ctx.get("industry_stats", [])
+    if stats:
+        lines.append("| Source | Dataset | Geo | Industry | Metric | Value | Year |")
+        lines.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
+        for s in stats[:10]:
+            val = format_value(s.get("value"))
+            lines.append(f"| {s['source']} | {s['dataset']} | {s['geo_name']} | {s['industry_name']} | {s['metric_name']} | {val} | {s['year']} |")
+    else:
+        lines.append("No industry statistics found.")
+        
+    lines.append("</div>")
+    lines.append("</details>")
+        
+    return "\n".join(lines)
+
+def _build_market_confirmation_section(ctx: dict) -> str:
+    m_ctx = ctx.get("market_confirmation", {})
+    lines = ["## 4. Market Confirmation"]
+    
+    prices = m_ctx.get("latest_prices", [])
+    pos_movers = [p for p in prices if (p.get("percent_change") or 0) > 0.5]
+    neg_movers = [p for p in prices if (p.get("percent_change") or 0) < -0.5]
+    na_movers = [p for p in prices if p.get("percent_change") is None]
+    
+    # Determine status
+    status = "Limited"
+    if prices:
+        if len(pos_movers) > len(prices) * 0.6 or len(neg_movers) > len(prices) * 0.6:
+            status = "Confirming"
+        elif len(pos_movers) > 0 and len(neg_movers) > 0:
+            status = "Mixed"
+        else:
+            status = "Divergent"
+            
+    # Market Summary Grid
+    lines.append("<div class=\"market-summary-grid\">")
+    lines.append(f"  <div class=\"market-status-card\"><div>Status</div><div class=\"metric-value\">{status}</div></div>")
+    lines.append(f"  <div class=\"market-status-card\"><div>Positive Movers</div><div class=\"metric-value\">{len(pos_movers)}</div></div>")
+    lines.append(f"  <div class=\"market-status-card\"><div>Negative Movers</div><div class=\"metric-value\">{len(neg_movers)}</div></div>")
+    lines.append(f"  <div class=\"market-status-card\"><div>N/A</div><div class=\"metric-value\">{len(na_movers)}</div></div>")
+    lines.append("</div>")
+    
+    lines.append("<details open>")
+    lines.append("<summary>Market pricing table</summary>")
+    lines.append("<div class=\"u-m-top-1\">")
+    
+    if prices:
+        lines.append("| Symbol | Provider | Latest Close | Date | 30D Change | Class |")
+        lines.append("| :--- | :--- | :--- | :--- | :--- | :--- |")
+        for p in prices:
+            close = format_value(p.get("latest_close"))
+            change = format_percent(p.get("percent_change"))
+            lines.append(f"| **{p['symbol']}** | {p['provider']} | {close} | {p['latest_date']} | {change} | {p['asset_class']} |")
+    else:
+        lines.append("\n*Market confirmation data is not yet available for the instruments defined in this domain configuration.*")
+        
+    lines.append("</div>")
+    lines.append("</details>")
+        
+    # Interpretation section
+    lines.append("\n**Interpretation**:")
+    if not prices:
+        lines.append("Market confirmation remains incomplete due to missing price data for domain-specific instruments.")
+    else:
+        interp = []
+        if na_movers:
+            interp.append(f"Analysis is partially limited by {len(na_movers)} instruments showing N/A for 30D change (reference prices only).")
+        
+        if len(pos_movers) > len(prices) * 0.6:
+            interp.append("Current market price action shows broad upward momentum, which may confirm positive structural adjustments.")
+        elif len(neg_movers) > len(prices) * 0.6:
+            interp.append("Market pricing indicates broad downward pressure, aligning with identified structural risks.")
+        elif len(pos_movers) > 0 and len(neg_movers) > 0:
+            interp.append("Market confirmation is mixed; structural signals have not yet consolidated into a singular directional trend.")
+        else:
+            interp.append("Market has not confirmed severe stress; price action remains within historical range for most tracked instruments.")
+            
+        lines.append("<blockquote class=\"highlight-box\">" + " ".join(interp) + "</blockquote>")
+
+    return "\n".join(lines)
+
+def _build_asset_sector_exposure(ctx: dict) -> str:
+    domain = ctx.get("domain", {})
+    lines = ["## 5. Asset / Sector Exposure"]
+    
+    exposure = ctx.get("exposure_targets", [])
+    assets = domain.get("primary_asset_classes", [])
+    
+    all_chips = exposure + assets
+    
+    if all_chips:
+        lines.append("<div class=\"exposure-chip-grid\">")
+        for chip in all_chips:
+            lines.append(f"  <span class=\"exposure-chip\">{chip}</span>")
+        lines.append("</div>")
+    else:
+        lines.append("<p>No exposure targets defined.</p>")
+            
+    lines.append("<p style=\"font-size: 0.8rem; color: var(--text-secondary);\">Note: This list identifies potential correlation points and sensitivity targets. It does not constitute a recommendation to trade.</p>")
+    return "\n".join(lines)
+
+def _build_watch_indicators(ctx: dict) -> str:
+    indicators = ctx.get("watch_indicators", [])
+    lines = ["## 6. Watch Indicators"]
+    if indicators:
+        lines.append("<div class=\"watch-indicator-grid\">")
+        for ind in indicators:
+            val = format_value(ind.get("latest_value"))
+            lines.append("  <div class=\"watch-indicator-card\">")
+            lines.append(f"    <div class=\"wi-header\">{ind['indicator']}</div>")
+            lines.append(f"    <div class=\"wi-source\">{ind['source']} | Latest: <strong>{val}</strong></div>")
+            lines.append(f"    <div style=\"font-size:0.9rem; margin:0.5rem 0;\"><strong>Why it matters:</strong> {ind['why_it_matters']}</div>")
+            lines.append("    <div style=\"font-size:0.85rem; border-left:2px solid var(--success); padding-left:0.5rem;\">⬆ {ind['upward_interpretation']}</div>".replace("{ind['upward_interpretation']}", ind['upward_interpretation']))
+            lines.append("    <div style=\"font-size:0.85rem; border-left:2px solid var(--danger); padding-left:0.5rem;\">⬇ {ind['downward_interpretation']}</div>".replace("{ind['downward_interpretation']}", ind['downward_interpretation']))
+            if ind.get("limitation"):
+                lines.append(f"    <div style=\"font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;\"><em>Limitation: {ind['limitation']}</em></div>")
+            lines.append("  </div>")
+        lines.append("</div>")
+    else:
+        lines.append("<p>No watch indicators defined.</p>")
+    return "\n".join(lines)
+
+def _build_balanced_interpretations(ctx: dict) -> str:
+    interp = ctx.get("balanced_interpretations", {})
+    lines = ["## 7. Balanced Interpretations"]
+    
+    if interp:
+        lines.append("<div class=\"balanced-view-grid\">")
+        lines.append("  <div class=\"balanced-view-card\">")
+        lines.append("    <h3 style=\"color: var(--success);\">Stability / Resilience View</h3>")
+        lines.append(f"    <p>{interp.get('stability_view', 'N/A')}</p>")
+        lines.append("  </div>")
+        lines.append("  <div class=\"balanced-view-card\">")
+        lines.append("    <h3 style=\"color: var(--danger);\">Volatility / Stress View</h3>")
+        lines.append(f"    <p>{interp.get('volatility_view', 'N/A')}</p>")
+        lines.append("  </div>")
+        lines.append("</div>")
+        
+        lines.append(f"\n**Market Confirmation View**: {interp.get('market_confirmation_view', 'N/A')}")
+        
+        cond = interp.get("invalidating_conditions", [])
+        if cond:
+            lines.append("\n**Invalidating Conditions (Watch for these to reverse the thesis)**:")
+            for c in cond:
+                lines.append(f"- {c}")
+    else:
+        lines.append("<p>Interpretations not available.</p>")
+    return "\n".join(lines)
+
+def _build_data_notes(ctx: dict) -> str:
+    lines = []
+    lines.append("<details style=\"margin-top: 2rem;\">")
+    lines.append("<summary>Data Notes & Coverage Limitations</summary>")
+    lines.append("<div class=\"u-m-top-1\">")
+    
+    lines.append("### Methodology & Legal Disclaimers")
+    lines.append("<ul>")
+    lines.append("<li>This report uses public structural data and delayed or reference market data.</li>")
+    lines.append("<li>No LLM forecast, scenario generation, or deterministic prediction is included.</li>")
+    lines.append("<li><strong>This is not investment advice and does not provide buy/sell recommendations.</strong></li>")
+    lines.append("<li>Market data may be delayed and subject to provider licensing limitations.</li>")
+    lines.append("</ul>")
+    
+    notes = ctx.get("data_notes", [])
+    if notes:
+        lines.append("### Coverage Limitations")
+        lines.append("<ul>")
+        for n in notes:
+            lines.append(f"<li>{n}</li>")
+        lines.append("</ul>")
+        
+    lines.append("</div>")
+    lines.append("</details>")
+            
+    # Priority Sync List for AI/Semi
+    domain_id = ctx.get("domain", {}).get("domain_id")
+    if domain_id == "ai_semiconductor_intelligence":
+        missing = ["SOXX", "USDTWD", "EWJ", "EWY"]
+        lines.append("\n**Priority Synchronization List (Next Cycle)**:")
+        for m in missing:
+            lines.append(f"- [ ] {m} (Market Data)")
+            
+    freshness = ctx.get("data_freshness", {})
+    if freshness.get("last_update"):
+        lines.append(f"\n<div class=\"data-freshness-meta\">Data Freshness Index: {freshness['last_update']}</div>")
+        
+    return "\n".join(lines)
+
+def _apply_compliance_guardrails(text: str) -> str:
+    """Ensures no prohibited promotional language is used."""
+    replacements = {
+        "we recommend buying": "exposure targets include",
+        "we recommend selling": "potential sensitivity in",
+        "price target": "current reference level",
+        "will definitely": "historically correlates with",
+        "guaranteed return": "performance profile"
+    }
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+        text = text.replace(old.capitalize(), new.capitalize())
+    return text
+
+# --- Format Helpers ---
+
+def format_value(val: Any) -> str:
+    if val is None:
+        return "N/A"
+    if isinstance(val, (int, float)):
+        # If very small, use more decimals
+        if 0 < abs(val) < 0.01:
+            return f"{val:.6f}"
+        return f"{val:,.2f}"
+    return str(val)
+
+def format_percent(val: Optional[float]) -> str:
+    if val is None:
+        return "N/A"
+    prefix = "+" if val > 0 else ""
+    return f"{prefix}{val:.2f}%"
+
+def compact_number(val: Any) -> str:
+    if val is None or not isinstance(val, (int, float)):
+        return "N/A"
+    if val >= 1_000_000_000:
+        return f"{val / 1_000_000_000:.2f}B"
+    if val >= 1_000_000:
+        return f"{val / 1_000_000:.2f}M"
+    if val >= 1_000:
+        return f"{val / 1_000:.2f}K"
+    return f"{val:.2f}"
+
+def build_pro_structural_report_payload(context: dict) -> dict:
+    """
+    Extracts structured payload for the Intelligence Report UI.
+    Includes signal classification, event timeline, market breakdown,
+    divergence check, watch conditions, exposure matrix, and coverage matrix.
+    All analysis is rule-based / heuristic — no LLM dependency.
+    """
+    domain = context.get("domain", {})
+    sig = context.get("signal", {})
+    s_ctx = context.get("structural_context", {})
+    m_ctx = context.get("market_confirmation", {})
+    prices = m_ctx.get("latest_prices", [])
+    
+    pos_movers = [p for p in prices if (p.get("percent_change") or 0) > 0.5]
+    neg_movers = [p for p in prices if (p.get("percent_change") or 0) < -0.5]
+    na_movers = [p for p in prices if p.get("percent_change") is None]
+    
+    status = "Limited"
+    if prices:
+        if len(pos_movers) > len(prices) * 0.6 or len(neg_movers) > len(prices) * 0.6:
+            status = "Confirming"
+        elif len(pos_movers) > 0 and len(neg_movers) > 0:
+            status = "Mixed"
+        else:
+            status = "Divergent"
+            
+    freshness = context.get("data_freshness", {})
+
+    # --- 1. Signal Classification (from domain template) ---
+    sig_class = context.get("signal_classification_template", {})
+
+    # --- 2. Event Timeline (built in context engine) ---
+    event_timeline = context.get("event_timeline", [])
+
+    # --- 3. Relevance Map (from domain config) ---
+    relevance_map = context.get("relevance_map", {})
+
+    # --- 4. Market Confirmation Breakdown by group ---
+    market_group_map = context.get("market_group_map", {})
+    market_group_interp = context.get("market_group_interpretation", {})
+    breakdown = _build_market_breakdown(prices, market_group_map, market_group_interp)
+
+    # --- 4.5. Coverage Matrix (heuristic based on data counts) ---
+    coverage_matrix = _build_coverage_matrix(s_ctx, m_ctx, event_timeline, sig)
+
+    # --- 5. Divergence Check (heuristic) ---
+    divergence_check = _build_divergence_check(s_ctx, status, freshness, prices, coverage_matrix)
+
+    # --- 6. Watch Conditions (from domain template) ---
+    watch_cond = context.get("watch_conditions_template", {})
+
+    # --- 7. Exposure Matrix (from domain config) ---
+    exposure_matrix = context.get("exposure_matrix_details", [])
+
+    # Coverage matrix already computed above
+
+    # --- 9. Geo Context ---
+    geo_context = _build_geo_context(sig, event_timeline)
+
+    # --- 10. Unresolved Signals ---
+    unresolved = _build_unresolved_signals(status, coverage_matrix, divergence_check)
+
+    # --- 11. Executive Summary + Key Findings (auto-generated) ---
+    exec_summary, key_findings = _build_executive_summary(
+        domain, sig, sig_class, status, coverage_matrix, divergence_check, breakdown, geo_context
+    )
+
+    # --- 12. Enrich macro observations with display_name ---
+    enriched_macro = []
+    for obs in s_ctx.get("macro_observations", []):
+        entry = dict(obs)
+        sid = entry.get("series_id", "")
+        entry["display_name"] = relevance_map.get(sid, sid)
+        enriched_macro.append(entry)
+
+    return {
+        "domain": {
+            "domain_id": domain.get("domain_id"),
+            "display_name": domain.get("display_name"),
+            "primary_user_question": domain.get("primary_user_question")
+        },
+        "signal": {
+            "title": sig.get("title"),
+            "triggered_at": sig.get("triggered_at"),
+            "severity": sig.get("severity"),
+            "target_label": sig.get("target_label"),
+            "location_lat": sig.get("location_lat"),
+            "location_lng": sig.get("location_lng"),
+            "related_news": sig.get("related_news", [])
+        },
+        "executive_summary": exec_summary,
+        "key_findings": key_findings,
+        "signal_classification": sig_class,
+        "event_timeline": event_timeline,
+        "structural_context": {
+            "macro_observations": enriched_macro,
+            "trade_flows": s_ctx.get("trade_flows", []),
+            "industry_stats": s_ctx.get("industry_stats", [])
+        },
+        "relevance_map": relevance_map,
+        "market_confirmation": {
+            "latest_prices": prices,
+            "status": status,
+            "positive_movers": len(pos_movers),
+            "negative_movers": len(neg_movers),
+            "limited_instruments": len(na_movers),
+            "breakdown": breakdown
+        },
+        "divergence_check": divergence_check,
+        "unresolved_signals": unresolved,
+        "watch_indicators": context.get("watch_indicators", []),
+        "watch_conditions": watch_cond,
+        "transmission_flow": context.get("transmission_channels", []),
+        "exposure_targets": context.get("exposure_targets", []),
+        "exposure_matrix": exposure_matrix,
+        "balanced_interpretations": context.get("balanced_interpretations", {}),
+        "coverage_matrix": coverage_matrix,
+        "geo_context": geo_context,
+        "data_notes": {
+            "freshness": freshness.get("last_update"),
+            "coverage_limitations": context.get("data_notes", []),
+            "missing_data": []
+        }
+    }
+
+
+def _build_market_breakdown(prices: list, group_map: dict, interp_map: dict) -> list:
+    """
+    Group market instruments by asset group and determine per-group status
+    using domain-specific interpretation from market_group_interpretation config.
+    """
+    groups: dict = {}
+    for p in prices:
+        symbol = p.get("symbol", "")
+        mapping = group_map.get(symbol)
+        if not mapping:
+            continue
+        group_name = mapping["group"]
+        order = mapping.get("order", 99)
+        if group_name not in groups:
+            groups[group_name] = {"group": group_name, "order": order, "instrument_details": [], "changes": []}
+        pct = p.get("percent_change")
+        groups[group_name]["instrument_details"].append({"symbol": symbol, "percent_change": pct})
+        if pct is not None:
+            groups[group_name]["changes"].append(pct)
+
+    result = []
+    for g in sorted(groups.values(), key=lambda x: x["order"]):
+        changes = g["changes"]
+        total_instr = len(g["instrument_details"])
+        na_count = total_instr - len(changes)
+        group_name = g["group"]
+        interp = interp_map.get(group_name, {})
+        pos_label = interp.get("positive_means", "confirming")
+        neg_label = interp.get("negative_means", "stress")
+        description = interp.get("description", "")
+
+        if not changes and total_instr > 0:
+            grp_status = "unavailable"
+        elif na_count > total_instr * 0.5:
+            grp_status = "limited"
+        elif all(c > 0.2 for c in changes):
+            grp_status = pos_label
+        elif all(c < -0.2 for c in changes):
+            grp_status = neg_label
+        elif any(c > 0.2 for c in changes) and any(c < -0.2 for c in changes):
+            grp_status = "mixed"
+        elif changes:
+            grp_status = "neutral"
+        else:
+            grp_status = "limited"
+
+        result.append({
+            "group": group_name,
+            "instruments": [d["symbol"] for d in g["instrument_details"]],
+            "instrument_details": g["instrument_details"],
+            "status": grp_status,
+            "description": description
+        })
+
+    return result
+
+
+def _build_divergence_check(s_ctx: dict, market_status: str, freshness: dict, prices: list, coverage: dict) -> dict:
+    """
+    Heuristic divergence assessment. Uses coverage_matrix to avoid
+    saying 'coverage is limited' when data is actually strong.
+    """
+    significant_changes = 0
+    for obs in s_ctx.get("macro_observations", []):
+        change = obs.get("change_pct")
+        if change is not None and abs(change) > 3:
+            significant_changes += 1
+
+    if significant_changes >= 3:
+        structural_risk = "elevated"
+    elif significant_changes >= 1:
+        structural_risk = "medium"
+    else:
+        structural_risk = "low"
+
+    # Data lag
+    last_update = freshness.get("last_update")
+    if last_update:
+        try:
+            from datetime import datetime
+            last_dt = datetime.fromisoformat(last_update)
+            days_ago = (datetime.now() - last_dt).days
+            data_lag = "low" if days_ago <= 3 else ("medium" if days_ago <= 14 else "high")
+        except Exception:
+            data_lag = "medium"
+    else:
+        data_lag = "high"
+
+    mc_map = {"Confirming": "confirming", "Mixed": "mixed", "Divergent": "divergent", "Limited": "limited"}
+    mc_val = mc_map.get(market_status, "limited")
+
+    # Overall coverage level
+    cov_levels = [coverage.get(k, "low") for k in ["macro_data", "market_data", "trade_data", "news_evidence"]]
+    high_count = sum(1 for c in cov_levels if c == "high")
+    cov_label = "strong" if high_count >= 3 else ("moderate" if high_count >= 1 else "limited")
+
+    # Build interpretation using actual coverage level
+    interp_parts = []
+    if structural_risk == "elevated" and mc_val == "confirming":
+        interp_parts.append("Both structural data and market prices point in the same direction.")
+        interp_parts.append("The signal appears well-reflected across available data sources.")
+    elif structural_risk == "elevated" and mc_val in ("mixed", "limited"):
+        interp_parts.append("Structural risk indicators are elevated while market confirmation remains incomplete.")
+        interp_parts.append("This suggests the signal has not yet consolidated into a single market narrative.")
+    elif structural_risk == "low" and mc_val == "confirming":
+        interp_parts.append("Market prices are moving but structural data shows limited disruption.")
+        interp_parts.append("This may reflect sentiment-driven repricing rather than fundamental change.")
+    elif structural_risk == "medium" and mc_val == "mixed":
+        interp_parts.append("Moderate structural signals with mixed market response.")
+        interp_parts.append("The situation is evolving; directional clarity has not yet emerged.")
+    elif cov_label == "limited":
+        interp_parts.append("Data coverage across source categories is limited.")
+        interp_parts.append("The signal requires additional observation before drawing conclusions.")
+    else:
+        interp_parts.append(f"Data coverage is {cov_label} across available source categories.")
+        interp_parts.append("Structural and market signals are within normal ranges for this assessment period.")
+
+    if data_lag == "high":
+        interp_parts.append("Note: structural data has significant lag; current assessment may not reflect very recent developments.")
+
+    return {
+        "structural_risk": structural_risk,
+        "market_confirmation": mc_val,
+        "data_lag": data_lag,
+        "overall_coverage": cov_label,
+        "interpretation": " ".join(interp_parts)
+    }
+
+
+def _build_coverage_matrix(s_ctx: dict, m_ctx: dict, timeline: list, sig: dict) -> dict:
+    """
+    Heuristic coverage assessment based on data point counts.
+    Thresholds: high >= 3, medium >= 1, low = 0
+    """
+    def _level(count: int) -> str:
+        if count >= 3:
+            return "high"
+        elif count >= 1:
+            return "medium"
+        return "low"
+
+    macro_count = len(s_ctx.get("macro_observations", []))
+    market_count = len(m_ctx.get("latest_prices", []))
+    trade_count = len(s_ctx.get("trade_flows", []))
+    news_count = len(sig.get("related_news", []))
+    geo_count = 1 if sig.get("location_lat") else 0
+
+    notes_parts = []
+    if macro_count == 0:
+        notes_parts.append("No macro observations available for this domain.")
+    if trade_count == 0:
+        notes_parts.append("Trade flow data not yet synced or not applicable.")
+    if geo_count == 0:
+        notes_parts.append("No geographic coordinates associated with this signal.")
+
+    return {
+        "macro_data": _level(macro_count),
+        "market_data": _level(market_count),
+        "trade_data": _level(trade_count),
+        "geo_data": _level(geo_count),
+        "news_evidence": _level(news_count),
+        "notes": " ".join(notes_parts) if notes_parts else "Data coverage is adequate across available sources."
+    }
+
+
+# --- Region keyword dictionary for geo extraction ---
+_GEO_KEYWORDS = [
+    "United States", "China", "Russia", "Japan", "South Korea", "Taiwan",
+    "Iran", "Saudi Arabia", "UAE", "Iraq", "Israel", "Turkey",
+    "Ukraine", "Europe", "Germany", "France", "United Kingdom", "UK",
+    "India", "Brazil", "Mexico", "Canada", "Australia", "Indonesia",
+    "Gulf of Oman", "Strait of Hormuz", "South China Sea", "Taiwan Strait",
+    "Suez Canal", "Panama Canal", "Red Sea", "Baltic Sea", "Arctic",
+    "Middle East", "Southeast Asia", "Central Asia", "Africa", "Latin America",
+    "North Korea", "Pakistan", "Nigeria", "Venezuela", "Norway", "Singapore"
+]
+
+
+def _build_geo_context(sig: dict, timeline: list) -> dict:
+    """Extract geographic context from signal and timeline text."""
+    has_coords = sig.get("location_lat") is not None and sig.get("location_lng") is not None
+
+    # Collect text to scan for region mentions
+    texts = []
+    if sig.get("title"):
+        texts.append(sig["title"])
+    for ev in timeline:
+        if ev.get("title"):
+            texts.append(ev["title"])
+        if ev.get("location_label"):
+            texts.append(ev["location_label"])
+    for n in sig.get("related_news", []):
+        t = n.get("title") or n.get("headline") or n.get("text", "")
+        if t:
+            texts.append(t)
+
+    combined = " ".join(texts)
+    mentioned = []
+    for kw in _GEO_KEYWORDS:
+        if kw.lower() in combined.lower() and kw not in mentioned:
+            mentioned.append(kw)
+
+    confidence = "coordinates" if has_coords else ("inferred" if mentioned else "unavailable")
+
+    return {
+        "has_coordinates": has_coords,
+        "mentioned_regions": mentioned[:8],
+        "confidence": confidence
+    }
+
+
+def _build_unresolved_signals(market_status: str, coverage: dict, divergence: dict) -> list:
+    """Identify contradictory or incomplete data points worth highlighting."""
+    items = []
+    if market_status == "Mixed":
+        items.append("Market instruments are sending mixed signals — some asset groups confirm while others diverge.")
+    if coverage.get("geo_data") == "low":
+        items.append("Geographic attribution is limited; the signal's regional scope may be broader than displayed.")
+    if coverage.get("trade_data") == "low":
+        items.append("Trade flow data is sparse; structural transmission assessment relies primarily on macro and market data.")
+    if divergence.get("structural_risk") == "elevated" and divergence.get("market_confirmation") in ("limited", "mixed"):
+        items.append("Structural risk appears elevated but market prices have not fully reflected this assessment.")
+    if divergence.get("data_lag") == "high":
+        items.append("Significant data lag detected; the most recent structural observations may be stale.")
+    return items
+
+
+def _build_executive_summary(
+    domain: dict, sig: dict, sig_class: dict,
+    market_status: str, coverage: dict, divergence: dict,
+    breakdown: list, geo_context: dict
+) -> tuple:
+    """
+    Auto-generate executive summary + key findings from structured payload.
+    Returns (summary_text, key_findings_list).
+    """
+    parts = []
+    findings = []
+
+    domain_name = domain.get("display_name", "Unknown Domain")
+    signal_title = sig.get("title") or sig.get("target_label") or "an unspecified event"
+    primary_type = (sig_class.get("primary_type") or "unclassified").replace("_", " ")
+    parts.append(
+        f"This brief tracks a {domain_name} signal related to {signal_title}, "
+        f"classified as {primary_type}."
+    )
+
+    secondary = sig_class.get("secondary_types", [])
+    if secondary:
+        readable = [s.replace("_", " ") for s in secondary[:3]]
+        parts.append(f"Secondary signal dimensions include {', '.join(readable)}.")
+
+    # Market + breakdown
+    if breakdown:
+        groups_desc = []
+        for g in breakdown[:4]:
+            groups_desc.append(f"{g['group'].lower()} ({g['status']})")
+        parts.append(f"Market confirmation is {market_status.lower()} across {', '.join(groups_desc)}.")
+        # Key findings from breakdown
+        for g in breakdown:
+            if g["status"] in ("confirming", "stress", "easing", "risk_on", "flight_to_safety", "inflationary", "deflationary", "usd_strength", "usd_weakness", "resilient"):
+                findings.append(f"{g['group']}: {g['status'].replace('_', ' ')}")
+    else:
+        parts.append(f"Market confirmation status is {market_status.lower()}.")
+
+    # Coverage
+    cov_levels = [coverage.get(k, "low") for k in ["macro_data", "market_data", "trade_data", "news_evidence"]]
+    high_count = sum(1 for c in cov_levels if c == "high")
+    if high_count >= 3:
+        parts.append("Data coverage is strong across most source categories.")
+    elif high_count >= 1:
+        parts.append("Data coverage is moderate; some source categories have limited observations.")
+    else:
+        parts.append("Data coverage is limited; findings should be interpreted with caution.")
+
+    # Geo
+    regions = geo_context.get("mentioned_regions", [])
+    geo_conf = geo_context.get("confidence", "unavailable")
+    if regions:
+        parts.append(f"Geographic scope includes {', '.join(regions[:4])} ({geo_conf} attribution).")
+        findings.append(f"Geo scope: {', '.join(regions[:4])}")
+    elif geo_conf == "unavailable":
+        parts.append("Geographic attribution remains unavailable.")
+
+    # Divergence
+    sr = divergence.get("structural_risk", "low")
+    mc = divergence.get("market_confirmation", "limited")
+    if sr == "elevated":
+        findings.append(f"Structural risk: {sr}")
+        if mc in ("mixed", "limited"):
+            parts.append("Structural risk indicators are elevated while market confirmation remains incomplete.")
+    elif sr == "medium" and mc == "mixed":
+        findings.append("Evolving situation with mixed market signals")
+
+    return " ".join(parts), findings
+
