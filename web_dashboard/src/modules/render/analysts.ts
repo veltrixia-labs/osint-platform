@@ -8,7 +8,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
     if (!analysts.length) return;
     const a = analysts[0];
     const usage = (window as any).getCurrentUsage?.() || { keywords: { used: 0, limit: 3 } };
-    const isGuest = a.id === 'guest';
+    const isAnonymous = a.id === 'free-access';
 
     container.innerHTML = `
         <div class="sidebar-header" style="margin-bottom: 1rem;">
@@ -25,10 +25,10 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
             `).join('')}
         </div>
         <div class="add-kw-container u-m-top-1">
-            <input type="text" id="new-keyword" placeholder="${isGuest ? 'Join to add' : 'Add entity...'}" ${isGuest ? 'disabled' : ''} />
-            <button id="add-keyword-btn" class="u-tier-1" ${isGuest ? 'disabled' : ''}>Add</button>
-            ${isGuest ? `
-                <div class="guest-lock-msg" style="font-size: 0.7rem; color: var(--accent); margin-top: 8px; font-weight: 600;">
+            <input type="text" id="new-keyword" placeholder="${isAnonymous ? 'Sign in to add' : 'Add entity...'}" ${isAnonymous ? 'disabled' : ''} />
+            <button id="add-keyword-btn" class="u-tier-1" ${isAnonymous ? 'disabled' : ''}>Add</button>
+            ${isAnonymous ? `
+                <div class="free-lock-msg" style="font-size: 0.7rem; color: var(--accent); margin-top: 8px; font-weight: 600;">
                     🔒 Account required for alerts
                 </div>
             ` : (usage.keywords?.used >= usage.keywords?.limit ? `
@@ -42,8 +42,8 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
         <div class="sidebar-footer-nav" style="margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--border);">
             <div class="analyst-profile-section" style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
                 <div style="font-size: 0.7rem; color: #8b949e; margin-bottom: 0.5rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Analyst Profile</div>
-                ${isGuest ? `
-                    <div style="margin-bottom: 0.75rem; font-size: 0.85rem; color: #c9d1d9;">Mode: <span style="color: var(--accent);">Guest Analyst</span></div>
+                ${isAnonymous ? `
+                    <div style="margin-bottom: 0.75rem; font-size: 0.85rem; color: #c9d1d9;">Mode: <span style="color: var(--accent);">Free Access</span></div>
                     <button class="trigger-login-btn" style="width: 100%; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(88,166,255,0.2);">Enable Email Alerts</button>
                 ` : `
                     <div style="margin-bottom: 0.5rem; font-size: 0.85rem; color: #c9d1d9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${a.email}">

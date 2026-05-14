@@ -14,6 +14,7 @@ import type {
 import { fetchProInsights, fetchExpertIntelligence } from '../api';
 import { getTopicDef } from '../topics';
 import { renderLockedFeature } from '../subscription';
+import { renderProStructuralBriefs, renderProStructuralBriefDetail } from './pro_reports';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Component Primitives (Pure CSS / SVG)
@@ -84,7 +85,7 @@ function renderCategoryBadge(category: string): string {
 
 export async function renderProInsights(container: HTMLElement, user: UserMe, onNavigatePlans: () => void) {
     // 1. Tier Enforcement
-    if (user.tier === 'guest' || user.tier === 'free') {
+    if (user.tier === 'free') {
         container.innerHTML = renderLockedFeature('Pro Insights Dashboard', 'pro');
         const btn = container.querySelector('#locked-goto-plans');
         btn?.addEventListener('click', () => onNavigatePlans());
@@ -93,43 +94,102 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
 
     container.innerHTML = `<div class="intelligence-loader">Initializing Pro Suite...</div>`;
 
-    try {
-        const data: ProInsights = (await fetchProInsights())!;
-        
-        // 2. Build Dashboard Grid
+    // Internal navigation handler for switching between Hub and Detail view
+    const showHub = async () => {
+        let data: ProInsights | null = null;
+        try {
+            data = await fetchProInsights();
+        } catch (err) {
+            console.error("Failed to load Pro Insights data:", err);
+        }
+
+        // Hub display stats
+        const hubStats = {
+            coverage_domains: 6,
+            latest_report: new Date().toLocaleDateString()
+        };
+        // Log automation state for devs only
+        console.debug('[ProInsights] Automation state: dry_run=true');
+
+        const riskSummaryHtml = data && data.risk_summary && Object.keys(data.risk_summary).length > 0
+            ? Object.entries((data.risk_summary || {}) as any).map(([topic, stat]: [string, any]) => {
+                const def = getTopicDef(topic === 'null' ? null : topic);
+                return `
+                <div class="bluf-stat-card" style="--accent: ${def.color}">
+                    <div class="bluf-header u-flex-between">
+                        <div class="bluf-topic">${def.icon} ${def.label}</div>
+                        <div class="bluf-trend bluf-trend--${stat.trend}">${stat.trend === 'rising' ? '▲' : '■'}</div>
+                    </div>
+                    <div class="u-flex u-flex-baseline">
+                        <div class="bluf-value">${(stat.intensity || 0).toFixed(1)}</div>
+                        ${stat.intensity_delta !== undefined ? `
+                            <div class="bluf-delta ${stat.intensity_delta > 0.5 ? 'rising' : stat.intensity_delta < -0.5 ? 'falling' : ''}" style="margin-left: 8px; font-size: 0.75rem; font-weight: 800;">
+                                ${stat.intensity_delta > 0 ? '↑' : stat.intensity_delta < 0 ? '↓' : ''} ${Math.abs(stat.intensity_delta).toFixed(1)} <span style="font-weight:400; opacity:0.6;">(24h)</span>
+                            </div>
+                        ` : ''}
+                        ${stat.spike_detected ? `<div class="spike-badge" title="UNUSUAL MOMENTUM DETECTED">SPIKE</div>` : ''}
+                    </div>
+                    <div class="bluf-label">${stat.why_it_matters || ''}</div>
+                    ${stat.anomaly_detected ? `<div class="anomaly-warning-pill">⚠️ ANOMALY DETECTED</div>` : ''}
+                    <div class="bluf-latest-wrap">
+                        <span class="bluf-latest-label">TOP SIGNAL</span>
+                        <div class="bluf-latest">${stat.top_signal || 'None'}</div>
+                    </div>
+                </div>`;
+            }).join('')
+            : `<div class="u-p-2 u-text-center" style="grid-column: 1/-1; opacity:0.6; font-size: 0.9rem;">Intelligence gathering in progress...</div>`;
+
         container.innerHTML = `
         <div class="insights-dashboard pro-dashboard">
-            <!-- Row 1: BLUF Summary -->
-            <div class="dashboard-row bluf-row">
-                ${Object.entries((data.risk_summary || {}) as any).map(([topic, stat]: [string, any]) => {
-                    const def = getTopicDef(topic === 'null' ? null : topic);
-                    return `
-                    <div class="bluf-stat-card" style="--accent: ${def.color}">
-                        <div class="bluf-header u-flex-between">
-                            <div class="bluf-topic">${def.icon} ${def.label}</div>
-                            <div class="bluf-trend bluf-trend--${stat.trend}">${stat.trend === 'rising' ? '▲' : '■'}</div>
-                        </div>
-                        <div class="u-flex u-flex-baseline">
-                            <div class="bluf-value">${stat.intensity.toFixed(1)}</div>
-                            ${stat.intensity_delta !== undefined ? `
-                                <div class="bluf-delta ${stat.intensity_delta > 0.5 ? 'rising' : stat.intensity_delta < -0.5 ? 'falling' : ''}" style="margin-left: 8px; font-size: 0.75rem; font-weight: 800;">
-                                    ${stat.intensity_delta > 0 ? '↑' : stat.intensity_delta < 0 ? '↓' : ''} ${Math.abs(stat.intensity_delta).toFixed(1)} <span style="font-weight:400; opacity:0.6;">(24h)</span>
-                                </div>
-                            ` : ''}
-                            ${stat.spike_detected ? `<div class="spike-badge" title="UNUSUAL MOMENTUM DETECTED">SPIKE</div>` : ''}
-                        </div>
-                        <div class="bluf-label">${stat.why_it_matters}</div>
-                        ${stat.anomaly_detected ? `<div class="anomaly-warning-pill">⚠️ ANOMALY DETECTED</div>` : ''}
-                        <div class="bluf-latest-wrap">
-                            <span class="bluf-latest-label">TOP SIGNAL</span>
-                            <div class="bluf-latest">${stat.top_signal || 'None'}</div>
-                        </div>
-                    </div>`;
-                }).join('')}
+            <div class="u-m-bottom-2">
+                <h1 style="font-size: 1.8rem; margin: 0; color: #c9d1d9;">Pro Insights Hub</h1>
+                <p style="color: #8b949e; margin-top: 0.5rem; max-width: 600px;">
+                    Professional-grade structural intelligence, market confirmation, and cascading risk analysis.
+                </p>
             </div>
 
-            <!-- Row 2: Deep Analysis -->
-            <div class="dashboard-grid">
+            <!-- Coverage Stats & Analysis Layers -->
+            <div class="pro-hub-grid">
+                <div class="pro-stat-card glow-blue">
+                    <div class="pro-stat-title">Coverage Domains</div>
+                    <div class="pro-stat-value">${hubStats.coverage_domains}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">monitored domains</div>
+                </div>
+                <div class="pro-stat-card" style="grid-column: span 1;">
+                    <div class="pro-stat-title" style="margin-bottom: 0.75rem;">Analysis Layers</div>
+                    <div class="pro-analysis-layers">
+                        <span class="pro-layer-chip">Signals</span>
+                        <span class="pro-layer-chip">Macro Data</span>
+                        <span class="pro-layer-chip">Market Confirmation</span>
+                        <span class="pro-layer-chip">Exposure Mapping</span>
+                    </div>
+                </div>
+                <div class="pro-stat-card" style="grid-column: span 2;">
+                    <div class="pro-stat-title" style="margin-bottom: 0.5rem;">Monitored Domains</div>
+                    <div class="domain-chips-container">
+                        <span class="domain-chip domain-energy">Energy</span>
+                        <span class="domain-chip domain-ai-semi">AI-Semi</span>
+                        <span class="domain-chip domain-global-market">Global Market</span>
+                        <span class="domain-chip domain-supply-chain">Supply Chain</span>
+                        <span class="domain-chip domain-crypto">Crypto</span>
+                        <span class="domain-chip domain-defense">Defense</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Structural Briefs Embedded Section -->
+            <div id="pro-hub-structural-briefs-container" class="u-m-bottom-2">
+                <!-- Injected via renderProStructuralBriefs -->
+            </div>
+
+            <!-- Row 1: BLUF Summary -->
+            <h2 style="font-size: 1.3rem; color: #c9d1d9; margin: 2rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">Active Market Pressures</h2>
+            <div class="dashboard-row bluf-row">
+                ${riskSummaryHtml}
+            </div>
+            
+            ${data && data.sector_distribution ? `
+            <div class="dashboard-grid" style="margin-top: 2rem;">
                 <!-- Sector Distribution -->
                 ${renderCard('Sector Distribution', `
                     <div class="sector-dist-list">
@@ -139,42 +199,25 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
                         }).join('')}
                     </div>
                 `)}
-
-                <!-- Top Entities -->
-                ${renderCard('Exposed Entities', `
-                    <div class="entity-list">
-                        ${(data.top_entities as any[]).map((ent: any) => `
-                            <div class="entity-item">
-                                <div class="entity-core u-flex-between">
-                                    <span class="entity-name">${ent.name}</span>
-                                    <span class="entity-badge">${ent.count}</span>
-                                </div>
-                                <div class="entity-comment">${ent.entity_comment || ''}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `, 'Entities with highest signal frequency in 24h')}
-
-                <!-- Momentum Alerts -->
-                ${renderCard('Momentum Alerts', `
-                    <div class="momentum-list">
-                        ${(data.momentum_alerts as any[]).map((alert: any) => `
-                            <div class="momentum-alert-item" style="border-left: 3px solid ${getTopicDef(alert.topic).color}">
-                                <div class="momentum-alert-title">${alert.title}</div>
-                                <div class="momentum-alert-meta">
-                                    <span>${getTopicDef(alert.topic).label}</span>
-                                    <span class="intensity-tag">${alert.intensity.toFixed(1)}</span>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `, 'Top 3 signals by immediate volatility')}
             </div>
+            ` : ''}
         </div>`;
 
-    } catch (err) {
-        container.innerHTML = `<div class="error-slate">Failed to load Pro Insights: ${err}</div>`;
-    }
+        // Render the Structural Briefs list into the specific container
+        const briefsContainer = container.querySelector('#pro-hub-structural-briefs-container') as HTMLElement;
+        if (briefsContainer) {
+            await renderProStructuralBriefs(briefsContainer, (id: string) => {
+                // When a brief is clicked, render its details into the main container
+                renderProStructuralBriefDetail(id, container, () => {
+                    // And when the back button is clicked, restore the hub
+                    showHub();
+                });
+            });
+        }
+    };
+
+    // Initialize hub
+    await showHub();
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

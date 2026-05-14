@@ -22,20 +22,18 @@ const GRACE_PERIOD_DAYS = 3;
 
 /** Mapping internal tier IDs to user-facing display names */
 const PLAN_NAME_MAP: Record<string, string> = {
-    guest: 'Guest',
-    free: 'Guest',
-    pro: 'Pro',
-    experts: 'Expert',
+    free: 'Free Access',
+    pro: 'Founding Pro',
+    experts: 'Founding Expert',
     enterprise: 'Enterprise',
 };
 
 /** "Best For" labels for conversion guidance */
 const TIER_BEST_FOR: Record<string, string> = {
-    guest: 'Public Monitoring & Fast-News',
-    free: 'Public Monitoring & Fast-News',
-    pro: 'AI-Powered Insights',
-    experts: 'Strategic Intelligence',
-    enterprise: 'Enterprise Strategic Suite',
+    free: 'Public Monitoring & Context Briefs',
+    pro: 'Strategic Market Intelligence',
+    experts: 'Strategic Foresight & Forecasting',
+    enterprise: 'Organization-wide Strategy',
 };
 
 interface PlanConfig {
@@ -60,7 +58,7 @@ const PLANS: PlanConfig[] = [
     {
         id: 'free',
         name: PLAN_NAME_MAP.free,
-        subtitle: 'Fast-News Briefing',
+        subtitle: 'The Entry Point for Global Intelligence',
         bestFor: TIER_BEST_FOR.free,
         price: '$0',
         priceNote: 'forever',
@@ -68,76 +66,80 @@ const PLANS: PlanConfig[] = [
         directCheckout: false,
         contactUrl: '',
         features: [
-            'Real-time global map (static)',
-            'Access to free alerts',
-            'Daily intelligence headlines',
-            'No login required',
-            'Email support',
+            'Real-time Alert Stream headlines',
+            'Full Global Map access',
+            'Context Briefs (Free-tier limited)',
+            'Base news evidence',
+            'Community support',
         ],
         ctaText: 'Start Monitoring',
     },
     {
         id: 'pro',
         name: PLAN_NAME_MAP.pro,
-        subtitle: 'Deep Asset Intelligence',
-        explanation: 'Understand exactly how signals impact your assets',
+        subtitle: 'Deep Structural Analysis',
+        explanation: 'Limited to the first 1,000 members',
         bestFor: TIER_BEST_FOR.pro,
-        price: '$19',
-        priceNote: 'per month',
+        price: '$39',
+        originalPrice: '$79',
+        priceNote: 'month',
         color: '#58a6ff',
         directCheckout: true,
         contactUrl: '',
         features: [
-            'Tier-based AI analysis',
-            'Pro-only strategic alerts',
-            'AI Insights Dashboard (/pro-insights)',
-            'Impact Depth: Level 2',
-            'Full source traceability',
-            '100 alerts/day',
-            'Daily + Weekly reports',
+            'Pro Insights Dashboard',
+            'Full Structural Briefs',
+            'Market Confirmation Breakdown',
+            'Exposure Matrix Analysis',
+            'High-Fidelity Signal Access',
+            'Transmission Flow Visualization',
+            'Key Findings Analysis',
         ],
-        ctaText: 'Unlock AI Insights',
+        ctaText: 'Become a Founding Pro',
+        highlight: 'EARLY ACCESS',
     },
     {
         id: 'experts',
         name: PLAN_NAME_MAP.experts,
-        subtitle: 'Strategic Causal Analysis',
-        explanation: 'Expert foresight for risk leads',
+        subtitle: 'Advanced Strategic Foresight',
+        explanation: 'Limited to the first 100 members',
         bestFor: TIER_BEST_FOR.experts,
-        price: '$49',
-        priceNote: 'per month',
+        price: '$149',
+        originalPrice: '$299',
+        priceNote: 'month',
         color: '#3fb950',
         directCheckout: true,
         contactUrl: '',
         features: [
-            'Strategic Intelligence Dashboard (/expert-intel)',
-            'Full impact chain visualization (Unlimited)',
-            'Cross-domain risk forecasting',
+            'Coming Soon: Expert Foresight',
+            'Cross-domain Risk Forecasting',
+            'Strategic Scenario Analysis',
             'Recommended Strategic Actions',
-            '30–60 day scenario outlook',
-            'Unlimited alerts',
+            'Waitlist Priority for New Tools',
+            'Direct Analyst Access (Coming)',
+            'Unlimited Strategic Alerts',
         ],
-        ctaText: 'Unlock Strategic Intelligence',
-        highlight: 'Best for Decision-Makers',
+        ctaText: 'Secure Founding Expert Spot',
+        highlight: 'FOUNDING MEMBER',
     },
     {
         id: 'enterprise',
         name: PLAN_NAME_MAP.enterprise,
         subtitle: 'Expert Intelligence + Organization Controls',
         bestFor: TIER_BEST_FOR.enterprise,
-        price: 'Custom',
-        priceNote: 'contact us',
+        price: 'Contact',
+        priceNote: 'us',
         color: '#bc8cff',
         directCheckout: false,
         contactUrl: 'mailto:sales@osint-platform.com?subject=Enterprise%20Plan%20Inquiry',
         features: [
-            'All Expert features',
+            'Full Expert-tier features',
             'Team & Admin Management',
-            'Custom topic configuration',
-            'Dedicated onboarding & support',
-            'Enterprise strategic workflow',
+            'Custom domain configuration',
+            'Priority 1-on-1 support',
+            'Enterprise API Access',
         ],
-        ctaText: 'Explore Enterprise Suite',
+        ctaText: 'Contact Sales',
     },
 ];
 
@@ -246,7 +248,6 @@ function renderUpgradeButton(plan: PlanConfig, currentUser: UserMe): string {
 
 export function renderTierBadge(user: UserMe): string {
     const colors: Record<string, string> = {
-        guest: '#6e7681',
         free: '#8b949e',
         pro: '#58a6ff',
         experts: '#3fb950',
@@ -397,14 +398,19 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
 
         // Pricing Display Logic
         let priceHtml = '';
-        if (plan.id === 'pro') {
+        if (plan.originalPrice) {
             priceHtml = `
-                <span class="plan-price-amount pro-price-highlight">${plan.price}</span>
-                <span class="plan-price-note">/${plan.priceNote}</span>
+                <div class="plan-price-standard">
+                    <span class="plan-price-old">${plan.originalPrice}</span>
+                    <span class="plan-price-standard-label">Standard</span>
+                </div>
+                <div class="plan-price-founding">
+                    <span class="plan-price-amount ${plan.id === 'pro' ? 'pro-price-highlight' : ''}">${plan.price}</span>
+                    <span class="plan-price-note">/${plan.priceNote}</span>
+                </div>
             `;
         } else {
             priceHtml = `
-                ${plan.originalPrice ? `<span class="plan-price-old">${plan.originalPrice}</span>` : ''}
                 <span class="plan-price-amount">${plan.price}</span>
                 <span class="plan-price-note">/${plan.priceNote}</span>
             `;
@@ -467,8 +473,30 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         </tr>`;
     }).join('');
 
+    let upsellMessage: string | null = null;
+    const upsellRaw = sessionStorage.getItem('plansContextBriefUpsell');
+    if (upsellRaw) {
+        sessionStorage.removeItem('plansContextBriefUpsell');
+        try {
+            const j = JSON.parse(upsellRaw) as { message?: string };
+            if (typeof j.message === 'string' && j.message.trim()) {
+                upsellMessage = j.message.trim();
+            }
+        } catch {
+            /* ignore */
+        }
+    }
+    const upsellBannerHtml = upsellMessage
+        ? `
+        <div class="sub-upsell-banner" id="plans-context-brief-upsell" role="status">
+            <p class="sub-upsell-banner__text"></p>
+            <button type="button" class="sub-upsell-banner__dismiss" aria-label="Dismiss notice">×</button>
+        </div>`
+        : '';
+
     container.innerHTML = `
     <div class="subscription-tab">
+        ${upsellBannerHtml}
         <!-- Current Status Redesign -->
         <div class="sub-status-card">
             <div class="sub-status-layout">
@@ -511,6 +539,14 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
             </div>
         </div>
     </div>`;
+
+    if (upsellMessage) {
+        const p = container.querySelector('.sub-upsell-banner__text');
+        if (p) p.textContent = upsellMessage;
+        container.querySelector('.sub-upsell-banner__dismiss')?.addEventListener('click', () => {
+            document.getElementById('plans-context-brief-upsell')?.remove();
+        });
+    }
 
     // ── Event handlers ────────────────────────────────────────────────────────
 

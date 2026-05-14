@@ -128,7 +128,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         const statusCfg = statusMap[status] || statusMap['idle'];
 
         // --- Tier Gating Logic ---
-        const isGuest = userTier === 'guest' || userTier === 'free';
+        const isFreeAccess = userTier === 'free';
         const isPro = userTier === 'pro';
         const isExpert = userTier === 'experts' || userTier === 'enterprise';
 
@@ -158,13 +158,13 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             </div>
 
             <div class="alert-cta-row">
-                ${isGuest ? `
+                ${isFreeAccess ? `
                     <button class="cta-link cta-pro trigger-pro-btn">Unlock AI Brief with Pro &rarr;</button>
                     <button class="cta-link cta-expert trigger-expert-btn">Unlock Strategic Impact Analysis with Expert &rarr;</button>
                 ` : isPro ? `
                     <button class="cta-link cta-expert trigger-expert-btn">Unlock Strategic Impact Analysis with Expert &rarr;</button>
                 ` : ''}
-                ${!isGuest && !isPro && !isExpert ? `
+                ${!isFreeAccess && !isPro && !isExpert ? `
                     <button class="cta-link trigger-plans-btn">View Subscription Plans &rarr;</button>
                 ` : ''}
             </div>

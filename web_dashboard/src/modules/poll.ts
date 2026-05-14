@@ -8,12 +8,12 @@ export class DashboardState {
     isPaused = false;
     error: string | null = null;
     lastStatus = 200;
-    userTier: string = 'guest';
+    userTier: string = 'free';
     currentTopic: string | null = null;
 
     private subscribers: ((state: DashboardState) => void)[] = [];
 
-    constructor(tier: string = 'guest') {
+    constructor(tier: string = 'free') {
         this.userTier = tier;
     }
 
@@ -48,7 +48,7 @@ export class DashboardState {
 
             const [alertsResp, healthResp] = await Promise.all([
                 apiClient.get(`/alerts?${query}`),
-                this.userTier === 'guest' ? Promise.resolve(null) : apiClient.get('/system/health')
+                this.userTier === 'free' ? Promise.resolve(null) : apiClient.get('/system/health')
             ]);
 
             if (alertsResp) {
