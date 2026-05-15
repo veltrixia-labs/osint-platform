@@ -25,6 +25,34 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 ALERT_ENABLED = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
 ALERT_COOLDOWN_HOURS = 12
 
+# Suppress zero-domain alerts only when intensity is below this (was 8.0).
+ZERO_EVIDENCE_INTENSITY_FLOOR = float(os.getenv("ZERO_EVIDENCE_INTENSITY_FLOOR", "3.0"))
+
+ALLOWED_TREND_BASE_TYPES = frozenset({
+    "risk_pattern",
+    "risk_acceleration",
+    "entity_heat",
+    "sector_surge",
+    "sustained_event",
+})
+
+
+def _is_allowed_trend_type(trend_type: str) -> bool:
+    """Accept base trend types and trend_engine merge suffixes (e.g. risk_acceleration_merged)."""
+    if trend_type in ALLOWED_TREND_BASE_TYPES:
+        return True
+    if trend_type.endswith("_merged"):
+        base = trend_type[: -len("_merged")]
+        return base in ALLOWED_TREND_BASE_TYPES
+    return False
+
+
+def _base_trend_type(trend_type: str) -> str:
+    if trend_type.endswith("_merged"):
+        return trend_type[: -len("_merged")]
+    return trend_type
+
+
 # Severity Thresholds (Phase 22 - Calibrated for Restoration)
 # Evaluation Priority: Critical > Elevated > Watch
 SEVERITY_CONFIG = {
@@ -40,8 +68,6 @@ class AlertManager:
         # Phase 24: We now proceed with scoring and logging even if Telegram is disabled
         # Original: if not ALERT_ENABLED: return
 
-        ALLOWED_TYPES = ["risk_pattern", "risk_acceleration", "entity_heat", "sector_surge", "sustained_event"]
-        
         # [v10.37] STRATEGIC THINK-TANK CALIBRATION: Only allow 6 core sectors
         STRATEGIC_TOPICS = [
             "energy_resource_risk",
@@ -53,12 +79,22 @@ class AlertManager:
         ]
 
         for sig in new_signals:
-            if sig.trend_type not in ALLOWED_TYPES:
+            if not _is_allowed_trend_type(sig.trend_type):
+                logger.info(
+                    "Alert suppressed: disallowed trend_type=%r target=%r topic=%r",
+                    sig.trend_type,
+                    sig.target_label,
+                    sig.topic,
+                )
                 continue
 
             # Skip general news or non-strategic topics for Tactical Alerts
             if sig.topic not in STRATEGIC_TOPICS:
-                logger.info(f"Signal suppressed: Topic '{sig.topic}' falls outside the 6 Strategic OSINT Sectors.")
+                logger.info(
+                    "Alert suppressed: topic outside strategic sectors topic=%r target=%r",
+                    sig.topic,
+                    sig.target_label,
+                )
                 continue
 
             # Map the signal's trend_type to an appropriate display trigger_type
@@ -67,17 +103,25 @@ class AlertManager:
                 "risk_acceleration": "acceleration",
                 "entity_heat": "entity_surge",
                 "sector_surge": "sector_surge",
-                "sustained_event": "event_continuation"
+                "sustained_event": "event_continuation",
             }
-            display_trigger_type = trigger_type_map.get(sig.trend_type, "pattern_risk")
+            base_type = _base_trend_type(sig.trend_type)
+            display_trigger_type = trigger_type_map.get(base_type, "pattern_risk")
 
             # 1. Gather Metrics for Severity
             domain_count, evidence_list, related_item_ids = await cls._get_evidence_metrics(db, sig)
             
-            # CRITICAL: Suppress alerts ONLY if zero evidence AND intensity is low
-            # (User Requirement: Relaxed filtering for high-signal alerts)
-            if domain_count == 0 and sig.intensity_score < 8.0:
-                logger.info(f"Alert for {sig.target_label} suppressed: Zero evidence sources and low intensity ({sig.intensity_score}).")
+            # Suppress only when zero URL domains AND intensity below production floor.
+            if domain_count == 0 and sig.intensity_score < ZERO_EVIDENCE_INTENSITY_FLOOR:
+                logger.info(
+                    "Alert suppressed: zero evidence (domain_count=0, intensity=%.2f < %.2f) "
+                    "target=%r topic=%r trend_type=%r",
+                    sig.intensity_score,
+                    ZERO_EVIDENCE_INTENSITY_FLOOR,
+                    sig.target_label,
+                    sig.topic,
+                    sig.trend_type,
+                )
                 continue
 
             spike_delta = await cls._get_spike_delta(db, sig)
@@ -85,11 +129,21 @@ class AlertManager:
             # 2. Determine Severity (Priority: Critical > Elevated > Watch)
             severity = cls._determine_severity(sig.intensity_score, spike_delta, domain_count)
             if not severity:
-                logger.debug(f"Signal for {sig.target_label} suppressed: no severity.")
+                logger.info(
+                    "Alert suppressed: no severity (intensity=%.2f, spike=%.2f, domains=%s) "
+                    "target=%r topic=%r",
+                    sig.intensity_score,
+                    spike_delta,
+                    domain_count,
+                    sig.target_label,
+                    sig.topic,
+                )
                 continue
 
             # 3. Escalation & Intensification-Aware Deduplication
-            suppressed, is_spike, last_intensity = await cls._check_suppression(db, sig.target_label, sig.topic, display_trigger_type, severity, sig.intensity_score)
+            suppressed, is_spike, last_intensity = await cls._check_suppression(
+                db, sig.target_label, sig.topic, display_trigger_type, severity, sig.intensity_score
+            )
             if suppressed:
                 continue
 
@@ -332,7 +386,13 @@ class AlertManager:
         # Simplified Logic: If we already alerted for this recently, just suppress it to prevent UI flood.
         # Removes opaque Escalation / Intensification logic to ensure a predictable base state.
         last_intensity = last_alert.intensity or 0.0
-        logger.info(f"Alert suppressed for {target_label} ({topic}): Already issued within cooldown.")
+        logger.info(
+            "Alert suppressed: cooldown duplicate (target=%r topic=%r, hours=%s, last_intensity=%.2f)",
+            target_label,
+            topic,
+            ALERT_COOLDOWN_HOURS,
+            last_intensity,
+        )
         return True, False, last_intensity
 
     @classmethod

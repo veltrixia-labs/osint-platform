@@ -1,10 +1,12 @@
 import asyncio
 import logging
 import json
+import os
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import desc
 from db.database import AsyncSessionLocal
 from db.models import Item, ItemTopic, SignalRanking, AnalysisCache, TrendSignal
 from llm.client import generate_analysis
@@ -13,6 +15,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- Config ---
+# Shorter lookback + item cap keeps clustering O(n^2) bounded on Render.
+SIGNAL_LOOKBACK_HOURS = int(os.getenv("SIGNAL_LOOKBACK_HOURS", "168"))  # 7 days
+MAX_CLUSTERING_ITEMS = int(os.getenv("SIGNAL_MAX_CLUSTERING_ITEMS", "1000"))
 BATCH_SIZE = 5
 PROMPT_VERSION = "v2_batch_signal"
 CACHE_TTL_DAYS = 3
@@ -64,18 +69,23 @@ from sqlalchemy import delete
 
 async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_topic: str | None = None):
     now = datetime.now(timezone.utc)
-    start_time = now - timedelta(days=30)
+    start_time = now - timedelta(hours=SIGNAL_LOOKBACK_HOURS)
     
-    # 1. Fetch Candidates
+    # 1. Fetch Candidates (recency window + cap before O(n^2) clustering)
     stmt = select(Item).where((Item.published_at == None) | (Item.published_at >= start_time))
     if filter_topic:
         # Check topic via ItemTopic or rough_category
         stmt = stmt.where((Item.category == filter_topic) | (Item.rough_category == filter_topic))
-    
+    stmt = stmt.order_by(desc(Item.created_at)).limit(MAX_CLUSTERING_ITEMS)
+
     candidates = (await db.execute(stmt)).scalars().all()
     if not candidates:
-        logger.info(f"No candidates for {signal_type}")
+        logger.info(f"No candidates for {signal_type} (lookback={SIGNAL_LOOKBACK_HOURS}h)")
         return
+    logger.info(
+        f"[SIGNAL] {signal_type}: clustering up to {len(candidates)} items "
+        f"(lookback={SIGNAL_LOOKBACK_HOURS}h, cap={MAX_CLUSTERING_ITEMS})"
+    )
 
     # 2. Clustering (Non-LLM)
     # Note: cluster_items handles DB updates for cluster_id
@@ -100,11 +110,13 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
     from analysis.signal_engine import calculate_cluster_signal
     from db.models import EventCluster
     
-    cluster_stmt = select(EventCluster).where(EventCluster.created_at >= now - timedelta(days=30))
+    cluster_stmt = select(EventCluster).where(EventCluster.created_at >= start_time)
     clusters = (await db.execute(cluster_stmt)).scalars().all()
     
     if not clusters:
-        logger.info(f"[SIGNAL] No clusters found in last 24h for {signal_type}")
+        logger.info(
+            f"[SIGNAL] No clusters found in last {SIGNAL_LOOKBACK_HOURS}h for {signal_type}"
+        )
         return
 
     # Bulk fetch all relevant items for these clusters in one query
