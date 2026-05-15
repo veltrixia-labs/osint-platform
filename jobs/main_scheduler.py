@@ -9,7 +9,6 @@ from db.database import AsyncSessionLocal
 from db.seeding import seed_admin
 from jobs.ingest_job import run_ingest
 from processor.normalize import run_normalize
-from processor.classify import run_classify
 from jobs.signal_job import run_signal
 from jobs.health_check_job import run_health_check
 from jobs.report_orchestrator import run_all_reports
@@ -78,10 +77,8 @@ async def pipeline_full_processing():
             logger.info("[INGEST/NORMALIZE]")
             await run_ingest(session)
             await run_normalize(session)
-            
-            logger.info("[CLASSIFY]")
-            await run_classify(session)
-            
+            # LLM classify decoupled from standard alert stream (Expert / reports may use classify separately).
+
             logger.info("[SIGNAL]")
             await run_signal(session)
 

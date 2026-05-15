@@ -42,26 +42,9 @@ VALID_STRATEGIC_TOPICS = {
 }
 
 def normalize_strategic_topic(raw_topic=None, source_group=None, title=""):
-    if raw_topic in VALID_STRATEGIC_TOPICS:
-        return raw_topic
+    from processor.lightweight_topic import infer_topic_from_text
 
-    if source_group in VALID_STRATEGIC_TOPICS:
-        return source_group
-
-    text = (title or "").lower()
-
-    if any(k in text for k in ["oil", "gas", "lng", "energy", "pipeline", "mining", "crude"]):
-        return "energy_resource_risk"
-    if any(k in text for k in ["ship", "shipping", "port", "freight", "logistics", "supply chain", "container"]):
-        return "supply_chain_intelligence"
-    if any(k in text for k in ["defense", "military", "missile", "navy", "army", "drone", "nato"]):
-        return "defense_technology"
-    if any(k in text for k in ["ai", "semiconductor", "chip", "gpu", "data center"]):
-        return "ai_semiconductor_intelligence"
-    if any(k in text for k in ["bitcoin", "crypto", "stablecoin", "blockchain"]):
-        return "crypto_geopolitics"
-
-    return "global_market_intelligence"
+    return infer_topic_from_text(title or "", raw_topic=raw_topic, source_group=source_group)
 
 from analysis.clustering import cluster_items
 from analysis.signal_engine import run_signal_engine

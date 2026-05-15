@@ -1,3 +1,10 @@
+"""
+LLM batch classification (DeepSeek). Not invoked by jobs/main_scheduler pipeline.
+
+Standard Alert Stream uses processor.normalize + keyword topics (lightweight_topic)
+and rule-based signal_engine scoring only. Run this module from Expert/report jobs
+or manual scripts when LLM categorization is required.
+"""
 import asyncio
 import logging
 import json

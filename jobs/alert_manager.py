@@ -10,6 +10,7 @@ from sqlalchemy import desc, func, or_
 from db.models import TrendSignal, EventCluster, Item, AlertLog, Report, AnalystProfile
 from urllib.parse import urlparse
 from processor.location_resolver import LocationResolver
+from processor.lightweight_topic import STRATEGIC_TOPICS, infer_topic_from_text
 
 logging.basicConfig(level=logging.INFO)
 
@@ -53,6 +54,24 @@ def _base_trend_type(trend_type: str) -> str:
     return trend_type
 
 
+def _resolve_signal_topic(sig: TrendSignal) -> str:
+    """Keyword / existing topic only — no LLM classification required."""
+    text = f"{sig.target_label or ''} {sig.description or ''}"
+    return infer_topic_from_text(text, raw_topic=sig.topic)
+
+
+def _physical_intensity(sig: TrendSignal) -> float:
+    """Intensity from rule-based signal engine (cluster size, source authority, keywords)."""
+    meta = sig.metrics_json if isinstance(sig.metrics_json, dict) else {}
+    base = float(sig.intensity_score or 0.0)
+    cluster_n = int(meta.get("supporting_cluster_count") or 0)
+    if cluster_n >= 5:
+        base = max(base, 2.6)
+    if cluster_n >= 10:
+        base = max(base, 3.0)
+    return base
+
+
 # Severity Thresholds (Phase 22 - Calibrated for Restoration)
 # Evaluation Priority: Critical > Elevated > Watch
 SEVERITY_CONFIG = {
@@ -68,16 +87,6 @@ class AlertManager:
         # Phase 24: We now proceed with scoring and logging even if Telegram is disabled
         # Original: if not ALERT_ENABLED: return
 
-        # [v10.37] STRATEGIC THINK-TANK CALIBRATION: Only allow 6 core sectors
-        STRATEGIC_TOPICS = [
-            "energy_resource_risk",
-            "global_market_intelligence",
-            "crypto_geopolitics",
-            "ai_semiconductor_intelligence",
-            "defense_technology",
-            "supply_chain_intelligence"
-        ]
-
         for sig in new_signals:
             if not _is_allowed_trend_type(sig.trend_type):
                 logger.info(
@@ -88,11 +97,13 @@ class AlertManager:
                 )
                 continue
 
-            # Skip general news or non-strategic topics for Tactical Alerts
-            if sig.topic not in STRATEGIC_TOPICS:
+            topic = _resolve_signal_topic(sig)
+            intensity = _physical_intensity(sig)
+
+            if topic not in STRATEGIC_TOPICS:
                 logger.info(
                     "Alert suppressed: topic outside strategic sectors topic=%r target=%r",
-                    sig.topic,
+                    topic,
                     sig.target_label,
                 )
                 continue
@@ -111,15 +122,15 @@ class AlertManager:
             # 1. Gather Metrics for Severity
             domain_count, evidence_list, related_item_ids = await cls._get_evidence_metrics(db, sig)
             
-            # Suppress only when zero URL domains AND intensity below production floor.
-            if domain_count == 0 and sig.intensity_score < ZERO_EVIDENCE_INTENSITY_FLOOR:
+            # Physical path: cluster/rule intensity + URL domains (no LLM metadata required).
+            if domain_count == 0 and intensity < ZERO_EVIDENCE_INTENSITY_FLOOR:
                 logger.info(
                     "Alert suppressed: zero evidence (domain_count=0, intensity=%.2f < %.2f) "
                     "target=%r topic=%r trend_type=%r",
-                    sig.intensity_score,
+                    intensity,
                     ZERO_EVIDENCE_INTENSITY_FLOOR,
                     sig.target_label,
-                    sig.topic,
+                    topic,
                     sig.trend_type,
                 )
                 continue
@@ -127,33 +138,35 @@ class AlertManager:
             spike_delta = await cls._get_spike_delta(db, sig)
             
             # 2. Determine Severity (Priority: Critical > Elevated > Watch)
-            severity = cls._determine_severity(sig.intensity_score, spike_delta, domain_count)
+            severity = cls._determine_severity(intensity, spike_delta, domain_count)
             if not severity:
                 logger.info(
                     "Alert suppressed: no severity (intensity=%.2f, spike=%.2f, domains=%s) "
                     "target=%r topic=%r",
-                    sig.intensity_score,
+                    intensity,
                     spike_delta,
                     domain_count,
                     sig.target_label,
-                    sig.topic,
+                    topic,
                 )
                 continue
 
             # 3. Escalation & Intensification-Aware Deduplication
             suppressed, is_spike, last_intensity = await cls._check_suppression(
-                db, sig.target_label, sig.topic, display_trigger_type, severity, sig.intensity_score
+                db, sig.target_label, topic, display_trigger_type, severity, intensity
             )
             if suppressed:
                 continue
 
             if is_spike:
                 display_trigger_type = f"{display_trigger_type} (🚨 INTENSITY SPIKE)"
-                logger.info(f"Intensification detected for {sig.target_label}: {last_intensity} -> {sig.intensity_score}")
+                logger.info(f"Intensification detected for {sig.target_label}: {last_intensity} -> {intensity}")
 
             # 4. Intelligence Scoring (Phase 24)
             from jobs.alert_scoring import calculate_alert_score
-            intel_score, breakdown = await calculate_alert_score(db, sig.intensity_score, spike_delta, domain_count, display_trigger_type, sig.target_label)
+            intel_score, breakdown = await calculate_alert_score(
+                db, intensity, spike_delta, domain_count, display_trigger_type, sig.target_label
+            )
             
             # 5. Personalization & Multi-Analyst Routing (Phase 25)
             from jobs.personalization_service import get_target_analysts
@@ -199,11 +212,11 @@ class AlertManager:
                 }
 
             alert_log = AlertLog(
-                target_label=sig.target_label,
-                topic=sig.topic,
+                target_label=sig.target_label or "Untitled signal",
+                topic=topic,
                 trigger_type=display_trigger_type,
                 severity=severity,
-                intensity=sig.intensity_score,
+                intensity=intensity,
                 intelligence_score=intel_score,
                 fidelity_score=fidelity_score,
                 is_high_fidelity=is_high_fidelity,

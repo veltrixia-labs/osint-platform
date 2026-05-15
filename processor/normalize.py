@@ -6,6 +6,7 @@ from dateutil import parser as dt_parser
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from db.models import RawItem, Item
+from processor.lightweight_topic import infer_topic_from_text
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +65,10 @@ async def run_normalize(db: AsyncSession):
                 except Exception:
                     pass
             
+            topic_code = infer_topic_from_text(
+                f"{title} {summary}",
+                source_group=raw.source_group,
+            )
             new_item = Item(
                 type="article",
                 dedup_key=url_hash,
@@ -75,7 +80,8 @@ async def run_normalize(db: AsyncSession):
                 source_id=raw.source_id,
                 source_group=raw.source_group,
                 reliability_weight=raw.reliability_weight,
-                category=None,  # Bug Fix #2 (Phase 9.1): Was "news" — classify.py sets the correct topic category
+                category=topic_code,
+                rough_category=topic_code,
                 geo={},
                 tags={}
             )
