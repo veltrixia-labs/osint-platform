@@ -77,7 +77,6 @@ async def pipeline_full_processing():
             logger.info("[INGEST/NORMALIZE]")
             await run_ingest(session)
             await run_normalize(session)
-            # LLM classify decoupled from standard alert stream (Expert / reports may use classify separately).
 
             logger.info("[SIGNAL]")
             await run_signal(session)
