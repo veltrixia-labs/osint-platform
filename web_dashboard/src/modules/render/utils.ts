@@ -1,4 +1,5 @@
 import type { Alert } from '../api';
+import { normalizeTopicCode } from '../topics';
 
 /**
  * Formats an intensity value for UI display.
@@ -158,17 +159,9 @@ export function simpleMarkdown(md: string): string {
 }
 
 /**
- * Maps a raw topic code to a standardized domain class for CSS styling.
+ * Stable CSS hook derived from canonical topic code (prefer getTopicCssVars on the element).
  */
 export function getDomainSlugClass(topicCode: string | null | undefined): string {
-    if (!topicCode) return 'domain-default';
-    const mapping: Record<string, string> = {
-        'energy_resource_risk': 'domain-energy',
-        'ai_semiconductor_intelligence': 'domain-ai-semi',
-        'global_market_intelligence': 'domain-global-market',
-        'supply_chain_intelligence': 'domain-supply-chain',
-        'crypto_geopolitics': 'domain-crypto',
-        'defense_technology': 'domain-defense'
-    };
-    return mapping[topicCode] || 'domain-default';
+    const code = normalizeTopicCode(topicCode);
+    return `topic-${code.toLowerCase().replace(/_/g, '-')}`;
 }

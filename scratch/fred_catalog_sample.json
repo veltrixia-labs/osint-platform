@@ -1,0 +1,407 @@
+[
+  {
+    "series_id": "FEDFUNDS",
+    "name": "Effective Federal Funds Rate",
+    "category": "monetary_policy",
+    "unit": "percent",
+    "pro_use": "policy_rate_context",
+    "observations": [
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-01",
+        "value": "3.64"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-03-01",
+        "value": "3.64"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-02-01",
+        "value": "3.64"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-01-01",
+        "value": "3.64"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2025-12-01",
+        "value": "3.72"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2025-11-01",
+        "value": "3.88"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2025-10-01",
+        "value": "4.09"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2025-09-01",
+        "value": "4.22"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2025-08-01",
+        "value": "4.33"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2025-07-01",
+        "value": "4.33"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2025-06-01",
+        "value": "4.33"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2025-05-01",
+        "value": "4.33"
+      }
+    ]
+  },
+  {
+    "series_id": "DGS10",
+    "name": "10-Year Treasury Constant Maturity Rate",
+    "category": "monetary_policy",
+    "unit": "percent",
+    "pro_use": "long_rate_context",
+    "observations": [
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-05-01",
+        "value": "4.39"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-30",
+        "value": "4.4"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-29",
+        "value": "4.42"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-28",
+        "value": "4.36"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-27",
+        "value": "4.35"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-24",
+        "value": "4.31"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-23",
+        "value": "4.34"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-22",
+        "value": "4.3"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-21",
+        "value": "4.3"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-20",
+        "value": "4.26"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-17",
+        "value": "4.26"
+      },
+      {
+        "realtime_start": "2026-05-04",
+        "realtime_end": "2026-05-04",
+        "date": "2026-04-16",
+        "value": "4.32"
+      }
+    ]
+  },
+  {
+    "series_id": "CPIAUCSL",
+    "name": "Consumer Price Index for All Urban Consumers",
+    "category": "inflation",
+    "unit": "index",
+    "pro_use": "inflation_context",
+    "observations": [
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2026-03-01",
+        "value": "330.293"
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2026-02-01",
+        "value": "327.460"
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2026-01-01",
+        "value": "326.588"
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2025-12-01",
+        "value": "326.031"
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2025-11-01",
+        "value": "325.063"
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2025-10-01",
+        "value": "."
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2025-09-01",
+        "value": "324.245"
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2025-08-01",
+        "value": "323.291"
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2025-07-01",
+        "value": "322.169"
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2025-06-01",
+        "value": "321.435"
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2025-05-01",
+        "value": "320.620"
+      },
+      {
+        "realtime_start": "2026-04-11",
+        "realtime_end": "2026-04-11",
+        "date": "2025-04-01",
+        "value": "320.302"
+      }
+    ]
+  },
+  {
+    "series_id": "DCOILWTICO",
+    "name": "WTI Crude Oil Price",
+    "category": "energy",
+    "unit": "usd_per_barrel",
+    "pro_use": "energy_price_context",
+    "observations": [
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-27",
+        "value": "99.89"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-24",
+        "value": "98.42"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-23",
+        "value": "99.27"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-22",
+        "value": "94.76"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-21",
+        "value": "93.64"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-20",
+        "value": "91.06"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-17",
+        "value": "85.91"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-16",
+        "value": "96.46"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-15",
+        "value": "93.04"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-14",
+        "value": "93.07"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-13",
+        "value": "100.72"
+      },
+      {
+        "realtime_start": "2026-04-29",
+        "realtime_end": "2026-04-29",
+        "date": "2026-04-10",
+        "value": "98.34"
+      }
+    ]
+  },
+  {
+    "series_id": "DTWEXBGS",
+    "name": "Nominal Broad U.S. Dollar Index",
+    "category": "currency",
+    "unit": "index",
+    "pro_use": "usd_strength_context",
+    "observations": [
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-05-01",
+        "value": "118.3926"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-30",
+        "value": "118.671"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-29",
+        "value": "119.0975"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-28",
+        "value": "118.7717"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-27",
+        "value": "118.5458"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-24",
+        "value": "118.7294"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-23",
+        "value": "118.7155"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-22",
+        "value": "118.6004"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-21",
+        "value": "118.4331"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-20",
+        "value": "118.2374"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-17",
+        "value": "118.0795"
+      },
+      {
+        "realtime_start": "2026-05-05",
+        "realtime_end": "2026-05-05",
+        "date": "2026-04-16",
+        "value": "118.3616"
+      }
+    ]
+  }
+]

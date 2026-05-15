@@ -5050,24 +5050,42 @@ p {
   gap: 0.5rem;
   transition: var(--transition-standard);
   position: relative;
-  border-left: 3px solid var(--border);
+  border-left: 3px solid var(--topic-color, var(--border));
 }
 
 .alert-card-compact:hover {
-  background: rgba(88, 166, 255, 0.05);
-  border-color: rgba(88, 166, 255, 0.3);
+  background: color-mix(in srgb, var(--topic-color, var(--accent)) 6%, rgba(22, 27, 34, 0.6));
+  border-color: color-mix(in srgb, var(--topic-color, var(--accent)) 35%, var(--border));
 }
 
-.alert-card-compact.critical {
-  border-left-color: var(--danger);
+/* Severity: badge + subtle top accent only (topic owns left border). */
+.alert-card-compact.severity-critical {
+  box-shadow: inset 0 2px 0 0 color-mix(in srgb, var(--danger) 85%, transparent);
 }
 
-.alert-card-compact.elevated {
-  border-left-color: #d29922;
+.alert-card-compact.severity-elevated {
+  box-shadow: inset 0 2px 0 0 color-mix(in srgb, #d29922 70%, transparent);
 }
 
-.alert-card-compact.watch {
-  border-left-color: var(--text-secondary);
+.alert-headline-skeleton {
+  display: block;
+  height: 1.05rem;
+  width: min(100%, 18rem);
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(88, 166, 255, 0.08) 0%,
+    rgba(88, 166, 255, 0.18) 50%,
+    rgba(88, 166, 255, 0.08) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s infinite;
+}
+
+.alert-headline-skeleton--inline {
+  flex: 1;
+  max-width: 14rem;
+  height: 0.75rem;
 }
 
 .alert-header {
@@ -5080,8 +5098,18 @@ p {
 
 .meta-item-topic {
   font-weight: 700;
-  color: var(--accent);
-  opacity: 0.8;
+  color: var(--topic-color, var(--accent));
+  opacity: 0.9;
+}
+
+.meta-item-topic--tag {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--topic-color, var(--accent)) 35%, transparent);
+  background: color-mix(in srgb, var(--topic-color, var(--accent)) 12%, transparent);
 }
 
 .alert-content-terminal {
@@ -6523,19 +6551,19 @@ body.cb-modal-scroll-lock {
    ========================================================================== */
 
 :root {
-  /* Domain Color Tokens */
-  --domain-energy: #f59e0b;
-  --domain-energy-bg: rgba(245, 158, 11, 0.1);
-  --domain-ai-semi: #8b5cf6;
-  --domain-ai-semi-bg: rgba(139, 92, 246, 0.1);
-  --domain-global-market: #3b82f6;
-  --domain-global-market-bg: rgba(59, 130, 246, 0.1);
-  --domain-supply-chain: #10b981;
-  --domain-supply-chain-bg: rgba(16, 185, 129, 0.1);
-  --domain-crypto: #facc15;
-  --domain-crypto-bg: rgba(250, 204, 21, 0.1);
-  --domain-defense: #ef4444;
-  --domain-defense-bg: rgba(239, 68, 68, 0.1);
+  /* Domain tokens — synced with modules/topics.ts TOPIC_COLORS */
+  --domain-energy: #d29922;
+  --domain-energy-bg: color-mix(in srgb, #d29922 12%, transparent);
+  --domain-ai-semi: #bc8cff;
+  --domain-ai-semi-bg: color-mix(in srgb, #bc8cff 12%, transparent);
+  --domain-global-market: #58a6ff;
+  --domain-global-market-bg: color-mix(in srgb, #58a6ff 12%, transparent);
+  --domain-supply-chain: #3fb950;
+  --domain-supply-chain-bg: color-mix(in srgb, #3fb950 12%, transparent);
+  --domain-crypto: #58a6ff;
+  --domain-crypto-bg: color-mix(in srgb, #58a6ff 12%, transparent);
+  --domain-defense: #f85149;
+  --domain-defense-bg: color-mix(in srgb, #f85149 12%, transparent);
   --domain-default: #8b949e;
   --domain-default-bg: rgba(139, 148, 158, 0.1);
 }
@@ -6574,6 +6602,45 @@ body.cb-modal-scroll-lock {
 .domain-default {
   --domain-accent: var(--domain-default);
   --domain-bg: var(--domain-default-bg);
+}
+
+/* Canonical topic hooks (from getDomainSlugClass / normalizeTopicCode) */
+.topic-geopolitics,
+.topic-global-market-intelligence,
+.topic-market-sentiment,
+.domain-crypto,
+.domain-global-market {
+  --domain-accent: #58a6ff;
+  --domain-bg: color-mix(in srgb, #58a6ff 12%, transparent);
+  --topic-color: #58a6ff;
+}
+
+.topic-energy-resource-risk,
+.domain-energy {
+  --domain-accent: #d29922;
+  --domain-bg: color-mix(in srgb, #d29922 12%, transparent);
+  --topic-color: #d29922;
+}
+
+.topic-supply-chain-intelligence,
+.domain-supply-chain {
+  --domain-accent: #3fb950;
+  --domain-bg: color-mix(in srgb, #3fb950 12%, transparent);
+  --topic-color: #3fb950;
+}
+
+.topic-ai-semiconductor-intelligence,
+.domain-ai-semi {
+  --domain-accent: #bc8cff;
+  --domain-bg: color-mix(in srgb, #bc8cff 12%, transparent);
+  --topic-color: #bc8cff;
+}
+
+.topic-defense-technology,
+.domain-defense {
+  --domain-accent: #f85149;
+  --domain-bg: color-mix(in srgb, #f85149 12%, transparent);
+  --topic-color: #f85149;
 }
 
 /* Pro Hub Layout */
@@ -6626,9 +6693,9 @@ body.cb-modal-scroll-lock {
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: var(--domain-bg);
-  color: var(--domain-accent);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--domain-bg, color-mix(in srgb, var(--topic-color, #8b949e) 12%, transparent));
+  color: var(--domain-accent, var(--topic-color, #8b949e));
+  border: 1px solid color-mix(in srgb, var(--domain-accent, var(--topic-color, #8b949e)) 35%, transparent);
 }
 
 .domain-chips-container {

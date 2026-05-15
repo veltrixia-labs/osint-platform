@@ -1,0 +1,40 @@
+﻿Pro Reports count before: 78
+Generating Pro Structural Brief for Alert: 9a79c1f8-979b-4e8d-ace8-569c2cb3478b...
+
+[VERIFICATION]
+Report ID    : bc63d707-cbfa-4968-b8da-3466823c1943
+Title        : Structural Impact Brief - Energy & Resource Risk
+Topic Code   : energy_resource_risk
+Report Type  : pro_structural
+Plan Required: pro
+Is Premium   : True
+Content Non-Empty: True
+Market Confirmation Found: True
+Quantitative Context Found: True
+Data Notes Found: True
+Markdown saved to: scratch/pro_real_generation_energy_test.md
+Pro Reports count after: 79 (Change: +1)
+.venv\Scripts\python.exe : Traceback (most recent call last):
+発生場所 行:1 文字:1
++ .venv\Scripts\python.exe scratch/run_pro_real_test.py > scratch/run_p ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\RDTP project\Development\OSINT_analytics\scratch\run_pro_real_test.py", line 103, in <module>
+    asyncio.run(run_manual_test())
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Owner\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\Owner\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\Owner\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 725, in run_until_comp
+lete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\RDTP project\Development\OSINT_analytics\scratch\run_pro_real_test.py", line 70, in run_manual_test
+    Report.created_at >= datetime.now(timezone.utc) - datetime.timedelta(minutes=5)
+                                                      ^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'datetime.datetime' has no attribute 'timedelta'

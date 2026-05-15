@@ -1,0 +1,416 @@
+{
+  "BEAAPI": {
+    "Request": {
+      "RequestParam": [
+        {
+          "ParameterName": "USERID",
+          "ParameterValue": "B17B7B02-C2BD-4F43-A492-C72703C49847"
+        },
+        {
+          "ParameterName": "METHOD",
+          "ParameterValue": "GETDATA"
+        },
+        {
+          "ParameterName": "RESULTFORMAT",
+          "ParameterValue": "JSON"
+        },
+        {
+          "ParameterName": "DATASETNAME",
+          "ParameterValue": "NIPA"
+        },
+        {
+          "ParameterName": "TABLENAME",
+          "ParameterValue": "T10105"
+        },
+        {
+          "ParameterName": "FREQUENCY",
+          "ParameterValue": "A"
+        },
+        {
+          "ParameterName": "YEAR",
+          "ParameterValue": "2018"
+        }
+      ]
+    },
+    "Results": {
+      "Statistic": "NIPA Table",
+      "UTCProductionTime": "2026-05-05T08:16:04.310",
+      "Dimensions": [
+        {
+          "Ordinal": "1",
+          "Name": "TableName",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "2",
+          "Name": "SeriesCode",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "3",
+          "Name": "LineNumber",
+          "DataType": "numeric",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "4",
+          "Name": "LineDescription",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "5",
+          "Name": "TimePeriod",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "6",
+          "Name": "CL_UNIT",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "7",
+          "Name": "UNIT_MULT",
+          "DataType": "numeric",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "8",
+          "Name": "METRIC_NAME",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "9",
+          "Name": "DataValue",
+          "DataType": "numeric",
+          "IsValue": "1"
+        }
+      ],
+      "Data": [
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A191RC",
+          "LineNumber": "1",
+          "LineDescription": "Gross domestic product",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "20,656,516",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "DPCERC",
+          "LineNumber": "2",
+          "LineDescription": "Personal consumption expenditures",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "13,934,442",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "DGDSRC",
+          "LineNumber": "3",
+          "LineDescription": "Goods",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "4,414,208",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "DDURRC",
+          "LineNumber": "4",
+          "LineDescription": "Durable goods",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,488,831",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "DNDGRC",
+          "LineNumber": "5",
+          "LineDescription": "Nondurable goods",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,925,377",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "DSERRC",
+          "LineNumber": "6",
+          "LineDescription": "Services",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "9,520,234",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A006RC",
+          "LineNumber": "7",
+          "LineDescription": "Gross private domestic investment",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "3,724,770",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A007RC",
+          "LineNumber": "8",
+          "LineDescription": "Fixed investment",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "3,668,362",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A008RC",
+          "LineNumber": "9",
+          "LineDescription": "Nonresidential",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,856,471",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "B009RC",
+          "LineNumber": "10",
+          "LineDescription": "Structures",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "636,633",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "Y033RC",
+          "LineNumber": "11",
+          "LineDescription": "Equipment",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,227,620",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "Y001RC",
+          "LineNumber": "12",
+          "LineDescription": "Intellectual property products",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "992,217",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A011RC",
+          "LineNumber": "13",
+          "LineDescription": "Residential",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "811,892",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A014RC",
+          "LineNumber": "14",
+          "LineDescription": "Change in private inventories",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "56,408",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A019RC",
+          "LineNumber": "15",
+          "LineDescription": "Net exports of goods and services",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "-593,077",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "B020RC",
+          "LineNumber": "16",
+          "LineDescription": "Exports",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,538,089",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A253RC",
+          "LineNumber": "17",
+          "LineDescription": "Goods",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,669,294",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A646RC",
+          "LineNumber": "18",
+          "LineDescription": "Services",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "868,795",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "B021RC",
+          "LineNumber": "19",
+          "LineDescription": "Imports",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "3,131,166",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A255RC",
+          "LineNumber": "20",
+          "LineDescription": "Goods",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,559,050",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "B656RC",
+          "LineNumber": "21",
+          "LineDescription": "Services",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "572,116",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A822RC",
+          "LineNumber": "22",
+          "LineDescription": "Government consumption expenditures and gross investment",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "3,590,381",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A823RC",
+          "LineNumber": "23",
+          "LineDescription": "Federal",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,346,295",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A824RC",
+          "LineNumber": "24",
+          "LineDescription": "National defense",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "795,065",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A825RC",
+          "LineNumber": "25",
+          "LineDescription": "Nondefense",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "551,230",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A829RC",
+          "LineNumber": "26",
+          "LineDescription": "State and local",
+          "TimePeriod": "2018",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,244,086",
+          "NoteRef": "T10105"
+        }
+      ],
+      "Notes": [
+        {
+          "NoteRef": "T10105",
+          "NoteText": "Table 1.1.5. Gross Domestic Product [Billions of dollars] - LastRevised: April 30, 2026"
+        }
+      ]
+    }
+  }
+}

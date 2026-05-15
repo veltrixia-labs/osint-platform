@@ -1,0 +1,606 @@
+﻿====================================================================================================
+PRO AUTOMATION DEEP DIAGNOSTICS - 2026-05-09T05:08:52.973355+00:00
+====================================================================================================
+ENV STATUS:
+  ENABLE_PRO_AUTOMATION: true
+  PRO_AUTOMATION_DRY_RUN: true
+  ENABLED_DOMAINS: ['energy_resource_risk', 'ai_semiconductor_intelligence', 'global_market_intelligence', 'supply_chain_intelligence']
+
+[PIPELINE AUDIT] Data Ingestion Volume:
+  Last  7 Days: RawItems= 3520 | Items=  778 | Alerts=  166
+  Last 14 Days: RawItems= 3520 | Items=  778 | Alerts=  166
+  Last 30 Days: RawItems= 4484 | Items= 1221 | Alerts=  166
+
+[ALERT STATS] By Enabled Domain (Last 30 Days):
+  energy_resource_risk               : 7d= 47 | 14d= 47 | 30d= 47
+  ai_semiconductor_intelligence      : 7d= 10 | 14d= 10 | 30d= 10
+  global_market_intelligence         : 7d= 20 | 14d= 20 | 30d= 20
+  supply_chain_intelligence          : 7d= 16 | 14d= 16 | 30d= 16
+
+[ALERT AUDIT] Individual Evaluation (Last 30 Days, Enabled Domains):
+ID                                     | Topic                     | Sev      | Fid  | Evid | Data | Score | Status
+-------------------------------------------------------------------------------------------------------------------
+6c1a2308-b993-413d-ae7b-12d983962213   | global_market_intelligence | watch    | N    | N    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+55242c4e-87eb-43cf-9b94-af03f3dcd39c   | energy_resource_risk      | watch    | N    | N    | Y    | 0.35  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.35
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+2ce28be7-83c2-435e-b119-999d2fd0059d   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.31  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.31
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+68c9f4a7-a6a3-4d0f-93ae-7cc463e8534d   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+b0f36726-6ec1-4d85-820e-be9c804ab5ab   | global_market_intelligence | watch    | N    | Y    | Y    | 0.33  | READY (GM Relaxed: Global Market rescue: Evidence 4+ and Fidelity 0.6+)
+-------------------------------------------------------------------------------------------------------------------
+dfac4745-a22b-4a59-a813-1169f0b7fb09   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.22  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.22
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+31ff4e7e-78e6-4b93-a78d-3b149224c91d   | global_market_intelligence | watch    | N    | N    | Y    | 0.23  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.23
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+3bf2a00a-0fc3-4e83-8e09-2a65fb658fb2   | supply_chain_intelligence | watch    | N    | Y    | Y    | 0.30  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.30
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+1802d400-09ac-4dc4-8fe7-5ae89299e156   | global_market_intelligence | watch    | N    | N    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+4603ed97-2f3e-47fc-9d86-bca3cf8dd693   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+2673672e-53e9-48f5-b765-74d35ff00bad   | ai_semiconductor_intelligence | watch    | N    | Y    | Y    | 0.27  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+79e98230-831e-4fa7-b381-21b14c51a63a   | energy_resource_risk      | watch    | N    | N    | Y    | 0.27  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.27
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+581575a8-75aa-4efe-941a-ce2fecb88bfc   | energy_resource_risk      | watch    | N    | N    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+e3767008-4557-4844-86a3-51c74ca6a807   | energy_resource_risk      | watch    | N    | N    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+60fd6509-d316-4165-b2db-05502dff24f5   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+ef7839f7-2bd9-4838-b422-05187d6051be   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.34  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.34
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+3ae25134-fe48-4db8-b93e-1278dad6bc95   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+0a8660ae-1027-4b4b-b9ec-08e21a1fc450   | global_market_intelligence | watch    | N    | Y    | Y    | 0.30  | READY (GM Relaxed: Global Market rescue: Evidence 4+ and Fidelity 0.6+)
+-------------------------------------------------------------------------------------------------------------------
+5d48d9fa-b57d-4288-995d-46ab7c16b7ad   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+bf07e5a9-9c68-42b9-8ed3-692b03d45877   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.33  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.33
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+da6a4fc6-8043-4ded-9558-e5977e255512   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.27  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.27
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+9a79c1f8-979b-4e8d-ace8-569c2cb3478b   | energy_resource_risk      | elevated | Y    | Y    | Y    | 0.46  | SKIP (Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h))
+    -> Reasons: ["Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=Y, Evid=Y, Data=Y, Score=0.46
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+1a834d8a-5a97-401c-ac00-10b093eed721   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.33  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.33
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+1f0d6f70-306a-40cb-8a9e-cd31d09028bb   | global_market_intelligence | watch    | N    | N    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+0e5c10a8-8f60-452f-807f-9fbab074cdd0   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+6b4ebdfd-385d-47ae-ab89-d30c05dbe364   | global_market_intelligence | watch    | N    | N    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+54cb3454-fa7b-4320-a688-caa473c4c7c4   | energy_resource_risk      | watch    | N    | N    | Y    | 0.38  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.38
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+87f2ca57-1645-4b25-bc21-c9f02360bc1b   | global_market_intelligence | watch    | N    | N    | Y    | 0.24  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.24
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+b2244312-0b98-4473-bee1-68bd840f1139   | energy_resource_risk      | watch    | N    | N    | Y    | 0.25  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.25
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+b6550944-b3f1-421d-a430-72c584bf1c39   | energy_resource_risk      | watch    | N    | N    | Y    | 0.24  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.24
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+cde456f2-669d-40ba-8816-397d6838921f   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+cb875348-29bc-4793-97de-6371fd133e91   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.23  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.23
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+60d35146-faae-4928-98ab-c75db79c0a9d   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.29
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+ecb41c22-3010-4791-8186-9464145d9f48   | global_market_intelligence | watch    | N    | Y    | Y    | 0.27  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+510e7f73-ff70-45d7-bb48-8e5fd73d2c0f   | supply_chain_intelligence | watch    | N    | Y    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+3cf35190-ee54-46ca-9080-c09b87a27872   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.31  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.31
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+ba1a02ab-800d-4f01-9965-953e97a8c7c5   | global_market_intelligence | watch    | N    | Y    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+94dc2899-0811-4c5b-9965-57ce2ecbd163   | energy_resource_risk      | watch    | Y    | Y    | Y    | 0.34  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=Y, Evid=Y, Data=Y, Score=0.34
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+8b0b15c7-dfb9-497e-a683-28836ed2e38c   | energy_resource_risk      | watch    | N    | N    | Y    | 0.25  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.25
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+8faf0ec1-fb45-49b9-b0ef-258dcacc052c   | energy_resource_risk      | watch    | N    | N    | Y    | 0.25  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.25
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+82009793-e944-4214-b872-999b180533cd   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+4a08b74a-2986-45cc-ba43-1c7024519164   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+4417dd18-cb11-442c-96e7-49e90bd6fbe0   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.27  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+0e7bb422-63e7-4dae-a22a-0808341df993   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+5a84c01f-18b6-48c4-a608-17f38ab8d298   | ai_semiconductor_intelligence | watch    | N    | Y    | Y    | 0.32  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.32
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+faec04cd-0017-4f60-8100-d0f5f125b088   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+3dbc6439-380d-437a-a7b1-c7c6b474bac2   | energy_resource_risk      | watch    | N    | N    | Y    | 0.25  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.25
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+a1a8ad3a-ce74-4587-8628-2c744c04c1f9   | global_market_intelligence | watch    | N    | N    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+53e13502-8ab1-4e45-bd46-2576f157ea0a   | energy_resource_risk      | watch    | N    | N    | Y    | 0.35  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.35
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+9723a998-370e-403f-915e-8325f83f80df   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.31  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.31
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+a1ac0b46-b0c7-417a-b4ee-04a4948cdf86   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+dfd118d8-3c1a-48e5-b67d-27e0fd7eb19d   | global_market_intelligence | watch    | N    | Y    | Y    | 0.31  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.31
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+6499d033-70f9-464d-bddb-5ccdbdd48054   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.22  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.22
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+f38c6351-4a10-4155-bcf3-c10158ddc2bd   | global_market_intelligence | watch    | N    | N    | Y    | 0.23  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.23
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+82f24231-0d98-403b-8c5c-ab675eebd2da   | supply_chain_intelligence | watch    | N    | Y    | Y    | 0.30  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.30
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+f8548bbf-6563-4ece-9e3f-e148f9a9f1c4   | global_market_intelligence | watch    | N    | Y    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+9082ea4b-6118-400e-93e7-a51e9069be10   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+75d289e9-3c81-4148-b07d-c5854d834ee6   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.27  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+1b4e6876-9c23-412f-969f-7f5a7fbdb687   | energy_resource_risk      | watch    | N    | N    | Y    | 0.27  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.27
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+f622e43f-74c6-47cf-b9b0-c448523d206c   | energy_resource_risk      | watch    | N    | N    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+89d8b642-258d-47e9-bfc9-8dc71077aa78   | energy_resource_risk      | watch    | N    | N    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+875c1039-e706-4158-82ee-b1164cfa414a   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+77add619-f08a-4ac7-bfee-d705b0e73cd3   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+1c852847-c15a-4a07-b455-64aae2a6c2cb   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+f357b75d-69a7-4371-8af4-96c1eda0fe3c   | energy_resource_risk      | watch    | N    | N    | Y    | 0.30  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.30
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+4e18ed35-bcd5-40cd-b66d-e2666e458805   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.35  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.35
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+d97d09b1-35c7-4f23-93a9-460a9664c979   | global_market_intelligence | watch    | N    | N    | Y    | 0.24  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.24
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+8ec0dd32-e0c9-46da-a38c-10cb8324dbc4   | energy_resource_risk      | watch    | N    | N    | Y    | 0.25  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.25
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+f63340eb-cf0b-49a8-86f2-ab15c9c5d90b   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.35  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.35
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+6c4d7fad-68e6-4f14-bb52-f92b2d96e626   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.29
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+7329f4ca-18df-47c6-81fe-f4dc5699f67e   | global_market_intelligence | watch    | N    | N    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+50de5afa-dbf6-4bb8-9b80-979cdf3dc873   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+9b7a9f45-2241-470f-b2aa-ccdd6f2596a8   | global_market_intelligence | watch    | N    | N    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+d0d9c673-084f-49b1-918c-c47d37e444ca   | energy_resource_risk      | watch    | N    | N    | Y    | 0.23  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.23
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+9cdadf73-96e5-4598-9770-7db034ddadc3   | global_market_intelligence | watch    | N    | N    | Y    | 0.24  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.24
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+e9b6d00f-994b-4640-a5af-2c49dc051092   | energy_resource_risk      | watch    | N    | N    | Y    | 0.24  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.24
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+44d87021-b5cb-403a-86fe-3bc1d6531f5e   | supply_chain_intelligence | watch    | N    | Y    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+cd2e1e94-1dee-40ae-8d0a-b01690f37846   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.23  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.23
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+0392d73d-8531-4a51-bd85-12e38ab0439a   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.26
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+c179de4a-fe26-4154-9fad-6f1889164169   | global_market_intelligence | watch    | N    | Y    | Y    | 0.26  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+dc84a290-3398-4d29-8259-ea8d77614017   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.23  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.23
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+3f3df4ef-3ef2-4811-8884-f3b2cbe34838   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.24  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.24
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+a2f050c4-463c-4ebf-9b14-198bdcf814c6   | supply_chain_intelligence | watch    | N    | Y    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+eeb5fc1c-9e82-4a0b-9c79-0d0025ff93ef   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.24  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.24
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+d5a4ad6e-0e39-4bc2-bd83-3a7577a4c0f6   | global_market_intelligence | watch    | N    | N    | Y    | 0.23  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.23
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+6f6658b0-1c08-441a-85fc-b758424bb342   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+08705949-614b-411d-bcaa-c531040dec47   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.27  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.27
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+d4cded5e-6ec1-4ef7-81e6-7a5bb795eb8a   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.29
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+f7f849f1-9747-4595-a846-a5b4aadeb8d8   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.', "Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h)", "Recent General Pro report for domain 'energy_resource_risk' exists (within 24h)"]
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.28
+    -> Duplicates: Structural=True, General=True
+-------------------------------------------------------------------------------------------------------------------
+d25b9d61-5831-4346-ba94-a3eabafe7cb5   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.28  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+dbd4a769-9efb-4b43-aa7b-78739b560aec   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.27  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+f6794f8f-cd0b-466e-8bc0-8df48ec1d27a   | supply_chain_intelligence | watch    | N    | N    | Y    | 0.29  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+8455eda1-dc9a-490a-8db7-ae442b7bfa3a   | ai_semiconductor_intelligence | watch    | N    | Y    | Y    | 0.33  | SKIP (Insufficient score/severity and did not meet relaxed quality gates.)
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.33
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+
+[SUMMARY] Candidates & Skips:
+  - Total Candidates Slated: 2
+  - Watch Alerts Promoted  : 2
+
+[SUMMARY] Skip Reason Ranking (Last 30 Days):
+  - Insufficient score/severity and did not meet relaxed quality gates.: 90
+  - Recent Pro Structural Brief for domain 'energy_resource_risk' exists (within 24h): 1
+
+[DUPLICATE CHECK] Recent Pro Reports in DB (Last 72h):
+    - [GENERAL]    ID: c67daca7-1008-47ec-9176-bf1087e583a6 | Topic: energy_resource_risk      | Created: 2026-05-09 04:46:52.381621
+    - [GENERAL]    ID: 64ea38f6-e2f8-4174-96dc-7ea1a7c66fc6 | Topic: energy_resource_risk      | Created: 2026-05-09 04:36:42.030447
+    - [GENERAL]    ID: d5cdb64d-533f-4179-a89f-da6adb55eea3 | Topic: energy_resource_risk      | Created: 2026-05-09 03:43:47.774676
+    - [GENERAL]    ID: 08d081e1-258a-4e90-9c87-8a09b4a1cddd | Topic: energy_resource_risk      | Created: 2026-05-09 03:43:47.507841
+    - [GENERAL]    ID: b6c344fd-3762-45e8-b47c-cbd358c59422 | Topic: energy_resource_risk      | Created: 2026-05-09 03:43:47.099845
+    - [GENERAL]    ID: 2c65174e-8bbd-4dda-911d-5781b5297ff8 | Topic: energy_resource_risk      | Created: 2026-05-09 03:43:46.704703
+    - [GENERAL]    ID: 2cc57b79-ac1f-4566-acbd-033649e6e24b | Topic: energy_resource_risk      | Created: 2026-05-09 03:43:46.450184
+    - [GENERAL]    ID: 070f8e1c-b12c-4b67-88ff-f6fc7daec55c | Topic: energy_resource_risk      | Created: 2026-05-09 03:43:45.902471
+    - [STRUCTURAL] ID: bf307a0d-4479-4c58-80ab-cfb6416434f4 | Topic: energy_resource_risk      | Created: 2026-05-09 02:56:02.355223
+    - [GENERAL]    ID: ba5768e2-ae6d-480c-9c20-066d84af6e33 | Topic: energy_resource_risk      | Created: 2026-05-09 02:42:41.144969
+    - [GENERAL]    ID: 9d31803b-67b4-4cf0-96d8-67dab9844f8b | Topic: energy_resource_risk      | Created: 2026-05-09 02:32:17.320905
+    - [GENERAL]    ID: e92b9248-270e-49ae-96b4-c26fc6c5057b | Topic: energy_resource_risk      | Created: 2026-05-09 02:11:20.646219
+    - [GENERAL]    ID: cf3b71f4-af17-4c2d-a621-d26f80af027a | Topic: energy_resource_risk      | Created: 2026-05-09 02:11:20.231699
+    - [GENERAL]    ID: 44c3a7b4-1176-4ecc-93e8-c78e33cda155 | Topic: energy_resource_risk      | Created: 2026-05-09 02:11:19.824000
+    - [GENERAL]    ID: 216881b6-70a7-4029-b579-cd9d52afa61b | Topic: energy_resource_risk      | Created: 2026-05-09 02:11:19.545681
+    - [GENERAL]    ID: bc00ce67-492f-432e-9339-d2f6b503e53c | Topic: energy_resource_risk      | Created: 2026-05-09 02:11:18.960831
+    - [GENERAL]    ID: d442cf05-d576-472b-ad7c-15bb442a21b6 | Topic: energy_resource_risk      | Created: 2026-05-09 01:37:46.546828
+    - [GENERAL]    ID: fcc16f62-7d70-4d33-9b0b-1235d3ebe4fb | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:51.315101
+    - [GENERAL]    ID: d4922a01-a62c-46dd-9810-8f30719ce375 | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:50.953018
+    - [GENERAL]    ID: 85574020-a2f0-4d31-adac-db2035698b79 | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:50.557114
+    - [GENERAL]    ID: 37dc3abf-7084-474c-aea3-6e7730308a75 | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:50.319853
+    - [GENERAL]    ID: 922a3633-5055-4054-8a81-e5dcf8ca3ca2 | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:49.929718
+    - [GENERAL]    ID: ab7eceb2-e14f-4797-bca9-fc4a7658b68e | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:49.661330
+    - [GENERAL]    ID: fe73de81-c8d1-40a0-a586-9a508ae246ea | Topic: energy_resource_risk      | Created: 2026-05-09 00:22:01.199722
+    - [GENERAL]    ID: 4f538008-d082-4530-9c1f-1bb30c7957cc | Topic: energy_resource_risk      | Created: 2026-05-08 23:29:19.903296
+    - [GENERAL]    ID: 1e0f15f1-fbc5-4ab7-b024-d7975b7bdbda | Topic: energy_resource_risk      | Created: 2026-05-08 22:58:18.385409
+    - [GENERAL]    ID: 0a9d4922-03d6-4b21-92b3-3964cbbee0d6 | Topic: energy_resource_risk      | Created: 2026-05-08 22:58:18.023118
+    - [GENERAL]    ID: dfb958b9-b89b-48aa-b425-6af2eafefc6c | Topic: energy_resource_risk      | Created: 2026-05-08 22:58:17.763281
+    - [GENERAL]    ID: 9d934e86-e2ec-40f2-bfe6-f92a74a0743b | Topic: energy_resource_risk      | Created: 2026-05-08 22:58:17.416224
+    - [GENERAL]    ID: 1802c006-527d-42e9-aadb-1712ea859eb3 | Topic: energy_resource_risk      | Created: 2026-05-08 22:58:17.152095
+    - [GENERAL]    ID: 76ee7d92-133f-4b06-bb95-cd29c1fa7ec7 | Topic: energy_resource_risk      | Created: 2026-05-08 22:27:30.533719
+    - [GENERAL]    ID: bc0532ca-6191-4155-bae1-17d3fe30f218 | Topic: energy_resource_risk      | Created: 2026-05-08 22:17:18.092470
+    - [GENERAL]    ID: bb64b67b-2089-4a43-8fe0-76bc2ec59990 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:17.920709
+    - [GENERAL]    ID: 9a112b94-50e1-4ede-81a6-e7f55beb0039 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:17.696354
+    - [GENERAL]    ID: 5462ad12-dc29-4eb7-a0da-60ab91d4ff25 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:17.348922
+    - [GENERAL]    ID: 940ae907-397f-4959-8971-471518d8aad3 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:17.129200
+    - [GENERAL]    ID: ca76d40f-06da-475b-9877-9609c27e3bc8 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:16.928988
+    - [GENERAL]    ID: ec7231b4-da39-4864-bd4d-5393e26888c9 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:16.566940
+    - [GENERAL]    ID: 1bd540a8-4e9d-4049-b58c-fd3936f85659 | Topic: energy_resource_risk      | Created: 2026-05-08 20:24:58.706540
+    - [GENERAL]    ID: 2e93fb4d-9833-41b3-b82a-6607ebbd3516 | Topic: energy_resource_risk      | Created: 2026-05-08 20:14:46.095981
+    - [GENERAL]    ID: ba21cfb2-5dbb-4c8e-910c-85fbb63cb7d0 | Topic: energy_resource_risk      | Created: 2026-05-08 19:54:28.780220
+    - [GENERAL]    ID: 9a9bc787-a8e3-4706-bf63-0c045e2938a7 | Topic: energy_resource_risk      | Created: 2026-05-08 19:54:28.605821
+    - [GENERAL]    ID: d11c40a0-9e80-45b9-8426-f475b531cc24 | Topic: energy_resource_risk      | Created: 2026-05-08 19:54:28.406757
+    - [GENERAL]    ID: 52a053f1-7a1e-4ea2-8020-69ad4ea9367e | Topic: energy_resource_risk      | Created: 2026-05-08 19:54:28.004890
+    - [GENERAL]    ID: 22a2fce8-8e42-410e-80f4-5f06b10d28b2 | Topic: energy_resource_risk      | Created: 2026-05-08 19:54:27.793554
+    - [GENERAL]    ID: 5de2f718-e5d4-45e5-94f6-5c4e4dec6b60 | Topic: energy_resource_risk      | Created: 2026-05-08 19:24:03.222322
+    - [GENERAL]    ID: de5b0faf-4bbe-48db-bf51-2f192f174564 | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:06.624972
+    - [GENERAL]    ID: 3a95f113-47f5-4aee-a6cf-d8a9adebdc2b | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:06.427234
+    - [GENERAL]    ID: 3faf6528-610f-4c42-bee1-4ec803c0c9e0 | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:06.139529
+    - [GENERAL]    ID: 3d821373-9e49-4fcd-a72c-98e35fc0085b | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:05.962133
+    - [GENERAL]    ID: 5a03dd93-264a-45a0-b36b-6f67c0ca494b | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:05.748549
+    - [GENERAL]    ID: 323c1f89-bdf3-4b4d-9f2c-608cba613f22 | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:05.601054
+    - [GENERAL]    ID: c4e1e178-6098-4f6b-b51e-8c504e992d22 | Topic: energy_resource_risk      | Created: 2026-05-08 18:12:50.217239
+    - [GENERAL]    ID: 8f69c3f9-e82d-4857-98d3-484c3dbb0974 | Topic: energy_resource_risk      | Created: 2026-05-08 17:21:52.345291
+    - [GENERAL]    ID: 712d3244-29bc-4755-ae9c-d73d4c76d332 | Topic: energy_resource_risk      | Created: 2026-05-08 16:49:17.817072
+    - [GENERAL]    ID: f10b055a-c48d-46f9-a926-46cd3d4bfcf9 | Topic: energy_resource_risk      | Created: 2026-05-08 16:49:17.669704
+    - [GENERAL]    ID: 501d2128-7bf6-4fa0-9e1e-e5d5e45a6026 | Topic: energy_resource_risk      | Created: 2026-05-08 16:49:17.503606
+    - [GENERAL]    ID: 51ed1300-8237-4031-8ebd-7b0572639c00 | Topic: energy_resource_risk      | Created: 2026-05-08 16:49:17.223477
+    - [GENERAL]    ID: 6aa461eb-aafd-4ebe-afc0-223da17bbf63 | Topic: energy_resource_risk      | Created: 2026-05-08 16:49:17.057627
+    - [GENERAL]    ID: efcf7124-0ce1-481b-8115-1b69eeade436 | Topic: energy_resource_risk      | Created: 2026-05-08 16:16:44.374021
+    - [GENERAL]    ID: fe20c9fa-cfff-46a9-af9c-7ab9cc059597 | Topic: energy_resource_risk      | Created: 2026-05-08 16:11:07.889840
+    - [GENERAL]    ID: 7fa0db92-e194-420e-8d52-ddf3ca3c59eb | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.584088
+    - [GENERAL]    ID: 54f89930-6917-48a6-a512-d8ba53a3bad9 | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.489074
+    - [GENERAL]    ID: 272c53fc-026a-4f3b-889c-97ab1b043b35 | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.383997
+    - [GENERAL]    ID: d47fb2a2-b733-4f6f-ac4f-389d01137786 | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.305239
+    - [GENERAL]    ID: de8f69c9-fb72-49a5-8f05-aa78667eb7c1 | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.219852
+    - [GENERAL]    ID: 50c4b3f8-5ff1-491f-8b07-ee3c183de2ab | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.132463
+    - [GENERAL]    ID: c90f5d5e-35d1-40e1-9a36-4d33c9b4dfe8 | Topic: energy_resource_risk      | Created: 2026-05-08 14:10:54.518729
+    - [GENERAL]    ID: c9e57c95-35cf-4e41-b8c8-edc914b66cde | Topic: energy_resource_risk      | Created: 2026-05-08 14:10:54.460778
+    - [GENERAL]    ID: 3d0f3cca-5b8b-44a4-a968-927e8d55a7c6 | Topic: energy_resource_risk      | Created: 2026-05-08 13:43:20.843044
+    - [GENERAL]    ID: 31d1b212-5691-4ba1-9ab9-83aaff278d33 | Topic: energy_resource_risk      | Created: 2026-05-08 13:43:20.789872
+    - [GENERAL]    ID: e921e187-9817-43b2-bc06-ac42f266cd3e | Topic: energy_resource_risk      | Created: 2026-05-08 13:43:20.739414
+    - [GENERAL]    ID: e6d8a395-1066-4c3e-bedb-e2a3703a3000 | Topic: energy_resource_risk      | Created: 2026-05-08 13:43:20.685850
+    - [GENERAL]    ID: 310acccd-9d7c-42f5-a0a2-a6b7f91289af | Topic: energy_resource_risk      | Created: 2026-05-08 13:43:20.625630
+    - [GENERAL]    ID: f4c2ec2d-3034-42e7-852c-b764aa05ac30 | Topic: energy_resource_risk      | Created: 2026-05-08 13:10:12.483297
+    - [GENERAL]    ID: 24b9a2db-4a87-4db9-abf2-2596b679c576 | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.830454
+    - [GENERAL]    ID: 28b64a55-c6d9-4d19-80eb-1f2eb916a2b2 | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.805464
+    - [GENERAL]    ID: c316f346-49d8-4803-beaa-780eacd1b1fd | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.778624
+    - [GENERAL]    ID: 858d9f3c-1729-4fd5-9929-d2829c91429c | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.751135
+    - [GENERAL]    ID: 93e103fc-0355-45bc-950b-1eba7bbc5a93 | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.722741
+    - [GENERAL]    ID: 793a698f-7d65-4dde-9bdd-3057493291f3 | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.694278
+    - [GENERAL]    ID: f874627f-1e69-4776-9068-0f146b817935 | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.663163
+.venv\Scripts\python.exe : INFO:jobs.pro_automation_manager:  [SKIP] Alert f71a1706-9a70-49f6-ae59-e6954c057fa6 (crypto
+_geopolitics): Domain not enabled for automation: 'crypto_geopolitics' (Enabled: ['energy_resource_risk', 'ai_semicondu
+ctor_intelligence', 'global_market_intelligence', 'supply_chain_intelligence'])
+発生場所 行:1 文字:1
++ .venv\Scripts\python.exe scratch/check_pro_automation_dry_run_status. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (INFO:jobs.pro_a...intelligence']):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+INFO:jobs.pro_automation_manager:  [SKIP] Alert 9baca5cc-4cc0-4f67-9600-aaa4d6ceca76 (crypto_geopolitics): Domain not e
+nabled for automation: 'crypto_geopolitics' (Enabled: ['energy_resource_risk', 'ai_semiconductor_intelligence', 'global
+_market_intelligence', 'supply_chain_intelligence'])
+INFO:jobs.pro_automation_manager:  [SKIP] Alert 5f4b4a5d-453b-4be1-9832-0ff168139f58 (defense_technology): Domain not e
+nabled for automation: 'defense_technology' (Enabled: ['energy_resource_risk', 'ai_semiconductor_intelligence', 'global
+_market_intelligence', 'supply_chain_intelligence'])
+INFO:jobs.pro_automation_manager:  [SKIP] Alert 4c19286b-c36a-40c4-a4ce-f90e616cb4f9 (defense_technology): Domain not e
+nabled for automation: 'defense_technology' (Enabled: ['energy_resource_risk', 'ai_semiconductor_intelligence', 'global
+_market_intelligence', 'supply_chain_intelligence'])
+    - [STRUCTURAL] ID: e610cc29-095d-4f04-8960-fda0b328a32c | Topic: energy_resource_risk      | Created: 2026-05-06 06:34:18.388657
+    - [STRUCTURAL] ID: 4fa50d59-48bc-44e2-aecd-f235c4326256 | Topic: energy_resource_risk      | Created: 2026-05-06 06:32:28.615886
+    - [STRUCTURAL] ID: 62882065-164c-427c-bd23-786fe74ab118 | Topic: energy_resource_risk      | Created: 2026-05-06 06:21:11.481999
+
+[SIMULATION] Final Manager Verdict (Limit 5):
+  Candidates Found: 6
+  Planned to Generate: 2
+  Skipped Count: 4
+  Slated Candidates:
+    - Planned: Structural Impact Brief - global_market_intelligence (Alert: b0f36726-6ec1-4d85-820e-be9c804ab5ab)
+    - Planned: Structural Impact Brief - global_market_intelligence (Alert: 0a8660ae-1027-4b4b-b9ec-08e21a1fc450)
+
+====================================================================================================
+Deep diagnostics complete.
+====================================================================================================

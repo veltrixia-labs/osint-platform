@@ -1,0 +1,3222 @@
+{
+  "NY.GDP.MKTP.CD": {
+    "metadata": {
+      "indicator_id": "NY.GDP.MKTP.CD",
+      "name": "GDP (current US$)",
+      "pro_use": "global_economic_scale",
+      "category": "growth"
+    },
+    "data": [
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2024",
+        "value": 18743803170827.2,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2023",
+        "value": 18270356654533.2,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2022",
+        "value": 18316765021690.2,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2021",
+        "value": 18201698719564,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2020",
+        "value": 14996414166715.1,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2019",
+        "value": 14560167101283.4,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2018",
+        "value": 14147765772963.8,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2017",
+        "value": 12537559062282.9,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2016",
+        "value": 11456024084962,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2015",
+        "value": 11280814787468.9,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2024",
+        "value": 4685592577804.69,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2023",
+        "value": 4562207532490.28,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2022",
+        "value": 4201021706478.62,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2021",
+        "value": 4355251953410.78,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2020",
+        "value": 3941398957073.94,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2019",
+        "value": 3959894794039.21,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2018",
+        "value": 4055433215301.96,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2017",
+        "value": 3765351626105.89,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2016",
+        "value": 3536787895179,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2015",
+        "value": 3425099578746.09,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2024",
+        "value": 3686033044482.13,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2023",
+        "value": 3420796653789.08,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2022",
+        "value": 3181244350465.41,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2021",
+        "value": 3194559188925.93,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2020",
+        "value": 2724001478304.59,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2019",
+        "value": 2875710080015.3,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2018",
+        "value": 2897028009916.05,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2017",
+        "value": 2699118387873.1,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2016",
+        "value": 2706807606538.73,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2015",
+        "value": 2945579890258.46,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2024",
+        "value": 4027597523550.58,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2023",
+        "value": 4213167237905.83,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2022",
+        "value": 4262463317796.53,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2021",
+        "value": 5039148168861.22,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2020",
+        "value": 5054068005376.28,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2019",
+        "value": 5117993853016.51,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2018",
+        "value": 5040880939324.86,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2017",
+        "value": 4930837369151.42,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2016",
+        "value": 5003677627544.24,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2015",
+        "value": 4444930651964.18,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2024",
+        "value": 28750956130731.2,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2023",
+        "value": 27292170793214.4,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2022",
+        "value": 25604848907611,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2021",
+        "value": 23315080560000,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2020",
+        "value": 21060473613000,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2019",
+        "value": 21380976119000,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2018",
+        "value": 20533057312000,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2017",
+        "value": 19477336549000,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2016",
+        "value": 18695110842000,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.CD",
+        "indicator_name": "GDP (current US$)",
+        "date": "2015",
+        "value": 18206020741000,
+        "decimal": 0
+      }
+    ]
+  },
+  "NY.GDP.MKTP.KD.ZG": {
+    "metadata": {
+      "indicator_id": "NY.GDP.MKTP.KD.ZG",
+      "name": "GDP growth (annual %)",
+      "pro_use": "macro_growth_comparison",
+      "category": "growth"
+    },
+    "data": [
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2024",
+        "value": 4.9773565917572,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2023",
+        "value": 5.41484330099675,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2022",
+        "value": 3.1341888719577,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2021",
+        "value": 8.57008513166322,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2020",
+        "value": 2.34018843078414,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2019",
+        "value": 6.06850235053705,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2018",
+        "value": 6.75671800166833,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2017",
+        "value": 6.8912663621211,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2016",
+        "value": 6.77555562837017,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2015",
+        "value": 6.97878002657477,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2024",
+        "value": -0.495851897260366,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2023",
+        "value": -0.869647578573321,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2022",
+        "value": 1.8092581243061,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2021",
+        "value": 3.90999994204108,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2020",
+        "value": -4.13191443239947,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2019",
+        "value": 0.977734697038784,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2018",
+        "value": 1.13569604599849,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2017",
+        "value": 2.797906720551,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2016",
+        "value": 2.22222216259371,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2015",
+        "value": 1.66300602334775,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2024",
+        "value": 1.1264226705118,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2023",
+        "value": 0.271650048355255,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2022",
+        "value": 5.14970388522993,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2021",
+        "value": 8.5431118453255,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2020",
+        "value": -10.047896637362,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2019",
+        "value": 1.25629899760824,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2018",
+        "value": 1.55133095078786,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2017",
+        "value": 3.02322219840339,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2016",
+        "value": 2.20652020635357,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2015",
+        "value": 2.14040560033371,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2024",
+        "value": 0.104309021773304,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2023",
+        "value": 1.47503481053384,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2022",
+        "value": 0.941998775483285,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2021",
+        "value": 2.69657404187188,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2020",
+        "value": -4.16876457146743,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2019",
+        "value": -0.402169200894946,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2018",
+        "value": 0.643391023533141,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2017",
+        "value": 1.67533175173359,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2016",
+        "value": 0.753826745789127,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2015",
+        "value": 1.56062669680782,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2024",
+        "value": 2.79300127716779,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2023",
+        "value": 2.88755600749487,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2022",
+        "value": 2.51237531986017,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2021",
+        "value": 6.05505293244555,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2020",
+        "value": -2.16302914036166,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2019",
+        "value": 2.58382533412825,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2018",
+        "value": 2.96650506901305,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2017",
+        "value": 2.45762229852507,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2016",
+        "value": 1.81945147788167,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NY.GDP.MKTP.KD.ZG",
+        "indicator_name": "GDP growth (annual %)",
+        "date": "2015",
+        "value": 2.94555045484053,
+        "decimal": 1
+      }
+    ]
+  },
+  "FP.CPI.TOTL.ZG": {
+    "metadata": {
+      "indicator_id": "FP.CPI.TOTL.ZG",
+      "name": "Inflation, consumer prices (annual %)",
+      "pro_use": "global_inflation_context",
+      "category": "stability"
+    },
+    "data": [
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2024",
+        "value": 0.218128938439177,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2023",
+        "value": 0.23483682889305,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2022",
+        "value": 1.9735755573905,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2021",
+        "value": 0.981015135544881,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2020",
+        "value": 2.41942189457782,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2019",
+        "value": 2.89923416358226,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2018",
+        "value": 2.07479039965576,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2017",
+        "value": 1.59313600071435,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2016",
+        "value": 2.00000182191943,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2015",
+        "value": 1.43702380935654,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2024",
+        "value": 2.2564981433876,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2023",
+        "value": 5.94643667725823,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2022",
+        "value": 6.87257438551096,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2021",
+        "value": 3.06666666666673,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2020",
+        "value": 0.144877925813981,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2019",
+        "value": 1.44565976888253,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2018",
+        "value": 1.73216879766941,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2017",
+        "value": 1.50949485109628,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2016",
+        "value": 0.491747008445174,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2015",
+        "value": 0.514426137125456,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2024",
+        "value": 3.2715729463592,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2023",
+        "value": 6.79396706793963,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2022",
+        "value": 7.92204883147902,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2021",
+        "value": 2.51837109614213,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2020",
+        "value": 0.989486703772491,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2019",
+        "value": 1.73810460086513,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2018",
+        "value": 2.29283990345938,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2017",
+        "value": 2.55775577557747,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2016",
+        "value": 1.0084173681141,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2015",
+        "value": 0.36804684232536,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2024",
+        "value": 2.73853681635241,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2023",
+        "value": 3.26813365933163,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2022",
+        "value": 2.49770278172255,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2021",
+        "value": -0.233352779398264,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2020",
+        "value": -0.024995834027731,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2019",
+        "value": 0.46877615938395,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2018",
+        "value": 0.989094598021848,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2017",
+        "value": 0.484199796126385,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2016",
+        "value": -0.127258844489754,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2015",
+        "value": 0.795279630579839,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2024",
+        "value": 2.94952520485207,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2023",
+        "value": 4.11633838374488,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2022",
+        "value": 8.00279982052121,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2021",
+        "value": 4.69785886363742,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2020",
+        "value": 1.23358439630629,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2019",
+        "value": 1.81221007526021,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2018",
+        "value": 2.44258329692817,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2017",
+        "value": 2.13011000365961,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2016",
+        "value": 1.26158320570536,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "FP.CPI.TOTL.ZG",
+        "indicator_name": "Inflation, consumer prices (annual %)",
+        "date": "2015",
+        "value": 0.118627135552451,
+        "decimal": 1
+      }
+    ]
+  },
+  "NE.TRD.GNFS.ZS": {
+    "metadata": {
+      "indicator_id": "NE.TRD.GNFS.ZS",
+      "name": "Trade (% of GDP)",
+      "pro_use": "trade_openness_exposure",
+      "category": "trade"
+    },
+    "data": [
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2024",
+        "value": 37.1984201388065,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2023",
+        "value": 36.1051923691138,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2022",
+        "value": 37.440719876366,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2021",
+        "value": 36.5206911762676,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2020",
+        "value": 34.0389507864581,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2019",
+        "value": 35.1994202738836,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2018",
+        "value": 36.8943843914718,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2017",
+        "value": 36.95085261586,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2016",
+        "value": 36.177170692978,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2015",
+        "value": 38.6971848362625,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2024",
+        "value": 79.0907305894936,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2023",
+        "value": 81.9625483787634,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2022",
+        "value": 88.7857542130501,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2021",
+        "value": 79.9195348609851,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2020",
+        "value": 72.9335327120137,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2019",
+        "value": 79.0732427175683,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2018",
+        "value": 79.1252260463654,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2017",
+        "value": 77.4548394742448,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2016",
+        "value": 76.0059902166055,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2015",
+        "value": 77.7565815686922,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2024",
+        "value": 62.8401605267118,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2023",
+        "value": 64.9923841747803,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2022",
+        "value": 69.1989264413981,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2021",
+        "value": 58.53838629291,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2020",
+        "value": 59.1598893030611,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2019",
+        "value": 65.0035664177054,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2018",
+        "value": 64.9097721959201,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2017",
+        "value": 63.1899245764158,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2016",
+        "value": 59.8395315138259,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2015",
+        "value": 57.125044605439,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2024",
+        "value": 46.4069516150859,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2023",
+        "value": 45.1508795641248,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2022",
+        "value": 46.8129868368938,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2021",
+        "value": 36.7384462280698,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2020",
+        "value": 31.335208636773,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2019",
+        "value": 35.2164181084145,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2018",
+        "value": 36.609931802107,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2017",
+        "value": 34.4232135721686,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2016",
+        "value": 31.3102468455884,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2015",
+        "value": 35.4274083544798,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2024",
+        "value": 25.3786342507088,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2023",
+        "value": 25.2903297883366,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2022",
+        "value": 27.3139397355363,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2021",
+        "value": 25.6095576621932,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2020",
+        "value": 23.4015629969394,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2019",
+        "value": 26.4537594940475,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2018",
+        "value": 27.6103792720958,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2017",
+        "value": 27.3130208877206,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2016",
+        "value": 26.6079620604584,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.TRD.GNFS.ZS",
+        "indicator_name": "Trade (% of GDP)",
+        "date": "2015",
+        "value": 27.8235649187872,
+        "decimal": 0
+      }
+    ]
+  },
+  "NE.EXP.GNFS.ZS": {
+    "metadata": {
+      "indicator_id": "NE.EXP.GNFS.ZS",
+      "name": "Exports of goods and services (% of GDP)",
+      "pro_use": "export_dependency",
+      "category": "trade"
+    },
+    "data": [
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2024",
+        "value": 20.0229166362049,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2023",
+        "value": 19.102471716101,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2022",
+        "value": 20.2977316914005,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2021",
+        "value": 19.5262422245091,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2020",
+        "value": 18.2035821684822,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2019",
+        "value": 18.0557069597496,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2018",
+        "value": 18.770519802938,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2017",
+        "value": 19.3356301657728,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2016",
+        "value": 19.2036507365412,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2015",
+        "value": 20.9390642234326,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2024",
+        "value": 41.4340593720908,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2023",
+        "value": 42.9672624196847,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2022",
+        "value": 45.6284043425185,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2021",
+        "value": 42.5198379291429,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2020",
+        "value": 39.1198068808828,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2019",
+        "value": 42.3402444816356,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2018",
+        "value": 42.4968914074717,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2017",
+        "value": 42.2029575981591,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2016",
+        "value": 41.6355419518592,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2015",
+        "value": 42.5853976151835,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2024",
+        "value": 30.9841588401688,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2023",
+        "value": 31.9122697629938,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2022",
+        "value": 34.0619283837069,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2021",
+        "value": 29.2894071087705,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2020",
+        "value": 29.9486520576829,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2019",
+        "value": 31.9028602803155,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2018",
+        "value": 31.854534000688,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2017",
+        "value": 30.9738310965649,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2016",
+        "value": 29.0615561502528,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2015",
+        "value": 27.8790736176463,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2024",
+        "value": 22.7689998646748,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2023",
+        "value": 21.8515912402593,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2022",
+        "value": 21.5464241239166,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2021",
+        "value": 18.1091919388618,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2020",
+        "value": 15.5331828643222,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2019",
+        "value": 17.4635264275221,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2018",
+        "value": 18.3149455985223,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2017",
+        "value": 17.5914391047836,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2016",
+        "value": 16.0579692360598,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2015",
+        "value": 17.4367598376529,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2024",
+        "value": 11.1074566893674,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2023",
+        "value": 11.1844126402687,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2022",
+        "value": 11.7844046293243,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2021",
+        "value": 10.9604167715559,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2020",
+        "value": 10.2141055302392,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2019",
+        "value": 11.8768712235892,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2018",
+        "value": 12.3609892157496,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2017",
+        "value": 12.2617381180006,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2016",
+        "value": 11.957982056879,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.EXP.GNFS.ZS",
+        "indicator_name": "Exports of goods and services (% of GDP)",
+        "date": "2015",
+        "value": 12.4718192531032,
+        "decimal": 1
+      }
+    ]
+  },
+  "NE.IMP.GNFS.ZS": {
+    "metadata": {
+      "indicator_id": "NE.IMP.GNFS.ZS",
+      "name": "Imports of goods and services (% of GDP)",
+      "pro_use": "import_dependency",
+      "category": "trade"
+    },
+    "data": [
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2024",
+        "value": 17.1755035026016,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2023",
+        "value": 17.0027206530128,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2022",
+        "value": 17.1429881849654,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2021",
+        "value": 16.9944489517585,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2020",
+        "value": 15.8353686179759,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2019",
+        "value": 17.1437133141341,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2018",
+        "value": 18.1238645885338,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2017",
+        "value": 17.6152224500872,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2016",
+        "value": 16.9735199564368,
+        "decimal": 1
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2015",
+        "value": 17.7581206128298,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2024",
+        "value": 37.6566712174028,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2023",
+        "value": 38.9952859590786,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2022",
+        "value": 43.1573498705316,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2021",
+        "value": 37.3996969318423,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2020",
+        "value": 33.8137258311309,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2019",
+        "value": 36.7329982359327,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2018",
+        "value": 36.6283346388937,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2017",
+        "value": 35.2518818760857,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2016",
+        "value": 34.3704482647463,
+        "decimal": 1
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2015",
+        "value": 35.1711839535087,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2024",
+        "value": 31.856001686543,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2023",
+        "value": 33.0801144117865,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2022",
+        "value": 35.1369980576912,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2021",
+        "value": 29.2489791841395,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2020",
+        "value": 29.2112372453782,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2019",
+        "value": 33.1007061373899,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2018",
+        "value": 33.0552381952321,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2017",
+        "value": 32.216093479851,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2016",
+        "value": 30.7779753635731,
+        "decimal": 1
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2015",
+        "value": 29.2459709877926,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2024",
+        "value": 23.6379517504111,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2023",
+        "value": 23.2992883238654,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2022",
+        "value": 25.2665627129772,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2021",
+        "value": 18.629254289208,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2020",
+        "value": 15.8020257724508,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2019",
+        "value": 17.7528916808924,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2018",
+        "value": 18.2949862035848,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2017",
+        "value": 16.831774467385,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2016",
+        "value": 15.2522776095286,
+        "decimal": 1
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2015",
+        "value": 17.990648516827,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2024",
+        "value": 14.2711775613413,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2023",
+        "value": 14.1059171480679,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2022",
+        "value": 15.529535106212,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2021",
+        "value": 14.6491408906374,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2020",
+        "value": 13.1874574667002,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2019",
+        "value": 14.5768882704583,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2018",
+        "value": 15.2493900563462,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2017",
+        "value": 15.0512827697199,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2016",
+        "value": 14.6499800035794,
+        "decimal": 1
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "NE.IMP.GNFS.ZS",
+        "indicator_name": "Imports of goods and services (% of GDP)",
+        "date": "2015",
+        "value": 15.351745665684,
+        "decimal": 1
+      }
+    ]
+  },
+  "SP.POP.TOTL": {
+    "metadata": {
+      "indicator_id": "SP.POP.TOTL",
+      "name": "Population, total",
+      "pro_use": "market_size_scaling",
+      "category": "demographics"
+    },
+    "data": [
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2024",
+        "value": 1408975000,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2023",
+        "value": 1410710000,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2022",
+        "value": 1412175000,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2021",
+        "value": 1412360000,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2020",
+        "value": 1411100000,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2019",
+        "value": 1407745000,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2018",
+        "value": 1402760000,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2017",
+        "value": 1396215000,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2016",
+        "value": 1387790000,
+        "decimal": 0
+      },
+      {
+        "country_id": "CN",
+        "country_name": "China",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2015",
+        "value": 1379860000,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2024",
+        "value": 83516593,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2023",
+        "value": 83287273,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2022",
+        "value": 83177813,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2021",
+        "value": 83196078,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2020",
+        "value": 83160871,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2019",
+        "value": 83092962,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2018",
+        "value": 82905782,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2017",
+        "value": 82657002,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2016",
+        "value": 82348669,
+        "decimal": 0
+      },
+      {
+        "country_id": "DE",
+        "country_name": "Germany",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2015",
+        "value": 81686611,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2024",
+        "value": 69226000,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2023",
+        "value": 68492000,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2022",
+        "value": 67604000,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2021",
+        "value": 66984000,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2020",
+        "value": 66744000,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2019",
+        "value": 66631000,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2018",
+        "value": 66289000,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2017",
+        "value": 65966000,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2016",
+        "value": 65607000,
+        "decimal": 0
+      },
+      {
+        "country_id": "GB",
+        "country_name": "United Kingdom",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2015",
+        "value": 65088000,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2024",
+        "value": 123975371,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2023",
+        "value": 124516650,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2022",
+        "value": 125124989,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2021",
+        "value": 125681593,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2020",
+        "value": 126261000,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2019",
+        "value": 126633000,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2018",
+        "value": 126811000,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2017",
+        "value": 126972000,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2016",
+        "value": 127076000,
+        "decimal": 0
+      },
+      {
+        "country_id": "JP",
+        "country_name": "Japan",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2015",
+        "value": 127141000,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2024",
+        "value": 340110988,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2023",
+        "value": 336806231,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2022",
+        "value": 334017321,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2021",
+        "value": 332099760,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2020",
+        "value": 331577720,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2019",
+        "value": 330226227,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2018",
+        "value": 328529577,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2017",
+        "value": 326608609,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2016",
+        "value": 324353340,
+        "decimal": 0
+      },
+      {
+        "country_id": "US",
+        "country_name": "United States",
+        "indicator_id": "SP.POP.TOTL",
+        "indicator_name": "Population, total",
+        "date": "2015",
+        "value": 321815121,
+        "decimal": 0
+      }
+    ]
+  }
+}

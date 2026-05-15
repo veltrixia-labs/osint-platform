@@ -149,11 +149,93 @@ export function canAccessReport(_userTier: string, _reportType: string, _topicCo
 }
 
 /**
+ * Fixed UI colors per canonical topic (UPPER_SNAKE).
+ * Single source of truth — Alert Stream, Context Briefs, Pro cards all use getTopicColor().
+ */
+export const TOPIC_COLORS: Record<string, string> = {
+    GEOPOLITICS: '#58a6ff',
+    GLOBAL_MARKET_INTELLIGENCE: '#58a6ff',
+    MARKET_SENTIMENT: '#58a6ff',
+    ENERGY_RESOURCE_RISK: '#d29922',
+    SUPPLY_CHAIN_INTELLIGENCE: '#3fb950',
+    AI_SEMICONDUCTOR_INTELLIGENCE: '#bc8cff',
+    DEFENSE_TECHNOLOGY: '#f85149',
+};
+
+const INTERNAL_TOPIC_TO_CANONICAL: Record<string, string> = {
+    crypto_geopolitics: 'GEOPOLITICS',
+    energy_resource_risk: 'ENERGY_RESOURCE_RISK',
+    supply_chain_intelligence: 'SUPPLY_CHAIN_INTELLIGENCE',
+    ai_semiconductor_intelligence: 'AI_SEMICONDUCTOR_INTELLIGENCE',
+    defense_technology: 'DEFENSE_TECHNOLOGY',
+    global_market_intelligence: 'GLOBAL_MARKET_INTELLIGENCE',
+};
+
+const CANONICAL_TOPIC_LABELS: Record<string, string> = {
+    GEOPOLITICS: 'Geopolitics',
+    ENERGY_RESOURCE_RISK: 'Energy & Resources',
+    SUPPLY_CHAIN_INTELLIGENCE: 'Supply Chain',
+    AI_SEMICONDUCTOR_INTELLIGENCE: 'AI & Semiconductors',
+    MARKET_SENTIMENT: 'Market Sentiment',
+    DEFENSE_TECHNOLOGY: 'Defense Technology',
+    GLOBAL_MARKET_INTELLIGENCE: 'Global Intelligence',
+};
+
+/**
+ * Normalize API/DB topic strings to canonical UPPER_SNAKE codes for colors and labels.
+ */
+export function normalizeTopicCode(raw: string | null | undefined): string {
+    if (!raw) return 'GLOBAL_MARKET_INTELLIGENCE';
+    const trimmed = raw.trim();
+    const upper = trimmed.toUpperCase();
+    if (TOPIC_COLORS[upper]) return upper;
+    const lower = trimmed.toLowerCase();
+    return INTERNAL_TOPIC_TO_CANONICAL[lower] ?? 'GLOBAL_MARKET_INTELLIGENCE';
+}
+
+/** Accent color for alert borders and topic tags (category, not severity). */
+export function getTopicColor(topic: string | null | undefined): string {
+    const code = normalizeTopicCode(topic);
+    return TOPIC_COLORS[code] ?? TOPIC_COLORS.GLOBAL_MARKET_INTELLIGENCE;
+}
+
+/** Topics shown in Pro Hub “Monitored Domains” preview chips. */
+export const UI_TOPIC_PREVIEW_CODES = [
+    'energy_resource_risk',
+    'ai_semiconductor_intelligence',
+    'global_market_intelligence',
+    'supply_chain_intelligence',
+    'crypto_geopolitics',
+    'defense_technology',
+] as const;
+
+/** Inline CSS custom properties for cards, chips, and Pro brief chrome. */
+export function getTopicCssVars(topic: string | null | undefined): string {
+    const color = getTopicColor(topic);
+    return `--topic-color:${color};--domain-accent:${color};--domain-bg:color-mix(in srgb, ${color} 12%, transparent);`;
+}
+
+/** Human-readable label for canonical or legacy topic codes. */
+export function getTopicDisplayLabel(topic: string | null | undefined): string {
+    const code = normalizeTopicCode(topic);
+    if (CANONICAL_TOPIC_LABELS[code]) return CANONICAL_TOPIC_LABELS[code];
+    const def = ACCESS_MAP.find(t => t.code === topic || normalizeTopicCode(t.code) === code);
+    return def?.label ?? code.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/**
  * Look up a TopicDef by its DB topic_code (including null → global).
  */
 export function getTopicDef(code: string | null): TopicDef {
+    const canonical = normalizeTopicCode(code);
+    const byCanonical = ACCESS_MAP.find(
+        t => normalizeTopicCode(t.code) === canonical
+    );
+    if (byCanonical) {
+        return { ...byCanonical, color: getTopicColor(canonical) };
+    }
     const found = ACCESS_MAP.find(t => t.code === code || (code === null && t.key === 'global'));
-    return found ?? ACCESS_MAP[0]; // fallback to global
+    return found ?? ACCESS_MAP[0];
 }
 
 /**

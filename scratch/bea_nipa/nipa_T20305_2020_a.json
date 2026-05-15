@@ -1,0 +1,500 @@
+{
+  "BEAAPI": {
+    "Request": {
+      "RequestParam": [
+        {
+          "ParameterName": "USERID",
+          "ParameterValue": "B17B7B02-C2BD-4F43-A492-C72703C49847"
+        },
+        {
+          "ParameterName": "METHOD",
+          "ParameterValue": "GETDATA"
+        },
+        {
+          "ParameterName": "RESULTFORMAT",
+          "ParameterValue": "JSON"
+        },
+        {
+          "ParameterName": "DATASETNAME",
+          "ParameterValue": "NIPA"
+        },
+        {
+          "ParameterName": "TABLENAME",
+          "ParameterValue": "T20305"
+        },
+        {
+          "ParameterName": "FREQUENCY",
+          "ParameterValue": "A"
+        },
+        {
+          "ParameterName": "YEAR",
+          "ParameterValue": "2020"
+        }
+      ]
+    },
+    "Results": {
+      "Statistic": "NIPA Table",
+      "UTCProductionTime": "2026-05-05T08:16:17.297",
+      "Dimensions": [
+        {
+          "Ordinal": "1",
+          "Name": "TableName",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "2",
+          "Name": "SeriesCode",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "3",
+          "Name": "LineNumber",
+          "DataType": "numeric",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "4",
+          "Name": "LineDescription",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "5",
+          "Name": "TimePeriod",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "6",
+          "Name": "CL_UNIT",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "7",
+          "Name": "UNIT_MULT",
+          "DataType": "numeric",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "8",
+          "Name": "METRIC_NAME",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "9",
+          "Name": "DataValue",
+          "DataType": "numeric",
+          "IsValue": "1"
+        }
+      ],
+      "Data": [
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DPCERC",
+          "LineNumber": "1",
+          "LineDescription": "Personal consumption expenditures (PCE)",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "14,231,353",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DGDSRC",
+          "LineNumber": "2",
+          "LineDescription": "Goods",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "4,708,625",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DDURRC",
+          "LineNumber": "3",
+          "LineDescription": "Durable goods",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,621,700",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DMOTRC",
+          "LineNumber": "4",
+          "LineDescription": "Motor vehicles and parts",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "546,813",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DFDHRC",
+          "LineNumber": "5",
+          "LineDescription": "Furnishings and durable household equipment",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "380,989",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DREQRC",
+          "LineNumber": "6",
+          "LineDescription": "Recreational goods and vehicles",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "496,205",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DODGRC",
+          "LineNumber": "7",
+          "LineDescription": "Other durable goods",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "197,693",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DNDGRC",
+          "LineNumber": "8",
+          "LineDescription": "Nondurable goods",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "3,086,925",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DFXARC",
+          "LineNumber": "9",
+          "LineDescription": "Food and beverages purchased for off-premises consumption",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,201,722",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DCLORC",
+          "LineNumber": "10",
+          "LineDescription": "Clothing and footwear",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "360,435",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DGOERC",
+          "LineNumber": "11",
+          "LineDescription": "Gasoline and other energy goods",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "258,458",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DONGRC",
+          "LineNumber": "12",
+          "LineDescription": "Other nondurable goods",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,266,309",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DSERRC",
+          "LineNumber": "13",
+          "LineDescription": "Services",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "9,522,728",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DHCERC",
+          "LineNumber": "14",
+          "LineDescription": "Household consumption expenditures (for services)",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "9,040,696",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DHUTRC",
+          "LineNumber": "15",
+          "LineDescription": "Housing and utilities",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,687,694",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DHLCRC",
+          "LineNumber": "16",
+          "LineDescription": "Health care",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,354,165",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DTRSRC",
+          "LineNumber": "17",
+          "LineDescription": "Transportation services",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "366,455",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DRCARC",
+          "LineNumber": "18",
+          "LineDescription": "Recreation services",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "470,207",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DFSARC",
+          "LineNumber": "19",
+          "LineDescription": "Food services and accommodations",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "823,957",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DIFSRC",
+          "LineNumber": "20",
+          "LineDescription": "Financial services and insurance",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,152,896",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DOTSRC",
+          "LineNumber": "21",
+          "LineDescription": "Other services",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,185,322",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DNPIRC",
+          "LineNumber": "22",
+          "LineDescription": "Final consumption expenditures of nonprofit institutions serving households (NPISHs)",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "482,032",
+          "NoteRef": "T20305,T20305.1"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DNPERC",
+          "LineNumber": "23",
+          "LineDescription": "Gross output of nonprofit institutions",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,655,266",
+          "NoteRef": "T20305,T20305.2"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DNPSRC",
+          "LineNumber": "24",
+          "LineDescription": "Less: Receipts from sales of goods and services by nonprofit institutions",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,173,234",
+          "NoteRef": "T20305,T20305.3"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DPCCRC",
+          "LineNumber": "25",
+          "LineDescription": "PCE excluding food and energy",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "12,529,065",
+          "NoteRef": "T20305,T20305.4"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "LA001176",
+          "LineNumber": "26",
+          "LineDescription": "PCE excluding food, energy, and housing",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "10,197,146",
+          "NoteRef": "T20305,T20305.4"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DNRGRC",
+          "LineNumber": "27",
+          "LineDescription": "Energy goods and services",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "500,566",
+          "NoteRef": "T20305,T20305.5"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "LA001260",
+          "LineNumber": "28",
+          "LineDescription": "PCE services excluding energy and housing",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "6,948,701",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DHSGRC",
+          "LineNumber": "29",
+          "LineDescription": "Housing",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,331,920",
+          "NoteRef": "T20305"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DPCMRC",
+          "LineNumber": "30",
+          "LineDescription": "Market-based PCE",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "12,319,732",
+          "NoteRef": "T20305,T20305.6"
+        },
+        {
+          "TableName": "T20305",
+          "SeriesCode": "DPCXRC",
+          "LineNumber": "31",
+          "LineDescription": "Market-based PCE excluding food and energy",
+          "TimePeriod": "2020",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "10,618,015",
+          "NoteRef": "T20305,T20305.6"
+        }
+      ],
+      "Notes": [
+        {
+          "NoteRef": "T20305",
+          "NoteText": "Table 2.3.5. Personal Consumption Expenditures by Major Type of Product [Billions of dollars] - LastRevised: April 30, 2026"
+        },
+        {
+          "NoteRef": "T20305.1",
+          "NoteText": "1. Net expenses of NPISHs, defined as their gross operating expenses less primary sales to households."
+        },
+        {
+          "NoteRef": "T20305.2",
+          "NoteText": "2. Gross output is net of unrelated sales, secondary sales, and sales to business, to government, and to the rest of the world; excludes own-account investment (construction and software)."
+        },
+        {
+          "NoteRef": "T20305.3",
+          "NoteText": "3. Excludes unrelated sales, secondary sales, and sales to business, to government, and to the rest of the world; includes membership dues and fees."
+        },
+        {
+          "NoteRef": "T20305.4",
+          "NoteText": "4. Food consists of food and beverages purchased for off-premises consumption; food services, which include purchased meals and beverages, are not classified as food."
+        },
+        {
+          "NoteRef": "T20305.5",
+          "NoteText": "5. Consists of gasoline and other energy goods and of electricity and gas services."
+        },
+        {
+          "NoteRef": "T20305.6",
+          "NoteText": "6. Market-based PCE is a supplemental measure that is based on household expenditures for which there are observable price measures.It excludes most imputed transactions (for example, financial services furnished without payment) and the final consumption expenditures of nonprofit institutions serving households."
+        }
+      ]
+    }
+  }
+}

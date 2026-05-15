@@ -1,0 +1,64 @@
+{
+  "BEAAPI": {
+    "Request": {
+      "RequestParam": [
+        {
+          "ParameterName": "USERID",
+          "ParameterValue": "B17B7B02-C2BD-4F43-A492-C72703C49847"
+        },
+        {
+          "ParameterName": "METHOD",
+          "ParameterValue": "GETPARAMETERLIST"
+        },
+        {
+          "ParameterName": "RESULTFORMAT",
+          "ParameterValue": "JSON"
+        },
+        {
+          "ParameterName": "DATASETNAME",
+          "ParameterValue": "GDPBYINDUSTRY"
+        }
+      ]
+    },
+    "Results": {
+      "Parameter": [
+        {
+          "ParameterName": "Frequency",
+          "ParameterDataType": "string",
+          "ParameterDescription": "A - Annual, Q-Quarterly",
+          "ParameterIsRequiredFlag": "1",
+          "ParameterDefaultValue": "",
+          "MultipleAcceptedFlag": "1",
+          "AllValue": "ALL"
+        },
+        {
+          "ParameterName": "Industry",
+          "ParameterDataType": "string",
+          "ParameterDescription": "List of industries to retrieve (ALL for All)",
+          "ParameterIsRequiredFlag": "1",
+          "ParameterDefaultValue": "",
+          "MultipleAcceptedFlag": "1",
+          "AllValue": "ALL"
+        },
+        {
+          "ParameterName": "TableID",
+          "ParameterDataType": "integer",
+          "ParameterDescription": "The unique GDP by Industry table identifier (ALL for All)",
+          "ParameterIsRequiredFlag": "1",
+          "ParameterDefaultValue": "",
+          "MultipleAcceptedFlag": "1",
+          "AllValue": "ALL"
+        },
+        {
+          "ParameterName": "Year",
+          "ParameterDataType": "integer",
+          "ParameterDescription": "List of year(s) of data to retrieve (ALL for All)",
+          "ParameterIsRequiredFlag": "1",
+          "ParameterDefaultValue": "",
+          "MultipleAcceptedFlag": "1",
+          "AllValue": "ALL"
+        }
+      ]
+    }
+  }
+}

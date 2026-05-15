@@ -3,8 +3,9 @@
  * Context Briefs renderer — High-detail data without AI scoring.
  * Layout aligns with Pro Insights / Latest Structural Briefs (grid + premium cards).
  */
-import { simpleMarkdown, getDomainSlugClass } from './utils';
+import { simpleMarkdown } from './utils';
 import type { FreeAlertFeedItem } from '../api';
+import { getTopicDisplayLabel, getTopicCssVars } from '../topics';
 
 type CompanyImpactSource = NonNullable<FreeAlertFeedItem['company_impacts']>[number];
 type SectorImpactSource = NonNullable<FreeAlertFeedItem['sector_impacts']>[number];
@@ -28,12 +29,6 @@ function formatDate(iso: string): string {
         month: 'short', day: 'numeric',
         hour: '2-digit', minute: '2-digit'
     });
-}
-
-function topicLabel(topic: string): string {
-    return (topic || 'unknown')
-        .replace(/_/g, ' ')
-        .replace(/\b\w/g, (char: string) => char.toUpperCase());
 }
 
 /** Strip trigger-style prefixes (e.g. acceleration:, entity_surge:) for display titles. */
@@ -535,10 +530,10 @@ function renderStructuredContent(
             }
         }
         else if (lowerTitle.includes('coverage')) {
-            const domainClass = getDomainSlugClass(topic);
+            const topicVars = getTopicCssVars(topic);
             const sectorRows = dedupeSectorRowsByEntityId(normalizeSectorImpacts(structuredSectorImpacts, body));
             const { regional, structural } = partitionRegionalSectorRows(sectorRows);
-            html += `<div class="cb-section cb-section--structural-exposure ${domainClass}">`;
+            html += `<div class="cb-section cb-section--structural-exposure" style="${topicVars}">`;
             html += `<h4 class="cb-section-title">Structural Exposure</h4>`;
             if (regional.length > 0) {
                 html += `<div class="cb-regional-impact">`;
@@ -585,17 +580,17 @@ function renderStructuredContent(
 function renderFeedCard(item: FreeAlertFeedItem, index: number): string {
     const cardId = `cb-card-${index}`;
     const triggeredStr = formatDate(item.triggered_at);
-    const topicStr = topicLabel(item.topic);
+    const topicStr = getTopicDisplayLabel(item.topic);
+    const topicVars = getTopicCssVars(item.topic);
     const newsCount = item.related_news_count ?? 0;
     const entitiesCount = item.related_entities_count ?? 0;
-    const dc = getDomainSlugClass(item.topic);
     const displayTitle = cleanBriefTitle(item.title || item.target_label || 'Strategic Intelligence Alert');
     const teaser = escapeHtml(extractTeaserFromMarkdown(item.content_markdown || ''));
 
     return `
-    <div class="pro-brief-card cb-brief-card" id="${cardId}" data-domain-card="1">
+    <div class="pro-brief-card cb-brief-card" id="${cardId}" data-domain-card="1" style="${topicVars}">
       <div class="cb-brief-card-head u-flex-between">
-        <span class="domain-chip ${dc}">${topicStr}</span>
+        <span class="domain-chip meta-item-topic--tag">${topicStr}</span>
         <div class="cb-brief-card-head-meta">
           <span class="cb-brief-kind">Context Brief</span>
           <span class="cb-brief-ts">${escapeHtml(triggeredStr)}</span>

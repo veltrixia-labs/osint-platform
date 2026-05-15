@@ -1,0 +1,158 @@
+{
+  "TableID": [
+    {
+      "Key": "59",
+      "Desc": "Total Requirements, Commodity-by-Commodity - Summary"
+    },
+    {
+      "Key": "58",
+      "Desc": "Total Requirements, Commodity-by-Commodity - Sector"
+    },
+    {
+      "Key": "57",
+      "Desc": "Total Requirements, Industry-by-Commodity - Summary"
+    },
+    {
+      "Key": "56",
+      "Desc": "Total Requirements, Industry-by-Commodity - Sector"
+    },
+    {
+      "Key": "61",
+      "Desc": "Total Requirements, Industry-by-Industry - Summary"
+    },
+    {
+      "Key": "60",
+      "Desc": "Total Requirements, Industry-by-Industry - Sector"
+    },
+    {
+      "Key": "262",
+      "Desc": "The Domestic Supply of Commodities by Industries - Summary"
+    },
+    {
+      "Key": "261",
+      "Desc": "The Domestic Supply of Commodities by Industries - Sector"
+    },
+    {
+      "Key": "259",
+      "Desc": "The Use of Commodities by Industries - Summary"
+    },
+    {
+      "Key": "258",
+      "Desc": "The Use of Commodities by Industries - Sector"
+    }
+  ],
+  "Year": [
+    {
+      "Key": "1997",
+      "Desc": "1997"
+    },
+    {
+      "Key": "1998",
+      "Desc": "1998"
+    },
+    {
+      "Key": "1999",
+      "Desc": "1999"
+    },
+    {
+      "Key": "2000",
+      "Desc": "2000"
+    },
+    {
+      "Key": "2001",
+      "Desc": "2001"
+    },
+    {
+      "Key": "2002",
+      "Desc": "2002"
+    },
+    {
+      "Key": "2003",
+      "Desc": "2003"
+    },
+    {
+      "Key": "2004",
+      "Desc": "2004"
+    },
+    {
+      "Key": "2005",
+      "Desc": "2005"
+    },
+    {
+      "Key": "2006",
+      "Desc": "2006"
+    },
+    {
+      "Key": "2007",
+      "Desc": "2007"
+    },
+    {
+      "Key": "2008",
+      "Desc": "2008"
+    },
+    {
+      "Key": "2009",
+      "Desc": "2009"
+    },
+    {
+      "Key": "2010",
+      "Desc": "2010"
+    },
+    {
+      "Key": "2011",
+      "Desc": "2011"
+    },
+    {
+      "Key": "2012",
+      "Desc": "2012"
+    },
+    {
+      "Key": "2013",
+      "Desc": "2013"
+    },
+    {
+      "Key": "2014",
+      "Desc": "2014"
+    },
+    {
+      "Key": "2015",
+      "Desc": "2015"
+    },
+    {
+      "Key": "2016",
+      "Desc": "2016"
+    },
+    {
+      "Key": "2017",
+      "Desc": "2017"
+    },
+    {
+      "Key": "2018",
+      "Desc": "2018"
+    },
+    {
+      "Key": "2019",
+      "Desc": "2019"
+    },
+    {
+      "Key": "2020",
+      "Desc": "2020"
+    },
+    {
+      "Key": "2021",
+      "Desc": "2021"
+    },
+    {
+      "Key": "2022",
+      "Desc": "2022"
+    },
+    {
+      "Key": "2023",
+      "Desc": "2023"
+    },
+    {
+      "Key": "2024",
+      "Desc": "2024"
+    }
+  ]
+}

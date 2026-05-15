@@ -1,0 +1,381 @@
+{
+  "report_type": "pro",
+  "version": "0.1",
+  "as_of_year": 2024,
+  "as_of_date": "2024-12",
+  "sections": {
+    "macro_snapshot": {
+      "year": "2024",
+      "gdp_current_dollars_t": 29.298013,
+      "gdp_growth_rate_pct": 2.8,
+      "pce_current_dollars_t": 19.896009,
+      "pce_gdp_ratio_pct": 67.91
+    },
+    "industry_snapshot": [
+      {
+        "industry": "53",
+        "industry_description": "Real estate and rental and leasing",
+        "data_value": 4052.4,
+        "gdp_total": 29298.0,
+        "share_pct": 13.83,
+        "level": "sector"
+      },
+      {
+        "industry": "31G",
+        "industry_description": "Manufacturing",
+        "data_value": 2880.7,
+        "gdp_total": 29298.0,
+        "share_pct": 9.83,
+        "level": "sector"
+      },
+      {
+        "industry": "6",
+        "industry_description": "Educational services, health care, and social assistance",
+        "data_value": 2544.2,
+        "gdp_total": 29298.0,
+        "share_pct": 8.68,
+        "level": "sector"
+      },
+      {
+        "industry": "54",
+        "industry_description": "Professional, scientific, and technical services",
+        "data_value": 2355.1,
+        "gdp_total": 29298.0,
+        "share_pct": 8.04,
+        "level": "sector"
+      },
+      {
+        "industry": "52",
+        "industry_description": "Finance and insurance",
+        "data_value": 2229.2,
+        "gdp_total": 29298.0,
+        "share_pct": 7.61,
+        "level": "sector"
+      },
+      {
+        "industry": "62",
+        "industry_description": "Health care and social assistance",
+        "data_value": 2209.4,
+        "gdp_total": 29298.0,
+        "share_pct": 7.54,
+        "level": "sector"
+      },
+      {
+        "industry": "44RT",
+        "industry_description": "Retail trade",
+        "data_value": 1849.0,
+        "gdp_total": 29298.0,
+        "share_pct": 6.31,
+        "level": "sector"
+      },
+      {
+        "industry": "42",
+        "industry_description": "Wholesale trade",
+        "data_value": 1706.3,
+        "gdp_total": 29298.0,
+        "share_pct": 5.82,
+        "level": "sector"
+      },
+      {
+        "industry": "51",
+        "industry_description": "Information",
+        "data_value": 1592.7,
+        "gdp_total": 29298.0,
+        "share_pct": 5.44,
+        "level": "sector"
+      },
+      {
+        "industry": "23",
+        "industry_description": "Construction",
+        "data_value": 1305.4,
+        "gdp_total": 29298.0,
+        "share_pct": 4.46,
+        "level": "sector"
+      }
+    ],
+    "price_pressure_summary": {
+      "as_of": "2024-12",
+      "high_risk_series": [
+        {
+          "ppi_series_id": "WPU101",
+          "ppi_label": "Iron and steel",
+          "ppi_yoy_pct": -11.46,
+          "ppi_cumulative_pct": 32.44,
+          "ppi_latest_value": 288.188,
+          "ppi_latest_date": "2024-12",
+          "bea_industry_code": "31G",
+          "bea_industry_growth_pct": 27.36,
+          "bea_industry_value_billions": 2880.7,
+          "signal": "cost_pressure_outpacing_growth"
+        },
+        {
+          "ppi_series_id": "WPU114",
+          "ppi_label": "Machinery and equipment",
+          "ppi_yoy_pct": 3.33,
+          "ppi_cumulative_pct": 46.16,
+          "ppi_latest_value": 343.19,
+          "ppi_latest_date": "2024-12",
+          "bea_industry_code": "333",
+          "bea_industry_growth_pct": 34.67,
+          "bea_industry_value_billions": 208.6,
+          "signal": "cost_pressure_outpacing_growth"
+        }
+      ],
+      "easing_pressure_series": [
+        {
+          "ppi_series_id": "WPU057",
+          "ppi_label": "Fuels and related products and power",
+          "ppi_yoy_pct": -7.99,
+          "ppi_cumulative_pct": 19.58,
+          "ppi_latest_value": 235.567,
+          "ppi_latest_date": "2024-12",
+          "bea_industry_code": "21",
+          "bea_industry_growth_pct": 28.93,
+          "bea_industry_value_billions": 404.2,
+          "signal": "price_pressure_easing_with_growth"
+        },
+        {
+          "ppi_series_id": "WPU101",
+          "ppi_label": "Iron and steel",
+          "ppi_yoy_pct": -11.46,
+          "ppi_cumulative_pct": 32.44,
+          "ppi_latest_value": 288.188,
+          "ppi_latest_date": "2024-12",
+          "bea_industry_code": "23",
+          "bea_industry_growth_pct": 46.82,
+          "bea_industry_value_billions": 1305.4,
+          "signal": "price_pressure_easing_with_growth"
+        }
+      ],
+      "pricing_power_series": [
+        {
+          "ppi_series_id": "WPUFD4",
+          "ppi_label": "Final demand",
+          "ppi_yoy_pct": 3.48,
+          "ppi_cumulative_pct": 27.68,
+          "ppi_latest_value": 146.189,
+          "ppi_latest_date": "2024-12",
+          "bea_industry_code": "GDP",
+          "bea_industry_growth_pct": 41.83,
+          "bea_industry_value_billions": 29298.0,
+          "signal": "growth_with_pricing_power"
+        },
+        {
+          "ppi_series_id": "WPUFD49104",
+          "ppi_label": "Final demand goods",
+          "ppi_yoy_pct": 3.75,
+          "ppi_cumulative_pct": 27.49,
+          "ppi_latest_value": 144.96,
+          "ppi_latest_date": "2024-12",
+          "bea_industry_code": "31G",
+          "bea_industry_growth_pct": 27.36,
+          "bea_industry_value_billions": 2880.7,
+          "signal": "growth_with_pricing_power"
+        },
+        {
+          "ppi_series_id": "WPU081",
+          "ppi_label": "Lumber and wood products",
+          "ppi_yoy_pct": 8.6,
+          "ppi_cumulative_pct": 17.97,
+          "ppi_latest_value": 265.797,
+          "ppi_latest_date": "2024-12",
+          "bea_industry_code": "23",
+          "bea_industry_growth_pct": 46.82,
+          "bea_industry_value_billions": 1305.4,
+          "signal": "growth_with_pricing_power"
+        }
+      ],
+      "summary_metadata": {
+        "total_series_analyzed": 8,
+        "risk_count": 2,
+        "easing_count": 2
+      }
+    },
+    "risk_signals": [
+      {
+        "ppi_series_id": "WPU101",
+        "ppi_label": "Iron and steel",
+        "ppi_yoy_pct": -11.46,
+        "ppi_cumulative_pct": 32.44,
+        "ppi_latest_value": 288.188,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "31G",
+        "bea_industry_growth_pct": 27.36,
+        "bea_industry_value_billions": 2880.7,
+        "signal": "cost_pressure_outpacing_growth"
+      },
+      {
+        "ppi_series_id": "WPU101",
+        "ppi_label": "Iron and steel",
+        "ppi_yoy_pct": -11.46,
+        "ppi_cumulative_pct": 32.44,
+        "ppi_latest_value": 288.188,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "332",
+        "bea_industry_growth_pct": 25.41,
+        "bea_industry_value_billions": 190.5,
+        "signal": "cost_pressure_outpacing_growth"
+      },
+      {
+        "ppi_series_id": "WPU114",
+        "ppi_label": "Machinery and equipment",
+        "ppi_yoy_pct": 3.33,
+        "ppi_cumulative_pct": 46.16,
+        "ppi_latest_value": 343.19,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "333",
+        "bea_industry_growth_pct": 34.67,
+        "bea_industry_value_billions": 208.6,
+        "signal": "cost_pressure_outpacing_growth"
+      },
+      {
+        "ppi_series_id": "WPU114",
+        "ppi_label": "Machinery and equipment",
+        "ppi_yoy_pct": 3.33,
+        "ppi_cumulative_pct": 46.16,
+        "ppi_latest_value": 343.19,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "31G",
+        "bea_industry_growth_pct": 27.36,
+        "bea_industry_value_billions": 2880.7,
+        "signal": "cost_pressure_outpacing_growth"
+      }
+    ],
+    "pricing_power_signals": [
+      {
+        "ppi_series_id": "WPUFD4",
+        "ppi_label": "Final demand",
+        "ppi_yoy_pct": 3.48,
+        "ppi_cumulative_pct": 27.68,
+        "ppi_latest_value": 146.189,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "GDP",
+        "bea_industry_growth_pct": 41.83,
+        "bea_industry_value_billions": 29298.0,
+        "signal": "growth_with_pricing_power"
+      },
+      {
+        "ppi_series_id": "WPUFD4",
+        "ppi_label": "Final demand",
+        "ppi_yoy_pct": 3.48,
+        "ppi_cumulative_pct": 27.68,
+        "ppi_latest_value": 146.189,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "PVT",
+        "bea_industry_growth_pct": 43.67,
+        "bea_industry_value_billions": 26001.7,
+        "signal": "growth_with_pricing_power"
+      },
+      {
+        "ppi_series_id": "WPUFD49104",
+        "ppi_label": "Final demand goods",
+        "ppi_yoy_pct": 3.75,
+        "ppi_cumulative_pct": 27.49,
+        "ppi_latest_value": 144.96,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "31G",
+        "bea_industry_growth_pct": 27.36,
+        "bea_industry_value_billions": 2880.7,
+        "signal": "growth_with_pricing_power"
+      },
+      {
+        "ppi_series_id": "WPUFD49104",
+        "ppi_label": "Final demand goods",
+        "ppi_yoy_pct": 3.75,
+        "ppi_cumulative_pct": 27.49,
+        "ppi_latest_value": 144.96,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "PGOOD",
+        "bea_industry_growth_pct": 33.46,
+        "bea_industry_value_billions": 4860.1,
+        "signal": "growth_with_pricing_power"
+      },
+      {
+        "ppi_series_id": "WPU081",
+        "ppi_label": "Lumber and wood products",
+        "ppi_yoy_pct": 8.6,
+        "ppi_cumulative_pct": 17.97,
+        "ppi_latest_value": 265.797,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "23",
+        "bea_industry_growth_pct": 46.82,
+        "bea_industry_value_billions": 1305.4,
+        "signal": "growth_with_pricing_power"
+      },
+      {
+        "ppi_series_id": "WPU081",
+        "ppi_label": "Lumber and wood products",
+        "ppi_yoy_pct": 8.6,
+        "ppi_cumulative_pct": 17.97,
+        "ppi_latest_value": 265.797,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "321",
+        "bea_industry_growth_pct": 63.14,
+        "bea_industry_value_billions": 60.2,
+        "signal": "growth_with_pricing_power"
+      }
+    ],
+    "easing_pressure_signals": [
+      {
+        "ppi_series_id": "WPU057",
+        "ppi_label": "Fuels and related products and power",
+        "ppi_yoy_pct": -7.99,
+        "ppi_cumulative_pct": 19.58,
+        "ppi_latest_value": 235.567,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "21",
+        "bea_industry_growth_pct": 28.93,
+        "bea_industry_value_billions": 404.2,
+        "signal": "price_pressure_easing_with_growth"
+      },
+      {
+        "ppi_series_id": "WPU057",
+        "ppi_label": "Fuels and related products and power",
+        "ppi_yoy_pct": -7.99,
+        "ppi_cumulative_pct": 19.58,
+        "ppi_latest_value": 235.567,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "22",
+        "bea_industry_growth_pct": 41.82,
+        "bea_industry_value_billions": 454.4,
+        "signal": "price_pressure_easing_with_growth"
+      },
+      {
+        "ppi_series_id": "WPU057",
+        "ppi_label": "Fuels and related products and power",
+        "ppi_yoy_pct": -7.99,
+        "ppi_cumulative_pct": 19.58,
+        "ppi_latest_value": 235.567,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "48TW",
+        "bea_industry_growth_pct": 45.77,
+        "bea_industry_value_billions": 987.3,
+        "signal": "price_pressure_easing_with_growth"
+      },
+      {
+        "ppi_series_id": "WPU101",
+        "ppi_label": "Iron and steel",
+        "ppi_yoy_pct": -11.46,
+        "ppi_cumulative_pct": 32.44,
+        "ppi_latest_value": 288.188,
+        "ppi_latest_date": "2024-12",
+        "bea_industry_code": "23",
+        "bea_industry_growth_pct": 46.82,
+        "bea_industry_value_billions": 1305.4,
+        "signal": "price_pressure_easing_with_growth"
+      }
+    ]
+  },
+  "metadata": {
+    "data_sources": [
+      "BEA GDPbyIndustry",
+      "BEA NIPA",
+      "BLS PPI"
+    ],
+    "generated_at": "2026-05-05T09:25:03.243076Z",
+    "notes": [
+      "Pro report uses quantitative data only.",
+      "Expert interpretation is not included."
+    ]
+  }
+}

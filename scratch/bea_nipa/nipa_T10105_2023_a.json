@@ -1,0 +1,416 @@
+{
+  "BEAAPI": {
+    "Request": {
+      "RequestParam": [
+        {
+          "ParameterName": "USERID",
+          "ParameterValue": "B17B7B02-C2BD-4F43-A492-C72703C49847"
+        },
+        {
+          "ParameterName": "METHOD",
+          "ParameterValue": "GETDATA"
+        },
+        {
+          "ParameterName": "RESULTFORMAT",
+          "ParameterValue": "JSON"
+        },
+        {
+          "ParameterName": "DATASETNAME",
+          "ParameterValue": "NIPA"
+        },
+        {
+          "ParameterName": "TABLENAME",
+          "ParameterValue": "T10105"
+        },
+        {
+          "ParameterName": "FREQUENCY",
+          "ParameterValue": "A"
+        },
+        {
+          "ParameterName": "YEAR",
+          "ParameterValue": "2023"
+        }
+      ]
+    },
+    "Results": {
+      "Statistic": "NIPA Table",
+      "UTCProductionTime": "2026-05-05T08:16:11.170",
+      "Dimensions": [
+        {
+          "Ordinal": "1",
+          "Name": "TableName",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "2",
+          "Name": "SeriesCode",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "3",
+          "Name": "LineNumber",
+          "DataType": "numeric",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "4",
+          "Name": "LineDescription",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "5",
+          "Name": "TimePeriod",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "6",
+          "Name": "CL_UNIT",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "7",
+          "Name": "UNIT_MULT",
+          "DataType": "numeric",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "8",
+          "Name": "METRIC_NAME",
+          "DataType": "string",
+          "IsValue": "0"
+        },
+        {
+          "Ordinal": "9",
+          "Name": "DataValue",
+          "DataType": "numeric",
+          "IsValue": "1"
+        }
+      ],
+      "Data": [
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A191RC",
+          "LineNumber": "1",
+          "LineDescription": "Gross domestic product",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "27,811,517",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "DPCERC",
+          "LineNumber": "2",
+          "LineDescription": "Personal consumption expenditures",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "18,833,150",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "DGDSRC",
+          "LineNumber": "3",
+          "LineDescription": "Goods",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "6,115,666",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "DDURRC",
+          "LineNumber": "4",
+          "LineDescription": "Durable goods",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,141,043",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "DNDGRC",
+          "LineNumber": "5",
+          "LineDescription": "Nondurable goods",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "3,974,623",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "DSERRC",
+          "LineNumber": "6",
+          "LineDescription": "Services",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "12,717,484",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A006RC",
+          "LineNumber": "7",
+          "LineDescription": "Gross private domestic investment",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "5,023,712",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A007RC",
+          "LineNumber": "8",
+          "LineDescription": "Fixed investment",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "4,970,003",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A008RC",
+          "LineNumber": "9",
+          "LineDescription": "Nonresidential",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "3,855,957",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "B009RC",
+          "LineNumber": "10",
+          "LineDescription": "Structures",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "926,792",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "Y033RC",
+          "LineNumber": "11",
+          "LineDescription": "Equipment",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,404,659",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "Y001RC",
+          "LineNumber": "12",
+          "LineDescription": "Intellectual property products",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,524,507",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A011RC",
+          "LineNumber": "13",
+          "LineDescription": "Residential",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,114,045",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A014RC",
+          "LineNumber": "14",
+          "LineDescription": "Change in private inventories",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "53,709",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A019RC",
+          "LineNumber": "15",
+          "LineDescription": "Net exports of goods and services",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "-786,496",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "B020RC",
+          "LineNumber": "16",
+          "LineDescription": "Exports",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "3,073,360",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A253RC",
+          "LineNumber": "17",
+          "LineDescription": "Goods",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,024,358",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A646RC",
+          "LineNumber": "18",
+          "LineDescription": "Services",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,049,002",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "B021RC",
+          "LineNumber": "19",
+          "LineDescription": "Imports",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "3,859,856",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A255RC",
+          "LineNumber": "20",
+          "LineDescription": "Goods",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "3,092,569",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "B656RC",
+          "LineNumber": "21",
+          "LineDescription": "Services",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "767,287",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A822RC",
+          "LineNumber": "22",
+          "LineDescription": "Government consumption expenditures and gross investment",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "4,741,151",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A823RC",
+          "LineNumber": "23",
+          "LineDescription": "Federal",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,765,700",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A824RC",
+          "LineNumber": "24",
+          "LineDescription": "National defense",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "1,003,971",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A825RC",
+          "LineNumber": "25",
+          "LineDescription": "Nondefense",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "761,729",
+          "NoteRef": "T10105"
+        },
+        {
+          "TableName": "T10105",
+          "SeriesCode": "A829RC",
+          "LineNumber": "26",
+          "LineDescription": "State and local",
+          "TimePeriod": "2023",
+          "METRIC_NAME": "Current Dollars",
+          "CL_UNIT": "Level",
+          "UNIT_MULT": "6",
+          "DataValue": "2,975,451",
+          "NoteRef": "T10105"
+        }
+      ],
+      "Notes": [
+        {
+          "NoteRef": "T10105",
+          "NoteText": "Table 1.1.5. Gross Domestic Product [Billions of dollars] - LastRevised: April 30, 2026"
+        }
+      ]
+    }
+  }
+}

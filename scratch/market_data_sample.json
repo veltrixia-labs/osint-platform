@@ -1,0 +1,197 @@
+{
+  "alpha_vantage": {
+    "equity_SPY": {
+      "metadata": {
+        "1. Information": "Daily Prices (open, high, low, close) and Volumes",
+        "2. Symbol": "SPY",
+        "3. Last Refreshed": "2026-05-05",
+        "4. Output Size": "Compact",
+        "5. Time Zone": "US/Eastern"
+      },
+      "series_subset": {
+        "2026-05-05": {
+          "1. open": "721.7700",
+          "2. high": "725.0400",
+          "3. low": "721.4898",
+          "4. close": "723.7700",
+          "5. volume": "34844514"
+        },
+        "2026-05-04": {
+          "1. open": "720.0700",
+          "2. high": "722.1200",
+          "3. low": "714.9900",
+          "4. close": "718.0100",
+          "5. volume": "51950558"
+        },
+        "2026-05-01": {
+          "1. open": "721.2500",
+          "2. high": "724.8700",
+          "3. low": "720.4700",
+          "4. close": "720.6500",
+          "5. volume": "43049849"
+        }
+      }
+    },
+    "equity_QQQ": {
+      "metadata": {
+        "1. Information": "Daily Prices (open, high, low, close) and Volumes",
+        "2. Symbol": "QQQ",
+        "3. Last Refreshed": "2026-05-05",
+        "4. Output Size": "Compact",
+        "5. Time Zone": "US/Eastern"
+      },
+      "series_subset": {
+        "2026-05-05": {
+          "1. open": "677.9600",
+          "2. high": "682.7734",
+          "3. low": "677.5100",
+          "4. close": "681.6100",
+          "5. volume": "35634766"
+        },
+        "2026-05-04": {
+          "1. open": "674.6600",
+          "2. high": "676.7300",
+          "3. low": "668.9000",
+          "4. close": "672.8800",
+          "5. volume": "34541990"
+        },
+        "2026-05-01": {
+          "1. open": "669.1600",
+          "2. high": "675.9700",
+          "3. low": "668.8000",
+          "4. close": "674.1500",
+          "5. volume": "39172607"
+        }
+      }
+    },
+    "equity_XLE": {
+      "metadata": {
+        "1. Information": "Daily Prices (open, high, low, close) and Volumes",
+        "2. Symbol": "XLE",
+        "3. Last Refreshed": "2026-05-05",
+        "4. Output Size": "Compact",
+        "5. Time Zone": "US/Eastern"
+      },
+      "series_subset": {
+        "2026-05-05": {
+          "1. open": "59.2300",
+          "2. high": "59.7600",
+          "3. low": "58.8900",
+          "4. close": "59.4500",
+          "5. volume": "26750644"
+        },
+        "2026-05-04": {
+          "1. open": "58.7300",
+          "2. high": "59.6300",
+          "3. low": "58.2200",
+          "4. close": "59.3900",
+          "5. volume": "36882957"
+        },
+        "2026-05-01": {
+          "1. open": "59.0600",
+          "2. high": "59.6000",
+          "3. low": "58.2600",
+          "4. close": "58.8500",
+          "5. volume": "35828435"
+        }
+      }
+    },
+    "equity_SMH": {
+      "metadata": {
+        "1. Information": "Daily Prices (open, high, low, close) and Volumes",
+        "2. Symbol": "SMH",
+        "3. Last Refreshed": "2026-05-05",
+        "4. Output Size": "Compact",
+        "5. Time Zone": "US/Eastern"
+      },
+      "series_subset": {
+        "2026-05-05": {
+          "1. open": "515.3800",
+          "2. high": "526.2000",
+          "3. low": "514.1200",
+          "4. close": "522.6900",
+          "5. volume": "8433714"
+        },
+        "2026-05-04": {
+          "1. open": "512.4700",
+          "2. high": "513.1500",
+          "3. low": "501.1500",
+          "4. close": "506.7900",
+          "5. volume": "6867462"
+        },
+        "2026-05-01": {
+          "1. open": "504.2050",
+          "2. high": "511.9900",
+          "3. low": "502.2500",
+          "4. close": "509.8200",
+          "5. volume": "5308292"
+        }
+      }
+    },
+    "crypto_BTC": {
+      "metadata": {
+        "1. Information": "Daily Prices and Volumes for Digital Currency",
+        "2. Digital Currency Code": "BTC",
+        "3. Digital Currency Name": "Bitcoin",
+        "4. Market Code": "USD",
+        "5. Market Name": "United States Dollar",
+        "6. Last Refreshed": "2026-05-06 00:00:00",
+        "7. Time Zone": "UTC"
+      },
+      "series_subset": {
+        "2026-05-06": {
+          "1. open": "80907.72000000",
+          "2. high": "81259.28000000",
+          "3. low": "80877.99000000",
+          "4. close": "80969.73000000",
+          "5. volume": "289.90796503"
+        },
+        "2026-05-05": {
+          "1. open": "79852.37000000",
+          "2. high": "81799.60000000",
+          "3. low": "79789.50000000",
+          "4. close": "80907.72000000",
+          "5. volume": "9129.50056534"
+        },
+        "2026-05-04": {
+          "1. open": "78558.88000000",
+          "2. high": "80750.00000000",
+          "3. low": "78205.00000000",
+          "4. close": "79852.37000000",
+          "5. volume": "11539.41548269"
+        }
+      }
+    },
+    "fx_USDJPY": {
+      "Realtime Currency Exchange Rate": {
+        "1. From_Currency Code": "USD",
+        "2. From_Currency Name": "United States Dollar",
+        "3. To_Currency Code": "JPY",
+        "4. To_Currency Name": "Japanese Yen",
+        "5. Exchange Rate": "157.67976438",
+        "6. Last Refreshed": "2026-05-06 02:14:32",
+        "7. Time Zone": "UTC",
+        "8. Bid Price": "157.67423770",
+        "9. Ask Price": "157.68060797"
+      }
+    }
+  },
+  "frankfurter": {
+    "latest": {
+      "amount": 1.0,
+      "base": "USD",
+      "date": "2026-05-05",
+      "rates": {
+        "BRL": 4.9525,
+        "CAD": 1.3615,
+        "CNY": 6.8302,
+        "EUR": 0.85572,
+        "GBP": 0.73886,
+        "JPY": 157.81,
+        "KRW": 1472.95,
+        "NOK": 9.2465,
+        "SGD": 1.2772
+      }
+    }
+  }
+}

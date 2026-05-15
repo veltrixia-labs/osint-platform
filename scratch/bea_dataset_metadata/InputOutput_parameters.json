@@ -1,0 +1,46 @@
+{
+  "BEAAPI": {
+    "Request": {
+      "RequestParam": [
+        {
+          "ParameterName": "USERID",
+          "ParameterValue": "B17B7B02-C2BD-4F43-A492-C72703C49847"
+        },
+        {
+          "ParameterName": "METHOD",
+          "ParameterValue": "GETPARAMETERLIST"
+        },
+        {
+          "ParameterName": "RESULTFORMAT",
+          "ParameterValue": "JSON"
+        },
+        {
+          "ParameterName": "DATASETNAME",
+          "ParameterValue": "INPUTOUTPUT"
+        }
+      ]
+    },
+    "Results": {
+      "Parameter": [
+        {
+          "ParameterName": "TableID",
+          "ParameterDataType": "integer",
+          "ParameterDescription": "The unique Input-Output table identifier",
+          "ParameterIsRequiredFlag": "1",
+          "ParameterDefaultValue": " ",
+          "MultipleAcceptedFlag": "1",
+          "AllValue": ""
+        },
+        {
+          "ParameterName": "Year",
+          "ParameterDataType": "integer",
+          "ParameterDescription": "List of year(s) of data to retrieve (ALL for All)",
+          "ParameterIsRequiredFlag": "1",
+          "ParameterDefaultValue": "",
+          "MultipleAcceptedFlag": "1",
+          "AllValue": "ALL"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "BEAAPI": {
+    "Request": {
+      "RequestParam": [
+        {
+          "ParameterName": "USERID",
+          "ParameterValue": "B17B7B02-C2BD-4F43-A492-C72703C49847"
+        },
+        {
+          "ParameterName": "METHOD",
+          "ParameterValue": "GETPARAMETERLIST"
+        },
+        {
+          "ParameterName": "RESULTFORMAT",
+          "ParameterValue": "JSON"
+        },
+        {
+          "ParameterName": "DATASETNAME",
+          "ParameterValue": "ITA"
+        }
+      ]
+    },
+    "Results": {
+      "Parameter": [
+        {
+          "ParameterName": "Indicator",
+          "ParameterDataType": "string",
+          "ParameterDescription": "The indicator code for the type of transaction requested",
+          "ParameterIsRequiredFlag": "0",
+          "ParameterDefaultValue": "ALL",
+          "MultipleAcceptedFlag": "1",
+          "AllValue": "ALL"
+        },
+        {
+          "ParameterName": "AreaOrCountry",
+          "ParameterDataType": "string",
+          "ParameterDescription": "The area or country requested",
+          "ParameterIsRequiredFlag": "0",
+          "ParameterDefaultValue": "AllCountries",
+          "MultipleAcceptedFlag": "1",
+          "AllValue": "ALL"
+        },
+        {
+          "ParameterName": "Frequency",
+          "ParameterDataType": "string",
+          "ParameterDescription": "A - Annual, QSA - Quarterly seasonally adjusted, QNSA - Quarterly not seasonally adjusted",
+          "ParameterIsRequiredFlag": "0",
+          "ParameterDefaultValue": "ALL",
+          "MultipleAcceptedFlag": "1",
+          "AllValue": "ALL"
+        },
+        {
+          "ParameterName": "Year",
+          "ParameterDataType": "string",
+          "ParameterDescription": "Year requested",
+          "ParameterIsRequiredFlag": "0",
+          "ParameterDefaultValue": "ALL",
+          "MultipleAcceptedFlag": "1",
+          "AllValue": "ALL"
+        }
+      ]
+    }
+  }
+}

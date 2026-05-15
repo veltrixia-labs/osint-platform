@@ -1,0 +1,572 @@
+{
+  "domain": {
+    "domain_id": "energy_resource_risk",
+    "display_name": "Energy & Resource Risk",
+    "primary_user_question": "How do structural energy shifts and resource scarcity impact supply chain stability and inflation?",
+    "primary_asset_classes": [
+      "energy equities",
+      "commodities",
+      "inflation-linked assets",
+      "oil-sensitive FX"
+    ],
+    "decision_relevant_questions": [
+      "Is this signal more likely to affect supply expectations, price pressure, or policy enforcement?",
+      "Which commodity-sensitive sectors are exposed?",
+      "Does the signal reinforce or contradict current WTI / PPI energy trends?"
+    ]
+  },
+  "signal": null,
+  "structural_context": {
+    "macro_observations": [
+      {
+        "series_id": "DCOILWTICO",
+        "source": "fred",
+        "latest_value": 99.89,
+        "latest_date": "2026-04-27",
+        "period_label": null,
+        "previous_value": 101.26,
+        "change_pct": -1.3529527947857045,
+        "raw_json": "...(omitted)..."
+      }
+    ],
+    "trade_flows": [
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 337644667180.0,
+        "quantity": 553991815980.023,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 172426221223.0,
+        "quantity": 370391660223.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 117160520564.0,
+        "quantity": 235677354408.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 84557524567.0,
+        "quantity": null,
+        "unit": "-1"
+      },
+      {
+        "reporter_name": "Japan",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 80884609985.472,
+        "quantity": 125141694800.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 67586422986.0,
+        "quantity": null,
+        "unit": "-1"
+      },
+      {
+        "reporter_name": "Japan",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 52688846806.768,
+        "quantity": 76388825167.135,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 16041910757.0,
+        "quantity": 23999147428.207,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 3647771947.0,
+        "quantity": 5576574170.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 843802125.0,
+        "quantity": 1420845300.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "Germany",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 284515529.391,
+        "quantity": 452335000.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "Germany",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 262959896.748,
+        "quantity": null,
+        "unit": "-1"
+      },
+      {
+        "reporter_name": "Germany",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 163725705.722,
+        "quantity": 235218311.708,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United Kingdom",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 100346984.774,
+        "quantity": 153882000.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "Japan",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 68774316.075,
+        "quantity": null,
+        "unit": "-1"
+      },
+      {
+        "reporter_name": "Germany",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 1238852.81,
+        "quantity": 2640400.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United Kingdom",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 120375.781,
+        "quantity": 11062.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United Kingdom",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 41019.769,
+        "quantity": 2133.948,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United Kingdom",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 5995.981,
+        "quantity": null,
+        "unit": "-1"
+      },
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2022,
+        "period": "20220101",
+        "trade_value": 365512019551.0,
+        "quantity": 508276035032.0,
+        "unit": "8"
+      }
+    ],
+    "industry_stats": [
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Gross domestic product",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 27811.5,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Private industries",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 24712.8,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Private services-producing industries<sup>2</sup>",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 19989.5,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Finance, insurance, real estate, rental, and leasing",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 5883.4,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Private goods-producing industries<sup>1</sup>",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 4723.3,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Real estate and rental and leasing",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 3807.7,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Professional and business services",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 3609.8,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Real estate",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 3452.2,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Government",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 3098.7,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Manufacturing",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2816.5,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Housing",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2657.3,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Educational services, health care, and social assistance",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2360.1,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Professional, scientific, and technical services",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2220.6,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "State and local",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2098.9,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Finance and insurance",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2075.7,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Health care and social assistance",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2043.7,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Information-communications-technology-producing industries<sup>3</sup>",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 1956.7,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "General government",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 1952.8,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Retail trade",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 1779.6,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Wholesale trade",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 1652.8,
+        "unit": null
+      }
+    ]
+  },
+  "market_confirmation": {
+    "latest_prices": [
+      {
+        "provider": "alpha_vantage",
+        "symbol": "XLE",
+        "asset_class": "unknown",
+        "latest_date": "2026-05-05",
+        "latest_close": 59.45,
+        "previous_date": "2026-04-02",
+        "previous_close": 59.25,
+        "percent_change": 0.3375527426160385,
+        "interval": "daily"
+      },
+      {
+        "provider": "frankfurter",
+        "symbol": "USDCAD",
+        "asset_class": "unknown",
+        "latest_date": "2026-05-05",
+        "latest_close": 1.3615,
+        "previous_date": null,
+        "previous_close": null,
+        "percent_change": null,
+        "interval": "daily_reference"
+      },
+      {
+        "provider": "frankfurter",
+        "symbol": "USDNOK",
+        "asset_class": "unknown",
+        "latest_date": "2026-05-05",
+        "latest_close": 9.2465,
+        "previous_date": null,
+        "previous_close": null,
+        "percent_change": null,
+        "interval": "daily_reference"
+      },
+      {
+        "provider": "frankfurter",
+        "symbol": "USDBRL",
+        "asset_class": "unknown",
+        "latest_date": "2026-05-05",
+        "latest_close": 4.9525,
+        "previous_date": null,
+        "previous_close": null,
+        "percent_change": null,
+        "interval": "daily_reference"
+      }
+    ]
+  },
+  "watch_indicators": [
+    {
+      "indicator": "WTI Crude Oil Price",
+      "source": "FRED",
+      "lookup_type": "external_observation",
+      "series_id": "DCOILWTICO",
+      "why_it_matters": "Primary global benchmark for oil price sensitivity.",
+      "upward_interpretation": "Rising costs for energy consumers, windfall for producers.",
+      "downward_interpretation": "Easing headline inflation pressure, risk to exporter fiscal balances.",
+      "limitation": "Spot price doesn't reflect long-term contract structures.",
+      "latest_value": 99.89
+    }
+  ],
+  "transmission_channels": [
+    "Direct input costs",
+    "Logistics premiums",
+    "Currency volatility in petro-states"
+  ],
+  "exposure_targets": [
+    "Refiners",
+    "Airlines",
+    "Heavy manufacturing",
+    "Energy-dependent EMs"
+  ],
+  "balanced_interpretations": {
+    "stability_view": "Prices may remain range-bound if inventories compensate for geopolitical friction.",
+    "volatility_view": "Low spare capacity makes prices highly sensitive to even minor supply disruptions.",
+    "market_confirmation_view": "Check if energy equities (XLE) are leading or lagging the physical price move.",
+    "invalidating_conditions": [
+      "Discovery of major new reserves",
+      "Sudden demand destruction"
+    ]
+  },
+  "data_freshness": {
+    "last_update": "2026-05-05"
+  },
+  "data_notes": [
+    "Macro series GASREGW not found in DB.",
+    "Macro series WPU051 not found in DB.",
+    "Macro series WPU0511 not found in DB.",
+    "Macro series WPU0543 not found in DB.",
+    "Macro series NY.GDP.MKTP.CD not found in DB.",
+    "Market data for XOP not yet synced.",
+    "Market data for USO not yet synced.",
+    "Market data for IYT not yet synced.",
+    "Market data for JETS not yet synced."
+  ]
+}

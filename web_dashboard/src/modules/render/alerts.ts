@@ -1,5 +1,6 @@
 import { type Alert } from '../api';
-import { getTopicDef } from '../topics';
+import { getTopicColor, getTopicDisplayLabel } from '../topics';
+import { resolveAlertHeadline } from '../alert_display';
 
 /**
  * [v34] Simplified Evidence Modal for Live Alerts (Non-global)
@@ -69,15 +70,22 @@ export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
 
     const severityClass = latest.severity.toLowerCase();
     const timeStr = new Date(latest.triggered_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const topicColor = getTopicColor(latest.topic);
+    const topicLabel = getTopicDisplayLabel(latest.topic);
+    const pulseHeadline = resolveAlertHeadline(latest);
 
     // Apply temporary fade class if container already had content (simulating update)
     const isUpdate = container.innerHTML.length > 0;
 
+    const headlineHtml = pulseHeadline.pending
+        ? '<span class="alert-headline-skeleton alert-headline-skeleton--inline" aria-hidden="true"></span>'
+        : `<span style="flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.75rem; font-weight: 600; color: #fff;">${pulseHeadline.text}</span>`;
+
     container.innerHTML = `
         <div class="pulse-content ${isUpdate ? 'pulse-fade-update' : ''}" style="display: flex; align-items: center; gap: 10px; width: 100%; overflow: hidden;">
             <span class="severity-dot ${severityClass}"></span>
-            <span style="font-weight:900; color:var(--accent); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px;">${latest.topic?.toUpperCase() || 'CORE'}</span>
-            <span style="flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.75rem; font-weight: 600; color: #fff;">${latest.target_label}</span>
+            <span style="font-weight:900; color:${topicColor}; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px;">${topicLabel}</span>
+            ${headlineHtml}
             <span style="opacity:0.5; font-size: 0.65rem; font-family: monospace;">[${timeStr}]</span>
         </div>
     `;
@@ -110,7 +118,9 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
     }
 
     container.innerHTML = sortedAlerts.map(alert => {
-        const topicDef = getTopicDef(alert.topic);
+        const topicColor = getTopicColor(alert.topic);
+        const topicLabel = getTopicDisplayLabel(alert.topic);
+        const headline = resolveAlertHeadline(alert);
         const severityClass = alert.severity.toLowerCase();
         const date = new Date(alert.triggered_at);
 
@@ -141,12 +151,15 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                     <span class="status-badge ${statusCfg.class}">${statusCfg.label}</span>
                     <span class="timestamp">${displayDate}</span>
                 </div>
-                <div class="meta-item-topic">📂 ${topicDef.label}</div>
+                <span class="meta-item-topic meta-item-topic--tag">${topicLabel}</span>
             </div>
 
             <div class="alert-content-terminal">
                 <div class="alert-main-row">
-                    <h3 class="alert-headline-compact">${alert.target_label}</h3>
+                    ${headline.pending
+                        ? '<div class="alert-headline-skeleton" aria-busy="true" aria-label="Loading headline"></div>'
+                        : `<h3 class="alert-headline-compact">${headline.text}</h3>`
+                    }
                 </div>
                 
                 <div class="source-terminal-row">
@@ -171,7 +184,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         `;
 
         return `
-            <div class="alert-card-compact ${severityClass} ${alert.is_locked ? 'locked' : ''}" data-id="${alert.id}">
+            <div class="alert-card-compact severity-${severityClass} ${alert.is_locked ? 'locked' : ''}" data-id="${alert.id}" style="--topic-color: ${topicColor};">
                 ${cardContent}
             </div>
         `;
@@ -208,8 +221,9 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
 
             if (!targetAlert) return;
 
+            const modalTitle = resolveAlertHeadline(targetAlert).text || targetAlert.target_label;
             showEvidenceModal(
-                targetAlert.target_label,
+                modalTitle,
                 targetAlert.evidence_list || []
             );
         });

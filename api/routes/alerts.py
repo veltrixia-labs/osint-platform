@@ -81,6 +81,10 @@ async def get_alerts(
         {
             "id": str(a.id),
             "target_label": a.target_label,
+            "title": (
+                (a.metadata_json or {}).get("display_title")
+                or a.target_label
+            ),
             "topic": a.topic,
             "trigger_type": a.trigger_type,
             "severity": a.severity,
@@ -168,6 +172,10 @@ async def get_live_alerts(
         {
             "id": str(a.id),
             "target_label": a.target_label,
+            "title": (
+                (a.metadata_json or {}).get("display_title")
+                or a.target_label
+            ),
             "topic": a.topic,
             "severity": a.severity,
             "triggered_at": a.triggered_at.isoformat(),
@@ -182,7 +190,8 @@ async def get_live_alerts(
             "is_partial": False,
             "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
             "intensity_display": f"{a.intensity:.1f}",
-            "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle"
+            "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle",
+            "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else [],
         }
         for a in alerts
     ]
@@ -229,7 +238,11 @@ async def get_alert(
 
     data = {
         "id": str(a.id),
-        "target_label": a.target_label, # Title is always shown in Fast News view
+        "target_label": a.target_label,
+        "title": (
+            (a.metadata_json or {}).get("display_title")
+            or a.target_label
+        ),
         "topic": a.topic,
         "trigger_type": a.trigger_type,
         "severity": a.severity,

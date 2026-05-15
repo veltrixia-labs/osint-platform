@@ -1,0 +1,399 @@
+﻿====================================================================================================
+PRO AUTOMATION DEEP DIAGNOSTICS - 2026-05-09T02:35:03.124284+00:00
+====================================================================================================
+ENV STATUS:
+  ENABLE_PRO_AUTOMATION: true
+  PRO_AUTOMATION_DRY_RUN: true
+  ENABLED_DOMAINS: ['energy_resource_risk', 'ai_semiconductor_intelligence']
+
+[PIPELINE AUDIT] Data Ingestion Volume:
+  Last  7 Days: RawItems= 3359 | Items=  771 | Alerts=  164
+  Last 14 Days: RawItems= 3359 | Items=  771 | Alerts=  164
+  Last 30 Days: RawItems= 4323 | Items= 1214 | Alerts=  164
+
+[ALERT STATS] By Enabled Domain (Last 30 Days):
+  energy_resource_risk               : 7d= 47 | 14d= 47 | 30d= 47
+  ai_semiconductor_intelligence      : 7d= 10 | 14d= 10 | 30d= 10
+
+[ALERT AUDIT] Individual Evaluation (Last 30 Days, Enabled Domains):
+ID                                     | Topic                     | Sev      | Fid  | Evid | Data | Score | Status
+-------------------------------------------------------------------------------------------------------------------
+55242c4e-87eb-43cf-9b94-af03f3dcd39c   | energy_resource_risk      | watch    | N    | N    | Y    | 0.35  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.35
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+68c9f4a7-a6a3-4d0f-93ae-7cc463e8534d   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+dfac4745-a22b-4a59-a813-1169f0b7fb09   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.22  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.22
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+4603ed97-2f3e-47fc-9d86-bca3cf8dd693   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.26  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+2673672e-53e9-48f5-b765-74d35ff00bad   | ai_semiconductor_intelligence | watch    | N    | Y    | Y    | 0.27  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+79e98230-831e-4fa7-b381-21b14c51a63a   | energy_resource_risk      | watch    | N    | N    | Y    | 0.27  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+581575a8-75aa-4efe-941a-ce2fecb88bfc   | energy_resource_risk      | watch    | N    | N    | Y    | 0.29  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+e3767008-4557-4844-86a3-51c74ca6a807   | energy_resource_risk      | watch    | N    | N    | Y    | 0.29  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+ef7839f7-2bd9-4838-b422-05187d6051be   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.34  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.34
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+3ae25134-fe48-4db8-b93e-1278dad6bc95   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+5d48d9fa-b57d-4288-995d-46ab7c16b7ad   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+bf07e5a9-9c68-42b9-8ed3-692b03d45877   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.33  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.33
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+da6a4fc6-8043-4ded-9558-e5977e255512   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.27  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+9a79c1f8-979b-4e8d-ace8-569c2cb3478b   | energy_resource_risk      | elevated | Y    | Y    | Y    | 0.46  | READY
+-------------------------------------------------------------------------------------------------------------------
+1a834d8a-5a97-401c-ac00-10b093eed721   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.33  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.33
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+0e5c10a8-8f60-452f-807f-9fbab074cdd0   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+54cb3454-fa7b-4320-a688-caa473c4c7c4   | energy_resource_risk      | watch    | N    | N    | Y    | 0.38  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.38
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+b2244312-0b98-4473-bee1-68bd840f1139   | energy_resource_risk      | watch    | N    | N    | Y    | 0.25  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.25
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+b6550944-b3f1-421d-a430-72c584bf1c39   | energy_resource_risk      | watch    | N    | N    | Y    | 0.24  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.24
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+cb875348-29bc-4793-97de-6371fd133e91   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.23  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.23
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+60d35146-faae-4928-98ab-c75db79c0a9d   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.29  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+3cf35190-ee54-46ca-9080-c09b87a27872   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.31  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.31
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+94dc2899-0811-4c5b-9965-57ce2ecbd163   | energy_resource_risk      | watch    | Y    | Y    | Y    | 0.34  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=Y, Evid=Y, Data=Y, Score=0.34
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+8b0b15c7-dfb9-497e-a683-28836ed2e38c   | energy_resource_risk      | watch    | N    | N    | Y    | 0.25  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.25
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+8faf0ec1-fb45-49b9-b0ef-258dcacc052c   | energy_resource_risk      | watch    | N    | N    | Y    | 0.25  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.25
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+82009793-e944-4214-b872-999b180533cd   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+5a84c01f-18b6-48c4-a608-17f38ab8d298   | ai_semiconductor_intelligence | watch    | N    | Y    | Y    | 0.32  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.32
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+faec04cd-0017-4f60-8100-d0f5f125b088   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+3dbc6439-380d-437a-a7b1-c7c6b474bac2   | energy_resource_risk      | watch    | N    | N    | Y    | 0.25  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.25
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+53e13502-8ab1-4e45-bd46-2576f157ea0a   | energy_resource_risk      | watch    | N    | N    | Y    | 0.35  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.35
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+a1ac0b46-b0c7-417a-b4ee-04a4948cdf86   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+6499d033-70f9-464d-bddb-5ccdbdd48054   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.22  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.22
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+9082ea4b-6118-400e-93e7-a51e9069be10   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.26  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+75d289e9-3c81-4148-b07d-c5854d834ee6   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.27  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+1b4e6876-9c23-412f-969f-7f5a7fbdb687   | energy_resource_risk      | watch    | N    | N    | Y    | 0.27  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+f622e43f-74c6-47cf-b9b0-c448523d206c   | energy_resource_risk      | watch    | N    | N    | Y    | 0.29  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+89d8b642-258d-47e9-bfc9-8dc71077aa78   | energy_resource_risk      | watch    | N    | N    | Y    | 0.29  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+77add619-f08a-4ac7-bfee-d705b0e73cd3   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+1c852847-c15a-4a07-b455-64aae2a6c2cb   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+f357b75d-69a7-4371-8af4-96c1eda0fe3c   | energy_resource_risk      | watch    | N    | N    | Y    | 0.30  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.30
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+4e18ed35-bcd5-40cd-b66d-e2666e458805   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.35  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.35
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+8ec0dd32-e0c9-46da-a38c-10cb8324dbc4   | energy_resource_risk      | watch    | N    | N    | Y    | 0.25  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.25
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+f63340eb-cf0b-49a8-86f2-ab15c9c5d90b   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.35  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.35
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+6c4d7fad-68e6-4f14-bb52-f92b2d96e626   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.29  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+50de5afa-dbf6-4bb8-9b80-979cdf3dc873   | energy_resource_risk      | watch    | N    | N    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+d0d9c673-084f-49b1-918c-c47d37e444ca   | energy_resource_risk      | watch    | N    | N    | Y    | 0.23  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.23
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+e9b6d00f-994b-4640-a5af-2c49dc051092   | energy_resource_risk      | watch    | N    | N    | Y    | 0.24  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.24
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+cd2e1e94-1dee-40ae-8d0a-b01690f37846   | ai_semiconductor_intelligence | watch    | N    | N    | Y    | 0.23  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=N, Data=Y, Score=0.23
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+0392d73d-8531-4a51-bd85-12e38ab0439a   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.26  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.26
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+dc84a290-3398-4d29-8259-ea8d77614017   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.23  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.23
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+3f3df4ef-3ef2-4811-8884-f3b2cbe34838   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.24  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.24
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+eeb5fc1c-9e82-4a0b-9c79-0d0025ff93ef   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.24  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.24
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+6f6658b0-1c08-441a-85fc-b758424bb342   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+08705949-614b-411d-bcaa-c531040dec47   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.27  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.27
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+d4cded5e-6ec1-4ef7-81e6-7a5bb795eb8a   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.29  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.29
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+f7f849f1-9747-4595-a846-a5b4aadeb8d8   | energy_resource_risk      | watch    | N    | Y    | Y    | 0.28  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.28
+    -> Duplicates: Structural=False, General=True
+-------------------------------------------------------------------------------------------------------------------
+8455eda1-dc9a-490a-8db7-ae442b7bfa3a   | ai_semiconductor_intelligence | watch    | N    | Y    | Y    | 0.33  | SKIPPED
+    -> Reasons: ['Insufficient score/severity and did not meet relaxed quality gates.']
+    -> Gates: Fid=N, Evid=Y, Data=Y, Score=0.33
+    -> Duplicates: Structural=False, General=False
+-------------------------------------------------------------------------------------------------------------------
+
+[SUMMARY] Candidates & Skips:
+  - Total Candidates Slated: 1
+  - Watch Alerts Promoted  : 0
+
+[SUMMARY] Skip Reason Ranking (Last 30 Days):
+  - Insufficient score/severity and did not meet relaxed quality gates.: 56
+
+[DUPLICATE CHECK] Recent Pro Reports in DB (Last 72h):
+    - [GENERAL]    ID: 9d31803b-67b4-4cf0-96d8-67dab9844f8b | Topic: energy_resource_risk      | Created: 2026-05-09 02:32:17.320905
+    - [GENERAL]    ID: e92b9248-270e-49ae-96b4-c26fc6c5057b | Topic: energy_resource_risk      | Created: 2026-05-09 02:11:20.646219
+    - [GENERAL]    ID: cf3b71f4-af17-4c2d-a621-d26f80af027a | Topic: energy_resource_risk      | Created: 2026-05-09 02:11:20.231699
+    - [GENERAL]    ID: 44c3a7b4-1176-4ecc-93e8-c78e33cda155 | Topic: energy_resource_risk      | Created: 2026-05-09 02:11:19.824000
+    - [GENERAL]    ID: 216881b6-70a7-4029-b579-cd9d52afa61b | Topic: energy_resource_risk      | Created: 2026-05-09 02:11:19.545681
+    - [GENERAL]    ID: bc00ce67-492f-432e-9339-d2f6b503e53c | Topic: energy_resource_risk      | Created: 2026-05-09 02:11:18.960831
+    - [GENERAL]    ID: d442cf05-d576-472b-ad7c-15bb442a21b6 | Topic: energy_resource_risk      | Created: 2026-05-09 01:37:46.546828
+    - [GENERAL]    ID: fcc16f62-7d70-4d33-9b0b-1235d3ebe4fb | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:51.315101
+    - [GENERAL]    ID: d4922a01-a62c-46dd-9810-8f30719ce375 | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:50.953018
+    - [GENERAL]    ID: 85574020-a2f0-4d31-adac-db2035698b79 | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:50.557114
+    - [GENERAL]    ID: 37dc3abf-7084-474c-aea3-6e7730308a75 | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:50.319853
+    - [GENERAL]    ID: 922a3633-5055-4054-8a81-e5dcf8ca3ca2 | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:49.929718
+    - [GENERAL]    ID: ab7eceb2-e14f-4797-bca9-fc4a7658b68e | Topic: energy_resource_risk      | Created: 2026-05-09 00:33:49.661330
+    - [GENERAL]    ID: fe73de81-c8d1-40a0-a586-9a508ae246ea | Topic: energy_resource_risk      | Created: 2026-05-09 00:22:01.199722
+    - [GENERAL]    ID: 4f538008-d082-4530-9c1f-1bb30c7957cc | Topic: energy_resource_risk      | Created: 2026-05-08 23:29:19.903296
+    - [GENERAL]    ID: 1e0f15f1-fbc5-4ab7-b024-d7975b7bdbda | Topic: energy_resource_risk      | Created: 2026-05-08 22:58:18.385409
+    - [GENERAL]    ID: 0a9d4922-03d6-4b21-92b3-3964cbbee0d6 | Topic: energy_resource_risk      | Created: 2026-05-08 22:58:18.023118
+    - [GENERAL]    ID: dfb958b9-b89b-48aa-b425-6af2eafefc6c | Topic: energy_resource_risk      | Created: 2026-05-08 22:58:17.763281
+    - [GENERAL]    ID: 9d934e86-e2ec-40f2-bfe6-f92a74a0743b | Topic: energy_resource_risk      | Created: 2026-05-08 22:58:17.416224
+    - [GENERAL]    ID: 1802c006-527d-42e9-aadb-1712ea859eb3 | Topic: energy_resource_risk      | Created: 2026-05-08 22:58:17.152095
+    - [GENERAL]    ID: 76ee7d92-133f-4b06-bb95-cd29c1fa7ec7 | Topic: energy_resource_risk      | Created: 2026-05-08 22:27:30.533719
+    - [GENERAL]    ID: bc0532ca-6191-4155-bae1-17d3fe30f218 | Topic: energy_resource_risk      | Created: 2026-05-08 22:17:18.092470
+    - [GENERAL]    ID: bb64b67b-2089-4a43-8fe0-76bc2ec59990 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:17.920709
+    - [GENERAL]    ID: 9a112b94-50e1-4ede-81a6-e7f55beb0039 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:17.696354
+    - [GENERAL]    ID: 5462ad12-dc29-4eb7-a0da-60ab91d4ff25 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:17.348922
+    - [GENERAL]    ID: 940ae907-397f-4959-8971-471518d8aad3 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:17.129200
+    - [GENERAL]    ID: ca76d40f-06da-475b-9877-9609c27e3bc8 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:16.928988
+    - [GENERAL]    ID: ec7231b4-da39-4864-bd4d-5393e26888c9 | Topic: energy_resource_risk      | Created: 2026-05-08 21:26:16.566940
+    - [GENERAL]    ID: 1bd540a8-4e9d-4049-b58c-fd3936f85659 | Topic: energy_resource_risk      | Created: 2026-05-08 20:24:58.706540
+    - [GENERAL]    ID: 2e93fb4d-9833-41b3-b82a-6607ebbd3516 | Topic: energy_resource_risk      | Created: 2026-05-08 20:14:46.095981
+    - [GENERAL]    ID: ba21cfb2-5dbb-4c8e-910c-85fbb63cb7d0 | Topic: energy_resource_risk      | Created: 2026-05-08 19:54:28.780220
+    - [GENERAL]    ID: 9a9bc787-a8e3-4706-bf63-0c045e2938a7 | Topic: energy_resource_risk      | Created: 2026-05-08 19:54:28.605821
+    - [GENERAL]    ID: d11c40a0-9e80-45b9-8426-f475b531cc24 | Topic: energy_resource_risk      | Created: 2026-05-08 19:54:28.406757
+    - [GENERAL]    ID: 52a053f1-7a1e-4ea2-8020-69ad4ea9367e | Topic: energy_resource_risk      | Created: 2026-05-08 19:54:28.004890
+    - [GENERAL]    ID: 22a2fce8-8e42-410e-80f4-5f06b10d28b2 | Topic: energy_resource_risk      | Created: 2026-05-08 19:54:27.793554
+    - [GENERAL]    ID: 5de2f718-e5d4-45e5-94f6-5c4e4dec6b60 | Topic: energy_resource_risk      | Created: 2026-05-08 19:24:03.222322
+    - [GENERAL]    ID: de5b0faf-4bbe-48db-bf51-2f192f174564 | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:06.624972
+    - [GENERAL]    ID: 3a95f113-47f5-4aee-a6cf-d8a9adebdc2b | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:06.427234
+    - [GENERAL]    ID: 3faf6528-610f-4c42-bee1-4ec803c0c9e0 | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:06.139529
+    - [GENERAL]    ID: 3d821373-9e49-4fcd-a72c-98e35fc0085b | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:05.962133
+    - [GENERAL]    ID: 5a03dd93-264a-45a0-b36b-6f67c0ca494b | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:05.748549
+    - [GENERAL]    ID: 323c1f89-bdf3-4b4d-9f2c-608cba613f22 | Topic: energy_resource_risk      | Created: 2026-05-08 18:23:05.601054
+    - [GENERAL]    ID: c4e1e178-6098-4f6b-b51e-8c504e992d22 | Topic: energy_resource_risk      | Created: 2026-05-08 18:12:50.217239
+    - [GENERAL]    ID: 8f69c3f9-e82d-4857-98d3-484c3dbb0974 | Topic: energy_resource_risk      | Created: 2026-05-08 17:21:52.345291
+    - [GENERAL]    ID: 712d3244-29bc-4755-ae9c-d73d4c76d332 | Topic: energy_resource_risk      | Created: 2026-05-08 16:49:17.817072
+    - [GENERAL]    ID: f10b055a-c48d-46f9-a926-46cd3d4bfcf9 | Topic: energy_resource_risk      | Created: 2026-05-08 16:49:17.669704
+    - [GENERAL]    ID: 501d2128-7bf6-4fa0-9e1e-e5d5e45a6026 | Topic: energy_resource_risk      | Created: 2026-05-08 16:49:17.503606
+    - [GENERAL]    ID: 51ed1300-8237-4031-8ebd-7b0572639c00 | Topic: energy_resource_risk      | Created: 2026-05-08 16:49:17.223477
+    - [GENERAL]    ID: 6aa461eb-aafd-4ebe-afc0-223da17bbf63 | Topic: energy_resource_risk      | Created: 2026-05-08 16:49:17.057627
+    - [GENERAL]    ID: efcf7124-0ce1-481b-8115-1b69eeade436 | Topic: energy_resource_risk      | Created: 2026-05-08 16:16:44.374021
+    - [GENERAL]    ID: fe20c9fa-cfff-46a9-af9c-7ab9cc059597 | Topic: energy_resource_risk      | Created: 2026-05-08 16:11:07.889840
+    - [GENERAL]    ID: 7fa0db92-e194-420e-8d52-ddf3ca3c59eb | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.584088
+    - [GENERAL]    ID: 54f89930-6917-48a6-a512-d8ba53a3bad9 | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.489074
+    - [GENERAL]    ID: 272c53fc-026a-4f3b-889c-97ab1b043b35 | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.383997
+    - [GENERAL]    ID: d47fb2a2-b733-4f6f-ac4f-389d01137786 | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.305239
+    - [GENERAL]    ID: de8f69c9-fb72-49a5-8f05-aa78667eb7c1 | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.219852
+    - [GENERAL]    ID: 50c4b3f8-5ff1-491f-8b07-ee3c183de2ab | Topic: energy_resource_risk      | Created: 2026-05-08 15:16:20.132463
+    - [GENERAL]    ID: c90f5d5e-35d1-40e1-9a36-4d33c9b4dfe8 | Topic: energy_resource_risk      | Created: 2026-05-08 14:10:54.518729
+    - [GENERAL]    ID: c9e57c95-35cf-4e41-b8c8-edc914b66cde | Topic: energy_resource_risk      | Created: 2026-05-08 14:10:54.460778
+    - [GENERAL]    ID: 3d0f3cca-5b8b-44a4-a968-927e8d55a7c6 | Topic: energy_resource_risk      | Created: 2026-05-08 13:43:20.843044
+    - [GENERAL]    ID: 31d1b212-5691-4ba1-9ab9-83aaff278d33 | Topic: energy_resource_risk      | Created: 2026-05-08 13:43:20.789872
+    - [GENERAL]    ID: e921e187-9817-43b2-bc06-ac42f266cd3e | Topic: energy_resource_risk      | Created: 2026-05-08 13:43:20.739414
+    - [GENERAL]    ID: e6d8a395-1066-4c3e-bedb-e2a3703a3000 | Topic: energy_resource_risk      | Created: 2026-05-08 13:43:20.685850
+    - [GENERAL]    ID: 310acccd-9d7c-42f5-a0a2-a6b7f91289af | Topic: energy_resource_risk      | Created: 2026-05-08 13:43:20.625630
+    - [GENERAL]    ID: f4c2ec2d-3034-42e7-852c-b764aa05ac30 | Topic: energy_resource_risk      | Created: 2026-05-08 13:10:12.483297
+    - [GENERAL]    ID: 24b9a2db-4a87-4db9-abf2-2596b679c576 | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.830454
+    - [GENERAL]    ID: 28b64a55-c6d9-4d19-80eb-1f2eb916a2b2 | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.805464
+    - [GENERAL]    ID: c316f346-49d8-4803-beaa-780eacd1b1fd | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.778624
+    - [GENERAL]    ID: 858d9f3c-1729-4fd5-9929-d2829c91429c | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.751135
+    - [GENERAL]    ID: 93e103fc-0355-45bc-950b-1eba7bbc5a93 | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.722741
+    - [GENERAL]    ID: 793a698f-7d65-4dde-9bdd-3057493291f3 | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.694278
+    - [GENERAL]    ID: f874627f-1e69-4776-9068-0f146b817935 | Topic: energy_resource_risk      | Created: 2026-05-08 12:07:55.663163
+    - [STRUCTURAL] ID: e610cc29-095d-4f04-8960-fda0b328a32c | Topic: energy_resource_risk      | Created: 2026-05-06 06:34:18.388657
+    - [STRUCTURAL] ID: 4fa50d59-48bc-44e2-aecd-f235c4326256 | Topic: energy_resource_risk      | Created: 2026-05-06 06:32:28.615886
+    - [STRUCTURAL] ID: 62882065-164c-427c-bd23-786fe74ab118 | Topic: energy_resource_risk      | Created: 2026-05-06 06:21:11.481999
+    - [STRUCTURAL] ID: e628889b-19e1-4566-8a01-a439482dcb28 | Topic: global_market_intelligence | Created: 2026-05-06 04:51:27.571852
+    - [STRUCTURAL] ID: 94f5a432-6826-42d2-b657-d3e2804bfc8e | Topic: energy_resource_risk      | Created: 2026-05-06 04:51:27.547670
+
+[SIMULATION] Final Manager Verdict (Limit 5):
+  Candidates Found: 5
+  Planned to Generate: 1
+  Skipped Count: 4
+  Slated Candidates:
+    - Planned: Structural Impact Brief - energy_resource_risk (Alert: 9a79c1f8-979b-4e8d-ace8-569c2cb3478b)
+
+====================================================================================================
+Deep diagnostics complete.
+====================================================================================================

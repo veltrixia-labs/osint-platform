@@ -1,0 +1,30 @@
+{
+  "BEAAPI": {
+    "Request": {
+      "RequestParam": [
+        {
+          "ParameterName": "USERID",
+          "ParameterValue": "B17B7B02-C2BD-4F43-A492-C72703C49847"
+        },
+        {
+          "ParameterName": "METHOD",
+          "ParameterValue": "GETPARAMETERLIST"
+        },
+        {
+          "ParameterName": "RESULTFORMAT",
+          "ParameterValue": "JSON"
+        },
+        {
+          "ParameterName": "DATASETNAME",
+          "ParameterValue": "INTERNATIONAL"
+        }
+      ]
+    },
+    "Results": {
+      "Error": {
+        "APIErrorCode": "20",
+        "APIErrorDescription": "The Dataset requested does not exist."
+      }
+    }
+  }
+}

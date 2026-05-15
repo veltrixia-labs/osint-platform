@@ -1,0 +1,76 @@
+{
+  "BEAAPI": {
+    "Request": {
+      "RequestParam": [
+        {
+          "ParameterName": "USERID",
+          "ParameterValue": "B17B7B02-C2BD-4F43-A492-C72703C49847"
+        },
+        {
+          "ParameterName": "METHOD",
+          "ParameterValue": "GETDATASETLIST"
+        },
+        {
+          "ParameterName": "RESULTFORMAT",
+          "ParameterValue": "JSON"
+        }
+      ]
+    },
+    "Results": {
+      "Dataset": [
+        {
+          "DatasetName": "NIPA",
+          "DatasetDescription": "Standard NIPA tables"
+        },
+        {
+          "DatasetName": "NIUnderlyingDetail",
+          "DatasetDescription": "Standard NI underlying detail tables"
+        },
+        {
+          "DatasetName": "MNE",
+          "DatasetDescription": "Multinational Enterprises"
+        },
+        {
+          "DatasetName": "FixedAssets",
+          "DatasetDescription": "Standard Fixed Assets tables"
+        },
+        {
+          "DatasetName": "ITA",
+          "DatasetDescription": "International Transactions Accounts"
+        },
+        {
+          "DatasetName": "IIP",
+          "DatasetDescription": "International Investment Position"
+        },
+        {
+          "DatasetName": "InputOutput",
+          "DatasetDescription": "Input-Output Data"
+        },
+        {
+          "DatasetName": "IntlServTrade",
+          "DatasetDescription": "International Services Trade"
+        },
+        {
+          "DatasetName": "IntlServSTA",
+          "DatasetDescription": "International Services Supplied Through Affiliates"
+        },
+        {
+          "DatasetName": "GDPbyIndustry",
+          "DatasetDescription": "GDP by Industry"
+        },
+        {
+          "DatasetName": "Regional",
+          "DatasetDescription": "Regional data sets"
+        },
+        {
+          "DatasetName": "UnderlyingGDPbyIndustry",
+          "DatasetDescription": "Underlying GDP by Industry"
+        },
+        {
+          "DatasetName": "APIDatasetMetaData",
+          "DatasetDescription": "Metadata about other API datasets"
+        }
+      ]
+    }
+  }
+}

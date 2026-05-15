@@ -1,0 +1,706 @@
+{
+  "Frequency": [
+    {
+      "Key": "A",
+      "Desc": "Annual"
+    },
+    {
+      "Key": "Q",
+      "Desc": "Quarterly"
+    }
+  ],
+  "Industry": [
+    {
+      "Key": "11",
+      "Desc": "Agriculture, forestry, fishing, and hunting (A,Q)"
+    },
+    {
+      "Key": "111CA",
+      "Desc": "Farms (A,Q)"
+    },
+    {
+      "Key": "113FF",
+      "Desc": "Forestry, fishing, and related activities (A,Q)"
+    },
+    {
+      "Key": "21",
+      "Desc": "Mining (A,Q)"
+    },
+    {
+      "Key": "211",
+      "Desc": "Oil and gas extraction (A,Q)"
+    },
+    {
+      "Key": "212",
+      "Desc": "Mining, except oil and gas (A,Q)"
+    },
+    {
+      "Key": "213",
+      "Desc": "Support activities for mining (A,Q)"
+    },
+    {
+      "Key": "22",
+      "Desc": "Utilities (A,Q)"
+    },
+    {
+      "Key": "23",
+      "Desc": "Construction (A,Q)"
+    },
+    {
+      "Key": "311FT",
+      "Desc": "Food and beverage and tobacco products (A,Q)"
+    },
+    {
+      "Key": "313TT",
+      "Desc": "Textile mills and textile product mills (A,Q)"
+    },
+    {
+      "Key": "315AL",
+      "Desc": "Apparel and leather and allied products (A,Q)"
+    },
+    {
+      "Key": "31G",
+      "Desc": "Manufacturing (A,Q)"
+    },
+    {
+      "Key": "31ND",
+      "Desc": "Nondurable goods (A,Q)"
+    },
+    {
+      "Key": "321",
+      "Desc": "Wood products (A,Q)"
+    },
+    {
+      "Key": "322",
+      "Desc": "Paper products (A,Q)"
+    },
+    {
+      "Key": "323",
+      "Desc": "Printing and related support activities (A,Q)"
+    },
+    {
+      "Key": "324",
+      "Desc": "Petroleum and coal products (A,Q)"
+    },
+    {
+      "Key": "325",
+      "Desc": "Chemical products (A,Q)"
+    },
+    {
+      "Key": "326",
+      "Desc": "Plastics and rubber products (A,Q)"
+    },
+    {
+      "Key": "327",
+      "Desc": "Nonmetallic mineral products (A,Q)"
+    },
+    {
+      "Key": "331",
+      "Desc": "Primary metals (A,Q)"
+    },
+    {
+      "Key": "332",
+      "Desc": "Fabricated metal products (A,Q)"
+    },
+    {
+      "Key": "333",
+      "Desc": "Machinery (A,Q)"
+    },
+    {
+      "Key": "334",
+      "Desc": "Computer and electronic products (A,Q)"
+    },
+    {
+      "Key": "335",
+      "Desc": "Electrical equipment, appliances, and components (A,Q)"
+    },
+    {
+      "Key": "3361MV",
+      "Desc": "Motor vehicles, bodies and trailers, and parts (A,Q)"
+    },
+    {
+      "Key": "3364OT",
+      "Desc": "Other transportation equipment (A,Q)"
+    },
+    {
+      "Key": "337",
+      "Desc": "Furniture and related products (A,Q)"
+    },
+    {
+      "Key": "339",
+      "Desc": "Miscellaneous manufacturing (A,Q)"
+    },
+    {
+      "Key": "33DG",
+      "Desc": "Durable goods (A,Q)"
+    },
+    {
+      "Key": "42",
+      "Desc": "Wholesale trade (A,Q)"
+    },
+    {
+      "Key": "441",
+      "Desc": "Motor vehicle and parts dealers (A,Q)"
+    },
+    {
+      "Key": "445",
+      "Desc": "Food and beverage stores (A,Q)"
+    },
+    {
+      "Key": "44RT",
+      "Desc": "Retail trade (A,Q)"
+    },
+    {
+      "Key": "452",
+      "Desc": "General merchandise stores (A,Q)"
+    },
+    {
+      "Key": "481",
+      "Desc": "Air transportation (A,Q)"
+    },
+    {
+      "Key": "482",
+      "Desc": "Rail transportation (A,Q)"
+    },
+    {
+      "Key": "483",
+      "Desc": "Water transportation (A,Q)"
+    },
+    {
+      "Key": "484",
+      "Desc": "Truck transportation (A,Q)"
+    },
+    {
+      "Key": "485",
+      "Desc": "Transit and ground passenger transportation (A,Q)"
+    },
+    {
+      "Key": "486",
+      "Desc": "Pipeline transportation (A,Q)"
+    },
+    {
+      "Key": "487OS",
+      "Desc": "Other transportation and support activities (A,Q)"
+    },
+    {
+      "Key": "48TW",
+      "Desc": "Transportation and warehousing (A,Q)"
+    },
+    {
+      "Key": "493",
+      "Desc": "Warehousing and storage (A,Q)"
+    },
+    {
+      "Key": "4A0",
+      "Desc": "Other retail (A,Q)"
+    },
+    {
+      "Key": "51",
+      "Desc": "Information (A,Q)"
+    },
+    {
+      "Key": "511",
+      "Desc": "Publishing industries, except internet (includes software) (A,Q)"
+    },
+    {
+      "Key": "512",
+      "Desc": "Motion picture and sound recording industries (A,Q)"
+    },
+    {
+      "Key": "513",
+      "Desc": "Broadcasting and telecommunications (A,Q)"
+    },
+    {
+      "Key": "514",
+      "Desc": "Data processing, internet publishing, and other information services (A,Q)"
+    },
+    {
+      "Key": "52",
+      "Desc": "Finance and insurance (A,Q)"
+    },
+    {
+      "Key": "521CI",
+      "Desc": "Federal Reserve banks, credit intermediation, and related activities (A,Q)"
+    },
+    {
+      "Key": "523",
+      "Desc": "Securities, commodity contracts, and investments (A,Q)"
+    },
+    {
+      "Key": "524",
+      "Desc": "Insurance carriers and related activities (A,Q)"
+    },
+    {
+      "Key": "525",
+      "Desc": "Funds, trusts, and other financial vehicles (A,Q)"
+    },
+    {
+      "Key": "53",
+      "Desc": "Real estate and rental and leasing (A,Q)"
+    },
+    {
+      "Key": "531",
+      "Desc": "Real estate (A,Q)"
+    },
+    {
+      "Key": "532RL",
+      "Desc": "Rental and leasing services and lessors of intangible assets (A,Q)"
+    },
+    {
+      "Key": "54",
+      "Desc": "Professional, scientific, and technical services (A,Q)"
+    },
+    {
+      "Key": "5411",
+      "Desc": "Legal services (A,Q)"
+    },
+    {
+      "Key": "5412OP",
+      "Desc": "Miscellaneous professional, scientific, and technical services (A,Q)"
+    },
+    {
+      "Key": "5415",
+      "Desc": "Computer systems design and related services (A,Q)"
+    },
+    {
+      "Key": "55",
+      "Desc": "Management of companies and enterprises (A,Q)"
+    },
+    {
+      "Key": "56",
+      "Desc": "Administrative and waste management services (A,Q)"
+    },
+    {
+      "Key": "561",
+      "Desc": "Administrative and support services (A,Q)"
+    },
+    {
+      "Key": "562",
+      "Desc": "Waste management and remediation services (A,Q)"
+    },
+    {
+      "Key": "6",
+      "Desc": "Educational services, health care, and social assistance (A,Q)"
+    },
+    {
+      "Key": "61",
+      "Desc": "Educational services (A,Q)"
+    },
+    {
+      "Key": "62",
+      "Desc": "Health care and social assistance (A,Q)"
+    },
+    {
+      "Key": "621",
+      "Desc": "Ambulatory health care services (A,Q)"
+    },
+    {
+      "Key": "622",
+      "Desc": "Hospitals (A,Q)"
+    },
+    {
+      "Key": "622HO",
+      "Desc": "Hospitals and nursing and residential care facilities (A,Q)"
+    },
+    {
+      "Key": "623",
+      "Desc": "Nursing and residential care facilities (A,Q)"
+    },
+    {
+      "Key": "624",
+      "Desc": "Social assistance (A,Q)"
+    },
+    {
+      "Key": "7",
+      "Desc": "Arts, entertainment, recreation, accommodation, and food services (A,Q)"
+    },
+    {
+      "Key": "71",
+      "Desc": "Arts, entertainment, and recreation (A,Q)"
+    },
+    {
+      "Key": "711AS",
+      "Desc": "Performing arts, spectator sports, museums, and related activities (A,Q)"
+    },
+    {
+      "Key": "713",
+      "Desc": "Amusements, gambling, and recreation industries (A,Q)"
+    },
+    {
+      "Key": "72",
+      "Desc": "Accommodation and food services (A,Q)"
+    },
+    {
+      "Key": "721",
+      "Desc": "Accommodation (A,Q)"
+    },
+    {
+      "Key": "722",
+      "Desc": "Food services and drinking places (A,Q)"
+    },
+    {
+      "Key": "81",
+      "Desc": "Other services, except government (A,Q)"
+    },
+    {
+      "Key": "FIRE",
+      "Desc": "Finance, insurance, real estate, rental, and leasing (A,Q)"
+    },
+    {
+      "Key": "G",
+      "Desc": "Government (A,Q)"
+    },
+    {
+      "Key": "GDP",
+      "Desc": "Gross domestic product (A,Q)"
+    },
+    {
+      "Key": "GF",
+      "Desc": "Federal (A,Q)"
+    },
+    {
+      "Key": "GFE",
+      "Desc": "Government enterprises (A,Q)"
+    },
+    {
+      "Key": "GFG",
+      "Desc": "General government (A,Q)"
+    },
+    {
+      "Key": "GFGD",
+      "Desc": "National defense (A,Q)"
+    },
+    {
+      "Key": "GFGN",
+      "Desc": "Nondefense (A,Q)"
+    },
+    {
+      "Key": "GSL",
+      "Desc": "State and local (A,Q)"
+    },
+    {
+      "Key": "GSLE",
+      "Desc": "Government enterprises (A,Q)"
+    },
+    {
+      "Key": "GSLG",
+      "Desc": "General government (A,Q)"
+    },
+    {
+      "Key": "HS",
+      "Desc": "Housing (A,Q)"
+    },
+    {
+      "Key": "ICT",
+      "Desc": "Information-communications-technology-producing industries (A)"
+    },
+    {
+      "Key": "ICT",
+      "Desc": "Information-communications-technology-producing industries<sup> 4</sup> (A)"
+    },
+    {
+      "Key": "II",
+      "Desc": "All industries (A,Q)"
+    },
+    {
+      "Key": "NABI",
+      "Desc": "Not allocated by industry (A,Q)"
+    },
+    {
+      "Key": "ORE",
+      "Desc": "Other real estate (A,Q)"
+    },
+    {
+      "Key": "PGOOD",
+      "Desc": "Private goods-producing industries (A,Q)"
+    },
+    {
+      "Key": "PROF",
+      "Desc": "Professional and business services (A,Q)"
+    },
+    {
+      "Key": "PSERV",
+      "Desc": "Private services-producing industries (A,Q)"
+    },
+    {
+      "Key": "PVT",
+      "Desc": "Private industries (A,Q)"
+    }
+  ],
+  "TableID": [
+    {
+      "Key": "1",
+      "Desc": "Value Added by Industry (A) (Q)"
+    },
+    {
+      "Key": "5",
+      "Desc": "Value added by Industry as a Percentage of Gross Domestic Product (A) (Q)"
+    },
+    {
+      "Key": "6",
+      "Desc": "Components of Value Added by Industry (A)"
+    },
+    {
+      "Key": "7",
+      "Desc": "Components of Value Added by Industry as a Percentage of Value Added (A)"
+    },
+    {
+      "Key": "8",
+      "Desc": "Chain-Type Quantity Indexes for Value Added by Industry (A) (Q)"
+    },
+    {
+      "Key": "9",
+      "Desc": "Percent Changes in Chain-Type Quantity Indexes for Value Added by Industry (A) (Q)"
+    },
+    {
+      "Key": "10",
+      "Desc": "Real Value Added by Industry (A) (Q)"
+    },
+    {
+      "Key": "11",
+      "Desc": "Chain-Type Price Indexes for Value Added by Industry (A) (Q)"
+    },
+    {
+      "Key": "12",
+      "Desc": "Percent Changes in Chain-Type Price Indexes for Value Added by Industry (A) (Q)"
+    },
+    {
+      "Key": "13",
+      "Desc": "Contributions to Percent Change in Real Gross Domestic Product by Industry (A) (Q)"
+    },
+    {
+      "Key": "14",
+      "Desc": "Contributions to Percent Change in the Chain-Type Price Index for Gross Domestic Product by Industry (A) (Q)"
+    },
+    {
+      "Key": "15",
+      "Desc": "Gross Output by Industry (A) (Q)"
+    },
+    {
+      "Key": "16",
+      "Desc": "Chain-Type Quantity Indexes for Gross Output by Industry (A) (Q)"
+    },
+    {
+      "Key": "17",
+      "Desc": "Percent Changes in Chain-Type Quantity Indexes for Gross Output by Industry (A) (Q)"
+    },
+    {
+      "Key": "18",
+      "Desc": "Chain-Type Price Indexes for Gross Output by Industry (A) (Q)"
+    },
+    {
+      "Key": "19",
+      "Desc": "Percent Changes in Chain-Type Price Indexes for Gross Output by Industry (A) (Q)"
+    },
+    {
+      "Key": "20",
+      "Desc": "Intermediate Inputs by Industry (A) (Q)"
+    },
+    {
+      "Key": "21",
+      "Desc": "Chain-Type Quantity Indexes for Intermediate Inputs by Industry (A) (Q)"
+    },
+    {
+      "Key": "22",
+      "Desc": "Percent Changes in Chain-Type Quantity Indexes for Intermediate Inputs by Industry (A) (Q)"
+    },
+    {
+      "Key": "23",
+      "Desc": "Chain-Type Price Indexes for Intermediate Inputs by Industry (A) (Q)"
+    },
+    {
+      "Key": "24",
+      "Desc": "Percent Changes in Chain-Type Price Indexes for Intermediate Inputs by Industry (A) (Q)"
+    },
+    {
+      "Key": "25",
+      "Desc": "Composition of Gross Output by Industry (A)"
+    },
+    {
+      "Key": "26",
+      "Desc": "Shares of Gross Output by Industry (A)"
+    },
+    {
+      "Key": "29",
+      "Desc": "Contributions to Percent Changes in Chain-Type Quantity Indexes for Gross Output by Industry Group (A)"
+    },
+    {
+      "Key": "30",
+      "Desc": "Contributions to Percent Changes in Chain-Type Price Indexes for Gross Output by Industry Group (A)"
+    },
+    {
+      "Key": "31",
+      "Desc": "Chain-Type Quantity Indexes for Energy Inputs by Industry (A)"
+    },
+    {
+      "Key": "32",
+      "Desc": "Contributions to Percent Change by Industry in the Chain-Type Quantity Index for All Industries Energy Inputs (A)"
+    },
+    {
+      "Key": "33",
+      "Desc": "Chain-Type Price Indexes for Energy Inputs by Industry (A)"
+    },
+    {
+      "Key": "34",
+      "Desc": "Contributions to Percent Change by Industry in the Chain-Type Price Index for All Industries Energy Inputs (A)"
+    },
+    {
+      "Key": "35",
+      "Desc": "Chain-Type Quantity Indexes for Materials Inputs by Industry (A)"
+    },
+    {
+      "Key": "36",
+      "Desc": "Contributions to Percent Change by Industry in the Chain-Type Quantity Index for All Industries Materials Inputs (A)"
+    },
+    {
+      "Key": "37",
+      "Desc": "Chain-Type Price Indexes for Materials Inputs by Industry (A)"
+    },
+    {
+      "Key": "38",
+      "Desc": "Contributions to Percent Change by Industry in the Chain-Type Price Index for All Industries Materials Inputs (A)"
+    },
+    {
+      "Key": "39",
+      "Desc": "Chain-Type Quantity Indexes for Purchased Service Inputs by Industry (A)"
+    },
+    {
+      "Key": "40",
+      "Desc": "Contributions to Percent Change by Industry in the Chain-Type Quantity Index for All Industries Purchased Service Inputs (A)"
+    },
+    {
+      "Key": "41",
+      "Desc": "Chain-Type Price Indexes for Purchased Service Inputs by Industry (A)"
+    },
+    {
+      "Key": "42",
+      "Desc": "Contributions to Percent Change by Industry in the Chain-Type Price Index for All Industries Purchased Service Inputs (A)"
+    },
+    {
+      "Key": "208",
+      "Desc": "Real Gross Output by Industry (A) (Q)"
+    },
+    {
+      "Key": "209",
+      "Desc": "Real Intermediate Inputs by Industry (A) (Q)"
+    }
+  ],
+  "Year": [
+    {
+      "Key": "1997",
+      "Desc": "1997"
+    },
+    {
+      "Key": "1998",
+      "Desc": "1998"
+    },
+    {
+      "Key": "1999",
+      "Desc": "1999"
+    },
+    {
+      "Key": "2000",
+      "Desc": "2000"
+    },
+    {
+      "Key": "2001",
+      "Desc": "2001"
+    },
+    {
+      "Key": "2002",
+      "Desc": "2002"
+    },
+    {
+      "Key": "2003",
+      "Desc": "2003"
+    },
+    {
+      "Key": "2004",
+      "Desc": "2004"
+    },
+    {
+      "Key": "2005",
+      "Desc": "2005"
+    },
+    {
+      "Key": "2006",
+      "Desc": "2006"
+    },
+    {
+      "Key": "2007",
+      "Desc": "2007"
+    },
+    {
+      "Key": "2008",
+      "Desc": "2008"
+    },
+    {
+      "Key": "2009",
+      "Desc": "2009"
+    },
+    {
+      "Key": "2010",
+      "Desc": "2010"
+    },
+    {
+      "Key": "2011",
+      "Desc": "2011"
+    },
+    {
+      "Key": "2012",
+      "Desc": "2012"
+    },
+    {
+      "Key": "2013",
+      "Desc": "2013"
+    },
+    {
+      "Key": "2014",
+      "Desc": "2014"
+    },
+    {
+      "Key": "2015",
+      "Desc": "2015"
+    },
+    {
+      "Key": "2016",
+      "Desc": "2016"
+    },
+    {
+      "Key": "2017",
+      "Desc": "2017"
+    },
+    {
+      "Key": "2018",
+      "Desc": "2018"
+    },
+    {
+      "Key": "2019",
+      "Desc": "2019"
+    },
+    {
+      "Key": "2020",
+      "Desc": "2020"
+    },
+    {
+      "Key": "2021",
+      "Desc": "2021"
+    },
+    {
+      "Key": "2022",
+      "Desc": "2022"
+    },
+    {
+      "Key": "2023",
+      "Desc": "2023"
+    },
+    {
+      "Key": "2024",
+      "Desc": "2024"
+    },
+    {
+      "Key": "2025",
+      "Desc": "2025"
+    }
+  ]
+}

@@ -12,7 +12,7 @@ import type {
     ProInsights, ExpertIntelligence, UserMe 
 } from '../api';
 import { fetchProInsights, fetchExpertIntelligence } from '../api';
-import { getTopicDef } from '../topics';
+import { getTopicDef, getTopicCssVars, getTopicDisplayLabel, UI_TOPIC_PREVIEW_CODES } from '../topics';
 import { renderLockedFeature } from '../subscription';
 import { renderProStructuralBriefs, renderProStructuralBriefDetail } from './pro_reports';
 
@@ -167,12 +167,9 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
                 <div class="pro-stat-card" style="grid-column: span 2;">
                     <div class="pro-stat-title" style="margin-bottom: 0.5rem;">Monitored Domains</div>
                     <div class="domain-chips-container">
-                        <span class="domain-chip domain-energy">Energy</span>
-                        <span class="domain-chip domain-ai-semi">AI-Semi</span>
-                        <span class="domain-chip domain-global-market">Global Market</span>
-                        <span class="domain-chip domain-supply-chain">Supply Chain</span>
-                        <span class="domain-chip domain-crypto">Crypto</span>
-                        <span class="domain-chip domain-defense">Defense</span>
+                        ${UI_TOPIC_PREVIEW_CODES.map(code =>
+                            `<span class="domain-chip meta-item-topic--tag" style="${getTopicCssVars(code)}">${getTopicDisplayLabel(code)}</span>`
+                        ).join('')}
                     </div>
                 </div>
             </div>

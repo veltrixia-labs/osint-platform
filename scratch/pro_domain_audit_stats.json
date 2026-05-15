@@ -1,0 +1,52 @@
+{
+    "global_market_intelligence": {
+        "macro_observations": 6,
+        "trade_flows": 0,
+        "industry_stats": 20,
+        "market_instruments": 4,
+        "unknown_asset_class": 0,
+        "price_changes": 4,
+        "data_notes": 9,
+        "watch_indicators_val": 1
+    },
+    "ai_semiconductor_intelligence": {
+        "macro_observations": 3,
+        "trade_flows": 20,
+        "industry_stats": 20,
+        "market_instruments": 4,
+        "unknown_asset_class": 0,
+        "price_changes": 3,
+        "data_notes": 4,
+        "watch_indicators_val": 1
+    },
+    "defense_technology": {
+        "macro_observations": 2,
+        "trade_flows": 20,
+        "industry_stats": 20,
+        "market_instruments": 1,
+        "unknown_asset_class": 0,
+        "price_changes": 1,
+        "data_notes": 6,
+        "watch_indicators_val": 0
+    },
+    "supply_chain_intelligence": {
+        "macro_observations": 2,
+        "trade_flows": 20,
+        "industry_stats": 20,
+        "market_instruments": 6,
+        "unknown_asset_class": 0,
+        "price_changes": 3,
+        "data_notes": 6,
+        "watch_indicators_val": 0
+    },
+    "crypto_geopolitics": {
+        "macro_observations": 3,
+        "trade_flows": 0,
+        "industry_stats": 20,
+        "market_instruments": 5,
+        "unknown_asset_class": 0,
+        "price_changes": 3,
+        "data_notes": 4,
+        "watch_indicators_val": 1
+    }
+}

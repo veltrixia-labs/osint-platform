@@ -1,0 +1,2648 @@
+{
+  "Frequency": {
+    "Key": "A",
+    "Desc": "Annual"
+  },
+  "Industry": [
+    {
+      "Key": "11",
+      "Desc": "Agriculture, forestry, fishing, and hunting (A)"
+    },
+    {
+      "Key": "111",
+      "Desc": "Crop production (A)"
+    },
+    {
+      "Key": "1111A0",
+      "Desc": "Oilseed farming (A)"
+    },
+    {
+      "Key": "1111B0",
+      "Desc": "Grain farming (A)"
+    },
+    {
+      "Key": "111200",
+      "Desc": "Vegetable and melon farming (A)"
+    },
+    {
+      "Key": "111300",
+      "Desc": "Fruit and tree nut farming (A)"
+    },
+    {
+      "Key": "111400",
+      "Desc": "Greenhouse, nursery, and floriculture production (A)"
+    },
+    {
+      "Key": "111900",
+      "Desc": "Other crop farming (A)"
+    },
+    {
+      "Key": "111CA",
+      "Desc": "Farms (A)"
+    },
+    {
+      "Key": "112",
+      "Desc": "Animal production and aquaculture (A)"
+    },
+    {
+      "Key": "112120",
+      "Desc": "Dairy cattle and milk production (A)"
+    },
+    {
+      "Key": "1121A0",
+      "Desc": "Beef cattle ranching and farming, including feedlots and dual-purpose ranching and farming (A)"
+    },
+    {
+      "Key": "112300",
+      "Desc": "Poultry and egg production (A)"
+    },
+    {
+      "Key": "112A00",
+      "Desc": "Animal production, except cattle and poultry and eggs (A)"
+    },
+    {
+      "Key": "113000",
+      "Desc": "Forestry and logging (A)"
+    },
+    {
+      "Key": "113FF",
+      "Desc": "Forestry, fishing, and related activities (A)"
+    },
+    {
+      "Key": "114000",
+      "Desc": "Fishing, hunting and trapping (A)"
+    },
+    {
+      "Key": "115000",
+      "Desc": "Support activities for agriculture and forestry (A)"
+    },
+    {
+      "Key": "21",
+      "Desc": "Mining (A)"
+    },
+    {
+      "Key": "211",
+      "Desc": "Oil and gas extraction (A)"
+    },
+    {
+      "Key": "211000",
+      "Desc": "Oil and gas extraction (A)"
+    },
+    {
+      "Key": "212",
+      "Desc": "Mining, except oil and gas (A)"
+    },
+    {
+      "Key": "212100",
+      "Desc": "Coal mining (A)"
+    },
+    {
+      "Key": "212230",
+      "Desc": "Copper, nickel, lead, and zinc mining (A)"
+    },
+    {
+      "Key": "2122A0",
+      "Desc": "Iron, gold, silver, and other metal ore mining (A)"
+    },
+    {
+      "Key": "212310",
+      "Desc": "Stone mining and quarrying (A)"
+    },
+    {
+      "Key": "2123A0",
+      "Desc": "Other nonmetallic mineral mining and quarrying (A)"
+    },
+    {
+      "Key": "213",
+      "Desc": "Support activities for mining (A)"
+    },
+    {
+      "Key": "213111",
+      "Desc": "Drilling oil and gas wells (A)"
+    },
+    {
+      "Key": "21311A",
+      "Desc": "Other support activities for mining (A)"
+    },
+    {
+      "Key": "22",
+      "Desc": "Utilities (A)"
+    },
+    {
+      "Key": "2211",
+      "Desc": "Electric power generation, transmission, and distribution (A)"
+    },
+    {
+      "Key": "221111",
+      "Desc": "Hydroelectric power generation (A)"
+    },
+    {
+      "Key": "221112",
+      "Desc": "Fossil fuel electric power generation (A)"
+    },
+    {
+      "Key": "221113",
+      "Desc": "Nuclear electric power generation (A)"
+    },
+    {
+      "Key": "221114",
+      "Desc": "Solar electric power generation (A)"
+    },
+    {
+      "Key": "221115",
+      "Desc": "Wind electric power generation (A)"
+    },
+    {
+      "Key": "221116",
+      "Desc": "Geothermal electric power generation (A)"
+    },
+    {
+      "Key": "221117",
+      "Desc": "Biomass electric power generation (A)"
+    },
+    {
+      "Key": "221118",
+      "Desc": "Other electric power generation (A)"
+    },
+    {
+      "Key": "221121",
+      "Desc": "Electric bulk power transmission and control (A)"
+    },
+    {
+      "Key": "221122",
+      "Desc": "Electric power distribution (A)"
+    },
+    {
+      "Key": "221200",
+      "Desc": "Natural gas distribution (A)"
+    },
+    {
+      "Key": "2212NW",
+      "Desc": "Natural gas distribution and water, sewage and other systems (A)"
+    },
+    {
+      "Key": "221300",
+      "Desc": "Water, sewage and other systems (A)"
+    },
+    {
+      "Key": "23",
+      "Desc": "Construction (A)"
+    },
+    {
+      "Key": "230301",
+      "Desc": "Nonresidential maintenance and repair (A)"
+    },
+    {
+      "Key": "230302",
+      "Desc": "Residential maintenance and repair (A)"
+    },
+    {
+      "Key": "233210",
+      "Desc": "Health care structures (A)"
+    },
+    {
+      "Key": "233230",
+      "Desc": "Manufacturing structures (A)"
+    },
+    {
+      "Key": "233240",
+      "Desc": "Power and communication structures (A)"
+    },
+    {
+      "Key": "233262",
+      "Desc": "Educational and vocational structures (A)"
+    },
+    {
+      "Key": "2332A0",
+      "Desc": "Office and commercial structures (A)"
+    },
+    {
+      "Key": "2332C0",
+      "Desc": "Transportation structures and highways and streets (A)"
+    },
+    {
+      "Key": "2332D0",
+      "Desc": "Other nonresidential structures (A)"
+    },
+    {
+      "Key": "233411",
+      "Desc": "Single-family residential structures (A)"
+    },
+    {
+      "Key": "233412",
+      "Desc": "Multifamily residential structures (A)"
+    },
+    {
+      "Key": "2334A0",
+      "Desc": "Other residential structures (A)"
+    },
+    {
+      "Key": "23EH",
+      "Desc": "Education, hospital, and health structures (A)"
+    },
+    {
+      "Key": "23MR",
+      "Desc": "Maintenance and repair construction (A)"
+    },
+    {
+      "Key": "23OC",
+      "Desc": "Office and commercial structures (A)"
+    },
+    {
+      "Key": "23OR",
+      "Desc": "Other residential construction (A)"
+    },
+    {
+      "Key": "23OT",
+      "Desc": "Other nonresidential structures (A)"
+    },
+    {
+      "Key": "23PC",
+      "Desc": "Power and communication structures (A)"
+    },
+    {
+      "Key": "23SF",
+      "Desc": "Single-family residential structures (A)"
+    },
+    {
+      "Key": "23TH",
+      "Desc": "Transportation structures and highways and streets (A)"
+    },
+    {
+      "Key": "311",
+      "Desc": "Food manufacturing (A)"
+    },
+    {
+      "Key": "311111",
+      "Desc": "Dog and cat food manufacturing (A)"
+    },
+    {
+      "Key": "311119",
+      "Desc": "Other animal food manufacturing (A)"
+    },
+    {
+      "Key": "311210",
+      "Desc": "Flour milling and malt manufacturing (A)"
+    },
+    {
+      "Key": "311221",
+      "Desc": "Wet corn milling (A)"
+    },
+    {
+      "Key": "311224",
+      "Desc": "Soybean and other oilseed processing (A)"
+    },
+    {
+      "Key": "311225",
+      "Desc": "Fats and oils refining and blending (A)"
+    },
+    {
+      "Key": "311230",
+      "Desc": "Breakfast cereal manufacturing (A)"
+    },
+    {
+      "Key": "311300",
+      "Desc": "Sugar and confectionery product manufacturing (A)"
+    },
+    {
+      "Key": "311410",
+      "Desc": "Frozen food manufacturing (A)"
+    },
+    {
+      "Key": "311420",
+      "Desc": "Fruit and vegetable canning, pickling, and drying (A)"
+    },
+    {
+      "Key": "311513",
+      "Desc": "Cheese manufacturing (A)"
+    },
+    {
+      "Key": "311514",
+      "Desc": "Dry, condensed, and evaporated dairy product manufacturing (A)"
+    },
+    {
+      "Key": "31151A",
+      "Desc": "Fluid milk and butter manufacturing (A)"
+    },
+    {
+      "Key": "311520",
+      "Desc": "Ice cream and frozen dessert manufacturing (A)"
+    },
+    {
+      "Key": "311615",
+      "Desc": "Poultry processing (A)"
+    },
+    {
+      "Key": "31161A",
+      "Desc": "Animal (except poultry) slaughtering, rendering, and processing (A)"
+    },
+    {
+      "Key": "311700",
+      "Desc": "Seafood product preparation and packaging (A)"
+    },
+    {
+      "Key": "311810",
+      "Desc": "Bread and bakery product manufacturing (A)"
+    },
+    {
+      "Key": "3118A0",
+      "Desc": "Cookie, cracker, pasta, and tortilla manufacturing (A)"
+    },
+    {
+      "Key": "311910",
+      "Desc": "Snack food manufacturing (A)"
+    },
+    {
+      "Key": "311920",
+      "Desc": "Coffee and tea manufacturing (A)"
+    },
+    {
+      "Key": "311930",
+      "Desc": "Flavoring syrup and concentrate manufacturing (A)"
+    },
+    {
+      "Key": "311940",
+      "Desc": "Seasoning and dressing manufacturing (A)"
+    },
+    {
+      "Key": "311990",
+      "Desc": "All other food manufacturing (A)"
+    },
+    {
+      "Key": "311FT",
+      "Desc": "Food and beverage and tobacco products (A)"
+    },
+    {
+      "Key": "3121",
+      "Desc": "Beverage manufacturing (A)"
+    },
+    {
+      "Key": "312110",
+      "Desc": "Soft drink and ice manufacturing (A)"
+    },
+    {
+      "Key": "312120",
+      "Desc": "Breweries (A)"
+    },
+    {
+      "Key": "312130",
+      "Desc": "Wineries (A)"
+    },
+    {
+      "Key": "312140",
+      "Desc": "Distilleries (A)"
+    },
+    {
+      "Key": "3122",
+      "Desc": "Tobacco product manufacturing (A)"
+    },
+    {
+      "Key": "312200",
+      "Desc": "Tobacco manufacturing (A)"
+    },
+    {
+      "Key": "313100",
+      "Desc": "Fiber, yarn, and thread mills (A)"
+    },
+    {
+      "Key": "313200",
+      "Desc": "Fabric mills (A)"
+    },
+    {
+      "Key": "313300",
+      "Desc": "Textile and fabric finishing and fabric coating mills (A)"
+    },
+    {
+      "Key": "313TT",
+      "Desc": "Textile mills and textile product mills (A)"
+    },
+    {
+      "Key": "314110",
+      "Desc": "Carpet and rug mills (A)"
+    },
+    {
+      "Key": "314120",
+      "Desc": "Curtain and linen mills (A)"
+    },
+    {
+      "Key": "314900",
+      "Desc": "Other textile product mills (A)"
+    },
+    {
+      "Key": "315000",
+      "Desc": "Apparel manufacturing (A)"
+    },
+    {
+      "Key": "315AL",
+      "Desc": "Apparel and leather and allied products (A)"
+    },
+    {
+      "Key": "316000",
+      "Desc": "Leather and allied product manufacturing (A)"
+    },
+    {
+      "Key": "31G",
+      "Desc": "Manufacturing (A)"
+    },
+    {
+      "Key": "31ND",
+      "Desc": "Nondurable goods (A)"
+    },
+    {
+      "Key": "321",
+      "Desc": "Wood products (A)"
+    },
+    {
+      "Key": "321100",
+      "Desc": "Sawmills and wood preservation (A)"
+    },
+    {
+      "Key": "321200",
+      "Desc": "Veneer, plywood, and engineered wood product manufacturing (A)"
+    },
+    {
+      "Key": "321910",
+      "Desc": "Millwork (A)"
+    },
+    {
+      "Key": "3219A0",
+      "Desc": "All other wood product manufacturing (A)"
+    },
+    {
+      "Key": "322",
+      "Desc": "Paper products (A)"
+    },
+    {
+      "Key": "322110",
+      "Desc": "Pulp mills (A)"
+    },
+    {
+      "Key": "322120",
+      "Desc": "Paper mills (A)"
+    },
+    {
+      "Key": "322130",
+      "Desc": "Paperboard mills (A)"
+    },
+    {
+      "Key": "322210",
+      "Desc": "Paperboard container manufacturing (A)"
+    },
+    {
+      "Key": "322220",
+      "Desc": "Paper bag and coated and treated paper manufacturing (A)"
+    },
+    {
+      "Key": "322230",
+      "Desc": "Stationery product manufacturing (A)"
+    },
+    {
+      "Key": "322291",
+      "Desc": "Sanitary paper product manufacturing (A)"
+    },
+    {
+      "Key": "322299",
+      "Desc": "All other converted paper product manufacturing (A)"
+    },
+    {
+      "Key": "323",
+      "Desc": "Printing and related support activities (A)"
+    },
+    {
+      "Key": "323110",
+      "Desc": "Printing (A)"
+    },
+    {
+      "Key": "323120",
+      "Desc": "Support activities for printing (A)"
+    },
+    {
+      "Key": "324",
+      "Desc": "Petroleum and coal products (A)"
+    },
+    {
+      "Key": "324110",
+      "Desc": "Petroleum refineries (A)"
+    },
+    {
+      "Key": "324121",
+      "Desc": "Asphalt paving mixture and block manufacturing (A)"
+    },
+    {
+      "Key": "324122",
+      "Desc": "Asphalt shingle and coating materials manufacturing (A)"
+    },
+    {
+      "Key": "324190",
+      "Desc": "Other petroleum and coal products manufacturing (A)"
+    },
+    {
+      "Key": "325",
+      "Desc": "Chemical products (A)"
+    },
+    {
+      "Key": "3251",
+      "Desc": "Basic chemical manufacturing (A)"
+    },
+    {
+      "Key": "325110",
+      "Desc": "Petrochemical manufacturing (A)"
+    },
+    {
+      "Key": "325120",
+      "Desc": "Industrial gas manufacturing (A)"
+    },
+    {
+      "Key": "325130",
+      "Desc": "Synthetic dye and pigment manufacturing (A)"
+    },
+    {
+      "Key": "325180",
+      "Desc": "Other basic inorganic chemical manufacturing (A)"
+    },
+    {
+      "Key": "325190",
+      "Desc": "Other basic organic chemical manufacturing (A)"
+    },
+    {
+      "Key": "3252",
+      "Desc": "Resin, rubber, and artificial fibers manufacturing (A)"
+    },
+    {
+      "Key": "325211",
+      "Desc": "Plastics material and resin manufacturing (A)"
+    },
+    {
+      "Key": "3252A0",
+      "Desc": "Synthetic rubber and artificial and synthetic fibers and filaments manufacturing (A)"
+    },
+    {
+      "Key": "325310",
+      "Desc": "Fertilizer manufacturing (A)"
+    },
+    {
+      "Key": "325320",
+      "Desc": "Pesticide and other agricultural chemical manufacturing (A)"
+    },
+    {
+      "Key": "3254",
+      "Desc": "Pharmaceutical and medicine manufacturing (A)"
+    },
+    {
+      "Key": "325411",
+      "Desc": "Medicinal and botanical manufacturing (A)"
+    },
+    {
+      "Key": "325412",
+      "Desc": "Pharmaceutical preparation manufacturing (A)"
+    },
+    {
+      "Key": "325413",
+      "Desc": "In-vitro diagnostic substance manufacturing (A)"
+    },
+    {
+      "Key": "325414",
+      "Desc": "Biological product (except diagnostic) manufacturing (A)"
+    },
+    {
+      "Key": "325510",
+      "Desc": "Paint and coating manufacturing (A)"
+    },
+    {
+      "Key": "325520",
+      "Desc": "Adhesive manufacturing (A)"
+    },
+    {
+      "Key": "325610",
+      "Desc": "Soap and cleaning compound manufacturing (A)"
+    },
+    {
+      "Key": "325620",
+      "Desc": "Toilet preparation manufacturing (A)"
+    },
+    {
+      "Key": "325910",
+      "Desc": "Printing ink manufacturing (A)"
+    },
+    {
+      "Key": "3259A0",
+      "Desc": "All other chemical product and preparation manufacturing (A)"
+    },
+    {
+      "Key": "325X",
+      "Desc": "Other chemical manufacturing (A)"
+    },
+    {
+      "Key": "326",
+      "Desc": "Plastics and rubber products (A)"
+    },
+    {
+      "Key": "326110",
+      "Desc": "Plastics packaging materials and unlaminated film and sheet manufacturing (A)"
+    },
+    {
+      "Key": "326120",
+      "Desc": "Plastics pipe, pipe fitting, and unlaminated profile shape manufacturing (A)"
+    },
+    {
+      "Key": "326130",
+      "Desc": "Laminated plastics plate, sheet (except packaging), and shape manufacturing (A)"
+    },
+    {
+      "Key": "326140",
+      "Desc": "Polystyrene foam product manufacturing (A)"
+    },
+    {
+      "Key": "326150",
+      "Desc": "Urethane and other foam product (except polystyrene) manufacturing (A)"
+    },
+    {
+      "Key": "326160",
+      "Desc": "Plastics bottle manufacturing (A)"
+    },
+    {
+      "Key": "326190",
+      "Desc": "Other plastics product manufacturing (A)"
+    },
+    {
+      "Key": "326210",
+      "Desc": "Tire manufacturing (A)"
+    },
+    {
+      "Key": "326220",
+      "Desc": "Rubber and plastics hoses and belting manufacturing (A)"
+    },
+    {
+      "Key": "326290",
+      "Desc": "Other rubber product manufacturing (A)"
+    },
+    {
+      "Key": "327",
+      "Desc": "Nonmetallic mineral products (A)"
+    },
+    {
+      "Key": "327100",
+      "Desc": "Clay product and refractory manufacturing (A)"
+    },
+    {
+      "Key": "327200",
+      "Desc": "Glass and glass product manufacturing (A)"
+    },
+    {
+      "Key": "327310",
+      "Desc": "Cement manufacturing (A)"
+    },
+    {
+      "Key": "327320",
+      "Desc": "Ready-mix concrete manufacturing (A)"
+    },
+    {
+      "Key": "327330",
+      "Desc": "Concrete pipe, brick, and block manufacturing (A)"
+    },
+    {
+      "Key": "327390",
+      "Desc": "Other concrete product manufacturing (A)"
+    },
+    {
+      "Key": "327400",
+      "Desc": "Lime and gypsum product manufacturing (A)"
+    },
+    {
+      "Key": "327910",
+      "Desc": "Abrasive product manufacturing (A)"
+    },
+    {
+      "Key": "327991",
+      "Desc": "Cut stone and stone product manufacturing (A)"
+    },
+    {
+      "Key": "327992",
+      "Desc": "Ground or treated mineral and earth manufacturing (A)"
+    },
+    {
+      "Key": "327993",
+      "Desc": "Mineral wool manufacturing (A)"
+    },
+    {
+      "Key": "327999",
+      "Desc": "Miscellaneous nonmetallic mineral products (A)"
+    },
+    {
+      "Key": "331",
+      "Desc": "Primary metals (A)"
+    },
+    {
+      "Key": "331110",
+      "Desc": "Iron and steel mills and ferroalloy manufacturing (A)"
+    },
+    {
+      "Key": "3311IS",
+      "Desc": "Iron and steel mills and manufacturing from purchased steel (A)"
+    },
+    {
+      "Key": "331200",
+      "Desc": "Steel product manufacturing from purchased steel (A)"
+    },
+    {
+      "Key": "331313",
+      "Desc": "Alumina refining and primary aluminum production (A)"
+    },
+    {
+      "Key": "331314",
+      "Desc": "Secondary smelting and alloying of aluminum (A)"
+    },
+    {
+      "Key": "33131B",
+      "Desc": "Aluminum product manufacturing from purchased aluminum (A)"
+    },
+    {
+      "Key": "3313NF",
+      "Desc": "Nonferrous metal production and processing and foundries (A)"
+    },
+    {
+      "Key": "331410",
+      "Desc": "Nonferrous metal (except aluminum) smelting and refining (A)"
+    },
+    {
+      "Key": "331420",
+      "Desc": "Copper rolling, drawing, extruding and alloying (A)"
+    },
+    {
+      "Key": "331490",
+      "Desc": "Nonferrous metal (except copper and aluminum) rolling, drawing, extruding and alloying (A)"
+    },
+    {
+      "Key": "331510",
+      "Desc": "Ferrous metal foundries (A)"
+    },
+    {
+      "Key": "331520",
+      "Desc": "Nonferrous metal foundries (A)"
+    },
+    {
+      "Key": "332",
+      "Desc": "Fabricated metal products (A)"
+    },
+    {
+      "Key": "332114",
+      "Desc": "Custom roll forming (A)"
+    },
+    {
+      "Key": "332119",
+      "Desc": "Metal crown, closure, and other metal stamping (except automotive) (A)"
+    },
+    {
+      "Key": "33211A",
+      "Desc": "All other forging, stamping, and sintering (A)"
+    },
+    {
+      "Key": "332200",
+      "Desc": "Cutlery and handtool manufacturing (A)"
+    },
+    {
+      "Key": "332310",
+      "Desc": "Plate work and fabricated structural product manufacturing (A)"
+    },
+    {
+      "Key": "332320",
+      "Desc": "Ornamental and architectural metal products manufacturing (A)"
+    },
+    {
+      "Key": "332410",
+      "Desc": "Power boiler and heat exchanger manufacturing (A)"
+    },
+    {
+      "Key": "332420",
+      "Desc": "Metal tank (heavy gauge) manufacturing (A)"
+    },
+    {
+      "Key": "332430",
+      "Desc": "Metal can, box, and other metal container (light gauge) manufacturing (A)"
+    },
+    {
+      "Key": "332500",
+      "Desc": "Hardware manufacturing (A)"
+    },
+    {
+      "Key": "332600",
+      "Desc": "Spring and wire product manufacturing (A)"
+    },
+    {
+      "Key": "332710",
+      "Desc": "Machine shops (A)"
+    },
+    {
+      "Key": "332720",
+      "Desc": "Turned product and screw, nut, and bolt manufacturing (A)"
+    },
+    {
+      "Key": "332800",
+      "Desc": "Coating, engraving, heat treating and allied activities (A)"
+    },
+    {
+      "Key": "332913",
+      "Desc": "Plumbing fixture fitting and trim manufacturing (A)"
+    },
+    {
+      "Key": "33291A",
+      "Desc": "Valve and fittings other than plumbing (A)"
+    },
+    {
+      "Key": "332991",
+      "Desc": "Ball and roller bearing manufacturing (A)"
+    },
+    {
+      "Key": "332996",
+      "Desc": "Fabricated pipe and pipe fitting manufacturing (A)"
+    },
+    {
+      "Key": "332999",
+      "Desc": "Other fabricated metal manufacturing (A)"
+    },
+    {
+      "Key": "33299A",
+      "Desc": "Ammunition, arms, ordnance, and accessories manufacturing (A)"
+    },
+    {
+      "Key": "333",
+      "Desc": "Machinery (A)"
+    },
+    {
+      "Key": "33311",
+      "Desc": "Agricultural implement manufacturing (A)"
+    },
+    {
+      "Key": "333111",
+      "Desc": "Farm machinery and equipment manufacturing (A)"
+    },
+    {
+      "Key": "333112",
+      "Desc": "Lawn and garden equipment manufacturing (A)"
+    },
+    {
+      "Key": "33312",
+      "Desc": "Construction machinery manufacturing (A)"
+    },
+    {
+      "Key": "333120",
+      "Desc": "Construction machinery manufacturing (A)"
+    },
+    {
+      "Key": "33313",
+      "Desc": "Mining and oil and gas field machinery manufacturing (A)"
+    },
+    {
+      "Key": "333130",
+      "Desc": "Mining and oil and gas field machinery manufacturing (A)"
+    },
+    {
+      "Key": "333242",
+      "Desc": "Semiconductor machinery manufacturing (A)"
+    },
+    {
+      "Key": "33329A",
+      "Desc": "Other industrial machinery manufacturing (A)"
+    },
+    {
+      "Key": "3332OM",
+      "Desc": "Other machinery (A)"
+    },
+    {
+      "Key": "333314",
+      "Desc": "Optical instrument and lens manufacturing (A)"
+    },
+    {
+      "Key": "333316",
+      "Desc": "Photographic and photocopying equipment manufacturing (A)"
+    },
+    {
+      "Key": "333318",
+      "Desc": "Other commercial and service industry machinery manufacturing (A)"
+    },
+    {
+      "Key": "333413",
+      "Desc": "Industrial and commercial fan and blower and air purification equipment manufacturing (A)"
+    },
+    {
+      "Key": "333414",
+      "Desc": "Heating equipment (except warm air furnaces) manufacturing (A)"
+    },
+    {
+      "Key": "333415",
+      "Desc": "Air conditioning, refrigeration, and warm air heating equipment manufacturing (A)"
+    },
+    {
+      "Key": "333511",
+      "Desc": "Industrial mold manufacturing (A)"
+    },
+    {
+      "Key": "333514",
+      "Desc": "Special tool, die, jig, and fixture manufacturing (A)"
+    },
+    {
+      "Key": "333517",
+      "Desc": "Machine tool manufacturing (A)"
+    },
+    {
+      "Key": "33351B",
+      "Desc": "Cutting and machine tool accessory, rolling mill, and other metalworking machinery manufacturing (A)"
+    },
+    {
+      "Key": "333611",
+      "Desc": "Turbine and turbine generator set units manufacturing (A)"
+    },
+    {
+      "Key": "333612",
+      "Desc": "Speed changer, industrial high-speed drive, and gear manufacturing (A)"
+    },
+    {
+      "Key": "333613",
+      "Desc": "Mechanical power transmission equipment manufacturing (A)"
+    },
+    {
+      "Key": "333618",
+      "Desc": "Other engine equipment manufacturing (A)"
+    },
+    {
+      "Key": "333912",
+      "Desc": "Air and gas compressor manufacturing (A)"
+    },
+    {
+      "Key": "333914",
+      "Desc": "Measuring, dispensing, and other pumping equipment manufacturing (A)"
+    },
+    {
+      "Key": "333920",
+      "Desc": "Material handling equipment manufacturing (A)"
+    },
+    {
+      "Key": "333991",
+      "Desc": "Power-driven handtool manufacturing (A)"
+    },
+    {
+      "Key": "333993",
+      "Desc": "Packaging machinery manufacturing (A)"
+    },
+    {
+      "Key": "333994",
+      "Desc": "Industrial process furnace and oven manufacturing (A)"
+    },
+    {
+      "Key": "33399A",
+      "Desc": "Other general purpose machinery manufacturing (A)"
+    },
+    {
+      "Key": "33399B",
+      "Desc": "Fluid power process machinery (A)"
+    },
+    {
+      "Key": "334",
+      "Desc": "Computer and electronic products (A)"
+    },
+    {
+      "Key": "3341",
+      "Desc": "Computer and peripheral equipment manufacturing (A)"
+    },
+    {
+      "Key": "334111",
+      "Desc": "Electronic computer manufacturing (A)"
+    },
+    {
+      "Key": "334112",
+      "Desc": "Computer storage device manufacturing (A)"
+    },
+    {
+      "Key": "334118",
+      "Desc": "Computer terminals and other computer peripheral equipment manufacturing (A)"
+    },
+    {
+      "Key": "3342",
+      "Desc": "Communications equipment manufacturing (A)"
+    },
+    {
+      "Key": "334210",
+      "Desc": "Telephone apparatus manufacturing (A)"
+    },
+    {
+      "Key": "334220",
+      "Desc": "Broadcast and wireless communications equipment (A)"
+    },
+    {
+      "Key": "334290",
+      "Desc": "Other communications equipment manufacturing (A)"
+    },
+    {
+      "Key": "334300",
+      "Desc": "Audio and video equipment manufacturing (A)"
+    },
+    {
+      "Key": "3344",
+      "Desc": "Semiconductor and other electronic component manufacturing (A)"
+    },
+    {
+      "Key": "334413",
+      "Desc": "Semiconductor and related device manufacturing (A)"
+    },
+    {
+      "Key": "334418",
+      "Desc": "Printed circuit assembly (electronic assembly) manufacturing (A)"
+    },
+    {
+      "Key": "33441A",
+      "Desc": "Other electronic component manufacturing (A)"
+    },
+    {
+      "Key": "3345",
+      "Desc": "Navigational, measuring, electromedical, and control instruments manufacturing (A)"
+    },
+    {
+      "Key": "334510",
+      "Desc": "Electromedical and electrotherapeutic apparatus manufacturing (A)"
+    },
+    {
+      "Key": "334511",
+      "Desc": "Search, detection, and navigation instruments manufacturing (A)"
+    },
+    {
+      "Key": "334512",
+      "Desc": "Automatic environmental control manufacturing (A)"
+    },
+    {
+      "Key": "334513",
+      "Desc": "Industrial process variable instruments manufacturing (A)"
+    },
+    {
+      "Key": "334514",
+      "Desc": "Totalizing fluid meter and counting device manufacturing (A)"
+    },
+    {
+      "Key": "334515",
+      "Desc": "Electricity and signal testing instruments manufacturing (A)"
+    },
+    {
+      "Key": "334516",
+      "Desc": "Analytical laboratory instrument manufacturing (A)"
+    },
+    {
+      "Key": "334517",
+      "Desc": "Irradiation apparatus manufacturing (A)"
+    },
+    {
+      "Key": "33451A",
+      "Desc": "Watch, clock, and other measuring and controlling device manufacturing (A)"
+    },
+    {
+      "Key": "334610",
+      "Desc": "Manufacturing and reproducing magnetic and optical media (A)"
+    },
+    {
+      "Key": "334X",
+      "Desc": "Other computer and electronic product manufacturing (A)"
+    },
+    {
+      "Key": "335",
+      "Desc": "Electrical equipment, appliances, and components (A)"
+    },
+    {
+      "Key": "335110",
+      "Desc": "Electric lamp bulb and part manufacturing (A)"
+    },
+    {
+      "Key": "335120",
+      "Desc": "Lighting fixture manufacturing (A)"
+    },
+    {
+      "Key": "335210",
+      "Desc": "Small electrical appliance manufacturing (A)"
+    },
+    {
+      "Key": "335220",
+      "Desc": "Major household appliance manufacturing (A)"
+    },
+    {
+      "Key": "335311",
+      "Desc": "Power, distribution, and specialty transformer manufacturing (A)"
+    },
+    {
+      "Key": "335312",
+      "Desc": "Motor and generator manufacturing (A)"
+    },
+    {
+      "Key": "335313",
+      "Desc": "Switchgear and switchboard apparatus manufacturing (A)"
+    },
+    {
+      "Key": "335314",
+      "Desc": "Relay and industrial control manufacturing (A)"
+    },
+    {
+      "Key": "335911",
+      "Desc": "Storage battery manufacturing (A)"
+    },
+    {
+      "Key": "335912",
+      "Desc": "Primary battery manufacturing (A)"
+    },
+    {
+      "Key": "335920",
+      "Desc": "Communication and energy wire and cable manufacturing (A)"
+    },
+    {
+      "Key": "335930",
+      "Desc": "Wiring device manufacturing (A)"
+    },
+    {
+      "Key": "335991",
+      "Desc": "Carbon and graphite product manufacturing (A)"
+    },
+    {
+      "Key": "335999",
+      "Desc": "All other miscellaneous electrical equipment and component manufacturing (A)"
+    },
+    {
+      "Key": "336111",
+      "Desc": "Automobile manufacturing (A)"
+    },
+    {
+      "Key": "336112",
+      "Desc": "Light truck and utility vehicle manufacturing (A)"
+    },
+    {
+      "Key": "33612",
+      "Desc": "Heavy duty truck manufacturing (A)"
+    },
+    {
+      "Key": "336120",
+      "Desc": "Heavy duty truck manufacturing (A)"
+    },
+    {
+      "Key": "3361MV",
+      "Desc": "Motor vehicles, bodies and trailers, and parts (A)"
+    },
+    {
+      "Key": "336211",
+      "Desc": "Motor vehicle body manufacturing (A)"
+    },
+    {
+      "Key": "336212",
+      "Desc": "Truck trailer manufacturing (A)"
+    },
+    {
+      "Key": "336213",
+      "Desc": "Motor home manufacturing (A)"
+    },
+    {
+      "Key": "336214",
+      "Desc": "Travel trailer and camper manufacturing (A)"
+    },
+    {
+      "Key": "3362BP",
+      "Desc": "Motor vehicle body, trailer, and parts manufacturing (A)"
+    },
+    {
+      "Key": "336310",
+      "Desc": "Motor vehicle gasoline engine and engine parts manufacturing (A)"
+    },
+    {
+      "Key": "336320",
+      "Desc": "Motor vehicle electrical and electronic equipment manufacturing (A)"
+    },
+    {
+      "Key": "336350",
+      "Desc": "Motor vehicle transmission and power train parts manufacturing (A)"
+    },
+    {
+      "Key": "336360",
+      "Desc": "Motor vehicle seating and interior trim manufacturing (A)"
+    },
+    {
+      "Key": "336370",
+      "Desc": "Motor vehicle metal stamping (A)"
+    },
+    {
+      "Key": "336390",
+      "Desc": "Other motor vehicle parts manufacturing (A)"
+    },
+    {
+      "Key": "3363A0",
+      "Desc": "Motor vehicle steering, suspension component (except spring), and brake systems manufacturing (A)"
+    },
+    {
+      "Key": "3364",
+      "Desc": "Aerospace product and parts manufacturing (A)"
+    },
+    {
+      "Key": "336411",
+      "Desc": "Aircraft manufacturing (A)"
+    },
+    {
+      "Key": "336412",
+      "Desc": "Aircraft engine and engine parts manufacturing (A)"
+    },
+    {
+      "Key": "336413",
+      "Desc": "Other aircraft parts and auxiliary equipment manufacturing (A)"
+    },
+    {
+      "Key": "336414",
+      "Desc": "Guided missile and space vehicle manufacturing (A)"
+    },
+    {
+      "Key": "33641A",
+      "Desc": "Propulsion units and parts for space vehicles and guided missiles (A)"
+    },
+    {
+      "Key": "3364OT",
+      "Desc": "Other transportation equipment (A)"
+    },
+    {
+      "Key": "336500",
+      "Desc": "Railroad rolling stock manufacturing (A)"
+    },
+    {
+      "Key": "3365AO",
+      "Desc": "All other transportation equipment manufacturing (A)"
+    },
+    {
+      "Key": "336611",
+      "Desc": "Ship building and repairing (A)"
+    },
+    {
+      "Key": "336612",
+      "Desc": "Boat building (A)"
+    },
+    {
+      "Key": "336991",
+      "Desc": "Motorcycle, bicycle, and parts manufacturing (A)"
+    },
+    {
+      "Key": "336992",
+      "Desc": "Military armored vehicle, tank, and tank component manufacturing (A)"
+    },
+    {
+      "Key": "336999",
+      "Desc": "All other transportation equipment manufacturing (A)"
+    },
+    {
+      "Key": "337",
+      "Desc": "Furniture and related products (A)"
+    },
+    {
+      "Key": "337110",
+      "Desc": "Wood kitchen cabinet and countertop manufacturing (A)"
+    },
+    {
+      "Key": "337121",
+      "Desc": "Upholstered household furniture manufacturing (A)"
+    },
+    {
+      "Key": "337122",
+      "Desc": "Nonupholstered wood household furniture manufacturing (A)"
+    },
+    {
+      "Key": "337127",
+      "Desc": "Institutional furniture manufacturing (A)"
+    },
+    {
+      "Key": "33712N",
+      "Desc": "Other household nonupholstered furniture (A)"
+    },
+    {
+      "Key": "337215",
+      "Desc": "Showcase, partition, shelving, and locker manufacturing (A)"
+    },
+    {
+      "Key": "33721A",
+      "Desc": "Office furniture and custom architectural woodwork and millwork manufacturing (A)"
+    },
+    {
+      "Key": "337900",
+      "Desc": "Other furniture related product manufacturing (A)"
+    },
+    {
+      "Key": "339",
+      "Desc": "Miscellaneous manufacturing (A)"
+    },
+    {
+      "Key": "3391",
+      "Desc": "Medical equipment and supplies manufacturing (A)"
+    },
+    {
+      "Key": "339112",
+      "Desc": "Surgical and medical instrument manufacturing (A)"
+    },
+    {
+      "Key": "339113",
+      "Desc": "Surgical appliance and supplies manufacturing (A)"
+    },
+    {
+      "Key": "339114",
+      "Desc": "Dental equipment and supplies manufacturing (A)"
+    },
+    {
+      "Key": "339115",
+      "Desc": "Ophthalmic goods manufacturing (A)"
+    },
+    {
+      "Key": "339116",
+      "Desc": "Dental laboratories (A)"
+    },
+    {
+      "Key": "3399",
+      "Desc": "Other miscellaneous manufacturing (A)"
+    },
+    {
+      "Key": "339910",
+      "Desc": "Jewelry and silverware manufacturing (A)"
+    },
+    {
+      "Key": "339920",
+      "Desc": "Sporting and athletic goods manufacturing (A)"
+    },
+    {
+      "Key": "339930",
+      "Desc": "Doll, toy, and game manufacturing (A)"
+    },
+    {
+      "Key": "339940",
+      "Desc": "Office supplies (except paper) manufacturing (A)"
+    },
+    {
+      "Key": "339950",
+      "Desc": "Sign manufacturing (A)"
+    },
+    {
+      "Key": "339990",
+      "Desc": "All other miscellaneous manufacturing (A)"
+    },
+    {
+      "Key": "33DG",
+      "Desc": "Durable goods (A)"
+    },
+    {
+      "Key": "42",
+      "Desc": "Wholesale trade (A)"
+    },
+    {
+      "Key": "4200ID",
+      "Desc": "Customs duties (A)"
+    },
+    {
+      "Key": "4231",
+      "Desc": "Motor vehicle and motor vehicle parts and supplies merchant wholesalers (A)"
+    },
+    {
+      "Key": "423100",
+      "Desc": "Motor vehicle and motor vehicle parts and supplies (A)"
+    },
+    {
+      "Key": "4234",
+      "Desc": "Professional and commercial equipment and supplies merchant wholesalers (A)"
+    },
+    {
+      "Key": "423400",
+      "Desc": "Professional and commercial equipment and supplies (A)"
+    },
+    {
+      "Key": "4236",
+      "Desc": "Household appliances and electrical and electronic goods merchant wholesalers (A)"
+    },
+    {
+      "Key": "423600",
+      "Desc": "Household appliances and electrical and electronic goods (A)"
+    },
+    {
+      "Key": "4238",
+      "Desc": "Machinery, equipment, and supplies merchant wholesalers (A)"
+    },
+    {
+      "Key": "423800",
+      "Desc": "Machinery, equipment, and supplies (A)"
+    },
+    {
+      "Key": "423A00",
+      "Desc": "Other durable goods merchant wholesalers (A)"
+    },
+    {
+      "Key": "423X",
+      "Desc": "Other durable goods merchant wholesalers (A)"
+    },
+    {
+      "Key": "4242",
+      "Desc": "Drugs and druggists sundries merchant wholesalers (A)"
+    },
+    {
+      "Key": "424200",
+      "Desc": "Drugs and druggists' sundries (A)"
+    },
+    {
+      "Key": "4244",
+      "Desc": "Grocery and related products merchant wholesalers (A)"
+    },
+    {
+      "Key": "424400",
+      "Desc": "Grocery and related product wholesalers (A)"
+    },
+    {
+      "Key": "4247",
+      "Desc": "Petroleum and petroleum products merchant wholesalers (A)"
+    },
+    {
+      "Key": "424700",
+      "Desc": "Petroleum and petroleum products (A)"
+    },
+    {
+      "Key": "424A00",
+      "Desc": "Other nondurable goods merchant wholesalers (A)"
+    },
+    {
+      "Key": "424X",
+      "Desc": "Other nondurable goods merchant wholesalers (A)"
+    },
+    {
+      "Key": "425",
+      "Desc": "Wholesale electronic markets and agents and brokers (A)"
+    },
+    {
+      "Key": "425000",
+      "Desc": "Wholesale electronic markets and agents and brokers (A)"
+    },
+    {
+      "Key": "42ID",
+      "Desc": "Customs duties (A)"
+    },
+    {
+      "Key": "441",
+      "Desc": "Motor vehicle and parts dealers (A)"
+    },
+    {
+      "Key": "441000",
+      "Desc": "Motor vehicle and parts dealers (A)"
+    },
+    {
+      "Key": "442000",
+      "Desc": "Furniture and home furnishings stores (A)"
+    },
+    {
+      "Key": "443000",
+      "Desc": "Electronics and appliance stores (A)"
+    },
+    {
+      "Key": "444",
+      "Desc": "Building material and garden equipment and supplies dealers (A)"
+    },
+    {
+      "Key": "444000",
+      "Desc": "Building material and garden equipment and supplies dealers (A)"
+    },
+    {
+      "Key": "445",
+      "Desc": "Food and beverage stores (A)"
+    },
+    {
+      "Key": "445000",
+      "Desc": "Food and beverage stores (A)"
+    },
+    {
+      "Key": "446",
+      "Desc": "Health and personal care stores (A)"
+    },
+    {
+      "Key": "446000",
+      "Desc": "Health and personal care stores (A)"
+    },
+    {
+      "Key": "447",
+      "Desc": "Gasoline stations (A)"
+    },
+    {
+      "Key": "447000",
+      "Desc": "Gasoline stations (A)"
+    },
+    {
+      "Key": "448",
+      "Desc": "Clothing and clothing accessories stores (A)"
+    },
+    {
+      "Key": "448000",
+      "Desc": "Clothing and clothing accessories stores (A)"
+    },
+    {
+      "Key": "44RT",
+      "Desc": "Retail trade (A)"
+    },
+    {
+      "Key": "451000",
+      "Desc": "Sporting goods, hobby, book, and music stores (A)"
+    },
+    {
+      "Key": "452",
+      "Desc": "General merchandise stores (A)"
+    },
+    {
+      "Key": "452000",
+      "Desc": "General merchandise stores (A)"
+    },
+    {
+      "Key": "453000",
+      "Desc": "Miscellaneous store retailers (A)"
+    },
+    {
+      "Key": "454",
+      "Desc": "Nonstore retailers (A)"
+    },
+    {
+      "Key": "454000",
+      "Desc": "Nonstore retailers (A)"
+    },
+    {
+      "Key": "481",
+      "Desc": "Air transportation (A)"
+    },
+    {
+      "Key": "481000",
+      "Desc": "Air transportation (A)"
+    },
+    {
+      "Key": "482",
+      "Desc": "Rail transportation (A)"
+    },
+    {
+      "Key": "482000",
+      "Desc": "Rail transportation (A)"
+    },
+    {
+      "Key": "483",
+      "Desc": "Water transportation (A)"
+    },
+    {
+      "Key": "483000",
+      "Desc": "Water transportation (A)"
+    },
+    {
+      "Key": "484",
+      "Desc": "Truck transportation (A)"
+    },
+    {
+      "Key": "484000",
+      "Desc": "Truck transportation (A)"
+    },
+    {
+      "Key": "485",
+      "Desc": "Transit and ground passenger transportation (A)"
+    },
+    {
+      "Key": "485000",
+      "Desc": "Transit and ground passenger transportation (A)"
+    },
+    {
+      "Key": "486",
+      "Desc": "Pipeline transportation (A)"
+    },
+    {
+      "Key": "486000",
+      "Desc": "Pipeline transportation (A)"
+    },
+    {
+      "Key": "487OS",
+      "Desc": "Other transportation and support activities (A)"
+    },
+    {
+      "Key": "48A",
+      "Desc": "Scenic and sightseeing transportation and support activities (A)"
+    },
+    {
+      "Key": "48A000",
+      "Desc": "Scenic and sightseeing transportation and support activities for transportation (A)"
+    },
+    {
+      "Key": "48TW",
+      "Desc": "Transportation and warehousing (A)"
+    },
+    {
+      "Key": "491000",
+      "Desc": "Postal service (A)"
+    },
+    {
+      "Key": "492",
+      "Desc": "Couriers and messengers (A)"
+    },
+    {
+      "Key": "492000",
+      "Desc": "Couriers and messengers (A)"
+    },
+    {
+      "Key": "493",
+      "Desc": "Warehousing and storage (A)"
+    },
+    {
+      "Key": "493000",
+      "Desc": "Warehousing and storage (A)"
+    },
+    {
+      "Key": "4A0",
+      "Desc": "Other retail (A)"
+    },
+    {
+      "Key": "4A0X",
+      "Desc": "All other retail (A)"
+    },
+    {
+      "Key": "51",
+      "Desc": "Information (A)"
+    },
+    {
+      "Key": "511",
+      "Desc": "Publishing industries, except internet (includes software) (A)"
+    },
+    {
+      "Key": "5111",
+      "Desc": "Newspaper, periodical, book, and directory publishers (A)"
+    },
+    {
+      "Key": "511110",
+      "Desc": "Newspaper publishers (A)"
+    },
+    {
+      "Key": "511120",
+      "Desc": "Periodical Publishers (A)"
+    },
+    {
+      "Key": "511130",
+      "Desc": "Book publishers (A)"
+    },
+    {
+      "Key": "5111A0",
+      "Desc": "Directory, mailing list, and other publishers (A)"
+    },
+    {
+      "Key": "5112",
+      "Desc": "Software publishers (A)"
+    },
+    {
+      "Key": "511200",
+      "Desc": "Software publishers (A)"
+    },
+    {
+      "Key": "512",
+      "Desc": "Motion picture and sound recording industries (A)"
+    },
+    {
+      "Key": "512100",
+      "Desc": "Motion picture and video industries (A)"
+    },
+    {
+      "Key": "512200",
+      "Desc": "Sound recording industries (A)"
+    },
+    {
+      "Key": "513",
+      "Desc": "Broadcasting and telecommunications (A)"
+    },
+    {
+      "Key": "514",
+      "Desc": "Data processing, internet publishing, and other information services (A)"
+    },
+    {
+      "Key": "515",
+      "Desc": "Broadcasting (except Internet) (A)"
+    },
+    {
+      "Key": "515100",
+      "Desc": "Radio and television broadcasting (A)"
+    },
+    {
+      "Key": "515200",
+      "Desc": "Cable and other subscription programming (A)"
+    },
+    {
+      "Key": "5171",
+      "Desc": "Wired telecommunications carriers (A)"
+    },
+    {
+      "Key": "517110",
+      "Desc": "Wired telecommunications carriers (A)"
+    },
+    {
+      "Key": "5172",
+      "Desc": "Wireless telecommunications carriers (except satellites) (A)"
+    },
+    {
+      "Key": "517210",
+      "Desc": "Wireless telecommunications carriers (except satellite) (A)"
+    },
+    {
+      "Key": "5174OT",
+      "Desc": "Other telecommunications, including satellite (A)"
+    },
+    {
+      "Key": "517A00",
+      "Desc": "Satellite, telecommunications resellers, and all other telecommunications (A)"
+    },
+    {
+      "Key": "518",
+      "Desc": "Data processing, hosting, and related services (A)"
+    },
+    {
+      "Key": "518200",
+      "Desc": "Data processing, hosting, and related services (A)"
+    },
+    {
+      "Key": "519",
+      "Desc": "Other information services (A)"
+    },
+    {
+      "Key": "519130",
+      "Desc": "Internet publishing and broadcasting and Web search portals (A)"
+    },
+    {
+      "Key": "5191A0",
+      "Desc": "News syndicates, libraries, archives and all other information services (A)"
+    },
+    {
+      "Key": "52",
+      "Desc": "Finance and insurance (A)"
+    },
+    {
+      "Key": "521CI",
+      "Desc": "Federal Reserve banks, credit intermediation, and related activities (A)"
+    },
+    {
+      "Key": "522A00",
+      "Desc": "Nondepository credit intermediation and related activities (A)"
+    },
+    {
+      "Key": "523",
+      "Desc": "Securities, commodity contracts, and investments (A)"
+    },
+    {
+      "Key": "523900",
+      "Desc": "Other financial investment activities (A)"
+    },
+    {
+      "Key": "523A00",
+      "Desc": "Securities and commodity contracts intermediation and brokerage (A)"
+    },
+    {
+      "Key": "524",
+      "Desc": "Insurance carriers and related activities (A)"
+    },
+    {
+      "Key": "524113",
+      "Desc": "Direct life insurance carriers (A)"
+    },
+    {
+      "Key": "5241XX",
+      "Desc": "Insurance carriers, except direct life insurance (A)"
+    },
+    {
+      "Key": "5242",
+      "Desc": "Agencies, brokerages, and other insurance related activities (A)"
+    },
+    {
+      "Key": "5242",
+      "Desc": "Insurance agencies, brokerages, and related activities (A)"
+    },
+    {
+      "Key": "525",
+      "Desc": "Funds, trusts, and other financial vehicles (A)"
+    },
+    {
+      "Key": "52A000",
+      "Desc": "Monetary authorities and depository credit intermediation (A)"
+    },
+    {
+      "Key": "53",
+      "Desc": "Real estate and rental and leasing (A)"
+    },
+    {
+      "Key": "531",
+      "Desc": "Real estate (A)"
+    },
+    {
+      "Key": "531HSO",
+      "Desc": "Owner-occupied housing (A)"
+    },
+    {
+      "Key": "531HST",
+      "Desc": "Tenant-occupied housing (A)"
+    },
+    {
+      "Key": "531ORE",
+      "Desc": "Other real estate (A)"
+    },
+    {
+      "Key": "532100",
+      "Desc": "Automotive equipment rental and leasing (A)"
+    },
+    {
+      "Key": "532400",
+      "Desc": "Commercial and industrial machinery and equipment rental and leasing (A)"
+    },
+    {
+      "Key": "532A00",
+      "Desc": "General and consumer goods rental (A)"
+    },
+    {
+      "Key": "532RL",
+      "Desc": "Rental and leasing services and lessors of intangible assets (A)"
+    },
+    {
+      "Key": "533000",
+      "Desc": "Lessors of nonfinancial intangible assets (A)"
+    },
+    {
+      "Key": "54",
+      "Desc": "Professional, scientific, and technical services (A)"
+    },
+    {
+      "Key": "5411",
+      "Desc": "Legal services (A)"
+    },
+    {
+      "Key": "541100",
+      "Desc": "Legal services (A)"
+    },
+    {
+      "Key": "5412",
+      "Desc": "Accounting, tax preparation, bookkeeping, and payroll services (A)"
+    },
+    {
+      "Key": "541200",
+      "Desc": "Accounting, tax preparation, bookkeeping, and payroll services (A)"
+    },
+    {
+      "Key": "5412OP",
+      "Desc": "Miscellaneous professional, scientific, and technical services (A)"
+    },
+    {
+      "Key": "5413",
+      "Desc": "Architectural, engineering, and related services (A)"
+    },
+    {
+      "Key": "541300",
+      "Desc": "Architectural, engineering, and related services (A)"
+    },
+    {
+      "Key": "541400",
+      "Desc": "Specialized design services (A)"
+    },
+    {
+      "Key": "5415",
+      "Desc": "Computer systems design and related services (A)"
+    },
+    {
+      "Key": "541511",
+      "Desc": "Custom computer programming services (A)"
+    },
+    {
+      "Key": "541512",
+      "Desc": "Computer systems design services (A)"
+    },
+    {
+      "Key": "54151A",
+      "Desc": "Other computer related services, including facilities management (A)"
+    },
+    {
+      "Key": "5416",
+      "Desc": "Management, scientific, and technical consulting services (A)"
+    },
+    {
+      "Key": "541610",
+      "Desc": "Management consulting services (A)"
+    },
+    {
+      "Key": "5416A0",
+      "Desc": "Environmental and other technical consulting services (A)"
+    },
+    {
+      "Key": "5417",
+      "Desc": "Scientific research and development services (A)"
+    },
+    {
+      "Key": "541700",
+      "Desc": "Scientific research and development services (A)"
+    },
+    {
+      "Key": "5418",
+      "Desc": "Advertising, public relations, and related services (A)"
+    },
+    {
+      "Key": "541800",
+      "Desc": "Advertising, public relations, and related services (A)"
+    },
+    {
+      "Key": "541920",
+      "Desc": "Photographic services (A)"
+    },
+    {
+      "Key": "541940",
+      "Desc": "Veterinary services (A)"
+    },
+    {
+      "Key": "5419A0",
+      "Desc": "All other miscellaneous professional, scientific, and technical services (A)"
+    },
+    {
+      "Key": "541X",
+      "Desc": "Specialized design services and other professional, scientific, and technical services (A)"
+    },
+    {
+      "Key": "55",
+      "Desc": "Management of companies and enterprises (A)"
+    },
+    {
+      "Key": "550000",
+      "Desc": "Management of companies and enterprises (A)"
+    },
+    {
+      "Key": "56",
+      "Desc": "Administrative and waste management services (A)"
+    },
+    {
+      "Key": "561",
+      "Desc": "Administrative and support services (A)"
+    },
+    {
+      "Key": "561100",
+      "Desc": "Office administrative services (A)"
+    },
+    {
+      "Key": "561200",
+      "Desc": "Facilities support services (A)"
+    },
+    {
+      "Key": "5613",
+      "Desc": "Employment services (A)"
+    },
+    {
+      "Key": "561300",
+      "Desc": "Employment services (A)"
+    },
+    {
+      "Key": "561400",
+      "Desc": "Business support services (A)"
+    },
+    {
+      "Key": "561500",
+      "Desc": "Travel arrangement and reservation services (A)"
+    },
+    {
+      "Key": "561600",
+      "Desc": "Investigation and security services (A)"
+    },
+    {
+      "Key": "5617",
+      "Desc": "Services to buildings and dwellings (A)"
+    },
+    {
+      "Key": "561700",
+      "Desc": "Services to buildings and dwellings (A)"
+    },
+    {
+      "Key": "561900",
+      "Desc": "Other support services (A)"
+    },
+    {
+      "Key": "561X",
+      "Desc": "Other administrative and support services (A)"
+    },
+    {
+      "Key": "562",
+      "Desc": "Waste management and remediation services (A)"
+    },
+    {
+      "Key": "562000",
+      "Desc": "Waste management and remediation services (A)"
+    },
+    {
+      "Key": "6",
+      "Desc": "Educational services, health care, and social assistance (A)"
+    },
+    {
+      "Key": "61",
+      "Desc": "Educational services (A)"
+    },
+    {
+      "Key": "611100",
+      "Desc": "Elementary and secondary schools (A)"
+    },
+    {
+      "Key": "611A00",
+      "Desc": "Junior colleges, colleges, universities, and professional schools (A)"
+    },
+    {
+      "Key": "611B00",
+      "Desc": "Other educational services (A)"
+    },
+    {
+      "Key": "62",
+      "Desc": "Health care and social assistance (A)"
+    },
+    {
+      "Key": "621",
+      "Desc": "Ambulatory health care services (A)"
+    },
+    {
+      "Key": "6211",
+      "Desc": "Offices of physicians (A)"
+    },
+    {
+      "Key": "621100",
+      "Desc": "Offices of physicians (A)"
+    },
+    {
+      "Key": "6212",
+      "Desc": "Offices of dentists (A)"
+    },
+    {
+      "Key": "621200",
+      "Desc": "Offices of dentists (A)"
+    },
+    {
+      "Key": "6213",
+      "Desc": "Offices of other health practitioners (A)"
+    },
+    {
+      "Key": "621300",
+      "Desc": "Offices of other health practitioners (A)"
+    },
+    {
+      "Key": "6214",
+      "Desc": "Outpatient care centers (A)"
+    },
+    {
+      "Key": "621400",
+      "Desc": "Outpatient care centers (A)"
+    },
+    {
+      "Key": "621500",
+      "Desc": "Medical and diagnostic laboratories (A)"
+    },
+    {
+      "Key": "6215OH",
+      "Desc": "Other ambulatory health care services (A)"
+    },
+    {
+      "Key": "621600",
+      "Desc": "Home health care services (A)"
+    },
+    {
+      "Key": "621900",
+      "Desc": "Other ambulatory health care services (A)"
+    },
+    {
+      "Key": "622",
+      "Desc": "Hospitals (A)"
+    },
+    {
+      "Key": "622000",
+      "Desc": "Hospitals (A)"
+    },
+    {
+      "Key": "622HO",
+      "Desc": "Hospitals and nursing and residential care facilities (A,Q)"
+    },
+    {
+      "Key": "623",
+      "Desc": "Nursing and residential care facilities (A)"
+    },
+    {
+      "Key": "623A00",
+      "Desc": "Nursing and community care facilities (A)"
+    },
+    {
+      "Key": "623B00",
+      "Desc": "Residential mental health, substance abuse, and other residential care facilities (A)"
+    },
+    {
+      "Key": "624",
+      "Desc": "Social assistance (A)"
+    },
+    {
+      "Key": "624100",
+      "Desc": "Individual and family services (A)"
+    },
+    {
+      "Key": "624400",
+      "Desc": "Child day care services (A)"
+    },
+    {
+      "Key": "624A00",
+      "Desc": "Community food, housing, and other relief services, including rehabilitation services (A)"
+    },
+    {
+      "Key": "7",
+      "Desc": "Arts, entertainment, recreation, accommodation, and food services (A)"
+    },
+    {
+      "Key": "71",
+      "Desc": "Arts, entertainment, and recreation (A)"
+    },
+    {
+      "Key": "711100",
+      "Desc": "Performing arts companies (A)"
+    },
+    {
+      "Key": "711200",
+      "Desc": "Spectator sports (A)"
+    },
+    {
+      "Key": "711500",
+      "Desc": "Independent artists, writers, and performers (A)"
+    },
+    {
+      "Key": "711A00",
+      "Desc": "Promoters of performing arts and sports and agents for public figures (A)"
+    },
+    {
+      "Key": "711AS",
+      "Desc": "Performing arts, spectator sports, museums, and related activities (A)"
+    },
+    {
+      "Key": "712000",
+      "Desc": "Museums, historical sites, zoos, and parks (A)"
+    },
+    {
+      "Key": "713",
+      "Desc": "Amusements, gambling, and recreation industries (A)"
+    },
+    {
+      "Key": "713100",
+      "Desc": "Amusement parks and arcades (A)"
+    },
+    {
+      "Key": "713200",
+      "Desc": "Gambling industries (except casino hotels) (A)"
+    },
+    {
+      "Key": "713900",
+      "Desc": "Other amusement and recreation industries (A)"
+    },
+    {
+      "Key": "72",
+      "Desc": "Accommodation and food services (A)"
+    },
+    {
+      "Key": "721",
+      "Desc": "Accommodation (A)"
+    },
+    {
+      "Key": "721000",
+      "Desc": "Accommodation (A)"
+    },
+    {
+      "Key": "722",
+      "Desc": "Food services and drinking places (A)"
+    },
+    {
+      "Key": "722110",
+      "Desc": "Full-service restaurants (A)"
+    },
+    {
+      "Key": "722211",
+      "Desc": "Limited-service restaurants (A)"
+    },
+    {
+      "Key": "722A00",
+      "Desc": "All other food and drinking places (A)"
+    },
+    {
+      "Key": "81",
+      "Desc": "Other services, except government (A)"
+    },
+    {
+      "Key": "811",
+      "Desc": "Repair and maintenance (A)"
+    },
+    {
+      "Key": "811100",
+      "Desc": "Automotive repair and maintenance (A)"
+    },
+    {
+      "Key": "811200",
+      "Desc": "Electronic and precision equipment repair and maintenance (A)"
+    },
+    {
+      "Key": "811300",
+      "Desc": "Commercial and industrial machinery and equipment repair and maintenance (A)"
+    },
+    {
+      "Key": "811400",
+      "Desc": "Personal and household goods repair and maintenance (A)"
+    },
+    {
+      "Key": "812",
+      "Desc": "Personal and laundry services (A)"
+    },
+    {
+      "Key": "812100",
+      "Desc": "Personal care services (A)"
+    },
+    {
+      "Key": "812200",
+      "Desc": "Death care services (A)"
+    },
+    {
+      "Key": "812300",
+      "Desc": "Dry-cleaning and laundry services (A)"
+    },
+    {
+      "Key": "812900",
+      "Desc": "Other personal services (A)"
+    },
+    {
+      "Key": "813",
+      "Desc": "Religious, grantmaking, civic, professional, and similar organizations (A)"
+    },
+    {
+      "Key": "813100",
+      "Desc": "Religious organizations (A)"
+    },
+    {
+      "Key": "813A00",
+      "Desc": "Grantmaking, giving, and social advocacy organizations (A)"
+    },
+    {
+      "Key": "813B00",
+      "Desc": "Civic, social, professional, and similar organizations (A)"
+    },
+    {
+      "Key": "814",
+      "Desc": "Private households (A)"
+    },
+    {
+      "Key": "814000",
+      "Desc": "Private households (A)"
+    },
+    {
+      "Key": "FIRE",
+      "Desc": "Finance, insurance, real estate, rental, and leasing (A)"
+    },
+    {
+      "Key": "G",
+      "Desc": "Government (A)"
+    },
+    {
+      "Key": "GDP",
+      "Desc": "Gross domestic product (A)"
+    },
+    {
+      "Key": "GF",
+      "Desc": "Federal (A)"
+    },
+    {
+      "Key": "GFE",
+      "Desc": "Government enterprises (A)"
+    },
+    {
+      "Key": "GFG",
+      "Desc": "Federal general government (A)"
+    },
+    {
+      "Key": "GFGD",
+      "Desc": "National defense (A)"
+    },
+    {
+      "Key": "GFGN",
+      "Desc": "Nondefense (A)"
+    },
+    {
+      "Key": "GSL",
+      "Desc": "State and local (A)"
+    },
+    {
+      "Key": "GSLE",
+      "Desc": "Government enterprises (A)"
+    },
+    {
+      "Key": "GSLG",
+      "Desc": "State and local general government (A)"
+    },
+    {
+      "Key": "GSLGE",
+      "Desc": "State and local government (educational services) (A)"
+    },
+    {
+      "Key": "GSLGE",
+      "Desc": "State and local government educational services (A)"
+    },
+    {
+      "Key": "GSLGH",
+      "Desc": "State and local government (hospitals and health services) (A)"
+    },
+    {
+      "Key": "GSLGH",
+      "Desc": "State and local government hospitals and health services (A)"
+    },
+    {
+      "Key": "GSLGO",
+      "Desc": "State and local government (other services) (A)"
+    },
+    {
+      "Key": "GSLGO",
+      "Desc": "State and local government other services (A)"
+    },
+    {
+      "Key": "HS",
+      "Desc": "Housing (A)"
+    },
+    {
+      "Key": "HSO",
+      "Desc": "Owner-occupied housing (A)"
+    },
+    {
+      "Key": "HST",
+      "Desc": "Tenant-occupied housing (A)"
+    },
+    {
+      "Key": "ICT",
+      "Desc": "Information-communications-technology-producing industries  (A)"
+    },
+    {
+      "Key": "ICT",
+      "Desc": "Information-communications-technology-producing industries <sup>4</sup> (A)"
+    },
+    {
+      "Key": "II",
+      "Desc": "All industries (A)"
+    },
+    {
+      "Key": "NABIU",
+      "Desc": "Not allocated by industry (A)"
+    },
+    {
+      "Key": "ORE",
+      "Desc": "Other real estate (A)"
+    },
+    {
+      "Key": "PGOOD",
+      "Desc": "Private goods-producing industries  (A)"
+    },
+    {
+      "Key": "PROF",
+      "Desc": "Professional and business services (A)"
+    },
+    {
+      "Key": "PSERV",
+      "Desc": "Private services-producing industries  (A)"
+    },
+    {
+      "Key": "PVT",
+      "Desc": "Private industries (A)"
+    },
+    {
+      "Key": "S00101",
+      "Desc": "Federal electric utilities (A)"
+    },
+    {
+      "Key": "S00102",
+      "Desc": "Other federal government enterprises (A)"
+    },
+    {
+      "Key": "S00201",
+      "Desc": "State and local government passenger transit (A)"
+    },
+    {
+      "Key": "S00202",
+      "Desc": "State and local government electric utilities (A)"
+    },
+    {
+      "Key": "S00203",
+      "Desc": "Other state and local government enterprises (A)"
+    },
+    {
+      "Key": "S00500",
+      "Desc": "Federal general government (defense) (A)"
+    },
+    {
+      "Key": "S00600",
+      "Desc": "Federal general government (nondefense) (A)"
+    }
+  ],
+  "TableID": [
+    {
+      "Key": "210",
+      "Desc": "U.Value Added by Industry (A)"
+    },
+    {
+      "Key": "211",
+      "Desc": "U.Value added by Industry as a Percentage of Gross Domestic Product (A)"
+    },
+    {
+      "Key": "212",
+      "Desc": "U.Chain-Type Quantity Indexes for Value Added by Industry (A)"
+    },
+    {
+      "Key": "213",
+      "Desc": "U.Percent Changes in Chain-Type Quantity Indexes for Value Added by Industry (A)"
+    },
+    {
+      "Key": "214",
+      "Desc": "U.Real Value Added by Industry (A)"
+    },
+    {
+      "Key": "215",
+      "Desc": "U.Chain-Type Price Indexes for Value Added by Industry (A)"
+    },
+    {
+      "Key": "216",
+      "Desc": "U.Percent Changes in Chain-Type Price Indexes for Value Added by Industry (A)"
+    },
+    {
+      "Key": "217",
+      "Desc": "U.Contributions to Percent Change in Real Gross Domestic Product by Industry (A)"
+    },
+    {
+      "Key": "218",
+      "Desc": "U.Contributions to Percent Change in the Chain-Type Price Index for Gross Domestic Product by Industry (A)"
+    },
+    {
+      "Key": "219",
+      "Desc": "U.Gross Output by Industry (A)"
+    },
+    {
+      "Key": "221",
+      "Desc": "U.Chain-Type Quantity Indexes for Gross Output by Industry (A)"
+    },
+    {
+      "Key": "223",
+      "Desc": "U.Percent Changes in Chain-Type Quantity Indexes for Gross Output by Industry (A)"
+    },
+    {
+      "Key": "225",
+      "Desc": "U.Chain-Type Price Indexes for Gross Output by Industry (A)"
+    },
+    {
+      "Key": "227",
+      "Desc": "U.Percent Changes in Chain-Type Price Indexes for Gross Output by Industry (A)"
+    },
+    {
+      "Key": "229",
+      "Desc": "U.Intermediate Inputs by Industry (A)"
+    },
+    {
+      "Key": "230",
+      "Desc": "U.Chain-Type Quantity Indexes for Intermediate Inputs by Industry (A)"
+    },
+    {
+      "Key": "231",
+      "Desc": "U.Percent Changes in Chain-Type Quantity Indexes for Intermediate Inputs by Industry (A)"
+    },
+    {
+      "Key": "232",
+      "Desc": "U.Chain-Type Price Indexes for Intermediate Inputs by Industry (A)"
+    },
+    {
+      "Key": "233",
+      "Desc": "U.Percent Changes in Chain-Type Price Indexes for Intermediate Inputs by Industry (A)"
+    },
+    {
+      "Key": "234",
+      "Desc": "U.Real Gross Output by Industry (A)"
+    },
+    {
+      "Key": "236",
+      "Desc": "U.Real Intermediate Inputs by Industry (A)"
+    },
+    {
+      "Key": "237",
+      "Desc": "U.Gross Output by Industry - Detail Level (A)"
+    },
+    {
+      "Key": "238",
+      "Desc": "U.Chain-Type Quantity Indexes for Gross Output by Industry - Detail Level (A)"
+    },
+    {
+      "Key": "239",
+      "Desc": "U.Percent Changes in Chain-Type Quantity Indexes for Gross Output by Industry - Detail Level (A)"
+    },
+    {
+      "Key": "240",
+      "Desc": "U.Chain-Type Price Indexes for Gross Output by Industry - Detail Level (A)"
+    },
+    {
+      "Key": "241",
+      "Desc": "U.Percent Changes in Chain-Type Price Indexes for Gross Output by Industry - Detail Level (A)"
+    },
+    {
+      "Key": "242",
+      "Desc": "U.Real Gross Output by Industry - Detail Level (A)"
+    }
+  ],
+  "Year": [
+    {
+      "Key": "1997",
+      "Desc": "1997"
+    },
+    {
+      "Key": "1998",
+      "Desc": "1998"
+    },
+    {
+      "Key": "1999",
+      "Desc": "1999"
+    },
+    {
+      "Key": "2000",
+      "Desc": "2000"
+    },
+    {
+      "Key": "2001",
+      "Desc": "2001"
+    },
+    {
+      "Key": "2002",
+      "Desc": "2002"
+    },
+    {
+      "Key": "2003",
+      "Desc": "2003"
+    },
+    {
+      "Key": "2004",
+      "Desc": "2004"
+    },
+    {
+      "Key": "2005",
+      "Desc": "2005"
+    },
+    {
+      "Key": "2006",
+      "Desc": "2006"
+    },
+    {
+      "Key": "2007",
+      "Desc": "2007"
+    },
+    {
+      "Key": "2008",
+      "Desc": "2008"
+    },
+    {
+      "Key": "2009",
+      "Desc": "2009"
+    },
+    {
+      "Key": "2010",
+      "Desc": "2010"
+    },
+    {
+      "Key": "2011",
+      "Desc": "2011"
+    },
+    {
+      "Key": "2012",
+      "Desc": "2012"
+    },
+    {
+      "Key": "2013",
+      "Desc": "2013"
+    },
+    {
+      "Key": "2014",
+      "Desc": "2014"
+    },
+    {
+      "Key": "2015",
+      "Desc": "2015"
+    },
+    {
+      "Key": "2016",
+      "Desc": "2016"
+    },
+    {
+      "Key": "2017",
+      "Desc": "2017"
+    },
+    {
+      "Key": "2018",
+      "Desc": "2018"
+    },
+    {
+      "Key": "2019",
+      "Desc": "2019"
+    },
+    {
+      "Key": "2020",
+      "Desc": "2020"
+    },
+    {
+      "Key": "2021",
+      "Desc": "2021"
+    },
+    {
+      "Key": "2022",
+      "Desc": "2022"
+    },
+    {
+      "Key": "2023",
+      "Desc": "2023"
+    },
+    {
+      "Key": "2024",
+      "Desc": "2024"
+    }
+  ]
+}

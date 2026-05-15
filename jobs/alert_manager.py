@@ -11,6 +11,7 @@ from db.models import TrendSignal, EventCluster, Item, AlertLog, Report, Analyst
 from urllib.parse import urlparse
 from processor.location_resolver import LocationResolver
 from processor.lightweight_topic import STRATEGIC_TOPICS, infer_topic_from_text
+from processor.topic_registry import CANONICAL_TOPICS, normalize_canonical_topic
 
 logging.basicConfig(level=logging.INFO)
 
@@ -60,6 +61,35 @@ def _resolve_signal_topic(sig: TrendSignal) -> str:
     return infer_topic_from_text(text, raw_topic=sig.topic)
 
 
+def _looks_like_source_label(label: str) -> bool:
+    """True when label is likely a source slug (reddit, technip) rather than a headline."""
+    if not label:
+        return True
+    s = label.strip()
+    if len(s) < 4:
+        return True
+    if " " not in s and s.islower() and len(s) <= 28:
+        return True
+    if "." in s and " " not in s and len(s) <= 48:
+        return True
+    return False
+
+
+def _resolve_display_label(sig: TrendSignal, evidence_list: List[Dict[str, str]]) -> str:
+    """Prefer news headlines over bare source/entity slugs for Alert Stream titles."""
+    label = (sig.target_label or "").strip()
+    if label and not _looks_like_source_label(label):
+        return label
+    for ev in evidence_list:
+        title = (ev.get("title") or "").strip()
+        if title and not _looks_like_source_label(title):
+            return title
+    desc = (sig.description or "").strip()
+    if desc and len(desc) >= 12:
+        return desc[:240]
+    return label or "Untitled signal"
+
+
 def _physical_intensity(sig: TrendSignal) -> float:
     """Intensity from rule-based signal engine (cluster size, source authority, keywords)."""
     meta = sig.metrics_json if isinstance(sig.metrics_json, dict) else {}
@@ -97,10 +127,14 @@ class AlertManager:
                 )
                 continue
 
-            topic = _resolve_signal_topic(sig)
+            internal_topic = _resolve_signal_topic(sig)
+            topic = normalize_canonical_topic(
+                internal_topic,
+                trend_type=sig.trend_type,
+            )
             intensity = _physical_intensity(sig)
 
-            if topic not in STRATEGIC_TOPICS:
+            if internal_topic not in STRATEGIC_TOPICS or topic not in CANONICAL_TOPICS:
                 logger.info(
                     "Alert suppressed: topic outside strategic sectors topic=%r target=%r",
                     topic,
@@ -121,6 +155,7 @@ class AlertManager:
 
             # 1. Gather Metrics for Severity
             domain_count, evidence_list, related_item_ids = await cls._get_evidence_metrics(db, sig)
+            display_label = _resolve_display_label(sig, evidence_list)
             
             # Physical path: cluster/rule intensity + URL domains (no LLM metadata required).
             if domain_count == 0 and intensity < ZERO_EVIDENCE_INTENSITY_FLOOR:
@@ -200,6 +235,8 @@ class AlertManager:
                     "scoring_breakdown": breakdown,
                     "related_item_ids": related_item_ids,
                     "description": sig.description or "",
+                    "display_title": display_label,
+                    "internal_topic": internal_topic,
             }
             if loc_detail:
                 meta_base["location_entity_id"] = loc_detail.entity_id
@@ -217,7 +254,7 @@ class AlertManager:
                 from jobs.free_alert_feed_generator import persist_free_alert_feed_item
 
                 alert_log = AlertLog(
-                    target_label=sig.target_label or "Untitled signal",
+                    target_label=display_label,
                     topic=topic,
                     trigger_type=display_trigger_type,
                     severity=severity,

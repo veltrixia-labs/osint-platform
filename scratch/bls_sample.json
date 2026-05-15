@@ -1,0 +1,473 @@
+[
+  {
+    "series_id": "WPUFD4",
+    "name": "PPI Final Demand",
+    "category": "ppi_headline",
+    "unit": "index",
+    "pro_use": "headline_producer_price_pressure",
+    "observations": [
+      {
+        "year": "2026",
+        "period": "M03",
+        "periodName": "March",
+        "latest": "true",
+        "value": "154.286",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2026",
+        "period": "M02",
+        "periodName": "February",
+        "value": "153.173",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2026",
+        "period": "M01",
+        "periodName": "January",
+        "value": "152.142",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M12",
+        "periodName": "December",
+        "value": "150.808",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M11",
+        "periodName": "November",
+        "value": "150.580",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M10",
+        "periodName": "October",
+        "value": "150.439",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M09",
+        "periodName": "September",
+        "value": "150.100",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M08",
+        "periodName": "August",
+        "value": "149.466",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M07",
+        "periodName": "July",
+        "value": "149.898",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M06",
+        "periodName": "June",
+        "value": "148.838",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M05",
+        "periodName": "May",
+        "value": "148.427",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M04",
+        "periodName": "April",
+        "value": "148.009",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M03",
+        "periodName": "March",
+        "value": "148.319",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M02",
+        "periodName": "February",
+        "value": "148.169",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M01",
+        "periodName": "January",
+        "value": "147.604",
+        "footnotes": [
+          {}
+        ]
+      }
+    ]
+  },
+  {
+    "series_id": "WPU05",
+    "name": "PPI Fuels and Related Products and Power",
+    "category": "energy_price_pressure",
+    "unit": "index",
+    "pro_use": "energy_cost_pressure",
+    "observations": [
+      {
+        "year": "2026",
+        "period": "M03",
+        "periodName": "March",
+        "latest": "true",
+        "value": "247.406",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2026",
+        "period": "M02",
+        "periodName": "February",
+        "value": "230.917",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2026",
+        "period": "M01",
+        "periodName": "January",
+        "value": "216.228",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M12",
+        "periodName": "December",
+        "value": "212.002",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M11",
+        "periodName": "November",
+        "value": "217.536",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M10",
+        "periodName": "October",
+        "value": "213.687",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M09",
+        "periodName": "September",
+        "value": "221.346",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M08",
+        "periodName": "August",
+        "value": "222.341",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M07",
+        "periodName": "July",
+        "value": "225.536",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M06",
+        "periodName": "June",
+        "value": "220.617",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M05",
+        "periodName": "May",
+        "value": "214.274",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M04",
+        "periodName": "April",
+        "value": "216.901",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M03",
+        "periodName": "March",
+        "value": "219.177",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M02",
+        "periodName": "February",
+        "value": "224.582",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M01",
+        "periodName": "January",
+        "value": "223.307",
+        "footnotes": [
+          {}
+        ]
+      }
+    ]
+  },
+  {
+    "series_id": "WPU101",
+    "name": "PPI Metals and Metal Products",
+    "category": "industrial_materials",
+    "unit": "index",
+    "pro_use": "industrial_input_cost_pressure",
+    "observations": [
+      {
+        "year": "2026",
+        "period": "M03",
+        "periodName": "March",
+        "latest": "true",
+        "value": "346.918",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2026",
+        "period": "M02",
+        "periodName": "February",
+        "value": "341.515",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2026",
+        "period": "M01",
+        "periodName": "January",
+        "value": "330.503",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M12",
+        "periodName": "December",
+        "value": "323.953",
+        "footnotes": [
+          {
+            "code": "P",
+            "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+          }
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M11",
+        "periodName": "November",
+        "value": "307.944",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M10",
+        "periodName": "October",
+        "value": "313.812",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M09",
+        "periodName": "September",
+        "value": "317.520",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M08",
+        "periodName": "August",
+        "value": "320.719",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M07",
+        "periodName": "July",
+        "value": "318.105",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M06",
+        "periodName": "June",
+        "value": "320.657",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M05",
+        "periodName": "May",
+        "value": "333.703",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M04",
+        "periodName": "April",
+        "value": "320.642",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M03",
+        "periodName": "March",
+        "value": "312.996",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M02",
+        "periodName": "February",
+        "value": "296.547",
+        "footnotes": [
+          {}
+        ]
+      },
+      {
+        "year": "2025",
+        "period": "M01",
+        "periodName": "January",
+        "value": "286.655",
+        "footnotes": [
+          {}
+        ]
+      }
+    ]
+  }
+]
