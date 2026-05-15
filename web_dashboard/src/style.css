@@ -5050,21 +5050,38 @@ p {
   gap: 0.5rem;
   transition: var(--transition-standard);
   position: relative;
-  border-left: 3px solid var(--topic-color, var(--border));
+  /* Topic is the only colored edge — no top severity stripe */
+  border-left: 4px solid var(--topic-color, var(--border));
 }
 
 .alert-card-compact:hover {
   background: color-mix(in srgb, var(--topic-color, var(--accent)) 6%, rgba(22, 27, 34, 0.6));
   border-color: color-mix(in srgb, var(--topic-color, var(--accent)) 35%, var(--border));
+  border-left-color: var(--topic-color, var(--border));
 }
 
-/* Severity: badge + subtle top accent only (topic owns left border). */
+/* Severity: badge (+ optional subtle wash for critical only). */
 .alert-card-compact.severity-critical {
-  box-shadow: inset 0 2px 0 0 color-mix(in srgb, var(--danger) 85%, transparent);
+  background: color-mix(in srgb, var(--danger) 5%, rgba(22, 27, 34, 0.6));
+  box-shadow: -6px 0 14px -6px color-mix(in srgb, var(--danger) 22%, transparent);
 }
 
-.alert-card-compact.severity-elevated {
-  box-shadow: inset 0 2px 0 0 color-mix(in srgb, #d29922 70%, transparent);
+.severity-badge.critical {
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.severity-badge.elevated {
+  background: color-mix(in srgb, #d29922 18%, transparent);
+  color: #d29922;
+  border: 1px solid color-mix(in srgb, #d29922 40%, transparent);
+}
+
+.severity-badge.watch {
+  background: rgba(139, 148, 158, 0.12);
+  color: #8b949e;
+  border: 1px solid rgba(139, 148, 158, 0.25);
 }
 
 .alert-headline-skeleton {
@@ -5098,7 +5115,7 @@ p {
 
 .meta-item-topic {
   font-weight: 700;
-  color: var(--topic-color, var(--accent));
+  color: var(--topic-color);
   opacity: 0.9;
 }
 
@@ -5108,8 +5125,9 @@ p {
   letter-spacing: 0.04em;
   padding: 2px 8px;
   border-radius: 4px;
-  border: 1px solid color-mix(in srgb, var(--topic-color, var(--accent)) 35%, transparent);
-  background: color-mix(in srgb, var(--topic-color, var(--accent)) 12%, transparent);
+  color: var(--topic-color);
+  border: 1px solid color-mix(in srgb, var(--topic-color) 35%, transparent);
+  background: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
 
 .alert-content-terminal {
@@ -5548,10 +5566,17 @@ p {
   margin-bottom: 0;
   overflow: visible;
   min-height: 100%;
+  border-left: 4px solid var(--topic-color, var(--border));
+}
+
+.pro-brief-card.cb-brief-card::before {
+  display: none;
 }
 
 .pro-brief-card.cb-brief-card:hover {
   transform: translateY(-2px);
+  border-left-color: var(--topic-color, var(--border));
+  border-color: color-mix(in srgb, var(--topic-color, var(--border)) 35%, var(--border));
 }
 
 .cb-brief-card-head {
@@ -6610,37 +6635,37 @@ body.cb-modal-scroll-lock {
 .topic-market-sentiment,
 .domain-crypto,
 .domain-global-market {
-  --domain-accent: #58a6ff;
-  --domain-bg: color-mix(in srgb, #58a6ff 12%, transparent);
   --topic-color: #58a6ff;
+  --domain-accent: var(--topic-color);
+  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
 
 .topic-energy-resource-risk,
 .domain-energy {
-  --domain-accent: #d29922;
-  --domain-bg: color-mix(in srgb, #d29922 12%, transparent);
   --topic-color: #d29922;
+  --domain-accent: var(--topic-color);
+  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
 
 .topic-supply-chain-intelligence,
 .domain-supply-chain {
-  --domain-accent: #3fb950;
-  --domain-bg: color-mix(in srgb, #3fb950 12%, transparent);
   --topic-color: #3fb950;
+  --domain-accent: var(--topic-color);
+  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
 
 .topic-ai-semiconductor-intelligence,
 .domain-ai-semi {
-  --domain-accent: #bc8cff;
-  --domain-bg: color-mix(in srgb, #bc8cff 12%, transparent);
   --topic-color: #bc8cff;
+  --domain-accent: var(--topic-color);
+  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
 
 .topic-defense-technology,
 .domain-defense {
-  --domain-accent: #f85149;
-  --domain-bg: color-mix(in srgb, #f85149 12%, transparent);
   --topic-color: #f85149;
+  --domain-accent: var(--topic-color);
+  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
 
 /* Pro Hub Layout */
@@ -6693,9 +6718,9 @@ body.cb-modal-scroll-lock {
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: var(--domain-bg, color-mix(in srgb, var(--topic-color, #8b949e) 12%, transparent));
-  color: var(--domain-accent, var(--topic-color, #8b949e));
-  border: 1px solid color-mix(in srgb, var(--domain-accent, var(--topic-color, #8b949e)) 35%, transparent);
+  background: color-mix(in srgb, var(--topic-color) 12%, transparent);
+  color: var(--topic-color);
+  border: 1px solid color-mix(in srgb, var(--topic-color) 35%, transparent);
 }
 
 .domain-chips-container {
@@ -6743,23 +6768,18 @@ body.cb-modal-scroll-lock {
   position: relative;
   overflow: hidden;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 4px solid var(--topic-color, var(--border));
 }
 
-/* Subtle accent border on top */
+/* Topic color on left edge only — no top stripe (avoids corner color clash). */
 .pro-brief-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--domain-accent);
-  opacity: 0.8;
+  display: none;
 }
 
 .pro-brief-card:hover {
   transform: translateY(-2px);
-  border-color: var(--domain-accent);
+  border-left-color: var(--topic-color, var(--border));
+  border-color: color-mix(in srgb, var(--topic-color, var(--border)) 35%, var(--border));
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 15px var(--domain-bg);
 }
 

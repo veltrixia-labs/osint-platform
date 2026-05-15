@@ -1,5 +1,5 @@
 import { type Alert } from '../api';
-import { getTopicColor, getTopicDisplayLabel } from '../topics';
+import { getTopicColor, getTopicDisplayLabel, getTopicCssVars } from '../topics';
 import { resolveAlertHeadline } from '../alert_display';
 
 /**
@@ -118,7 +118,6 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
     }
 
     container.innerHTML = sortedAlerts.map(alert => {
-        const topicColor = getTopicColor(alert.topic);
         const topicLabel = getTopicDisplayLabel(alert.topic);
         const headline = resolveAlertHeadline(alert);
         const severityClass = alert.severity.toLowerCase();
@@ -184,7 +183,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         `;
 
         return `
-            <div class="alert-card-compact severity-${severityClass} ${alert.is_locked ? 'locked' : ''}" data-id="${alert.id}" style="--topic-color: ${topicColor};">
+            <div class="alert-card-compact severity-${severityClass} ${alert.is_locked ? 'locked' : ''}" data-id="${alert.id}" style="${getTopicCssVars(alert.topic)}">
                 ${cardContent}
             </div>
         `;
