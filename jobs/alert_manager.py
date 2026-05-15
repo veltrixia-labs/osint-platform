@@ -240,33 +240,33 @@ class AlertManager:
             alert_log.metadata_json["backbone_discovery_status"] = "processing"
             alert_log.metadata_json["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
             flag_modified(alert_log, "metadata_json")
-            await db.commit() 
-            await db.refresh(alert_log)
 
-            # Fire-and-forget background task
-            import os
-            title = alert_log.target_label
-            summary = alert_log.metadata_json.get("description", f"Automated trigger on {alert_log.topic}")
-            
-            enable_ai_discovery = os.getenv("ENABLE_AI_DISCOVERY", "false").lower() == "true"
-            
-            if enable_ai_discovery:
-                logger.info(f"[Antigravity] Direct AI Analysis triggered for {alert_log.id}")
-                task = asyncio.create_task(ImpactDiscoveryEngine(None).run_discovery(uuid.uuid4(), title, summary, alert_log.id))
-                
-                # [v14.3] Add to global set and bind callback to prevent premature garbage collection
-                _bg_tasks.add(task)
-                task.add_done_callback(_bg_tasks.discard)
-            else:
-                logger.info("AI discovery disabled; skipping ImpactDiscoveryEngine task.")
-            
-            # --- Auto-generate Free Alert Feed Markdown/JSON ---
+            # Context Briefs: rule-based payload only (no LLM / classify required).
             try:
                 from jobs.free_alert_feed_generator import persist_free_alert_feed_item
-                await persist_free_alert_feed_item(db, alert_log)
+                await persist_free_alert_feed_item(db, alert_log, commit=False)
             except Exception as e:
-                logger.warning(f"Failed to persist Free Alert Feed item for alert {alert_log.id}: {e}")
-            # ---------------------------------------------------
+                logger.exception(
+                    "Failed to persist Free Alert Feed for alert %s: %s",
+                    alert_log.id,
+                    e,
+                )
+
+            await db.commit()
+            await db.refresh(alert_log)
+
+            title = alert_log.target_label
+            summary = alert_log.metadata_json.get("description", f"Automated trigger on {alert_log.topic}")
+            enable_ai_discovery = os.getenv("ENABLE_AI_DISCOVERY", "false").lower() == "true"
+            if enable_ai_discovery:
+                logger.info(f"[Antigravity] Direct AI Analysis triggered for {alert_log.id}")
+                task = asyncio.create_task(
+                    ImpactDiscoveryEngine(None).run_discovery(
+                        uuid.uuid4(), title, summary, alert_log.id
+                    )
+                )
+                _bg_tasks.add(task)
+                task.add_done_callback(_bg_tasks.discard)
 
 
 
@@ -495,10 +495,16 @@ async def run_alert_manager(db):
 
     if new_sigs:
         await AlertManager.evaluate_and_send(db, new_sigs)
-        await db.commit()
         logger.info("Alert manager finished")
     else:
         logger.info("No TrendSignals found. Nothing to alert.")
+
+    try:
+        from jobs.free_alert_feed_generator import backfill_missing_free_alerts
+        backfill_limit = int(os.getenv("FREE_ALERT_BACKFILL_LIMIT", "30"))
+        await backfill_missing_free_alerts(db, limit=backfill_limit)
+    except Exception as e:
+        logger.exception("free_alert backfill after alert_manager failed: %s", e)
 
 if __name__ == "__main__":
     from db.database import AsyncSessionLocal

@@ -63,19 +63,31 @@ async def build_free_alert_feed_item(db, alert_log) -> dict:
                 related_news_source = "target_label_fallback"
                 
     if not items:
-        # Fallback 2: Topic match (only if target_label fallback failed, limit to 3)
+        # Fallback 2: Topic match (category from keyword normalize — no LLM required)
         topic = (alert_log.topic or "").strip()
         if topic:
             stmt_fallback_topic = select(Item).where(
                 Item.created_at >= one_day_ago,
                 or_(
                     Item.category == topic,
-                    Item.rough_category == topic
-                )
-            ).order_by(Item.created_at.desc()).limit(3)
+                    Item.rough_category == topic,
+                ),
+            ).order_by(Item.created_at.desc()).limit(5)
             items = (await db.execute(stmt_fallback_topic)).scalars().all()
             if items:
                 related_news_source = "topic_fallback"
+
+    if not items:
+        # Fallback 3: Recent items (physical pipeline — show latest context without AI category)
+        stmt_recent = (
+            select(Item)
+            .where(Item.created_at >= one_day_ago)
+            .order_by(Item.created_at.desc())
+            .limit(5)
+        )
+        items = (await db.execute(stmt_recent)).scalars().all()
+        if items:
+            related_news_source = "recent_items_fallback"
 
     # --- 2. Fetch Stakeholders ---
     # Prefer master data (is_auto_provisioned == False)
@@ -226,30 +238,64 @@ async def build_free_alert_feed_item(db, alert_log) -> dict:
     
     return ui_feed_item
 
-async def persist_free_alert_feed_item(db, alert_log) -> dict:
+async def persist_free_alert_feed_item(db, alert_log, *, commit: bool = True) -> dict:
     """
     Builds the Free Alert Feed item and persists it into the AlertLog's metadata_json.
+    Stores a nested object at metadata_json["free_alert"] (not a boolean flag).
     Does not overwrite existing metadata such as related_item_ids or scoring_breakdown.
     """
     ui_feed_item = await build_free_alert_feed_item(db, alert_log)
-    
-    # Add generated_at timestamp
     ui_feed_item["generated_at"] = datetime.now(timezone.utc).isoformat()
-    
-    # Merge into metadata_json
+
     current_metadata = alert_log.metadata_json or {}
-    
-    # We must explicitly re-assign to trigger SQLAlchemy JSON mutation detection in some setups
+    if not isinstance(current_metadata, dict):
+        current_metadata = {}
+
     updated_metadata = dict(current_metadata)
     updated_metadata["free_alert"] = ui_feed_item
-    
     alert_log.metadata_json = updated_metadata
-    
+
     from sqlalchemy.orm.attributes import flag_modified
     flag_modified(alert_log, "metadata_json")
-    
     db.add(alert_log)
-    await db.commit()
-    await db.refresh(alert_log)
-    
+
+    if commit:
+        await db.commit()
+        await db.refresh(alert_log)
+
+    logger.info(
+        "Persisted free_alert for alert_id=%s topic=%r news_count=%s",
+        alert_log.id,
+        alert_log.topic,
+        ui_feed_item.get("related_news_count", 0),
+    )
     return ui_feed_item
+
+
+def _alertlog_has_free_alert_payload(meta) -> bool:
+    if not isinstance(meta, dict):
+        return False
+    fa = meta.get("free_alert")
+    return isinstance(fa, dict) and bool(fa.get("alert_id") or fa.get("title"))
+
+
+async def backfill_missing_free_alerts(db, limit: int = 50) -> int:
+    """Attach free_alert payloads to recent AlertLogs that lack them (no LLM required)."""
+    from db.models import AlertLog
+
+    stmt = select(AlertLog).order_by(AlertLog.triggered_at.desc()).limit(max(limit * 3, limit))
+    rows = (await db.execute(stmt)).scalars().all()
+    ok = 0
+    for alert in rows:
+        if _alertlog_has_free_alert_payload(alert.metadata_json):
+            continue
+        try:
+            await persist_free_alert_feed_item(db, alert, commit=True)
+            ok += 1
+        except Exception as e:
+            logger.exception("backfill free_alert failed for alert %s: %s", alert.id, e)
+        if ok >= limit:
+            break
+    if ok:
+        logger.info("backfill_missing_free_alerts: wrote free_alert for %s alert(s)", ok)
+    return ok
