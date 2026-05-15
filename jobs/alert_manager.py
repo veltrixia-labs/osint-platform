@@ -211,70 +211,96 @@ class AlertManager:
                     "matched_text": loc_detail.matched_text,
                 }
 
-            alert_log = AlertLog(
-                target_label=sig.target_label or "Untitled signal",
-                topic=topic,
-                trigger_type=display_trigger_type,
-                severity=severity,
-                intensity=intensity,
-                intelligence_score=intel_score,
-                fidelity_score=fidelity_score,
-                is_high_fidelity=is_high_fidelity,
-                section_anchor=anchor,
-                related_report_id=report_id,
-                status=status,
-                is_system_wide=is_system_wide,
-                supporting_events_count=len(evidence_list),
-                location_lat=lat,
-                location_lng=lng,
-                metadata_json=meta_base,
-            )
-            db.add(alert_log)
-            await db.flush() # Need actual ID for delivery logs
-
-            # --- Phase 4: Cascading Impact Discovery [v13.5 - Autonomous Push] ---
-            # Instead of waiting for a scout, we trigger the AI discovery pipeline IMMEDIATELY.
-            from sqlalchemy.orm.attributes import flag_modified
-            from processor.impact_discovery import ImpactDiscoveryEngine
-            
-            alert_log.metadata_json["backbone_discovery_status"] = "processing"
-            alert_log.metadata_json["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
-            flag_modified(alert_log, "metadata_json")
-
-            # Context Briefs: rule-based payload only (no LLM / classify required).
             try:
+                from sqlalchemy.orm.attributes import flag_modified
+                from processor.impact_discovery import ImpactDiscoveryEngine
                 from jobs.free_alert_feed_generator import persist_free_alert_feed_item
-                await persist_free_alert_feed_item(db, alert_log, commit=False)
-            except Exception as e:
-                logger.exception(
-                    "Failed to persist Free Alert Feed for alert %s: %s",
-                    alert_log.id,
-                    e,
+
+                alert_log = AlertLog(
+                    target_label=sig.target_label or "Untitled signal",
+                    topic=topic,
+                    trigger_type=display_trigger_type,
+                    severity=severity,
+                    intensity=intensity,
+                    intelligence_score=intel_score,
+                    fidelity_score=fidelity_score,
+                    is_high_fidelity=is_high_fidelity,
+                    section_anchor=anchor,
+                    related_report_id=report_id,
+                    status=status,
+                    is_system_wide=is_system_wide,
+                    supporting_events_count=len(evidence_list),
+                    location_lat=lat,
+                    location_lng=lng,
+                    metadata_json=dict(meta_base),
                 )
+                db.add(alert_log)
+                await db.flush()
 
-            await db.commit()
-            await db.refresh(alert_log)
+                alert_log.metadata_json["backbone_discovery_status"] = "processing"
+                alert_log.metadata_json["backbone_discovery_ts"] = datetime.now(
+                    timezone.utc
+                ).isoformat()
+                flag_modified(alert_log, "metadata_json")
 
-            title = alert_log.target_label
-            summary = alert_log.metadata_json.get("description", f"Automated trigger on {alert_log.topic}")
-            enable_ai_discovery = os.getenv("ENABLE_AI_DISCOVERY", "false").lower() == "true"
-            if enable_ai_discovery:
-                logger.info(f"[Antigravity] Direct AI Analysis triggered for {alert_log.id}")
-                task = asyncio.create_task(
-                    ImpactDiscoveryEngine(None).run_discovery(
-                        uuid.uuid4(), title, summary, alert_log.id
+                try:
+                    await persist_free_alert_feed_item(db, alert_log, commit=False)
+                except Exception as brief_err:
+                    logger.exception(
+                        "Free Alert Feed persist failed for alert %s (alert row will still commit): %s",
+                        alert_log.id,
+                        brief_err,
                     )
+                    await db.rollback()
+                    db.add(alert_log)
+                    await db.flush()
+                    alert_log.metadata_json = dict(meta_base)
+                    alert_log.metadata_json["backbone_discovery_status"] = "processing"
+                    alert_log.metadata_json["backbone_discovery_ts"] = datetime.now(
+                        timezone.utc
+                    ).isoformat()
+                    flag_modified(alert_log, "metadata_json")
+
+                await db.commit()
+                try:
+                    await db.refresh(alert_log)
+                except Exception as refresh_err:
+                    logger.warning(
+                        "Could not refresh alert_log %s after commit: %s",
+                        alert_log.id,
+                        refresh_err,
+                    )
+
+                title = alert_log.target_label
+                summary = alert_log.metadata_json.get(
+                    "description", f"Automated trigger on {alert_log.topic}"
                 )
-                _bg_tasks.add(task)
-                task.add_done_callback(_bg_tasks.discard)
+                enable_ai_discovery = os.getenv("ENABLE_AI_DISCOVERY", "false").lower() == "true"
+                if enable_ai_discovery:
+                    logger.info(f"[Antigravity] Direct AI Analysis triggered for {alert_log.id}")
+                    task = asyncio.create_task(
+                        ImpactDiscoveryEngine(None).run_discovery(
+                            uuid.uuid4(), title, summary, alert_log.id
+                        )
+                    )
+                    _bg_tasks.add(task)
+                    task.add_done_callback(_bg_tasks.discard)
 
-
-
-            if not targets:
-                logger.info(f"Alert for {sig.target_label} logged as system-wide.")
-            else:
-                for profile, personal_score, is_broadcast in targets:
-                    await cls._send_personalized_alert(db, profile, alert_log, sig, personal_score, is_broadcast)
+                if not targets:
+                    logger.info(f"Alert for {sig.target_label} logged as system-wide.")
+                else:
+                    for profile, personal_score, is_broadcast in targets:
+                        await cls._send_personalized_alert(
+                            db, profile, alert_log, sig, personal_score, is_broadcast
+                        )
+            except Exception as alert_err:
+                logger.exception(
+                    "Alert pipeline failed for target=%r (rolled back, continuing): %s",
+                    sig.target_label,
+                    alert_err,
+                )
+                await db.rollback()
+                continue
 
     @classmethod
     def _determine_severity(cls, intensity: float, spike: float, domains: int) -> Optional[str]:
@@ -494,7 +520,11 @@ async def run_alert_manager(db):
     logger.info(f"Found {len(new_sigs)} TrendSignals since {limit.isoformat()}")
 
     if new_sigs:
-        await AlertManager.evaluate_and_send(db, new_sigs)
+        try:
+            await AlertManager.evaluate_and_send(db, new_sigs)
+        except Exception as e:
+            logger.exception("evaluate_and_send failed (pipeline continues): %s", e)
+            await db.rollback()
         logger.info("Alert manager finished")
     else:
         logger.info("No TrendSignals found. Nothing to alert.")
@@ -505,6 +535,7 @@ async def run_alert_manager(db):
         await backfill_missing_free_alerts(db, limit=backfill_limit)
     except Exception as e:
         logger.exception("free_alert backfill after alert_manager failed: %s", e)
+        await db.rollback()
 
 if __name__ == "__main__":
     from db.database import AsyncSessionLocal

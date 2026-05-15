@@ -16,6 +16,39 @@ logger = logging.getLogger(__name__)
 _location_resolver_singleton: Optional[LocationResolver] = None
 
 
+async def _load_stakeholders_and_dependencies(db):
+    """
+    Load stakeholder graph for company matching. On missing table / SQL error,
+    returns empty structures so Context Briefs generation can continue.
+    """
+    try:
+        stmt_stk = select(Stakeholder).where(Stakeholder.is_auto_provisioned == False)
+        stk_records = (await db.execute(stmt_stk)).scalars().all()
+        if not stk_records:
+            stk_records = (await db.execute(select(Stakeholder))).scalars().all()
+
+        stk_ids = [s.id for s in stk_records]
+        deps_records = []
+        target_name_map = {}
+        if stk_ids:
+            stmt_dep = select(Dependency).where(Dependency.source_id.in_(stk_ids))
+            deps_records = (await db.execute(stmt_dep)).scalars().all()
+            all_target_ids = list({d.target_id for d in deps_records})
+            if all_target_ids:
+                stmt_targets = select(Stakeholder.id, Stakeholder.name).where(
+                    Stakeholder.id.in_(all_target_ids)
+                )
+                targets_result = (await db.execute(stmt_targets)).all()
+                target_name_map = {t[0]: t[1] for t in targets_result}
+        return stk_records, deps_records, target_name_map
+    except Exception as e:
+        logger.error(
+            "Stakeholder/dependency lookup skipped (table missing or DB error): %s",
+            e,
+        )
+        return [], [], {}
+
+
 def _get_location_resolver() -> LocationResolver:
     global _location_resolver_singleton
     if _location_resolver_singleton is None:
@@ -89,31 +122,8 @@ async def build_free_alert_feed_item(db, alert_log) -> dict:
         if items:
             related_news_source = "recent_items_fallback"
 
-    # --- 2. Fetch Stakeholders ---
-    # Prefer master data (is_auto_provisioned == False)
-    stmt_stk = select(Stakeholder).where(Stakeholder.is_auto_provisioned == False)
-    stk_records = (await db.execute(stmt_stk)).scalars().all()
-    
-    if not stk_records:
-        # Fallback to all stakeholders
-        stmt_stk_all = select(Stakeholder)
-        stk_records = (await db.execute(stmt_stk_all)).scalars().all()
-        
-    stk_ids = [s.id for s in stk_records]
-    
-    # --- 3. Fetch Dependencies ---
-    deps_records = []
-    target_name_map = {}
-    
-    if stk_ids:
-        stmt_dep = select(Dependency).where(Dependency.source_id.in_(stk_ids))
-        deps_records = (await db.execute(stmt_dep)).scalars().all()
-        
-        all_target_ids = list(set(d.target_id for d in deps_records))
-        if all_target_ids:
-            stmt_targets = select(Stakeholder.id, Stakeholder.name).where(Stakeholder.id.in_(all_target_ids))
-            targets_result = (await db.execute(stmt_targets)).all()
-            target_name_map = {t[0]: t[1] for t in targets_result}
+    # --- 2. Fetch Stakeholders (optional; Briefs still generate if table missing) ---
+    stk_records, deps_records, target_name_map = await _load_stakeholders_and_dependencies(db)
             
     # Assembly
     stk_map = {}
@@ -294,6 +304,7 @@ async def backfill_missing_free_alerts(db, limit: int = 50) -> int:
             ok += 1
         except Exception as e:
             logger.exception("backfill free_alert failed for alert %s: %s", alert.id, e)
+            await db.rollback()
         if ok >= limit:
             break
     if ok:
