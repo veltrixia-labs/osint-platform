@@ -6581,8 +6581,8 @@ body.cb-modal-scroll-lock {
   --domain-energy-bg: color-mix(in srgb, #d29922 12%, transparent);
   --domain-ai-semi: #bc8cff;
   --domain-ai-semi-bg: color-mix(in srgb, #bc8cff 12%, transparent);
-  --domain-global-market: #58a6ff;
-  --domain-global-market-bg: color-mix(in srgb, #58a6ff 12%, transparent);
+  --domain-global-market: #8b949e;
+  --domain-global-market-bg: color-mix(in srgb, #8b949e 12%, transparent);
   --domain-supply-chain: #3fb950;
   --domain-supply-chain-bg: color-mix(in srgb, #3fb950 12%, transparent);
   --domain-crypto: #58a6ff;
@@ -6631,11 +6631,21 @@ body.cb-modal-scroll-lock {
 
 /* Canonical topic hooks (from getDomainSlugClass / normalizeTopicCode) */
 .topic-geopolitics,
-.topic-global-market-intelligence,
-.topic-market-sentiment,
-.domain-crypto,
-.domain-global-market {
+.domain-crypto {
   --topic-color: #58a6ff;
+  --domain-accent: var(--topic-color);
+  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
+}
+
+.topic-global-market-intelligence,
+.domain-global-market {
+  --topic-color: #8b949e;
+  --domain-accent: var(--topic-color);
+  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
+}
+
+.topic-market-sentiment {
+  --topic-color: #79c0ff;
   --domain-accent: var(--topic-color);
   --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }

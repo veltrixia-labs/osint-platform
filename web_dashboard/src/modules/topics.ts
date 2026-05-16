@@ -154,8 +154,8 @@ export function canAccessReport(_userTier: string, _reportType: string, _topicCo
  */
 export const TOPIC_COLORS: Record<string, string> = {
     GEOPOLITICS: '#58a6ff',
-    GLOBAL_MARKET_INTELLIGENCE: '#58a6ff',
-    MARKET_SENTIMENT: '#58a6ff',
+    GLOBAL_MARKET_INTELLIGENCE: '#8b949e',
+    MARKET_SENTIMENT: '#79c0ff',
     ENERGY_RESOURCE_RISK: '#d29922',
     SUPPLY_CHAIN_INTELLIGENCE: '#3fb950',
     AI_SEMICONDUCTOR_INTELLIGENCE: '#bc8cff',
@@ -178,7 +178,7 @@ const CANONICAL_TOPIC_LABELS: Record<string, string> = {
     AI_SEMICONDUCTOR_INTELLIGENCE: 'AI & Semiconductors',
     MARKET_SENTIMENT: 'Market Sentiment',
     DEFENSE_TECHNOLOGY: 'Defense Technology',
-    GLOBAL_MARKET_INTELLIGENCE: 'Global Intelligence',
+    GLOBAL_MARKET_INTELLIGENCE: 'Global Market Intel',
 };
 
 /**

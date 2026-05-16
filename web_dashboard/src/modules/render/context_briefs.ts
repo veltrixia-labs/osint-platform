@@ -5,7 +5,7 @@
  */
 import { simpleMarkdown } from './utils';
 import type { FreeAlertFeedItem } from '../api';
-import { getTopicDisplayLabel, getTopicCssVars } from '../topics';
+import { getTopicDisplayLabel, getTopicCssVars, normalizeTopicCode } from '../topics';
 
 type CompanyImpactSource = NonNullable<FreeAlertFeedItem['company_impacts']>[number];
 type SectorImpactSource = NonNullable<FreeAlertFeedItem['sector_impacts']>[number];
@@ -530,7 +530,8 @@ function renderStructuredContent(
             }
         }
         else if (lowerTitle.includes('coverage')) {
-            const topicVars = getTopicCssVars(topic);
+            const canonicalTopic = normalizeTopicCode(topic);
+            const topicVars = getTopicCssVars(canonicalTopic);
             const sectorRows = dedupeSectorRowsByEntityId(normalizeSectorImpacts(structuredSectorImpacts, body));
             const { regional, structural } = partitionRegionalSectorRows(sectorRows);
             html += `<div class="cb-section cb-section--structural-exposure" style="${topicVars}">`;
@@ -580,8 +581,9 @@ function renderStructuredContent(
 function renderFeedCard(item: FreeAlertFeedItem, index: number): string {
     const cardId = `cb-card-${index}`;
     const triggeredStr = formatDate(item.triggered_at);
-    const topicStr = getTopicDisplayLabel(item.topic);
-    const topicVars = getTopicCssVars(item.topic);
+    const canonicalTopic = normalizeTopicCode(item.topic);
+    const topicStr = getTopicDisplayLabel(canonicalTopic);
+    const topicVars = getTopicCssVars(canonicalTopic);
     const newsCount = item.related_news_count ?? 0;
     const entitiesCount = item.related_entities_count ?? 0;
     const displayTitle = cleanBriefTitle(item.title || item.target_label || 'Strategic Intelligence Alert');

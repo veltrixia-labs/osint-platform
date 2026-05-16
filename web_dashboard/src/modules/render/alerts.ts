@@ -1,5 +1,5 @@
 import { type Alert } from '../api';
-import { getTopicColor, getTopicDisplayLabel, getTopicCssVars } from '../topics';
+import { getTopicColor, getTopicDisplayLabel, getTopicCssVars, normalizeTopicCode } from '../topics';
 import { resolveAlertHeadline } from '../alert_display';
 
 /**
@@ -70,8 +70,9 @@ export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
 
     const severityClass = latest.severity.toLowerCase();
     const timeStr = new Date(latest.triggered_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const topicColor = getTopicColor(latest.topic);
-    const topicLabel = getTopicDisplayLabel(latest.topic);
+    const canonicalTopic = normalizeTopicCode(latest.topic);
+    const topicColor = getTopicColor(canonicalTopic);
+    const topicLabel = getTopicDisplayLabel(canonicalTopic);
     const pulseHeadline = resolveAlertHeadline(latest);
 
     // Apply temporary fade class if container already had content (simulating update)
@@ -118,7 +119,8 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
     }
 
     container.innerHTML = sortedAlerts.map(alert => {
-        const topicLabel = getTopicDisplayLabel(alert.topic);
+        const canonicalTopic = normalizeTopicCode(alert.topic);
+        const topicLabel = getTopicDisplayLabel(canonicalTopic);
         const headline = resolveAlertHeadline(alert);
         const severityClass = alert.severity.toLowerCase();
         const date = new Date(alert.triggered_at);
@@ -183,7 +185,7 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         `;
 
         return `
-            <div class="alert-card-compact severity-${severityClass} ${alert.is_locked ? 'locked' : ''}" data-id="${alert.id}" style="${getTopicCssVars(alert.topic)}">
+            <div class="alert-card-compact severity-${severityClass} ${alert.is_locked ? 'locked' : ''}" data-id="${alert.id}" style="${getTopicCssVars(canonicalTopic)}">
                 ${cardContent}
             </div>
         `;
