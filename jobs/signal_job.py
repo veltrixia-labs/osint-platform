@@ -41,6 +41,20 @@ VALID_STRATEGIC_TOPICS = {
     "supply_chain_intelligence",
 }
 
+
+def _item_has_valid_source_url(item: Item) -> bool:
+    """Clusters without at least one http(s) URL are dropped before TrendSignal creation."""
+    raw = (getattr(item, "source_url", None) or "").strip()
+    if not raw:
+        return False
+    low = raw.lower()
+    return low.startswith("http://") or low.startswith("https://")
+
+
+def _cluster_has_source_url(items: List[Item]) -> bool:
+    return any(_item_has_valid_source_url(it) for it in items)
+
+
 def normalize_strategic_topic(raw_topic=None, source_group=None, title=""):
     from processor.lightweight_topic import infer_topic_from_text
 
@@ -125,9 +139,27 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
         # Use the representative item for ranking pool
         final_scored_pool.append((score, cluster_items_list))
 
-    # 4. Rank and Store
+    # 4. Rank and Store — only clusters with ≥1 valid source URL (Alert Manager expects evidence).
     final_scored_pool.sort(key=lambda x: x[0], reverse=True)
-    top_items = final_scored_pool[:10]
+    top_items = []
+    skipped_no_url = 0
+    for score, items in final_scored_pool:
+        if not _cluster_has_source_url(items):
+            skipped_no_url += 1
+            continue
+        top_items.append((score, items))
+        if len(top_items) >= 10:
+            break
+    if skipped_no_url:
+        logger.info(
+            f"[SIGNAL] {signal_type}: skipped {skipped_no_url} clusters with no valid source_url"
+        )
+    if not top_items:
+        logger.info(f"[SIGNAL] {signal_type}: no clusters left after source-url filter; skipping rankings")
+        await db.execute(delete(SignalRanking).where(SignalRanking.signal_type == signal_type))
+        await db.commit()
+        return
+
     for score, items in top_items:
         representative = items[0]
 

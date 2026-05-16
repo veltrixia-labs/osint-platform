@@ -6,7 +6,7 @@ import httpx
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Dict, Any, Tuple
 from sqlalchemy.future import select
-from sqlalchemy import desc, func, or_
+from sqlalchemy import desc, or_
 from db.models import TrendSignal, EventCluster, Item, AlertLog, Report, AnalystProfile
 from urllib.parse import urlparse
 from processor.location_resolver import LocationResolver
@@ -25,10 +25,11 @@ logger = logging.getLogger(__name__)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 ALERT_ENABLED = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
-ALERT_COOLDOWN_HOURS = 12
 
-# Suppress zero-domain alerts only when intensity is below this (was 8.0).
-ZERO_EVIDENCE_INTENSITY_FLOOR = float(os.getenv("ZERO_EVIDENCE_INTENSITY_FLOOR", "3.0"))
+# Duplicate suppression: skip same headline within window unless intensity reignites.
+ALERT_DEDUP_WINDOW_HOURS = int(os.getenv("ALERT_DEDUP_WINDOW_HOURS", "24"))
+REIGNITE_INTENSITY_FACTOR = float(os.getenv("REIGNITE_INTENSITY_FACTOR", "1.5"))
+RECENT_ALERTS_FETCH_LIMIT = int(os.getenv("ALERT_DEDUP_FETCH_LIMIT", "400"))
 
 ALLOWED_TREND_BASE_TYPES = frozenset({
     "risk_pattern",
@@ -88,6 +89,27 @@ def _resolve_display_label(sig: TrendSignal, evidence_list: List[Dict[str, str]]
     if desc and len(desc) >= 12:
         return desc[:240]
     return label or "Untitled signal"
+
+
+def _normalize_alert_title(raw: str | None) -> str:
+    """Lowercase collapsed whitespace for dedupe comparisons."""
+    if not raw:
+        return ""
+    return " ".join(raw.strip().lower().split())
+
+
+def _alert_title_keys(display_label: str, sig_target_label: str | None) -> set[str]:
+    keys = {_normalize_alert_title(display_label), _normalize_alert_title(sig_target_label or "")}
+    keys.discard("")
+    return keys
+
+
+def _prior_alert_title_keys(alert_log: AlertLog) -> set[str]:
+    meta = alert_log.metadata_json if isinstance(alert_log.metadata_json, dict) else {}
+    disp = meta.get("display_title") or ""
+    keys = {_normalize_alert_title(alert_log.target_label), _normalize_alert_title(disp)}
+    keys.discard("")
+    return keys
 
 
 def _physical_intensity(sig: TrendSignal) -> float:
@@ -156,14 +178,15 @@ class AlertManager:
             # 1. Gather Metrics for Severity
             domain_count, evidence_list, related_item_ids = await cls._get_evidence_metrics(db, sig)
             display_label = _resolve_display_label(sig, evidence_list)
-            
-            # Physical path: cluster/rule intensity + URL domains (no LLM metadata required).
-            if domain_count == 0 and intensity < ZERO_EVIDENCE_INTENSITY_FLOOR:
+            evidence_count = len(evidence_list)
+
+            # No URL-backed sources → noise (strict).
+            if domain_count == 0 or evidence_count == 0:
                 logger.info(
-                    "Alert suppressed: zero evidence (domain_count=0, intensity=%.2f < %.2f) "
+                    "Alert suppressed: no evidence URLs (domain_count=%s evidence_count=%s) "
                     "target=%r topic=%r trend_type=%r",
-                    intensity,
-                    ZERO_EVIDENCE_INTENSITY_FLOOR,
+                    domain_count,
+                    evidence_count,
                     sig.target_label,
                     topic,
                     sig.trend_type,
@@ -186,16 +209,21 @@ class AlertManager:
                 )
                 continue
 
-            # 3. Escalation & Intensification-Aware Deduplication
-            suppressed, is_spike, last_intensity = await cls._check_suppression(
-                db, sig.target_label, topic, display_trigger_type, severity, intensity
+            # 3. 24h dedupe by headline (target_label / display_title); allow reignite if intensity ≥ factor × prior.
+            suppressed, last_dup_intensity, reignited = await cls._check_recent_duplicate(
+                db, display_label, sig.target_label, intensity
             )
             if suppressed:
                 continue
-
-            if is_spike:
+            if reignited and last_dup_intensity > 0:
                 display_trigger_type = f"{display_trigger_type} (🚨 INTENSITY SPIKE)"
-                logger.info(f"Intensification detected for {sig.target_label}: {last_intensity} -> {intensity}")
+                logger.info(
+                    "Duplicate window bypass (reignite): %.2f -> %.2f (prior=%.2f, factor=%.2f)",
+                    last_dup_intensity,
+                    intensity,
+                    last_dup_intensity,
+                    REIGNITE_INTENSITY_FACTOR,
+                )
 
             # 4. Intelligence Scoring (Phase 24)
             from jobs.alert_scoring import calculate_alert_score
@@ -216,8 +244,7 @@ class AlertManager:
             is_high_fidelity = fidelity_score >= 0.7 or (severity == "critical" and domain_count >= 3)
 
             is_system_wide = len(targets) == 0
-            # Mark as confirmed if we found evidence domains, otherwise pending
-            status = "confirmed" if domain_count > 0 else "pending_evidence"
+            status = "confirmed"
             
             # Geotagging (Heuristic First) + location entity for Context Briefs enrichment
             loc_text = f"{sig.target_label} {sig.description or ''}"
@@ -445,31 +472,59 @@ class AlertManager:
         return domain_count, evidence_list, related_item_ids
 
     @classmethod
-    async def _check_suppression(cls, db, target_label: str, topic: str, trigger_type: str, new_severity: str, current_intensity: float) -> Tuple[bool, bool, float]:
-        """Simple exact-duplicate spam prevention."""
-        cooldown_threshold = datetime.now(timezone.utc) - timedelta(hours=ALERT_COOLDOWN_HOURS)
-        
-        stmt = select(AlertLog).where(
-            AlertLog.target_label == target_label,
-            AlertLog.topic == topic,
-            AlertLog.triggered_at >= cooldown_threshold
-        ).order_by(AlertLog.triggered_at.desc()).limit(1)
-        
-        last_alert = (await db.execute(stmt)).scalar_one_or_none()
-        if not last_alert:
-            return False, False, 0.0 # Not suppressed
-            
-        # Simplified Logic: If we already alerted for this recently, just suppress it to prevent UI flood.
-        # Removes opaque Escalation / Intensification logic to ensure a predictable base state.
-        last_intensity = last_alert.intensity or 0.0
-        logger.info(
-            "Alert suppressed: cooldown duplicate (target=%r topic=%r, hours=%s, last_intensity=%.2f)",
-            target_label,
-            topic,
-            ALERT_COOLDOWN_HOURS,
-            last_intensity,
+    async def _check_recent_duplicate(
+        cls,
+        db,
+        display_label: str,
+        sig_target_label: str | None,
+        new_intensity: float,
+    ) -> Tuple[bool, float, bool]:
+        """
+        Returns (suppress, last_matching_intensity, reignited).
+
+        If an alert with the same normalized headline exists within ALERT_DEDUP_WINDOW_HOURS,
+        skip unless new_intensity >= REIGNITE_INTENSITY_FACTOR * prior intensity (and prior > 0).
+        """
+        window_start = datetime.now(timezone.utc) - timedelta(hours=ALERT_DEDUP_WINDOW_HOURS)
+        new_keys = _alert_title_keys(display_label, sig_target_label)
+        if not new_keys:
+            return False, 0.0, False
+
+        stmt = (
+            select(AlertLog)
+            .where(AlertLog.triggered_at >= window_start)
+            .order_by(desc(AlertLog.triggered_at))
+            .limit(RECENT_ALERTS_FETCH_LIMIT)
         )
-        return True, False, last_intensity
+        rows = (await db.execute(stmt)).scalars().all()
+
+        for prev in rows:
+            prev_keys = _prior_alert_title_keys(prev)
+            if not prev_keys & new_keys:
+                continue
+
+            last_intensity = float(prev.intensity or 0.0)
+            if last_intensity <= 0:
+                logger.info(
+                    "Alert suppressed: duplicate headline within %sh (prior intensity unset) display=%r",
+                    ALERT_DEDUP_WINDOW_HOURS,
+                    display_label[:80],
+                )
+                return True, last_intensity, False
+
+            if new_intensity >= last_intensity * REIGNITE_INTENSITY_FACTOR:
+                return False, last_intensity, True
+
+            logger.info(
+                "Alert suppressed: duplicate headline within %sh (intensity %.2f vs prior %.2f; need ≥%.2f× prior)",
+                ALERT_DEDUP_WINDOW_HOURS,
+                new_intensity,
+                last_intensity,
+                REIGNITE_INTENSITY_FACTOR,
+            )
+            return True, last_intensity, False
+
+        return False, 0.0, False
 
     @classmethod
     async def _get_latest_report_link(cls, db, sig: TrendSignal) -> Tuple[Optional[uuid.UUID], Optional[str]]:
