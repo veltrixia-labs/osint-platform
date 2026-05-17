@@ -217,6 +217,24 @@ def register_jobs():
 
 async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""
+    force_backfill = os.getenv("SCHEDULER_FORCE_BACKFILL", "").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
+    if force_backfill:
+        from jobs.free_alert_feed_generator import backfill_missing_free_alerts
+
+        logger.info(
+            "SCHEDULER_FORCE_BACKFILL=true — running backfill_missing_free_alerts(limit=20)"
+        )
+        try:
+            async with AsyncSessionLocal() as session:
+                count = await backfill_missing_free_alerts(session, limit=20)
+            logger.info("Force backfill completed: %s free_alert payload(s) written", count)
+        except Exception as e:
+            logger.error("Force backfill failed: %s", e)
+
     skip_pipeline = os.getenv("SCHEDULER_SKIP_STARTUP_PIPELINE", "").lower() in (
         "true",
         "1",
@@ -235,24 +253,6 @@ async def run_startup_checks():
         await run_db_size_check(session)
         await enforce_metadata_limits(session)
         await audit_metadata_sizes(session)
-
-    force_backfill = os.getenv("SCHEDULER_FORCE_BACKFILL", "").lower() in (
-        "true",
-        "1",
-        "yes",
-    )
-    if force_backfill:
-        from jobs.free_alert_feed_generator import backfill_missing_free_alerts
-
-        logger.info(
-            "SCHEDULER_FORCE_BACKFILL=true — running backfill_missing_free_alerts(limit=20)"
-        )
-        try:
-            async with AsyncSessionLocal() as session:
-                count = await backfill_missing_free_alerts(session, limit=20)
-            logger.info("Force backfill completed: %s free_alert payload(s) written", count)
-        except Exception as e:
-            logger.error("Force backfill failed: %s", e)
 
 async def main():
     logger.info("--- OSINT SCHEDULER STARTUP ---")

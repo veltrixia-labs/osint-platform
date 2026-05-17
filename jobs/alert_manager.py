@@ -515,12 +515,14 @@ class AlertManager:
             if new_intensity >= last_intensity * REIGNITE_INTENSITY_FACTOR:
                 return False, last_intensity, True
 
+            factor = REIGNITE_INTENSITY_FACTOR
             logger.info(
-                "Alert suppressed: duplicate headline within %sh (intensity %.2f vs prior %.2f; need ≥%.2f× prior)",
+                "Alert suppressed: duplicate headline within %sh "
+                "(intensity %.2f vs prior %.2f; %s)",
                 ALERT_DEDUP_WINDOW_HOURS,
                 new_intensity,
                 last_intensity,
-                REIGNITE_INTENSITY_FACTOR,
+                f"need ≥{factor:.2f}× prior",
             )
             return True, last_intensity, False
 

@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 
 from dateutil import parser as dt_parser
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Item, RawItem
@@ -41,7 +41,7 @@ async def insert_items_ignore_duplicates(db: AsyncSession, rows: list[dict]) -> 
     inserted = 0
     for offset in range(0, len(rows), DEDUP_CHUNK_SIZE):
         chunk = rows[offset : offset + DEDUP_CHUNK_SIZE]
-        stmt = insert(Item.__table__).values(chunk)
+        stmt = pg_insert(Item.__table__).values(chunk)
         stmt = stmt.on_conflict_do_nothing(index_elements=["dedup_key"])
         result = await db.execute(stmt)
         if result.rowcount is not None and result.rowcount >= 0:
