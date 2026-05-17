@@ -9,7 +9,7 @@ import { DashboardState } from './modules/poll'
 import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 // (Pro reports now handled within Pro Insights hub)
-import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, getResolvedApiBase } from './modules/api'
+import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, FEED_DISPLAY_LIMIT, getResolvedApiBase } from './modules/api'
 import type { UserMe } from './modules/api'
 import {
     renderGracePeriodBanner,
@@ -80,6 +80,24 @@ export async function renderSignup() {
 }
 
 type TabId = 'feed' | 'free-feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'pro-map' | 'expert-intel'
+
+const PAGE_HEADER_META: Partial<Record<TabId, { title: string; subtitle?: string }>> = {
+    feed: {
+        title: 'Alert Stream',
+        subtitle: 'Real-time intelligence signals — high-frequency monitoring of global volatility.',
+    },
+    'free-feed': {
+        title: '🛰 Context Briefs',
+        subtitle: 'Rule-based context for recent alerts — same card language as Pro Structural Briefs.',
+    },
+    map: { title: 'Global Intelligence Map' },
+    'pro-map': { title: 'Pro Interactive Map' },
+    'pro-insights': { title: 'Pro Insights' },
+    'expert-intel': { title: 'Expert Intelligence' },
+    plans: { title: 'Plans & Access' },
+    reports: { title: 'Reports' },
+    legal: { title: 'Legal' },
+}
 
 function isLocalDevHost(): boolean {
     const host = window.location.hostname;
@@ -170,7 +188,12 @@ async function initDashboard() {
         </aside>
         <main class="main-content">
           ${graceBanner ? `<div id="grace-header">${graceBanner}</div>` : ''}
-          <div class="header-row"><h1 id="main-title">Analyst Intelligence</h1></div>
+          <div class="header-row">
+            <div class="page-header-block">
+              <h1 id="main-title">Analyst Intelligence</h1>
+              <p id="page-subtitle" class="page-subtitle" hidden></p>
+            </div>
+          </div>
           <div class="main-feed" id="alerts-container">
             <div id="pulse-bar" class="pulse-bar"></div>
             <div id="topic-filter-bar" class="topic-filter-bar"></div>
@@ -191,6 +214,24 @@ async function initDashboard() {
     const alertsContainer = document.querySelector<HTMLElement>('#alerts-list')!
     const pulseBar = document.querySelector<HTMLElement>('#pulse-bar')!
     const topicFilterBar = document.querySelector<HTMLElement>('#topic-filter-bar')!
+    const pageSubtitle = document.querySelector<HTMLElement>('#page-subtitle')
+
+    const applyPageHeader = (tab: TabId) => {
+        const mainTitle = document.querySelector<HTMLElement>('#main-title')
+        const meta = PAGE_HEADER_META[tab]
+        if (mainTitle) {
+            mainTitle.textContent = meta?.title ?? 'Analyst Intelligence'
+        }
+        if (pageSubtitle) {
+            if (meta?.subtitle) {
+                pageSubtitle.textContent = meta.subtitle
+                pageSubtitle.hidden = false
+            } else {
+                pageSubtitle.textContent = ''
+                pageSubtitle.hidden = true
+            }
+        }
+    }
 
     // [v42] Connectivity Sync Listener: Restores real-time HUD status updates
     window.addEventListener('api-sync-status' as any, (e: CustomEvent) => {
@@ -229,14 +270,7 @@ async function initDashboard() {
         const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
         const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
         const proMapContainer = document.querySelector<HTMLElement>('#pro-map-container');
-        const mainTitle = document.querySelector<HTMLElement>('#main-title');
-        if (mainTitle) {
-            if (tab === 'map') mainTitle.textContent = 'Global Intelligence Map';
-            else if (tab === 'feed') mainTitle.textContent = 'Alert Stream';
-            else if (tab === 'free-feed') mainTitle.textContent = 'Context Briefs';
-            else if (tab === 'pro-map') mainTitle.textContent = 'Pro Interactive Map';
-            else mainTitle.textContent = 'Analyst Intelligence';
-        }
+        applyPageHeader(tab);
 
         const pulseBarEl = document.querySelector<HTMLElement>('#pulse-bar');
         if (pulseBarEl) {
@@ -373,7 +407,7 @@ async function initDashboard() {
         topicFilterBar.style.display = 'flex';
         alertsContainer.innerHTML = '<div class="u-p-2 u-text-center" style="opacity:0.5;">Loading Context Briefs...</div>';
         try {
-            const items = await fetchFreeAlerts({ limit: 20 });
+            const items = await fetchFreeAlerts({ limit: FEED_DISPLAY_LIMIT });
             if (!Array.isArray(items)) {
                 throw new Error('Unexpected server response (not a list).');
             }
@@ -444,6 +478,15 @@ async function initDashboard() {
     window.addEventListener('trigger-tab' as any, (e: CustomEvent) => {
         if (e.detail.tab) handleTabSwitch(e.detail.tab);
     });
+
+    const initialHash = window.location.hash.slice(1);
+    const initialBase = (initialHash.split('?')[0] || '') as TabId;
+    const bootTabs: TabId[] = ['feed', 'free-feed', 'map', 'plans', 'legal', 'pro-insights', 'pro-map', 'expert-intel'];
+    if (initialBase && bootTabs.includes(initialBase)) {
+        handleTabSwitch(initialBase, new URLSearchParams(initialHash.split('?')[1] || '').get('alert') || undefined, true);
+    } else {
+        handleTabSwitch('feed');
+    }
 }
 
 // Global Core

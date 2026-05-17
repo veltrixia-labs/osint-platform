@@ -665,12 +665,6 @@ export function renderFreeAlertFeed(
 
     container.innerHTML = `
         <div class="cb-briefs-page">
-            <div class="cb-feed-header">
-                <h2 class="cb-feed-title">🛰 Context Briefs</h2>
-                <p class="cb-feed-subtitle">
-                    Rule-based context for recent alerts — same card language as Pro Structural Briefs.
-                </p>
-            </div>
             <div class="cb-briefs-grid cb-briefs-grid--context">
                 ${filtered.map((item, i) => renderFeedCard(item, i)).join('')}
             </div>

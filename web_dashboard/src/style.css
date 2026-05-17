@@ -130,6 +130,23 @@ body.no-scroll {
   pointer-events: auto;
 }
 
+#alerts-container.main-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  contain: layout style;
+  padding-top: 0.15rem;
+}
+
+#alerts-container.main-feed .alert-card-compact {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 4.5rem;
+}
+
+#alerts-container.main-feed .alert-card-compact:last-child {
+  margin-bottom: 0;
+}
+
 .alert-card,
 button,
 a,
@@ -535,7 +552,31 @@ p {
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.55rem;
+}
+
+.page-header-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.page-subtitle {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  margin: 0;
+  max-width: 52rem;
+}
+
+.page-subtitle[hidden] {
+  display: none !important;
 }
 
 /* ==============================
@@ -1312,10 +1353,10 @@ p {
 .topic-filter-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem;
-  row-gap: 0.8rem;
-  margin-bottom: 1.5rem;
-  padding: 0.5rem 0;
+  gap: 0.65rem;
+  row-gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  padding: 0.35rem 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -4938,7 +4979,7 @@ p {
   border: 1px solid rgba(88, 166, 255, 0.1);
   border-bottom: 2px solid var(--accent);
   padding: 6px 12px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.65rem;
   border-radius: 4px;
   height: 32px;
   display: flex;
@@ -5575,7 +5616,7 @@ p {
 .cb-briefs-grid--context {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  gap: 1rem;
   width: 100%;
   align-items: stretch;
 }
@@ -5788,6 +5829,12 @@ body.cb-modal-scroll-lock {
 .cb-feed-list {
   max-width: 1500px;
   margin: 0 auto;
+  contain: layout style;
+}
+
+#alerts-container.main-feed .cb-briefs-page,
+#alerts-container.main-feed .cb-feed-list {
+  width: 100%;
 }
 
 .cb-feed-header {

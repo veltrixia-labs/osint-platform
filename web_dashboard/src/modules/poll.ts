@@ -1,4 +1,4 @@
-import { apiClient, type Alert } from './api';
+import { apiClient, FEED_DISPLAY_LIMIT, type Alert } from './api';
 
 export class DashboardState {
     alerts: Alert[] = [];
@@ -42,7 +42,7 @@ export class DashboardState {
         if (!this.isPolling || this.isPaused) return;
 
         try {
-            const params: any = { limit: 15 };
+            const params: any = { limit: FEED_DISPLAY_LIMIT };
             if (this.currentTopic) params.topic = this.currentTopic;
             const query = new URLSearchParams(params).toString();
 

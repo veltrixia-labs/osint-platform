@@ -85,7 +85,7 @@ def _serialize(alert_log: AlertLog, free_alert: dict, subscription_tier: Optiona
 @router.get("/free/alerts")
 async def list_free_alerts(
     topic:   Optional[str] = Query(None, description="Filter by topic code"),
-    limit:   int           = Query(20, ge=1, le=100),
+    limit:   int           = Query(50, ge=1, le=100),
     current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/free/alerts")),
     db: AsyncSession = Depends(get_db),
 ):
