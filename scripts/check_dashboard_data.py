@@ -5,9 +5,11 @@ Usage (repo root, DATABASE_URL or .env configured):
   py -3 scripts/check_dashboard_data.py
   py -3 scripts/check_dashboard_data.py --ingest
   py -3 scripts/check_dashboard_data.py --backfill-free --limit 50
+  py -3 scripts/check_dashboard_data.py --backfill-free --limit 50 --force
 
 --ingest        Run jobs.ingest_job.run_ingest (RSS -> raw_items).
 --backfill-free Run persist_free_alert_feed_item on recent AlertLog rows (Context Briefs).
+--force         With --backfill-free: overwrite existing free_alert payloads (default skips rows that already have one).
 """
 from __future__ import annotations
 
@@ -42,11 +44,23 @@ async def counts(db) -> dict:
     return {"alert_logs": int(n_alerts or 0), "raw_items": int(n_raw or 0), "alert_logs_with_free_alert": int(n_free or 0)}
 
 
+def _has_free_alert_payload(meta) -> bool:
+    if not isinstance(meta, dict):
+        return False
+    fa = meta.get("free_alert")
+    return isinstance(fa, dict) and bool(fa.get("alert_id") or fa.get("title"))
+
+
 async def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--ingest", action="store_true", help="Run RSS ingest (raw_items)")
     p.add_argument("--backfill-free", action="store_true", help="Persist free_alert onto recent AlertLog rows")
     p.add_argument("--limit", type=int, default=50, help="Max rows for --backfill-free")
+    p.add_argument(
+        "--force",
+        action="store_true",
+        help="With --backfill-free: regenerate even when free_alert already exists",
+    )
     args = p.parse_args()
 
     async with AsyncSessionLocal() as db:
@@ -86,13 +100,35 @@ async def main() -> None:
             stmt = select(AlertLog).order_by(AlertLog.triggered_at.desc()).limit(args.limit)
             rows = list((await db.execute(stmt)).scalars().all())
             ok = 0
+            skipped_existing = 0
             for alert in rows:
+                meta = alert.metadata_json if isinstance(alert.metadata_json, dict) else {}
+                if not args.force and _has_free_alert_payload(meta):
+                    skipped_existing += 1
+                    logger.info("Skipped: free_alert already exists for ID: %s", alert.id)
+                    continue
                 try:
-                    await persist_free_alert_feed_item(db, alert)
+                    fa = await persist_free_alert_feed_item(db, alert)
                     ok += 1
+                    entities = int(fa.get("related_entities_count") or 0)
+                    news = int(fa.get("related_news_count") or 0)
+                    logger.info(
+                        "Wrote free_alert for ID: %s (Entities: %s, News: %s, source=%s)",
+                        alert.id,
+                        entities,
+                        news,
+                        fa.get("related_news_source"),
+                    )
+                    if news == 0:
+                        logger.warning("Skipped: No relevant items for ID: %s", alert.id)
                 except Exception as e:
                     logger.error("persist failed %s: %s", alert.id, e)
-            logger.info("backfill-free done: processed=%s ok=%s", len(rows), ok)
+            logger.info(
+                "backfill-free done: candidates=%s wrote=%s skipped_existing=%s",
+                len(rows),
+                ok,
+                skipped_existing,
+            )
             c3 = await counts(db)
             logger.info("After backfill: %s", c3)
 
