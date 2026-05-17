@@ -247,6 +247,9 @@ function renderSectorPillHtml(
         </div>`;
 }
 
+/** `list` = feed cards (stats only); `detail` = modal with Pro / Expert upsell. */
+type ContextBriefViewMode = 'list' | 'detail';
+
 function navigateToSubscription(): void {
     history.pushState({ tab: 'plans' }, '', '/subscription');
     window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'plans' } }));
@@ -308,61 +311,20 @@ function computeEntityDisplayState(
 
 function renderFreeEntityExposureList(
     entityState: { visible: ExposureRow[]; lockedCount: number },
-    options?: { showTierNote?: boolean }
+    viewMode: ContextBriefViewMode
 ): string {
+    const isDetail = viewMode === 'detail';
     let html = `<div class="cb-compact-list cb-compact-list--entities">`;
     entityState.visible.forEach((row: ExposureRow) => {
         html += renderExposureRowHtml(row, 'industry');
     });
-    if (entityState.lockedCount > 0) {
+    if (isDetail && entityState.lockedCount > 0) {
         html += renderEntityLockTeaser(entityState.lockedCount);
     }
     html += `</div>`;
-    if (options?.showTierNote && entityState.lockedCount > 0) {
+    if (isDetail && entityState.lockedCount > 0) {
         html += `<p class="cb-entity-tier-note">Full entity registry matches are available on Pro / Expert. Free access includes one primary match.</p>`;
     }
-    return html;
-}
-
-function renderCardEntityRow(row: ExposureRow): string {
-    const tk = (row.ticker || '').trim();
-    const tickerHtml = tk
-        ? `<span class="cb-card-entity-ticker">${escapeHtml(tk)}</span>`
-        : '';
-    return `
-      <div class="cb-card-entity-item">
-        <span class="cb-card-entity-name">${escapeHtml(row.name)}</span>
-        ${tickerHtml}
-      </div>`;
-}
-
-function renderCardEntityPreview(item: FreeAlertFeedItem, viewerTier: string): string {
-    const industryRows = companyImpactsToIndustryRows(item.company_impacts);
-    const relatedCount = item.related_entities_count ?? 0;
-    const additionalPro = item.additional_pro_count ?? 0;
-    const paid = isPaidContextTier(viewerTier);
-    const entityState = computeEntityDisplayState(
-        industryRows,
-        relatedCount,
-        additionalPro,
-        paid
-    );
-    if (entityState.total === 0 && industryRows.length === 0) return '';
-
-    let html = `<div class="cb-card-entity-preview" aria-label="Matched entities preview">`;
-    if (paid) {
-        industryRows.forEach((row: ExposureRow) => {
-            html += renderCardEntityRow(row);
-        });
-    } else {
-        entityState.visible.forEach((row: ExposureRow) => {
-            html += renderCardEntityRow(row);
-        });
-        if (entityState.lockedCount > 0) {
-            html += renderEntityLockTeaser(entityState.lockedCount);
-        }
-    }
-    html += `</div>`;
     return html;
 }
 
@@ -670,7 +632,8 @@ function renderStructuredContent(
     structuredSectorImpacts?: FreeAlertFeedItem['sector_impacts'],
     additionalProCount = 0,
     viewerTier?: string | null,
-    relatedEntitiesCount = 0
+    relatedEntitiesCount = 0,
+    viewMode: ContextBriefViewMode = 'detail'
 ): string {
     // 1. Suppress redundant title
     const cleanMarkdown = markdown.replace(/^# .*\n?/, '').trim();
@@ -793,7 +756,7 @@ function renderStructuredContent(
                     if (paid) {
                         html += renderIndustryExpandableList(industryRows);
                     } else {
-                        html += renderFreeEntityExposureList(entityState, { showTierNote: true });
+                        html += renderFreeEntityExposureList(entityState, viewMode);
                     }
                 } else {
                     html += `<div class="cb-muted-text cb-exposure-empty">No industry or asset matches.</div>`;
@@ -867,7 +830,6 @@ function renderFeedCard(item: FreeAlertFeedItem, index: number, viewerTier: stri
         isPaidContextTier(viewerTier)
     );
     const entitiesCount = entityState.total || (item.related_entities_count ?? 0);
-    const entityPreview = renderCardEntityPreview(item, viewerTier);
     const displayTitle = cleanBriefTitle(item.title || item.target_label || 'Strategic Intelligence Alert');
     const teaser = escapeHtml(extractTeaserFromMarkdown(item.content_markdown || ''));
 
@@ -886,7 +848,6 @@ function renderFeedCard(item: FreeAlertFeedItem, index: number, viewerTier: stri
         <span class="cb-brief-stat-chip">📰 ${newsCount} news</span>
         <span class="cb-brief-stat-chip">🏢 ${entitiesCount} entities</span>
       </div>
-      ${entityPreview}
       <div class="cb-brief-card-actions">
         <button type="button" class="btn-fb cb-open-context-btn" data-detail-index="${index}" aria-haspopup="dialog">
           View Full Context →
@@ -935,7 +896,8 @@ export function renderFreeAlertFeed(
             item.sector_impacts,
             item.additional_pro_count ?? 0,
             tierForModalDetail(viewerTier),
-            item.related_entities_count ?? 0
+            item.related_entities_count ?? 0,
+            'detail'
         )
     );
     const modalTitles = filtered.map(item =>
@@ -955,14 +917,6 @@ export function renderFreeAlertFeed(
     container.dataset.cbViewerTier = viewerTier;
 
     const onFeedClick = (e: Event) => {
-        const subCta = (e.target as HTMLElement).closest('[data-cb-subscription-cta]');
-        if (subCta && container.contains(subCta)) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            navigateToSubscription();
-            return;
-        }
         const btn = (e.target as HTMLElement).closest('.cb-open-context-btn');
         if (!btn || !container.contains(btn)) return;
         e.preventDefault();

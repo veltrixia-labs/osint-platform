@@ -6524,36 +6524,7 @@ body.cb-modal-scroll-lock {
   padding: 0.35rem;
 }
 
-/* Entity lock teaser — Free tier upsell (card + modal) */
-.cb-card-entity-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-top: 0.65rem;
-  padding-top: 0.55rem;
-  border-top: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
-}
-
-.cb-card-entity-item {
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  font-size: 0.8rem;
-  line-height: 1.35;
-}
-
-.cb-card-entity-name {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.cb-card-entity-ticker {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
+/* Entity lock teaser — Free tier upsell (detail modal only) */
 .cb-entity-lock-wrap {
   position: relative;
   margin-top: 0.15rem;
