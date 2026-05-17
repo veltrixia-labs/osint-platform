@@ -247,25 +247,123 @@ function renderSectorPillHtml(
         </div>`;
 }
 
-function renderProGateCard(additionalCount: number): string {
-    const n = Math.max(0, Math.floor(additionalCount));
-    const line = `+ ${n} more specific entities monitored in Pro / Expert...`;
+function navigateToSubscription(): void {
+    history.pushState({ tab: 'plans' }, '', '/subscription');
+    window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'plans' } }));
+}
+
+function renderEntityLockTeaser(lockedCount: number): string {
+    const n = Math.max(1, Math.floor(lockedCount));
     return `
-    <button type="button" class="cb-pro-gate-card" data-cb-pro-gate="1"
-      aria-label="Open Subscription Plans to upgrade to Pro / Expert for deeper entity coverage."
-      title="Pro / Expert unlocks the full matched entity list, dependency-level monitoring, and Structural Briefs. Click to open Subscription Plans.">
-      <div class="cb-pro-gate-logos-wrap" aria-hidden="true">
-        <span class="cb-pro-gate-lock">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </span>
-        <div class="cb-pro-gate-logos">
-          <span class="cb-pro-gate-logo cb-pro-gate-logo--a"></span>
-          <span class="cb-pro-gate-logo cb-pro-gate-logo--b"></span>
-          <span class="cb-pro-gate-logo cb-pro-gate-logo--c"></span>
-        </div>
+    <div class="cb-entity-lock-wrap">
+      <div class="cb-entity-lock-blur" aria-hidden="true">
+        <span class="cb-entity-lock-blur-line"></span>
+        <span class="cb-entity-lock-blur-line cb-entity-lock-blur-line--short"></span>
       </div>
-      <p class="cb-pro-gate-text">${escapeHtml(line)}</p>
-    </button>`;
+      <button type="button" class="cb-entity-lock-teaser" data-cb-subscription-cta="1"
+        aria-label="Upgrade to Pro / Expert to view ${n} additional matched entities">
+        <span class="cb-entity-lock-icon" aria-hidden="true">🔒</span>
+        <span class="cb-entity-lock-text">+${n} more in Pro / Expert</span>
+        <span class="cb-entity-lock-arrow" aria-hidden="true">→</span>
+      </button>
+    </div>`;
+}
+
+function companyImpactsToIndustryRows(
+    structuredCompanyImpacts?: FreeAlertFeedItem['company_impacts']
+): ExposureRow[] {
+    if (!structuredCompanyImpacts?.length) return [];
+    const comps = structuredCompanyImpacts.map((impact: CompanyImpactSource) => ({
+        name: (impact.company_name || '').trim() || 'Unknown Entity',
+        ticker: impact.ticker ?? null,
+        entity_id: String(impact.entity_id || '').trim() || null,
+        entity_type: String(impact.entity_type || '').trim().toLowerCase() || null,
+        sector: (impact.sector || 'Various').trim(),
+        country: (impact.country || 'Global').trim(),
+        match_basis: Array.isArray(impact.match_basis)
+            ? impact.match_basis.join(', ')
+            : String(impact.match_basis || ''),
+        registry_entity_type: impact.registry_entity_type ?? null,
+    }));
+    return dedupeExposureRowsByEntityId(comps).filter(
+        (row: ExposureRow) => row.name && !isPlaceholderCompanyRow(row) && !isGeopoliticalActorRow(row)
+    );
+}
+
+function computeEntityDisplayState(
+    industryRows: ExposureRow[],
+    relatedEntitiesCount: number,
+    additionalProCount: number,
+    paid: boolean
+): { total: number; visible: ExposureRow[]; lockedCount: number } {
+    const fromRows = industryRows.length;
+    const total = Math.max(relatedEntitiesCount, fromRows, fromRows + Math.max(0, additionalProCount));
+    if (paid) {
+        return { total, visible: industryRows, lockedCount: 0 };
+    }
+    const visible = industryRows.slice(0, 1);
+    const lockedCount = Math.max(0, total - visible.length, additionalProCount, fromRows - visible.length);
+    return { total, visible, lockedCount };
+}
+
+function renderFreeEntityExposureList(
+    entityState: { visible: ExposureRow[]; lockedCount: number },
+    options?: { showTierNote?: boolean }
+): string {
+    let html = `<div class="cb-compact-list cb-compact-list--entities">`;
+    entityState.visible.forEach((row: ExposureRow) => {
+        html += renderExposureRowHtml(row, 'industry');
+    });
+    if (entityState.lockedCount > 0) {
+        html += renderEntityLockTeaser(entityState.lockedCount);
+    }
+    html += `</div>`;
+    if (options?.showTierNote && entityState.lockedCount > 0) {
+        html += `<p class="cb-entity-tier-note">Full entity registry matches are available on Pro / Expert. Free access includes one primary match.</p>`;
+    }
+    return html;
+}
+
+function renderCardEntityRow(row: ExposureRow): string {
+    const tk = (row.ticker || '').trim();
+    const tickerHtml = tk
+        ? `<span class="cb-card-entity-ticker">${escapeHtml(tk)}</span>`
+        : '';
+    return `
+      <div class="cb-card-entity-item">
+        <span class="cb-card-entity-name">${escapeHtml(row.name)}</span>
+        ${tickerHtml}
+      </div>`;
+}
+
+function renderCardEntityPreview(item: FreeAlertFeedItem, viewerTier: string): string {
+    const industryRows = companyImpactsToIndustryRows(item.company_impacts);
+    const relatedCount = item.related_entities_count ?? 0;
+    const additionalPro = item.additional_pro_count ?? 0;
+    const paid = isPaidContextTier(viewerTier);
+    const entityState = computeEntityDisplayState(
+        industryRows,
+        relatedCount,
+        additionalPro,
+        paid
+    );
+    if (entityState.total === 0 && industryRows.length === 0) return '';
+
+    let html = `<div class="cb-card-entity-preview" aria-label="Matched entities preview">`;
+    if (paid) {
+        industryRows.forEach((row: ExposureRow) => {
+            html += renderCardEntityRow(row);
+        });
+    } else {
+        entityState.visible.forEach((row: ExposureRow) => {
+            html += renderCardEntityRow(row);
+        });
+        if (entityState.lockedCount > 0) {
+            html += renderEntityLockTeaser(entityState.lockedCount);
+        }
+    }
+    html += `</div>`;
+    return html;
 }
 
 function renderIndustryExpandableList(rows: ExposureRow[]): string {
@@ -303,9 +401,9 @@ function isPaidContextTier(tier?: string | null): boolean {
     return t === 'pro' || t === 'enterprise' || t === 'experts';
 }
 
-/** Modal detail view: full source/entity evidence for all tiers (no subscription redirect). */
-function tierForModalDetail(_viewerTier?: string | null): string {
-    return 'pro';
+/** Modal uses the viewer tier so Free sees gated entity lists with upgrade path. */
+function tierForModalDetail(viewerTier?: string | null): string {
+    return viewerTier || 'free';
 }
 
 const CB_CONTEXT_MODAL_ID = 'cb-context-modal-root';
@@ -410,6 +508,14 @@ function wireContextBriefModalOnce(modalRoot: HTMLElement): void {
             }
             return;
         }
+        const subCta = (e.target as HTMLElement).closest('[data-cb-subscription-cta]');
+        if (subCta) {
+            e.preventDefault();
+            e.stopPropagation();
+            navigateToSubscription();
+            closeModal();
+            return;
+        }
         const gate = (e.target as HTMLElement).closest('[data-cb-pro-gate]');
         if (!gate) return;
         e.preventDefault();
@@ -433,6 +539,14 @@ function wireContextBriefModalOnce(modalRoot: HTMLElement): void {
 
     modalBody.addEventListener('keydown', (e: KeyboardEvent) => {
         if (e.key !== 'Enter' && e.key !== ' ') return;
+        const subCta = (e.target as HTMLElement).closest('[data-cb-subscription-cta]');
+        if (subCta && modalBody.contains(subCta)) {
+            e.preventDefault();
+            e.stopPropagation();
+            navigateToSubscription();
+            closeModal();
+            return;
+        }
         const gate = (e.target as HTMLElement).closest('[data-cb-pro-gate]');
         if (!gate || !modalBody.contains(gate)) return;
         e.preventDefault();
@@ -555,7 +669,8 @@ function renderStructuredContent(
     topic?: string,
     structuredSectorImpacts?: FreeAlertFeedItem['sector_impacts'],
     additionalProCount = 0,
-    viewerTier?: string | null
+    viewerTier?: string | null,
+    relatedEntitiesCount = 0
 ): string {
     // 1. Suppress redundant title
     const cleanMarkdown = markdown.replace(/^# .*\n?/, '').trim();
@@ -663,33 +778,27 @@ function renderStructuredContent(
             );
             const industryRows = usable.filter((row: ExposureRow) => !isGeopoliticalActorRow(row));
             const paid = isPaidContextTier(viewerTier);
-            const showProGate = !paid && additionalProCount > 0;
+            const entityState = computeEntityDisplayState(
+                industryRows,
+                relatedEntitiesCount,
+                additionalProCount,
+                paid
+            );
 
-            if (usable.length > 0) {
+            if (usable.length > 0 || entityState.total > 0) {
                 html += `<div class="cb-exposure-single">`;
                 html += `<p class="cb-exposure-kicker">Affected segments</p>`;
                 html += `<h5 class="cb-exposure-subtitle">Industry &amp; Assets</h5>`;
-                if (industryRows.length > 0) {
+                if (industryRows.length > 0 || entityState.lockedCount > 0) {
                     if (paid) {
                         html += renderIndustryExpandableList(industryRows);
                     } else {
-                        const freeVisible = industryRows.slice(0, 1);
-                        html += `<div class="cb-compact-list">`;
-                        freeVisible.forEach((row: ExposureRow) => {
-                            html += renderExposureRowHtml(row, 'industry');
-                        });
-                        if (showProGate) {
-                            html += `<div class="cb-inline-pro-gate">${renderProGateCard(additionalProCount)}</div>`;
-                        }
-                        html += `</div>`;
+                        html += renderFreeEntityExposureList(entityState, { showTierNote: true });
                     }
                 } else {
                     html += `<div class="cb-muted-text cb-exposure-empty">No industry or asset matches.</div>`;
                 }
                 html += `</div>`;
-                if (showProGate && industryRows.length === 0) {
-                    html += renderProGateCard(additionalProCount);
-                }
             } else {
                 html += `<div class="cb-muted-text">No related companies or infrastructure matched this alert.</div>`;
             }
@@ -743,14 +852,22 @@ function renderStructuredContent(
     return html;
 }
 
-function renderFeedCard(item: FreeAlertFeedItem, index: number): string {
+function renderFeedCard(item: FreeAlertFeedItem, index: number, viewerTier: string = 'free'): string {
     const cardId = `cb-card-${index}`;
     const triggeredStr = formatDate(item.triggered_at);
     const canonicalTopic = normalizeTopicCode(item.topic);
     const topicStr = getTopicDisplayLabel(canonicalTopic);
     const topicVars = getTopicCssVars(canonicalTopic);
     const newsCount = item.related_news_count ?? 0;
-    const entitiesCount = item.related_entities_count ?? 0;
+    const industryRows = companyImpactsToIndustryRows(item.company_impacts);
+    const entityState = computeEntityDisplayState(
+        industryRows,
+        item.related_entities_count ?? 0,
+        item.additional_pro_count ?? 0,
+        isPaidContextTier(viewerTier)
+    );
+    const entitiesCount = entityState.total || (item.related_entities_count ?? 0);
+    const entityPreview = renderCardEntityPreview(item, viewerTier);
     const displayTitle = cleanBriefTitle(item.title || item.target_label || 'Strategic Intelligence Alert');
     const teaser = escapeHtml(extractTeaserFromMarkdown(item.content_markdown || ''));
 
@@ -769,6 +886,7 @@ function renderFeedCard(item: FreeAlertFeedItem, index: number): string {
         <span class="cb-brief-stat-chip">📰 ${newsCount} news</span>
         <span class="cb-brief-stat-chip">🏢 ${entitiesCount} entities</span>
       </div>
+      ${entityPreview}
       <div class="cb-brief-card-actions">
         <button type="button" class="btn-fb cb-open-context-btn" data-detail-index="${index}" aria-haspopup="dialog">
           View Full Context →
@@ -816,7 +934,8 @@ export function renderFreeAlertFeed(
             item.topic,
             item.sector_impacts,
             item.additional_pro_count ?? 0,
-            tierForModalDetail(viewerTier)
+            tierForModalDetail(viewerTier),
+            item.related_entities_count ?? 0
         )
     );
     const modalTitles = filtered.map(item =>
@@ -829,13 +948,21 @@ export function renderFreeAlertFeed(
     container.innerHTML = `
         <div class="cb-briefs-page">
             <div class="cb-briefs-grid cb-briefs-grid--context">
-                ${filtered.map((item, i) => renderFeedCard(item, i)).join('')}
+                ${filtered.map((item, i) => renderFeedCard(item, i, viewerTier)).join('')}
             </div>
         </div>`;
 
     container.dataset.cbViewerTier = viewerTier;
 
     const onFeedClick = (e: Event) => {
+        const subCta = (e.target as HTMLElement).closest('[data-cb-subscription-cta]');
+        if (subCta && container.contains(subCta)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            navigateToSubscription();
+            return;
+        }
         const btn = (e.target as HTMLElement).closest('.cb-open-context-btn');
         if (!btn || !container.contains(btn)) return;
         e.preventDefault();

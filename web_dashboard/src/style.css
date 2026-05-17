@@ -6524,6 +6524,130 @@ body.cb-modal-scroll-lock {
   padding: 0.35rem;
 }
 
+/* Entity lock teaser — Free tier upsell (card + modal) */
+.cb-card-entity-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.cb-card-entity-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.cb-card-entity-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cb-card-entity-ticker {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.cb-entity-lock-wrap {
+  position: relative;
+  margin-top: 0.15rem;
+}
+
+.cb-entity-lock-blur {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.25rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg-secondary) 92%, #8b5cf6 8%);
+  filter: blur(3px);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+}
+
+.cb-entity-lock-blur-line {
+  display: block;
+  height: 0.55rem;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.35), rgba(59, 130, 246, 0.2));
+}
+
+.cb-entity-lock-blur-line--short {
+  width: 62%;
+}
+
+.cb-entity-lock-teaser {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.42rem 0.65rem;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.03em;
+  color: #ddd6fe;
+  cursor: pointer;
+  text-align: left;
+  background:
+    linear-gradient(rgba(139, 92, 246, 0.06), rgba(139, 92, 246, 0.06)) padding-box,
+    linear-gradient(135deg, #8b5cf6, #3b82f6) border-box;
+  transition:
+    box-shadow 0.25s ease,
+    color 0.25s ease,
+    background 0.25s ease;
+}
+
+.cb-entity-lock-teaser:hover,
+.cb-entity-lock-teaser:focus-visible {
+  color: #f5f3ff;
+  background:
+    linear-gradient(rgba(139, 92, 246, 0.14), rgba(59, 130, 246, 0.08)) padding-box,
+    linear-gradient(135deg, #8b5cf6, #3b82f6) border-box;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.28);
+  outline: none;
+}
+
+.cb-entity-lock-icon {
+  font-size: 0.85em;
+  opacity: 0.9;
+}
+
+.cb-entity-lock-arrow {
+  margin-left: auto;
+  opacity: 0.85;
+  transition: transform 0.25s ease;
+}
+
+.cb-entity-lock-teaser:hover .cb-entity-lock-arrow,
+.cb-entity-lock-teaser:focus-visible .cb-entity-lock-arrow {
+  transform: translateX(2px);
+}
+
+.cb-entity-tier-note {
+  margin: 0.55rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: #a78bfa;
+  font-style: italic;
+}
+
+.cb-compact-list--entities .cb-entity-lock-wrap {
+  margin-top: 0.35rem;
+}
+
 .cb-expand-wrap {
   margin-top: 0.45rem;
 }
