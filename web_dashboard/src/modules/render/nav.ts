@@ -72,13 +72,17 @@ export function renderNavigation(
     activeTab: string = 'feed'
 ): void {
     const tier = user.tier || 'free';
-    const isAnonymous = !user.email || user.id === 'free-access';
+    const isDevOverride = user.id === 'dev-override';
+    const isAnonymous = !isDevOverride && (!user.email || user.id === 'free-access');
     
     // Determine tier display label
     let displayTierLabel = TIER_LABELS[tier] || 'Free Access';
     let displayEmail = user.email;
     
-    if (isAnonymous) {
+    if (isDevOverride) {
+        displayTierLabel = tier === 'pro' ? 'PRO ACCESS' : (TIER_LABELS[tier] || tier.toUpperCase());
+        displayEmail = 'Local Dev Override';
+    } else if (isAnonymous) {
         displayTierLabel = 'FREE ACCESS';
         displayEmail = 'Free Access';
     }

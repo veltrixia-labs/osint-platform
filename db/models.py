@@ -5,6 +5,9 @@ from db.database import Base
 
 class RawItem(Base):
     __tablename__ = "raw_items"
+    __table_args__ = (
+        Index("ix_raw_items_payload_hash_unique", "payload_hash", unique=True),
+    )
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     fetched_at = Column(DateTime(timezone=True), nullable=False)
     source_system = Column(String, nullable=False)

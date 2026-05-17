@@ -209,12 +209,21 @@ def register_jobs():
 
 async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""
-    logger.info("Triggering IMMEDIATE startup checks...")
-    async with AsyncSessionLocal() as session:
-        # Force an immediate pipeline run
+    skip_pipeline = os.getenv("SCHEDULER_SKIP_STARTUP_PIPELINE", "").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
+    if skip_pipeline:
+        logger.info(
+            "SCHEDULER_SKIP_STARTUP_PIPELINE=true — skipping startup pipeline_full_processing"
+        )
+    else:
+        logger.info("Triggering IMMEDIATE startup pipeline (ingest → normalize → signal)...")
         await pipeline_full_processing()
-        
-        # Immediate Operational Audit
+
+    logger.info("Running startup operational audits...")
+    async with AsyncSessionLocal() as session:
         await run_db_size_check(session)
         await enforce_metadata_limits(session)
         await audit_metadata_sizes(session)

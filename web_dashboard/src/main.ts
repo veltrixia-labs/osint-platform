@@ -80,32 +80,68 @@ export async function renderSignup() {
 
 type TabId = 'feed' | 'free-feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'pro-map' | 'expert-intel'
 
+function isLocalDevHost(): boolean {
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1';
+}
+
+function buildDevOverrideUser(tier: string): UserMe {
+    const isPro = tier === 'pro' || tier === 'experts' || tier === 'enterprise';
+    const isExperts = tier === 'experts' || tier === 'enterprise';
+    return {
+        id: 'dev-override',
+        email: 'Local Dev Override',
+        chat_id: '',
+        role: 'dev',
+        tier,
+        expires_at: null,
+        features: {
+            pro_insights: isPro,
+            expert_intelligence: isExperts,
+            team_admin: tier === 'enterprise',
+            custom_topics: tier === 'enterprise',
+            onboarding: tier === 'enterprise',
+            support: tier === 'enterprise',
+        },
+        limits: {
+            impact_depth: isExperts ? 999 : isPro ? 2 : 0,
+            topics: [],
+            reports: [],
+        },
+    };
+}
+
 async function initDashboard() {
     let user: UserMe | null = null;
     try { user = await fetchMe(); if (user && !user.email) { logout(); return; } } catch (e) { }
 
     if (!user) {
-        user = {
-            id: 'free-access',
-            email: 'Free Access',
-            chat_id: '',
-            role: 'anonymous',
-            tier: 'free',
-            expires_at: null,
-            features: {
-                pro_insights: false,
-                expert_intelligence: false,
-                team_admin: false,
-                custom_topics: false,
-                onboarding: false,
-                support: false
-            },
-            limits: {
-                impact_depth: 0,
-                topics: [],
-                reports: []
-            }
-        };
+        const devTier = (import.meta.env.VITE_DEV_TIER as string | undefined)?.toLowerCase();
+        if (devTier && devTier !== 'free' && isLocalDevHost()) {
+            user = buildDevOverrideUser(devTier);
+        } else {
+            user = {
+                id: 'free-access',
+                email: 'Free Access',
+                chat_id: '',
+                role: 'anonymous',
+                tier: 'free',
+                expires_at: null,
+                features: {
+                    pro_insights: false,
+                    expert_intelligence: false,
+                    team_admin: false,
+                    custom_topics: false,
+                    onboarding: false,
+                    support: false
+                },
+                limits: {
+                    impact_depth: 0,
+                    topics: [],
+                    reports: []
+                }
+            };
+        }
     }
 
     if (user) app.classList.remove('login-page');
