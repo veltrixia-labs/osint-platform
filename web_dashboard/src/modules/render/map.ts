@@ -1,48 +1,22 @@
 import L from 'leaflet';
 import type { BackboneNode } from '../api';
 import { fetchBackbone } from '../api';
-import { getTopicColor, getTopicMapFilterLabel } from '../topics';
+import {
+    BACKBONE_API_BY_STRATEGIC,
+    STRATEGIC_TOPIC_CODES,
+    getTopicColor,
+    getTopicDisplayLabel,
+    normalizeTopicCode,
+    type StrategicTopicCode,
+} from '../topics';
 
-/** Backbone API sector id -> platform topic code (snake_case for normalizeTopicCode). */
-const BACKBONE_FILTER_TO_TOPIC: Record<string, string> = {
-    energy: 'energy_resource_risk',
-    market: 'global_market_intelligence',
-    trade: 'supply_chain_intelligence',
-    crypto: 'crypto_geopolitics',
-    ai: 'ai_semiconductor_intelligence',
-    defense: 'defense_technology',
-};
+type TaggedBackboneNode = BackboneNode & { strategicCode: StrategicTopicCode };
 
-/** Node.sector strings from backbone JSON -> topic code. */
-const BACKBONE_NODE_SECTOR_TO_TOPIC: Record<string, string> = {
-    ENERGY: 'energy_resource_risk',
-    MARKET: 'global_market_intelligence',
-    TRADE: 'supply_chain_intelligence',
-    CRYPTO: 'crypto_geopolitics',
-    AI: 'ai_semiconductor_intelligence',
-    TECH: 'ai_semiconductor_intelligence',
-    SEMICONDUCTOR: 'ai_semiconductor_intelligence',
-    DEFENSE: 'defense_technology',
-};
-
-function topicCodeFromBackboneFilter(filterId: string): string | null {
-    return BACKBONE_FILTER_TO_TOPIC[filterId] ?? null;
-}
-
-function topicCodeFromNodeSector(sector: string): string {
-    const key = (sector || '').trim().toUpperCase();
-    if (BACKBONE_NODE_SECTOR_TO_TOPIC[key]) {
-        return BACKBONE_NODE_SECTOR_TO_TOPIC[key];
-    }
-    return 'global_market_intelligence';
-}
-
-function getBackboneSectorColor(sector: string): string {
-    return getTopicColor(topicCodeFromNodeSector(sector));
-}
-
-function getBackboneSectorLabel(sector: string): string {
-    return getTopicMapFilterLabel(topicCodeFromNodeSector(sector));
+function tagNode(node: BackboneNode): TaggedBackboneNode {
+    return {
+        ...node,
+        strategicCode: normalizeTopicCode(node.sector),
+    };
 }
 
 let map: L.Map;
@@ -50,12 +24,12 @@ let layerGroup: L.LayerGroup;
 let hoverLayerGroup: L.LayerGroup;
 
 const markerByNodeName = new Map<string, L.Marker>();
-let currentRenderedNodes: BackboneNode[] = [];
+let currentRenderedNodes: TaggedBackboneNode[] = [];
 
 let selectedNodeNames = new Set<string>();
 let popupOpenNodeName: string | null = null;
 
-let activeBackboneSectors = new Set<string>(['all']);
+let activeStrategicFilters = new Set<'all' | StrategicTopicCode>(['all']);
 
 export const renderMap = async (container: HTMLElement, _tier?: string, _focusAlertId?: string) => {
     if (!map) {
@@ -113,28 +87,28 @@ async function renderBackboneMap() {
     layerGroup.clearLayers();
 
     try {
-        const allSectors = ['energy', 'market', 'crypto', 'ai', 'defense', 'trade'];
-
-        const sectorsToLoad = activeBackboneSectors.has('all')
-            ? allSectors
-            : Array.from(activeBackboneSectors);
+        const sectorsToLoad = activeStrategicFilters.has('all')
+            ? STRATEGIC_TOPIC_CODES.map(code => BACKBONE_API_BY_STRATEGIC[code])
+            : Array.from(activeStrategicFilters)
+                .filter((id): id is StrategicTopicCode => id !== 'all')
+                .map(code => BACKBONE_API_BY_STRATEGIC[code]);
 
         const results = await Promise.all(
             sectorsToLoad.map(sector => fetchBackbone(sector))
         );
 
-        renderBackboneNodes(results.flat());
+        renderBackboneNodes(results.flat().map(tagNode));
         updateFilterButtonStates();
     } catch (e) {
         console.error('Failed to load backbone:', e);
     }
 }
 
-function renderBackboneNodes(nodes: BackboneNode[]) {
+function renderBackboneNodes(nodes: TaggedBackboneNode[]) {
     currentRenderedNodes = nodes;
     markerByNodeName.clear();
 
-    const nodeByName = new Map<string, BackboneNode>();
+    const nodeByName = new Map<string, TaggedBackboneNode>();
 
     nodes.forEach(node => {
         nodeByName.set(node.name, node);
@@ -150,7 +124,7 @@ function renderBackboneNodes(nodes: BackboneNode[]) {
     nodes.forEach(node => {
         if (!node.location) return;
 
-        const color = getBackboneSectorColor(node.sector);
+        const color = getTopicColor(node.strategicCode);
 
         const isSelected = selectedNodeNames.has(node.name);
 
@@ -309,34 +283,38 @@ function renderBackboneNodes(nodes: BackboneNode[]) {
     renderNodeList(nodes);
 }
 
-function renderNodeList(nodes: BackboneNode[]) {
+function renderNodeList(nodes: TaggedBackboneNode[]) {
     const list = document.getElementById('map-node-list');
     if (!list) return;
 
-    const groups = new Map<string, BackboneNode[]>();
-
+    const groups = new Map<StrategicTopicCode, TaggedBackboneNode[]>();
+    for (const code of STRATEGIC_TOPIC_CODES) {
+        groups.set(code, []);
+    }
     nodes.forEach(node => {
-        const sector = node.sector || 'OTHER';
-        if (!groups.has(sector)) groups.set(sector, []);
-        groups.get(sector)!.push(node);
+        groups.get(node.strategicCode)!.push(node);
     });
+
+    const visibleGroups = STRATEGIC_TOPIC_CODES
+        .map(code => [code, groups.get(code)!] as const)
+        .filter(([, sectorNodes]) => sectorNodes.length > 0);
 
     list.innerHTML = `
         <div style="font-weight:700; color:#fff; margin-bottom:8px;">
             Visible Entities
         </div>
 
-        ${Array.from(groups.entries()).map(([sector, sectorNodes]) => `
+        ${visibleGroups.map(([code, sectorNodes]) => `
             <div class="map-node-sector">
-                <button class="map-node-sector-btn" data-sector="${sector}" style="--sector-color:${getBackboneSectorColor(sector)};">
-                    <span>${getBackboneSectorLabel(sector)}</span>
+                <button class="map-node-sector-btn" data-sector="${code}" style="--sector-color:${getTopicColor(code)};">
+                    <span>${getTopicDisplayLabel(code)}</span>
                     <span>${sectorNodes.length}</span>
                 </button>
 
-                <div class="map-node-sector-list" data-sector-list="${sector}" style="display:none;">
+                <div class="map-node-sector-list" data-sector-list="${code}" style="display:none;">
                     ${sectorNodes.map(node => `
                         <button class="map-node-list-item" data-node="${node.name}">
-                            <span style="color:${getBackboneSectorColor(node.sector)};">●</span>
+                            <span style="color:${getTopicColor(node.strategicCode)};">●</span>
                             ${node.name}
                         </button>
                     `).join('')}
@@ -379,14 +357,14 @@ function renderNodeList(nodes: BackboneNode[]) {
 }
 
 function renderSelectedDependencyLines(
-    selectedNode: BackboneNode,
-    nodeByName: Map<string, BackboneNode>,
+    selectedNode: TaggedBackboneNode,
+    nodeByName: Map<string, TaggedBackboneNode>,
     targetLayer: L.LayerGroup = layerGroup,
     isPreview: boolean = false
 ) {
     if (!selectedNode.location) return;
 
-    const color = getBackboneSectorColor(selectedNode.sector);
+    const color = getTopicColor(selectedNode.strategicCode);
 
     (selectedNode.top_dependencies || []).slice(0, 5).forEach(dep => {
         let target = nodeByName.get(dep.target);
@@ -434,15 +412,14 @@ function initMapFilter() {
     const container = document.getElementById('map-filter');
     if (!container) return;
 
-    const FILTER_IDS = ['all', 'energy', 'market', 'trade', 'crypto', 'ai', 'defense'] as const;
+    const FILTER_IDS: readonly ('all' | StrategicTopicCode)[] = ['all', ...STRATEGIC_TOPIC_CODES];
 
     container.innerHTML = FILTER_IDS.map(id => {
-        const topicKey = id === 'all' ? null : topicCodeFromBackboneFilter(id);
-        const color = id === 'all' ? '#ffffff' : getTopicColor(topicKey);
-        const label = id === 'all' ? 'All' : getTopicMapFilterLabel(topicKey);
+        const color = id === 'all' ? '#ffffff' : getTopicColor(id);
+        const label = id === 'all' ? 'All' : getTopicDisplayLabel(id);
         return `
         <button
-            class="map-filter-btn ${activeBackboneSectors.has(id) ? 'active' : ''}"
+            class="map-filter-btn ${activeStrategicFilters.has(id) ? 'active' : ''}"
             data-id="${id}"
             style="--filter-color:${color};"
         >
@@ -452,27 +429,27 @@ function initMapFilter() {
 
     container.querySelectorAll('.map-filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const id = (btn as HTMLElement).dataset.id!;
+            const id = (btn as HTMLElement).dataset.id! as 'all' | StrategicTopicCode;
 
             if (id === 'all') {
-                if (activeBackboneSectors.has('all')) {
-                    activeBackboneSectors.clear();
-                    activeBackboneSectors.add('energy');
+                if (activeStrategicFilters.has('all')) {
+                    activeStrategicFilters.clear();
+                    activeStrategicFilters.add('ENERGY');
                 } else {
-                    activeBackboneSectors.clear();
-                    activeBackboneSectors.add('all');
+                    activeStrategicFilters.clear();
+                    activeStrategicFilters.add('all');
                 }
             } else {
-                activeBackboneSectors.delete('all');
+                activeStrategicFilters.delete('all');
 
-                if (activeBackboneSectors.has(id)) {
-                    activeBackboneSectors.delete(id);
+                if (activeStrategicFilters.has(id)) {
+                    activeStrategicFilters.delete(id);
                 } else {
-                    activeBackboneSectors.add(id);
+                    activeStrategicFilters.add(id);
                 }
 
-                if (activeBackboneSectors.size === 0) {
-                    activeBackboneSectors.add('all');
+                if (activeStrategicFilters.size === 0) {
+                    activeStrategicFilters.add('all');
                 }
             }
 
@@ -484,10 +461,10 @@ function initMapFilter() {
 function updateFilterButtonStates() {
     document.querySelectorAll('.map-filter-btn').forEach(btn => {
         const el = btn as HTMLElement;
-        const id = el.dataset.id;
+        const id = el.dataset.id as 'all' | StrategicTopicCode | undefined;
         if (!id) return;
 
-        const isActive = activeBackboneSectors.has(id);
+        const isActive = activeStrategicFilters.has(id);
         el.classList.toggle('active', isActive);
     });
 }

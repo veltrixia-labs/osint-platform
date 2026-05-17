@@ -22,8 +22,8 @@ from sqlalchemy import select
 from db.database import AsyncSessionLocal
 from db.models import AlertLog
 from processor.topic_registry import (
-    CANONICAL_TOPICS,
     INTERNAL_TO_CANONICAL,
+    STRATEGIC_TOPIC_CODES,
     _ALIASES,
     normalize_canonical_topic,
 )
@@ -44,11 +44,11 @@ def _classify_raw_topic(raw: str | None) -> tuple[str, str]:
     bucket: OK | NULL_OR_EMPTY | UNCATEGORIZED
     """
     if raw is None or not str(raw).strip():
-        return "NULL_OR_EMPTY", "GLOBAL_MARKET_INTELLIGENCE"
+        return "NULL_OR_EMPTY", "MARKET"
 
     stripped = str(raw).strip()
     upper = stripped.upper()
-    if upper in CANONICAL_TOPICS or upper in _ALIASES:
+    if upper in STRATEGIC_TOPIC_CODES or upper in _ALIASES:
         return "OK", normalize_canonical_topic(stripped)
 
     lower = stripped.lower()
@@ -133,8 +133,8 @@ async def run_audit(hours: int) -> int:
             bucket["last_triggered"] = ts
 
     # Topic table (canonical order + any extras)
-    topic_order = sorted(CANONICAL_TOPICS) + sorted(
-        t for t in by_topic if t not in CANONICAL_TOPICS
+    topic_order = sorted(STRATEGIC_TOPIC_CODES) + sorted(
+        t for t in by_topic if t not in STRATEGIC_TOPIC_CODES
     )
     rows: list[list[str]] = []
     sum_alerts = 0
@@ -205,7 +205,7 @@ async def run_audit(hours: int) -> int:
     else:
         for label, count in sorted(leak_counts.items()):
             print(f"  {label}: {count}")
-        print("  (UNCATEGORIZED = raw topic not in canonical map; still aggregated as GLOBAL_MARKET_INTELLIGENCE)")
+        print("  (UNCATEGORIZED = raw topic not in strategic map; still aggregated as MARKET)")
     print()
 
     return 0

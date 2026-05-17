@@ -1,48 +1,47 @@
 """
-Canonical alert topic codes (UPPER_SNAKE) for API / UI color mapping.
+Strategic topic codes (6 sectors) for AlertLog.topic and UI color mapping.
 Internal inference still uses snake_case in lightweight_topic.
 """
 from __future__ import annotations
 
-CANONICAL_TOPICS = frozenset({
-    "GEOPOLITICS",
-    "ENERGY_RESOURCE_RISK",
-    "SUPPLY_CHAIN_INTELLIGENCE",
-    "AI_SEMICONDUCTOR_INTELLIGENCE",
-    "MARKET_SENTIMENT",
-    "DEFENSE_TECHNOLOGY",
-    "GLOBAL_MARKET_INTELLIGENCE",
+STRATEGIC_TOPIC_CODES = frozenset({
+    "ENERGY",
+    "MARKET",
+    "AI_TECH",
+    "CRYPTO",
+    "DEFENSE",
+    "SUPPLY_CHAIN",
 })
 
-INTERNAL_TO_CANONICAL: dict[str, str] = {
-    "energy_resource_risk": "ENERGY_RESOURCE_RISK",
-    "supply_chain_intelligence": "SUPPLY_CHAIN_INTELLIGENCE",
-    "defense_technology": "DEFENSE_TECHNOLOGY",
-    "crypto_geopolitics": "GEOPOLITICS",
-    "ai_semiconductor_intelligence": "AI_SEMICONDUCTOR_INTELLIGENCE",
-    "global_market_intelligence": "GLOBAL_MARKET_INTELLIGENCE",
+# Backward-compatible alias for alert_manager checks
+CANONICAL_TOPICS = STRATEGIC_TOPIC_CODES
+
+INTERNAL_TO_STRATEGIC: dict[str, str] = {
+    "energy_resource_risk": "ENERGY",
+    "global_market_intelligence": "MARKET",
+    "market_sentiment": "MARKET",
+    "geopolitics": "MARKET",
+    "crypto_geopolitics": "CRYPTO",
+    "ai_semiconductor_intelligence": "AI_TECH",
+    "defense_technology": "DEFENSE",
+    "supply_chain_intelligence": "SUPPLY_CHAIN",
 }
 
 # Legacy / alias keys that may already exist in DB rows
 _ALIASES: dict[str, str] = {
-    "CRYPTO_GEOPOLITICS": "GEOPOLITICS",
-    "GLOBAL": "GLOBAL_MARKET_INTELLIGENCE",
+    "ENERGY_RESOURCE_RISK": "ENERGY",
+    "GLOBAL_MARKET_INTELLIGENCE": "MARKET",
+    "MARKET_SENTIMENT": "MARKET",
+    "GEOPOLITICS": "MARKET",
+    "CRYPTO_GEOPOLITICS": "CRYPTO",
+    "AI_SEMICONDUCTOR_INTELLIGENCE": "AI_TECH",
+    "DEFENSE_TECHNOLOGY": "DEFENSE",
+    "SUPPLY_CHAIN_INTELLIGENCE": "SUPPLY_CHAIN",
+    "GLOBAL": "MARKET",
 }
 
-_MARKET_SENTIMENT_TREND_BASES = frozenset({
-    "entity_heat",
-    "sector_surge",
-    "risk_acceleration",
-})
-
-
-def _normalize_trend_base(trend_type: str | None) -> str:
-    if not trend_type:
-        return ""
-    base = trend_type.strip().lower()
-    if base.endswith("_merged"):
-        base = base[: -len("_merged")]
-    return base.split("(")[0].strip()
+# Kept for audit script imports
+INTERNAL_TO_CANONICAL = INTERNAL_TO_STRATEGIC
 
 
 def normalize_canonical_topic(
@@ -50,23 +49,33 @@ def normalize_canonical_topic(
     *,
     trend_type: str | None = None,
 ) -> str:
-    """Map internal or legacy topic strings to a fixed UPPER_SNAKE canonical code."""
+    """Map internal or legacy topic strings to one of 6 strategic UPPER_SNAKE codes."""
+    del trend_type  # sentiment trends fold into MARKET
     if not raw:
-        return "GLOBAL_MARKET_INTELLIGENCE"
+        return "MARKET"
 
     stripped = raw.strip()
-    upper = stripped.upper()
-    if upper in CANONICAL_TOPICS:
+    upper = stripped.upper().replace("-", "_")
+    if upper in STRATEGIC_TOPIC_CODES:
         return upper
     if upper in _ALIASES:
         return _ALIASES[upper]
 
     lower = stripped.lower()
-    if lower in INTERNAL_TO_CANONICAL:
-        canon = INTERNAL_TO_CANONICAL[lower]
-        if lower == "global_market_intelligence":
-            if _normalize_trend_base(trend_type) in _MARKET_SENTIMENT_TREND_BASES:
-                return "MARKET_SENTIMENT"
-        return canon
+    if lower in INTERNAL_TO_STRATEGIC:
+        return INTERNAL_TO_STRATEGIC[lower]
 
-    return "GLOBAL_MARKET_INTELLIGENCE"
+    if "ENERGY" in upper or "OIL" in upper or "GAS" in upper:
+        return "ENERGY"
+    if "SUPPLY" in upper or "TRADE" in upper or "LOGISTIC" in upper:
+        return "SUPPLY_CHAIN"
+    if "CRYPTO" in upper or "BITCOIN" in upper:
+        return "CRYPTO"
+    if "DEFENSE" in upper or "MILITARY" in upper:
+        return "DEFENSE"
+    if "SEMICONDUCTOR" in upper or upper.startswith("AI"):
+        return "AI_TECH"
+    if "MARKET" in upper or "GEOPOLIT" in upper or "GLOBAL" in upper:
+        return "MARKET"
+
+    return "MARKET"

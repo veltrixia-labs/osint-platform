@@ -53,7 +53,7 @@ export const ACCESS_MAP: TopicDef[] = [
         label: 'Global Market Intel',
         icon: '💰',
         minTier: 'pro',
-        color: '#3fb950',
+        color: '#58a6ff',
         description: 'Cross-asset correlation and macroeconomic risk detection.',
         valueProposition: 'Data-driven insights into central bank shifts and market inflections.',
     },
@@ -63,7 +63,7 @@ export const ACCESS_MAP: TopicDef[] = [
         label: 'Crypto & Geopolitics',
         icon: '₿',
         minTier: 'pro',
-        color: '#f78166',
+        color: '#db6d28',
         description: 'Tracking digital asset flows and regulatory impact.',
         valueProposition: 'Predictive intelligence on state-level crypto adoption and risks.',
     },
@@ -83,7 +83,7 @@ export const ACCESS_MAP: TopicDef[] = [
         label: 'Defense Technology',
         icon: '🛡️',
         minTier: 'experts',
-        color: '#ff7b72',
+        color: '#f85149',
         description: 'Intelligence on emerging weapons systems and dual-use tech.',
         valueProposition: 'Strategic forecasting of disruptive military innovation.',
     },
@@ -93,7 +93,7 @@ export const ACCESS_MAP: TopicDef[] = [
         label: 'Supply Chain Intel',
         icon: '📦',
         minTier: 'experts',
-        color: '#79c0ff',
+        color: '#3fb950',
         description: 'Global logistics bottlenecks and tiered supplier mapping.',
         valueProposition: 'Real-time monitoring of systemic vulnerabilities in trade.',
     },
@@ -148,65 +148,120 @@ export function canAccessReport(_userTier: string, _reportType: string, _topicCo
     return true;
 }
 
-/**
- * Fixed UI colors per canonical topic (UPPER_SNAKE).
- * Single source of truth — Alert Stream, Context Briefs, Pro cards all use getTopicColor().
- */
-export const TOPIC_COLORS: Record<string, string> = {
-    GEOPOLITICS: '#58a6ff',
-    GLOBAL_MARKET_INTELLIGENCE: '#8b949e',
-    MARKET_SENTIMENT: '#79c0ff',
-    ENERGY_RESOURCE_RISK: '#d29922',
-    SUPPLY_CHAIN_INTELLIGENCE: '#3fb950',
-    AI_SEMICONDUCTOR_INTELLIGENCE: '#bc8cff',
-    DEFENSE_TECHNOLOGY: '#f85149',
-};
+/** Strategic sectors — single UI vocabulary (6 fields). */
+export const STRATEGIC_TOPIC_CODES = [
+    'ENERGY',
+    'MARKET',
+    'AI_TECH',
+    'CRYPTO',
+    'DEFENSE',
+    'SUPPLY_CHAIN',
+] as const;
 
-const INTERNAL_TOPIC_TO_CANONICAL: Record<string, string> = {
-    crypto_geopolitics: 'GEOPOLITICS',
-    energy_resource_risk: 'ENERGY_RESOURCE_RISK',
-    supply_chain_intelligence: 'SUPPLY_CHAIN_INTELLIGENCE',
-    ai_semiconductor_intelligence: 'AI_SEMICONDUCTOR_INTELLIGENCE',
-    defense_technology: 'DEFENSE_TECHNOLOGY',
-    global_market_intelligence: 'GLOBAL_MARKET_INTELLIGENCE',
-};
-
-const CANONICAL_TOPIC_LABELS: Record<string, string> = {
-    GEOPOLITICS: 'Geopolitics',
-    ENERGY_RESOURCE_RISK: 'Energy & Resources',
-    SUPPLY_CHAIN_INTELLIGENCE: 'Supply Chain',
-    AI_SEMICONDUCTOR_INTELLIGENCE: 'AI & Semiconductors',
-    MARKET_SENTIMENT: 'Market Sentiment',
-    DEFENSE_TECHNOLOGY: 'Defense Technology',
-    GLOBAL_MARKET_INTELLIGENCE: 'Global Market Intel',
-};
+export type StrategicTopicCode = (typeof STRATEGIC_TOPIC_CODES)[number];
 
 /**
- * Normalize API/DB topic strings to canonical UPPER_SNAKE codes for colors and labels.
+ * Fixed UI colors per strategic sector.
+ * Alert Stream, Context Briefs, Global Map — all use getTopicColor().
  */
-export function normalizeTopicCode(raw: string | null | undefined): string {
-    if (!raw) return 'GLOBAL_MARKET_INTELLIGENCE';
+export const TOPIC_COLORS: Record<StrategicTopicCode, string> = {
+    ENERGY: '#d29922',
+    MARKET: '#58a6ff',
+    AI_TECH: '#bc8cff',
+    CRYPTO: '#db6d28',
+    DEFENSE: '#f85149',
+    SUPPLY_CHAIN: '#3fb950',
+};
+
+export const STRATEGIC_TOPIC_LABELS: Record<StrategicTopicCode, string> = {
+    ENERGY: 'Energy & Resources',
+    MARKET: 'Global Market Intel',
+    AI_TECH: 'AI & Semiconductors',
+    CRYPTO: 'Crypto & Geopolitics',
+    DEFENSE: 'Defense Technology',
+    SUPPLY_CHAIN: 'Supply Chain Intelligence',
+};
+
+/** Backbone API path segment per strategic code (internal fetch only). */
+export const BACKBONE_API_BY_STRATEGIC: Record<StrategicTopicCode, string> = {
+    ENERGY: 'energy',
+    MARKET: 'market',
+    AI_TECH: 'ai',
+    CRYPTO: 'crypto',
+    DEFENSE: 'defense',
+    SUPPLY_CHAIN: 'trade',
+};
+
+/** Legacy DB / API topic strings → strategic code (name unification). */
+const LEGACY_TO_STRATEGIC: Record<string, StrategicTopicCode> = {
+    energy: 'ENERGY',
+    market: 'MARKET',
+    trade: 'SUPPLY_CHAIN',
+    TRADE: 'SUPPLY_CHAIN',
+    crypto: 'CRYPTO',
+    ai: 'AI_TECH',
+    tech: 'AI_TECH',
+    TECH: 'AI_TECH',
+    semiconductor: 'AI_TECH',
+    SEMICONDUCTOR: 'AI_TECH',
+    defense: 'DEFENSE',
+    energy_resource_risk: 'ENERGY',
+    global_market_intelligence: 'MARKET',
+    market_sentiment: 'MARKET',
+    geopolitics: 'MARKET',
+    crypto_geopolitics: 'CRYPTO',
+    ai_semiconductor_intelligence: 'AI_TECH',
+    defense_technology: 'DEFENSE',
+    supply_chain_intelligence: 'SUPPLY_CHAIN',
+    global: 'MARKET',
+    ENERGY_RESOURCE_RISK: 'ENERGY',
+    GLOBAL_MARKET_INTELLIGENCE: 'MARKET',
+    MARKET_SENTIMENT: 'MARKET',
+    GEOPOLITICS: 'MARKET',
+    CRYPTO_GEOPOLITICS: 'CRYPTO',
+    AI_SEMICONDUCTOR_INTELLIGENCE: 'AI_TECH',
+    DEFENSE_TECHNOLOGY: 'DEFENSE',
+    SUPPLY_CHAIN_INTELLIGENCE: 'SUPPLY_CHAIN',
+};
+
+/**
+ * Normalize any topic string to one of the 6 strategic sector codes.
+ */
+export function normalizeTopicCode(raw: string | null | undefined): StrategicTopicCode {
+    if (!raw) return 'MARKET';
     const trimmed = raw.trim();
-    const upper = trimmed.toUpperCase();
-    if (TOPIC_COLORS[upper]) return upper;
+    if (!trimmed) return 'MARKET';
+
+    const upper = trimmed.toUpperCase().replace(/-/g, '_');
+    if (upper in TOPIC_COLORS) return upper as StrategicTopicCode;
+    if (upper in LEGACY_TO_STRATEGIC) return LEGACY_TO_STRATEGIC[upper];
+
     const lower = trimmed.toLowerCase();
-    return INTERNAL_TOPIC_TO_CANONICAL[lower] ?? 'GLOBAL_MARKET_INTELLIGENCE';
+    if (lower in LEGACY_TO_STRATEGIC) return LEGACY_TO_STRATEGIC[lower];
+
+    if (upper.includes('ENERGY') || upper.includes('OIL') || upper.includes('GAS')) return 'ENERGY';
+    if (upper.includes('SUPPLY') || upper.includes('TRADE') || upper.includes('LOGISTIC')) return 'SUPPLY_CHAIN';
+    if (upper.includes('CRYPTO') || upper.includes('BITCOIN')) return 'CRYPTO';
+    if (upper.includes('DEFENSE') || upper.includes('MILITARY')) return 'DEFENSE';
+    if (upper.includes('SEMICONDUCTOR') || upper.includes('AI_') || upper === 'AI') return 'AI_TECH';
+    if (upper.includes('MARKET') || upper.includes('GEOPOLIT') || upper.includes('GLOBAL')) return 'MARKET';
+
+    return 'MARKET';
 }
 
 /** Accent color for alert borders and topic tags (category, not severity). */
 export function getTopicColor(topic: string | null | undefined): string {
-    const code = normalizeTopicCode(topic);
-    return TOPIC_COLORS[code] ?? TOPIC_COLORS.GLOBAL_MARKET_INTELLIGENCE;
+    return TOPIC_COLORS[normalizeTopicCode(topic)];
 }
 
-/** Topics shown in Pro Hub “Monitored Domains” preview chips. */
+/** Topics shown in Pro Hub “Monitored Domains” preview chips (legacy keys → normalize). */
 export const UI_TOPIC_PREVIEW_CODES = [
     'energy_resource_risk',
-    'ai_semiconductor_intelligence',
     'global_market_intelligence',
-    'supply_chain_intelligence',
+    'ai_semiconductor_intelligence',
     'crypto_geopolitics',
     'defense_technology',
+    'supply_chain_intelligence',
 ] as const;
 
 /** Inline CSS custom properties for cards, chips, and Pro brief chrome. */
@@ -215,42 +270,42 @@ export function getTopicCssVars(topic: string | null | undefined): string {
     return `--topic-color:${color};--domain-accent:${color};--domain-bg:color-mix(in srgb, ${color} 12%, transparent);`;
 }
 
-/** Human-readable label for canonical or legacy topic codes. */
+/** Human-readable label for any topic input (always one of 6 strategic names). */
 export function getTopicDisplayLabel(topic: string | null | undefined): string {
-    const code = normalizeTopicCode(topic);
-    if (CANONICAL_TOPIC_LABELS[code]) return CANONICAL_TOPIC_LABELS[code];
-    const def = ACCESS_MAP.find(t => t.code === topic || normalizeTopicCode(t.code) === code);
-    return def?.label ?? code.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    return STRATEGIC_TOPIC_LABELS[normalizeTopicCode(topic)];
 }
 
-/** Compact labels for map filter chips (aligned with Alert Stream naming). */
+/** @deprecated Use getTopicDisplayLabel — map/feed share the same 6 labels. */
 export function getTopicMapFilterLabel(topic: string | null | undefined): string {
-    const code = normalizeTopicCode(topic);
-    const short: Record<string, string> = {
-        GEOPOLITICS: 'Geopolitics',
-        ENERGY_RESOURCE_RISK: 'Energy',
-        GLOBAL_MARKET_INTELLIGENCE: 'Global Market Intel',
-        MARKET_SENTIMENT: 'Market Sentiment',
-        SUPPLY_CHAIN_INTELLIGENCE: 'Supply Chain',
-        AI_SEMICONDUCTOR_INTELLIGENCE: 'AI & Semiconductors',
-        DEFENSE_TECHNOLOGY: 'Defense',
-    };
-    return short[code] ?? getTopicDisplayLabel(code);
+    return getTopicDisplayLabel(topic);
+}
+
+/** Resolve backbone API id → strategic code. */
+export function strategicTopicFromBackboneApi(apiSector: string): StrategicTopicCode {
+    return normalizeTopicCode(apiSector);
 }
 
 /**
  * Look up a TopicDef by its DB topic_code (including null → global).
  */
 export function getTopicDef(code: string | null): TopicDef {
-    const canonical = normalizeTopicCode(code);
-    const byCanonical = ACCESS_MAP.find(
-        t => normalizeTopicCode(t.code) === canonical
+    const strategic = normalizeTopicCode(code);
+    const byStrategic = ACCESS_MAP.find(
+        t => t.code !== null && normalizeTopicCode(t.code) === strategic
     );
-    if (byCanonical) {
-        return { ...byCanonical, color: getTopicColor(canonical) };
+    if (byStrategic) {
+        return {
+            ...byStrategic,
+            label: STRATEGIC_TOPIC_LABELS[strategic],
+            color: getTopicColor(strategic),
+        };
     }
     const found = ACCESS_MAP.find(t => t.code === code || (code === null && t.key === 'global'));
-    return found ?? ACCESS_MAP[0];
+    if (found) {
+        const s = normalizeTopicCode(found.code);
+        return { ...found, label: STRATEGIC_TOPIC_LABELS[s], color: getTopicColor(s) };
+    }
+    return ACCESS_MAP[0];
 }
 
 /**

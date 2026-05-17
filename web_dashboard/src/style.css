@@ -6629,27 +6629,8 @@ body.cb-modal-scroll-lock {
   --domain-bg: var(--domain-default-bg);
 }
 
-/* Canonical topic hooks (from getDomainSlugClass / normalizeTopicCode) */
-.topic-geopolitics,
-.domain-crypto {
-  --topic-color: #58a6ff;
-  --domain-accent: var(--topic-color);
-  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
-}
-
-.topic-global-market-intelligence,
-.domain-global-market {
-  --topic-color: #8b949e;
-  --domain-accent: var(--topic-color);
-  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
-}
-
-.topic-market-sentiment {
-  --topic-color: #79c0ff;
-  --domain-accent: var(--topic-color);
-  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
-}
-
+/* Strategic 6 sectors (getDomainSlugClass / normalizeTopicCode) */
+.topic-energy,
 .topic-energy-resource-risk,
 .domain-energy {
   --topic-color: #d29922;
@@ -6657,13 +6638,17 @@ body.cb-modal-scroll-lock {
   --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
 
-.topic-supply-chain-intelligence,
-.domain-supply-chain {
-  --topic-color: #3fb950;
+.topic-market,
+.topic-geopolitics,
+.topic-global-market-intelligence,
+.topic-market-sentiment,
+.domain-global-market {
+  --topic-color: #58a6ff;
   --domain-accent: var(--topic-color);
   --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
 
+.topic-ai-tech,
 .topic-ai-semiconductor-intelligence,
 .domain-ai-semi {
   --topic-color: #bc8cff;
@@ -6671,9 +6656,26 @@ body.cb-modal-scroll-lock {
   --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
 
+.topic-crypto,
+.topic-crypto-geopolitics,
+.domain-crypto {
+  --topic-color: #db6d28;
+  --domain-accent: var(--topic-color);
+  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
+}
+
+.topic-defense,
 .topic-defense-technology,
 .domain-defense {
   --topic-color: #f85149;
+  --domain-accent: var(--topic-color);
+  --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
+}
+
+.topic-supply-chain,
+.topic-supply-chain-intelligence,
+.domain-supply-chain {
+  --topic-color: #3fb950;
   --domain-accent: var(--topic-color);
   --domain-bg: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
