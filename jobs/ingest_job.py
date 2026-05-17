@@ -167,7 +167,14 @@ async def run_ingest(db: AsyncSession):
             db.expire_all()
 
             total_new += new_count
-            logger.info("Inserted %s new items for %s", new_count, source_id)
+            group = src.get("source_group") or ""
+            logger.info(
+                "Inserted %s new items for %s (fetched=%s, source_group=%s)",
+                new_count,
+                source_id,
+                len(items),
+                group,
+            )
 
         except Exception as e:
             logger.error("Error fetching from %s: %s", source_id, e)

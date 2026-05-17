@@ -165,8 +165,8 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
 
         topic = normalize_strategic_topic(
             raw_topic=representative.category,
-            source_group=representative.rough_category,
-            title=representative.title
+            source_group=representative.source_group,
+            title=f"{representative.title or ''} {representative.summary or ''}",
         )
 
         sig = TrendSignal(

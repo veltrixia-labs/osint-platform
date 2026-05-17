@@ -14,7 +14,10 @@ AUTHORITY_WEIGHTS = {
     "fed_press_all": 1.5,
     "ecb_press": 1.5,
     "oilprice_main": 1.4,
-    "defensenews_rss": 1.4
+    "defensenews_rss": 1.4,
+    "coindesk_rss": 1.25,
+    "cointelegraph_rss": 1.2,
+    "cryptoslate_feed": 1.15,
 }
 
 SEVERITY_KEYWORDS = {
@@ -31,8 +34,10 @@ SEVERITY_KEYWORDS = {
 CATEGORY_PRIORITY = {
     "energy_resource_risk": 1.2,
     "global_market_intelligence": 1.1,
+    "crypto_geopolitics": 1.2,
+    "ai_semiconductor_intelligence": 1.15,
     "defense_technology": 1.3,
-    "supply_chain_intelligence": 1.4
+    "supply_chain_intelligence": 1.4,
 }
 
 async def calculate_cluster_signal(cluster: EventCluster, items: List[Item]) -> float:

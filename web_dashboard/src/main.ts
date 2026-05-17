@@ -247,6 +247,9 @@ async function initDashboard() {
                 pulseBarEl.innerHTML = '';
             }
         }
+        if (topicFilterBar) {
+            topicFilterBar.style.display = tab === 'feed' || tab === 'free-feed' ? 'flex' : 'none';
+        }
 
         // Stop any active DashboardState polling to prevent background /api/alerts requests
         (window as any).stopPolling?.();
@@ -345,14 +348,38 @@ async function initDashboard() {
         state.startPolling();
     };
 
+    let contextBriefsItems: Awaited<ReturnType<typeof fetchFreeAlerts>> = [];
+    let contextBriefsTopicFilter: StrategicTopicCode | null = null;
+
+    const renderContextBriefsView = () => {
+        renderFreeAlertFeed(
+            contextBriefsItems,
+            alertsContainer,
+            user?.tier ?? 'free',
+            contextBriefsTopicFilter,
+            contextBriefsItems.length,
+        );
+    };
+
+    const bindContextBriefsFilterBar = () => {
+        renderTopicFilterBar(topicFilterBar, contextBriefsTopicFilter, (topic) => {
+            contextBriefsTopicFilter = topic;
+            bindContextBriefsFilterBar();
+            renderContextBriefsView();
+        });
+    };
+
     const renderFreeFeed = async () => {
+        topicFilterBar.style.display = 'flex';
         alertsContainer.innerHTML = '<div class="u-p-2 u-text-center" style="opacity:0.5;">Loading Context Briefs...</div>';
         try {
             const items = await fetchFreeAlerts({ limit: 20 });
             if (!Array.isArray(items)) {
                 throw new Error('Unexpected server response (not a list).');
             }
-            renderFreeAlertFeed(items, alertsContainer, user?.tier ?? 'free');
+            contextBriefsItems = items;
+            bindContextBriefsFilterBar();
+            renderContextBriefsView();
         } catch (err: any) {
             const msg = err?.message || 'Connection error';
             alertsContainer.innerHTML = `

@@ -10,7 +10,7 @@ from sqlalchemy import desc, or_
 from db.models import TrendSignal, EventCluster, Item, AlertLog, Report, AnalystProfile
 from urllib.parse import urlparse
 from processor.location_resolver import LocationResolver
-from processor.lightweight_topic import STRATEGIC_TOPICS, infer_topic_from_text
+from processor.lightweight_topic import infer_topic_from_text
 from processor.topic_registry import CANONICAL_TOPICS, normalize_canonical_topic
 
 logging.basicConfig(level=logging.INFO)
@@ -156,10 +156,11 @@ class AlertManager:
             )
             intensity = _physical_intensity(sig)
 
-            if internal_topic not in STRATEGIC_TOPICS or topic not in CANONICAL_TOPICS:
+            if topic not in CANONICAL_TOPICS:
                 logger.info(
-                    "Alert suppressed: topic outside strategic sectors topic=%r target=%r",
+                    "Alert suppressed: topic outside strategic sectors topic=%r internal=%r target=%r",
                     topic,
+                    internal_topic,
                     sig.target_label,
                 )
                 continue

@@ -5,7 +5,12 @@
  */
 import { simpleMarkdown } from './utils';
 import type { FreeAlertFeedItem } from '../api';
-import { getTopicDisplayLabel, getTopicCssVars, normalizeTopicCode } from '../topics';
+import {
+    getTopicDisplayLabel,
+    getTopicCssVars,
+    normalizeTopicCode,
+    type StrategicTopicCode,
+} from '../topics';
 
 type CompanyImpactSource = NonNullable<FreeAlertFeedItem['company_impacts']>[number];
 type SectorImpactSource = NonNullable<FreeAlertFeedItem['sector_impacts']>[number];
@@ -618,19 +623,32 @@ function renderFeedCard(item: FreeAlertFeedItem, index: number): string {
 export function renderFreeAlertFeed(
     items: FreeAlertFeedItem[],
     container: HTMLElement,
-    viewerTier: string = 'free'
+    viewerTier: string = 'free',
+    topicFilter: StrategicTopicCode | null = null,
+    totalUnfilteredCount?: number,
 ): void {
-    if (!items || items.length === 0) {
+    const allItems = items || [];
+    const filtered = topicFilter
+        ? allItems.filter(i => normalizeTopicCode(i.topic) === topicFilter)
+        : allItems;
+
+    if (!filtered.length) {
+        const filterLabel = topicFilter ? getTopicDisplayLabel(topicFilter) : null;
+        const hadItems = (totalUnfilteredCount ?? allItems.length) > 0;
         container.innerHTML = `
             <div class="empty-state u-p-2 u-text-center">
                 <div class="empty-icon">📡</div>
-                <div class="empty-title">No alerts found</div>
-                <div class="empty-subtitle">There are no Context Briefs yet, or none match your filters. New briefs appear after alerts are processed and the free-feed job runs.</div>
+                <div class="empty-title">${hadItems && filterLabel ? `No Context Briefs for ${filterLabel}` : 'No alerts found'}</div>
+                <div class="empty-subtitle">${
+                    hadItems && filterLabel
+                        ? 'Try another topic filter or check Alert Stream after the next pipeline run.'
+                        : 'There are no Context Briefs yet. New briefs appear after alerts are processed and the free-feed job runs.'
+                }</div>
             </div>`;
         return;
     }
 
-    const detailBodies = items.map(item =>
+    const detailBodies = filtered.map(item =>
         renderStructuredContent(
             item.content_markdown || '',
             item.related_news,
@@ -641,7 +659,7 @@ export function renderFreeAlertFeed(
             viewerTier
         )
     );
-    const modalTitles = items.map(item =>
+    const modalTitles = filtered.map(item =>
         cleanBriefTitle(item.title || item.target_label || 'Strategic Intelligence Alert')
     );
 
@@ -654,7 +672,7 @@ export function renderFreeAlertFeed(
                 </p>
             </div>
             <div class="cb-briefs-grid cb-briefs-grid--context">
-                ${items.map((item, i) => renderFeedCard(item, i)).join('')}
+                ${filtered.map((item, i) => renderFeedCard(item, i)).join('')}
             </div>
             <div id="cb-context-modal-root" class="cb-modal-root" aria-hidden="true">
                 <div class="cb-modal-backdrop" tabindex="-1"></div>
