@@ -31,7 +31,7 @@ async def get_alerts(
     suppressed: Optional[bool] = None,
     analyst_id: Optional[str] = None,
     topic: Optional[str] = None,
-    limit: int = 50,
+    limit: int = 30,
     since: Optional[datetime] = None,
     current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/alerts")),
     db: AsyncSession = Depends(get_db)
@@ -171,7 +171,7 @@ async def get_alerts(
 
 @router.get("/alerts/live")
 async def get_live_alerts(
-    limit: int = 50,
+    limit: int = 30,
     current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/alerts/live")),
     db: AsyncSession = Depends(get_db)
 ):

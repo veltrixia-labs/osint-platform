@@ -3,8 +3,11 @@
  * OSINT Risk Intelligence API Client
  */
 
-/** Default page size for Alert Stream and Context Briefs list endpoints. */
-export const FEED_DISPLAY_LIMIT = 50;
+/** Default page size for Alert Stream list endpoints. */
+export const ALERT_STREAM_DISPLAY_LIMIT = 30;
+
+/** Default page size for Context Briefs list endpoints. */
+export const CONTEXT_BRIEFS_DISPLAY_LIMIT = 40;
 
 /**
  * Resolve API prefix for fetch():
@@ -304,7 +307,7 @@ export async function fetchAlert(id: string): Promise<Alert> {
     return await resp.json();
 }
 
-export async function fetchLiveAlerts(limit: number = FEED_DISPLAY_LIMIT): Promise<Alert[]> {
+export async function fetchLiveAlerts(limit: number = ALERT_STREAM_DISPLAY_LIMIT): Promise<Alert[]> {
     const resp = await apiClient.get(`/alerts/live?limit=${limit}`);
     return resp.ok ? await resp.json() : [];
 }
@@ -325,7 +328,7 @@ export async function fetchFreeAlerts(
 ): Promise<FreeAlertFeedList> {
     const query = new URLSearchParams();
     if (params.topic) query.set('topic', params.topic);
-    query.set('limit', String(params.limit ?? FEED_DISPLAY_LIMIT));
+    query.set('limit', String(params.limit ?? CONTEXT_BRIEFS_DISPLAY_LIMIT));
     const qs = query.toString();
     const resp = await apiClient.get(`/free/alerts${qs ? `?${qs}` : ''}`);
     if (!resp.ok) {

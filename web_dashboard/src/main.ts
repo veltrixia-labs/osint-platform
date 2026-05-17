@@ -9,7 +9,7 @@ import { DashboardState } from './modules/poll'
 import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 // (Pro reports now handled within Pro Insights hub)
-import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, FEED_DISPLAY_LIMIT, getResolvedApiBase } from './modules/api'
+import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase } from './modules/api'
 import type { UserMe } from './modules/api'
 import {
     renderGracePeriodBanner,
@@ -81,16 +81,22 @@ export async function renderSignup() {
 
 type TabId = 'feed' | 'free-feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'pro-map' | 'expert-intel'
 
-const PAGE_HEADER_META: Partial<Record<TabId, { title: string; subtitle?: string }>> = {
+const PAGE_HEADER_META: Partial<Record<TabId, { icon?: string; title: string; subtitle?: string }>> = {
     feed: {
+        icon: '📡',
         title: 'Alert Stream',
         subtitle: 'Real-time intelligence signals — high-frequency monitoring of global volatility.',
     },
     'free-feed': {
-        title: '🛰 Context Briefs',
+        icon: '🛰',
+        title: 'Context Briefs',
         subtitle: 'Rule-based context for recent alerts — same card language as Pro Structural Briefs.',
     },
-    map: { title: 'Global Intelligence Map' },
+    map: {
+        icon: '🌐',
+        title: 'Global Map',
+        subtitle: 'Live geospatial insight — real-time visualization of entity activities across global hotspots.',
+    },
     'pro-map': { title: 'Pro Interactive Map' },
     'pro-insights': { title: 'Pro Insights' },
     'expert-intel': { title: 'Expert Intelligence' },
@@ -190,7 +196,10 @@ async function initDashboard() {
           ${graceBanner ? `<div id="grace-header">${graceBanner}</div>` : ''}
           <div class="header-row">
             <div class="page-header-block">
-              <h1 id="main-title">Analyst Intelligence</h1>
+              <h1 id="main-title" class="page-title">
+                <span id="page-title-icon" class="page-title-icon" aria-hidden="true" hidden></span>
+                <span id="page-title-text">Analyst Intelligence</span>
+              </h1>
               <p id="page-subtitle" class="page-subtitle" hidden></p>
             </div>
           </div>
@@ -216,11 +225,22 @@ async function initDashboard() {
     const topicFilterBar = document.querySelector<HTMLElement>('#topic-filter-bar')!
     const pageSubtitle = document.querySelector<HTMLElement>('#page-subtitle')
 
+    const pageTitleIcon = document.querySelector<HTMLElement>('#page-title-icon')
+    const pageTitleText = document.querySelector<HTMLElement>('#page-title-text')
+
     const applyPageHeader = (tab: TabId) => {
-        const mainTitle = document.querySelector<HTMLElement>('#main-title')
         const meta = PAGE_HEADER_META[tab]
-        if (mainTitle) {
-            mainTitle.textContent = meta?.title ?? 'Analyst Intelligence'
+        if (pageTitleText) {
+            pageTitleText.textContent = meta?.title ?? 'Analyst Intelligence'
+        }
+        if (pageTitleIcon) {
+            if (meta?.icon) {
+                pageTitleIcon.textContent = meta.icon
+                pageTitleIcon.hidden = false
+            } else {
+                pageTitleIcon.textContent = ''
+                pageTitleIcon.hidden = true
+            }
         }
         if (pageSubtitle) {
             if (meta?.subtitle) {
@@ -407,7 +427,7 @@ async function initDashboard() {
         topicFilterBar.style.display = 'flex';
         alertsContainer.innerHTML = '<div class="u-p-2 u-text-center" style="opacity:0.5;">Loading Context Briefs...</div>';
         try {
-            const items = await fetchFreeAlerts({ limit: FEED_DISPLAY_LIMIT });
+            const items = await fetchFreeAlerts({ limit: CONTEXT_BRIEFS_DISPLAY_LIMIT });
             if (!Array.isArray(items)) {
                 throw new Error('Unexpected server response (not a list).');
             }
