@@ -223,6 +223,21 @@ export function getTopicDisplayLabel(topic: string | null | undefined): string {
     return def?.label ?? code.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 }
 
+/** Compact labels for map filter chips (aligned with Alert Stream naming). */
+export function getTopicMapFilterLabel(topic: string | null | undefined): string {
+    const code = normalizeTopicCode(topic);
+    const short: Record<string, string> = {
+        GEOPOLITICS: 'Geopolitics',
+        ENERGY_RESOURCE_RISK: 'Energy',
+        GLOBAL_MARKET_INTELLIGENCE: 'Global Market Intel',
+        MARKET_SENTIMENT: 'Market Sentiment',
+        SUPPLY_CHAIN_INTELLIGENCE: 'Supply Chain',
+        AI_SEMICONDUCTOR_INTELLIGENCE: 'AI & Semiconductors',
+        DEFENSE_TECHNOLOGY: 'Defense',
+    };
+    return short[code] ?? getTopicDisplayLabel(code);
+}
+
 /**
  * Look up a TopicDef by its DB topic_code (including null → global).
  */

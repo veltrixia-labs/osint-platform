@@ -1,6 +1,49 @@
 import L from 'leaflet';
 import type { BackboneNode } from '../api';
 import { fetchBackbone } from '../api';
+import { getTopicColor, getTopicMapFilterLabel } from '../topics';
+
+/** Backbone API sector id -> platform topic code (snake_case for normalizeTopicCode). */
+const BACKBONE_FILTER_TO_TOPIC: Record<string, string> = {
+    energy: 'energy_resource_risk',
+    market: 'global_market_intelligence',
+    trade: 'supply_chain_intelligence',
+    crypto: 'crypto_geopolitics',
+    ai: 'ai_semiconductor_intelligence',
+    defense: 'defense_technology',
+};
+
+/** Node.sector strings from backbone JSON -> topic code. */
+const BACKBONE_NODE_SECTOR_TO_TOPIC: Record<string, string> = {
+    ENERGY: 'energy_resource_risk',
+    MARKET: 'global_market_intelligence',
+    TRADE: 'supply_chain_intelligence',
+    CRYPTO: 'crypto_geopolitics',
+    AI: 'ai_semiconductor_intelligence',
+    TECH: 'ai_semiconductor_intelligence',
+    SEMICONDUCTOR: 'ai_semiconductor_intelligence',
+    DEFENSE: 'defense_technology',
+};
+
+function topicCodeFromBackboneFilter(filterId: string): string | null {
+    return BACKBONE_FILTER_TO_TOPIC[filterId] ?? null;
+}
+
+function topicCodeFromNodeSector(sector: string): string {
+    const key = (sector || '').trim().toUpperCase();
+    if (BACKBONE_NODE_SECTOR_TO_TOPIC[key]) {
+        return BACKBONE_NODE_SECTOR_TO_TOPIC[key];
+    }
+    return 'global_market_intelligence';
+}
+
+function getBackboneSectorColor(sector: string): string {
+    return getTopicColor(topicCodeFromNodeSector(sector));
+}
+
+function getBackboneSectorLabel(sector: string): string {
+    return getTopicMapFilterLabel(topicCodeFromNodeSector(sector));
+}
 
 let map: L.Map;
 let layerGroup: L.LayerGroup;
@@ -286,7 +329,7 @@ function renderNodeList(nodes: BackboneNode[]) {
         ${Array.from(groups.entries()).map(([sector, sectorNodes]) => `
             <div class="map-node-sector">
                 <button class="map-node-sector-btn" data-sector="${sector}" style="--sector-color:${getBackboneSectorColor(sector)};">
-                    <span>${sector}</span>
+                    <span>${getBackboneSectorLabel(sector)}</span>
                     <span>${sectorNodes.length}</span>
                 </button>
 
@@ -381,19 +424,6 @@ function renderSelectedDependencyLines(
     });
 }
 
-function getBackboneSectorColor(sector: string): string {
-    const key = sector.toUpperCase();
-
-    if (key.includes('ENERGY')) return '#d29922';
-    if (key.includes('MARKET')) return '#3fb950';
-    if (key.includes('CRYPTO')) return '#f97316';
-    if (key.includes('AI') || key.includes('TECH') || key.includes('SEMICONDUCTOR')) return '#bc8cff';
-    if (key.includes('DEFENSE')) return '#ff4d6d';
-    if (key.includes('TRADE') || key.includes('SUPPLY')) return '#79c0ff';
-
-    return '#58a6ff';
-}
-
 function getStrengthColor(value: number): string {
     if (value >= 0.7) return '#ff6b6b'; // 赤
     if (value >= 0.4) return '#f1c40f'; // 黄
@@ -404,25 +434,21 @@ function initMapFilter() {
     const container = document.getElementById('map-filter');
     if (!container) return;
 
-    const TOPICS = [
-        { id: 'all', label: 'All', color: '#ffffff' },
-        { id: 'energy', label: 'Energy', color: '#d29922' },
-        { id: 'market', label: 'Market', color: '#3fb950' },
-        { id: 'crypto', label: 'Crypto', color: '#f97316' },
-        { id: 'ai', label: 'AI/Tech', color: '#bc8cff' },
-        { id: 'defense', label: 'Defense', color: '#ff4d6d' },
-        { id: 'trade', label: 'Trade', color: '#79c0ff' }
-    ];
+    const FILTER_IDS = ['all', 'energy', 'market', 'trade', 'crypto', 'ai', 'defense'] as const;
 
-    container.innerHTML = TOPICS.map(t => `
+    container.innerHTML = FILTER_IDS.map(id => {
+        const topicKey = id === 'all' ? null : topicCodeFromBackboneFilter(id);
+        const color = id === 'all' ? '#ffffff' : getTopicColor(topicKey);
+        const label = id === 'all' ? 'All' : getTopicMapFilterLabel(topicKey);
+        return `
         <button
-            class="map-filter-btn ${activeBackboneSectors.has(t.id) ? 'active' : ''}"
-            data-id="${t.id}"
-            style="--filter-color:${t.color};"
+            class="map-filter-btn ${activeBackboneSectors.has(id) ? 'active' : ''}"
+            data-id="${id}"
+            style="--filter-color:${color};"
         >
-            ${t.label}
-        </button>
-    `).join('');
+            ${label}
+        </button>`;
+    }).join('');
 
     container.querySelectorAll('.map-filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
