@@ -81,7 +81,14 @@ export async function renderSignup() {
 
 type TabId = 'feed' | 'free-feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'pro-map' | 'expert-intel'
 
-const PAGE_HEADER_META: Partial<Record<TabId, { icon?: string; title: string; subtitle?: string }>> = {
+type PageHeaderMeta = {
+    icon?: string
+    title: string
+    subtitle?: string
+    proCta?: { label: string; href: string }
+}
+
+const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
     feed: {
         icon: '📡',
         title: 'Alert Stream',
@@ -90,12 +97,16 @@ const PAGE_HEADER_META: Partial<Record<TabId, { icon?: string; title: string; su
     'free-feed': {
         icon: '🛰',
         title: 'Context Briefs',
-        subtitle: 'Rule-based context for recent alerts — same card language as Pro Structural Briefs.',
+        subtitle: 'Strategic synthesis of recent intelligence — connecting the dots across global sectors.',
     },
     map: {
         icon: '🌐',
         title: 'Global Map',
-        subtitle: 'Strategic entity mapping — visualizing key actors and geographic relationships across primary sectors.',
+        subtitle: 'Strategic entity mapping — visualizing actors and geographic relationships.',
+        proCta: {
+            label: 'Unlock real-time motion and temporal tracking with Pro',
+            href: '/subscription',
+        },
     },
     'pro-map': { title: 'Pro Interactive Map' },
     'pro-insights': { title: 'Pro Insights' },
@@ -200,7 +211,10 @@ async function initDashboard() {
                 <span id="page-title-icon" class="page-title-icon" aria-hidden="true" hidden></span>
                 <span id="page-title-text">Analyst Intelligence</span>
               </h1>
-              <p id="page-subtitle" class="page-subtitle" hidden></p>
+              <div id="page-subtitle-wrap" class="page-subtitle-wrap" hidden>
+                <p id="page-subtitle" class="page-subtitle"></p>
+                <a id="page-pro-cta" class="page-pro-cta" href="/subscription" hidden></a>
+              </div>
             </div>
           </div>
           <div class="main-feed" id="alerts-container">
@@ -223,10 +237,15 @@ async function initDashboard() {
     const alertsContainer = document.querySelector<HTMLElement>('#alerts-list')!
     const pulseBar = document.querySelector<HTMLElement>('#pulse-bar')!
     const topicFilterBar = document.querySelector<HTMLElement>('#topic-filter-bar')!
+    const pageSubtitleWrap = document.querySelector<HTMLElement>('#page-subtitle-wrap')
     const pageSubtitle = document.querySelector<HTMLElement>('#page-subtitle')
+    const pageProCta = document.querySelector<HTMLAnchorElement>('#page-pro-cta')
 
     const pageTitleIcon = document.querySelector<HTMLElement>('#page-title-icon')
     const pageTitleText = document.querySelector<HTMLElement>('#page-title-text')
+
+    const isProOrAbove = (tier?: string) =>
+        tier === 'pro' || tier === 'experts' || tier === 'enterprise'
 
     const applyPageHeader = (tab: TabId) => {
         const meta = PAGE_HEADER_META[tab]
@@ -242,14 +261,27 @@ async function initDashboard() {
                 pageTitleIcon.hidden = true
             }
         }
+
+        const showSubtitle = Boolean(meta?.subtitle)
+        const showProCta = Boolean(
+            meta?.proCta && tab === 'map' && !isProOrAbove(user?.tier)
+        )
+
         if (pageSubtitle) {
-            if (meta?.subtitle) {
-                pageSubtitle.textContent = meta.subtitle
-                pageSubtitle.hidden = false
+            pageSubtitle.textContent = showSubtitle ? meta!.subtitle! : ''
+        }
+        if (pageProCta) {
+            if (showProCta && meta?.proCta) {
+                pageProCta.textContent = `[ ${meta.proCta.label} ]`
+                pageProCta.href = meta.proCta.href
+                pageProCta.hidden = false
             } else {
-                pageSubtitle.textContent = ''
-                pageSubtitle.hidden = true
+                pageProCta.textContent = ''
+                pageProCta.hidden = true
             }
+        }
+        if (pageSubtitleWrap) {
+            pageSubtitleWrap.hidden = !(showSubtitle || showProCta)
         }
     }
 
@@ -327,6 +359,12 @@ async function initDashboard() {
             if (mainContent) mainContent.style.opacity = '1';
         }, 50);
     };
+
+    pageProCta?.addEventListener('click', (e) => {
+        e.preventDefault();
+        history.pushState({ tab: 'plans' }, '', '/subscription');
+        handleTabSwitch('plans', undefined, true);
+    });
 
     window.addEventListener('hashchange', () => {
         const hash = window.location.hash.slice(1);
@@ -502,7 +540,12 @@ async function initDashboard() {
     const initialHash = window.location.hash.slice(1);
     const initialBase = (initialHash.split('?')[0] || '') as TabId;
     const bootTabs: TabId[] = ['feed', 'free-feed', 'map', 'plans', 'legal', 'pro-insights', 'pro-map', 'expert-intel'];
-    if (initialBase && bootTabs.includes(initialBase)) {
+    const onSubscriptionPath = /\/subscription\/?$/.test(window.location.pathname);
+
+    if (onSubscriptionPath) {
+        history.replaceState({ tab: 'plans' }, '', '/subscription');
+        handleTabSwitch('plans', undefined, true);
+    } else if (initialBase && bootTabs.includes(initialBase)) {
         handleTabSwitch(initialBase, new URLSearchParams(initialHash.split('?')[1] || '').get('alert') || undefined, true);
     } else {
         handleTabSwitch('feed');
