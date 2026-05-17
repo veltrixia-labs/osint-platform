@@ -95,7 +95,7 @@ const PAGE_HEADER_META: Partial<Record<TabId, { icon?: string; title: string; su
     map: {
         icon: '🌐',
         title: 'Global Map',
-        subtitle: 'Live geospatial insight — real-time visualization of entity activities across global hotspots.',
+        subtitle: 'Strategic entity mapping — visualizing key actors and geographic relationships across primary sectors.',
     },
     'pro-map': { title: 'Pro Interactive Map' },
     'pro-insights': { title: 'Pro Insights' },
