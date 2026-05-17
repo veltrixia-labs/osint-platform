@@ -99,7 +99,7 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
         title: 'Context Briefs',
         subtitle: 'Strategic intelligence synthesis — bridging global news signals with high-fidelity structural analysis.',
         proCta: {
-            label: 'Unlock Pro / Expert for advanced BEA economic data & deep-sector intelligence',
+            label: 'Unlock Pro / Expert for institutional-grade analytics & deep-sector intelligence',
             href: '/subscription',
         },
     },
