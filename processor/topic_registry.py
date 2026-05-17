@@ -43,6 +43,30 @@ _ALIASES: dict[str, str] = {
 # Kept for audit script imports
 INTERNAL_TO_CANONICAL = INTERNAL_TO_STRATEGIC
 
+# Strategic UI codes → legacy snake_case (Item.category, sector fallbacks)
+STRATEGIC_TO_INTERNAL: dict[str, str] = {
+    "ENERGY": "energy_resource_risk",
+    "MARKET": "global_market_intelligence",
+    "AI_TECH": "ai_semiconductor_intelligence",
+    "CRYPTO": "crypto_geopolitics",
+    "DEFENSE": "defense_technology",
+    "SUPPLY_CHAIN": "supply_chain_intelligence",
+}
+
+
+def internal_topic_for_fallback(raw: str | None) -> str:
+    """Map strategic or legacy topic codes to snake_case for DB joins and fallbacks."""
+    if not raw:
+        return "global_market_intelligence"
+    stripped = raw.strip()
+    upper = stripped.upper().replace("-", "_")
+    if upper in STRATEGIC_TO_INTERNAL:
+        return STRATEGIC_TO_INTERNAL[upper]
+    lower = stripped.lower()
+    if lower in INTERNAL_TO_STRATEGIC:
+        return lower
+    return lower
+
 
 def normalize_canonical_topic(
     raw: str | None,

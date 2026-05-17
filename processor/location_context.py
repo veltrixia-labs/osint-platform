@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from processor.location_resolver import LocationResolver
+from processor.topic_registry import internal_topic_for_fallback
 
 # Topic code -> illustrative (name, sector, country, match_basis) rows
 TOPIC_SECTOR_FALLBACK: Dict[str, Tuple[Tuple[str, str, str, str], ...]] = {
@@ -39,6 +40,12 @@ TOPIC_SECTOR_FALLBACK: Dict[str, Tuple[Tuple[str, str, str, str], ...]] = {
         ("Equipment & materials suppliers", "Semiconductor capital equipment", "Global", "Sector context — process node ramps (illustrative)"),
     ),
 }
+
+
+def topic_sector_fallback_rows(topic: str | None) -> Tuple[Tuple[str, str, str, str], ...]:
+    """Resolve strategic (ENERGY, …) or legacy topic codes to illustrative sector rows."""
+    legacy_key = internal_topic_for_fallback(topic)
+    return TOPIC_SECTOR_FALLBACK.get(legacy_key, ())
 
 
 def _impact_dict(
@@ -146,7 +153,7 @@ def build_location_company_supplement(
         return rows, ctx
 
     topic = getattr(alert_log, "topic", None) or ""
-    for tup in TOPIC_SECTOR_FALLBACK.get(topic, ()):
+    for tup in topic_sector_fallback_rows(topic):
         key = tup[0].strip().lower()
         if key in seen:
             continue

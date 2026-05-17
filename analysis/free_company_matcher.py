@@ -1,6 +1,30 @@
 import re
 from collections import defaultdict
 
+_MIN_TICKER_LEN = 4
+_MIN_TOTAL_SCORE = 2.0
+_MIN_NAME_TOKEN_LEN = 3
+
+_NAME_TOKEN_STOPWORDS = frozenset({
+    "the", "and", "for", "inc", "ltd", "corp", "co", "company", "group", "holdings",
+    "international", "global", "national",
+})
+
+
+def _name_first_token(name: str) -> str:
+    """Leading significant token for partial name match (e.g. NVIDIA from NVIDIA Corporation)."""
+    cleaned = re.sub(r"[^\w\s]", " ", (name or "").lower())
+    for token in cleaned.split():
+        if len(token) >= _MIN_NAME_TOKEN_LEN and token not in _NAME_TOKEN_STOPWORDS:
+            return token
+    return ""
+
+
+def _word_in_text(word: str, haystack: str) -> bool:
+    if not word or not haystack:
+        return False
+    return bool(re.search(rf"\b{re.escape(word)}\b", haystack, flags=re.IGNORECASE))
+
 
 def match_news_to_companies(items, rankings, stakeholders) -> tuple[list[dict], list[dict]]:
     """
@@ -10,7 +34,8 @@ def match_news_to_companies(items, rankings, stakeholders) -> tuple[list[dict], 
     A company is included ONLY if at least one "strong match" exists:
       - Company name found in item title
       - Company name found in item summary
-      - Ticker match (>= 3 chars, word-boundary)
+      - Ticker match (>= 4 chars, word-boundary)
+      - First name token in title/summary (e.g. NVIDIA in "NVIDIA Corporation")
       - Dependency target match
 
     Weak signals (sector/category, description keywords, dependency type)
@@ -23,16 +48,16 @@ def match_news_to_companies(items, rankings, stakeholders) -> tuple[list[dict], 
     for stakeholder in stakeholders:
         sh_name = stakeholder.get("name", "")
         sh_ticker = stakeholder.get("ticker", "") or ""
-        sh_sector = stakeholder.get("sector", "Unknown")
-        sh_country = stakeholder.get("country", "Unknown")
+        sh_sector = stakeholder.get("sector") or "Unknown"
+        sh_country = stakeholder.get("country") or "Unknown"
         top_deps = stakeholder.get("top_dependencies", [])
 
         name_lower = sh_name.lower()
+        name_token = _name_first_token(sh_name)
         ticker_upper = sh_ticker.strip().upper()
         sector_lower = sh_sector.lower()
 
-        # Ticker eligibility: must be >= 3 characters
-        ticker_eligible = len(ticker_upper) >= 3
+        ticker_eligible = len(ticker_upper) >= _MIN_TICKER_LEN
 
         total_score = 0.0
         match_basis_set: set[str] = set()
@@ -65,10 +90,23 @@ def match_news_to_companies(items, rankings, stakeholders) -> tuple[list[dict], 
                 item_matches.append("Company Name in Summary")
                 strong_match_found = True
 
-            # ── 3. Ticker Match: DISABLED for Free tier ──
-            # (Too many false positives from short tickers like E, BP, EC, LNG)
+            # ── 3. First name token (e.g. NVIDIA): +4.0 title / +2.5 summary ──
+            elif name_token and _word_in_text(name_token, title):
+                item_score += 4.0
+                item_matches.append(f"Name Token in Title ({name_token})")
+                strong_match_found = True
+            elif name_token and _word_in_text(name_token, summary):
+                item_score += 2.5
+                item_matches.append(f"Name Token in Summary ({name_token})")
+                strong_match_found = True
 
-            # ── 4. Dependency Target Match: weight × 3.0 ──
+            # ── 4. Ticker match (>= 4 chars, word-boundary): +3.5 ──
+            elif ticker_eligible and _word_in_text(ticker_upper, text):
+                item_score += 3.5
+                item_matches.append(f"Ticker Match ({ticker_upper})")
+                strong_match_found = True
+
+            # ── 5. Dependency Target Match: weight × 3.0 ──
             for dep in top_deps:
                 target = (dep.get("target") or "").lower()
                 weight = float(dep.get("weight", 0.5))
@@ -81,14 +119,14 @@ def match_news_to_companies(items, rankings, stakeholders) -> tuple[list[dict], 
                 # dependency type matching: DISABLED for Free tier
                 # (too many false positives from generic types like 'policy', 'supply')
 
-            # ── 5. Sector/Category bonus (supplementary only) ──
+            # ── 6. Sector/Category bonus (supplementary only) ──
             if strong_match_found and sector_lower and sector_lower in category:
                 item_score += 0.5
 
             # description keyword matching: DISABLED for Free tier
             # (generic words cause excessive noise; re-enable after NER integration)
 
-            # ── 6. SignalRanking.score bonus (strong match only) ──
+            # ── 7. SignalRanking.score bonus (strong match only) ──
             if strong_match_found and item_score > 0:
                 ranking = ranking_by_item_id.get(str(item.id))
                 r_score = (
@@ -128,7 +166,7 @@ def match_news_to_companies(items, rankings, stakeholders) -> tuple[list[dict], 
             continue
         if not match_basis_set:
             continue
-        if total_score < 3.0:
+        if total_score < _MIN_TOTAL_SCORE:
             continue
 
         # Impact Level logic is removed for Free tier

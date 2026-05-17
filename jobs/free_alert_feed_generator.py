@@ -10,6 +10,7 @@ from analysis.free_company_matcher import match_news_to_companies, sector_impact
 from reports.free_alert_builder import build_company_impact_alert
 from processor.location_resolver import LocationResolver
 from processor.location_context import build_location_company_supplement
+from processor.topic_registry import internal_topic_for_fallback
 
 logger = logging.getLogger(__name__)
 
@@ -18,20 +19,29 @@ _location_resolver_singleton: Optional[LocationResolver] = None
 
 async def _load_stakeholders_and_dependencies(db):
     """
-    Load stakeholder graph for company matching. On missing table / SQL error,
-    returns empty structures so Context Briefs generation can continue.
+    Load backbone (is_auto_provisioned=False) and auto-provisioned stakeholders plus deps.
+    On missing table / SQL error, returns empty structures so Briefs can continue.
     """
     try:
-        stmt_stk = select(Stakeholder).where(Stakeholder.is_auto_provisioned == False)
-        stk_records = (await db.execute(stmt_stk)).scalars().all()
-        if not stk_records:
-            stk_records = (await db.execute(select(Stakeholder))).scalars().all()
+        backbone_records = (
+            await db.execute(
+                select(Stakeholder).where(Stakeholder.is_auto_provisioned == False)
+            )
+        ).scalars().all()
+        auto_records = (
+            await db.execute(
+                select(Stakeholder).where(Stakeholder.is_auto_provisioned == True)
+            )
+        ).scalars().all()
+        if not backbone_records and not auto_records:
+            backbone_records = (await db.execute(select(Stakeholder))).scalars().all()
+            auto_records = []
 
-        stk_ids = [s.id for s in stk_records]
+        all_ids = {s.id for s in backbone_records} | {s.id for s in auto_records}
         deps_records = []
         target_name_map = {}
-        if stk_ids:
-            stmt_dep = select(Dependency).where(Dependency.source_id.in_(stk_ids))
+        if all_ids:
+            stmt_dep = select(Dependency).where(Dependency.source_id.in_(all_ids))
             deps_records = (await db.execute(stmt_dep)).scalars().all()
             all_target_ids = list({d.target_id for d in deps_records})
             if all_target_ids:
@@ -40,13 +50,60 @@ async def _load_stakeholders_and_dependencies(db):
                 )
                 targets_result = (await db.execute(stmt_targets)).all()
                 target_name_map = {t[0]: t[1] for t in targets_result}
-        return stk_records, deps_records, target_name_map
+        return backbone_records, auto_records, deps_records, target_name_map
     except Exception as e:
         logger.error(
             "Stakeholder/dependency lookup skipped (table missing or DB error): %s",
             e,
         )
-        return [], [], {}
+        return [], [], [], {}
+
+
+def _stakeholders_list_from_records(records, deps_records, target_name_map) -> list[dict]:
+    stk_map: dict = {}
+    for s in records:
+        stk_map[s.id] = {
+            "id": str(s.id),
+            "name": s.name,
+            "ticker": s.ticker,
+            "sector": s.sector,
+            "country": s.country,
+            "description": s.description,
+            "top_dependencies": [],
+        }
+    for d in deps_records:
+        if d.source_id in stk_map:
+            t_name = target_name_map.get(d.target_id, "Unknown")
+            stk_map[d.source_id]["top_dependencies"].append({
+                "target": t_name,
+                "type": d.dependency_type,
+                "weight": d.exposure_weight,
+            })
+    return list(stk_map.values())
+
+
+def _merge_company_impacts(backbone_impacts: list[dict], auto_impacts: list[dict]) -> list[dict]:
+    """Prefer backbone rows; add auto-provisioned hits not already covered."""
+    by_name: dict[str, dict] = {}
+    for row in backbone_impacts:
+        key = str(row.get("company_name", "")).strip().lower()
+        if key:
+            by_name[key] = row
+    for row in auto_impacts:
+        key = str(row.get("company_name", "")).strip().lower()
+        if not key:
+            continue
+        if key not in by_name:
+            by_name[key] = row
+            continue
+        if float(row.get("_internal_score", 0) or 0) > float(
+            by_name[key].get("_internal_score", 0) or 0
+        ):
+            by_name[key] = row
+    return sorted(
+        by_name.values(),
+        key=lambda x: -float(x.get("_internal_score", 0) or 0),
+    )
 
 
 def _get_location_resolver() -> LocationResolver:
@@ -99,9 +156,12 @@ async def build_free_alert_feed_item(db, alert_log) -> dict:
         # Fallback 2: Topic match (category from keyword normalize — no LLM required)
         topic = (alert_log.topic or "").strip()
         if topic:
+            legacy_topic = internal_topic_for_fallback(topic)
             stmt_fallback_topic = select(Item).where(
                 Item.created_at >= one_day_ago,
                 or_(
+                    Item.category == legacy_topic,
+                    Item.rough_category == legacy_topic,
                     Item.category == topic,
                     Item.rough_category == topic,
                 ),
@@ -122,35 +182,18 @@ async def build_free_alert_feed_item(db, alert_log) -> dict:
         if items:
             related_news_source = "recent_items_fallback"
 
-    # --- 2. Fetch Stakeholders (optional; Briefs still generate if table missing) ---
-    stk_records, deps_records, target_name_map = await _load_stakeholders_and_dependencies(db)
-            
-    # Assembly
-    stk_map = {}
-    for s in stk_records:
-        stk_map[s.id] = {
-            "id": str(s.id),
-            "name": s.name,
-            "ticker": s.ticker,
-            "sector": s.sector,
-            "country": s.country,
-            "description": s.description,
-            "top_dependencies": []
-        }
-        
-    for d in deps_records:
-        if d.source_id in stk_map:
-            t_name = target_name_map.get(d.target_id, "Unknown")
-            stk_map[d.source_id]["top_dependencies"].append({
-                "target": t_name,
-                "type": d.dependency_type,
-                "weight": d.exposure_weight
-            })
-            
-    stakeholders_list = list(stk_map.values())
-    
-    # --- 4. Run Matcher ---
-    company_impacts, _sector_unused = match_news_to_companies(items, [], stakeholders_list)
+    # --- 2. Fetch Stakeholders (backbone first, then auto hits merged) ---
+    backbone_records, auto_records, deps_records, target_name_map = (
+        await _load_stakeholders_and_dependencies(db)
+    )
+    backbone_list = _stakeholders_list_from_records(
+        backbone_records, deps_records, target_name_map
+    )
+    auto_list = _stakeholders_list_from_records(auto_records, deps_records, target_name_map)
+
+    impacts_backbone, _ = match_news_to_companies(items, [], backbone_list)
+    impacts_auto, _ = match_news_to_companies(items, [], auto_list)
+    company_impacts = _merge_company_impacts(impacts_backbone, impacts_auto)
 
     resolver = _get_location_resolver()
     sup_rows, loc_ctx = build_location_company_supplement(alert_log, resolver)
