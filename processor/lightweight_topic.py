@@ -17,7 +17,8 @@ TOPIC_KEYWORD_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("supply_chain_intelligence", ("ship", "shipping", "port", "freight", "logistics", "supply chain", "container")),
     ("defense_technology", ("defense", "military", "missile", "navy", "army", "drone", "nato", "war")),
     ("ai_semiconductor_intelligence", ("ai", "semiconductor", "chip", "gpu", "data center", "nvidia", "tsmc")),
-    ("crypto_geopolitics", ("bitcoin", "crypto", "stablecoin", "blockchain", "ethereum")),
+    # Crypto before broad market keywords so "crypto market" stays CRYPTO
+    ("crypto_geopolitics", ("bitcoin", "crypto", "stablecoin", "blockchain", "ethereum", "defi", "binance")),
     ("global_market_intelligence", ("fed", "inflation", "recession", "gdp", "stocks", "bond", "yield", "market")),
 )
 

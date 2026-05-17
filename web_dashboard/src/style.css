@@ -1338,9 +1338,9 @@ p {
 }
 
 .topic-btn--active {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: var(--accent);
+  background: color-mix(in srgb, var(--topic-color, var(--accent)) 18%, transparent);
+  color: var(--topic-color, var(--accent));
+  border-color: var(--topic-color, var(--accent));
 }
 
 /* ==============================

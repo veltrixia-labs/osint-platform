@@ -1,5 +1,12 @@
 import { type Alert } from '../api';
-import { getTopicColor, getTopicDisplayLabel, getTopicCssVars, normalizeTopicCode } from '../topics';
+import {
+    STRATEGIC_TOPIC_FILTERS,
+    getTopicColor,
+    getTopicDisplayLabel,
+    getTopicCssVars,
+    normalizeTopicCode,
+    type StrategicTopicCode,
+} from '../topics';
 import { resolveAlertHeadline } from '../alert_display';
 
 /**
@@ -48,6 +55,36 @@ export function showEvidenceModal(title: string, evidenceList: any[]) {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 }
 
+export function renderTopicFilterBar(
+    container: HTMLElement,
+    activeTopic: StrategicTopicCode | null,
+    onSelect: (topic: StrategicTopicCode | null) => void,
+): void {
+    const allActive = activeTopic === null;
+    container.innerHTML = `
+        <button type="button" class="topic-btn ${allActive ? 'topic-btn--active' : ''}" data-topic="">
+            All
+        </button>
+        ${STRATEGIC_TOPIC_FILTERS.map(({ code, label, color }) => `
+            <button
+                type="button"
+                class="topic-btn ${activeTopic === code ? 'topic-btn--active' : ''}"
+                data-topic="${code}"
+                style="--topic-color:${color}; border-color: color-mix(in srgb, ${color} 45%, var(--border));"
+            >
+                ${label}
+            </button>
+        `).join('')}
+    `;
+
+    container.querySelectorAll<HTMLButtonElement>('.topic-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const raw = btn.dataset.topic ?? '';
+            onSelect(raw ? (raw as StrategicTopicCode) : null);
+        });
+    });
+}
+
 export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
     // [v16.0] Compact Pulse Bar: Single most critical/recent signal
     const severityMap: Record<string, number> = { critical: 3, elevated: 2, watch: 1 };
@@ -92,20 +129,27 @@ export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
     `;
 }
 
-export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: string = 'free') {
+export function renderAlerts(
+    alerts: Alert[],
+    container: HTMLElement,
+    userTier: string = 'free',
+    topicFilter: StrategicTopicCode | null = null,
+) {
     if (!Array.isArray(alerts)) {
         console.error("renderAlerts expected an array, got:", alerts);
         container.innerHTML = '<div class="u-p-2 u-text-center" style="color:#f85149;">Technical error: invalid alerts data.</div>';
         return;
     }
 
-    const sortedAlerts = [...alerts].sort((a, b) => {
-        const sevMap: Record<string, number> = { critical: 3, elevated: 2, watch: 1 };
-        const sevA = sevMap[a.severity?.toLowerCase() || ''] || 0;
-        const sevB = sevMap[b.severity?.toLowerCase() || ''] || 0;
-        if (sevA !== sevB) return sevB - sevA;
-        return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
-    });
+    const sortedAlerts = [...alerts]
+        .filter(a => !topicFilter || normalizeTopicCode(a.topic) === topicFilter)
+        .sort((a, b) => {
+            const sevMap: Record<string, number> = { critical: 3, elevated: 2, watch: 1 };
+            const sevA = sevMap[a.severity?.toLowerCase() || ''] || 0;
+            const sevB = sevMap[b.severity?.toLowerCase() || ''] || 0;
+            if (sevA !== sevB) return sevB - sevA;
+            return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
+        });
 
     if (sortedAlerts.length === 0) {
         container.innerHTML = `

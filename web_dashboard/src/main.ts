@@ -6,7 +6,8 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap } from './modules/render/index'
+import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
+import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 // (Pro reports now handled within Pro Insights hub)
 import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, getResolvedApiBase } from './modules/api'
 import type { UserMe } from './modules/api'
@@ -159,7 +160,7 @@ async function initDashboard() {
         app.innerHTML = `
       <div class="mobile-header">
         <div class="u-flex"><span style="font-weight:700; color:var(--accent);">VELTRIXIA</span></div>
-        <button class="hamburger" id="mobile-menu-btn">☰</button>
+        <button class="hamburger" id="mobile-menu-btn">笘ｰ</button>
       </div>
       <div class="mobile-overlay" id="mobile-overlay"></div>
       <div class="app-container">
@@ -172,6 +173,7 @@ async function initDashboard() {
           <div class="header-row"><h1 id="main-title">Analyst Intelligence</h1></div>
           <div class="main-feed" id="alerts-container">
             <div id="pulse-bar" class="pulse-bar"></div>
+            <div id="topic-filter-bar" class="topic-filter-bar"></div>
             <div id="alerts-list"></div>
           </div>
           <div id="map-page-container" style="display:none;"></div>
@@ -188,6 +190,7 @@ async function initDashboard() {
     renderBaseUI();
     const alertsContainer = document.querySelector<HTMLElement>('#alerts-list')!
     const pulseBar = document.querySelector<HTMLElement>('#pulse-bar')!
+    const topicFilterBar = document.querySelector<HTMLElement>('#topic-filter-bar')!
 
     // [v42] Connectivity Sync Listener: Restores real-time HUD status updates
     window.addEventListener('api-sync-status' as any, (e: CustomEvent) => {
@@ -299,6 +302,17 @@ async function initDashboard() {
 
     const renderIntelligenceFeed = async () => {
         const state = new DashboardState(user!.tier);
+        let activeTopicFilter: StrategicTopicCode | null = null;
+
+        const bindTopicFilterBar = () => {
+            renderTopicFilterBar(topicFilterBar, activeTopicFilter, (topic) => {
+                activeTopicFilter = topic;
+                state.setTopic(topic);
+                bindTopicFilterBar();
+            });
+        };
+        bindTopicFilterBar();
+
         state.subscribe((data) => {
             if (currentTab !== 'feed') return;
 
@@ -306,7 +320,7 @@ async function initDashboard() {
             if (data.error || data.lastStatus >= 400) {
                 alertsContainer.innerHTML = `
                     <div class="u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 8px; background: rgba(255,123,114,0.05); margin-top: 2rem;">
-                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚠️</div>
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">笞・・/div>
                         <div style="color: #ff7b72; font-weight: 600;">${data.lastStatus === 401 ? 'Intelligence Access Restricted' : 'Strategic Pipeline Offline'}</div>
                         <div style="font-size: var(--font-xs); color: #8b949e; margin-top: 0.5rem;">
                             ${data.lastStatus === 401 ? 'Your current tier does not have clearance for this signal stream.' : 'The analysis engine is currently unreachable. Reconnecting...'}
@@ -319,8 +333,12 @@ async function initDashboard() {
 
             if (data.alerts) {
                 pulseBar.style.display = 'block';
-                renderAlerts(data.alerts, alertsContainer, user!.tier);
-                renderLiveFeed(data.alerts, pulseBar);
+                topicFilterBar.style.display = 'flex';
+                const filtered = activeTopicFilter
+                    ? data.alerts.filter(a => normalizeTopicCode(a.topic) === activeTopicFilter)
+                    : data.alerts;
+                renderAlerts(data.alerts, alertsContainer, user!.tier, activeTopicFilter);
+                renderLiveFeed(filtered, pulseBar);
             }
         });
         (window as any).stopPolling = () => state.stopPolling();
@@ -339,7 +357,7 @@ async function initDashboard() {
             const msg = err?.message || 'Connection error';
             alertsContainer.innerHTML = `
                 <div class="empty-state u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 12px; margin-top: 2rem; max-width: 520px; margin-left: auto; margin-right: auto;">
-                    <div class="empty-icon">⚠️</div>
+                    <div class="empty-icon">笞・・/div>
                     <div class="empty-title" style="color: #ff7b72;">Could not load Context Briefs</div>
                     <div class="empty-subtitle" style="margin-top: 0.5rem;">${msg}</div>
                     <div class="empty-subtitle" style="margin-top: 0.75rem; font-size: 0.8rem; color: #8b949e;">
@@ -357,7 +375,7 @@ async function initDashboard() {
             if (reports.length === 0) {
                 alertsContainer.innerHTML = `
                     <div class="u-p-2 u-text-center" style="opacity:0.5; border: 1px dashed var(--border); border-radius: 8px; margin-top: 2rem;">
-                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📑</div>
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">淘</div>
                         <div style="font-size: var(--font-m); font-weight: 500;">No intelligence reports published yet.</div>
                         <div style="font-size: var(--font-xs); margin-top: 0.25rem;">Reports are generated following significant strategic pivots.</div>
                     </div>

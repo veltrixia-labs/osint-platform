@@ -69,7 +69,22 @@ async def get_alerts(
     if suppressed is not None:
         stmt = stmt.where(AlertLog.suppressed == suppressed)
     if topic:
-        stmt = stmt.where(AlertLog.topic == topic)
+        from processor.topic_registry import (
+            INTERNAL_TO_STRATEGIC,
+            STRATEGIC_TO_INTERNAL,
+            normalize_canonical_topic,
+        )
+
+        canonical = normalize_canonical_topic(topic)
+        topic_keys = {canonical, topic.strip()}
+        legacy = STRATEGIC_TO_INTERNAL.get(canonical)
+        if legacy:
+            topic_keys.add(legacy)
+        for k, v in INTERNAL_TO_STRATEGIC.items():
+            if v == canonical:
+                topic_keys.add(k)
+                topic_keys.add(k.upper())
+        stmt = stmt.where(AlertLog.topic.in_(topic_keys))
     if since:
         stmt = stmt.where(AlertLog.triggered_at >= since)
 

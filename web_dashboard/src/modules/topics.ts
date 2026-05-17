@@ -182,6 +182,17 @@ export const STRATEGIC_TOPIC_LABELS: Record<StrategicTopicCode, string> = {
     SUPPLY_CHAIN: 'Supply Chain Intelligence',
 };
 
+/** Alert Stream / map filter chips — all 6 strategic sectors (CRYPTO is top-level, not under MARKET). */
+export const STRATEGIC_TOPIC_FILTERS: ReadonlyArray<{
+    code: StrategicTopicCode;
+    label: string;
+    color: string;
+}> = STRATEGIC_TOPIC_CODES.map(code => ({
+    code,
+    label: STRATEGIC_TOPIC_LABELS[code],
+    color: TOPIC_COLORS[code],
+}));
+
 /** Backbone API path segment per strategic code (internal fetch only). */
 export const BACKBONE_API_BY_STRATEGIC: Record<StrategicTopicCode, string> = {
     ENERGY: 'energy',
@@ -241,10 +252,20 @@ export function normalizeTopicCode(raw: string | null | undefined): StrategicTop
 
     if (upper.includes('ENERGY') || upper.includes('OIL') || upper.includes('GAS')) return 'ENERGY';
     if (upper.includes('SUPPLY') || upper.includes('TRADE') || upper.includes('LOGISTIC')) return 'SUPPLY_CHAIN';
-    if (upper.includes('CRYPTO') || upper.includes('BITCOIN')) return 'CRYPTO';
+    // CRYPTO before MARKET/GLOBAL — avoid folding crypto_geopolitics into MARKET via "GLOBAL" substring heuristics
+    if (
+        upper.includes('CRYPTO') ||
+        upper.includes('BITCOIN') ||
+        upper.includes('STABLECOIN') ||
+        upper.includes('BLOCKCHAIN') ||
+        upper.includes('ETHEREUM')
+    ) {
+        return 'CRYPTO';
+    }
     if (upper.includes('DEFENSE') || upper.includes('MILITARY')) return 'DEFENSE';
     if (upper.includes('SEMICONDUCTOR') || upper.includes('AI_') || upper === 'AI') return 'AI_TECH';
-    if (upper.includes('MARKET') || upper.includes('GEOPOLIT') || upper.includes('GLOBAL')) return 'MARKET';
+    if (upper.includes('MARKET') || upper.includes('GEOPOLIT')) return 'MARKET';
+    if (upper === 'GLOBAL' || upper.endsWith('_GLOBAL')) return 'MARKET';
 
     return 'MARKET';
 }
@@ -280,8 +301,21 @@ export function getTopicMapFilterLabel(topic: string | null | undefined): string
     return getTopicDisplayLabel(topic);
 }
 
-/** Resolve backbone API id → strategic code. */
+const BACKBONE_API_SECTOR_TO_STRATEGIC: Record<string, StrategicTopicCode> = {
+    energy: 'ENERGY',
+    market: 'MARKET',
+    trade: 'SUPPLY_CHAIN',
+    ai: 'AI_TECH',
+    crypto: 'CRYPTO',
+    defense: 'DEFENSE',
+};
+
+/** Resolve backbone API path segment → strategic code (never fold crypto into market). */
 export function strategicTopicFromBackboneApi(apiSector: string): StrategicTopicCode {
+    const key = (apiSector || '').trim().toLowerCase();
+    if (key in BACKBONE_API_SECTOR_TO_STRATEGIC) {
+        return BACKBONE_API_SECTOR_TO_STRATEGIC[key];
+    }
     return normalizeTopicCode(apiSector);
 }
 

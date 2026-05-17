@@ -93,13 +93,21 @@ def normalize_canonical_topic(
         return "ENERGY"
     if "SUPPLY" in upper or "TRADE" in upper or "LOGISTIC" in upper:
         return "SUPPLY_CHAIN"
-    if "CRYPTO" in upper or "BITCOIN" in upper:
+    if (
+        "CRYPTO" in upper
+        or "BITCOIN" in upper
+        or "STABLECOIN" in upper
+        or "BLOCKCHAIN" in upper
+        or "ETHEREUM" in upper
+    ):
         return "CRYPTO"
     if "DEFENSE" in upper or "MILITARY" in upper:
         return "DEFENSE"
     if "SEMICONDUCTOR" in upper or upper.startswith("AI"):
         return "AI_TECH"
-    if "MARKET" in upper or "GEOPOLIT" in upper or "GLOBAL" in upper:
+    if "MARKET" in upper or "GEOPOLIT" in upper:
+        return "MARKET"
+    if upper == "GLOBAL" or upper.endswith("_GLOBAL"):
         return "MARKET"
 
     return "MARKET"

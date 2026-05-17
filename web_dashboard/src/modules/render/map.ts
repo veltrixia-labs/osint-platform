@@ -7,15 +7,20 @@ import {
     getTopicColor,
     getTopicDisplayLabel,
     normalizeTopicCode,
+    strategicTopicFromBackboneApi,
     type StrategicTopicCode,
 } from '../topics';
 
 type TaggedBackboneNode = BackboneNode & { strategicCode: StrategicTopicCode };
 
-function tagNode(node: BackboneNode): TaggedBackboneNode {
+/** Prefer API sector segment so crypto backbone rows never inherit MARKET from node.sector text. */
+function tagNode(node: BackboneNode, apiSector?: string): TaggedBackboneNode {
+    const strategicCode = apiSector
+        ? strategicTopicFromBackboneApi(apiSector)
+        : normalizeTopicCode(node.sector);
     return {
         ...node,
-        strategicCode: normalizeTopicCode(node.sector),
+        strategicCode,
     };
 }
 
@@ -94,10 +99,13 @@ async function renderBackboneMap() {
                 .map(code => BACKBONE_API_BY_STRATEGIC[code]);
 
         const results = await Promise.all(
-            sectorsToLoad.map(sector => fetchBackbone(sector))
+            sectorsToLoad.map(async sector => {
+                const nodes = await fetchBackbone(sector);
+                return nodes.map(node => tagNode(node, sector));
+            })
         );
 
-        renderBackboneNodes(results.flat().map(tagNode));
+        renderBackboneNodes(results.flat());
         updateFilterButtonStates();
     } catch (e) {
         console.error('Failed to load backbone:', e);
@@ -292,12 +300,17 @@ function renderNodeList(nodes: TaggedBackboneNode[]) {
         groups.set(code, []);
     }
     nodes.forEach(node => {
-        groups.get(node.strategicCode)!.push(node);
+        const bucket = groups.get(node.strategicCode);
+        if (bucket) {
+            bucket.push(node);
+        } else {
+            groups.get('MARKET')!.push(node);
+        }
     });
 
-    const visibleGroups = STRATEGIC_TOPIC_CODES
-        .map(code => [code, groups.get(code)!] as const)
-        .filter(([, sectorNodes]) => sectorNodes.length > 0);
+    const visibleGroups = STRATEGIC_TOPIC_CODES.map(
+        code => [code, groups.get(code) ?? []] as const
+    );
 
     list.innerHTML = `
         <div style="font-weight:700; color:#fff; margin-bottom:8px;">
@@ -305,10 +318,10 @@ function renderNodeList(nodes: TaggedBackboneNode[]) {
         </div>
 
         ${visibleGroups.map(([code, sectorNodes]) => `
-            <div class="map-node-sector">
+            <div class="map-node-sector ${sectorNodes.length === 0 ? 'map-node-sector--empty' : ''}">
                 <button class="map-node-sector-btn" data-sector="${code}" style="--sector-color:${getTopicColor(code)};">
                     <span>${getTopicDisplayLabel(code)}</span>
-                    <span>${sectorNodes.length}</span>
+                    <span class="map-node-sector-count">${sectorNodes.length}</span>
                 </button>
 
                 <div class="map-node-sector-list" data-sector-list="${code}" style="display:none;">
