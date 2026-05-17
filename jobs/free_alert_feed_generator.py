@@ -82,28 +82,23 @@ def _stakeholders_list_from_records(records, deps_records, target_name_map) -> l
     return list(stk_map.values())
 
 
-def _merge_company_impacts(backbone_impacts: list[dict], auto_impacts: list[dict]) -> list[dict]:
-    """Prefer backbone rows; add auto-provisioned hits not already covered."""
-    by_name: dict[str, dict] = {}
-    for row in backbone_impacts:
-        key = str(row.get("company_name", "")).strip().lower()
-        if key:
-            by_name[key] = row
-    for row in auto_impacts:
-        key = str(row.get("company_name", "")).strip().lower()
-        if not key:
+def _merge_stakeholder_lists(backbone_list: list[dict], auto_list: list[dict]) -> list[dict]:
+    """Backbone first; auto-provisioned names only when not already present."""
+    seen: set[str] = set()
+    merged: list[dict] = []
+    for row in backbone_list:
+        key = str(row.get("name", "")).strip().lower()
+        if not key or key in seen:
             continue
-        if key not in by_name:
-            by_name[key] = row
+        seen.add(key)
+        merged.append(row)
+    for row in auto_list:
+        key = str(row.get("name", "")).strip().lower()
+        if not key or key in seen:
             continue
-        if float(row.get("_internal_score", 0) or 0) > float(
-            by_name[key].get("_internal_score", 0) or 0
-        ):
-            by_name[key] = row
-    return sorted(
-        by_name.values(),
-        key=lambda x: -float(x.get("_internal_score", 0) or 0),
-    )
+        seen.add(key)
+        merged.append(row)
+    return merged
 
 
 def _get_location_resolver() -> LocationResolver:
@@ -190,10 +185,8 @@ async def build_free_alert_feed_item(db, alert_log) -> dict:
         backbone_records, deps_records, target_name_map
     )
     auto_list = _stakeholders_list_from_records(auto_records, deps_records, target_name_map)
-
-    impacts_backbone, _ = match_news_to_companies(items, [], backbone_list)
-    impacts_auto, _ = match_news_to_companies(items, [], auto_list)
-    company_impacts = _merge_company_impacts(impacts_backbone, impacts_auto)
+    merged_stakeholders = _merge_stakeholder_lists(backbone_list, auto_list)
+    company_impacts, _ = match_news_to_companies(items, [], merged_stakeholders)
 
     resolver = _get_location_resolver()
     sup_rows, loc_ctx = build_location_company_supplement(alert_log, resolver)

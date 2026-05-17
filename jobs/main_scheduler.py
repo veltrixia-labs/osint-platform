@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 # --- Safe Task Execution & Concurrency Guards ---
 
 _running_tasks = set()
+# Serialize heavy memory jobs (full pipeline vs discovery scout) to avoid OOM spikes.
+_heavy_work_lock = asyncio.Lock()
 
 async def safe_run(name, coro_func, *args, **kwargs):
     """
@@ -71,6 +73,11 @@ async def pipeline_full_processing():
         logger.warning("SCHEDULER IS PAUSED (via SCHEDULER_PAUSED env var). Skipping pipeline.")
         return
 
+    async with _heavy_work_lock:
+        await _pipeline_full_processing_locked()
+
+
+async def _pipeline_full_processing_locked():
     logger.info("--- Starting Full Processing Pipeline ---")
     try:
         async with AsyncSessionLocal() as session:
@@ -134,7 +141,8 @@ async def run_learning_wrapper():
 
 async def run_discovery_scout_wrapper():
     """Autonomous scout for AI discovery."""
-    await ImpactDiscoveryEngine.run_discovery_scout()
+    async with _heavy_work_lock:
+        await ImpactDiscoveryEngine.run_discovery_scout()
 
 async def run_cleanup_bundle():
     """Bundle of hourly/daily cleanups to ensure they run under one concurrency guard name."""

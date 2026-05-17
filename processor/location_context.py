@@ -4,38 +4,41 @@ Location-linked context for Free-tier Context Briefs.
 Builds supplemental company/infrastructure rows from static location registry
 (`related`, `related_companies`) plus topic-based illustrative fallbacks when
 rule-based news matching yields no companies.
+
+All topic-based fallbacks resolve through the 6 strategic topic codes
+(ENERGY, MARKET, AI_TECH, CRYPTO, DEFENSE, SUPPLY_CHAIN).
 """
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
 from processor.location_resolver import LocationResolver
-from processor.topic_registry import internal_topic_for_fallback
+from processor.topic_registry import normalize_canonical_topic
 
-# Topic code -> illustrative (name, sector, country, match_basis) rows
+# Strategic topic code -> illustrative (name, sector, country, match_basis) rows
 TOPIC_SECTOR_FALLBACK: Dict[str, Tuple[Tuple[str, str, str, str], ...]] = {
-    "energy_resource_risk": (
+    "ENERGY": (
         ("VLCC / crude tanker operators (cluster)", "Marine transport", "Global", "Sector context — energy logistics & chokepoints (illustrative)"),
         ("Integrated oil & gas majors", "Energy", "Global", "Sector context — upstream/downstream exposure (illustrative)"),
         ("Independent refiners & petrochemical buyers", "Refining & chemicals", "Global", "Sector context — crude price pass-through (illustrative)"),
     ),
-    "global_market_intelligence": (
+    "MARKET": (
         ("Global banks & market makers", "Financial services", "Global", "Sector context — rates, FX, risk assets (illustrative)"),
         ("Asset managers / pension overlays", "Asset management", "Global", "Sector context — cross-asset hedging (illustrative)"),
     ),
-    "crypto_geopolitics": (
+    "CRYPTO": (
         ("Crypto exchanges & custodians", "Digital assets", "Global", "Sector context — liquidity & regulatory perimeter (illustrative)"),
         ("Stablecoin issuers & payment fintechs", "Payments", "Global", "Sector context — settlement rails (illustrative)"),
     ),
-    "defense_technology": (
+    "DEFENSE": (
         ("Prime defense contractors", "Aerospace & defense", "Global", "Sector context — procurement cycles (illustrative)"),
         ("Defense electronics suppliers", "Electronics", "Global", "Sector context — mission systems supply chain (illustrative)"),
     ),
-    "supply_chain_intelligence": (
+    "SUPPLY_CHAIN": (
         ("Container lines & freight forwarders", "Logistics", "Global", "Sector context — lane disruption sensitivity (illustrative)"),
         ("Industrial distributors & EMS providers", "Industrials", "Global", "Sector context — component lead times (illustrative)"),
     ),
-    "ai_semiconductor_intelligence": (
+    "AI_TECH": (
         ("Semiconductor foundries & IDMs", "Semiconductors", "Global", "Sector context — fab utilization & capex (illustrative)"),
         ("Equipment & materials suppliers", "Semiconductor capital equipment", "Global", "Sector context — process node ramps (illustrative)"),
     ),
@@ -43,9 +46,9 @@ TOPIC_SECTOR_FALLBACK: Dict[str, Tuple[Tuple[str, str, str, str], ...]] = {
 
 
 def topic_sector_fallback_rows(topic: str | None) -> Tuple[Tuple[str, str, str, str], ...]:
-    """Resolve strategic (ENERGY, …) or legacy topic codes to illustrative sector rows."""
-    legacy_key = internal_topic_for_fallback(topic)
-    return TOPIC_SECTOR_FALLBACK.get(legacy_key, ())
+    """Resolve any topic string to strategic code, then return illustrative sector rows."""
+    strategic = normalize_canonical_topic(topic)
+    return TOPIC_SECTOR_FALLBACK.get(strategic, ())
 
 
 def _impact_dict(
@@ -85,6 +88,9 @@ def build_location_company_supplement(
     if not isinstance(meta, dict):
         meta = {}
 
+    raw_topic = getattr(alert_log, "topic", None) or ""
+    strategic_topic = normalize_canonical_topic(raw_topic)
+
     entity_id: Optional[str] = meta.get("location_entity_id")
     text = f"{getattr(alert_log, 'target_label', '') or ''} {meta.get('description', '') or ''}".strip()
     if not entity_id and text:
@@ -99,6 +105,8 @@ def build_location_company_supplement(
         "registry_related_company_total": 0,
         "registry_catalog_total": 0,
         "source": "none",
+        "topic": raw_topic,
+        "strategic_topic": strategic_topic,
     }
     rows: List[Dict[str, Any]] = []
     seen: set[str] = set()
@@ -152,8 +160,7 @@ def build_location_company_supplement(
         ctx["source"] = "location_registry"
         return rows, ctx
 
-    topic = getattr(alert_log, "topic", None) or ""
-    for tup in topic_sector_fallback_rows(topic):
+    for tup in topic_sector_fallback_rows(strategic_topic):
         key = tup[0].strip().lower()
         if key in seen:
             continue
