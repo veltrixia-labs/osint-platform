@@ -249,11 +249,11 @@ function renderSectorPillHtml(
 
 function renderProGateCard(additionalCount: number): string {
     const n = Math.max(0, Math.floor(additionalCount));
-    const line = `+ ${n} more specific entities monitored in Pro...`;
+    const line = `+ ${n} more specific entities monitored in Pro / Expert...`;
     return `
     <button type="button" class="cb-pro-gate-card" data-cb-pro-gate="1"
-      aria-label="Open Subscription Plans to upgrade to Pro for deeper entity coverage."
-      title="Pro unlocks the full matched entity list, dependency-level monitoring, and Structural Briefs. Click to open Subscription Plans.">
+      aria-label="Open Subscription Plans to upgrade to Pro / Expert for deeper entity coverage."
+      title="Pro / Expert unlocks the full matched entity list, dependency-level monitoring, and Structural Briefs. Click to open Subscription Plans.">
       <div class="cb-pro-gate-logos-wrap" aria-hidden="true">
         <span class="cb-pro-gate-lock">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -763,7 +763,7 @@ export function renderFreeAlertFeed(
                 'plansContextBriefUpsell',
                 JSON.stringify({
                     message:
-                        'On Pro, every matched company and infrastructure link from our registry is visible — with dependency-aligned Structural Briefs, not just this preview.',
+                        'On Pro / Expert, every matched company and infrastructure link from our registry is visible — with dependency-aligned Structural Briefs, not just this preview.',
                     ts: Date.now(),
                 })
             );
@@ -784,7 +784,7 @@ export function renderFreeAlertFeed(
                 'plansContextBriefUpsell',
                 JSON.stringify({
                     message:
-                        'On Pro, every matched company and infrastructure link from our registry is visible — with dependency-aligned Structural Briefs, not just this preview.',
+                        'On Pro / Expert, every matched company and infrastructure link from our registry is visible — with dependency-aligned Structural Briefs, not just this preview.',
                     ts: Date.now(),
                 })
             );

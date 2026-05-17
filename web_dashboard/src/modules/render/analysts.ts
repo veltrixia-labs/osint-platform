@@ -34,7 +34,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
             ` : (usage.keywords?.used >= usage.keywords?.limit ? `
                 <div style="font-size: 0.7rem; color: #ff7b72; margin-top: 8px;">
                     Keyword limit reached (${usage.keywords.limit}/${usage.keywords.limit}). 
-                    <a href="#" id="watchlist-upgrade-link" style="color:#58a6ff; text-decoration:none;">Upgrade to Pro</a>
+                    <a href="#" id="watchlist-upgrade-link" style="color:#58a6ff; text-decoration:none;">Upgrade to Pro / Expert</a>
                 </div>
             ` : '')}
         </div>

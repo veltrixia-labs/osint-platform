@@ -97,14 +97,18 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
     'free-feed': {
         icon: '🛰',
         title: 'Context Briefs',
-        subtitle: 'Strategic synthesis of recent intelligence — connecting the dots across global sectors.',
+        subtitle: 'Strategic intelligence synthesis — bridging global news signals with high-fidelity structural analysis.',
+        proCta: {
+            label: 'Unlock Pro / Expert for advanced BEA economic data & deep-sector intelligence',
+            href: '/subscription',
+        },
     },
     map: {
         icon: '🌐',
         title: 'Global Map',
-        subtitle: 'Strategic entity mapping — visualizing actors and geographic relationships.',
+        subtitle: 'Strategic entity mapping — visualizing structural relationships and geopolitical actors.',
         proCta: {
-            label: 'Unlock real-time motion and temporal tracking with Pro',
+            label: 'Unlock Pro / Expert for real-time motion and live entity tracking',
             href: '/subscription',
         },
     },
@@ -213,7 +217,7 @@ async function initDashboard() {
               </h1>
               <div id="page-subtitle-wrap" class="page-subtitle-wrap" hidden>
                 <p id="page-subtitle" class="page-subtitle"></p>
-                <a id="page-pro-cta" class="page-pro-cta" href="/subscription" hidden></a>
+                <a id="page-pro-cta" class="page-premium-cta" href="/subscription" hidden></a>
               </div>
             </div>
           </div>
@@ -264,7 +268,9 @@ async function initDashboard() {
 
         const showSubtitle = Boolean(meta?.subtitle)
         const showProCta = Boolean(
-            meta?.proCta && tab === 'map' && !isProOrAbove(user?.tier)
+            meta?.proCta
+            && (tab === 'map' || tab === 'free-feed')
+            && !isProOrAbove(user?.tier)
         )
 
         if (pageSubtitle) {
@@ -272,11 +278,12 @@ async function initDashboard() {
         }
         if (pageProCta) {
             if (showProCta && meta?.proCta) {
-                pageProCta.textContent = `[ ${meta.proCta.label} ]`
                 pageProCta.href = meta.proCta.href
+                pageProCta.innerHTML =
+                    `${meta.proCta.label}<span class="page-premium-cta-arrow" aria-hidden="true">→</span>`
                 pageProCta.hidden = false
             } else {
-                pageProCta.textContent = ''
+                pageProCta.innerHTML = ''
                 pageProCta.hidden = true
             }
         }
@@ -363,6 +370,7 @@ async function initDashboard() {
     pageProCta?.addEventListener('click', (e) => {
         e.preventDefault();
         history.pushState({ tab: 'plans' }, '', '/subscription');
+        document.querySelector<HTMLElement>('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
         handleTabSwitch('plans', undefined, true);
     });
 

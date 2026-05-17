@@ -139,7 +139,7 @@ async def get_alerts(
         if not is_at_least_pro:
             # --- Guest "Fast News" Restriction ---
             # Mask AI forensic details, add labels, and simplify numbers
-            a["description"] = "Upgrade to Pro tier to unlock the full AI analytical brief and forensic intelligence."
+            a["description"] = "Upgrade to Pro / Expert to unlock the full AI analytical brief and forensic intelligence."
             a["cascading_impacts"] = []
             a["is_partial"] = True
             

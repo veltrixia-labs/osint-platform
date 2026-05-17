@@ -300,7 +300,7 @@ export function renderLockedFeature(label: string, minTier: string, context?: st
     let valueProp = context;
     if (!valueProp) {
         if (minTier === 'pro') {
-            valueProp = `Upgrade to Pro to unlock real-time sector intensity metrics and early-warning signals for ${label.toLowerCase()}.`;
+            valueProp = `Upgrade to Pro / Expert to unlock real-time sector intensity metrics and early-warning signals for ${label.toLowerCase()}.`;
         } else if (minTier === 'experts') {
             valueProp = `Expert access required to visualize recursive causal chains and 60-day strategic scenarios for ${label.toLowerCase()}.`;
         } else {

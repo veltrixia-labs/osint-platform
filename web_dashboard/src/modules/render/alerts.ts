@@ -187,7 +187,7 @@ export function renderAlerts(
         const tierBadge = isExpert
             ? '<span class="alert-tier-corner alert-tier-corner--expert" title="Expert access">EX</span>'
             : isPro
-                ? '<span class="alert-tier-corner alert-tier-corner--pro" title="Pro access">PRO</span>'
+                ? '<span class="alert-tier-corner alert-tier-corner--pro" title="Pro / Expert access">PRO</span>'
                 : '';
 
         const count = alert.evidence_list?.length || 0;

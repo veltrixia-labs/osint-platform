@@ -140,13 +140,13 @@ export function renderNavigation(
     const footerCtaHtml = !isPaidTier
         ? `
                 <button class="nav-upgrade-btn nav-upgrade-btn--premium" id="upgrade-button">
-                    Upgrade to Pro
+                    Upgrade to Pro / Expert
                 </button>
           `
         : canManageSubscription
             ? `
                 <button class="nav-upgrade-btn nav-upgrade-btn--ghost" id="upgrade-button">
-                    ${tier === 'pro' ? 'Manage Pro Access' : 'Account Settings'}
+                    ${tier === 'pro' ? 'Manage Pro / Expert Access' : 'Account Settings'}
                 </button>
               `
             : `
@@ -193,7 +193,7 @@ export function renderNavigation(
             const tabId = (el as HTMLElement).dataset.tab!;
 
             if (!accessible) {
-                setPlansUpsellContext('Pro access is required for this module. Please review the full scope of Pro capabilities.');
+                setPlansUpsellContext('Pro / Expert access is required for this module. Please review the full scope of Pro / Expert capabilities.');
                 onTabSwitch('plans');
             } else {
                 onTabSwitch(tabId);
