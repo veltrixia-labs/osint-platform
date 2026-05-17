@@ -5,7 +5,8 @@ import re
 from datetime import datetime, timezone, timedelta
 
 from dateutil import parser as dt_parser
-from sqlalchemy import insert, select
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Item, RawItem

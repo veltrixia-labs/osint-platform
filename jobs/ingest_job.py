@@ -8,7 +8,7 @@ import yaml
 from datetime import datetime, timezone
 
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import AsyncSessionLocal
@@ -104,7 +104,7 @@ async def insert_raw_items_ignore_duplicates(db: AsyncSession, rows: list[dict])
     inserted = 0
     for offset in range(0, len(rows), HASH_CHUNK_SIZE):
         chunk = rows[offset : offset + HASH_CHUNK_SIZE]
-        stmt = pg_insert(RawItem.__table__).values(chunk)
+        stmt = insert(RawItem.__table__).values(chunk)
         stmt = stmt.on_conflict_do_nothing(index_elements=["payload_hash"])
         result = await db.execute(stmt)
         if result.rowcount is not None and result.rowcount >= 0:
