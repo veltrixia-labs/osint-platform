@@ -303,6 +303,166 @@ function isPaidContextTier(tier?: string | null): boolean {
     return t === 'pro' || t === 'enterprise' || t === 'experts';
 }
 
+/** Modal detail view: full source/entity evidence for all tiers (no subscription redirect). */
+function tierForModalDetail(_viewerTier?: string | null): string {
+    return 'pro';
+}
+
+const CB_CONTEXT_MODAL_ID = 'cb-context-modal-root';
+
+type ContextBriefModalState = {
+    detailBodies: string[];
+    modalTitles: string[];
+    viewerTier: string;
+};
+
+let contextBriefModalState: ContextBriefModalState | null = null;
+let contextBriefModalWired = false;
+
+function getOrCreateContextBriefModal(): HTMLElement {
+    let root = document.getElementById(CB_CONTEXT_MODAL_ID) as HTMLElement | null;
+    if (!root) {
+        root = document.createElement('div');
+        root.id = CB_CONTEXT_MODAL_ID;
+        root.className = 'cb-modal-root';
+        root.setAttribute('aria-hidden', 'true');
+        root.innerHTML = `
+            <div class="cb-modal-backdrop" tabindex="-1"></div>
+            <div class="cb-modal-panel" role="dialog" aria-modal="true" aria-labelledby="cb-modal-title">
+                <button type="button" class="cb-modal-close" aria-label="Close">×</button>
+                <h2 id="cb-modal-title" class="cb-modal-title"></h2>
+                <p id="cb-modal-kicker" class="cb-modal-kicker">Source evidence &amp; structural context</p>
+                <div class="cb-modal-body"></div>
+            </div>`;
+        document.body.appendChild(root);
+    }
+    return root;
+}
+
+function wireContextBriefModalOnce(modalRoot: HTMLElement): void {
+    if (contextBriefModalWired) return;
+    contextBriefModalWired = true;
+
+    const modalBody = modalRoot.querySelector('.cb-modal-body') as HTMLElement;
+    const modalTitleEl = modalRoot.querySelector('#cb-modal-title') as HTMLElement;
+    const backdrop = modalRoot.querySelector('.cb-modal-backdrop') as HTMLElement;
+    const closeBtn = modalRoot.querySelector('.cb-modal-close') as HTMLButtonElement;
+
+    const closeModal = () => {
+        if (!modalRoot.classList.contains('cb-modal-root--open')) return;
+        modalRoot.classList.remove('cb-modal-root--open');
+        modalRoot.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('cb-modal-scroll-lock');
+        modalBody.innerHTML = '';
+        document.removeEventListener('keydown', onDocKey);
+    };
+
+    function onDocKey(ev: KeyboardEvent) {
+        if (ev.key !== 'Escape' || !modalRoot.classList.contains('cb-modal-root--open')) return;
+        ev.preventDefault();
+        closeModal();
+    }
+
+    const openModal = (index: number) => {
+        const state = contextBriefModalState;
+        if (!state || index < 0 || index >= state.detailBodies.length) return;
+        modalTitleEl.textContent = state.modalTitles[index] || 'Context Brief';
+        modalBody.innerHTML = state.detailBodies[index] || '';
+        modalRoot.classList.add('cb-modal-root--open');
+        modalRoot.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('cb-modal-scroll-lock');
+        document.removeEventListener('keydown', onDocKey);
+        document.addEventListener('keydown', onDocKey);
+        closeBtn.focus();
+    };
+
+    (modalRoot as HTMLElement & { __openContextBriefModal?: (i: number) => void }).__openContextBriefModal =
+        openModal;
+
+    backdrop.addEventListener('click', closeModal);
+    closeBtn.addEventListener('click', closeModal);
+
+    modalBody.addEventListener('click', (e: MouseEvent) => {
+        const expBtn = (e.target as HTMLElement).closest('[data-cb-expand-btn]') as HTMLButtonElement | null;
+        if (expBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const wrap = expBtn.closest('[data-cb-expand-wrap]');
+            const hidden = wrap?.querySelector('[data-cb-expand-hidden]') as HTMLElement | null;
+            if (wrap && hidden) {
+                const expanded = expBtn.getAttribute('data-cb-expand-btn') === '1';
+                if (expanded) {
+                    wrap.classList.remove('cb-expand-wrap--open');
+                    hidden.setAttribute('aria-hidden', 'true');
+                    expBtn.setAttribute('data-cb-expand-btn', '0');
+                    expBtn.setAttribute('aria-expanded', 'false');
+                    const n = hidden.querySelectorAll('.cb-compact-item').length;
+                    expBtn.textContent = n > 0 ? `+ ${n} more items ↓` : '';
+                    expBtn.style.display = n > 0 ? '' : 'none';
+                } else {
+                    wrap.classList.add('cb-expand-wrap--open');
+                    hidden.setAttribute('aria-hidden', 'false');
+                    expBtn.setAttribute('data-cb-expand-btn', '1');
+                    expBtn.setAttribute('aria-expanded', 'true');
+                    expBtn.style.display = '';
+                    expBtn.textContent = 'Show less ↑';
+                }
+            }
+            return;
+        }
+        const gate = (e.target as HTMLElement).closest('[data-cb-pro-gate]');
+        if (!gate) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const tier = (contextBriefModalState?.viewerTier || 'free').toLowerCase();
+        if (tier === 'pro' || tier === 'enterprise' || tier === 'experts') {
+            window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'pro-insights' } }));
+        } else {
+            sessionStorage.setItem(
+                'plansContextBriefUpsell',
+                JSON.stringify({
+                    message:
+                        'On Pro / Expert, every matched company and infrastructure link from our registry is visible — with dependency-aligned Structural Briefs, not just this preview.',
+                    ts: Date.now(),
+                })
+            );
+            window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'plans' } }));
+        }
+        closeModal();
+    });
+
+    modalBody.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const gate = (e.target as HTMLElement).closest('[data-cb-pro-gate]');
+        if (!gate || !modalBody.contains(gate)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const tier = (contextBriefModalState?.viewerTier || 'free').toLowerCase();
+        if (tier === 'pro' || tier === 'enterprise' || tier === 'experts') {
+            window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'pro-insights' } }));
+        } else {
+            sessionStorage.setItem(
+                'plansContextBriefUpsell',
+                JSON.stringify({
+                    message:
+                        'On Pro / Expert, every matched company and infrastructure link from our registry is visible — with dependency-aligned Structural Briefs, not just this preview.',
+                    ts: Date.now(),
+                })
+            );
+            window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'plans' } }));
+        }
+        closeModal();
+    });
+}
+
+function openContextBriefModal(index: number): void {
+    const modalRoot = getOrCreateContextBriefModal();
+    wireContextBriefModalOnce(modalRoot);
+    const opener = (modalRoot as HTMLElement & { __openContextBriefModal?: (i: number) => void })
+        .__openContextBriefModal;
+    opener?.(index);
+}
+
 /** Prefer API sector_impacts; else parse legacy markdown table (2- or 3-column). */
 function normalizeSectorImpacts(
     apiRows: FreeAlertFeedItem['sector_impacts'] | undefined,
@@ -610,7 +770,7 @@ function renderFeedCard(item: FreeAlertFeedItem, index: number): string {
         <span class="cb-brief-stat-chip">🏢 ${entitiesCount} entities</span>
       </div>
       <div class="cb-brief-card-actions">
-        <button type="button" class="btn-fb pro-brief-btn cb-open-context-btn" data-detail-index="${index}">
+        <button type="button" class="btn-fb cb-open-context-btn" data-detail-index="${index}" aria-haspopup="dialog">
           View Full Context →
         </button>
       </div>
@@ -656,142 +816,33 @@ export function renderFreeAlertFeed(
             item.topic,
             item.sector_impacts,
             item.additional_pro_count ?? 0,
-            viewerTier
+            tierForModalDetail(viewerTier)
         )
     );
     const modalTitles = filtered.map(item =>
         cleanBriefTitle(item.title || item.target_label || 'Strategic Intelligence Alert')
     );
 
+    contextBriefModalState = { detailBodies, modalTitles, viewerTier };
+    wireContextBriefModalOnce(getOrCreateContextBriefModal());
+
     container.innerHTML = `
         <div class="cb-briefs-page">
             <div class="cb-briefs-grid cb-briefs-grid--context">
                 ${filtered.map((item, i) => renderFeedCard(item, i)).join('')}
             </div>
-            <div id="cb-context-modal-root" class="cb-modal-root" aria-hidden="true">
-                <div class="cb-modal-backdrop" tabindex="-1"></div>
-                <div class="cb-modal-panel" role="dialog" aria-modal="true" aria-labelledby="cb-modal-title">
-                    <button type="button" class="cb-modal-close" aria-label="Close">×</button>
-                    <h2 id="cb-modal-title" class="cb-modal-title"></h2>
-                    <div class="cb-modal-body"></div>
-                </div>
-            </div>
         </div>`;
 
     container.dataset.cbViewerTier = viewerTier;
 
-    const modalRoot = container.querySelector('#cb-context-modal-root') as HTMLElement;
-    const modalBody = modalRoot.querySelector('.cb-modal-body') as HTMLElement;
-    const modalTitleEl = modalRoot.querySelector('#cb-modal-title') as HTMLElement;
-    const backdrop = modalRoot.querySelector('.cb-modal-backdrop') as HTMLElement;
-    const closeBtn = modalRoot.querySelector('.cb-modal-close') as HTMLButtonElement;
-    const panel = modalRoot.querySelector('.cb-modal-panel') as HTMLElement;
-
-    const closeModal = () => {
-        if (!modalRoot.classList.contains('cb-modal-root--open')) return;
-        modalRoot.classList.remove('cb-modal-root--open');
-        modalRoot.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('cb-modal-scroll-lock');
-        modalBody.innerHTML = '';
-        document.removeEventListener('keydown', onDocKey);
-    };
-
-    function onDocKey(ev: KeyboardEvent) {
-        if (ev.key !== 'Escape' || !modalRoot.classList.contains('cb-modal-root--open')) return;
-        ev.preventDefault();
-        closeModal();
-    }
-
-    const openModal = (index: number) => {
-        if (index < 0 || index >= detailBodies.length) return;
-        modalTitleEl.textContent = modalTitles[index] || 'Context Brief';
-        modalBody.innerHTML = detailBodies[index] || '';
-        modalRoot.classList.add('cb-modal-root--open');
-        modalRoot.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('cb-modal-scroll-lock');
-        document.removeEventListener('keydown', onDocKey);
-        document.addEventListener('keydown', onDocKey);
-        closeBtn.focus();
-    };
-
-    container.querySelectorAll<HTMLButtonElement>('.cb-open-context-btn').forEach(btn => {
-        btn.addEventListener('click', e => {
-            e.stopPropagation();
-            const idx = parseInt(btn.getAttribute('data-detail-index') || '-1', 10);
-            openModal(idx);
-        });
-    });
-
-    backdrop.addEventListener('click', closeModal);
-    closeBtn.addEventListener('click', closeModal);
-
-    modalBody.addEventListener('click', (e: MouseEvent) => {
-        const expBtn = (e.target as HTMLElement).closest('[data-cb-expand-btn]') as HTMLButtonElement | null;
-        if (expBtn) {
-            e.preventDefault();
-            const wrap = expBtn.closest('[data-cb-expand-wrap]');
-            const hidden = wrap?.querySelector('[data-cb-expand-hidden]') as HTMLElement | null;
-            if (wrap && hidden) {
-                const expanded = expBtn.getAttribute('data-cb-expand-btn') === '1';
-                if (expanded) {
-                    wrap.classList.remove('cb-expand-wrap--open');
-                    hidden.setAttribute('aria-hidden', 'true');
-                    expBtn.setAttribute('data-cb-expand-btn', '0');
-                    expBtn.setAttribute('aria-expanded', 'false');
-                    const n = hidden.querySelectorAll('.cb-compact-item').length;
-                    expBtn.textContent = n > 0 ? `+ ${n} more items ↓` : '';
-                    expBtn.style.display = n > 0 ? '' : 'none';
-                } else {
-                    wrap.classList.add('cb-expand-wrap--open');
-                    hidden.setAttribute('aria-hidden', 'false');
-                    expBtn.setAttribute('data-cb-expand-btn', '1');
-                    expBtn.setAttribute('aria-expanded', 'true');
-                    expBtn.style.display = '';
-                    expBtn.textContent = 'Show less ↑';
-                }
-            }
-            return;
-        }
-        const gate = (e.target as HTMLElement).closest('[data-cb-pro-gate]');
-        if (!gate) return;
+    const onFeedClick = (e: Event) => {
+        const btn = (e.target as HTMLElement).closest('.cb-open-context-btn');
+        if (!btn || !container.contains(btn)) return;
         e.preventDefault();
-        const tier = (container.dataset.cbViewerTier || 'free').toLowerCase();
-        if (tier === 'pro' || tier === 'enterprise' || tier === 'experts') {
-            window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'pro-insights' } }));
-        } else {
-            sessionStorage.setItem(
-                'plansContextBriefUpsell',
-                JSON.stringify({
-                    message:
-                        'On Pro / Expert, every matched company and infrastructure link from our registry is visible — with dependency-aligned Structural Briefs, not just this preview.',
-                    ts: Date.now(),
-                })
-            );
-            window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'plans' } }));
-        }
-        closeModal();
-    });
-    modalBody.addEventListener('keydown', (e: KeyboardEvent) => {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        const gate = (e.target as HTMLElement).closest('[data-cb-pro-gate]');
-        if (!gate || !modalBody.contains(gate)) return;
-        e.preventDefault();
-        const tier = (container.dataset.cbViewerTier || 'free').toLowerCase();
-        if (tier === 'pro' || tier === 'enterprise' || tier === 'experts') {
-            window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'pro-insights' } }));
-        } else {
-            sessionStorage.setItem(
-                'plansContextBriefUpsell',
-                JSON.stringify({
-                    message:
-                        'On Pro / Expert, every matched company and infrastructure link from our registry is visible — with dependency-aligned Structural Briefs, not just this preview.',
-                    ts: Date.now(),
-                })
-            );
-            window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'plans' } }));
-        }
-        closeModal();
-    });
-
-    panel.addEventListener('click', e => e.stopPropagation());
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        openContextBriefModal(parseInt(btn.getAttribute('data-detail-index') || '-1', 10));
+    };
+    container.removeEventListener('click', onFeedClick, true);
+    container.addEventListener('click', onFeedClick, true);
 }
