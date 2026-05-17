@@ -28,7 +28,7 @@ ALERT_ENABLED = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
 
 # Duplicate suppression: skip same headline within window unless intensity reignites.
 ALERT_DEDUP_WINDOW_HOURS = int(os.getenv("ALERT_DEDUP_WINDOW_HOURS", "24"))
-REIGNITE_INTENSITY_FACTOR = float(os.getenv("REIGNITE_INTENSITY_FACTOR", "1.5"))
+REIGNITE_INTENSITY_FACTOR = float(os.getenv("REIGNITE_INTENSITY_FACTOR", "1.1"))
 RECENT_ALERTS_FETCH_LIMIT = int(os.getenv("ALERT_DEDUP_FETCH_LIMIT", "400"))
 
 ALLOWED_TREND_BASE_TYPES = frozenset({
