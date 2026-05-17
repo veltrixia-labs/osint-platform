@@ -138,10 +138,13 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
         };
         const statusCfg = statusMap[status] || statusMap['idle'];
 
-        // --- Tier Gating Logic ---
-        const isFreeAccess = userTier === 'free';
         const isPro = userTier === 'pro';
         const isExpert = userTier === 'experts' || userTier === 'enterprise';
+        const tierBadge = isExpert
+            ? '<span class="alert-tier-corner alert-tier-corner--expert" title="Expert access">EX</span>'
+            : isPro
+                ? '<span class="alert-tier-corner alert-tier-corner--pro" title="Pro access">PRO</span>'
+                : '';
 
         const count = alert.evidence_list?.length || 0;
 
@@ -152,7 +155,10 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                     <span class="status-badge ${statusCfg.class}">${statusCfg.label}</span>
                     <span class="timestamp">${displayDate}</span>
                 </div>
-                <span class="meta-item-topic meta-item-topic--tag">${topicLabel}</span>
+                <div class="alert-header-meta">
+                    ${tierBadge}
+                    <span class="meta-item-topic meta-item-topic--tag">${topicLabel}</span>
+                </div>
             </div>
 
             <div class="alert-content-terminal">
@@ -171,17 +177,6 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
                 </div>
             </div>
 
-            <div class="alert-cta-row">
-                ${isFreeAccess ? `
-                    <button class="cta-link cta-pro trigger-pro-btn">Unlock AI Brief with Pro &rarr;</button>
-                    <button class="cta-link cta-expert trigger-expert-btn">Unlock Strategic Impact Analysis with Expert &rarr;</button>
-                ` : isPro ? `
-                    <button class="cta-link cta-expert trigger-expert-btn">Unlock Strategic Impact Analysis with Expert &rarr;</button>
-                ` : ''}
-                ${!isFreeAccess && !isPro && !isExpert ? `
-                    <button class="cta-link trigger-plans-btn">View Subscription Plans &rarr;</button>
-                ` : ''}
-            </div>
         `;
 
         return `
@@ -190,28 +185,6 @@ export function renderAlerts(alerts: Alert[], container: HTMLElement, userTier: 
             </div>
         `;
     }).join('');
-
-    // Attach Events
-    container.querySelectorAll('.trigger-pro-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            document.querySelector<HTMLElement>('#nav-pro-insights')?.click();
-        });
-    });
-
-    container.querySelectorAll('.trigger-expert-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            document.querySelector<HTMLElement>('#nav-expert-intel')?.click();
-        });
-    });
-
-    container.querySelectorAll('.trigger-plans-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            document.querySelector<HTMLElement>('#nav-plans')?.click();
-        });
-    });
 
     container.querySelectorAll('.source-modal-trigger').forEach(btn => {
         btn.addEventListener('click', (e) => {

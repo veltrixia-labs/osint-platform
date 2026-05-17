@@ -5043,11 +5043,11 @@ p {
   background: rgba(22, 27, 34, 0.6);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
+  padding: 0.6rem 0.85rem 0.55rem;
+  margin-bottom: 0.4rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
   transition: var(--transition-standard);
   position: relative;
   /* Topic is the only colored edge — no top severity stripe */
@@ -5130,10 +5130,40 @@ p {
   background: color-mix(in srgb, var(--topic-color) 12%, transparent);
 }
 
+.alert-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.alert-tier-corner {
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 3px;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.alert-tier-corner--pro {
+  color: var(--tier-pro);
+  border: 1px solid color-mix(in srgb, var(--tier-pro) 35%, transparent);
+  background: color-mix(in srgb, var(--tier-pro) 10%, transparent);
+}
+
+.alert-tier-corner--expert {
+  color: var(--tier-experts);
+  border: 1px solid color-mix(in srgb, var(--tier-experts) 35%, transparent);
+  background: color-mix(in srgb, var(--tier-experts) 10%, transparent);
+}
+
 .alert-content-terminal {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .alert-main-row {
@@ -5145,7 +5175,8 @@ p {
 
 .alert-headline-compact {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+  line-height: 1.35;
   font-weight: 600;
   color: #fff;
   flex: 1;
@@ -5174,11 +5205,12 @@ p {
 }
 
 .source-terminal-row {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   display: flex;
   align-items: center;
-  gap: 8px;
-  opacity: 0.8;
+  gap: 6px;
+  opacity: 0.85;
+  margin-top: 1px;
 }
 
 .source-label {
