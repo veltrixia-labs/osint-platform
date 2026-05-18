@@ -300,17 +300,17 @@
         </section>
 
         <!-- System Workflow -->
-        <section id="lp-preview" class="lp-section lp-preview-section">
+        <section id="workflow" class="lp-section lp-preview-section">
             <div class="lp-wrap">
                 <p class="lp-kicker">System Workflow</p>
                 <h2 class="lp-h2">How raw signals become structured intelligence.</h2>
                 <p class="lp-lead">
-                    Scroll to advance pipeline stages—or watch the backend log stream simulate live processing.
-                    This is workflow documentation, not decorative animation.
+                    Stage-by-stage analysis on the left syncs with a live backend stream on the right—scroll the section or let the pipeline auto-advance.
                 </p>
                 <div class="lp-engine-split">
                 <div class="lp-preview-frame">
-                    <nav class="lp-preview-pipeline" aria-label="Processing pipeline">
+                    <p class="lp-panel-label lp-mono">Stage-by-Stage Analysis</p>
+                    <nav class="lp-preview-pipeline" aria-label="Stage-by-Stage Analysis">
                         <div class="lp-pipe-step is-active" data-step="0">
                             <span class="lp-pipe-num lp-mono">1</span>
                             <span>Ingest</span>
@@ -328,21 +328,15 @@
                             <span>Infer</span>
                         </div>
                     </nav>
-                    <div class="lp-preview-log lp-mono" aria-live="polite">
-                        <div class="lp-log-line" data-stage="0"><span class="lvl lvl--ingest">[INGEST]</span> Polling 2,847 sources...</div>
-                        <div class="lp-log-line" data-stage="0"><span class="lvl lvl--ingest">[INGEST]</span> Candidate: Strait of Hormuz — transit advisory</div>
-                        <div class="lp-log-line" data-stage="0"><span class="lvl lvl--ingest">[INGEST]</span> 14 raw hits · dedupe → 3 retained</div>
-                        <div class="lp-log-line" data-stage="1"><span class="lvl lvl--process">[PROCESS]</span> Identifying high-fidelity signals in Energy/Defense...</div>
-                        <div class="lp-log-line" data-stage="1"><span class="lvl lvl--process">[PROCESS]</span> Consensus filter: ≥2 independent sources</div>
-                        <div class="lp-log-line" data-stage="2"><span class="lvl lvl--context">[CONTEXT]</span> Linking 'Hormuz Strait' to 'Global Oil Supply Chain'...</div>
-                        <div class="lp-log-line" data-stage="2"><span class="lvl lvl--context">[CONTEXT]</span> Macro attach: Brent · VLCC · CPI pass-through</div>
-                        <div class="lp-log-line" data-stage="3"><span class="lvl lvl--infer">[INFER]</span> Generating Scenario A (Escalation) vs Scenario B (De-escalation)...</div>
-                        <div class="lp-log-line" data-stage="3"><span class="lvl lvl--infer">[INFER]</span> Brief ready — evidence chain attached</div>
+                    <div id="lp-stage-log" class="lp-preview-log lp-mono" aria-live="polite">
+                        <div class="lp-stage-log-scan" aria-hidden="true"></div>
+                        <div id="lp-stage-log-body" class="lp-stage-log-body"></div>
                     </div>
+
                 </div>
 
-                <div class="lp-sys-terminal" aria-label="Live backend log simulation">
-                    <div class="lp-sys-terminal-bar lp-mono">backend · processing stream</div>
+                <div class="lp-sys-terminal" aria-label="Backend Live Stream">
+                    <div class="lp-sys-terminal-bar lp-mono">Backend Live Stream · fleet-wide</div>
                     <div id="lp-sys-stream" class="lp-sys-stream lp-mono"></div>
                 </div>
                 </div>
@@ -371,6 +365,7 @@
     </footer>
 
     <script src="lp-live.js" defer></script>
+    <script src="lp-workflow.js" defer></script>
     <script src="lp.js" defer></script>
 </body>
 
