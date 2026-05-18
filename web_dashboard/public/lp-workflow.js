@@ -1,5 +1,5 @@
 /**
- * System Workflow — stage typing (left) + fleet-wide backend stream (right).
+ * System Workflow — timer-driven auto loop (no scroll coupling).
  */
 (function () {
   const section = document.getElementById('workflow');
@@ -9,10 +9,12 @@
   const stageLogRoot = document.getElementById('lp-stage-log');
   const stageLogBody = document.getElementById('lp-stage-log-body');
   const streamRoot = document.getElementById('lp-sys-stream');
-  const scrollAnchor = section.querySelector('.lp-engine-split') || section;
+  const streamTerminal = section.querySelector('.lp-sys-terminal');
 
-  /** Wider bands: Ingest holds ~40% of scroll span before Process. */
-  const STAGE_BANDS = [0, 0.4, 0.64, 0.84, 1];
+  const STAGE_MIN_MS = 5600;
+  const STAGE_LOOP_GAP_MS = 1400;
+  const STREAM_DELAY = { min: 260, max: 400 };
+  const STREAM_STAGE_MUL = [1, 0.82, 0.66, 0.5];
 
   const STAGE_LINES = [
     [
@@ -64,54 +66,13 @@
 
   let currentStage = 0;
   let typingGen = 0;
-  let autoTimer = null;
-  let scrollIdleTimer = null;
+  let loopGen = 0;
   let streamTimer = null;
   let sectionVisible = false;
-  let scrollStageCeiling = 0;
-  let lastScrollY = window.scrollY;
-  let hasEngaged = false;
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  const headerOffset = () => {
-    const header = document.querySelector('.lp-header');
-    return header ? header.getBoundingClientRect().height : 52;
-  };
-
-  const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
-
-  const stageForRatio = (r) => {
-    const t = clamp(r, 0, 1);
-    if (t < STAGE_BANDS[1]) return 0;
-    if (t < STAGE_BANDS[2]) return 1;
-    if (t < STAGE_BANDS[3]) return 2;
-    return 3;
-  };
-
-  /**
-   * Map scroll anchor position → 0..1 progress through the workflow.
-   * Stage 0 dead zone: anchor still below ~52% viewport (panel approaching center).
-   */
-  const computeScrollProgress = () => {
-    const rect = section.getBoundingClientRect();
-    const anchorRect = scrollAnchor.getBoundingClientRect();
-    const vh = window.innerHeight;
-    const hdr = headerOffset();
-
-    if (rect.bottom < hdr || rect.top > vh) return null;
-
-    const engageLine = hdr + 40;
-    const preCenterLine = vh * 0.52;
-
-    if (anchorRect.top > preCenterLine) {
-      return 0;
-    }
-
-    const scrollSpan = Math.max(section.offsetHeight * 0.78, vh * 0.95);
-    const scrolled = preCenterLine - anchorRect.top;
-    return clamp(scrolled / scrollSpan, 0, 1);
-  };
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const applyStepClasses = (stage) => {
     steps.forEach((el, i) => {
@@ -119,6 +80,7 @@
       if (i < stage) el.classList.add('is-done');
       else if (i === stage) el.classList.add('is-active');
     });
+    section.dataset.workflowStage = String(stage + 1);
   };
 
   const flashScanline = () => {
@@ -129,121 +91,23 @@
     setTimeout(() => stageLogRoot.classList.remove('is-stage-flash'), 700);
   };
 
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const typeChar = async (el, text, gen) => {
-    if (prefersReducedMotion) {
-      el.textContent = text;
-      return;
-    }
-    el.textContent = '';
-    const cursor = document.createElement('span');
-    cursor.className = 'lp-stage-cursor';
-    cursor.setAttribute('aria-hidden', 'true');
-    el.appendChild(cursor);
-    for (let i = 0; i < text.length; i += 1) {
-      if (gen !== typingGen) return;
-      el.insertBefore(document.createTextNode(text[i]), cursor);
-      await sleep(10 + Math.random() * 8);
-    }
-    cursor.remove();
-  };
-
-  const renderStageLine = (entry) => {
-    const row = document.createElement('div');
-    row.className = `lp-stage-log-line lp-stage-log-line--${entry.cls}`;
-    row.innerHTML = `<span class="lvl lvl--${entry.cls}">[${entry.tag}]</span> <span class="lp-stage-log-text"></span>`;
-    const textEl = row.querySelector('.lp-stage-log-text');
-    return { row, textEl, entry };
-  };
-
-  const runStageTyping = async (stage, gen) => {
-    if (!stageLogBody) return;
-    stageLogBody.innerHTML = '';
-    const lines = STAGE_LINES[stage] || [];
-    for (const entry of lines) {
-      if (gen !== typingGen) return;
-      const { row, textEl } = renderStageLine(entry);
-      stageLogBody.appendChild(row);
-      row.classList.add('is-typing');
-      await typeChar(textEl, entry.text, gen);
-      if (gen !== typingGen) return;
-      row.classList.remove('is-typing');
-      row.classList.add('is-complete');
-      await sleep(120);
-    }
-  };
-
-  const setStage = (stage, opts = {}) => {
-    const next = Math.max(0, Math.min(3, stage));
-    if (next === currentStage && !opts.force) return;
-    currentStage = next;
-    typingGen += 1;
-    const gen = typingGen;
-    applyStepClasses(next);
-    if (opts.flash !== false) flashScanline();
-    runStageTyping(next, gen);
-  };
-
-  const scheduleAutoAdvance = () => {
-    if (autoTimer) clearTimeout(autoTimer);
-    if (!sectionVisible) return;
-    autoTimer = setTimeout(() => {
-      const next = Math.min(3, currentStage + 1);
-      if (next === currentStage) {
-        scrollStageCeiling = 0;
-        setStage(0, { force: true });
-        scheduleAutoAdvance();
-        return;
-      }
-      scrollStageCeiling = Math.max(scrollStageCeiling, next);
-      setStage(next, { force: true });
-      scheduleAutoAdvance();
-    }, 8500);
-  };
-
-  const updateFromScroll = () => {
-    const progress = computeScrollProgress();
-    if (progress === null) return;
-
-    const scrollingDown = window.scrollY >= lastScrollY - 2;
-    lastScrollY = window.scrollY;
-
-    const targetStage = stageForRatio(progress);
-    let stage = targetStage;
-
-    if (scrollingDown) {
-      stage = Math.min(targetStage, scrollStageCeiling + 1);
-      scrollStageCeiling = Math.max(scrollStageCeiling, stage);
-    } else {
-      scrollStageCeiling = targetStage;
-      stage = targetStage;
-    }
-
-    const anchorRect = scrollAnchor.getBoundingClientRect();
-    const hdr = headerOffset();
-    const shouldEngage = anchorRect.top <= window.innerHeight * 0.58;
-
-    if (shouldEngage && !hasEngaged) {
-      hasEngaged = true;
-      scrollStageCeiling = 0;
-      setStage(0, { force: true });
-    } else if (hasEngaged) {
-      setStage(stage);
-    }
-
-    if (autoTimer) clearTimeout(autoTimer);
-    clearTimeout(scrollIdleTimer);
-    scrollIdleTimer = setTimeout(() => {
-      if (sectionVisible) scheduleAutoAdvance();
-    }, 1800);
+  const streamDelayMs = () => {
+    const mul = STREAM_STAGE_MUL[currentStage] ?? 1;
+    const base = STREAM_DELAY.min + Math.random() * (STREAM_DELAY.max - STREAM_DELAY.min);
+    return Math.round(base * mul);
   };
 
   const tagClass = (cls) => `lp-log-tag lp-log-tag--${cls}`;
 
-  const appendStreamLine = () => {
+  const appendStreamLine = (pickStageBias) => {
     if (!streamRoot || !document.body.contains(streamRoot)) return;
-    const item = STREAM_POOL[Math.floor(Math.random() * STREAM_POOL.length)];
+    let pool = STREAM_POOL;
+    if (pickStageBias != null) {
+      const bias = ['ingest', 'process', 'context', 'infer'][pickStageBias];
+      const filtered = STREAM_POOL.filter((x) => x.cls === bias);
+      if (filtered.length) pool = filtered;
+    }
+    const item = pool[Math.floor(Math.random() * pool.length)];
     const row = document.createElement('div');
     row.className = 'lp-sys-line is-new';
     row.innerHTML =
@@ -267,15 +131,26 @@
     }
   };
 
+  const burstStream = (stage) => {
+    if (!streamTerminal) return;
+    streamTerminal.classList.remove('is-stream-burst');
+    void streamTerminal.offsetWidth;
+    streamTerminal.classList.add('is-stream-burst');
+    setTimeout(() => streamTerminal.classList.remove('is-stream-burst'), 1600);
+    for (let i = 0; i < 3; i += 1) {
+      setTimeout(() => appendStreamLine(stage), i * 90);
+    }
+  };
+
   const startStream = () => {
     if (streamTimer || !streamRoot) return;
-    appendStreamLine();
+    appendStreamLine(currentStage);
     const tick = () => {
+      if (!sectionVisible) return;
       appendStreamLine();
-      const delay = 280 + Math.random() * 420;
-      streamTimer = setTimeout(tick, delay);
+      streamTimer = setTimeout(tick, streamDelayMs());
     };
-    streamTimer = setTimeout(tick, 320);
+    streamTimer = setTimeout(tick, streamDelayMs());
   };
 
   const stopStream = () => {
@@ -285,29 +160,100 @@
     }
   };
 
+  const typeChar = async (el, text, gen) => {
+    if (prefersReducedMotion) {
+      el.textContent = text;
+      return;
+    }
+    el.textContent = '';
+    const cursor = document.createElement('span');
+    cursor.className = 'lp-stage-cursor';
+    cursor.setAttribute('aria-hidden', 'true');
+    el.appendChild(cursor);
+    for (let i = 0; i < text.length; i += 1) {
+      if (gen !== typingGen) return;
+      el.insertBefore(document.createTextNode(text[i]), cursor);
+      await sleep(10 + Math.random() * 8);
+    }
+    cursor.remove();
+  };
+
+  const runStageTyping = async (stage, gen) => {
+    if (!stageLogBody) return;
+    stageLogBody.innerHTML = '';
+    const lines = STAGE_LINES[stage] || [];
+    for (const entry of lines) {
+      if (gen !== typingGen) return;
+      const row = document.createElement('div');
+      row.className = `lp-stage-log-line lp-stage-log-line--${entry.cls}`;
+      row.innerHTML = `<span class="lvl lvl--${entry.cls}">[${entry.tag}]</span> <span class="lp-stage-log-text"></span>`;
+      const textEl = row.querySelector('.lp-stage-log-text');
+      stageLogBody.appendChild(row);
+      row.classList.add('is-typing');
+      await typeChar(textEl, entry.text, gen);
+      if (gen !== typingGen) return;
+      row.classList.remove('is-typing');
+      row.classList.add('is-complete');
+      await sleep(100);
+    }
+  };
+
+  const enterStage = (stage) => {
+    currentStage = stage;
+    typingGen += 1;
+    applyStepClasses(stage);
+    flashScanline();
+    burstStream(stage);
+    return typingGen;
+  };
+
+  const runAutoLoop = async (startStage, token) => {
+    let stage = startStage;
+    while (sectionVisible && token === loopGen) {
+      const gen = enterStage(stage);
+      const typingDone = runStageTyping(stage, gen);
+      const minHold = sleep(STAGE_MIN_MS);
+      await Promise.all([typingDone, minHold]);
+      if (!sectionVisible || token !== loopGen || gen !== typingGen) return;
+
+      const next = (stage + 1) % 4;
+      if (next === 0) {
+        section.classList.add('is-loop-reset');
+        await sleep(STAGE_LOOP_GAP_MS);
+        section.classList.remove('is-loop-reset');
+      }
+      stage = next;
+    }
+  };
+
+  const startLoop = () => {
+    loopGen += 1;
+    const token = loopGen;
+    section.classList.add('is-auto-running');
+    applyStepClasses(0);
+    runAutoLoop(0, token);
+  };
+
+  const stopLoop = () => {
+    loopGen += 1;
+    typingGen += 1;
+    section.classList.remove('is-auto-running', 'is-loop-reset');
+    section.removeAttribute('data-workflow-stage');
+    if (streamTerminal) streamTerminal.classList.remove('is-stream-burst');
+  };
+
   const onSectionEnter = () => {
     sectionVisible = true;
-    scrollStageCeiling = 0;
-    hasEngaged = false;
-    applyStepClasses(0);
-    const progress = computeScrollProgress();
-    if (progress !== null && progress <= STAGE_BANDS[1]) {
-      hasEngaged = true;
-      setStage(0, { force: true });
-    }
     startStream();
-    updateFromScroll();
-    clearTimeout(scrollIdleTimer);
-    scrollIdleTimer = setTimeout(() => scheduleAutoAdvance(), 2200);
+    startLoop();
   };
 
   const onSectionLeave = () => {
     sectionVisible = false;
-    hasEngaged = false;
-    scrollStageCeiling = 0;
-    if (autoTimer) clearTimeout(autoTimer);
-    clearTimeout(scrollIdleTimer);
+    stopLoop();
     stopStream();
+    applyStepClasses(0);
+    if (stageLogBody) stageLogBody.innerHTML = '';
   };
 
   const io = new IntersectionObserver(
@@ -317,14 +263,8 @@
         else onSectionLeave();
       });
     },
-    { rootMargin: '-10% 0px -15% 0px', threshold: [0, 0.08, 0.2] }
+    { threshold: 0.22 }
   );
 
   io.observe(section);
-  window.addEventListener('scroll', updateFromScroll, { passive: true });
-  window.addEventListener('resize', updateFromScroll, { passive: true });
-
-  if (location.hash === '#workflow') {
-    requestAnimationFrame(() => updateFromScroll());
-  }
 })();

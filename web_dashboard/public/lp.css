@@ -676,22 +676,32 @@ body.lp {
   font-size: 0.65rem;
 }
 
-/* ── Dashboard preview (scroll-driven) ── */
+/* ── System Workflow (auto-loop, fixed height) ── */
 #workflow {
-  scroll-margin-top: calc(var(--lp-header-h) + 2.5rem);
+  scroll-margin-top: calc(var(--lp-header-h) + 1.25rem);
 }
 
 #workflow.lp-preview-section {
-  padding-top: clamp(4.75rem, 11vw, 6.5rem);
+  padding-top: clamp(3rem, 6vw, 4.5rem);
 }
 
 #workflow .lp-wrap > .lp-lead {
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
 #workflow .lp-engine-split {
-  scroll-margin-top: calc(var(--lp-header-h) + 1.5rem);
-  margin-top: 0.5rem;
+  margin-top: 0;
+  min-height: min(600px, 80vh);
+  max-height: 80vh;
+}
+
+#workflow.is-auto-running .lp-pipe-step.is-active .lp-pipe-num {
+  box-shadow: 0 0 12px rgba(88, 166, 255, 0.35);
+}
+
+#workflow.is-loop-reset .lp-preview-frame {
+  opacity: 0.92;
+  transition: opacity 0.35s ease;
 }
 
 .lp-preview-section {
@@ -706,7 +716,28 @@ body.lp {
   display: grid;
   grid-template-columns: 140px 1fr;
   grid-template-rows: auto 1fr;
-  min-height: 300px;
+  min-height: 280px;
+  height: 100%;
+}
+
+#workflow .lp-preview-frame {
+  min-height: 280px;
+}
+
+#workflow .lp-sys-terminal {
+  min-height: 280px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.lp-sys-terminal.is-stream-burst {
+  border-color: rgba(88, 166, 255, 0.35);
+  box-shadow: inset 0 0 24px rgba(88, 166, 255, 0.06);
+}
+
+.lp-sys-terminal.is-stream-burst .lp-sys-stream {
+  filter: brightness(1.06);
 }
 
 .lp-panel-label {
