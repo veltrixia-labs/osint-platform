@@ -1,6 +1,7 @@
 /* VELTRIXIA LP — High-Fidelity Strategic Intelligence */
 
 :root {
+  --lp-header-h: 3.25rem;
   --lp-bg: #080b10;
   --lp-surface: #0d1117;
   --lp-surface-2: #111820;
@@ -25,6 +26,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--lp-header-h) + 1.25rem);
 }
 
 body.lp {
@@ -675,6 +677,23 @@ body.lp {
 }
 
 /* ── Dashboard preview (scroll-driven) ── */
+#workflow {
+  scroll-margin-top: calc(var(--lp-header-h) + 2.5rem);
+}
+
+#workflow.lp-preview-section {
+  padding-top: clamp(4.75rem, 11vw, 6.5rem);
+}
+
+#workflow .lp-wrap > .lp-lead {
+  margin-bottom: 1.75rem;
+}
+
+#workflow .lp-engine-split {
+  scroll-margin-top: calc(var(--lp-header-h) + 1.5rem);
+  margin-top: 0.5rem;
+}
+
 .lp-preview-section {
   background: var(--lp-surface);
 }

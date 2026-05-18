@@ -9,6 +9,10 @@
   const stageLogRoot = document.getElementById('lp-stage-log');
   const stageLogBody = document.getElementById('lp-stage-log-body');
   const streamRoot = document.getElementById('lp-sys-stream');
+  const scrollAnchor = section.querySelector('.lp-engine-split') || section;
+
+  /** Wider bands: Ingest holds ~40% of scroll span before Process. */
+  const STAGE_BANDS = [0, 0.4, 0.64, 0.84, 1];
 
   const STAGE_LINES = [
     [
@@ -61,16 +65,52 @@
   let currentStage = 0;
   let typingGen = 0;
   let autoTimer = null;
+  let scrollIdleTimer = null;
   let streamTimer = null;
   let sectionVisible = false;
+  let scrollStageCeiling = 0;
+  let lastScrollY = window.scrollY;
+  let hasEngaged = false;
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+  const headerOffset = () => {
+    const header = document.querySelector('.lp-header');
+    return header ? header.getBoundingClientRect().height : 52;
+  };
+
+  const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
+
   const stageForRatio = (r) => {
-    if (r < 0.22) return 0;
-    if (r < 0.48) return 1;
-    if (r < 0.72) return 2;
+    const t = clamp(r, 0, 1);
+    if (t < STAGE_BANDS[1]) return 0;
+    if (t < STAGE_BANDS[2]) return 1;
+    if (t < STAGE_BANDS[3]) return 2;
     return 3;
+  };
+
+  /**
+   * Map scroll anchor position → 0..1 progress through the workflow.
+   * Stage 0 dead zone: anchor still below ~52% viewport (panel approaching center).
+   */
+  const computeScrollProgress = () => {
+    const rect = section.getBoundingClientRect();
+    const anchorRect = scrollAnchor.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const hdr = headerOffset();
+
+    if (rect.bottom < hdr || rect.top > vh) return null;
+
+    const engageLine = hdr + 40;
+    const preCenterLine = vh * 0.52;
+
+    if (anchorRect.top > preCenterLine) {
+      return 0;
+    }
+
+    const scrollSpan = Math.max(section.offsetHeight * 0.78, vh * 0.95);
+    const scrolled = preCenterLine - anchorRect.top;
+    return clamp(scrolled / scrollSpan, 0, 1);
   };
 
   const applyStepClasses = (stage) => {
@@ -141,32 +181,64 @@
     typingGen += 1;
     const gen = typingGen;
     applyStepClasses(next);
-    flashScanline();
+    if (opts.flash !== false) flashScanline();
     runStageTyping(next, gen);
-    if (opts.resetAuto) scheduleAutoAdvance();
   };
 
   const scheduleAutoAdvance = () => {
     if (autoTimer) clearTimeout(autoTimer);
     if (!sectionVisible) return;
     autoTimer = setTimeout(() => {
-      const next = (currentStage + 1) % 4;
-      setStage(next, { force: true, resetAuto: true });
-    }, 7200);
+      const next = Math.min(3, currentStage + 1);
+      if (next === currentStage) {
+        scrollStageCeiling = 0;
+        setStage(0, { force: true });
+        scheduleAutoAdvance();
+        return;
+      }
+      scrollStageCeiling = Math.max(scrollStageCeiling, next);
+      setStage(next, { force: true });
+      scheduleAutoAdvance();
+    }, 8500);
   };
 
   const updateFromScroll = () => {
-    const rect = section.getBoundingClientRect();
-    if (rect.bottom < 0 || rect.top > window.innerHeight) return;
-    const vh = window.innerHeight;
-    const start = vh * 0.88;
-    const end = vh * 0.12;
-    const progress = (start - rect.top) / (start - end + rect.height * 0.4);
-    const stage = stageForRatio(Math.min(1, Math.max(0, progress)));
-    setStage(stage, { resetAuto: true });
+    const progress = computeScrollProgress();
+    if (progress === null) return;
+
+    const scrollingDown = window.scrollY >= lastScrollY - 2;
+    lastScrollY = window.scrollY;
+
+    const targetStage = stageForRatio(progress);
+    let stage = targetStage;
+
+    if (scrollingDown) {
+      stage = Math.min(targetStage, scrollStageCeiling + 1);
+      scrollStageCeiling = Math.max(scrollStageCeiling, stage);
+    } else {
+      scrollStageCeiling = targetStage;
+      stage = targetStage;
+    }
+
+    const anchorRect = scrollAnchor.getBoundingClientRect();
+    const hdr = headerOffset();
+    const shouldEngage = anchorRect.top <= window.innerHeight * 0.58;
+
+    if (shouldEngage && !hasEngaged) {
+      hasEngaged = true;
+      scrollStageCeiling = 0;
+      setStage(0, { force: true });
+    } else if (hasEngaged) {
+      setStage(stage);
+    }
+
+    if (autoTimer) clearTimeout(autoTimer);
+    clearTimeout(scrollIdleTimer);
+    scrollIdleTimer = setTimeout(() => {
+      if (sectionVisible) scheduleAutoAdvance();
+    }, 1800);
   };
 
-  /* ── Right panel: continuous backend stream ── */
   const tagClass = (cls) => `lp-log-tag lp-log-tag--${cls}`;
 
   const appendStreamLine = () => {
@@ -213,22 +285,46 @@
     }
   };
 
+  const onSectionEnter = () => {
+    sectionVisible = true;
+    scrollStageCeiling = 0;
+    hasEngaged = false;
+    applyStepClasses(0);
+    const progress = computeScrollProgress();
+    if (progress !== null && progress <= STAGE_BANDS[1]) {
+      hasEngaged = true;
+      setStage(0, { force: true });
+    }
+    startStream();
+    updateFromScroll();
+    clearTimeout(scrollIdleTimer);
+    scrollIdleTimer = setTimeout(() => scheduleAutoAdvance(), 2200);
+  };
+
+  const onSectionLeave = () => {
+    sectionVisible = false;
+    hasEngaged = false;
+    scrollStageCeiling = 0;
+    if (autoTimer) clearTimeout(autoTimer);
+    clearTimeout(scrollIdleTimer);
+    stopStream();
+  };
+
   const io = new IntersectionObserver(
     (entries) => {
-      sectionVisible = entries.some((e) => e.isIntersecting);
-      if (sectionVisible) {
-        setStage(currentStage, { force: true });
-        scheduleAutoAdvance();
-        startStream();
-      } else {
-        if (autoTimer) clearTimeout(autoTimer);
-        stopStream();
-      }
+      entries.forEach((e) => {
+        if (e.isIntersecting) onSectionEnter();
+        else onSectionLeave();
+      });
     },
-    { threshold: 0.2 }
+    { rootMargin: '-10% 0px -15% 0px', threshold: [0, 0.08, 0.2] }
   );
 
   io.observe(section);
   window.addEventListener('scroll', updateFromScroll, { passive: true });
   window.addEventListener('resize', updateFromScroll, { passive: true });
+
+  if (location.hash === '#workflow') {
+    requestAnimationFrame(() => updateFromScroll());
+  }
 })();
