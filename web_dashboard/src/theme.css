@@ -1,0 +1,227 @@
+/**
+ * VELTRIXIA — Strategic Intelligence Terminal design tokens & foundations.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  color-scheme: dark;
+
+  /* Midnight Void palette */
+  --void-midnight: #0a0c10;
+  --bg-primary: #0a0c10;
+  --bg-secondary: #0e1219;
+  --bg-tertiary: #141a24;
+  --bg-elevated: rgba(14, 18, 25, 0.78);
+  --card-bg: rgba(10, 14, 22, 0.62);
+
+  --text-primary: #e8eef6;
+  --text-secondary: #8b9cb3;
+
+  --accent: #00d1ff;
+  --accent-pro: #00d1ff;
+  --accent-soft: rgba(0, 209, 255, 0.1);
+  --accent-glow: rgba(0, 209, 255, 0.35);
+
+  --danger: #ff4d4d;
+  --danger-soft: rgba(255, 77, 77, 0.12);
+  --success: #3fb950;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(0, 209, 255, 0.38);
+  --grid-line: rgba(255, 255, 255, 0.06);
+
+  --tier-free: #8b9cb3;
+  --tier-pro: #00d1ff;
+  --tier-experts: #3fb950;
+  --tier-enterprise: #bc8cff;
+  --tier-grace: #d29922;
+  --pro-cta: #7a5cff;
+  --pro-cta-soft: rgba(122, 92, 255, 0.14);
+
+  --shadow-premium: none;
+  --inner-glow: inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 0 0 28px rgba(0, 209, 255, 0.035);
+  --inner-glow-hover: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 0 36px rgba(0, 209, 255, 0.07);
+  --glow-hover: 0 0 0 1px rgba(0, 209, 255, 0.32), 0 0 18px rgba(0, 209, 255, 0.14);
+
+  --glass-blur: blur(16px) saturate(180%);
+  --glass-bg: rgba(10, 14, 22, 0.55);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-data: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  --bento-gap: 16px;
+  --space-unit: 8px;
+
+  --space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
+  --space-s: clamp(0.5rem, 1vw, 1rem);
+  --space-m: var(--bento-gap);
+  --space-l: clamp(1.5rem, 3vw, 2rem);
+
+  --font-xs: clamp(0.7rem, 0.8vw, 0.75rem);
+  --font-s: clamp(0.8rem, 1vw, 0.9rem);
+  --font-m: clamp(0.95rem, 1.2vw, 1.1rem);
+  --font-l: clamp(1.2rem, 2vw, 1.5rem);
+  --font-xl: clamp(1.5rem, 3vw, 2.2rem);
+  --font-xxl: clamp(2rem, 4vw, 3rem);
+
+  --transition-standard: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.22s ease,
+    color 0.15s ease, transform 0.18s ease;
+
+  font-family: var(--font-ui);
+  letter-spacing: 0.012em;
+  line-height: 1.6;
+  font-weight: 400;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbars ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 99px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 209, 255, 0.35);
+}
+
+/* ── Typography discipline ── */
+h1,
+h2,
+h3,
+.page-title {
+  letter-spacing: 0.02em;
+}
+
+p,
+.lp-lead,
+.page-subtitle {
+  letter-spacing: 0.015em;
+}
+
+.u-mono,
+.vx-mono,
+code,
+pre,
+kbd,
+.mono,
+.lp-mono,
+.sidebar-analyst-id,
+.nav-sync-hud,
+.sync-label,
+.sync-time,
+.cb-timestamp,
+.cb-brief-ts,
+.cb-brief-kind,
+.cb-card-stats-compact,
+.health-val,
+.bluf-value,
+.metric-value,
+.metric-label,
+.lp-report-id,
+.intel-section-num,
+.intel-hero-meta,
+.intel-tl-time,
+.intel-watch-data,
+.alert-header,
+.meta-item,
+.severity-badge,
+.spike-badge,
+.lp-source-ts,
+.cb-brief-stat-chip,
+[data-vx-mono='true'] {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* ── Heartbeat pulse (LIVE / SYNC) ── */
+@keyframes vx-heartbeat {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 209, 255, 0.45);
+  }
+
+  50% {
+    opacity: 0.72;
+    transform: scale(1.12);
+    box-shadow: 0 0 0 6px rgba(0, 209, 255, 0);
+  }
+}
+
+@keyframes vx-heartbeat-danger {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.5);
+  }
+
+  50% {
+    opacity: 0.75;
+    box-shadow: 0 0 0 5px rgba(255, 77, 77, 0);
+  }
+}
+
+@keyframes vx-scan-sweep {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 0.55;
+  }
+
+  45% {
+    opacity: 0.2;
+  }
+
+  100% {
+    transform: translateY(220%);
+    opacity: 0;
+  }
+}
+
+@keyframes vx-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pulse-dot,
+.status-live-dot {
+  position: relative;
+}
+
+.pulse-dot::after,
+.status-live-dot::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: inherit;
+  animation: vx-heartbeat 2.8s ease-in-out infinite;
+  z-index: -1;
+}

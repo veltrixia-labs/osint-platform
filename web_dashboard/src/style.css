@@ -1,57 +1,7 @@
 @import "leaflet/dist/leaflet.css";
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
-:root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.6;
-  font-weight: 400;
-
-  color-scheme: dark;
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-tertiary: #21262d;
-  --text-primary: #c9d1d9;
-  --text-secondary: #8b949e;
-  --accent: #58a6ff;
-  --accent-soft: rgba(88, 166, 255, 0.12);
-  --danger: #f85149;
-  --success: #3fb950;
-  --border: rgba(255, 255, 255, 0.12);
-  --border-active: rgba(255, 255, 255, 0.35);
-  --shadow-premium: 0 12px 32px rgba(0, 0, 0, 0.4);
-
-  /* Tier palette */
-  --tier-free: #8b949e;
-  --tier-pro: #58a6ff;
-  --tier-experts: #3fb950;
-  --tier-enterprise: #bc8cff;
-  --tier-grace: #d29922;
-  --pro-cta: #a371f7;
-  --pro-cta-soft: rgba(163, 113, 247, 0.14);
-
-  /* Responsive Spacing & Typography */
-  --space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
-  --space-s: clamp(0.5rem, 1vw, 1rem);
-  --space-m: clamp(1rem, 2vw, 1.5rem);
-  --space-l: clamp(1.5rem, 3vw, 2.5rem);
-
-  --font-xs: clamp(0.7rem, 0.8vw, 0.75rem);
-  --font-s: clamp(0.8rem, 1vw, 0.9rem);
-  --font-m: clamp(0.95rem, 1.2vw, 1.1rem);
-  --font-l: clamp(1.2rem, 2vw, 1.5rem);
-  --font-xl: clamp(1.5rem, 3vw, 2.2rem);
-  --font-xxl: clamp(2rem, 4vw, 3rem);
-
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  --transition-standard: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* Design tokens: see theme.css */
 
 * {
   box-sizing: border-box;

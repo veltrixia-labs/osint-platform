@@ -227,12 +227,13 @@
         <section id="evidence" class="lp-section">
             <div class="lp-wrap">
                 <p class="lp-kicker">Source Transparency</p>
+                <div class="lp-evidence-layout">
+                    <div class="lp-evidence-copy">
                 <h2 class="lp-h2">Every claim traces to cited evidence.</h2>
                 <p class="lp-lead">
                     Eliminating &ldquo;black box&rdquo; AI. Every inference is rooted in a traceable chain of evidence.
                     Citations, fetch timestamps, and confidence labels are surfaced in parallel—analysis you can verify.
                 </p>
-                <div class="lp-evidence-layout">
                     <div class="lp-evidence-points">
                         <div class="lp-evidence-point">
                             <h3>Primary source linkage</h3>
@@ -247,7 +248,8 @@
                             <p>Pro Briefs reference grounding events per section. Report IDs preserve reproducibility across sessions.</p>
                         </div>
                     </div>
-                    <aside class="lp-report" aria-label="Report evidence panel example">
+                    </div>
+                    <aside class="lp-report lp-terminal--evidence" aria-label="Report evidence panel example">
                         <header class="lp-report-header">
                             <h3 class="lp-report-title">Export controls — semiconductor supply chain</h3>
                             <span class="lp-report-id lp-mono">RPT-2026-0412-7F3A</span>
@@ -287,7 +289,7 @@
                             </div>
                             <div class="lp-report-section">
                                 <p class="lp-report-label">Inference boundary</p>
-                                <p style="margin:0;font-size:0.75rem;color:var(--lp-muted);">
+                                <p class="lp-report-note">
                                     Scenarios are derived from linked evidence only. Confidence reflects source agreement—not model optimism.
                                 </p>
                             </div>

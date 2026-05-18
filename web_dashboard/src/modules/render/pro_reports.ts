@@ -22,14 +22,14 @@ export async function renderProStructuralBriefs(container: HTMLElement, onSelect
         if (!listContainer) return;
         if (reports.length === 0) {
             listContainer.style.display = 'block';
-            listContainer.innerHTML = `<div class="u-p-2 u-text-center" style="background: var(--card-bg); border: 1px dashed var(--border); border-radius: 12px; margin-top: 2rem;"><div style="font-size: 2.5rem; margin-bottom: 1rem;">📡</div><div style="font-weight: 600; color: #c9d1d9; margin-bottom: 0.5rem;">No Structural Briefs Detected</div><div style="color: #8b949e; font-size: 0.9rem;">Intelligence pipelines are active.</div></div>`;
+            listContainer.innerHTML = `<div class="u-p-2 u-text-center" style="background: var(--card-bg); border: 1px dashed var(--border); border-radius: 12px; margin-top: 2rem;"><div style="font-size: 2.5rem; margin-bottom: 1rem;">�??�</div><div style="font-weight: 600; color: #c9d1d9; margin-bottom: 0.5rem;">No Structural Briefs Detected</div><div style="color: #8b949e; font-size: 0.9rem;">Intelligence pipelines are active.</div></div>`;
             return;
         }
         listContainer.innerHTML = reports.map(r => {
             const dc = getDomainSlugClass(r.topic);
             const topicVars = getTopicCssVars(r.topic);
             const topicLabel = getTopicDisplayLabel(r.topic);
-            return `<div class="pro-brief-card ${dc}" data-id="${r.id}" style="${topicVars}"><div class="u-flex-between" style="margin-bottom:1rem;"><span class="domain-chip meta-item-topic--tag">${topicLabel}</span><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">${(r.report_type||'PRO_STRUCTURAL').replace(/_/g,' ')}</span><span style="font-size:0.75rem;color:var(--text-secondary);">${new Date(r.created_at).toLocaleDateString()}</span></div></div><h3 style="margin:0 0 1rem;font-size:1.2rem;line-height:1.4;color:var(--text-primary);">${r.title}</h3><div style="font-size:0.9rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1.5rem;flex-grow:1;">${r.teaser_md||'Detailed structural analysis of transmission channels, macro-economic dependencies, and market confirmation signals.'}</div><button class="btn-fb pro-brief-btn" style="width:100%;pointer-events:none;">View Full Brief →</button></div>`;
+            return `<div class="pro-brief-card ${dc}" data-id="${r.id}" style="${topicVars}"><div class="u-flex-between" style="margin-bottom:1rem;"><span class="domain-chip meta-item-topic--tag">${topicLabel}</span><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">${(r.report_type||'PRO_STRUCTURAL').replace(/_/g,' ')}</span><span style="font-size:0.75rem;color:var(--text-secondary);">${new Date(r.created_at).toLocaleDateString()}</span></div></div><h3 style="margin:0 0 1rem;font-size:1.2rem;line-height:1.4;color:var(--text-primary);">${r.title}</h3><div style="font-size:0.9rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1.5rem;flex-grow:1;">${r.teaser_md||'Detailed structural analysis of transmission channels, macro-economic dependencies, and market confirmation signals.'}</div><button class="btn-fb pro-brief-btn" style="width:100%;pointer-events:none;">View Full Brief �?�E/button></div>`;
         }).join('');
         listContainer.querySelectorAll('.pro-brief-card').forEach(card => {
             (card as HTMLElement).addEventListener('click', () => { const id = card.getAttribute('data-id'); if (id) onSelect(id); });
@@ -41,7 +41,7 @@ export async function renderProStructuralBriefs(container: HTMLElement, onSelect
     }
 }
 
-/* ── Helpers ── */
+/* �??�?? Helpers �??�?? */
 function sh(num: string, title: string): string {
     return `<div class="intel-section-head"><span class="intel-section-num">${num}</span><h3 class="intel-section-title">${title}</h3></div>`;
 }
@@ -104,7 +104,7 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
         <div class="intel-hero-meta"><span>Generated: ${new Date(report.created_at).toLocaleString()}</span>${signal.triggered_at?`<span>Triggered: ${new Date(signal.triggered_at).toLocaleString()}</span>`:''}</div>
     </div>`;
 
-    // Status Metric Cards (hero sub-bar) — uses payload values
+    // Status Metric Cards (hero sub-bar) �?�Euses payload values
     const covLabel = (divCheck.overall_coverage || 'limited');
     html += `<div class="intel-status-bar">
         <div class="intel-status-card"><div class="intel-status-label">Structural Risk</div><div class="intel-status-val" style="color:${sc(divCheck.structural_risk)}">${(divCheck.structural_risk||'N/A').toUpperCase()}</div></div>
@@ -130,7 +130,7 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
         html += `<div class="intel-map-panel"><div id="pro-brief-minimap" class="pro-brief-mini-map"></div></div>`;
     }
     if (geoCtx.mentioned_regions && geoCtx.mentioned_regions.length > 0) {
-        html += `<div style="margin-top:${hasLocation?'1rem':'0'};"><span class="intel-sig-label">Mentioned Regions</span><div class="intel-chip-row" style="margin-top:0.4rem;">${geoCtx.mentioned_regions.map((r:string)=>`<span class="intel-sig-chip">📍 ${r}</span>`).join('')}</div></div>`;
+        html += `<div style="margin-top:${hasLocation?'1rem':'0'};"><span class="intel-sig-label">Mentioned Regions</span><div class="intel-chip-row" style="margin-top:0.4rem;">${geoCtx.mentioned_regions.map((r:string)=>`<span class="intel-sig-chip">�??� ${r}</span>`).join('')}</div></div>`;
     }
     if (!hasLocation && (!geoCtx.mentioned_regions || geoCtx.mentioned_regions.length===0)) {
         html += `<p class="intel-body-text">Coordinates unavailable. No geographic regions could be inferred from available evidence.</p>`;
@@ -139,11 +139,11 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
 
     // 04 Event Timeline
     if (timeline.length > 0) {
-        html += `<div class="intel-panel">${sh('04','Event Timeline')}<div class="intel-timeline">${timeline.map((ev:any)=>`<div class="intel-tl-item"><div class="intel-tl-dot"></div><div class="intel-tl-content"><div class="intel-tl-head">${roleBadge(ev.type || ev.role)}${ev.timestamp?`<span class="intel-tl-time">${ev.timestamp}</span>`:''}${ev.location_label?`<span class="intel-tl-loc">📍 ${ev.location_label}</span>`:''}</div><div class="intel-tl-title">${ev.source_url?`<a href="${ev.source_url}" target="_blank" rel="noopener">${ev.title}</a>`:ev.title}</div></div></div>`).join('')}</div></div>`;
+        html += `<div class="intel-panel">${sh('04','Event Timeline')}<div class="intel-timeline">${timeline.map((ev:any)=>`<div class="intel-tl-item"><div class="intel-tl-dot"></div><div class="intel-tl-content"><div class="intel-tl-head">${roleBadge(ev.type || ev.role)}${ev.timestamp?`<span class="intel-tl-time">${ev.timestamp}</span>`:''}${ev.location_label?`<span class="intel-tl-loc">�??� ${ev.location_label}</span>`:''}</div><div class="intel-tl-title">${ev.source_url?`<a href="${ev.source_url}" target="_blank" rel="noopener">${ev.title}</a>`:ev.title}</div></div></div>`).join('')}</div></div>`;
     }
 
     // 05 Structural Impact & Transmission
-    html += `<div class="intel-panel">${sh('05','Structural Impact & Transmission')}${flows.length?`<div class="intel-transmission-flow">${flows.map((f:string,i:number)=>`<div class="flow-step">${f}</div>${i<flows.length-1?'<div class="flow-arrow">→</div>':''}`).join('')}</div>`:'<p class="intel-body-text">No specific transmission channels defined.</p>'}</div>`;
+    html += `<div class="intel-panel">${sh('05','Structural Impact & Transmission')}${flows.length?`<div class="intel-transmission-flow">${flows.map((f:string,i:number)=>`<div class="flow-step">${f}</div>${i<flows.length-1?'<div class="flow-arrow">�?�E/div>':''}`).join('')}</div>`:'<p class="intel-body-text">No specific transmission channels defined.</p>'}</div>`;
 
     // 06 Quantitative Context
     if (macro.length > 0) {
@@ -172,18 +172,18 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
 
     // Unresolved Signals
     if (unresolved.length > 0) {
-        html += `<div class="intel-panel intel-unresolved-box"><div class="intel-section-head"><span class="intel-section-num" style="background:rgba(248,81,73,0.12);color:var(--danger);">⚠</span><h3 class="intel-section-title">Contradictory / Unresolved Signals</h3></div><ul class="intel-unresolved-list">${unresolved.map((u:string)=>`<li>${u}</li>`).join('')}</ul></div>`;
+        html += `<div class="intel-panel intel-unresolved-box"><div class="intel-section-head"><span class="intel-section-num" style="background:rgba(248,81,73,0.12);color:var(--danger);">�?�</span><h3 class="intel-section-title">Contradictory / Unresolved Signals</h3></div><ul class="intel-unresolved-list">${unresolved.map((u:string)=>`<li>${u}</li>`).join('')}</ul></div>`;
     }
 
     // 09 Escalation / De-escalation Watch
     const esc = watchCond.escalation||[]; const deesc = watchCond.deescalation||[];
     if (esc.length||deesc.length) {
-        html += `<div class="intel-panel">${sh('09','Escalation / De-escalation Watch')}<div class="intel-watch-split"><div class="intel-watch-col intel-watch-col--esc"><h4 class="intel-watch-col-title" style="color:var(--danger);">⬆ Escalation Triggers</h4><ul class="intel-watch-list">${esc.map((e:any)=>`<li><span>${e.condition}</span><span class="intel-watch-data">${(e.monitored_data||[]).join(', ')}</span></li>`).join('')}</ul></div><div class="intel-watch-col intel-watch-col--deesc"><h4 class="intel-watch-col-title" style="color:var(--success);">⬇ De-escalation Signals</h4><ul class="intel-watch-list">${deesc.map((d:any)=>`<li><span>${d.condition}</span><span class="intel-watch-data">${(d.monitored_data||[]).join(', ')}</span></li>`).join('')}</ul></div></div></div>`;
+        html += `<div class="intel-panel">${sh('09','Escalation / De-escalation Watch')}<div class="intel-watch-split"><div class="intel-watch-col intel-watch-col--esc"><h4 class="intel-watch-col-title" style="color:var(--danger);">⬁EEscalation Triggers</h4><ul class="intel-watch-list">${esc.map((e:any)=>`<li><span>${e.condition}</span><span class="intel-watch-data">${(e.monitored_data||[]).join(', ')}</span></li>`).join('')}</ul></div><div class="intel-watch-col intel-watch-col--deesc"><h4 class="intel-watch-col-title" style="color:var(--success);">⬁EDe-escalation Signals</h4><ul class="intel-watch-list">${deesc.map((d:any)=>`<li><span>${d.condition}</span><span class="intel-watch-data">${(d.monitored_data||[]).join(', ')}</span></li>`).join('')}</ul></div></div></div>`;
     }
 
     // 10 Watch Indicators
     if (watch.length) {
-        html += `<div class="intel-panel">${sh('10','Watch Indicators')}<div class="intel-watch-grid">${watch.map((w:any)=>`<div class="intel-metric-card"><strong>${w.indicator}</strong><div style="margin:0.5rem 0;color:var(--text-primary);font-size:1.1rem;">Latest: ${w.latest_value??'N/A'}</div><div style="font-size:0.85rem;border-left:2px solid var(--success);padding-left:0.5rem;margin-bottom:0.25rem;">⬆ ${w.upward_interpretation}</div><div style="font-size:0.85rem;border-left:2px solid var(--danger);padding-left:0.5rem;">⬇ ${w.downward_interpretation}</div></div>`).join('')}</div></div>`;
+        html += `<div class="intel-panel">${sh('10','Watch Indicators')}<div class="intel-watch-grid">${watch.map((w:any)=>`<div class="intel-metric-card"><strong>${w.indicator}</strong><div style="margin:0.5rem 0;color:var(--text-primary);font-size:1.1rem;">Latest: ${w.latest_value??'N/A'}</div><div style="font-size:0.85rem;border-left:2px solid var(--success);padding-left:0.5rem;margin-bottom:0.25rem;">⬁E${w.upward_interpretation}</div><div style="font-size:0.85rem;border-left:2px solid var(--danger);padding-left:0.5rem;">⬁E${w.downward_interpretation}</div></div>`).join('')}</div></div>`;
     }
 
     // 11 Balanced Assessment
@@ -224,14 +224,14 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
  * Renders the full detail of a Pro Structural Brief.
  */
 export async function renderProStructuralBriefDetail(id: string, container: HTMLElement, onBack: () => void) {
-    container.innerHTML = `<div class="u-p-2 u-text-center"><div class="loading-spinner u-m-bottom-1"></div><div style="color:#8b949e;font-size:0.9rem;">Decrypting structural impact matrix...</div></div>`;
+    container.innerHTML = `<div class="vx-scan-loading u-p-2 u-text-center" data-vx-loading="true"><div class="loading-spinner u-m-bottom-1"></div><div class="vx-mono" style="color:var(--text-secondary);font-size:0.85rem;">Decrypting structural impact matrix...</div></div>`;
     try {
         const report = await fetchProStructuralReport(id);
         const domainClass = getDomainSlugClass(report.topic);
         const topicVars = getTopicCssVars(report.topic);
         container.innerHTML = `
             <div class="pro-brief-detail ${domainClass}" style="${topicVars}">
-                <div class="u-flex u-m-bottom-2"><button class="btn-fb" id="pro-brief-back-btn" style="padding:8px 16px;">← Back to Index</button></div>
+                <div class="u-flex u-m-bottom-2"><button class="btn-fb" id="pro-brief-back-btn" style="padding:8px 16px;">�?�EBack to Index</button></div>
                 <div id="pro-brief-content-container" class="pro-brief-content-card" style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:2.5rem;box-shadow:0 12px 32px rgba(0,0,0,0.4);"></div>
                 <div class="u-m-top-2 u-text-center" style="color:#8b949e;font-size:0.75rem;padding-bottom:3rem;letter-spacing:0.1em;">
                     END OF STRUCTURAL BRIEF | REF: ${report.id.slice(0,8).toUpperCase()} | NOT INVESTMENT ADVICE
@@ -247,7 +247,7 @@ export async function renderProStructuralBriefDetail(id: string, container: HTML
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
         console.error("Failed to fetch Pro report detail", e);
-        container.innerHTML = `<div class="u-p-2 u-text-center" style="margin-top:4rem;"><div class="u-error u-m-bottom-2" style="font-size:1.1rem;">Failed to retrieve document content.</div><button class="btn-fb" id="pro-brief-error-back">← Return to Index</button></div>`;
+        container.innerHTML = `<div class="u-p-2 u-text-center" style="margin-top:4rem;"><div class="u-error u-m-bottom-2" style="font-size:1.1rem;">Failed to retrieve document content.</div><button class="btn-fb" id="pro-brief-error-back">�?�EReturn to Index</button></div>`;
         container.querySelector('#pro-brief-error-back')?.addEventListener('click', onBack);
     }
 }

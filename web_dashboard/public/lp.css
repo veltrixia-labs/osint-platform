@@ -456,13 +456,75 @@ body.lp {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
-  margin-top: 2rem;
+  margin-top: 1.25rem;
+}
+
+#evidence .lp-evidence-copy .lp-h2 {
+  margin-top: 0;
+}
+
+#evidence .lp-evidence-copy .lp-lead {
+  margin-bottom: 1.25rem;
 }
 
 @media (min-width: 900px) {
-  .lp-evidence-layout {
+  #evidence .lp-evidence-layout {
     grid-template-columns: 1fr 1.15fr;
-    align-items: start;
+    align-items: stretch;
+    gap: 2rem;
+    margin-top: 1.5rem;
+  }
+
+  #evidence .lp-evidence-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  #evidence .lp-evidence-copy .lp-h2 {
+    margin-bottom: 1rem;
+  }
+
+  #evidence .lp-evidence-copy .lp-lead {
+    margin-bottom: 1.35rem;
+  }
+
+  #evidence .lp-evidence-points {
+    gap: 1.2rem;
+    flex: 1;
+  }
+
+  #evidence .lp-terminal--evidence {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0;
+    align-self: stretch;
+    min-height: 0;
+  }
+
+  #evidence .lp-terminal--evidence .lp-report-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding: 1rem 1rem 1.1rem;
+  }
+
+  #evidence .lp-terminal--evidence .lp-report-section {
+    margin-bottom: 0;
+  }
+
+  #evidence .lp-terminal--evidence .lp-report-label {
+    margin-bottom: 0.55rem;
+  }
+
+  #evidence .lp-terminal--evidence .lp-chain {
+    gap: 0.5rem;
+  }
+
+  #evidence .lp-terminal--evidence .lp-source-list li {
+    padding: 0.58rem 0.7rem;
   }
 }
 
@@ -529,6 +591,13 @@ body.lp {
 
 .lp-report-section:last-child {
   margin-bottom: 0;
+}
+
+.lp-report-note {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--lp-muted);
+  line-height: 1.55;
 }
 
 .lp-report-label {

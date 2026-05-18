@@ -1,4 +1,6 @@
+import './theme.css'
 import './style.css'
+import './theme-terminal.css'
 declare const __APP_BUILD_INFO__: string;
 console.log(`[Antigravity] Resolved API base: ${getResolvedApiBase()} (VITE_API_BASE_URL=${String(import.meta.env.VITE_API_BASE_URL ?? '')})`);
 console.log(`[Antigravity] Mode: ${import.meta.env.MODE}`);
@@ -290,7 +292,7 @@ async function initDashboard() {
         <button class="hamburger" id="mobile-menu-btn">笘ｰ</button>
       </div>
       <div class="mobile-overlay" id="mobile-overlay"></div>
-      <div class="app-container">
+      <div class="app-container dashboard-terminal">
         <aside class="sidebar" id="sidebar">
           <div class="sidebar-header u-flex"><h2>VELTRIXIA LABS</h2></div>
           <div id="sidebar-nav-container" style="display:flex; flex-direction:column; flex:1;"></div>
