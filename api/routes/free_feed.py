@@ -14,6 +14,8 @@ from sqlalchemy import cast, String, or_
 
 from db.models import AlertLog, AnalystProfile
 from db.database import get_db
+from api.auth import get_optional_current_user
+from api.gating import get_effective_tier
 from api.rate_limit import rate_limit
 
 router = APIRouter(tags=["free_feed"])
@@ -86,13 +88,13 @@ def _serialize(alert_log: AlertLog, free_alert: dict, subscription_tier: Optiona
 async def list_free_alerts(
     topic:   Optional[str] = Query(None, description="Filter by topic code"),
     limit:   int           = Query(40, ge=1, le=100),
-    current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/free/alerts")),
+    _rate: Optional[AnalystProfile] = Depends(rate_limit("/api/free/alerts")),
+    current_user: Optional[AnalystProfile] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Returns Free Alert Feed items for authenticated Free+ users.
+    Public Context Briefs list (no JWT required). Optional auth upgrades payload caps.
     Only AlertLogs that have a persisted metadata_json.free_alert are returned.
-    No LLM, forecast, or scenario logic is invoked.
     """
     stmt = (
         select(AlertLog)
@@ -122,9 +124,7 @@ async def list_free_alerts(
     result = await db.execute(stmt)
     rows = result.scalars().all()
 
-    tier = "free"
-    if current_user is not None:
-        tier = getattr(current_user, "subscription_tier", None) or "free"
+    tier = await get_effective_tier(current_user)
 
     output = []
     for row in rows:
@@ -149,12 +149,12 @@ async def list_free_alerts(
 @router.get("/free/alerts/{alert_id}")
 async def get_free_alert(
     alert_id: uuid.UUID,
-    current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/free/alerts/{id}")),
+    _rate: Optional[AnalystProfile] = Depends(rate_limit("/api/free/alerts/{id}")),
+    current_user: Optional[AnalystProfile] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Returns a single Free Alert Feed item by AlertLog ID.
-    Raises 404 if the alert does not exist or has no free_alert payload.
+    Public single Context Brief (no JWT required). Optional auth upgrades payload caps.
     """
     stmt = select(AlertLog).where(AlertLog.id == alert_id)
     row = (await db.execute(stmt)).scalar_one_or_none()
@@ -169,8 +169,5 @@ async def get_free_alert(
             detail="Free Alert Feed data not yet generated for this alert"
         )
 
-    tier = "free"
-    if current_user is not None:
-        tier = getattr(current_user, "subscription_tier", None) or "free"
-
+    tier = await get_effective_tier(current_user)
     return _serialize(row, fa, tier)

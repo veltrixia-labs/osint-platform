@@ -9,7 +9,7 @@ import { DashboardState } from './modules/poll'
 import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 // (Pro reports now handled within Pro Insights hub)
-import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, confirmCheckoutSession, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase } from './modules/api'
+import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, confirmCheckoutSession, completeStripeSignup, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase } from './modules/api'
 import type { UserMe } from './modules/api'
 import {
     renderGracePeriodBanner,
@@ -154,6 +154,30 @@ function isLocalDevHost(): boolean {
     return host === 'localhost' || host === '127.0.0.1';
 }
 
+function buildAnonymousUser(): UserMe {
+    return {
+        id: 'free-access',
+        email: '',
+        chat_id: '',
+        role: 'anonymous',
+        tier: 'free',
+        expires_at: null,
+        features: {
+            pro_insights: false,
+            expert_intelligence: false,
+            team_admin: false,
+            custom_topics: false,
+            onboarding: false,
+            support: false,
+        },
+        limits: {
+            impact_depth: 0,
+            topics: [],
+            reports: [],
+        },
+    };
+}
+
 function buildDevOverrideUser(tier: string): UserMe {
     const isPro = tier === 'pro' || tier === 'experts' || tier === 'enterprise';
     const isExperts = tier === 'experts' || tier === 'enterprise';
@@ -180,9 +204,9 @@ function buildDevOverrideUser(tier: string): UserMe {
     };
 }
 
-async function handlePaymentReturn(): Promise<void> {
+async function handlePaymentReturn(): Promise<UserMe | null> {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('payment') !== 'success') return;
+    if (params.get('payment') !== 'success') return null;
 
     const sessionId = params.get('session_id');
     if (sessionId && localStorage.getItem('access_token')) {
@@ -191,11 +215,26 @@ async function handlePaymentReturn(): Promise<void> {
         } catch {
             /* webhook may already have applied tier */
         }
+    } else if (sessionId && !localStorage.getItem('access_token')) {
+        const password = window.prompt(
+            'Payment successful. Create a password for your new account (min 8 characters):'
+        );
+        if (password && password.length >= 8) {
+            try {
+                const result = await completeStripeSignup(sessionId, password);
+                if (result.access_token) {
+                    localStorage.setItem('access_token', result.access_token);
+                }
+            } catch {
+                alert('Account created. Please use Sign In with your email and the password you chose.');
+            }
+        }
     }
 
     const hash = window.location.hash || '#plans';
     const pathOnly = window.location.pathname.split('?')[0] || '/dashboard';
     window.history.replaceState({}, '', `${pathOnly}${hash}`);
+    return fetchMe();
 }
 
 async function initDashboard() {
@@ -209,8 +248,11 @@ async function initDashboard() {
     }
 
     if (user) {
-        await handlePaymentReturn();
-        user = (await fetchMe()) ?? user;
+        const refreshed = await handlePaymentReturn();
+        if (refreshed) user = refreshed;
+    } else {
+        const refreshed = await handlePaymentReturn();
+        if (refreshed) user = refreshed;
     }
 
     if (!user) {
@@ -218,8 +260,7 @@ async function initDashboard() {
         if (devTier && devTier !== 'free' && isLocalDevHost() && !hasToken) {
             user = buildDevOverrideUser(devTier);
         } else {
-            renderLogin();
-            return;
+            user = buildAnonymousUser();
         }
     }
 
@@ -230,12 +271,16 @@ async function initDashboard() {
         if (target.id === 'sidebar-login-btn') { renderLogin(); }
         if (target.id === 'sidebar-logout-btn') {
             if (confirm('Sign out?')) {
-                logout().then(() => renderLogin());
+                logout().then(() => {
+                    localStorage.removeItem('access_token');
+                    window.location.href = '/#free-feed';
+                    window.location.reload();
+                });
             }
         }
     });
 
-    let currentTab: TabId = 'feed';
+    let currentTab: TabId = 'free-feed';
 
     const renderBaseUI = () => {
         const graceBanner = user ? renderGracePeriodBanner(user) : '';
@@ -599,7 +644,7 @@ async function initDashboard() {
     } else if (initialBase && bootTabs.includes(initialBase)) {
         handleTabSwitch(initialBase, new URLSearchParams(initialHash.split('?')[1] || '').get('alert') || undefined, true);
     } else {
-        handleTabSwitch('feed');
+        handleTabSwitch('free-feed');
     }
 }
 

@@ -4,9 +4,10 @@ Stripe subscription helpers (checkout, webhooks, tier sync).
 from __future__ import annotations
 
 import logging
+import secrets
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import stripe
 from fastapi import HTTPException
@@ -14,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.auth import get_password_hash
 from config.settings import settings
 from db.models import AnalystProfile, StripeEvent
 
@@ -85,6 +87,70 @@ async def get_profile_by_customer(
     return (await db.execute(stmt)).scalars().first()
 
 
+def normalize_checkout_email(email: Optional[str]) -> str:
+    return (email or "").strip().lower()
+
+
+def extract_checkout_email(session_or_event: dict) -> Optional[str]:
+    """Resolve payer email from a Checkout Session object."""
+    details = session_or_event.get("customer_details") or {}
+    email = details.get("email") or session_or_event.get("customer_email")
+    if not email:
+        meta = session_or_event.get("metadata") or {}
+        email = meta.get("checkout_email")
+    return normalize_checkout_email(email) if email else None
+
+
+async def get_profile_by_email(db: AsyncSession, email: str) -> Optional[AnalystProfile]:
+    normalized = normalize_checkout_email(email)
+    if not normalized:
+        return None
+    stmt = select(AnalystProfile).where(AnalystProfile.email == normalized)
+    return (await db.execute(stmt)).scalars().first()
+
+
+async def provision_analyst_for_checkout(
+    db: AsyncSession,
+    email: str,
+    *,
+    subscription: Optional[Any] = None,
+    tier_fallback: Optional[str] = None,
+    customer_id: Optional[str] = None,
+) -> AnalystProfile:
+    """
+    Find or create AnalystProfile by email, then apply subscription tier from Stripe.
+    New accounts get a random password; user sets password via complete-signup after checkout.
+    """
+    normalized = normalize_checkout_email(email)
+    if not normalized or "@" not in normalized:
+        raise ValueError("Valid checkout email required")
+
+    analyst = await get_profile_by_email(db, normalized)
+    if not analyst:
+        analyst = AnalystProfile(
+            email=normalized,
+            hashed_password=get_password_hash(secrets.token_urlsafe(32)),
+            user_role="analyst",
+            is_admin=False,
+            subscription_tier="free",
+            is_active=True,
+            created_at=datetime.now(timezone.utc),
+        )
+        db.add(analyst)
+        await db.flush()
+        logger.info("Stripe provision: created analyst for %s", normalized)
+
+    if customer_id and not analyst.stripe_customer_id:
+        analyst.stripe_customer_id = customer_id
+
+    if subscription:
+        await apply_subscription_state(db, analyst, subscription)
+    elif tier_fallback in ALLOWED_CHECKOUT_TIERS:
+        analyst.subscription_tier = tier_fallback
+
+    return analyst
+
+
 async def get_profile_by_id(db: AsyncSession, analyst_id: str) -> Optional[AnalystProfile]:
     try:
         uid = uuid.UUID(analyst_id)
@@ -92,6 +158,35 @@ async def get_profile_by_id(db: AsyncSession, analyst_id: str) -> Optional[Analy
         return None
     stmt = select(AnalystProfile).where(AnalystProfile.id == uid)
     return (await db.execute(stmt)).scalars().first()
+
+
+def create_guest_checkout_session(email: str, tier: str) -> stripe.checkout.Session:
+    """Checkout for visitors without an account (email collected by Stripe)."""
+    tier_norm = (tier or "").strip().lower()
+    if tier_norm not in ALLOWED_CHECKOUT_TIERS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid tier. Allowed: {sorted(ALLOWED_CHECKOUT_TIERS)}",
+        )
+
+    price_id = TIER_TO_PRICE.get(tier_norm)
+    if not price_id:
+        raise HTTPException(status_code=400, detail="Stripe price not configured for tier")
+
+    normalized = normalize_checkout_email(email)
+    if not normalized or "@" not in normalized:
+        raise HTTPException(status_code=400, detail="Valid email is required for checkout")
+
+    success_url, cancel_url = checkout_redirect_urls()
+    return stripe.checkout.Session.create(
+        success_url=success_url,
+        cancel_url=cancel_url,
+        payment_method_types=["card"],
+        mode="subscription",
+        line_items=[{"price": price_id, "quantity": 1}],
+        customer_email=normalized,
+        metadata={"tier": tier_norm, "checkout_email": normalized, "guest_checkout": "true"},
+    )
 
 
 def create_checkout_session_for_user(
@@ -150,20 +245,33 @@ async def process_stripe_webhook_event(db: AsyncSession, event: dict) -> dict:
                     or meta.get("user_id")
                     or meta.get("analyst_id")
                 )
+                sub_id = data_object.get("subscription")
+                customer_id = data_object.get("customer")
+                subscription = (
+                    stripe.Subscription.retrieve(sub_id) if sub_id else None
+                )
+                tier_meta = (meta.get("tier") or "").lower()
+                checkout_email = extract_checkout_email(data_object)
+
+                analyst: Optional[AnalystProfile] = None
                 if analyst_id:
-                    analyst = await get_profile_by_id(db, analyst_id)
-                    if analyst:
-                        sub_id = data_object.get("subscription")
-                        customer_id = data_object.get("customer")
-                        if customer_id and not analyst.stripe_customer_id:
-                            analyst.stripe_customer_id = customer_id
-                        if sub_id:
-                            subscription = stripe.Subscription.retrieve(sub_id)
-                            await apply_subscription_state(db, analyst, subscription)
-                        else:
-                            tier_meta = (meta.get("tier") or "").lower()
-                            if tier_meta in ALLOWED_CHECKOUT_TIERS:
-                                analyst.subscription_tier = tier_meta
+                    analyst = await get_profile_by_id(db, str(analyst_id))
+
+                if analyst:
+                    if customer_id and not analyst.stripe_customer_id:
+                        analyst.stripe_customer_id = customer_id
+                    if subscription:
+                        await apply_subscription_state(db, analyst, subscription)
+                    elif tier_meta in ALLOWED_CHECKOUT_TIERS:
+                        analyst.subscription_tier = tier_meta
+                elif checkout_email:
+                    await provision_analyst_for_checkout(
+                        db,
+                        checkout_email,
+                        subscription=subscription,
+                        tier_fallback=tier_meta if tier_meta in ALLOWED_CHECKOUT_TIERS else None,
+                        customer_id=customer_id,
+                    )
 
             elif event_type in ("customer.subscription.updated", "invoice.paid"):
                 sub_id = (

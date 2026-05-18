@@ -14,7 +14,7 @@ import uuid
 
 from db.database import AsyncSessionLocal
 from db.models import Report, AnalystProfile, AlertLog
-from api.gating import get_effective_tier, TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE
+from api.gating import get_effective_tier, TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE, TIER_GUEST
 from api.auth import get_optional_current_user
 
 router = APIRouter(prefix="/pro", tags=["Pro Reports"])
@@ -30,6 +30,23 @@ async def get_current_tier(
     if current_user is not None:
         user = current_user[0] if isinstance(current_user, tuple) else current_user
     return await get_effective_tier(user)
+
+
+async def require_authenticated_pro_tier(
+    current_user: Optional[Any] = Depends(get_optional_current_user),
+) -> str:
+    """Pro Brief detail requires a logged-in user with Pro tier or above."""
+    if current_user is None:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    user = current_user[0] if isinstance(current_user, tuple) else current_user
+    tier = await get_effective_tier(user)
+    allowed = [TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE]
+    if tier in (TIER_GUEST, "free") or tier not in allowed:
+        raise HTTPException(
+            status_code=403,
+            detail="Pro or Expert subscription required for this analysis.",
+        )
+    return tier
 
 @router.get("/reports")
 async def get_pro_reports(
@@ -117,15 +134,12 @@ async def get_pro_map_signals(
 async def get_pro_report_detail(
     report_id: str,
     db: AsyncSession = Depends(get_db),
-    tier: str = Depends(get_current_tier)
+    tier: str = Depends(require_authenticated_pro_tier),
 ):
     """
-    Fetch the full Markdown content of a specific Pro Structural Brief.
+    Fetch the full Markdown content of a specific Pro Structural Brief (auth + Pro required).
     """
     allowed_tiers = [TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE]
-    if tier not in allowed_tiers:
-        raise HTTPException(status_code=403, detail="Pro or Expert subscription required for this analysis.")
-        
     try:
         report_uuid = uuid.UUID(report_id)
     except ValueError:

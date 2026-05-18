@@ -561,7 +561,21 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
             try {
                 const urlParams = new URLSearchParams(window.location.search);
                 const reportId = urlParams.get('report_id');
-                const response = await fetchCheckoutSession(tier, reportId || undefined);
+                const isGuest = user.id === 'free-access' || !user.email;
+                let checkoutEmail: string | undefined;
+                if (isGuest) {
+                    const entered = window.prompt(
+                        'Enter your email for Stripe checkout (account will be created after payment):'
+                    );
+                    if (!entered || !entered.includes('@')) {
+                        throw new Error('Email required for checkout');
+                    }
+                    checkoutEmail = entered.trim().toLowerCase();
+                }
+                const response = await fetchCheckoutSession(tier, {
+                    email: checkoutEmail,
+                    reportId: reportId || undefined,
+                });
                 if (response.url) {
                     window.location.href = response.url;
                     return;

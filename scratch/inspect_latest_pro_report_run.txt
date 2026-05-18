@@ -1,0 +1,1188 @@
+﻿================================================================================
+LATEST ALERT
+================================================================================
+  id:          9782ab68-f8f6-4382-afcc-23e4dd8671fd
+  topic:       energy_resource_risk
+  severity:    elevated
+  target:      TEST Hormuz Strait shipping lane watch
+  triggered:   2026-05-12 18:23:36
+  domain_id:   energy_resource_risk
+
+Generating Pro Structural Brief...
+
+================================================================================
+GENERATED REPORT
+================================================================================
+  id:          6d7cedd6-831d-4482-9a49-756b7168aa12
+  title:       Structural Impact Brief - Energy & Resource Risk
+  topic_code:  energy_resource_risk
+  created_at:  2026-05-18 09:18:03.912072
+
+================================================================================
+SECTION 06 - Quantitative Context (macro_observations)
+================================================================================
+Total macro series in payload: 4
+  [LEGACY] DCOILWTICO | source=fred | value=99.89 | change_pct=-1.3529527947857045 | date=2026-04-27
+  [LEGACY] GASREGW | source=fred | value=4.452 | change_pct=11.578947368421046 | date=2026-05-04
+  [LEGACY] WPU05 | source=bls | value=247.406 | change_pct=14.41903916236565 | date=2026-03-01
+  [LEGACY] WPU051 | source=bls | value=290.192 | change_pct=-0.1840214359175337 | date=2026-03-01
+
+================================================================================
+SECTION 07 - Market Confirmation
+================================================================================
+Status: Mixed
+Positive movers: 4 | Negative: 3
+  XLE: 0.3375527426160385% (close=59.45, date=2026-05-05)
+  XOP: 1.6148998424487984% (close=180.59, date=2026-05-05)
+  USO: 7.2323005297800655% (close=133.59, date=2026-05-08)
+  IYT: 3.8570326562098223% (close=80.78, date=2026-05-08)
+  JETS: 4.53269153630164% (close=26.06, date=2026-05-05)
+  USDCAD: -1.4574314574314573% (close=1.3658, date=2026-05-08)
+  USDNOK: -3.429890848026872% (close=9.2012, date=2026-05-08)
+  USDBRL: -3.301979613522779% (close=4.914, date=2026-05-08)
+
+Breakdown by group:
+  Energy Producers: status=confirming | instruments=['XLE', 'XOP']
+  Oil Price Proxy: status=confirming | instruments=['USO']
+  Transport Sensitivity: status=resilient | instruments=['IYT', 'JETS']
+  Petro FX: status=confirming | instruments=['USDCAD', 'USDNOK', 'USDBRL']
+
+================================================================================
+SECTION 13 - Coverage Matrix
+================================================================================
+{
+  "macro_data": "high",
+  "market_data": "high",
+  "trade_data": "high",
+  "geo_data": "low",
+  "news_evidence": "low",
+  "notes": "No geographic coordinates associated with this signal."
+}
+
+Saved: C:\RDTP project\Development\OSINT_analytics\scratch\inspect_latest_pro_report.md
+Saved: C:\RDTP project\Development\OSINT_analytics\scratch\inspect_latest_pro_report_payload.json
+
+================================================================================
+STRUCTURED_PAYLOAD (JSON)
+================================================================================
+{
+  "domain": {
+    "domain_id": "energy_resource_risk",
+    "display_name": "Energy & Resource Risk",
+    "primary_user_question": "How do structural energy shifts and resource scarcity impact supply chain stability and inflation?"
+  },
+  "signal": {
+    "title": "TEST Hormuz Strait shipping lane watch",
+    "triggered_at": "2026-05-12T18:23:36",
+    "severity": null,
+    "target_label": null,
+    "location_lat": null,
+    "location_lng": null,
+    "related_news": []
+  },
+  "executive_summary": "This brief tracks a Energy & Resource Risk signal related to TEST Hormuz Strait shipping lane watch, classified as energy supply disruption. Secondary signal dimensions include maritime chokepoint, petro fx sensitivity, commodity repricing. Market confirmation is mixed across energy producers (confirming), oil price proxy (confirming), transport sensitivity (resilient), petro fx (confirming). Data coverage is strong across most source categories. Geographic attribution remains unavailable.",
+  "key_findings": [
+    "Energy Producers: confirming",
+    "Oil Price Proxy: confirming",
+    "Transport Sensitivity: resilient",
+    "Petro FX: confirming",
+    "Evolving situation with mixed market signals"
+  ],
+  "signal_classification": {
+    "primary_type": "energy_supply_disruption",
+    "secondary_types": [
+      "maritime_chokepoint",
+      "petro_fx_sensitivity",
+      "commodity_repricing"
+    ],
+    "rationale": "Related events point to oil export disruption and tanker route risk rather than a pure demand shock."
+  },
+  "event_timeline": [],
+  "structural_context": {
+    "macro_observations": [
+      {
+        "series_id": "DCOILWTICO",
+        "source": "fred",
+        "latest_value": 99.89,
+        "latest_date": "2026-04-27",
+        "period_label": null,
+        "previous_value": 101.26,
+        "change_pct": -1.3529527947857045,
+        "raw_json": {
+          "realtime_start": "2026-05-05",
+          "realtime_end": "2026-05-05",
+          "date": "2026-04-27",
+          "value": "99.89"
+        },
+        "display_name": "Global crude oil repricing proxy"
+      },
+      {
+        "series_id": "GASREGW",
+        "source": "fred",
+        "latest_value": 4.452,
+        "latest_date": "2026-05-04",
+        "period_label": null,
+        "previous_value": 3.99,
+        "change_pct": 11.578947368421046,
+        "raw_json": {
+          "realtime_start": "2026-05-06",
+          "realtime_end": "2026-05-06",
+          "date": "2026-05-04",
+          "value": "4.452"
+        },
+        "display_name": "Consumer fuel cost pass-through"
+      },
+      {
+        "series_id": "WPU05",
+        "source": "bls",
+        "latest_value": 247.406,
+        "latest_date": "2026-03-01",
+        "period_label": "M03",
+        "previous_value": 216.228,
+        "change_pct": 14.41903916236565,
+        "raw_json": {
+          "year": "2026",
+          "period": "M03",
+          "periodName": "March",
+          "latest": "true",
+          "value": "247.406",
+          "footnotes": [
+            {
+              "code": "P",
+              "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+            }
+          ]
+        },
+        "display_name": "Upstream producer price pressure for fuels"
+      },
+      {
+        "series_id": "WPU051",
+        "source": "bls",
+        "latest_value": 290.192,
+        "latest_date": "2026-03-01",
+        "period_label": "M03",
+        "previous_value": 290.727,
+        "change_pct": -0.1840214359175337,
+        "raw_json": {
+          "year": "2026",
+          "period": "M03",
+          "periodName": "March",
+          "latest": "true",
+          "value": "290.192",
+          "footnotes": [
+            {
+              "code": "P",
+              "text": "Preliminary. All indexes are subject to monthly revisions up to four months after original publication."
+            }
+          ]
+        },
+        "display_name": "Refined petroleum product cost index"
+      }
+    ],
+    "trade_flows": [
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 337644667180.0,
+        "quantity": 553991815980.023,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 172426221223.0,
+        "quantity": 370391660223.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 117160520564.0,
+        "quantity": 235677354408.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 84557524567.0,
+        "quantity": null,
+        "unit": "-1"
+      },
+      {
+        "reporter_name": "Japan",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 80884609985.472,
+        "quantity": 125141694800.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 67586422986.0,
+        "quantity": null,
+        "unit": "-1"
+      },
+      {
+        "reporter_name": "Japan",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 52688846806.768,
+        "quantity": 76388825167.135,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 16041910757.0,
+        "quantity": 23999147428.207,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 3647771947.0,
+        "quantity": 5576574170.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 843802125.0,
+        "quantity": 1420845300.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2805",
+        "commodity_name": "Alkali or rare-earth metals",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 541036207.0,
+        "quantity": 48938735.769,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "Japan",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2805",
+        "commodity_name": "Alkali or rare-earth metals",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 368418728.416,
+        "quantity": 9984301.497,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "Germany",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 284515529.391,
+        "quantity": 452335000.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "Germany",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 262959896.748,
+        "quantity": null,
+        "unit": "-1"
+      },
+      {
+        "reporter_name": "Germany",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 163725705.722,
+        "quantity": 235218311.708,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United Kingdom",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2709",
+        "commodity_name": "Crude petroleum oils",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 100346984.774,
+        "quantity": 153882000.0,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2805",
+        "commodity_name": "Alkali or rare-earth metals",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 97579668.0,
+        "quantity": 21487627.683,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "Japan",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2711",
+        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 68774316.075,
+        "quantity": null,
+        "unit": "-1"
+      },
+      {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2805",
+        "commodity_name": "Alkali or rare-earth metals",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 50841940.0,
+        "quantity": 2743679.324,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2805",
+        "commodity_name": "Alkali or rare-earth metals",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 23689426.0,
+        "quantity": 435017.459,
+        "unit": "8"
+      }
+    ],
+    "industry_stats": [
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Gross domestic product",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 27811.5,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Private industries",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 24712.8,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Private services-producing industries<sup>2</sup>",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 19989.5,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Finance, insurance, real estate, rental, and leasing",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 5883.4,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Private goods-producing industries<sup>1</sup>",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 4723.3,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Real estate and rental and leasing",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 3807.7,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Professional and business services",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 3609.8,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Real estate",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 3452.2,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Government",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 3098.7,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Manufacturing",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2816.5,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Housing",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2657.3,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Educational services, health care, and social assistance",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2360.1,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Professional, scientific, and technical services",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2220.6,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "State and local",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2098.9,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Finance and insurance",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2075.7,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Health care and social assistance",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 2043.7,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Information-communications-technology-producing industries<sup>3</sup>",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 1956.7,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "General government",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 1952.8,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Retail trade",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 1779.6,
+        "unit": null
+      },
+      {
+        "source": "bea",
+        "dataset": "GDPbyIndustry",
+        "geo_name": "United States",
+        "industry_name": "Wholesale trade",
+        "metric_name": "Value Added",
+        "year": 2023,
+        "value": 1652.8,
+        "unit": null
+      }
+    ]
+  },
+  "relevance_map": {
+    "DCOILWTICO": "Global crude oil repricing proxy",
+    "WCESTUS1": "U.S. crude oil inventories ex-SPR \u2014 weekly supply/demand balance",
+    "WPULEUS3": "U.S. refinery utilization \u2014 operable capacity usage",
+    "WCRFPUS2": "U.S. field crude production \u2014 domestic supply growth",
+    "OPEC.CRUDE_PRODUCTION": "OPEC crude production \u2014 cartel supply strategy",
+    "WORLD.CRUDE_PRODUCTION": "World crude production \u2014 global supply baseline",
+    "GASREGW": "Consumer fuel cost pass-through",
+    "WPU05": "Upstream producer price pressure for fuels",
+    "WPU051": "Refined petroleum product cost index",
+    "NY.GDP.MKTP.CD": "Aggregate output exposure to energy costs",
+    "XLE": "Energy equity market confirmation",
+    "XOP": "Exploration & production equity proxy",
+    "USO": "Crude oil futures ETF tracking",
+    "IYT": "Transport-sector cost sensitivity",
+    "JETS": "Airline fuel-cost pass-through proxy",
+    "USDCAD": "Petro-state FX: Canadian dollar sensitivity",
+    "USDNOK": "Petro-state FX: Norwegian krone sensitivity",
+    "USDBRL": "EM petro-state FX: Brazilian real sensitivity",
+    "2709": "Crude petroleum trade volume",
+    "2711": "Natural gas trade volume",
+    "2805": "Strategic metals trade volume"
+  },
+  "market_confirmation": {
+    "latest_prices": [
+      {
+        "provider": "alpha_vantage",
+        "symbol": "XLE",
+        "asset_class": "equity",
+        "latest_date": "2026-05-05",
+        "latest_close": 59.45,
+        "previous_date": "2026-04-02",
+        "previous_close": 59.25,
+        "percent_change": 0.3375527426160385,
+        "interval": "daily"
+      },
+      {
+        "provider": "alpha_vantage",
+        "symbol": "XOP",
+        "asset_class": "equity",
+        "latest_date": "2026-05-05",
+        "latest_close": 180.59,
+        "previous_date": "2026-04-02",
+        "previous_close": 177.72,
+        "percent_change": 1.6148998424487984,
+        "interval": "daily"
+      },
+      {
+        "provider": "alpha_vantage",
+        "symbol": "USO",
+        "asset_class": "equity",
+        "latest_date": "2026-05-08",
+        "latest_close": 133.59,
+        "previous_date": "2026-04-08",
+        "previous_close": 124.58,
+        "percent_change": 7.2323005297800655,
+        "interval": "daily"
+      },
+      {
+        "provider": "alpha_vantage",
+        "symbol": "IYT",
+        "asset_class": "equity",
+        "latest_date": "2026-05-08",
+        "latest_close": 80.78,
+        "previous_date": "2026-04-08",
+        "previous_close": 77.78,
+        "percent_change": 3.8570326562098223,
+        "interval": "daily"
+      },
+      {
+        "provider": "alpha_vantage",
+        "symbol": "JETS",
+        "asset_class": "equity",
+        "latest_date": "2026-05-05",
+        "latest_close": 26.06,
+        "previous_date": "2026-04-02",
+        "previous_close": 24.93,
+        "percent_change": 4.53269153630164,
+        "interval": "daily"
+      },
+      {
+        "provider": "frankfurter",
+        "symbol": "USDCAD",
+        "asset_class": "fx",
+        "latest_date": "2026-05-08",
+        "latest_close": 1.3658,
+        "previous_date": "2026-04-08",
+        "previous_close": 1.386,
+        "percent_change": -1.4574314574314573,
+        "interval": "daily_reference"
+      },
+      {
+        "provider": "frankfurter",
+        "symbol": "USDNOK",
+        "asset_class": "fx",
+        "latest_date": "2026-05-08",
+        "latest_close": 9.2012,
+        "previous_date": "2026-04-08",
+        "previous_close": 9.528,
+        "percent_change": -3.429890848026872,
+        "interval": "daily_reference"
+      },
+      {
+        "provider": "frankfurter",
+        "symbol": "USDBRL",
+        "asset_class": "fx",
+        "latest_date": "2026-05-08",
+        "latest_close": 4.914,
+        "previous_date": "2026-04-08",
+        "previous_close": 5.0818,
+        "percent_change": -3.301979613522779,
+        "interval": "daily_reference"
+      }
+    ],
+    "status": "Mixed",
+    "positive_movers": 4,
+    "negative_movers": 3,
+    "limited_instruments": 0,
+    "breakdown": [
+      {
+        "group": "Energy Producers",
+        "instruments": [
+          "XLE",
+          "XOP"
+        ],
+        "instrument_details": [
+          {
+            "symbol": "XLE",
+            "percent_change": 0.3375527426160385
+          },
+          {
+            "symbol": "XOP",
+            "percent_change": 1.6148998424487984
+          }
+        ],
+        "status": "confirming",
+        "description": "Rising energy equities confirm supply-side pressure"
+      },
+      {
+        "group": "Oil Price Proxy",
+        "instruments": [
+          "USO"
+        ],
+        "instrument_details": [
+          {
+            "symbol": "USO",
+            "percent_change": 7.2323005297800655
+          }
+        ],
+        "status": "confirming",
+        "description": "Crude price movement validates or contradicts disruption thesis"
+      },
+      {
+        "group": "Transport Sensitivity",
+        "instruments": [
+          "IYT",
+          "JETS"
+        ],
+        "instrument_details": [
+          {
+            "symbol": "IYT",
+            "percent_change": 3.8570326562098223
+          },
+          {
+            "symbol": "JETS",
+            "percent_change": 4.53269153630164
+          }
+        ],
+        "status": "resilient",
+        "description": "Transport weakness under rising energy costs signals cost pass-through pressure"
+      },
+      {
+        "group": "Petro FX",
+        "instruments": [
+          "USDCAD",
+          "USDNOK",
+          "USDBRL"
+        ],
+        "instrument_details": [
+          {
+            "symbol": "USDCAD",
+            "percent_change": -1.4574314574314573
+          },
+          {
+            "symbol": "USDNOK",
+            "percent_change": -3.429890848026872
+          },
+          {
+            "symbol": "USDBRL",
+            "percent_change": -3.301979613522779
+          }
+        ],
+        "status": "confirming",
+        "description": "USD strengthening vs petro-currencies indicates capital flow pressure on exporters"
+      }
+    ]
+  },
+  "divergence_check": {
+    "structural_risk": "medium",
+    "market_confirmation": "mixed",
+    "data_lag": "medium",
+    "overall_coverage": "strong",
+    "interpretation": "Moderate structural signals with mixed market response. The situation is evolving; directional clarity has not yet emerged."
+  },
+  "unresolved_signals": [
+    "Market instruments are sending mixed signals \u2014 some asset groups confirm while others diverge.",
+    "Geographic attribution is limited; the signal's regional scope may be broader than displayed."
+  ],
+  "watch_indicators": [
+    {
+      "indicator": "WTI Crude Oil Price",
+      "source": "FRED",
+      "lookup_type": "external_observation",
+      "series_id": "DCOILWTICO",
+      "why_it_matters": "Primary global benchmark for oil price sensitivity.",
+      "upward_interpretation": "Rising costs for energy consumers, windfall for producers.",
+      "downward_interpretation": "Easing headline inflation pressure, risk to exporter fiscal balances.",
+      "limitation": "Spot price doesn't reflect long-term contract structures.",
+      "latest_value": 99.89
+    },
+    {
+      "indicator": "Energy Sector ETF (XLE)",
+      "source": "Alpha Vantage",
+      "lookup_type": "market_price",
+      "symbol": "XLE",
+      "why_it_matters": "Direct equity market reflection of energy sector profitability and sentiment.",
+      "upward_interpretation": "Market is pricing in sustained demand or margin expansion for energy firms.",
+      "downward_interpretation": "Concerns over demand destruction or peak cyclical earnings.",
+      "limitation": "XLE is dominated by a few large caps (XOM/CVX).",
+      "latest_value": 59.45
+    }
+  ],
+  "watch_conditions": {
+    "escalation": [
+      {
+        "condition": "WTI and USO rise while IYT/JETS weaken",
+        "monitored_data": [
+          "DCOILWTICO",
+          "USO",
+          "IYT",
+          "JETS"
+        ]
+      },
+      {
+        "condition": "Additional tanker or port disruption events appear",
+        "monitored_data": [
+          "related_news"
+        ]
+      },
+      {
+        "condition": "Petro-state FX becomes more volatile",
+        "monitored_data": [
+          "USDCAD",
+          "USDNOK",
+          "USDBRL"
+        ]
+      }
+    ],
+    "deescalation": [
+      {
+        "condition": "Crude prices stabilize within 5% band",
+        "monitored_data": [
+          "DCOILWTICO",
+          "USO"
+        ]
+      },
+      {
+        "condition": "Related shipping / port alerts decline",
+        "monitored_data": [
+          "related_news"
+        ]
+      },
+      {
+        "condition": "Transport-sensitive assets recover",
+        "monitored_data": [
+          "IYT",
+          "JETS"
+        ]
+      }
+    ]
+  },
+  "transmission_flow": [
+    "Direct input costs",
+    "Logistics premiums",
+    "Currency volatility in petro-states"
+  ],
+  "exposure_targets": [
+    "Refiners",
+    "Airlines",
+    "Heavy manufacturing",
+    "Energy-dependent EMs"
+  ],
+  "exposure_matrix": [
+    {
+      "target": "Refiners",
+      "transmission": "crude input costs",
+      "sensitivity": "high",
+      "reason": "Margins can narrow when crude costs rise faster than refined product prices."
+    },
+    {
+      "target": "Airlines",
+      "transmission": "jet fuel procurement",
+      "sensitivity": "high",
+      "reason": "Fuel is the largest variable cost; hedging only delays exposure."
+    },
+    {
+      "target": "Heavy manufacturing",
+      "transmission": "energy-intensive processes",
+      "sensitivity": "medium",
+      "reason": "Natural gas and electricity costs flow through to production margins."
+    },
+    {
+      "target": "Energy-dependent EMs",
+      "transmission": "import bill / fiscal balance",
+      "sensitivity": "high",
+      "reason": "Oil-importing emerging markets face twin deficits when crude rises sharply."
+    }
+  ],
+  "balanced_interpretations": {
+    "stability_view": "Prices may remain range-bound if inventories compensate for geopolitical friction.",
+    "volatility_view": "Low spare capacity makes prices highly sensitive to even minor supply disruptions.",
+    "market_confirmation_view": "Check if energy equities (XLE) are leading or lagging the physical price move.",
+    "invalidating_conditions": [
+      "Discovery of major new reserves",
+      "Sudden demand destruction"
+    ]
+  },
+  "coverage_matrix": {
+    "macro_data": "high",
+    "market_data": "high",
+    "trade_data": "high",
+    "geo_data": "low",
+    "news_evidence": "low",
+    "notes": "No geographic coordinates associated with this signal."
+  },
+  "geo_context": {
+    "has_coordinates": false,
+    "mentioned_regions": [],
+    "confidence": "unavailable"
+  },
+  "data_notes": {
+    "freshness": "2026-05-08",
+    "coverage_limitations": [
+      "Macro series NY.GDP.MKTP.CD not found in DB.",
+      "Macro series WCESTUS1 not found in DB.",
+      "Macro series WPULEUS3 not found in DB.",
+      "Macro series WCRFPUS2 not found in DB.",
+      "Macro series OPEC.CRUDE_PRODUCTION not found in DB.",
+      "Macro series WORLD.CRUDE_PRODUCTION not found in DB."
+    ],
+    "missing_data": []
+  }
+}
+
+================================================================================
+CONTENT_MARKDOWN (FULL)
+================================================================================
+# Structural Impact Brief
+
+## Executive Snapshot
+<div class="snapshot-grid">
+  <div class="snapshot-card"><span class="snapshot-card-label">Domain</span><span class="snapshot-card-value">Energy & Resource Risk</span></div>
+  <div class="snapshot-card"><span class="snapshot-card-label">Primary Signal</span><span class="snapshot-card-value">TEST Hormuz Strait shipping lane watch</span></div>
+  <div class="snapshot-card"><span class="snapshot-card-label">Structural Data</span><span class="snapshot-card-value">DCOILWTICO (-1.35%), GASREGW (+11.58%), WPU05 (+14.42%)</span></div>
+  <div class="snapshot-card"><span class="snapshot-card-label">Market Pricing</span><span class="snapshot-card-value">XLE (+0.34%), XOP (+1.61%), USO (+7.23%)</span></div>
+  <div class="snapshot-card"><span class="snapshot-card-label">Watch Indicators</span><span class="snapshot-card-value">2 Active</span></div>
+  <div class="snapshot-card"><span class="snapshot-card-label">Primary Limitation</span><span class="snapshot-card-value">Macro series NY.GDP.MKTP.CD not found in DB.</span></div>
+</div>
+
+## 1. Signal & Market Relevance
+<div class="signal-relevance-grid">
+  <div class="signal-context">
+    <h3>Signal Context</h3>
+    <p><strong>Alert:</strong> TEST Hormuz Strait shipping lane watch<br>
+    <strong>Triggered At:</strong> 2026-05-12T18:23:36<br>
+    <strong>Analytical Question:</strong> How do structural energy shifts and resource scarcity impact supply chain stability and inflation?</p>
+  </div>
+  <div class="market-relevance">
+    <h3>Decision-Relevant Questions</h3>
+    <ul>
+      <li>Is this signal more likely to affect supply expectations, price pressure, or policy enforcement?</li>
+      <li>Which commodity-sensitive sectors are exposed?</li>
+      <li>Does the signal reinforce or contradict current WTI / PPI energy trends?</li>
+    </ul>
+  </div>
+</div>
+
+
+
+## 2. Transmission Channels
+<div class="transmission-flow">
+  <div class="transmission-step">Direct input costs</div>
+  <div class="transmission-arrow">竊・/div>
+  <div class="transmission-step">Logistics premiums</div>
+  <div class="transmission-arrow">竊・/div>
+  <div class="transmission-step">Currency volatility in petro-states</div>
+</div>
+
+## 3. Quantitative Context
+<div class="metric-card-grid">
+  <div class="metric-card">
+    <div class="metric-label">DCOILWTICO</div>
+    <div class="metric-value">99.89</div>
+    <div class="metric-label">-1.35% (Lookback)</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">GASREGW</div>
+    <div class="metric-value">4.45</div>
+    <div class="metric-label">+11.58% (Lookback)</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">WPU05</div>
+    <div class="metric-value">247.41</div>
+    <div class="metric-label">+14.42% (Lookback)</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">WPU051</div>
+    <div class="metric-value">290.19</div>
+    <div class="metric-label">-0.18% (Lookback)</div>
+  </div>
+</div>
+<details>
+<summary>Show raw macroeconomic tables</summary>
+<div class="u-m-top-1">
+### Macro / Structural Observations
+| Series ID | Source | Latest Value | Date | % Change (Lookback) |
+| :--- | :--- | :--- | :--- | :--- |
+| DCOILWTICO | fred | 99.89 | 2026-04-27 | -1.35% |
+| GASREGW | fred | 4.45 | 2026-05-04 | +11.58% |
+| WPU05 | bls | 247.41 | 2026-03-01 | +14.42% |
+| WPU051 | bls | 290.19 | 2026-03-01 | -0.18% |
+
+### Trade Flows
+| Reporter | Partner | Flow | Commodity | Value (USD) | Year |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| China | World | M | 2709 | 337.64B | 2023 |
+| United States | World | M | 2709 | 172.43B | 2023 |
+| United States | World | X | 2709 | 117.16B | 2023 |
+| China | World | M | 2711 | 84.56B | 2023 |
+| Japan | World | M | 2709 | 80.88B | 2023 |
+| United States | World | X | 2711 | 67.59B | 2023 |
+| Japan | World | M | 2711 | 52.69B | 2023 |
+| United States | World | M | 2711 | 16.04B | 2023 |
+| China | World | X | 2711 | 3.65B | 2023 |
+| China | World | X | 2709 | 843.80M | 2023 |
+
+### Industry / Regional Stats
+| Source | Dataset | Geo | Industry | Metric | Value | Year |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| bea | GDPbyIndustry | United States | Gross domestic product | Value Added | 27,811.50 | 2023 |
+| bea | GDPbyIndustry | United States | Private industries | Value Added | 24,712.80 | 2023 |
+| bea | GDPbyIndustry | United States | Private services-producing industries<sup>2</sup> | Value Added | 19,989.50 | 2023 |
+| bea | GDPbyIndustry | United States | Finance, insurance, real estate, rental, and leasing | Value Added | 5,883.40 | 2023 |
+| bea | GDPbyIndustry | United States | Private goods-producing industries<sup>1</sup> | Value Added | 4,723.30 | 2023 |
+| bea | GDPbyIndustry | United States | Real estate and rental and leasing | Value Added | 3,807.70 | 2023 |
+| bea | GDPbyIndustry | United States | Professional and business services | Value Added | 3,609.80 | 2023 |
+| bea | GDPbyIndustry | United States | Real estate | Value Added | 3,452.20 | 2023 |
+| bea | GDPbyIndustry | United States | Government | Value Added | 3,098.70 | 2023 |
+| bea | GDPbyIndustry | United States | Manufacturing | Value Added | 2,816.50 | 2023 |
+</div>
+</details>
+
+## 4. Market Confirmation
+<div class="market-summary-grid">
+  <div class="market-status-card"><div>Status</div><div class="metric-value">Mixed</div></div>
+  <div class="market-status-card"><div>Positive Movers</div><div class="metric-value">4</div></div>
+  <div class="market-status-card"><div>Negative Movers</div><div class="metric-value">3</div></div>
+  <div class="market-status-card"><div>N/A</div><div class="metric-value">0</div></div>
+</div>
+<details open>
+<summary>Market pricing table</summary>
+<div class="u-m-top-1">
+| Symbol | Provider | Latest Close | Date | 30D Change | Class |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **XLE** | alpha_vantage | 59.45 | 2026-05-05 | +0.34% | equity |
+| **XOP** | alpha_vantage | 180.59 | 2026-05-05 | +1.61% | equity |
+| **USO** | alpha_vantage | 133.59 | 2026-05-08 | +7.23% | equity |
+| **IYT** | alpha_vantage | 80.78 | 2026-05-08 | +3.86% | equity |
+| **JETS** | alpha_vantage | 26.06 | 2026-05-05 | +4.53% | equity |
+| **USDCAD** | frankfurter | 1.37 | 2026-05-08 | -1.46% | fx |
+| **USDNOK** | frankfurter | 9.20 | 2026-05-08 | -3.43% | fx |
+| **USDBRL** | frankfurter | 4.91 | 2026-05-08 | -3.30% | fx |
+</div>
+</details>
+
+**Interpretation**:
+<blockquote class="highlight-box">Market confirmation is mixed; structural signals have not yet consolidated into a singular directional trend.</blockquote>
+
+## 5. Asset / Sector Exposure
+<div class="exposure-chip-grid">
+  <span class="exposure-chip">Refiners</span>
+  <span class="exposure-chip">Airlines</span>
+  <span class="exposure-chip">Heavy manufacturing</span>
+  <span class="exposure-chip">Energy-dependent EMs</span>
+  <span class="exposure-chip">energy equities</span>
+  <span class="exposure-chip">commodities</span>
+  <span class="exposure-chip">inflation-linked assets</span>
+  <span class="exposure-chip">oil-sensitive FX</span>
+</div>
+<p style="font-size: 0.8rem; color: var(--text-secondary);">Note: This list identifies potential correlation points and sensitivity targets. It does not constitute a recommendation to trade.</p>
+
+## 6. Watch Indicators
+<div class="watch-indicator-grid">
+  <div class="watch-indicator-card">
+    <div class="wi-header">WTI Crude Oil Price</div>
+    <div class="wi-source">FRED | Latest: <strong>99.89</strong></div>
+    <div style="font-size:0.9rem; margin:0.5rem 0;"><strong>Why it matters:</strong> Primary global benchmark for oil price sensitivity.</div>
+    <div style="font-size:0.85rem; border-left:2px solid var(--success); padding-left:0.5rem;">筮・Rising costs for energy consumers, windfall for producers.</div>
+    <div style="font-size:0.85rem; border-left:2px solid var(--danger); padding-left:0.5rem;">筮・Easing headline inflation pressure, risk to exporter fiscal balances.</div>
+    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;"><em>Limitation: Spot price doesn't reflect long-term contract structures.</em></div>
+  </div>
+  <div class="watch-indicator-card">
+    <div class="wi-header">Energy Sector ETF (XLE)</div>
+    <div class="wi-source">Alpha Vantage | Latest: <strong>59.45</strong></div>
+    <div style="font-size:0.9rem; margin:0.5rem 0;"><strong>Why it matters:</strong> Direct equity market reflection of energy sector profitability and sentiment.</div>
+    <div style="font-size:0.85rem; border-left:2px solid var(--success); padding-left:0.5rem;">筮・Market is pricing in sustained demand or margin expansion for energy firms.</div>
+    <div style="font-size:0.85rem; border-left:2px solid var(--danger); padding-left:0.5rem;">筮・Concerns over demand destruction or peak cyclical earnings.</div>
+    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.25rem;"><em>Limitation: XLE is dominated by a few large caps (XOM/CVX).</em></div>
+  </div>
+</div>
+
+## 7. Balanced Interpretations
+<div class="balanced-view-grid">
+  <div class="balanced-view-card">
+    <h3 style="color: var(--success);">Stability / Resilience View</h3>
+    <p>Prices may remain range-bound if inventories compensate for geopolitical friction.</p>
+  </div>
+  <div class="balanced-view-card">
+    <h3 style="color: var(--danger);">Volatility / Stress View</h3>
+    <p>Low spare capacity makes prices highly sensitive to even minor supply disruptions.</p>
+  </div>
+</div>
+
+**Market Confirmation View**: Check if energy equities (XLE) are leading or lagging the physical price move.
+
+**Invalidating Conditions (Watch for these to reverse the thesis)**:
+- Discovery of major new reserves
+- Sudden demand destruction
+
+<details style="margin-top: 2rem;">
+<summary>Data Notes & Coverage Limitations</summary>
+<div class="u-m-top-1">
+### Methodology & Legal Disclaimers
+<ul>
+<li>This report uses public structural data and delayed or reference market data.</li>
+<li>No LLM forecast, scenario generation, or deterministic prediction is included.</li>
+<li><strong>This is not investment advice and does not provide buy/sell recommendations.</strong></li>
+<li>Market data may be delayed and subject to provider licensing limitations.</li>
+</ul>
+### Coverage Limitations
+<ul>
+<li>Macro series NY.GDP.MKTP.CD not found in DB.</li>
+<li>Macro series WCESTUS1 not found in DB.</li>
+<li>Macro series WPULEUS3 not found in DB.</li>
+<li>Macro series WCRFPUS2 not found in DB.</li>
+<li>Macro series OPEC.CRUDE_PRODUCTION not found in DB.</li>
+<li>Macro series WORLD.CRUDE_PRODUCTION not found in DB.</li>
+</ul>
+</div>
+</details>
+
+<div class="data-freshness-meta">Data Freshness Index: 2026-05-08</div>

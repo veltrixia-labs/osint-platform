@@ -74,7 +74,7 @@ export function renderNavigation(
 ): void {
     const tier = user.tier || 'free';
     const isDevOverride = user.id === 'dev-override';
-    const isAnonymous = !isDevOverride && (!user.email || user.id === 'free-access');
+    const isAnonymous = user.id === 'free-access' || (!isDevOverride && !user.email);
     
     // Determine tier display label
     let displayTierLabel = TIER_LABELS[tier] || 'Free Access';
@@ -138,6 +138,10 @@ export function renderNavigation(
     };
 
     // Role-Based Access footer
+    const authFooterHtml = isAnonymous
+        ? `<button type="button" class="nav-upgrade-btn nav-upgrade-btn--ghost" id="sidebar-login-btn">Sign In</button>`
+        : `<button type="button" class="nav-upgrade-btn nav-upgrade-btn--ghost" id="sidebar-logout-btn">Sign Out</button>`;
+
     const footerCtaHtml = !isPaidTier
         ? `
                 <button class="nav-upgrade-btn nav-upgrade-btn--premium" id="upgrade-button">
@@ -183,6 +187,7 @@ export function renderNavigation(
                 <div class="nav-role-email" title="${displayEmail}">${displayEmail}</div>
             </div>
             ${devConsoleHtml}
+            ${authFooterHtml}
             ${footerCtaHtml}
             <div class="nav-legal-row">
                 <a href="#legal">Disclosure</a>

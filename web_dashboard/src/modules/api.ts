@@ -362,11 +362,9 @@ export async function fetchFreeAlerts(
         const detail = await resp.text().catch(() => '');
         console.error('[API] fetchFreeAlerts HTTP', resp.status, detail?.slice(0, 200));
         throw new Error(
-            resp.status === 401
-                ? 'Sign in required to load Context Briefs.'
-                : resp.status === 429
-                  ? 'Rate limited. Try again in a minute.'
-                  : `Could not load alerts (HTTP ${resp.status}).`
+            resp.status === 429
+                ? 'Rate limited. Try again in a minute.'
+                : `Could not load alerts (HTTP ${resp.status}).`
         );
     }
     const data = await resp.json();
@@ -404,8 +402,13 @@ export async function fetchExpertIntelligence(alertId?: string): Promise<ExpertI
     return resp.ok ? await resp.json() : null;
 }
 
-export async function fetchCheckoutSession(tier: string, _reportId?: string) {
-    const resp = await apiClient.post('/stripe/create-checkout', { tier });
+export async function fetchCheckoutSession(
+    tier: string,
+    opts?: { email?: string; reportId?: string },
+) {
+    const body: { tier: string; email?: string } = { tier };
+    if (opts?.email) body.email = opts.email.trim().toLowerCase();
+    const resp = await apiClient.post('/stripe/create-checkout', body);
     if (!resp.ok) {
         const err = await resp.json().catch(() => ({})) as { detail?: string };
         throw new Error(err.detail || 'Checkout failed');
@@ -417,6 +420,26 @@ export async function confirmCheckoutSession(sessionId: string) {
     const resp = await apiClient.post('/payments/confirm-session', { session_id: sessionId });
     if (!resp.ok) throw new Error('confirm_failed');
     return await resp.json();
+}
+
+export async function completeStripeSignup(sessionId: string, password: string) {
+    const resp = await apiClient.post('/stripe/complete-signup', {
+        session_id: sessionId,
+        password,
+    });
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({})) as { detail?: string };
+        throw new Error(err.detail || 'signup_failed');
+    }
+    const body = await resp.json() as {
+        access_token?: string;
+        email?: string;
+        tier?: string;
+    };
+    if (body.access_token) {
+        localStorage.setItem('access_token', body.access_token);
+    }
+    return body;
 }
 
 export async function cancelSubscription() {
