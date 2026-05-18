@@ -21,6 +21,7 @@ PRO_DOMAIN_CONFIG = {
         "structural_data": {
             "fred_series": ["DCOILWTICO", "GASREGW"],
             "bls_series": ["WPU05", "WPU051"],
+            "eia_series": ["WCESTUS1", "WPULEUS3", "WCRFPUS2"],
             "worldbank_indicators": ["NY.GDP.MKTP.CD"],
             "comtrade_commodity_codes": ["2709", "2711", "2805"], # Crude, Gas, Metals
             "bea_metrics": ["GDP-Energy"],
@@ -69,6 +70,9 @@ PRO_DOMAIN_CONFIG = {
         },
         "relevance_map": {
             "DCOILWTICO": "Global crude oil repricing proxy",
+            "WCESTUS1": "U.S. crude oil inventories ex-SPR — weekly supply/demand balance",
+            "WPULEUS3": "U.S. refinery utilization — operable capacity usage",
+            "WCRFPUS2": "U.S. field crude production — domestic supply growth",
             "GASREGW": "Consumer fuel cost pass-through",
             "WPU05": "Upstream producer price pressure for fuels",
             "WPU051": "Refined petroleum product cost index",

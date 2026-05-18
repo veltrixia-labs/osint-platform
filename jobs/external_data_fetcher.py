@@ -19,8 +19,10 @@ from data_sources import (
     BEAClient,
     CensusClient,
     EStatClient,
+    EIAClient,
 )
 from data_sources.estat_series_catalog import get_all_estat_series
+from data_sources.eia_series_catalog import get_all_eia_series
 from data_sources.external_data_repository import ExternalDataRepository
 from data_sources.fred_series_catalog import get_all_fred_series
 from data_sources.bls_series_catalog import get_all_bls_series
@@ -578,6 +580,94 @@ class ExternalDataFetcher:
             await self.db.commit()
 
         return {"source": "estat", "rows_fetched": rows_fetched, "rows_saved": rows_saved}
+
+    async def sync_eia_energy_stats(
+        self, series_ids: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """
+        Fetch and save U.S. weekly petroleum statistics from EIA API v2.
+        """
+        logger.info("Starting EIA energy stats sync (targeted=%s)...", series_ids is not None)
+        try:
+            client = EIAClient()
+        except ValueError as exc:
+            logger.error("EIA sync skipped: %s", exc)
+            return {"source": "eia", "rows_fetched": 0, "rows_saved": 0, "error": str(exc)}
+
+        all_series = get_all_eia_series()
+        if series_ids:
+            series_list = [s for s in all_series if s["series_id"] in series_ids]
+        else:
+            series_list = all_series
+
+        log = await self.repo.create_fetch_log(source="eia", job_name="sync_eia_energy_stats")
+        rows_fetched = 0
+        rows_saved = 0
+
+        try:
+            for index, s_info in enumerate(series_list):
+                s_id = s_info["series_id"]
+                logger.info("Fetching EIA series: %s (%s)", s_id, s_info.get("api_route"))
+
+                observations = await asyncio.to_thread(
+                    client.fetch_catalog_observations,
+                    api_route=s_info.get("api_route"),
+                    legacy_route=s_info.get("legacy_route"),
+                    fetch_via=s_info.get("fetch_via", "route"),
+                    facets=s_info.get("facets"),
+                    v1_series_id=s_info.get("v1_series_id"),
+                    frequency=s_info.get("frequency_hint", "weekly"),
+                    max_observations=52,
+                )
+                rows_fetched += len(observations)
+
+                series_record = await self.repo.upsert_series(
+                    source="eia",
+                    series_id=s_id,
+                    name=s_info["name"],
+                    unit=s_info.get("unit"),
+                    frequency=s_info.get("frequency_hint"),
+                    category=s_info.get("category"),
+                    pro_use=s_info.get("pro_use"),
+                    geography=s_info.get("geography"),
+                    metadata_json={
+                        "api_route": s_info.get("api_route"),
+                        "legacy_route": s_info.get("legacy_route"),
+                        "fetch_via": s_info.get("fetch_via"),
+                        "v1_series_id": s_info.get("v1_series_id"),
+                        "facets": s_info.get("facets"),
+                    },
+                )
+                await self.db.flush()
+
+                for obs in observations:
+                    await self.repo.upsert_observation(
+                        series=series_record,
+                        source="eia",
+                        series_id=s_id,
+                        date_val=obs["date"],
+                        value=obs["value"],
+                        period_label=obs.get("period_label"),
+                        raw_json=obs.get("raw"),
+                    )
+                    rows_saved += 1
+
+                await self.db.flush()
+                if index < len(series_list) - 1:
+                    await asyncio.sleep(2)
+
+            await self.repo.finish_fetch_log(
+                log, status="success", rows_fetched=rows_fetched, rows_saved=rows_saved
+            )
+            await self.db.commit()
+            logger.info("EIA sync completed. Saved %s observations.", rows_saved)
+
+        except Exception as exc:
+            logger.error("EIA sync failed: %s", exc)
+            await self.repo.finish_fetch_log(log, status="failed", error_message=str(exc))
+            await self.db.commit()
+
+        return {"source": "eia", "rows_fetched": rows_fetched, "rows_saved": rows_saved}
 
     async def sync_industry_stats(self) -> Dict[str, Any]:
         """
