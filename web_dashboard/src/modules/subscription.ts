@@ -12,6 +12,7 @@
 import type { UserMe } from './api';
 import type { TopicDef } from './topics';
 import { fetchCheckoutSession, cancelSubscription } from './api';
+import { promptCheckoutEmail } from './checkout_email_modal';
 import { ENTITLEMENT_MATRIX } from './topics';
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -564,13 +565,13 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                 const isGuest = user.id === 'free-access' || !user.email;
                 let checkoutEmail: string | undefined;
                 if (isGuest) {
-                    const entered = window.prompt(
-                        'Enter your email for Stripe checkout (account will be created after payment):'
-                    );
-                    if (!entered || !entered.includes('@')) {
-                        throw new Error('Email required for checkout');
+                    const entered = await promptCheckoutEmail();
+                    if (!entered) {
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                        return;
                     }
-                    checkoutEmail = entered.trim().toLowerCase();
+                    checkoutEmail = entered;
                 }
                 const response = await fetchCheckoutSession(tier, {
                     email: checkoutEmail,
