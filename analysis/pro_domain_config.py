@@ -22,6 +22,7 @@ PRO_DOMAIN_CONFIG = {
             "fred_series": ["DCOILWTICO", "GASREGW"],
             "bls_series": ["WPU05", "WPU051"],
             "eia_series": ["WCESTUS1", "WPULEUS3", "WCRFPUS2"],
+            "opec_series": ["OPEC.CRUDE_PRODUCTION", "WORLD.CRUDE_PRODUCTION"],
             "worldbank_indicators": ["NY.GDP.MKTP.CD"],
             "comtrade_commodity_codes": ["2709", "2711", "2805"], # Crude, Gas, Metals
             "bea_metrics": ["GDP-Energy"],
@@ -73,6 +74,8 @@ PRO_DOMAIN_CONFIG = {
             "WCESTUS1": "U.S. crude oil inventories ex-SPR — weekly supply/demand balance",
             "WPULEUS3": "U.S. refinery utilization — operable capacity usage",
             "WCRFPUS2": "U.S. field crude production — domestic supply growth",
+            "OPEC.CRUDE_PRODUCTION": "OPEC crude production — cartel supply strategy",
+            "WORLD.CRUDE_PRODUCTION": "World crude production — global supply baseline",
             "GASREGW": "Consumer fuel cost pass-through",
             "WPU05": "Upstream producer price pressure for fuels",
             "WPU051": "Refined petroleum product cost index",
@@ -145,6 +148,7 @@ PRO_DOMAIN_CONFIG = {
                 "EXR.D.USD.EUR.SP00.A",
                 "ICP.M.U2.N.000000.4.ANR",
             ],
+            "bcb_series": ["BCB.11", "BCB.1", "BCB.433"],
             "comtrade_commodity_codes": [],
             "bea_metrics": ["GDP-Total"],
             "census_metrics": []
@@ -223,6 +227,9 @@ PRO_DOMAIN_CONFIG = {
             "FM.D.U2.EUR.4F.KR.MRR_FAC.LEV": "ECB main refinancing rate — euro area policy stance",
             "EXR.D.USD.EUR.SP00.A": "EUR/USD reference rate — transatlantic FX and liquidity",
             "ICP.M.U2.N.000000.4.ANR": "Euro area HICP — ECB inflation mandate anchor",
+            "BCB.11": "Brazil Selic — EM policy rate and risk appetite",
+            "BCB.1": "Brazil USD/BRL — EM FX and commodity export sensitivity",
+            "BCB.433": "Brazil IPCA — EM inflation pass-through",
             "SPY": "S&P 500 — broad risk sentiment",
             "QQQ": "Nasdaq 100 — growth/duration sensitivity",
             "IWM": "Russell 2000 — domestic cyclical proxy",
@@ -552,6 +559,7 @@ PRO_DOMAIN_CONFIG = {
             "bls_series": ["WPU101", "WPU10"], # PPI Metals, PPI Industrial materials
             "worldbank_indicators": ["IS.SHP.GCNW.XQ"], # LPI
             "comtrade_commodity_codes": ["2805", "8507", "8703"], # Metals, Batteries, Vehicles
+            "asean_series": ["FDI.AMS.TOT.INF", "IMTS.Annually"],
             "bea_metrics": ["Value-Added-Manufacturing"],
             "census_metrics": ["CBP-Manufacturing-Estab"]
         },
@@ -638,7 +646,9 @@ PRO_DOMAIN_CONFIG = {
             "USDKRW": "KRW — Asian manufacturing proxy",
             "USDSGD": "SGD — trade hub sensitivity",
             "USDCNY": "CNY — China factory output proxy",
-            "USDJPY": "JPY — Japanese industrial export sensitivity"
+            "USDJPY": "JPY — Japanese industrial export sensitivity",
+            "FDI.AMS.TOT.INF": "ASEAN total FDI — regional investment and supply-chain capex",
+            "IMTS.Annually": "ASEAN merchandise trade — intra-bloc goods flow"
         },
         "market_group_map": {
             "XLI": {"group": "Industrial Production", "order": 1},

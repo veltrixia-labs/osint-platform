@@ -21,10 +21,16 @@ from data_sources import (
     EStatClient,
     EIAClient,
     ECBClient,
+    BCBClient,
+    OPECClient,
+    ASEANClient,
 )
 from data_sources.estat_series_catalog import get_all_estat_series
 from data_sources.eia_series_catalog import get_all_eia_series
 from data_sources.ecb_series_catalog import get_all_ecb_series
+from data_sources.bcb_series_catalog import get_all_bcb_series
+from data_sources.opec_series_catalog import get_all_opec_series
+from data_sources.asean_series_catalog import get_all_asean_series
 from data_sources.external_data_repository import ExternalDataRepository
 from data_sources.fred_series_catalog import get_all_fred_series
 from data_sources.bls_series_catalog import get_all_bls_series
@@ -744,6 +750,232 @@ class ExternalDataFetcher:
             await self.db.commit()
 
         return {"source": "ecb", "rows_fetched": rows_fetched, "rows_saved": rows_saved}
+
+    async def sync_south_america_stats(
+        self, series_ids: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Fetch and save Brazil macro series from BCB SGS."""
+        logger.info("Starting BCB South America sync (targeted=%s)...", series_ids is not None)
+        client = BCBClient()
+        all_series = get_all_bcb_series()
+        series_list = (
+            [s for s in all_series if s["series_id"] in series_ids]
+            if series_ids
+            else all_series
+        )
+
+        log = await self.repo.create_fetch_log(source="bcb", job_name="sync_south_america_stats")
+        rows_fetched = 0
+        rows_saved = 0
+
+        try:
+            for index, s_info in enumerate(series_list):
+                s_id = s_info["series_id"]
+                sgs_id = s_info["sgs_id"]
+                logger.info("Fetching BCB SGS series: %s (%s)", s_id, sgs_id)
+
+                observations = await asyncio.to_thread(
+                    lambda sid=sgs_id: client.fetch_series_observations(
+                        sid, max_observations=60
+                    )
+                )
+                rows_fetched += len(observations)
+
+                series_record = await self.repo.upsert_series(
+                    source="bcb",
+                    series_id=s_id,
+                    name=s_info["name"],
+                    unit=s_info.get("unit"),
+                    frequency=s_info.get("frequency_hint"),
+                    category=s_info.get("category"),
+                    pro_use=s_info.get("pro_use"),
+                    geography=s_info.get("geography"),
+                    metadata_json={"sgs_id": sgs_id},
+                )
+                await self.db.flush()
+
+                for obs in observations:
+                    await self.repo.upsert_observation(
+                        series=series_record,
+                        source="bcb",
+                        series_id=s_id,
+                        date_val=obs["date"],
+                        value=obs["value"],
+                        period_label=obs.get("period_label"),
+                        raw_json=obs.get("raw"),
+                    )
+                    rows_saved += 1
+
+                await self.db.flush()
+                if index < len(series_list) - 1:
+                    await asyncio.sleep(1)
+
+            await self.repo.finish_fetch_log(
+                log, status="success", rows_fetched=rows_fetched, rows_saved=rows_saved
+            )
+            await self.db.commit()
+            logger.info("BCB sync completed. Saved %s observations.", rows_saved)
+        except Exception as exc:
+            logger.error("BCB sync failed: %s", exc)
+            await self.repo.finish_fetch_log(log, status="failed", error_message=str(exc))
+            await self.db.commit()
+
+        return {"source": "bcb", "rows_fetched": rows_fetched, "rows_saved": rows_saved}
+
+    async def sync_opec_energy_stats(
+        self, series_ids: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Fetch and save OPEC-related production statistics (KAPSARC open data)."""
+        logger.info("Starting OPEC energy stats sync (targeted=%s)...", series_ids is not None)
+        client = OPECClient()
+        all_series = get_all_opec_series()
+        series_list = (
+            [s for s in all_series if s["series_id"] in series_ids]
+            if series_ids
+            else all_series
+        )
+
+        log = await self.repo.create_fetch_log(source="opec", job_name="sync_opec_energy_stats")
+        rows_fetched = 0
+        rows_saved = 0
+
+        try:
+            for index, s_info in enumerate(series_list):
+                s_id = s_info["series_id"]
+                logger.info("Fetching OPEC series: %s", s_id)
+
+                observations = await asyncio.to_thread(
+                    lambda info=s_info: client.fetch_catalog_observations(
+                        kapsarc_dataset=info["kapsarc_dataset"],
+                        kapsarc_filter=info.get("kapsarc_filter"),
+                        max_observations=60,
+                    )
+                )
+                rows_fetched += len(observations)
+
+                series_record = await self.repo.upsert_series(
+                    source="opec",
+                    series_id=s_id,
+                    name=s_info["name"],
+                    unit=s_info.get("unit"),
+                    frequency=s_info.get("frequency_hint"),
+                    category=s_info.get("category"),
+                    pro_use=s_info.get("pro_use"),
+                    geography=s_info.get("geography"),
+                    metadata_json={
+                        "kapsarc_dataset": s_info.get("kapsarc_dataset"),
+                        "kapsarc_filter": s_info.get("kapsarc_filter"),
+                    },
+                )
+                await self.db.flush()
+
+                for obs in observations:
+                    await self.repo.upsert_observation(
+                        series=series_record,
+                        source="opec",
+                        series_id=s_id,
+                        date_val=obs["date"],
+                        value=obs["value"],
+                        period_label=obs.get("period_label"),
+                        raw_json=obs.get("raw"),
+                    )
+                    rows_saved += 1
+
+                await self.db.flush()
+                if index < len(series_list) - 1:
+                    await asyncio.sleep(2)
+
+            await self.repo.finish_fetch_log(
+                log, status="success", rows_fetched=rows_fetched, rows_saved=rows_saved
+            )
+            await self.db.commit()
+            logger.info("OPEC sync completed. Saved %s observations.", rows_saved)
+        except Exception as exc:
+            logger.error("OPEC sync failed: %s", exc)
+            await self.repo.finish_fetch_log(log, status="failed", error_message=str(exc))
+            await self.db.commit()
+
+        return {"source": "opec", "rows_fetched": rows_fetched, "rows_saved": rows_saved}
+
+    async def sync_asean_supply_chain_stats(
+        self, series_ids: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Fetch and save ASEAN trade and investment indicators."""
+        logger.info("Starting ASEAN supply chain sync (targeted=%s)...", series_ids is not None)
+        client = ASEANClient()
+        all_series = get_all_asean_series()
+        series_list = (
+            [s for s in all_series if s["series_id"] in series_ids]
+            if series_ids
+            else all_series
+        )
+
+        log = await self.repo.create_fetch_log(
+            source="asean", job_name="sync_asean_supply_chain_stats"
+        )
+        rows_fetched = 0
+        rows_saved = 0
+
+        try:
+            for index, s_info in enumerate(series_list):
+                s_id = s_info["series_id"]
+                code = s_info["indicator_code"]
+                logger.info("Fetching ASEAN indicator: %s", code)
+
+                observations = await asyncio.to_thread(
+                    lambda c=code, info=s_info: client.fetch_indicator_observations(
+                        c,
+                        aggregate_host_code=info.get("aggregate_host_code", "ASEAN"),
+                        max_observations=60,
+                    )
+                )
+                rows_fetched += len(observations)
+                if not observations and s_info.get("optional"):
+                    logger.warning(
+                        "ASEAN optional series %s returned no data (API may be unavailable)",
+                        code,
+                    )
+
+                series_record = await self.repo.upsert_series(
+                    source="asean",
+                    series_id=s_id,
+                    name=s_info["name"],
+                    unit=s_info.get("unit"),
+                    frequency=s_info.get("frequency_hint"),
+                    category=s_info.get("category"),
+                    pro_use=s_info.get("pro_use"),
+                    geography=s_info.get("geography"),
+                    metadata_json={"indicator_code": code},
+                )
+                await self.db.flush()
+
+                for obs in observations:
+                    await self.repo.upsert_observation(
+                        series=series_record,
+                        source="asean",
+                        series_id=s_id,
+                        date_val=obs["date"],
+                        value=obs["value"],
+                        period_label=obs.get("period_label"),
+                        raw_json=obs.get("raw"),
+                    )
+                    rows_saved += 1
+
+                await self.db.flush()
+                if index < len(series_list) - 1:
+                    await asyncio.sleep(2)
+
+            await self.repo.finish_fetch_log(
+                log, status="success", rows_fetched=rows_fetched, rows_saved=rows_saved
+            )
+            await self.db.commit()
+            logger.info("ASEAN sync completed. Saved %s observations.", rows_saved)
+        except Exception as exc:
+            logger.error("ASEAN sync failed: %s", exc)
+            await self.repo.finish_fetch_log(log, status="failed", error_message=str(exc))
+            await self.db.commit()
+
+        return {"source": "asean", "rows_fetched": rows_fetched, "rows_saved": rows_saved}
 
     async def sync_industry_stats(self) -> Dict[str, Any]:
         """

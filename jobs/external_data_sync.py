@@ -1,5 +1,5 @@
 """
-Daily external macro-data sync pipeline (Phase 0–2, incl. ECB).
+Daily external macro-data sync pipeline (Phase 0–2.5).
 
 Runs ExternalDataFetcher steps sequentially with configurable inter-step delay
 so API rate limits are respected and the OSINT pipeline stays unblocked.
@@ -29,6 +29,9 @@ EXTERNAL_SYNC_STEPS: List[tuple[str, str, str]] = [
     ("estat", "Japan Stats (e-Stat)", "sync_estat_japan_stats"),
     ("eia", "Energy Stats (EIA)", "sync_eia_energy_stats"),
     ("ecb", "Europe Stats (ECB)", "sync_ecb_market_stats"),
+    ("bcb", "South America (BCB)", "sync_south_america_stats"),
+    ("opec", "Energy Strategy (OPEC)", "sync_opec_energy_stats"),
+    ("asean", "Southeast Asia (ASEAN)", "sync_asean_supply_chain_stats"),
 ]
 
 

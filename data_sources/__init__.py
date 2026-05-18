@@ -9,6 +9,9 @@ from .comtrade_client import ComtradeClient
 from .estat_client import EStatClient
 from .eia_client import EIAClient
 from .ecb_client import ECBClient
+from .bcb_client import BCBClient
+from .opec_client import OPECClient
+from .asean_client import ASEANClient
 
 __all__ = [
     "BaseAPIClient",
@@ -23,4 +26,7 @@ __all__ = [
     "EStatClient",
     "EIAClient",
     "ECBClient",
+    "BCBClient",
+    "OPECClient",
+    "ASEANClient",
 ]

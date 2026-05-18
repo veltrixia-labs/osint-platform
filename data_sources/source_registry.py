@@ -60,6 +60,24 @@ EXTERNAL_DATA_SOURCES = {
         "api_key_env": None,
         "storage_type": "generic_timeseries",
     },
+    "bcb": {
+        "name": "BCB",
+        "category": "south_america_macro",
+        "api_key_env": None,
+        "storage_type": "generic_timeseries",
+    },
+    "opec": {
+        "name": "OPEC",
+        "category": "energy_strategy",
+        "api_key_env": None,
+        "storage_type": "generic_timeseries",
+    },
+    "asean": {
+        "name": "ASEANstats",
+        "category": "southeast_asia_trade",
+        "api_key_env": None,
+        "storage_type": "generic_timeseries",
+    },
 }
 
 def get_source_config(source_id: str) -> dict:
