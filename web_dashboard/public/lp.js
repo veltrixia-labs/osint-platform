@@ -49,13 +49,13 @@
   if (streamRoot) {
     const lines = [
       '[INGEST] Polling 2,847 sources...',
-      '[INGEST] New candidate: Strait of Hormuz — transit advisory',
       '[PROCESS] Identifying high-fidelity signals in Energy/Defense...',
-      '[PROCESS] Noise filter: 14 → 3 retained (consensus ≥ 2 sources)',
       "[CONTEXT] Linking 'Hormuz Strait' to 'Global Oil Supply Chain'...",
-      '[CONTEXT] Macro attach: Brent +1.8% · VLCC rates · CPI pass-through',
       '[INFER] Generating Scenario A (Escalation) vs Scenario B (De-escalation)...',
-      '[INFER] Brief RPT-2026-0412-7F3A ready — evidence chain attached',
+      '[INGEST] Candidate: United States Ambivalent to Russian Oil Sanctions',
+      '[PROCESS] Consensus filter: ≥2 independent sources',
+      '[CONTEXT] Macro attach: Brent · VLCC · CPI pass-through',
+      '[INFER] Brief ready — evidence chain attached',
     ];
 
     let idx = 0;
@@ -110,13 +110,16 @@
     io.observe(streamRoot);
   }
 
-  /* ── Hero signal stream: cycle highlight ── */
-  const heroLines = document.querySelectorAll('.lp-terminal-body .lp-terminal-line');
-  if (heroLines.length) {
+  function startHeroPulse() {
+    const heroLines = document.querySelectorAll('.lp-terminal-body .lp-terminal-line');
+    if (!heroLines.length) return;
     let hi = 0;
     setInterval(() => {
       heroLines.forEach((el, i) => el.classList.toggle('is-hot', i === hi));
       hi = (hi + 1) % heroLines.length;
     }, 2800);
   }
+
+  startHeroPulse();
+  document.addEventListener('lp-data-ready', startHeroPulse);
 })();

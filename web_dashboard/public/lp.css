@@ -1025,3 +1025,90 @@ body.lp {
 .lp-log-line .lvl--process { color: #58a6ff; }
 .lp-log-line .lvl--context { color: #3fb950; }
 .lp-log-line .lvl--infer { color: #a371f7; }
+
+/* Live Engine split (workflow + streaming log) */
+.lp-engine-split {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  background: var(--lp-border);
+  border: 1px solid var(--lp-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .lp-engine-split {
+    grid-template-columns: 1.05fr 0.95fr;
+    align-items: stretch;
+  }
+
+  .lp-engine-split .lp-preview-frame {
+    border-right: 1px solid var(--lp-border);
+  }
+
+  .lp-engine-split .lp-sys-terminal {
+    margin-top: 0;
+    border: none;
+    border-radius: 0;
+    min-height: 100%;
+  }
+}
+
+.lp-engine-split .lp-sys-terminal {
+  margin-top: 0;
+}
+
+.lp-panel-loading {
+  min-height: 8rem;
+}
+
+.lp-panel-skeleton {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--lp-dim);
+  animation: lpSkeleton 1.4s ease-in-out infinite;
+}
+
+@keyframes lpSkeleton {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+[data-lp-sync] {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  padding: 0.12rem 0.4rem;
+  border: 1px solid var(--lp-border);
+  border-radius: 2px;
+  color: var(--lp-dim);
+}
+
+.lp-sync-badge--live,
+[data-lp-sync].lp-sync-badge--live {
+  color: #3fb950;
+  border-color: rgba(63, 185, 80, 0.35);
+  background: rgba(63, 185, 80, 0.08);
+}
+
+.lp-map-pulse-neon {
+  fill: #58a6ff;
+  filter: drop-shadow(0 0 6px rgba(88, 166, 255, 0.85));
+}
+
+.lp-map-pulse-ring {
+  animation: lpNeonRing 2.2s ease-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes lpNeonRing {
+  0% { r: 4; opacity: 0.7; }
+  70% { r: 18; opacity: 0; }
+  100% { r: 18; opacity: 0; }
+}
+
+.lp-map-marker:nth-child(2) .lp-map-pulse-ring { animation-delay: 0.5s; }
+.lp-map-marker:nth-child(3) .lp-map-pulse-ring { animation-delay: 1s; }
+.lp-map-marker:nth-child(4) .lp-map-pulse-ring { animation-delay: 1.4s; }

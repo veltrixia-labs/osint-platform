@@ -79,14 +79,15 @@
             </div>
         </section>
 
-        <!-- The Intelligence Terminal (product UI) -->
-        <section id="terminal" class="lp-section">
+        <!-- Live Engine Showcase -->
+        <section id="terminal" class="lp-section lp-engine-section">
             <div class="lp-wrap">
-                <p class="lp-kicker">The Intelligence Terminal</p>
-                <h2 class="lp-h2">Production UI — alert stream, context briefs, global map.</h2>
+                <p class="lp-kicker">The Live Engine Showcase</p>
+                <h2 class="lp-h2">The intelligence terminal — synced with production data.</h2>
                 <p class="lp-lead">
-                    High-fidelity HTML reconstructions of the live dashboard. Same grid discipline, topic-coded edges,
-                    and evidence chips as the analyst workspace—not marketing mockups.
+                    Preview panels load from the same APIs as the dashboard
+                    (<span class="lp-mono">/api/alerts/live</span>, <span class="lp-mono">/api/free/alerts</span>).
+                    What you see here is what you will find after launch.
                 </p>
 
                 <div class="lp-terminal-showcase">
@@ -94,42 +95,11 @@
                     <div class="lp-ui-panel">
                         <div class="lp-ui-panel-head">
                             <span>Alert Stream</span>
-                            <em class="lp-mono">Live Feed</em>
+                            <em class="lp-mono"><span data-lp-sync>…</span></em>
                         </div>
                         <div class="lp-ui-body">
-                            <div class="lp-alert-stream" aria-label="Alert stream preview">
-                                <article class="lp-alert">
-                                    <div class="lp-alert-meta">
-                                        <span class="lp-alert-topic">Geopolitics</span>
-                                        <span class="lp-alert-sev lp-alert-sev--elevated">ELEVATED</span>
-                                    </div>
-                                    <h4 class="lp-alert-title">Strait of Hormuz — commercial transit advisory issued</h4>
-                                    <p class="lp-alert-ts lp-mono">14:02:11 UTC · 3 sources</p>
-                                </article>
-                                <article class="lp-alert">
-                                    <div class="lp-alert-meta">
-                                        <span class="lp-alert-topic">Energy</span>
-                                        <span class="lp-alert-sev lp-alert-sev--critical">CRITICAL</span>
-                                    </div>
-                                    <h4 class="lp-alert-title">Brent front-month +1.8% — supply-chain repricing signal</h4>
-                                    <p class="lp-alert-ts lp-mono">14:04:38 UTC · consensus</p>
-                                </article>
-                                <article class="lp-alert">
-                                    <div class="lp-alert-meta">
-                                        <span class="lp-alert-topic">Defense</span>
-                                        <span class="lp-alert-sev lp-alert-sev--elevated">ELEVATED</span>
-                                    </div>
-                                    <h4 class="lp-alert-title">Export control notice — advanced semiconductor inputs</h4>
-                                    <p class="lp-alert-ts lp-mono">14:07:02 UTC · official</p>
-                                </article>
-                                <article class="lp-alert">
-                                    <div class="lp-alert-meta">
-                                        <span class="lp-alert-topic">Macro</span>
-                                        <span class="lp-alert-sev">WATCH</span>
-                                    </div>
-                                    <h4 class="lp-alert-title">Rates desk — CPI pass-through watch activated</h4>
-                                    <p class="lp-alert-ts lp-mono">14:09:44 UTC · linked</p>
-                                </article>
+                            <div id="lp-alert-stream" class="lp-alert-stream lp-panel-loading" aria-label="Alert stream preview" aria-busy="true">
+                                <p class="lp-panel-skeleton lp-mono">Loading live signals…</p>
                             </div>
                         </div>
                     </div>
@@ -138,34 +108,11 @@
                     <div class="lp-ui-panel">
                         <div class="lp-ui-panel-head">
                             <span>Context Briefs</span>
-                            <em class="lp-mono">Structured insight</em>
+                            <em class="lp-mono"><span data-lp-sync>…</span></em>
                         </div>
                         <div class="lp-ui-body">
-                            <div class="lp-brief-grid">
-                                <article class="lp-brief-card lp-brief-card--accent">
-                                    <div class="lp-brief-head">
-                                        <span class="lp-brief-chip">Energy</span>
-                                        <span class="lp-brief-kind lp-mono">Context Brief</span>
-                                    </div>
-                                    <h4 class="lp-brief-title">Hormuz transit risk — oil supply chain exposure</h4>
-                                    <p class="lp-brief-teaser">Rule-based context links VLCC routes, Brent curve, and prior 2024-Q3 incident patterns. Open for full evidence.</p>
-                                    <div class="lp-brief-stats lp-mono">
-                                        <span class="lp-brief-stat">📰 12 news</span>
-                                        <span class="lp-brief-stat">🏢 8 entities</span>
-                                    </div>
-                                </article>
-                                <article class="lp-brief-card lp-brief-card--warn">
-                                    <div class="lp-brief-head">
-                                        <span class="lp-brief-chip" style="color:#d29922">Defense</span>
-                                        <span class="lp-brief-kind lp-mono">Context Brief</span>
-                                    </div>
-                                    <h4 class="lp-brief-title">Semiconductor export controls — fab input dependencies</h4>
-                                    <p class="lp-brief-teaser">Sector impacts, regional exposure tags, and matched infrastructure nodes—structured without black-box scoring.</p>
-                                    <div class="lp-brief-stats lp-mono">
-                                        <span class="lp-brief-stat">📰 7 news</span>
-                                        <span class="lp-brief-stat">🏢 14 entities</span>
-                                    </div>
-                                </article>
+                            <div id="lp-brief-grid" class="lp-brief-grid lp-panel-loading" aria-busy="true">
+                                <p class="lp-panel-skeleton lp-mono">Loading briefs…</p>
                             </div>
                         </div>
                     </div>
@@ -177,18 +124,18 @@
                             <em class="lp-mono">Geospatial risk plot</em>
                         </div>
                         <div class="lp-ui-body lp-map-wrap">
-                            <svg class="lp-map-svg" viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg" aria-label="Global risk map preview">
-                                <rect width="800" height="220" fill="transparent"/>
-                                <path d="M80,120 Q200,80 320,100 T560,90 T720,110" fill="none" stroke="rgba(88,166,255,0.15)" stroke-width="1"/>
-                                <path d="M60,150 Q240,130 400,140 T740,135" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-                                <circle class="lp-map-dot lp-map-dot--critical" cx="420" cy="105" r="4"/>
-                                <circle class="lp-map-dot lp-map-dot--elevated" cx="520" cy="88" r="4"/>
-                                <circle class="lp-map-dot lp-map-dot--std" cx="280" cy="115" r="4"/>
-                                <circle class="lp-map-dot lp-map-dot--std" cx="610" cy="125" r="3"/>
-                                <circle class="lp-map-dot lp-map-dot--elevated" cx="190" cy="95" r="3"/>
-                                <text class="lp-map-label" x="428" y="98">Hormuz</text>
-                                <text class="lp-map-label" x="528" y="80">Taiwan Strait</text>
-                                <text class="lp-map-label" x="248" y="108">North Atlantic</text>
+                            <svg id="lp-world-map" class="lp-map-svg" viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg" aria-label="Global risk map preview">
+                                <defs><radialGradient id="lp-map-glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(88,166,255,0.12)"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
+                                <rect width="800" height="220" fill="#05080c"/><rect width="800" height="220" fill="url(#lp-map-glow)"/>
+                                <g fill="rgba(88,166,255,0.06)" stroke="rgba(88,166,255,0.12)" stroke-width="0.6">
+                                    <path d="M120,72 L165,58 L210,65 L248,78 L280,95 L305,118 L298,142 L268,158 L228,162 L188,155 L148,138 L118,115 Z"/>
+                                    <path d="M355,55 L420,48 L495,52 L545,68 L575,92 L568,118 L530,135 L475,140 L410,132 L365,108 Z"/>
+                                    <path d="M520,95 L580,88 L640,95 L680,110 L695,130 L680,150 L630,162 L570,158 L530,140 Z"/>
+                                </g>
+                                <g stroke="rgba(255,255,255,0.04)" stroke-width="1">
+                                    <line x1="0" y1="110" x2="800" y2="110"/><line x1="400" y1="0" x2="400" y2="220"/>
+                                </g>
+                                <g id="lp-map-markers"></g><g id="lp-map-labels"></g>
                             </svg>
                             <div class="lp-map-legend lp-mono">
                                 <span><i class="i-crit"></i>Critical</span>
@@ -355,6 +302,7 @@
                     Scroll to advance pipeline stages—or watch the backend log stream simulate live processing.
                     This is workflow documentation, not decorative animation.
                 </p>
+                <div class="lp-engine-split">
                 <div class="lp-preview-frame">
                     <nav class="lp-preview-pipeline" aria-label="Processing pipeline">
                         <div class="lp-pipe-step is-active" data-step="0">
@@ -391,6 +339,7 @@
                     <div class="lp-sys-terminal-bar lp-mono">backend · processing stream</div>
                     <div id="lp-sys-stream" class="lp-sys-stream lp-mono"></div>
                 </div>
+                </div>
             </div>
         </section>
 
@@ -415,6 +364,7 @@
         </p>
     </footer>
 
+    <script src="lp-live.js" defer></script>
     <script src="lp.js" defer></script>
 </body>
 
