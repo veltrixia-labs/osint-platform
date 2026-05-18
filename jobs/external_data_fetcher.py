@@ -20,9 +20,11 @@ from data_sources import (
     CensusClient,
     EStatClient,
     EIAClient,
+    ECBClient,
 )
 from data_sources.estat_series_catalog import get_all_estat_series
 from data_sources.eia_series_catalog import get_all_eia_series
+from data_sources.ecb_series_catalog import get_all_ecb_series
 from data_sources.external_data_repository import ExternalDataRepository
 from data_sources.fred_series_catalog import get_all_fred_series
 from data_sources.bls_series_catalog import get_all_bls_series
@@ -668,6 +670,80 @@ class ExternalDataFetcher:
             await self.db.commit()
 
         return {"source": "eia", "rows_fetched": rows_fetched, "rows_saved": rows_saved}
+
+    async def sync_ecb_market_stats(
+        self, series_ids: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """
+        Fetch and save euro area market statistics from ECB SDMX-JSON API.
+        """
+        logger.info("Starting ECB market stats sync (targeted=%s)...", series_ids is not None)
+        client = ECBClient()
+
+        all_series = get_all_ecb_series()
+        if series_ids:
+            series_list = [s for s in all_series if s["series_id"] in series_ids]
+        else:
+            series_list = all_series
+
+        log = await self.repo.create_fetch_log(source="ecb", job_name="sync_ecb_market_stats")
+        rows_fetched = 0
+        rows_saved = 0
+
+        try:
+            for index, s_info in enumerate(series_list):
+                series_key = s_info["series_key"]
+                s_id = s_info["series_id"]
+                logger.info("Fetching ECB series: %s", series_key)
+
+                observations = await asyncio.to_thread(
+                    client.fetch_series_observations,
+                    series_key,
+                    60,
+                )
+                rows_fetched += len(observations)
+
+                series_record = await self.repo.upsert_series(
+                    source="ecb",
+                    series_id=s_id,
+                    name=s_info["name"],
+                    unit=s_info.get("unit"),
+                    frequency=s_info.get("frequency_hint"),
+                    category=s_info.get("category"),
+                    pro_use=s_info.get("pro_use"),
+                    geography=s_info.get("geography"),
+                    metadata_json={"series_key": series_key},
+                )
+                await self.db.flush()
+
+                for obs in observations:
+                    await self.repo.upsert_observation(
+                        series=series_record,
+                        source="ecb",
+                        series_id=s_id,
+                        date_val=obs["date"],
+                        value=obs["value"],
+                        period_label=obs.get("period_label"),
+                        raw_json=obs.get("raw"),
+                    )
+                    rows_saved += 1
+
+                await self.db.flush()
+                if index < len(series_list) - 1:
+                    await asyncio.sleep(2)
+
+            await self.repo.finish_fetch_log(
+                log, status="success", rows_fetched=rows_fetched, rows_saved=rows_saved
+            )
+            await self.db.commit()
+            logger.info("ECB sync completed. Saved %s observations.", rows_saved)
+
+        except Exception as exc:
+            logger.error("ECB sync failed: %s", exc)
+            await self.repo.finish_fetch_log(log, status="failed", error_message=str(exc))
+            await self.db.commit()
+
+        return {"source": "ecb", "rows_fetched": rows_fetched, "rows_saved": rows_saved}
 
     async def sync_industry_stats(self) -> Dict[str, Any]:
         """

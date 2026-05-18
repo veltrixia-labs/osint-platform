@@ -54,6 +54,12 @@ EXTERNAL_DATA_SOURCES = {
         "api_key_env": "EIA_API_KEY",
         "storage_type": "generic_timeseries",
     },
+    "ecb": {
+        "name": "ECB",
+        "category": "europe_macro",
+        "api_key_env": None,
+        "storage_type": "generic_timeseries",
+    },
 }
 
 def get_source_config(source_id: str) -> dict:

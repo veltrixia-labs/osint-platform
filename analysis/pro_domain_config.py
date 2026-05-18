@@ -140,6 +140,11 @@ PRO_DOMAIN_CONFIG = {
             "bls_series": ["WPUFD4"], # PPI Final Demand
             "worldbank_indicators": ["NY.GDP.MKTP.KD.ZG", "FP.CPI.TOTL.ZG"], # Growth, Inflation
             "estat_series": ["0003423164"],  # Japan CPI
+            "ecb_series": [
+                "FM.D.U2.EUR.4F.KR.MRR_FAC.LEV",
+                "EXR.D.USD.EUR.SP00.A",
+                "ICP.M.U2.N.000000.4.ANR",
+            ],
             "comtrade_commodity_codes": [],
             "bea_metrics": ["GDP-Total"],
             "census_metrics": []
@@ -215,6 +220,9 @@ PRO_DOMAIN_CONFIG = {
             "NY.GDP.MKTP.KD.ZG": "Real GDP growth rate",
             "FP.CPI.TOTL.ZG": "Global inflation rate comparison",
             "0003423164": "Japan CPI — domestic inflation and BoJ policy context",
+            "FM.D.U2.EUR.4F.KR.MRR_FAC.LEV": "ECB main refinancing rate — euro area policy stance",
+            "EXR.D.USD.EUR.SP00.A": "EUR/USD reference rate — transatlantic FX and liquidity",
+            "ICP.M.U2.N.000000.4.ANR": "Euro area HICP — ECB inflation mandate anchor",
             "SPY": "S&P 500 — broad risk sentiment",
             "QQQ": "Nasdaq 100 — growth/duration sensitivity",
             "IWM": "Russell 2000 — domestic cyclical proxy",

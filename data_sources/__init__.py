@@ -8,6 +8,7 @@ from .worldbank_client import WorldBankClient
 from .comtrade_client import ComtradeClient
 from .estat_client import EStatClient
 from .eia_client import EIAClient
+from .ecb_client import ECBClient
 
 __all__ = [
     "BaseAPIClient",
@@ -21,4 +22,5 @@ __all__ = [
     "ComtradeClient",
     "EStatClient",
     "EIAClient",
+    "ECBClient",
 ]
