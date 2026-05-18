@@ -25,6 +25,7 @@ from jobs.cleanup_job import (
 from jobs.entity_lifecycle import run_entity_lifecycle  # [v10.21]
 from processor.impact_discovery import ImpactDiscoveryEngine # [v12.0]
 from jobs.pro_automation_manager import run_scheduled_pro_automation
+from jobs.external_data_sync import run_daily_external_data_sync_pipeline
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,6 +35,8 @@ logger = logging.getLogger(__name__)
 _running_tasks = set()
 # Serialize heavy memory jobs (full pipeline vs discovery scout) to avoid OOM spikes.
 _heavy_work_lock = asyncio.Lock()
+# Macro API sync runs separately so the 5-minute OSINT pipeline is not blocked.
+_external_data_sync_lock = asyncio.Lock()
 
 async def safe_run(name, coro_func, *args, **kwargs):
     """
@@ -179,6 +182,20 @@ async def pro_automation_wrapper():
     """Wrapper for Pro Structural Brief automation."""
     await run_scheduled_pro_automation()
 
+
+async def run_external_data_sync_wrapper():
+    """
+    Phase 0: Daily macro sync (FRED, BLS, World Bank, Comtrade, BEA, Census).
+    Sequential steps with inter-step delay; isolated from the OSINT ingest pipeline.
+    Schedule host should run in UTC (see EXTERNAL_DATA_SYNC_UTC_TIME).
+    """
+    if os.getenv("SCHEDULER_PAUSED") == "true":
+        logger.warning("SCHEDULER_PAUSED — skipping external data sync.")
+        return
+    async with _external_data_sync_lock:
+        await run_daily_external_data_sync_pipeline()
+
+
 def register_jobs():
     logger.info("Registering job schedules (Async Native Mapping)...")
     
@@ -204,6 +221,19 @@ def register_jobs():
 
     # Operational Monitoring
     schedule.every().day.at("00:00").do(schedule_async, "ops_monitoring", run_ops_monitoring)
+
+    # Phase 0: External macro data (FRED/BLS/WB/Comtrade/BEA/Census) — once daily, sequential + jitter inside job
+    external_sync_time = os.getenv("EXTERNAL_DATA_SYNC_UTC_TIME", "00:05")
+    schedule.every().day.at(external_sync_time).do(
+        schedule_async,
+        "external_data_sync",
+        run_external_data_sync_wrapper,
+    )
+    logger.info(
+        "Registered external_data_sync daily at %s (host local time; use TZ=UTC). "
+        "Inter-step delay: EXTERNAL_SYNC_INTER_STEP_SECONDS (default 1200).",
+        external_sync_time,
+    )
 
     # [v10.21] Entity Lifecycle Management (Strategic Score + Pruning @ 03:00 daily)
     schedule.every().day.at("03:00").do(schedule_async, "entity_lifecycle", run_entity_lifecycle)
