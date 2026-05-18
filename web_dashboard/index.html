@@ -34,9 +34,9 @@
 
     <main>
         <!-- Hero -->
-        <section class="lp-hero">
+        <section id="hero" class="lp-hero">
             <div class="lp-wrap lp-hero-grid">
-                <div>
+                <div class="lp-hero-copy">
                     <p class="lp-kicker">High-Fidelity Strategic Intelligence</p>
                     <h1>Information Asymmetry into Strategic Clarity.</h1>
                     <p class="lp-hero-sub">
@@ -63,17 +63,13 @@
                         </div>
                     </dl>
                 </div>
-                <aside class="lp-terminal" aria-label="Live signal feed preview">
+                <aside class="lp-terminal lp-terminal--hero" aria-label="Live signal feed preview">
                     <div class="lp-terminal-bar">
                         <span class="lp-terminal-dot lp-terminal-dot--live" aria-hidden="true"></span>
                         <span>Alert stream · live preview</span>
                     </div>
-                    <div class="lp-terminal-body lp-mono">
-                        <span class="lp-terminal-line"><span class="ts">14:02:11Z</span><span class="tag">GEO</span><span class="val">Strait transit restriction — commercial lanes</span></span>
-                        <span class="lp-terminal-line"><span class="ts">14:04:38Z</span><span class="tag">MACRO</span><span class="val">Energy futures +2.1% — 3-source consensus</span></span>
-                        <span class="lp-terminal-line"><span class="ts">14:07:02Z</span><span class="tag">DEF</span><span class="val">Export control notice — semiconductor inputs</span></span>
-                        <span class="lp-terminal-line"><span class="ts">14:09:44Z</span><span class="tag">CTX</span><span class="val">Linked: CPI · rates · prior incident 2024-Q3</span></span>
-                        <span class="lp-terminal-line"><span class="ts">14:11:19Z</span><span class="tag">SCN</span><span class="val">Scenario branch A/B — confidence indexed</span></span>
+                    <div class="lp-terminal-body lp-terminal-body--hero lp-mono" aria-live="polite">
+                        <span class="lp-terminal-line lp-terminal-line--placeholder"><span class="ts">······</span><span class="tag">···</span><span class="val">Loading signal stream…</span></span>
                     </div>
                 </aside>
             </div>

@@ -110,13 +110,18 @@
     io.observe(streamRoot);
   }
 
+  let heroPulseTimer = null;
+
   function startHeroPulse() {
-    const heroLines = document.querySelectorAll('.lp-terminal-body .lp-terminal-line');
-    if (!heroLines.length) return;
+    const initial = document.querySelectorAll('.lp-hero .lp-terminal-body .lp-terminal-line');
+    if (!initial.length) return;
+    if (heroPulseTimer) clearInterval(heroPulseTimer);
     let hi = 0;
-    setInterval(() => {
-      heroLines.forEach((el, i) => el.classList.toggle('is-hot', i === hi));
-      hi = (hi + 1) % heroLines.length;
+    heroPulseTimer = setInterval(() => {
+      const lines = document.querySelectorAll('.lp-hero .lp-terminal-body .lp-terminal-line');
+      if (!lines.length) return;
+      lines.forEach((el, i) => el.classList.toggle('is-hot', i === hi));
+      hi = (hi + 1) % lines.length;
     }, 2800);
   }
 

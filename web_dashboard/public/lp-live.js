@@ -3,8 +3,9 @@
  */
 (function () {
   const CARD_COUNT = 4;
+  const HERO_STREAM_COUNT = 9;
   const ROTATE_MS = 4200;
-  const FETCH_LIMIT = 16;
+  const FETCH_LIMIT = 24;
 
   const TOPIC_LABELS = {
     energy_resource_risk: { label: 'Energy & Resource Risk', color: '#d29922' },
@@ -232,7 +233,7 @@
   function expandPool(pool, fallback) {
     const base = pool.length ? [...pool] : [];
     let i = 0;
-    while (base.length < CARD_COUNT * 2) {
+    while (base.length < Math.max(CARD_COUNT * 2, HERO_STREAM_COUNT + 2)) {
       base.push(fallback[i % fallback.length]);
       i += 1;
     }
@@ -399,12 +400,35 @@
     return { markers: merged.slice(0, 10), activeIndex };
   }
 
+  function heroTopicTag(topic) {
+    const key = (topic || 'global').toLowerCase();
+    const short = {
+      energy_resource_risk: 'ENR',
+      global_market_intelligence: 'MKT',
+      crypto_geopolitics: 'CRY',
+      ai_semiconductor_intelligence: 'SEM',
+      defense_technology: 'DEF',
+      supply_chain_intelligence: 'SUP',
+      supply_chain_disruption: 'SCD',
+      global: 'GLB',
+    };
+    if (short[key]) return short[key];
+    const parts = key.split('_').filter(Boolean);
+    if (parts.length >= 2) return (parts[0].slice(0, 2) + parts[1].slice(0, 1)).toUpperCase();
+    return (parts[0] || 'sig').slice(0, 3).toUpperCase();
+  }
+
+  function heroAlerts(pool, offset) {
+    return windowItems(pool, offset, HERO_STREAM_COUNT);
+  }
+
   function renderHeroTerminal(container, alerts) {
-    if (!container || !alerts.length) return;
-    container.innerHTML = alerts
-      .slice(0, 5)
+    if (!container) return;
+    const rows = alerts.length ? alerts.slice(0, HERO_STREAM_COUNT) : [];
+    if (!rows.length) return;
+    container.innerHTML = rows
       .map((a) => {
-        const tag = (a.topic || 'SIG').split('_')[0].slice(0, 3).toUpperCase();
+        const tag = heroTopicTag(a.topic);
         const d = new Date(a.triggered_at || Date.now());
         const ts = Number.isNaN(d.getTime()) ? '—' : d.toISOString().slice(11, 19) + 'Z';
         return `<span class="lp-terminal-line"><span class="ts">${ts}</span><span class="tag">${tag}</span><span class="val">${escapeHtml(cleanTitle(a.title || a.target_label))}</span></span>`;
@@ -432,7 +456,10 @@
     const idx =
       highlight?.location_lat != null ? activeIndex : state.mapHighlightIndex % markers.length;
     renderMap(mapSvg, markers, idx);
-    renderHeroTerminal(document.querySelector('.lp-hero .lp-terminal-body'), alerts);
+    renderHeroTerminal(
+      document.querySelector('.lp-hero .lp-terminal-body'),
+      heroAlerts(state.alertPool, state.alertOffset)
+    );
   }
 
   async function fetchJson(path) {
@@ -474,7 +501,7 @@
 
     renderAlerts(alertRoot, windowItems(state.alertPool, 0, CARD_COUNT), false);
     renderBriefs(briefRoot, windowItems(state.briefPool, 0, CARD_COUNT), false);
-    renderHeroTerminal(heroRoot, state.alertPool);
+    renderHeroTerminal(heroRoot, heroAlerts(state.alertPool, 0));
 
     const { markers, activeIndex } = markersFromAlerts(state.livePool, state.alertPool[0]);
     renderMap(mapSvg, markers, activeIndex);

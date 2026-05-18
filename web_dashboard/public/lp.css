@@ -194,7 +194,20 @@ body.lp {
 @media (min-width: 900px) {
   .lp-hero-grid {
     grid-template-columns: 1.1fr 0.9fr;
-    align-items: start;
+    align-items: stretch;
+  }
+
+  .lp-hero-copy {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Align terminal chrome with h1 top (skip kicker block) */
+  .lp-terminal--hero {
+    margin-top: 1.72rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 }
 
@@ -304,6 +317,38 @@ body.lp {
 
 .lp-terminal-line .val {
   color: var(--lp-text);
+}
+
+.lp-terminal--hero {
+  display: flex;
+  flex-direction: column;
+  border-color: rgba(88, 166, 255, 0.14);
+}
+
+.lp-terminal-body--hero {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0.1rem;
+  padding: 0.5rem 0.85rem 0.6rem;
+  font-size: 0.675rem;
+  line-height: 1.38;
+}
+
+@media (min-width: 900px) {
+  .lp-terminal-body--hero {
+    justify-content: space-between;
+    min-height: 0;
+  }
+}
+
+.lp-terminal-body--hero .lp-terminal-line {
+  line-height: 1.38;
+  letter-spacing: -0.01em;
+}
+
+.lp-terminal-line--placeholder .val {
+  color: var(--lp-dim);
 }
 
 /* ── Methodology ── */
