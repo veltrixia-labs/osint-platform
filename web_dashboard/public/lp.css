@@ -12,6 +12,9 @@
   --lp-dim: #6e7681;
   --lp-accent: #58a6ff;
   --lp-accent-dim: rgba(88, 166, 255, 0.12);
+  --lp-neon: #00d1ff;
+  --lp-mint: #5eead4;
+  --lp-pricing-glow: rgba(0, 209, 255, 0.22);
   --lp-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", Consolas, monospace;
   --lp-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --lp-grid: 1.25rem;
@@ -399,7 +402,327 @@ body.lp {
   line-height: 1.6;
 }
 
-/* ── Tiers table ── */
+/* ── Pricing ── */
+.lp-pricing-section {
+  position: relative;
+}
+
+.lp-pricing-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(0, 209, 255, 0.06), transparent 65%);
+  pointer-events: none;
+}
+
+.lp-pricing-billing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem 0.85rem;
+  margin: 2rem 0 2.25rem;
+}
+
+.lp-pricing-billing-label {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--lp-dim);
+  transition: color 0.2s ease;
+}
+
+.lp-pricing-section[data-billing="monthly"] [data-billing-label="monthly"],
+.lp-pricing-section[data-billing="annual"] [data-billing-label="annual"] {
+  color: var(--lp-text);
+}
+
+.lp-pricing-save-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0a0e14;
+  background: linear-gradient(135deg, var(--lp-mint), var(--lp-neon));
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+.lp-pricing-switch {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lp-pricing-switch-track {
+  display: block;
+  width: 3rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--lp-border-strong);
+  position: relative;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.lp-pricing-section[data-billing="annual"] .lp-pricing-switch-track {
+  background: rgba(0, 209, 255, 0.15);
+  border-color: rgba(0, 209, 255, 0.45);
+}
+
+.lp-pricing-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: var(--lp-text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  transition: transform 0.22s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.lp-pricing-section[data-billing="annual"] .lp-pricing-switch-thumb {
+  transform: translateX(1.45rem);
+  background: linear-gradient(135deg, var(--lp-mint), var(--lp-neon));
+}
+
+.lp-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.15rem;
+  align-items: stretch;
+}
+
+@media (max-width: 960px) {
+  .lp-pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 22rem;
+    margin-inline: auto;
+  }
+}
+
+.lp-pricing-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1.35rem 1.35rem;
+  border-radius: 1.35rem;
+  border: 1px solid var(--lp-border);
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(13, 17, 23, 0.72) 45%,
+    rgba(8, 11, 16, 0.85) 100%
+  );
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+  position: relative;
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.lp-pricing-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+
+.lp-pricing-card--featured {
+  border-color: rgba(0, 209, 255, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(0, 209, 255, 0.12),
+    0 16px 48px var(--lp-pricing-glow);
+}
+
+.lp-pricing-card--featured::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(94, 234, 212, 0.35), rgba(0, 209, 255, 0.5));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.lp-pricing-ribbon {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #051016;
+  background: linear-gradient(135deg, var(--lp-mint), var(--lp-neon));
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+}
+
+.lp-pricing-card-head {
+  margin-bottom: 0.35rem;
+}
+
+.lp-pricing-plan-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.lp-pricing-tagline {
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lp-dim);
+  font-family: var(--lp-mono);
+}
+
+.lp-pricing-price-block {
+  margin: 1rem 0 0.65rem;
+  min-height: 4.5rem;
+}
+
+.lp-pricing-price {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.05rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--lp-text);
+}
+
+.lp-pricing-currency {
+  font-size: 1.35rem;
+  margin-top: 0.35rem;
+  opacity: 0.85;
+}
+
+.lp-pricing-amount {
+  font-size: clamp(2.5rem, 5vw, 3.15rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.lp-pricing-period {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: var(--lp-muted);
+}
+
+.lp-pricing-billed-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: var(--lp-neon);
+  font-weight: 500;
+}
+
+.lp-pricing-section[data-billing="annual"] .lp-pricing-billed-note {
+  display: block;
+}
+
+.lp-pricing-section[data-billing="monthly"] .lp-pricing-billed-note {
+  display: none !important;
+}
+
+.lp-pricing-blurb {
+  margin: 0 0 1rem;
+  font-size: 0.84rem;
+  color: var(--lp-muted);
+  line-height: 1.55;
+}
+
+.lp-pricing-features {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--lp-text);
+}
+
+.lp-pricing-features li {
+  position: relative;
+  padding: 0.35rem 0 0.35rem 1.35rem;
+  line-height: 1.45;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.lp-pricing-features li:last-child {
+  border-bottom: none;
+}
+
+.lp-pricing-features li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--lp-neon);
+}
+
+.lp-pricing-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.lp-pricing-cta--trial {
+  color: #051016;
+  background: linear-gradient(135deg, var(--lp-mint) 0%, var(--lp-neon) 100%);
+  border: none;
+  box-shadow: 0 4px 24px var(--lp-pricing-glow);
+}
+
+.lp-pricing-cta--trial:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(0, 209, 255, 0.35);
+}
+
+.lp-pricing-cta--muted {
+  color: var(--lp-text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--lp-border-strong);
+}
+
+.lp-pricing-cta--muted:hover {
+  border-color: var(--lp-muted);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.lp-pricing-footnote {
+  margin: 1.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--lp-dim);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.lp-pricing-footnote a {
+  color: var(--lp-neon);
+  text-decoration: none;
+}
+
+.lp-pricing-footnote a:hover {
+  text-decoration: underline;
+}
+
+/* ── Tiers table (legacy) ── */
 .lp-tier-table-wrap {
   margin-top: 2rem;
   border: 1px solid var(--lp-border);

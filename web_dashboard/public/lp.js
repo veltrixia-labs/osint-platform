@@ -20,4 +20,52 @@
 
   startHeroPulse();
   document.addEventListener('lp-data-ready', startHeroPulse);
+
+  /** Stripe Payment Link URLs — set when available; falls back to app.html#plans */
+  const STRIPE_CHECKOUT = {
+    pro: {
+      monthly: '',
+      annual: '',
+    },
+    experts: {
+      monthly: '',
+      annual: '',
+    },
+  };
+
+  function initPricingBilling() {
+    const section = document.getElementById('pricing');
+    const toggle = document.getElementById('lp-billing-toggle');
+    if (!section || !toggle) return;
+
+    const priceBlocks = section.querySelectorAll('[data-price-monthly][data-price-annual]');
+    const trialLinks = section.querySelectorAll('a[data-tier][data-href-monthly]');
+
+    function setBilling(mode) {
+      const annual = mode === 'annual';
+      section.dataset.billing = mode;
+      toggle.setAttribute('aria-checked', String(annual));
+
+      priceBlocks.forEach((block) => {
+        const amountEl = block.querySelector('.lp-pricing-amount');
+        if (!amountEl) return;
+        amountEl.textContent = annual ? block.dataset.priceAnnual : block.dataset.priceMonthly;
+      });
+
+      trialLinks.forEach((link) => {
+        const tier = link.dataset.tier;
+        const stripeUrl = tier && STRIPE_CHECKOUT[tier] ? STRIPE_CHECKOUT[tier][mode] : '';
+        const fallback = annual ? link.dataset.hrefAnnual : link.dataset.hrefMonthly;
+        link.href = stripeUrl || fallback || 'app.html#plans';
+      });
+    }
+
+    toggle.addEventListener('click', () => {
+      setBilling(section.dataset.billing === 'annual' ? 'monthly' : 'annual');
+    });
+
+    setBilling('monthly');
+  }
+
+  initPricingBilling();
 })();

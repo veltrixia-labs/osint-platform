@@ -24,7 +24,7 @@
             <nav class="lp-nav" aria-label="Primary">
                 <a href="#terminal">Terminal</a>
                 <a href="#methodology">Methodology</a>
-                <a href="#tiers">Tiers</a>
+                <a href="#pricing">Pricing</a>
                 <a href="#evidence">Evidence</a>
                 <a href="app.html#free-feed" class="lp-btn">Context Briefs</a>
                 <a href="app.html" class="lp-btn lp-btn--primary">Launch Terminal</a>
@@ -145,44 +145,101 @@
             </div>
         </section>
 
-        <!-- Tiers -->
-        <section id="tiers" class="lp-section">
+        <!-- Pricing -->
+        <section id="pricing" class="lp-section lp-pricing-section" data-billing="monthly">
             <div class="lp-wrap">
-                <p class="lp-kicker">Tiered Intelligence</p>
-                <h2 class="lp-h2">Depth of analysis scales with clearance.</h2>
+                <p class="lp-kicker">Pricing</p>
+                <h2 class="lp-h2">Start with clarity. Scale with depth.</h2>
                 <p class="lp-lead">
-                    Access is defined by analytical depth and inferential reach—not raw volume of alerts.
+                    Every plan includes evidence-backed intelligence. Upgrade when you need structural analysis or strategic foresight—not more noise.
                 </p>
-                <div class="lp-tier-table-wrap">
-                    <table class="lp-tier-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">Tier</th>
-                                <th scope="col">Capability</th>
-                                <th scope="col">Delivered value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Free<span class="lp-tier-name lp-mono">Situational Awareness</span></td>
-                                <td>Context Briefs · public signal feed</td>
-                                <td>Immediate grasp of major signals. Track geopolitical and market shifts at awareness level—without delay.</td>
-                            </tr>
-                            <tr>
-                                <td>Pro<span class="lp-tier-name lp-mono">Structural Analysis</span></td>
-                                <td>Pro Structural Brief · domain linkage</td>
-                                <td>Identify chains of fact and concrete spillover into economic and defense domains. Evidence-backed structural reports.</td>
-                            </tr>
-                            <tr>
-                                <td>Expert<span class="lp-tier-name lp-mono">Strategic Foresight</span></td>
-                                <td>Scenario engine · action framing</td>
-                                <td>Forward scenarios and specific risk-mitigation recommendations—built for decision-makers, not observers.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                <div class="lp-pricing-billing" aria-label="Billing period">
+                    <span class="lp-pricing-billing-label" data-billing-label="monthly">Monthly</span>
+                    <button type="button" class="lp-pricing-switch" id="lp-billing-toggle" role="switch" aria-checked="false" aria-label="Toggle annual billing">
+                        <span class="lp-pricing-switch-track">
+                            <span class="lp-pricing-switch-thumb"></span>
+                        </span>
+                    </button>
+                    <span class="lp-pricing-billing-label" data-billing-label="annual">Annual</span>
+                    <span class="lp-pricing-save-badge">Save ~20%</span>
                 </div>
-                <p style="margin-top:1.25rem;font-size:0.82rem;color:var(--lp-dim);">
-                    <a href="app.html#plans" style="color:var(--lp-accent);">Pricing &amp; Plans</a> — full feature matrix inside the terminal.
+
+                <div class="lp-pricing-grid">
+                    <article class="lp-pricing-card lp-pricing-card--free">
+                        <header class="lp-pricing-card-head">
+                            <h3 class="lp-pricing-plan-name">Free</h3>
+                            <p class="lp-pricing-tagline">Situational Awareness</p>
+                        </header>
+                        <div class="lp-pricing-price-block">
+                            <p class="lp-pricing-price" aria-label="Free">
+                                <span class="lp-pricing-currency">$</span><span class="lp-pricing-amount">0</span>
+                            </p>
+                            <p class="lp-pricing-period">forever</p>
+                        </div>
+                        <p class="lp-pricing-blurb">Monitor global signals and context briefs at awareness level—no card required.</p>
+                        <ul class="lp-pricing-features">
+                            <li>Real-time Alert Stream headlines</li>
+                            <li>Context Briefs (Free-tier limited)</li>
+                            <li>Base news evidence</li>
+                            <li>Community support</li>
+                        </ul>
+                        <a href="app.html" class="lp-pricing-cta lp-pricing-cta--muted">Get Started</a>
+                    </article>
+
+                    <article class="lp-pricing-card lp-pricing-card--featured">
+                        <span class="lp-pricing-ribbon">Most popular</span>
+                        <header class="lp-pricing-card-head">
+                            <h3 class="lp-pricing-plan-name">Founding Pro</h3>
+                            <p class="lp-pricing-tagline">Structural Analysis</p>
+                        </header>
+                        <div class="lp-pricing-price-block" data-price-monthly="79" data-price-annual="69">
+                            <p class="lp-pricing-price" aria-live="polite">
+                                <span class="lp-pricing-currency">$</span><span class="lp-pricing-amount">79</span>
+                            </p>
+                            <p class="lp-pricing-period">/ month</p>
+                            <p class="lp-pricing-billed-note">billed annually</p>
+                        </div>
+                        <p class="lp-pricing-blurb">Evidence-backed structural briefs and domain linkage for analysts who need causality, not headlines.</p>
+                        <ul class="lp-pricing-features">
+                            <li>Pro Insights Dashboard</li>
+                            <li>Full Structural Briefs</li>
+                            <li>Market Confirmation Breakdown</li>
+                            <li>Exposure Matrix Analysis</li>
+                            <li>High-Fidelity Signal Access</li>
+                            <li>Transmission Flow Visualization</li>
+                        </ul>
+                        <a href="app.html#plans?tier=pro&amp;billing=monthly" class="lp-pricing-cta lp-pricing-cta--trial" data-tier="pro" data-href-monthly="app.html#plans?tier=pro&amp;billing=monthly" data-href-annual="app.html#plans?tier=pro&amp;billing=annual">Start 7-day Free Trial</a>
+                    </article>
+
+                    <article class="lp-pricing-card">
+                        <header class="lp-pricing-card-head">
+                            <h3 class="lp-pricing-plan-name">Founding Expert</h3>
+                            <p class="lp-pricing-tagline">Strategic Foresight</p>
+                        </header>
+                        <div class="lp-pricing-price-block" data-price-monthly="149" data-price-annual="129">
+                            <p class="lp-pricing-price" aria-live="polite">
+                                <span class="lp-pricing-currency">$</span><span class="lp-pricing-amount">149</span>
+                            </p>
+                            <p class="lp-pricing-period">/ month</p>
+                            <p class="lp-pricing-billed-note">billed annually</p>
+                        </div>
+                        <p class="lp-pricing-blurb">Scenario engine and action framing for decision-makers who need forward risk, not rear-view reporting.</p>
+                        <ul class="lp-pricing-features">
+                            <li>Everything in Founding Pro</li>
+                            <li>Cross-domain Risk Forecasting</li>
+                            <li>Strategic Scenario Analysis</li>
+                            <li>Recommended Strategic Actions</li>
+                            <li>Expert specialty topics</li>
+                            <li>Unlimited strategic alerts</li>
+                        </ul>
+                        <a href="app.html#plans?tier=experts&amp;billing=monthly" class="lp-pricing-cta lp-pricing-cta--trial" data-tier="experts" data-href-monthly="app.html#plans?tier=experts&amp;billing=monthly" data-href-annual="app.html#plans?tier=experts&amp;billing=annual">Start 7-day Free Trial</a>
+                    </article>
+                </div>
+
+                <p class="lp-pricing-footnote">
+                    Paid plans include a 7-day free trial. Cancel anytime before renewal.
+                    <a href="app.html#plans">Full feature matrix</a> inside the terminal.
                 </p>
             </div>
         </section>
