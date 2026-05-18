@@ -11,31 +11,30 @@ from api.auth import get_password_hash
 from sqlalchemy.future import select
 
 async def create_free_user():
-    username = "free_test_user"
+    email = "free_test_user@veltrixia.local"
     password = "free_test_user"
-    
+
     async with AsyncSessionLocal() as session:
-        # Final check to avoid duplicates (though uniquely constrained)
-        stmt = select(AnalystProfile).where(AnalystProfile.telegram_chat_id == username)
+        stmt = select(AnalystProfile).where(AnalystProfile.email == email)
         existing = (await session.execute(stmt)).scalar_one_or_none()
-        
+
         if existing:
-            print(f"USER_EXISTS: {username} already in database.")
+            print(f"USER_EXISTS: {email} already in database.")
             return
 
         hashed_pw = get_password_hash(password)
         new_user = AnalystProfile(
-            telegram_chat_id=username,
+            email=email,
             hashed_password=hashed_pw,
             user_role="analyst",
             is_active=True,
-            subscription_tier="free"
+            subscription_tier="free",
         )
         
         session.add(new_user)
         try:
             await session.commit()
-            print(f"SUCCESS: Created {username} with Free tier.")
+            print(f"SUCCESS: Created {email} with Free tier.")
         except Exception as e:
             await session.rollback()
             print(f"ERROR: Failed to create user: {e}")

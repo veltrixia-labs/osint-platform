@@ -562,14 +562,11 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                 const urlParams = new URLSearchParams(window.location.search);
                 const reportId = urlParams.get('report_id');
                 const response = await fetchCheckoutSession(tier, reportId || undefined);
-                if (response.success) {
-                    btn.textContent = 'Success! Updating...';
-                    setTimeout(() => window.location.reload(), 800);
-                    return;
-                }
                 if (response.url) {
                     window.location.href = response.url;
+                    return;
                 }
+                throw new Error('No checkout URL returned');
             } catch (err: any) {
                 btn.textContent = '⚠ Failed — try again';
                 btn.classList.add('plan-cta-btn--error');

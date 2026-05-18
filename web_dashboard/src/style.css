@@ -426,6 +426,56 @@ select,
   text-overflow: ellipsis;
 }
 
+.nav-dev-console {
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px dashed rgba(210, 153, 34, 0.45);
+  background: rgba(210, 153, 34, 0.06);
+}
+
+.nav-dev-console-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d29922;
+  margin-bottom: 0.45rem;
+}
+
+.nav-dev-console-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.nav-dev-btn {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 5px;
+  border: 1px solid rgba(88, 166, 255, 0.35);
+  background: rgba(88, 166, 255, 0.08);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.nav-dev-btn:hover:not(:disabled) {
+  background: rgba(88, 166, 255, 0.16);
+}
+
+.nav-dev-btn--reset {
+  border-color: rgba(139, 148, 158, 0.4);
+  background: rgba(139, 148, 158, 0.08);
+  color: var(--text-secondary);
+}
+
+.nav-dev-console-hint {
+  margin-top: 0.4rem;
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+}
+
 .nav-upgrade-btn {
   width: 100%;
   padding: 8px 12px;
@@ -1289,6 +1339,68 @@ p {
   margin-bottom: 3rem;
   /* Increased spacing before form */
   color: var(--text-secondary);
+}
+
+.login-subtitle {
+  margin-bottom: 1.5rem !important;
+  font-size: 0.9rem;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.login-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.35rem;
+}
+
+.login-field input {
+  margin-bottom: 0;
+}
+
+.login-primary-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.login-error {
+  color: var(--danger);
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  min-height: 1.2em;
+}
+
+.login-footer-links {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1rem;
+}
+
+.login-muted {
+  opacity: 0.6;
+  margin-right: 0.5rem;
+}
+
+.login-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-banner--success {
+  color: var(--success);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
 }
 
 .login-card input {

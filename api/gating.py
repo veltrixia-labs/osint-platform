@@ -76,6 +76,15 @@ ALL_TOPIC_CODES = [
 # Tier Resolution
 # ──────────────────────────────────────────────────────────────────────────────
 
+def is_admin_profile(user: Optional[AnalystProfile]) -> bool:
+    """True when the profile has admin privileges (column or legacy user_role)."""
+    if not user:
+        return False
+    if bool(getattr(user, "is_admin", False)):
+        return True
+    return (user.user_role or "").lower() == "admin"
+
+
 async def get_effective_tier(user: Optional[AnalystProfile]) -> str:
     """Determine the user's active tier, handling expiration, grace period, and Guests."""
     # Local Dev Override for UI testing (MUST be disabled in production).
@@ -87,6 +96,11 @@ async def get_effective_tier(user: Optional[AnalystProfile]) -> str:
 
     if not user:
         return TIER_GUEST
+
+    if is_admin_profile(user):
+        manual = (getattr(user, "manual_tier", None) or "").strip().lower()
+        if manual:
+            return manual
         
     if not user.subscription_expires_at:
         return user.subscription_tier or TIER_FREE

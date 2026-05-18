@@ -244,11 +244,13 @@ class AlertLog(Base):
 class AnalystProfile(Base):
     __tablename__ = "analyst_profiles"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    telegram_chat_id = Column(String, unique=True, nullable=True) # Now optional
-    email = Column(String, unique=True, nullable=True)           # New Primary ID
+    telegram_chat_id = Column(String, unique=True, nullable=True)  # legacy / optional
+    email = Column(String, unique=True, nullable=False, index=True)
     is_email_verified = Column(Boolean, default=False)
-    hashed_password = Column(String) # For Phase 27 Auth
+    hashed_password = Column(String, nullable=False)
     user_role = Column(String, default="analyst") # analyst, admin
+    is_admin = Column(Boolean, default=False, nullable=False)
+    manual_tier = Column(String, nullable=True)  # admin override: pro, experts, etc.
     subscription_tier = Column(String, default="free") # free, pro, enterprise
     subscription_expires_at = Column(DateTime(timezone=True), nullable=True)
     stripe_customer_id = Column(String, nullable=True)

@@ -48,6 +48,8 @@ export interface UserMe {
     email: string;
     chat_id: string | null;
     role: string;
+    is_admin?: boolean;
+    manual_tier?: string | null;
     tier: string;
     expires_at: string | null;
     features: {
@@ -265,19 +267,36 @@ export const apiClient = {
 
 // --- Exported API Functions ---
 
-export async function login(email: any, password?: string) {
-    const data = typeof email === 'object' ? email : { email, password };
-    const resp = await apiClient.post('/auth/token', data);
-    if (resp.ok) {
-        const body = await resp.json();
-        if (body.access_token) localStorage.setItem('access_token', body.access_token);
+export async function login(email: string, password: string): Promise<void> {
+    const resp = await apiClient.post('/auth/login', {
+        email: email.trim().toLowerCase(),
+        password,
+    });
+    if (!resp.ok) {
+        throw new Error('auth_failed');
     }
-    return resp;
+    const body = await resp.json();
+    if (body.access_token) {
+        localStorage.setItem('access_token', body.access_token);
+    }
 }
 
-export async function signup(email: any, password?: string, chat_id?: string) {
-    const data = typeof email === 'object' ? email : { email, password, chat_id };
-    return await apiClient.post('/auth/signup', data);
+export async function signup(email: string, password: string): Promise<void> {
+    const resp = await apiClient.post('/auth/signup', {
+        email: email.trim().toLowerCase(),
+        password,
+    });
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({})) as { detail?: string | { msg?: string }[] };
+        const detail = err.detail;
+        const message =
+            typeof detail === 'string'
+                ? detail
+                : Array.isArray(detail) && detail[0]?.msg
+                  ? String(detail[0].msg)
+                  : 'signup_failed';
+        throw new Error(message);
+    }
 }
 
 export async function logout() {
@@ -293,6 +312,14 @@ export async function fetchMe(_cache?: any): Promise<UserMe | null> {
         if (!resp.ok) return null;
         return await resp.json();
     } catch { return null; }
+}
+
+/** Admin-only: set manual_tier override (null clears → Stripe/subscription applies). */
+export async function toggleAdminTier(tier: string | null): Promise<{ ok: boolean; tier?: string }> {
+    const resp = await apiClient.post('/admin/toggle-tier', { tier });
+    if (!resp.ok) return { ok: false };
+    const body = await resp.json();
+    return { ok: true, tier: body.tier };
 }
 
 export async function fetchAlerts(params: Record<string, string> = {}): Promise<Alert[]> {
@@ -377,13 +404,25 @@ export async function fetchExpertIntelligence(alertId?: string): Promise<ExpertI
     return resp.ok ? await resp.json() : null;
 }
 
-export async function fetchCheckoutSession(tier: string, email?: string) {
-    const resp = await apiClient.post('/payments/create-checkout', { tier, email });
+export async function fetchCheckoutSession(tier: string, reportId?: string) {
+    const resp = await apiClient.post('/stripe/create-checkout', { tier });
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({})) as { detail?: string };
+        throw new Error(err.detail || 'Checkout failed');
+    }
+    return await resp.json() as { url?: string; session_id?: string };
+}
+
+export async function confirmCheckoutSession(sessionId: string) {
+    const resp = await apiClient.post('/payments/confirm-session', { session_id: sessionId });
+    if (!resp.ok) throw new Error('confirm_failed');
     return await resp.json();
 }
 
 export async function cancelSubscription() {
-    return await apiClient.post('/payments/cancel');
+    const resp = await apiClient.post('/payments/portal-session');
+    if (!resp.ok) throw new Error('portal_failed');
+    return await resp.json() as { url?: string };
 }
 
 export async function submitFeedback(alertId: string, score: number) {

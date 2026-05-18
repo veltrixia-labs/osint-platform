@@ -36,7 +36,7 @@ from api.payments import router as payments_router
 from api.gating import (
     get_effective_tier, get_watchlist_limit, can_add_watchlist_keywords,
     TIER_PRO, TIER_EXPERTS, TIER_ORDER, is_tier_sufficient,
-    is_topic_allowed, can_access_report_type, PlanTier
+    is_topic_allowed, can_access_report_type, PlanTier, is_admin_profile,
 )
 
 # ── Feature Routers ────────────────────────────────────────────────────────────
@@ -50,6 +50,8 @@ from api.routes.backbone import router as backbone_router
 from api.routes.free_feed import router as free_feed_router
 from api.routes.pro_reports import router as pro_reports_router
 from api.routes.dev_tools import router as dev_tools_router
+from api.routes.admin import router as admin_router
+from api.routes.stripe import router as stripe_router
 
 # Production Traceability
 COMMIT_HASH = "v11.1.2-AURORA-SYNC"
@@ -221,6 +223,7 @@ from fastapi.staticfiles import StaticFiles
 
 # ── Router Registration ────────────────────────────────────────────────────────
 app.include_router(payments_router, prefix="/api/payments", tags=["payments"])
+app.include_router(stripe_router, prefix="/api/stripe")
 app.include_router(alerts_router, prefix="/api")
 app.include_router(reports_router, prefix="/api")
 app.include_router(analysts_router, prefix="/api")
@@ -231,34 +234,36 @@ app.include_router(backbone_router, prefix="/api")
 app.include_router(free_feed_router, prefix="/api")
 app.include_router(pro_reports_router, prefix="/api")
 app.include_router(dev_tools_router, prefix="/api")
+app.include_router(admin_router, prefix="/api")
 
 # ── Auth Endpoints ─────────────────────────────────────────────────────────────
 
-@app.post("/api/auth/login")
-async def login(response: Response, request: Request, data: dict, db: AsyncSession = Depends(get_db)):
-    email = data.get("email")
-    password = data.get("password")
+def _normalize_email(email: str) -> str:
+    return (email or "").strip().lower()
 
-    logger.info(f"Login attempt for email: {email}")
-    stmt = select(AnalystProfile).where(AnalystProfile.email == email)
-    user = (await db.execute(stmt)).scalar_one_or_none()
 
-    if not user:
-        logger.warning(f"Login failed: User not found for email: {email}")
-        await SecurityLogger.log_event(db, "login_failed", details={"email": email, "reason": "user_not_found"}, client_ip=request.client.host)
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+class LoginData(BaseModel):
+    email: str
+    password: str
 
-    if not verify_password(password, user.hashed_password):
-        logger.warning(f"Login failed: Password mismatch for email: {email}")
-        await SecurityLogger.log_event(db, "login_failed", details={"email": email, "reason": "password_mismatch"}, client_ip=request.client.host)
-        raise HTTPException(status_code=401, detail="Invalid credentials")
 
+class SignupData(BaseModel):
+    email: str
+    password: str
+
+
+async def _issue_tokens_for_user(
+    response: Response,
+    request: Request,
+    db: AsyncSession,
+    user: AnalystProfile,
+) -> dict:
     session_id = await session_manager.create_session(db, user.id)
     version = 1
-
-    access_token = create_access_token({"sub": str(user.id), "session_id": str(session_id), "v": version})
-    refresh_token, jti = create_refresh_token(user.id, session_id, version)
-
+    access_token = create_access_token(
+        {"sub": str(user.id), "session_id": str(session_id), "v": version}
+    )
+    refresh_token, _jti = create_refresh_token(user.id, session_id, version)
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
@@ -266,51 +271,114 @@ async def login(response: Response, request: Request, data: dict, db: AsyncSessi
         secure=os.getenv("ENV") == "production",
         samesite="lax",
         path="/api/auth",
-        max_age=7 * 86400
+        max_age=7 * 86400,
     )
-
-    await SecurityLogger.log_event(db, "login_success", user_id=user.id, session_id=session_id, client_ip=request.client.host)
+    await SecurityLogger.log_event(
+        db,
+        "login_success",
+        user_id=user.id,
+        session_id=session_id,
+        client_ip=request.client.host,
+    )
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-class SignupData(BaseModel):
-    email: str
-    password: str
-    telegram_chat_id: Optional[str] = None
+@app.post("/api/auth/login")
+async def login(
+    response: Response,
+    request: Request,
+    data: LoginData,
+    db: AsyncSession = Depends(get_db),
+):
+    email = _normalize_email(data.email)
+    password = data.password
+
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+
+    logger.info("Login attempt for email: %s", email)
+    stmt = select(AnalystProfile).where(AnalystProfile.email == email)
+    user = (await db.execute(stmt)).scalar_one_or_none()
+
+    if not user or not user.hashed_password:
+        await SecurityLogger.log_event(
+            db,
+            "login_failed",
+            details={"email": email, "reason": "user_not_found"},
+            client_ip=request.client.host,
+        )
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    if not verify_password(password, user.hashed_password):
+        await SecurityLogger.log_event(
+            db,
+            "login_failed",
+            details={"email": email, "reason": "password_mismatch"},
+            client_ip=request.client.host,
+        )
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Account is disabled")
+
+    return await _issue_tokens_for_user(response, request, db, user)
+
+
+@app.post("/api/auth/token")
+async def login_token_alias(
+    response: Response,
+    request: Request,
+    data: LoginData,
+    db: AsyncSession = Depends(get_db),
+):
+    """Backward-compatible alias for OAuth2-style clients."""
+    return await login(response, request, data, db)
+
 
 @app.post("/api/auth/signup", status_code=status.HTTP_201_CREATED)
-async def signup(request: Request, data: SignupData, db: AsyncSession = Depends(get_db)):
-    email = data.email
+async def signup(
+    request: Request,
+    data: SignupData,
+    db: AsyncSession = Depends(get_db),
+):
+    email = _normalize_email(data.email)
     password = data.password
-    chat_id = data.telegram_chat_id
+
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid email is required")
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
 
     stmt = select(AnalystProfile).where(AnalystProfile.email == email)
     existing_user = (await db.execute(stmt)).scalar_one_or_none()
-
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    hashed_pw = get_password_hash(password)
     new_user = AnalystProfile(
         id=uuid.uuid4(),
         email=email,
-        telegram_chat_id=chat_id,
-        hashed_password=hashed_pw,
+        hashed_password=get_password_hash(password),
         user_role="analyst",
+        is_admin=False,
         subscription_tier="free",
         is_active=True,
-        created_at=datetime.now(timezone.utc)
+        created_at=datetime.now(timezone.utc),
     )
-
     db.add(new_user)
     try:
         await db.commit()
     except Exception as e:
         await db.rollback()
-        logger.error(f"Signup failed for {email}: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+        logger.error("Signup failed for %s: %s", email, e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Registration failed")
 
-    await SecurityLogger.log_event(db, "signup_success", user_id=new_user.id, details={"email": email}, client_ip=request.client.host)
+    await SecurityLogger.log_event(
+        db,
+        "signup_success",
+        user_id=new_user.id,
+        details={"email": email},
+        client_ip=request.client.host,
+    )
     return {"status": "success", "message": "Account created successfully", "email": email}
 
 
@@ -357,6 +425,8 @@ async def get_me(current_user_data: tuple = Depends(get_current_user_from_access
         "email": user.email,
         "chat_id": user.telegram_chat_id,
         "role": user.user_role,
+        "is_admin": is_admin_profile(user),
+        "manual_tier": user.manual_tier,
         "tier": tier,
         "expires_at": user.subscription_expires_at.isoformat() if user.subscription_expires_at else None,
         "features": features,

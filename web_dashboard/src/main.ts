@@ -9,7 +9,7 @@ import { DashboardState } from './modules/poll'
 import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 // (Pro reports now handled within Pro Insights hub)
-import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase } from './modules/api'
+import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, confirmCheckoutSession, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase } from './modules/api'
 import type { UserMe } from './modules/api'
 import {
     renderGracePeriodBanner,
@@ -27,15 +27,15 @@ export async function renderLogin(message?: string, initialEmail?: string) {
     <div class="login-container">
         <div class="login-card">
             <h1>VELTRIXIA LABS</h1>
-            <p>Enter your analyst credentials</p>
+            <p class="login-subtitle">Sign in with your email</p>
             ${message ? `<div id="login-message" style="color: #3fb950; margin-bottom: 1rem; font-size: 0.9rem;">${message}</div>` : ''}
             <input type="email" id="login-email" placeholder="Email Address" required value="${initialEmail || ''}" />
             <input type="password" id="password" placeholder="Password" required />
-            <button id="login-btn">Login</button>
+            <button type="button" id="login-btn" class="login-primary-btn">Log In</button>
             <div id="login-error" style="color: #ff7b72; margin-top: 1rem; font-size: 0.9rem;"></div>
             <div style="margin-top: 1.5rem; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
                 <span style="opacity: 0.6;">New analyst?</span>
-                <a href="#" id="go-signup" style="color: var(--accent); text-decoration: none; margin-left: 0.5rem; font-weight: 600;">Create Account</a>
+                <a href="#" id="go-signup" class="login-link">Sign Up</a>
             </div>
         </div>
     </div>
@@ -43,12 +43,25 @@ export async function renderLogin(message?: string, initialEmail?: string) {
     const loginBtn = document.querySelector('#login-btn')!
     const signupLink = document.querySelector('#go-signup')!
     signupLink.addEventListener('click', (e) => { e.preventDefault(); renderSignup(); });
-    loginBtn.addEventListener('click', async () => {
-        const email = (document.querySelector('#login-email') as HTMLInputElement).value
-        const pwd = (document.querySelector('#password') as HTMLInputElement).value
-        const errorDiv = document.querySelector('#login-error')!
-        try { await login(email, pwd); initDashboard(); } catch (e) { errorDiv.textContent = "Authentication failed."; }
-    })
+    const submitLogin = async () => {
+        const email = (document.querySelector('#login-email') as HTMLInputElement).value;
+        const pwd = (document.querySelector('#password') as HTMLInputElement).value;
+        const errorDiv = document.querySelector('#login-error') as HTMLElement;
+        errorDiv.textContent = '';
+        loginBtn.setAttribute('disabled', 'true');
+        try {
+            await login(email, pwd);
+            await initDashboard();
+        } catch {
+            errorDiv.textContent = 'Invalid email or password.';
+        } finally {
+            loginBtn.removeAttribute('disabled');
+        }
+    };
+    loginBtn.addEventListener('click', submitLogin);
+    document.querySelector('#password')?.addEventListener('keydown', (e) => {
+        if ((e as KeyboardEvent).key === 'Enter') submitLogin();
+    });
 }
 
 export async function renderSignup() {
@@ -56,11 +69,17 @@ export async function renderSignup() {
     app.innerHTML = `
     <div class="login-container">
         <div class="login-card">
-            <h1>Create Account</h1>
-            <input type="email" id="signup-email" placeholder="Email Address" required />
-            <input type="text" id="signup-chat-id" placeholder="Telegram Chat ID (Optional)" />
-            <input type="password" id="signup-password" placeholder="Create Password" required />
-            <button id="signup-btn" class="u-tier-1">Sign Up</button>
+            <h1>Sign Up</h1>
+            <p class="login-subtitle">Create an analyst account</p>
+            <label class="login-field">
+                <span class="login-label">Email</span>
+                <input type="email" id="signup-email" autocomplete="email" placeholder="you@company.com" required />
+            </label>
+            <label class="login-field">
+                <span class="login-label">Password</span>
+                <input type="password" id="signup-password" autocomplete="new-password" placeholder="At least 8 characters" required minlength="8" />
+            </label>
+            <button type="button" id="signup-btn" class="login-primary-btn">Create Account</button>
             <div id="signup-error" style="color: #ff7b72; margin-top: 1rem; font-size: 0.9rem;"></div>
             <div style="margin-top: 1.5rem; font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
                 <a href="#" id="go-login" style="color: var(--accent); text-decoration: none; font-weight: 600;">Back to Login</a>
@@ -72,11 +91,21 @@ export async function renderSignup() {
     const loginLink = document.querySelector('#go-login')!
     loginLink.addEventListener('click', (e) => { e.preventDefault(); renderLogin(); });
     signupBtn.addEventListener('click', async () => {
-        const email = (document.querySelector('#signup-email') as HTMLInputElement).value
-        const chatId = (document.querySelector('#signup-chat-id') as HTMLInputElement).value
-        const pwd = (document.querySelector('#signup-password') as HTMLInputElement).value
-        try { await signup({ email, password: pwd, chat_id: chatId }); renderLogin("Account created!", email); } catch (e: any) { (document.querySelector('#signup-error') as HTMLElement).textContent = "Registration failed."; }
-    })
+        const email = (document.querySelector('#signup-email') as HTMLInputElement).value;
+        const pwd = (document.querySelector('#signup-password') as HTMLInputElement).value;
+        const errorDiv = document.querySelector('#signup-error') as HTMLElement;
+        errorDiv.textContent = '';
+        signupBtn.setAttribute('disabled', 'true');
+        try {
+            await signup(email, pwd);
+            renderLogin('Account created. Please sign in.', email);
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : '';
+            errorDiv.textContent = msg.includes('8') ? 'Password must be at least 8 characters.' : 'Registration failed. Email may already be in use.';
+        } finally {
+            signupBtn.removeAttribute('disabled');
+        }
+    });
 }
 
 type TabId = 'feed' | 'free-feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'pro-map' | 'expert-intel'
@@ -151,36 +180,46 @@ function buildDevOverrideUser(tier: string): UserMe {
     };
 }
 
+async function handlePaymentReturn(): Promise<void> {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') !== 'success') return;
+
+    const sessionId = params.get('session_id');
+    if (sessionId && localStorage.getItem('access_token')) {
+        try {
+            await confirmCheckoutSession(sessionId);
+        } catch {
+            /* webhook may already have applied tier */
+        }
+    }
+
+    const hash = window.location.hash || '#plans';
+    const pathOnly = window.location.pathname.split('?')[0] || '/dashboard';
+    window.history.replaceState({}, '', `${pathOnly}${hash}`);
+}
+
 async function initDashboard() {
     let user: UserMe | null = null;
-    try { user = await fetchMe(); if (user && !user.email) { logout(); return; } } catch (e) { }
+    const hasToken = Boolean(localStorage.getItem('access_token'));
+
+    try {
+        user = await fetchMe();
+    } catch {
+        user = null;
+    }
+
+    if (user) {
+        await handlePaymentReturn();
+        user = (await fetchMe()) ?? user;
+    }
 
     if (!user) {
         const devTier = (import.meta.env.VITE_DEV_TIER as string | undefined)?.toLowerCase();
-        if (devTier && devTier !== 'free' && isLocalDevHost()) {
+        if (devTier && devTier !== 'free' && isLocalDevHost() && !hasToken) {
             user = buildDevOverrideUser(devTier);
         } else {
-            user = {
-                id: 'free-access',
-                email: 'Free Access',
-                chat_id: '',
-                role: 'anonymous',
-                tier: 'free',
-                expires_at: null,
-                features: {
-                    pro_insights: false,
-                    expert_intelligence: false,
-                    team_admin: false,
-                    custom_topics: false,
-                    onboarding: false,
-                    support: false
-                },
-                limits: {
-                    impact_depth: 0,
-                    topics: [],
-                    reports: []
-                }
-            };
+            renderLogin();
+            return;
         }
     }
 
@@ -189,7 +228,11 @@ async function initDashboard() {
     app.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
         if (target.id === 'sidebar-login-btn') { renderLogin(); }
-        if (target.id === 'sidebar-logout-btn') { if (confirm("Sign out?")) logout(); }
+        if (target.id === 'sidebar-logout-btn') {
+            if (confirm('Sign out?')) {
+                logout().then(() => renderLogin());
+            }
+        }
     });
 
     let currentTab: TabId = 'feed';

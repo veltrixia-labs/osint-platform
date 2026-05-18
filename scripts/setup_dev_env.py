@@ -54,21 +54,28 @@ def setup_dev_env():
     try:
         # A. Promote Admin & TestUser
         print("Promoting admin and testuser to ENTERPRISE tier...")
-        for username in ["admin", "testuser"]:
-            user = session.query(AnalystProfile).filter_by(telegram_chat_id=username).first()
+        dev_accounts = [
+            ("admin@veltrixia.local", "admin", "admin"),
+            ("testuser@veltrixia.local", "testuser", "analyst"),
+        ]
+        for email, password, role in dev_accounts:
+            user = session.query(AnalystProfile).filter_by(email=email).first()
             if user:
                 user.subscription_tier = "enterprise"
-                user.subscription_expires_at = None # No expiration for dev
-                print(f"Updated {username} to enterprise.")
+                user.subscription_expires_at = None
+                if role == "admin":
+                    user.is_admin = True
+                    user.user_role = "admin"
+                print(f"Updated {email} to enterprise.")
             else:
-                # Create if missing
-                print(f"Creating missing user: {username}")
+                print(f"Creating missing user: {email}")
                 new_user = AnalystProfile(
-                    telegram_chat_id=username,
-                    hashed_password=get_password_hash(username),
-                    user_role="admin" if username == "admin" else "analyst",
+                    email=email,
+                    hashed_password=get_password_hash(password),
+                    user_role=role,
+                    is_admin=(role == "admin"),
                     subscription_tier="enterprise",
-                    is_active=True
+                    is_active=True,
                 )
                 session.add(new_user)
 

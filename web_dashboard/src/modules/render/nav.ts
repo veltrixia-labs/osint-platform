@@ -1,4 +1,5 @@
 import type { UserMe } from '../api';
+import { toggleAdminTier } from '../api';
 
 /**
  * [Phase 3] Role-aware Navigation Renderer
@@ -155,6 +156,21 @@ export function renderNavigation(
                 </div>
               `;
 
+    const isAdmin = user.is_admin === true || user.role === 'admin';
+    const devConsoleHtml = isAdmin
+        ? `
+            <div class="nav-dev-console">
+                <div class="nav-dev-console-label">Dev Console</div>
+                <div class="nav-dev-console-actions">
+                    <button type="button" class="nav-dev-btn" data-dev-tier="experts">Switch to Expert</button>
+                    <button type="button" class="nav-dev-btn" data-dev-tier="pro">Switch to Pro</button>
+                    <button type="button" class="nav-dev-btn nav-dev-btn--reset" data-dev-tier="">Reset to Standard</button>
+                </div>
+                ${user.manual_tier ? `<div class="nav-dev-console-hint">Override: ${user.manual_tier}</div>` : ''}
+            </div>
+        `
+        : '';
+
     const footerHtml = `
         <div class="nav-role-footer">
             <div id="sync-hud" class="nav-sync-hud">
@@ -166,6 +182,7 @@ export function renderNavigation(
                 <div class="nav-role-tier-label" style="color: ${tierColor};">${displayTierLabel.toUpperCase()}</div>
                 <div class="nav-role-email" title="${displayEmail}">${displayEmail}</div>
             </div>
+            ${devConsoleHtml}
             ${footerCtaHtml}
             <div class="nav-legal-row">
                 <a href="#legal">Disclosure</a>
@@ -205,6 +222,26 @@ export function renderNavigation(
     container.querySelector('#upgrade-button')?.addEventListener('click', () => {
         setPlansUpsellContext('全てのプロ機能を確認して、解析を次のレベルへ進めましょう。');
         onTabSwitch('plans');
+    });
+
+    container.querySelectorAll('.nav-dev-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const tier = (btn as HTMLElement).dataset.devTier ?? '';
+            const targetTier = tier === '' ? null : tier;
+            (btn as HTMLButtonElement).disabled = true;
+            try {
+                const result = await toggleAdminTier(targetTier);
+                if (result.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to update tier override. Ensure you are logged in as admin.');
+                }
+            } catch {
+                alert('Failed to update tier override.');
+            } finally {
+                (btn as HTMLButtonElement).disabled = false;
+            }
+        });
     });
 }
 
