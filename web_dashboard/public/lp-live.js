@@ -1,5 +1,5 @@
 /**
- * LP Live Engine — production API sync, 4×4 rotating cards, map pulse linkage.
+ * LP Live Engine — production API sync, rotating alert & brief cards.
  */
 (function () {
   const CARD_COUNT = 4;
@@ -94,8 +94,6 @@
       topic: 'energy_resource_risk',
       severity: 'critical',
       triggered_at: '2026-05-03T07:12:00.000Z',
-      location_lat: 26.56,
-      location_lng: 56.25,
       related_news_count: 3,
     },
     {
@@ -105,8 +103,6 @@
       topic: 'ai_semiconductor_intelligence',
       severity: 'high',
       triggered_at: '2026-05-03T06:30:00.000Z',
-      location_lat: 37.3871,
-      location_lng: -121.9667,
     },
     {
       id: 'fl-004',
@@ -115,8 +111,6 @@
       topic: 'defense_technology',
       severity: 'elevated',
       triggered_at: '2026-05-02T22:18:00.000Z',
-      location_lat: 23.6978,
-      location_lng: 120.9605,
     },
     {
       id: 'fl-005',
@@ -125,8 +119,6 @@
       topic: 'energy_resource_risk',
       severity: 'critical',
       triggered_at: '2026-05-02T19:44:00.000Z',
-      location_lat: 48.3794,
-      location_lng: 31.1656,
     },
     {
       id: 'fl-006',
@@ -139,21 +131,12 @@
     },
   ];
 
-  const GEOPOLITICAL_MARKERS = [
-    { name: 'Hormuz Strait', lat: 26.56, lng: 56.25, level: 'critical' },
-    { name: 'Taiwan Strait', lat: 24.0, lng: 121.0, level: 'elevated' },
-    { name: 'Ukraine', lat: 48.3794, lng: 31.1656, level: 'critical' },
-    { name: 'South China Sea', lat: 15.0, lng: 115.0, level: 'watch' },
-  ];
-
   const state = {
     mode: 'fallback',
     alertPool: [],
     briefPool: [],
-    livePool: [],
     alertOffset: 0,
     briefOffset: 0,
-    mapHighlightIndex: 0,
     rotateTimer: null,
   };
 
@@ -181,16 +164,6 @@
     return raw
       .replace(/^(acceleration|entity_surge|pattern_risk|sector_surge|event_continuation)\s*:\s*/i, '')
       .trim() || raw;
-  }
-
-  function extractTeaser(md) {
-    if (!md) return 'Structured context and evidence — open full brief.';
-    let t = md.replace(/^#\s+[^\n]*\n?/m, '').trim();
-    const m = t.match(/##\s*Summary[^\n]*\n+([\s\S]*?)(?=\n##|\n*$)/i);
-    if (m) t = m[1].trim();
-    t = t.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
-    if (t.length > 120) return t.slice(0, 120).trim() + '…';
-    return t;
   }
 
   function contextChainFromItem(item) {
@@ -331,75 +304,6 @@
     }
   }
 
-  function project(lat, lng, w, h) {
-    return { x: (lng + 180) * (w / 360), y: (90 - lat) * (h / 180) };
-  }
-
-  function renderMap(svg, markers, activeIndex) {
-    if (!svg) return;
-    const g = svg.querySelector('#lp-map-markers');
-    const labels = svg.querySelector('#lp-map-labels');
-    if (!g) return;
-    const w = 1000;
-    const h = 420;
-    g.innerHTML = markers
-      .map((m, i) => {
-        const { x, y } = project(m.lat, m.lng, w, h);
-        const cls =
-          m.level === 'critical'
-            ? 'lp-map-dot--critical'
-            : m.level === 'elevated'
-              ? 'lp-map-dot--elevated'
-              : 'lp-map-dot--std';
-        const hot = i === activeIndex ? ' lp-map-marker--hot' : '';
-        return `
-        <g class="lp-map-marker${hot}" data-marker-index="${i}" transform="translate(${x},${y})">
-          <circle class="lp-map-pulse-ring" r="10" fill="none" stroke="#58a6ff" stroke-width="1.2"/>
-          <circle class="lp-map-pulse-ring lp-map-pulse-ring--delay" r="10" fill="none" stroke="#58a6ff" stroke-width="0.8"/>
-          <circle class="lp-map-dot lp-map-pulse-neon ${cls}" r="5"/>
-        </g>`;
-      })
-      .join('');
-    if (labels) {
-      labels.innerHTML = markers
-        .map((m, i) => {
-          const { x, y } = project(m.lat, m.lng, w, h);
-          const hot = i === activeIndex ? ' lp-map-label--hot' : '';
-          return `<text class="lp-map-label${hot}" x="${x + 10}" y="${y - 8}">${escapeHtml(m.name)}</text>`;
-        })
-        .join('');
-    }
-  }
-
-  function markersFromAlerts(live, highlightAlert) {
-    const fromAlerts = live
-      .filter((a) => a.location_lat != null && a.location_lng != null)
-      .map((a) => ({
-        name: cleanTitle(a.target_label).slice(0, 24),
-        lat: a.location_lat,
-        lng: a.location_lng,
-        level: severityClass(a.severity),
-      }));
-    const seen = new Set();
-    const merged = [];
-    [...GEOPOLITICAL_MARKERS, ...fromAlerts].forEach((m) => {
-      const k = `${m.lat.toFixed(2)},${m.lng.toFixed(2)}`;
-      if (seen.has(k)) return;
-      seen.add(k);
-      merged.push(m);
-    });
-    let activeIndex = 0;
-    if (highlightAlert?.location_lat != null) {
-      const hi = merged.findIndex(
-        (m) =>
-          Math.abs(m.lat - highlightAlert.location_lat) < 0.5 &&
-          Math.abs(m.lng - highlightAlert.location_lng) < 0.5
-      );
-      if (hi >= 0) activeIndex = hi;
-    }
-    return { markers: merged.slice(0, 10), activeIndex };
-  }
-
   function heroTopicTag(topic) {
     const key = (topic || 'global').toLowerCase();
     const short = {
@@ -439,23 +343,12 @@
   function tickRotate() {
     state.alertOffset = (state.alertOffset + 1) % state.alertPool.length;
     state.briefOffset = (state.briefOffset + 1) % state.briefPool.length;
-    state.mapHighlightIndex = (state.mapHighlightIndex + 1) % GEOPOLITICAL_MARKERS.length;
 
     const alertRoot = document.getElementById('lp-alert-stream');
     const briefRoot = document.getElementById('lp-brief-grid');
-    const mapSvg = document.getElementById('lp-world-map');
 
-    const alerts = windowItems(state.alertPool, state.alertOffset, CARD_COUNT);
-    const briefs = windowItems(state.briefPool, state.briefOffset, CARD_COUNT);
-
-    renderAlerts(alertRoot, alerts, true);
-    renderBriefs(briefRoot, briefs, true);
-
-    const highlight = alerts[0];
-    const { markers, activeIndex } = markersFromAlerts(state.livePool, highlight);
-    const idx =
-      highlight?.location_lat != null ? activeIndex : state.mapHighlightIndex % markers.length;
-    renderMap(mapSvg, markers, idx);
+    renderAlerts(alertRoot, windowItems(state.alertPool, state.alertOffset, CARD_COUNT), true);
+    renderBriefs(briefRoot, windowItems(state.briefPool, state.briefOffset, CARD_COUNT), true);
     renderHeroTerminal(
       document.querySelector('.lp-hero .lp-terminal-body'),
       heroAlerts(state.alertPool, state.alertOffset)
@@ -472,7 +365,6 @@
     const alertRoot = document.getElementById('lp-alert-stream');
     const briefRoot = document.getElementById('lp-brief-grid');
     const heroRoot = document.querySelector('.lp-hero .lp-terminal-body');
-    const mapSvg = document.getElementById('lp-world-map');
 
     let freeItems = [...FALLBACK_FREE];
     let liveItems = [...FALLBACK_LIVE];
@@ -497,14 +389,10 @@
 
     state.briefPool = expandPool(freeItems, FALLBACK_FREE);
     state.alertPool = expandPool(liveItems, FALLBACK_LIVE);
-    state.livePool = liveItems;
 
     renderAlerts(alertRoot, windowItems(state.alertPool, 0, CARD_COUNT), false);
     renderBriefs(briefRoot, windowItems(state.briefPool, 0, CARD_COUNT), false);
     renderHeroTerminal(heroRoot, heroAlerts(state.alertPool, 0));
-
-    const { markers, activeIndex } = markersFromAlerts(state.livePool, state.alertPool[0]);
-    renderMap(mapSvg, markers, activeIndex);
 
     setSyncBadge(state.mode);
 

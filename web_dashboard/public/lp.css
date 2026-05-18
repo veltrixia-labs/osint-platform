@@ -1044,7 +1044,7 @@ body.lp {
 
 /* ── The Intelligence Terminal (product UI previews) ── */
 .lp-terminal-showcase {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   display: grid;
   grid-template-columns: 1fr;
   gap: 1px;
@@ -1054,20 +1054,16 @@ body.lp {
   overflow: hidden;
 }
 
-@media (min-width: 960px) {
+@media (min-width: 768px) {
   .lp-terminal-showcase {
-    grid-template-columns: 1fr 1.15fr;
-  }
-
-  .lp-ui-panel--map {
-    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items: stretch;
   }
 }
 
-@media (min-width: 1100px) {
-  .lp-terminal-showcase {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  }
+#terminal .lp-ui-panel--alerts,
+#terminal .lp-ui-panel--briefs {
+  min-height: 22rem;
 }
 
 .lp-ui-panel {
@@ -1105,14 +1101,17 @@ body.lp {
 }
 
 .lp-ui-body--dense {
-  min-height: 22rem;
+  min-height: 20rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .lp-alert-stream {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  min-height: 21rem;
+  flex: 1;
+  min-height: 18rem;
 }
 
 .lp-alert {
@@ -1209,7 +1208,8 @@ body.lp {
 .lp-brief-grid--4 {
   grid-template-columns: 1fr 1fr;
   gap: 0.45rem;
-  min-height: 21rem;
+  flex: 1;
+  min-height: 18rem;
   align-content: start;
 }
 
@@ -1321,57 +1321,6 @@ body.lp {
     inset 0 0 8px rgba(88, 166, 255, 0.08);
   text-shadow: 0 0 8px rgba(126, 231, 135, 0.45);
 }
-
-.lp-map-wrap {
-  position: relative;
-  min-height: 280px;
-  background:
-    linear-gradient(rgba(88, 166, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(88, 166, 255, 0.04) 1px, transparent 1px),
-    var(--lp-bg);
-  background-size: 20px 20px, 20px 20px, 100% 100%;
-}
-
-.lp-map-svg {
-  width: 100%;
-  height: auto;
-  min-height: 280px;
-  display: block;
-}
-
-.lp-map-dot { animation: lpMapPulse 2.4s ease-in-out infinite; }
-.lp-map-dot--critical { fill: #f85149; animation-delay: 0.3s; }
-.lp-map-dot--elevated { fill: #d29922; animation-delay: 0.7s; }
-.lp-map-dot--std { fill: #58a6ff; }
-
-@keyframes lpMapPulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
-.lp-map-legend {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.65rem;
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.6rem;
-  color: var(--lp-dim);
-}
-
-.lp-map-legend i {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-right: 0.2rem;
-  vertical-align: middle;
-  font-style: normal;
-}
-
-.lp-map-legend .i-crit { background: #f85149; }
-.lp-map-legend .i-elev { background: #d29922; }
-.lp-map-legend .i-std { background: #58a6ff; }
 
 /* System log stream */
 .lp-sys-terminal {
@@ -1513,43 +1462,3 @@ body.lp {
   background: rgba(63, 185, 80, 0.08);
 }
 
-.lp-map-pulse-neon {
-  fill: #58a6ff;
-  filter: drop-shadow(0 0 6px rgba(88, 166, 255, 0.85));
-}
-
-.lp-map-pulse-ring {
-  animation: lpNeonRing 2.4s ease-out infinite;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-
-.lp-map-pulse-ring--delay {
-  animation-delay: 1.2s;
-}
-
-.lp-map-marker--hot .lp-map-dot {
-  fill: #79c0ff;
-  filter: drop-shadow(0 0 10px rgba(121, 192, 255, 1));
-}
-
-.lp-map-marker--hot .lp-map-pulse-ring {
-  stroke: #79c0ff;
-  opacity: 0.85;
-}
-
-.lp-map-label--hot {
-  fill: #e6edf3;
-  font-weight: 600;
-}
-
-@keyframes lpNeonRing {
-  0% { r: 5; opacity: 0.75; stroke-width: 1.5; }
-  70% { r: 22; opacity: 0; stroke-width: 0.5; }
-  100% { r: 22; opacity: 0; }
-}
-
-.lp-map-marker:nth-child(2) .lp-map-pulse-ring { animation-delay: 0.45s; }
-.lp-map-marker:nth-child(3) .lp-map-pulse-ring { animation-delay: 0.9s; }
-.lp-map-marker:nth-child(4) .lp-map-pulse-ring { animation-delay: 1.35s; }
-.lp-map-marker:nth-child(5) .lp-map-pulse-ring { animation-delay: 1.8s; }

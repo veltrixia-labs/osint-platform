@@ -112,42 +112,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Global Map -->
-                    <div class="lp-ui-panel lp-ui-panel--map">
-                        <div class="lp-ui-panel-head">
-                            <span>Global Map</span>
-                            <span class="lp-neon-badge lp-neon-badge--on">LIVE GEO</span>
-                        </div>
-                        <div class="lp-ui-body lp-map-wrap">
-                            <svg id="lp-world-map" class="lp-map-svg" viewBox="0 0 1000 420" xmlns="http://www.w3.org/2000/svg" aria-label="Global risk map preview">
-                                <defs>
-                                    <radialGradient id="lp-map-vignette" cx="50%" cy="45%" r="65%">
-                                        <stop offset="0%" stop-color="rgba(88,166,255,0.1)"/>
-                                        <stop offset="100%" stop-color="rgba(4,7,12,0.98)"/>
-                                    </radialGradient>
-                                    <pattern id="lp-map-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(88,166,255,0.07)" stroke-width="0.5"/>
-                                    </pattern>
-                                </defs>
-                                <rect width="1000" height="420" fill="#04070c"/>
-                                <rect width="1000" height="420" fill="url(#lp-map-grid)"/>
-                                <rect width="1000" height="420" fill="url(#lp-map-vignette)"/>
-                                <image href="lp-world-continents.svg" x="0" y="0" width="1000" height="420" preserveAspectRatio="xMidYMid meet" opacity="0.92"/>
-                                <g stroke="rgba(88,166,255,0.1)" stroke-width="1">
-                                    <line x1="0" y1="210" x2="1000" y2="210"/>
-                                    <line x1="500" y1="0" x2="500" y2="420"/>
-                                </g>
-                                <g id="lp-map-markers"></g>
-                                <g id="lp-map-labels"></g>
-                            </svg>
-                            <div class="lp-map-legend lp-mono">
-                                <span><i class="i-crit"></i>Critical</span>
-                                <span><i class="i-elev"></i>Elevated</span>
-                                <span><i class="i-std"></i>Watch</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>
