@@ -6,6 +6,7 @@ from .census_client import CensusClient
 from .bls_client import BLSClient
 from .worldbank_client import WorldBankClient
 from .comtrade_client import ComtradeClient
+from .estat_client import EStatClient
 
 __all__ = [
     "BaseAPIClient",
@@ -17,4 +18,5 @@ __all__ = [
     "BLSClient",
     "WorldBankClient",
     "ComtradeClient",
+    "EStatClient",
 ]

@@ -42,6 +42,12 @@ EXTERNAL_DATA_SOURCES = {
         "api_key_env": "CENSUS_API_KEY",
         "storage_type": "industry_stats",
     },
+    "estat": {
+        "name": "e-Stat",
+        "category": "japan_macro",
+        "api_key_env": "ESTAT_APP_ID",
+        "storage_type": "generic_timeseries",
+    },
 }
 
 def get_source_config(source_id: str) -> dict:

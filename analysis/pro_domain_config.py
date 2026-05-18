@@ -135,6 +135,7 @@ PRO_DOMAIN_CONFIG = {
             "fred_series": ["FEDFUNDS", "DGS10", "CPIAUCSL", "DTWEXBGS", "M2SL"],
             "bls_series": ["WPUFD4"], # PPI Final Demand
             "worldbank_indicators": ["NY.GDP.MKTP.KD.ZG", "FP.CPI.TOTL.ZG"], # Growth, Inflation
+            "estat_series": ["0003423164"],  # Japan CPI
             "comtrade_commodity_codes": [],
             "bea_metrics": ["GDP-Total"],
             "census_metrics": []
@@ -209,6 +210,7 @@ PRO_DOMAIN_CONFIG = {
             "WPUFD4": "PPI Final Demand — upstream inflation pressure",
             "NY.GDP.MKTP.KD.ZG": "Real GDP growth rate",
             "FP.CPI.TOTL.ZG": "Global inflation rate comparison",
+            "0003423164": "Japan CPI — domestic inflation and BoJ policy context",
             "SPY": "S&P 500 — broad risk sentiment",
             "QQQ": "Nasdaq 100 — growth/duration sensitivity",
             "IWM": "Russell 2000 — domestic cyclical proxy",
@@ -274,6 +276,7 @@ PRO_DOMAIN_CONFIG = {
             "fred_series": ["IPB53122S", "DGS10"], # Semi Production, Rates
             "bls_series": ["PCU334413334413"], # PPI Semi
             "worldbank_indicators": [],
+            "estat_series": ["0003410537"],  # Japan IIP (mining & manufacturing)
             "comtrade_commodity_codes": ["8542"], # Integrated circuits
             "bea_metrics": ["Value-Added-Manufacturing"],
             "census_metrics": ["CBP-Semi-Estab"],
@@ -344,6 +347,7 @@ PRO_DOMAIN_CONFIG = {
             "IPB53122S": "US semiconductor industrial production index",
             "DGS10": "Long-term discount rate — tech valuation sensitivity",
             "PCU334413334413": "PPI for semiconductor manufacturing",
+            "0003410537": "Japan IIP — manufacturing output cycle (semi supply chain)",
             "8542": "Integrated circuit global trade volume",
             "SMH": "Semiconductor equity ETF — sector sentiment",
             "SOXX": "Broad semiconductor index — confirmation",

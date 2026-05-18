@@ -122,9 +122,14 @@ async def build_pro_structural_context(
     return context
 
 async def _get_macro_observations(db: AsyncSession, config: dict, lookback_days: int, notes: list) -> List[dict]:
-    """Fetch latest macro observations for FRED, BLS, and WB."""
+    """Fetch latest macro observations for FRED, BLS, World Bank, and e-Stat."""
     s_data = config.get("structural_data", {})
-    series_ids = s_data.get("fred_series", []) + s_data.get("bls_series", []) + s_data.get("worldbank_indicators", [])
+    series_ids = (
+        s_data.get("fred_series", [])
+        + s_data.get("bls_series", [])
+        + s_data.get("worldbank_indicators", [])
+        + s_data.get("estat_series", [])
+    )
     
     if not series_ids:
         return []
