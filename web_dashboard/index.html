@@ -92,12 +92,12 @@
 
                 <div class="lp-terminal-showcase">
                     <!-- Alert Stream -->
-                    <div class="lp-ui-panel">
+                    <div class="lp-ui-panel lp-ui-panel--alerts">
                         <div class="lp-ui-panel-head">
                             <span>Alert Stream</span>
-                            <em class="lp-mono"><span data-lp-sync>…</span></em>
+                            <span class="lp-neon-badge" data-lp-sync>…</span>
                         </div>
-                        <div class="lp-ui-body">
+                        <div class="lp-ui-body lp-ui-body--dense">
                             <div id="lp-alert-stream" class="lp-alert-stream lp-panel-loading" aria-label="Alert stream preview" aria-busy="true">
                                 <p class="lp-panel-skeleton lp-mono">Loading live signals…</p>
                             </div>
@@ -105,13 +105,13 @@
                     </div>
 
                     <!-- Context Briefs -->
-                    <div class="lp-ui-panel">
+                    <div class="lp-ui-panel lp-ui-panel--briefs">
                         <div class="lp-ui-panel-head">
                             <span>Context Briefs</span>
-                            <em class="lp-mono"><span data-lp-sync>…</span></em>
+                            <span class="lp-neon-badge" data-lp-sync>…</span>
                         </div>
-                        <div class="lp-ui-body">
-                            <div id="lp-brief-grid" class="lp-brief-grid lp-panel-loading" aria-busy="true">
+                        <div class="lp-ui-body lp-ui-body--dense">
+                            <div id="lp-brief-grid" class="lp-brief-grid lp-brief-grid--4 lp-panel-loading" aria-busy="true">
                                 <p class="lp-panel-skeleton lp-mono">Loading briefs…</p>
                             </div>
                         </div>
@@ -121,21 +121,29 @@
                     <div class="lp-ui-panel lp-ui-panel--map">
                         <div class="lp-ui-panel-head">
                             <span>Global Map</span>
-                            <em class="lp-mono">Geospatial risk plot</em>
+                            <span class="lp-neon-badge lp-neon-badge--on">LIVE GEO</span>
                         </div>
                         <div class="lp-ui-body lp-map-wrap">
-                            <svg id="lp-world-map" class="lp-map-svg" viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg" aria-label="Global risk map preview">
-                                <defs><radialGradient id="lp-map-glow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(88,166,255,0.12)"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
-                                <rect width="800" height="220" fill="#05080c"/><rect width="800" height="220" fill="url(#lp-map-glow)"/>
-                                <g fill="rgba(88,166,255,0.06)" stroke="rgba(88,166,255,0.12)" stroke-width="0.6">
-                                    <path d="M120,72 L165,58 L210,65 L248,78 L280,95 L305,118 L298,142 L268,158 L228,162 L188,155 L148,138 L118,115 Z"/>
-                                    <path d="M355,55 L420,48 L495,52 L545,68 L575,92 L568,118 L530,135 L475,140 L410,132 L365,108 Z"/>
-                                    <path d="M520,95 L580,88 L640,95 L680,110 L695,130 L680,150 L630,162 L570,158 L530,140 Z"/>
+                            <svg id="lp-world-map" class="lp-map-svg" viewBox="0 0 1000 420" xmlns="http://www.w3.org/2000/svg" aria-label="Global risk map preview">
+                                <defs>
+                                    <radialGradient id="lp-map-vignette" cx="50%" cy="45%" r="65%">
+                                        <stop offset="0%" stop-color="rgba(88,166,255,0.1)"/>
+                                        <stop offset="100%" stop-color="rgba(4,7,12,0.98)"/>
+                                    </radialGradient>
+                                    <pattern id="lp-map-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(88,166,255,0.07)" stroke-width="0.5"/>
+                                    </pattern>
+                                </defs>
+                                <rect width="1000" height="420" fill="#04070c"/>
+                                <rect width="1000" height="420" fill="url(#lp-map-grid)"/>
+                                <rect width="1000" height="420" fill="url(#lp-map-vignette)"/>
+                                <image href="lp-world-continents.svg" x="0" y="0" width="1000" height="420" preserveAspectRatio="xMidYMid meet" opacity="0.92"/>
+                                <g stroke="rgba(88,166,255,0.1)" stroke-width="1">
+                                    <line x1="0" y1="210" x2="1000" y2="210"/>
+                                    <line x1="500" y1="0" x2="500" y2="420"/>
                                 </g>
-                                <g stroke="rgba(255,255,255,0.04)" stroke-width="1">
-                                    <line x1="0" y1="110" x2="800" y2="110"/><line x1="400" y1="0" x2="400" y2="220"/>
-                                </g>
-                                <g id="lp-map-markers"></g><g id="lp-map-labels"></g>
+                                <g id="lp-map-markers"></g>
+                                <g id="lp-map-labels"></g>
                             </svg>
                             <div class="lp-map-legend lp-mono">
                                 <span><i class="i-crit"></i>Critical</span>
