@@ -7,6 +7,14 @@ economic data sources to market confirmation instruments.
 
 from typing import Dict, Any, List, Optional
 
+from analysis.pro_global_series import (
+    CORE_GLOBAL_SERIES,
+    CORE_GLOBAL_REPRESENTATIVE_IDS,
+    GLOBAL_RELEVANCE_MAP,
+    get_core_global_series_ids,
+    merge_relevance_maps,
+)
+
 PRO_DOMAIN_CONFIG = {
     "energy_resource_risk": {
         "domain_id": "energy_resource_risk",
@@ -29,8 +37,11 @@ PRO_DOMAIN_CONFIG = {
             "census_metrics": ["CBP-Energy-Estab"]
         },
         "market_data": {
-            "alpha_vantage_symbols": ["XLE", "XOP", "USO", "IYT", "JETS"],
-            "frankfurter_fx_pairs": ["USDCAD", "USDNOK", "USDBRL"],
+            "alpha_vantage_symbols": [
+                "XLE", "XOP", "USO", "IYT", "JETS",
+                "N225", "DAX", "EWJ", "EWG",
+            ],
+            "frankfurter_fx_pairs": ["USDCAD", "USDNOK", "USDBRL", "EURUSD", "USDJPY"],
             "instrument_symbols": ["DCOILWTICO", "WPU05", "2709", "2711"]
         },
         "transmission_channels": ["Direct input costs", "Logistics premiums", "Currency volatility in petro-states"],
@@ -88,6 +99,12 @@ PRO_DOMAIN_CONFIG = {
             "USDCAD": "Petro-state FX: Canadian dollar sensitivity",
             "USDNOK": "Petro-state FX: Norwegian krone sensitivity",
             "USDBRL": "EM petro-state FX: Brazilian real sensitivity",
+            "N225": "Nikkei 225 — Japan risk sentiment on energy shocks",
+            "DAX": "DAX — European industrial / energy import sensitivity",
+            "EURUSD": "EUR/USD — European terms-of-trade and ECB reaction",
+            "USDJPY": "USD/JPY — Japan energy import bill and BoJ pressure",
+            "EWJ": "Japan equity proxy when Nikkei index feed unavailable",
+            "EWG": "Germany/Europe equity proxy for DAX region",
             "2709": "Crude petroleum trade volume",
             "2711": "Natural gas trade volume",
             "2805": "Strategic metals trade volume"
@@ -101,13 +118,22 @@ PRO_DOMAIN_CONFIG = {
             "JETS": {"group": "Transport Sensitivity", "order": 3},
             "USDCAD": {"group": "Petro FX", "order": 4},
             "USDNOK": {"group": "Petro FX", "order": 4},
-            "USDBRL": {"group": "Petro FX", "order": 4}
+            "USDBRL": {"group": "Petro FX", "order": 4},
+            "N225": {"group": "Japan Market", "order": 5},
+            "EWJ": {"group": "Japan Market", "order": 5},
+            "DAX": {"group": "Europe Market", "order": 6},
+            "EWG": {"group": "Europe Market", "order": 6},
+            "EURUSD": {"group": "Tri-Polar FX", "order": 7},
+            "USDJPY": {"group": "Tri-Polar FX", "order": 7},
         },
         "market_group_interpretation": {
             "Energy Producers": {"positive_means": "confirming", "negative_means": "stress", "description": "Rising energy equities confirm supply-side pressure"},
             "Oil Price Proxy": {"positive_means": "confirming", "negative_means": "easing", "description": "Crude price movement validates or contradicts disruption thesis"},
             "Transport Sensitivity": {"positive_means": "resilient", "negative_means": "stress", "description": "Transport weakness under rising energy costs signals cost pass-through pressure"},
-            "Petro FX": {"positive_means": "stress", "negative_means": "confirming", "description": "USD strengthening vs petro-currencies indicates capital flow pressure on exporters"}
+            "Petro FX": {"positive_means": "stress", "negative_means": "confirming", "description": "USD strengthening vs petro-currencies indicates capital flow pressure on exporters"},
+            "Japan Market": {"positive_means": "resilient", "negative_means": "stress", "description": "Japan equities under energy import cost pressure"},
+            "Europe Market": {"positive_means": "resilient", "negative_means": "stress", "description": "European equities reacting to energy terms-of-trade"},
+            "Tri-Polar FX": {"positive_means": "mixed", "negative_means": "mixed", "description": "EUR/JPY moves frame US-dollar and regional policy divergence"},
         },
         "watch_conditions_template": {
             "escalation": [
@@ -142,9 +168,9 @@ PRO_DOMAIN_CONFIG = {
             "fred_series": ["FEDFUNDS", "DGS10", "CPIAUCSL", "DTWEXBGS", "M2SL"],
             "bls_series": ["WPUFD4"], # PPI Final Demand
             "worldbank_indicators": ["NY.GDP.MKTP.KD.ZG", "FP.CPI.TOTL.ZG"], # Growth, Inflation
-            "estat_series": ["0003423164"],  # Japan CPI
+            "estat_series": ["0003427113"],  # Japan CPI (2020 base)
             "ecb_series": [
-                "FM.D.U2.EUR.4F.KR.MRR_FAC.LEV",
+                "FM.D.U2.EUR.4F.KR.MRR_RT.LEV",
                 "EXR.D.USD.EUR.SP00.A",
                 "ICP.M.U2.N.000000.4.ANR",
             ],
@@ -154,7 +180,10 @@ PRO_DOMAIN_CONFIG = {
             "census_metrics": []
         },
         "market_data": {
-            "alpha_vantage_symbols": ["SPY", "QQQ", "IWM", "TLT", "SHY", "GLD", "USO"],
+            "alpha_vantage_symbols": [
+                "SPY", "QQQ", "IWM", "TLT", "SHY", "GLD", "USO",
+                "N225", "DAX", "EWJ", "EWG",
+            ],
             "frankfurter_fx_pairs": ["EURUSD", "USDJPY", "GBPUSD", "AUDUSD"],
             "instrument_symbols": ["FEDFUNDS", "DGS10", "CPIAUCSL", "DTWEXBGS"]
         },
@@ -223,8 +252,8 @@ PRO_DOMAIN_CONFIG = {
             "WPUFD4": "PPI Final Demand — upstream inflation pressure",
             "NY.GDP.MKTP.KD.ZG": "Real GDP growth rate",
             "FP.CPI.TOTL.ZG": "Global inflation rate comparison",
-            "0003423164": "Japan CPI — domestic inflation and BoJ policy context",
-            "FM.D.U2.EUR.4F.KR.MRR_FAC.LEV": "ECB main refinancing rate — euro area policy stance",
+            "0003427113": "Japan CPI — domestic inflation and BoJ policy context",
+            "FM.D.U2.EUR.4F.KR.MRR_RT.LEV": "ECB main refinancing rate — euro area policy stance",
             "EXR.D.USD.EUR.SP00.A": "EUR/USD reference rate — transatlantic FX and liquidity",
             "ICP.M.U2.N.000000.4.ANR": "Euro area HICP — ECB inflation mandate anchor",
             "BCB.11": "Brazil Selic — EM policy rate and risk appetite",
@@ -240,7 +269,11 @@ PRO_DOMAIN_CONFIG = {
             "EURUSD": "Euro/USD — transatlantic policy divergence",
             "USDJPY": "USD/JPY — carry trade and BoJ policy proxy",
             "GBPUSD": "GBP/USD — UK macro sensitivity",
-            "AUDUSD": "AUD/USD — commodity and China growth proxy"
+            "AUDUSD": "AUD/USD — commodity and China growth proxy",
+            "N225": "Nikkei 225 — Japan macro and BoJ sensitivity",
+            "DAX": "DAX — euro-area industrial cycle",
+            "EWJ": "Japan equity ETF proxy",
+            "EWG": "Germany/Europe equity ETF proxy",
         },
         "market_group_map": {
             "SPY": {"group": "Equity Indices", "order": 1},
@@ -253,14 +286,20 @@ PRO_DOMAIN_CONFIG = {
             "EURUSD": {"group": "FX Majors", "order": 5},
             "USDJPY": {"group": "FX Majors", "order": 5},
             "GBPUSD": {"group": "FX Majors", "order": 5},
-            "AUDUSD": {"group": "FX Majors", "order": 5}
+            "AUDUSD": {"group": "FX Majors", "order": 5},
+            "N225": {"group": "Asia-Pacific Indices", "order": 6},
+            "EWJ": {"group": "Asia-Pacific Indices", "order": 6},
+            "DAX": {"group": "European Indices", "order": 7},
+            "EWG": {"group": "European Indices", "order": 7},
         },
         "market_group_interpretation": {
             "Equity Indices": {"positive_means": "risk_on", "negative_means": "stress", "description": "Broad equity direction reflects macro risk appetite"},
             "Fixed Income": {"positive_means": "flight_to_safety", "negative_means": "risk_on", "description": "Bond prices rising suggests rate cut expectations or risk aversion"},
             "Safe Haven": {"positive_means": "stress", "negative_means": "risk_on", "description": "Gold rising signals real-rate or geopolitical anxiety"},
             "Commodities": {"positive_means": "inflationary", "negative_means": "deflationary", "description": "Commodity prices reflect inflation expectations"},
-            "FX Majors": {"positive_means": "usd_strength", "negative_means": "usd_weakness", "description": "FX pairs indicate USD liquidity conditions"}
+            "FX Majors": {"positive_means": "usd_strength", "negative_means": "usd_weakness", "description": "FX pairs indicate USD liquidity conditions"},
+            "Asia-Pacific Indices": {"positive_means": "risk_on", "negative_means": "stress", "description": "Japan risk appetite vs global rates and FX"},
+            "European Indices": {"positive_means": "risk_on", "negative_means": "stress", "description": "European cyclical exposure to global macro"},
         },
         "watch_conditions_template": {
             "escalation": [
@@ -295,7 +334,7 @@ PRO_DOMAIN_CONFIG = {
             "fred_series": ["IPB53122S", "DGS10"], # Semi Production, Rates
             "bls_series": ["PCU334413334413"], # PPI Semi
             "worldbank_indicators": [],
-            "estat_series": ["0003410537"],  # Japan IIP (mining & manufacturing)
+            "estat_series": ["0004015804"],  # Japan IIP (2020 base, monthly production)
             "comtrade_commodity_codes": ["8542"], # Integrated circuits
             "bea_metrics": ["Value-Added-Manufacturing"],
             "census_metrics": ["CBP-Semi-Estab"],
@@ -366,7 +405,7 @@ PRO_DOMAIN_CONFIG = {
             "IPB53122S": "US semiconductor industrial production index",
             "DGS10": "Long-term discount rate — tech valuation sensitivity",
             "PCU334413334413": "PPI for semiconductor manufacturing",
-            "0003410537": "Japan IIP — manufacturing output cycle (semi supply chain)",
+            "0004015804": "Japan IIP — manufacturing output cycle (semi supply chain)",
             "8542": "Integrated circuit global trade volume",
             "SMH": "Semiconductor equity ETF — sector sentiment",
             "SOXX": "Broad semiconductor index — confirmation",

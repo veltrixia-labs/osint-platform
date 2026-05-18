@@ -15,8 +15,8 @@ def series_key_to_id(series_key: str) -> str:
 ECB_SERIES_CATALOG: Dict[str, List[Dict[str, Any]]] = {
     "policy_rate": [
         {
-            "series_key": "FM/D.U2.EUR.4F.KR.MRR_FAC.LEV",
-            "series_id": series_key_to_id("FM/D.U2.EUR.4F.KR.MRR_FAC.LEV"),
+            "series_key": "FM/D.U2.EUR.4F.KR.MRR_RT.LEV",
+            "series_id": series_key_to_id("FM/D.U2.EUR.4F.KR.MRR_RT.LEV"),
             "name": "ECB Main Refinancing Operations Rate",
             "unit": "percent",
             "frequency_hint": "daily",

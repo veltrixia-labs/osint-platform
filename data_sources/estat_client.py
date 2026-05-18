@@ -41,6 +41,7 @@ class EStatClient(BaseAPIClient):
         limit: int = 100_000,
         start_position: int = 1,
         meta_get_flg: str = "N",
+        narrowing: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """
         Call getStatsData and return raw JSON.
@@ -49,11 +50,16 @@ class EStatClient(BaseAPIClient):
             "appId": self.api_key,
             "statsDataId": stats_data_id,
             "metaGetFlg": meta_get_flg,
-            "cntGetFlg": "Y",
+            # "Y" returns counts only and omits VALUE rows (API 3.0 manual §4.3).
+            "cntGetFlg": "N",
             "sectionHeaderFlg": "1",
             "limit": limit,
             "startPosition": start_position,
         }
+        if narrowing:
+            for key, value in narrowing.items():
+                if value:
+                    params[key] = value
         try:
             return self.get_json(ESTAT_GET_STATS_DATA_PATH, params=params)
         except Exception as exc:
@@ -64,11 +70,13 @@ class EStatClient(BaseAPIClient):
         self,
         stats_data_id: str,
         max_observations: int = 60,
+        *,
+        narrowing: Optional[Dict[str, str]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Fetch table values and return normalized observation rows (newest first).
         """
-        raw = self.get_stats_data(stats_data_id, limit=100_000)
+        raw = self.get_stats_data(stats_data_id, limit=100_000, narrowing=narrowing)
         if raw.get("error"):
             return []
 
@@ -108,6 +116,10 @@ class EStatClient(BaseAPIClient):
         stat = root.get("STATISTICAL_DATA") or root.get("statisticalData") or {}
         data = stat.get("DATA") or stat.get("data") or {}
         values = data.get("VALUE") or data.get("value") or []
+        if not values:
+            data_inf = stat.get("DATA_INF") or stat.get("dataInf") or {}
+            if isinstance(data_inf, dict):
+                values = data_inf.get("VALUE") or data_inf.get("value") or []
         if isinstance(values, dict):
             values = [values]
 

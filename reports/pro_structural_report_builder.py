@@ -8,10 +8,19 @@ human-readable Markdown report for Pro users.
 from typing import Any, List, Optional, Dict
 import math
 
+from analysis.pro_global_series import (
+    energy_supply_driven_market_status,
+    merge_relevance_maps,
+    relevance_display_name,
+    select_quantitative_context_cards,
+    trend_meaning_for_observation,
+)
+
 def build_pro_structural_report(context: dict) -> str:
     """
     Generates a full Markdown report based on the provided context.
     """
+    context = _apply_macro_and_market_priorities(context)
     sections = [
         "# Structural Impact Brief",
         _build_executive_snapshot(context),
@@ -122,17 +131,21 @@ def _build_quantitative_context(ctx: dict) -> str:
     s_ctx = ctx.get("structural_context", {})
     lines = ["## 3. Quantitative Context"]
     
-    # Summary Cards for Macro
-    obs = s_ctx.get("macro_observations", [])
-    if obs:
+    display_cards = s_ctx.get("macro_display_cards") or s_ctx.get("macro_observations", [])
+    all_macro = s_ctx.get("macro_observations", [])
+    if display_cards:
         lines.append("<div class=\"metric-card-grid\">")
-        for o in obs[:4]:
+        for o in display_cards[:6]:
             val = format_value(o.get("latest_value"))
             change = format_percent(o.get("change_pct"))
+            label = o.get("display_name") or o.get("series_id", "")
             lines.append("  <div class=\"metric-card\">")
-            lines.append(f"    <div class=\"metric-label\">{o['series_id']}</div>")
+            lines.append(f"    <div class=\"metric-label\">{label}</div>")
             lines.append(f"    <div class=\"metric-value\">{val}</div>")
             lines.append(f"    <div class=\"metric-label\">{change} (Lookback)</div>")
+            meaning = o.get("trend_meaning")
+            if meaning:
+                lines.append(f"    <blockquote class=\"highlight-box\">{meaning}</blockquote>")
             lines.append("  </div>")
         lines.append("</div>")
 
@@ -143,10 +156,10 @@ def _build_quantitative_context(ctx: dict) -> str:
     
     # Macro Table
     lines.append("### Macro / Structural Observations")
-    if obs:
+    if all_macro:
         lines.append("| Series ID | Source | Latest Value | Date | % Change (Lookback) |")
         lines.append("| :--- | :--- | :--- | :--- | :--- |")
-        for o in obs:
+        for o in all_macro:
             val = format_value(o.get("latest_value"))
             change = format_percent(o.get("change_pct"))
             lines.append(f"| {o['series_id']} | {o['source']} | {val} | {o['latest_date']} | {change} |")
@@ -191,15 +204,7 @@ def _build_market_confirmation_section(ctx: dict) -> str:
     neg_movers = [p for p in prices if (p.get("percent_change") or 0) < -0.5]
     na_movers = [p for p in prices if p.get("percent_change") is None]
     
-    # Determine status
-    status = "Limited"
-    if prices:
-        if len(pos_movers) > len(prices) * 0.6 or len(neg_movers) > len(prices) * 0.6:
-            status = "Confirming"
-        elif len(pos_movers) > 0 and len(neg_movers) > 0:
-            status = "Mixed"
-        else:
-            status = "Divergent"
+    status = m_ctx.get("status") or _compute_market_status(prices)
             
     # Market Summary Grid
     lines.append("<div class=\"market-summary-grid\">")
@@ -398,6 +403,95 @@ def compact_number(val: Any) -> str:
         return f"{val / 1_000:.2f}K"
     return f"{val:.2f}"
 
+
+def _finalize_event_timeline_for_payload(
+    event_timeline: List[dict],
+    related_events: List[dict],
+    signal: Optional[dict],
+) -> List[dict]:
+    """
+    Ensure related_events are reflected in event_timeline with type (trigger/context/background).
+    """
+    from analysis.pro_structural_context import _assign_timeline_types
+
+    timeline = [dict(item) for item in event_timeline]
+    seen = {(e.get("alert_id"), e.get("title")) for e in timeline}
+    for ev in related_events or []:
+        key = (ev.get("alert_id"), ev.get("title"))
+        if key not in seen:
+            timeline.append(dict(ev))
+            seen.add(key)
+    if not timeline and related_events:
+        timeline = [dict(item) for item in related_events]
+
+    trigger_alert_id = (signal or {}).get("alert_id")
+    return _assign_timeline_types(timeline, trigger_alert_id)
+
+
+def _compute_market_status(prices: List[dict]) -> str:
+    pos_movers = [p for p in prices if (p.get("percent_change") or 0) > 0.5]
+    neg_movers = [p for p in prices if (p.get("percent_change") or 0) < -0.5]
+    if not prices:
+        return "Limited"
+    if len(pos_movers) > len(prices) * 0.6 or len(neg_movers) > len(prices) * 0.6:
+        return "Confirming"
+    if len(pos_movers) > 0 and len(neg_movers) > 0:
+        return "Mixed"
+    return "Divergent"
+
+
+def _apply_macro_and_market_priorities(context: dict) -> dict:
+    """Reorder macro cards and apply energy supply-driven market status override."""
+    from analysis.pro_domain_config import get_pro_domain_config
+
+    ctx = dict(context)
+    domain_id = ctx.get("domain", {}).get("domain_id", "")
+    relevance_raw = ctx.get("relevance_map", {})
+    if relevance_raw and not isinstance(next(iter(relevance_raw.values()), None), dict):
+        relevance_map = merge_relevance_maps(relevance_raw)
+    else:
+        relevance_map = relevance_raw or merge_relevance_maps({})
+
+    s_ctx = dict(ctx.get("structural_context", {}))
+    m_ctx = dict(ctx.get("market_confirmation", {}))
+
+    enriched: List[dict] = []
+    for obs in s_ctx.get("macro_observations", []):
+        entry = dict(obs)
+        sid = entry.get("series_id", "")
+        entry["display_name"] = relevance_display_name(relevance_map, sid)
+        entry["trend_meaning"] = trend_meaning_for_observation(
+            relevance_map, sid, entry.get("change_pct")
+        )
+        enriched.append(entry)
+
+    config = get_pro_domain_config(domain_id) or {}
+    structural_data = config.get("structural_data", {})
+    display_cards = select_quantitative_context_cards(
+        enriched, domain_id, structural_data, limit=6
+    )
+    picked = {c["series_id"] for c in display_cards}
+    s_ctx["macro_display_cards"] = display_cards
+    s_ctx["macro_observations"] = display_cards + [
+        o for o in enriched if o.get("series_id") not in picked
+    ]
+
+    prices = m_ctx.get("latest_prices", [])
+    status = _compute_market_status(prices)
+    supply_status = energy_supply_driven_market_status(domain_id, enriched)
+    if supply_status:
+        status = supply_status
+        m_ctx["supply_driven"] = True
+    else:
+        m_ctx["supply_driven"] = False
+    m_ctx["status"] = status
+
+    ctx["structural_context"] = s_ctx
+    ctx["market_confirmation"] = m_ctx
+    ctx["relevance_map"] = relevance_map
+    return ctx
+
+
 def build_pro_structural_report_payload(context: dict) -> dict:
     """
     Extracts structured payload for the Intelligence Report UI.
@@ -405,6 +499,7 @@ def build_pro_structural_report_payload(context: dict) -> dict:
     divergence check, watch conditions, exposure matrix, and coverage matrix.
     All analysis is rule-based / heuristic — no LLM dependency.
     """
+    context = _apply_macro_and_market_priorities(context)
     domain = context.get("domain", {})
     sig = context.get("signal", {})
     s_ctx = context.get("structural_context", {})
@@ -415,22 +510,18 @@ def build_pro_structural_report_payload(context: dict) -> dict:
     neg_movers = [p for p in prices if (p.get("percent_change") or 0) < -0.5]
     na_movers = [p for p in prices if p.get("percent_change") is None]
     
-    status = "Limited"
-    if prices:
-        if len(pos_movers) > len(prices) * 0.6 or len(neg_movers) > len(prices) * 0.6:
-            status = "Confirming"
-        elif len(pos_movers) > 0 and len(neg_movers) > 0:
-            status = "Mixed"
-        else:
-            status = "Divergent"
-            
+    status = m_ctx.get("status") or _compute_market_status(prices)
     freshness = context.get("data_freshness", {})
 
     # --- 1. Signal Classification (from domain template) ---
     sig_class = context.get("signal_classification_template", {})
 
-    # --- 2. Event Timeline (built in context engine) ---
-    event_timeline = context.get("event_timeline", [])
+    # --- 2. Event Timeline (alerts + news, with UI types) ---
+    event_timeline = _finalize_event_timeline_for_payload(
+        context.get("event_timeline", []),
+        context.get("related_events", []),
+        sig,
+    )
 
     # --- 3. Relevance Map (from domain config) ---
     relevance_map = context.get("relevance_map", {})
@@ -464,14 +555,17 @@ def build_pro_structural_report_payload(context: dict) -> dict:
     exec_summary, key_findings = _build_executive_summary(
         domain, sig, sig_class, status, coverage_matrix, divergence_check, breakdown, geo_context
     )
+    if m_ctx.get("supply_driven"):
+        key_findings = [
+            "Physical crude up with US inventory draw — supply-driven confirmation",
+            *key_findings,
+        ]
 
-    # --- 12. Enrich macro observations with display_name ---
-    enriched_macro = []
-    for obs in s_ctx.get("macro_observations", []):
-        entry = dict(obs)
-        sid = entry.get("series_id", "")
-        entry["display_name"] = relevance_map.get(sid, sid)
-        enriched_macro.append(entry)
+    enriched_macro = s_ctx.get("macro_observations", [])
+    macro_display_cards = s_ctx.get("macro_display_cards", enriched_macro[:6])
+    relevance_map_payload = {
+        sid: relevance_display_name(relevance_map, sid) for sid in relevance_map
+    }
 
     return {
         "domain": {
@@ -494,13 +588,16 @@ def build_pro_structural_report_payload(context: dict) -> dict:
         "event_timeline": event_timeline,
         "structural_context": {
             "macro_observations": enriched_macro,
+            "macro_display_cards": macro_display_cards,
             "trade_flows": s_ctx.get("trade_flows", []),
             "industry_stats": s_ctx.get("industry_stats", [])
         },
-        "relevance_map": relevance_map,
+        "relevance_map": relevance_map_payload,
+        "relevance_map_detail": relevance_map,
         "market_confirmation": {
             "latest_prices": prices,
             "status": status,
+            "supply_driven": m_ctx.get("supply_driven", False),
             "positive_movers": len(pos_movers),
             "negative_movers": len(neg_movers),
             "limited_instruments": len(na_movers),

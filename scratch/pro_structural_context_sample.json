@@ -16,16 +16,147 @@
     ]
   },
   "signal": null,
+  "event_timeline": [],
   "structural_context": {
     "macro_observations": [
       {
         "series_id": "DCOILWTICO",
         "source": "fred",
-        "latest_value": 99.89,
-        "latest_date": "2026-04-27",
+        "latest_value": 101.56,
+        "latest_date": "2026-05-11",
         "period_label": null,
-        "previous_value": 101.26,
-        "change_pct": -1.3529527947857045,
+        "previous_value": 98.34,
+        "change_pct": 3.2743542810656887,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "GASREGW",
+        "source": "fred",
+        "latest_value": 4.5,
+        "latest_date": "2026-05-11",
+        "period_label": null,
+        "previous_value": 4.12,
+        "change_pct": 9.223300970873783,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "WPU05",
+        "source": "bls",
+        "latest_value": 247.406,
+        "latest_date": "2026-03-01",
+        "period_label": "M03",
+        "previous_value": 216.228,
+        "change_pct": 14.41903916236565,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "WPU051",
+        "source": "bls",
+        "latest_value": 290.192,
+        "latest_date": "2026-03-01",
+        "period_label": "M03",
+        "previous_value": 290.727,
+        "change_pct": -0.1840214359175337,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "WCESTUS1",
+        "source": "eia",
+        "latest_value": 452876.0,
+        "latest_date": "2026-05-08",
+        "period_label": "2026-05-08",
+        "previous_value": 464717.0,
+        "change_pct": -2.5480023326024224,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "WPULEUS3",
+        "source": "eia",
+        "latest_value": 91.7,
+        "latest_date": "2026-05-08",
+        "period_label": "2026-05-08",
+        "previous_value": 92.0,
+        "change_pct": -0.326086956521736,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "WCRFPUS2",
+        "source": "eia",
+        "latest_value": 13710.0,
+        "latest_date": "2026-05-08",
+        "period_label": "2026-05-08",
+        "previous_value": 13596.0,
+        "change_pct": 0.8384819064430714,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "OPEC.CRUDE_PRODUCTION",
+        "source": "opec",
+        "latest_value": 33.32,
+        "latest_date": "2022-01-01",
+        "period_label": "2022",
+        "previous_value": 31.55,
+        "change_pct": 5.610142630744848,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "CPIAUCSL",
+        "source": "fred",
+        "latest_value": 332.407,
+        "latest_date": "2026-04-01",
+        "period_label": null,
+        "previous_value": 330.293,
+        "change_pct": 0.6400377846336361,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "FEDFUNDS",
+        "source": "fred",
+        "latest_value": 3.64,
+        "latest_date": "2026-04-01",
+        "period_label": null,
+        "previous_value": 3.64,
+        "change_pct": 0.0,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "0003427113",
+        "source": "estat",
+        "latest_value": 112.7,
+        "latest_date": "2026-01-01",
+        "period_label": "2026000303",
+        "previous_value": 112.3,
+        "change_pct": 0.3561887800534334,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "0004015804",
+        "source": "estat",
+        "latest_value": 97.3,
+        "latest_date": "0517-10-01",
+        "period_label": "0517100",
+        "previous_value": 107.2,
+        "change_pct": -9.235074626865677,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "ICP.M.U2.N.000000.4.ANR",
+        "source": "ecb",
+        "latest_value": 1.9,
+        "latest_date": "2025-12-01",
+        "period_label": "2025-12",
+        "previous_value": 2.1,
+        "change_pct": -9.52380952380953,
+        "raw_json": "...(omitted)..."
+      },
+      {
+        "series_id": "FM.D.U2.EUR.4F.KR.MRR_RT.LEV",
+        "source": "ecb",
+        "latest_value": 2.15,
+        "latest_date": "2026-05-18",
+        "period_label": "2026-05-18",
+        "previous_value": 2.15,
+        "change_pct": 0.0,
         "raw_json": "...(omitted)..."
       }
     ],
@@ -151,6 +282,30 @@
         "unit": "8"
       },
       {
+        "reporter_name": "China",
+        "partner_name": "World",
+        "flow_type": "X",
+        "commodity_id": "2805",
+        "commodity_name": "Alkali or rare-earth metals",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 541036207.0,
+        "quantity": 48938735.769,
+        "unit": "8"
+      },
+      {
+        "reporter_name": "Japan",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2805",
+        "commodity_name": "Alkali or rare-earth metals",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 368418728.416,
+        "quantity": 9984301.497,
+        "unit": "8"
+      },
+      {
         "reporter_name": "Germany",
         "partner_name": "World",
         "flow_type": "M",
@@ -199,6 +354,18 @@
         "unit": "8"
       },
       {
+        "reporter_name": "United States",
+        "partner_name": "World",
+        "flow_type": "M",
+        "commodity_id": "2805",
+        "commodity_name": "Alkali or rare-earth metals",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 97579668.0,
+        "quantity": 21487627.683,
+        "unit": "8"
+      },
+      {
         "reporter_name": "Japan",
         "partner_name": "World",
         "flow_type": "X",
@@ -211,63 +378,27 @@
         "unit": "-1"
       },
       {
-        "reporter_name": "Germany",
+        "reporter_name": "United States",
         "partner_name": "World",
         "flow_type": "X",
-        "commodity_id": "2709",
-        "commodity_name": "Crude petroleum oils",
+        "commodity_id": "2805",
+        "commodity_name": "Alkali or rare-earth metals",
         "year": 2023,
         "period": "20230101",
-        "trade_value": 1238852.81,
-        "quantity": 2640400.0,
+        "trade_value": 50841940.0,
+        "quantity": 2743679.324,
         "unit": "8"
-      },
-      {
-        "reporter_name": "United Kingdom",
-        "partner_name": "World",
-        "flow_type": "M",
-        "commodity_id": "2711",
-        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
-        "year": 2023,
-        "period": "20230101",
-        "trade_value": 120375.781,
-        "quantity": 11062.0,
-        "unit": "8"
-      },
-      {
-        "reporter_name": "United Kingdom",
-        "partner_name": "World",
-        "flow_type": "X",
-        "commodity_id": "2711",
-        "commodity_name": "Petroleum gases and other gaseous hydrocarbons",
-        "year": 2023,
-        "period": "20230101",
-        "trade_value": 41019.769,
-        "quantity": 2133.948,
-        "unit": "8"
-      },
-      {
-        "reporter_name": "United Kingdom",
-        "partner_name": "World",
-        "flow_type": "X",
-        "commodity_id": "2709",
-        "commodity_name": "Crude petroleum oils",
-        "year": 2023,
-        "period": "20230101",
-        "trade_value": 5995.981,
-        "quantity": null,
-        "unit": "-1"
       },
       {
         "reporter_name": "China",
         "partner_name": "World",
         "flow_type": "M",
-        "commodity_id": "2709",
-        "commodity_name": "Crude petroleum oils",
-        "year": 2022,
-        "period": "20220101",
-        "trade_value": 365512019551.0,
-        "quantity": 508276035032.0,
+        "commodity_id": "2805",
+        "commodity_name": "Alkali or rare-earth metals",
+        "year": 2023,
+        "period": "20230101",
+        "trade_value": 23689426.0,
+        "quantity": 435017.459,
         "unit": "8"
       }
     ],
@@ -479,7 +610,7 @@
       {
         "provider": "alpha_vantage",
         "symbol": "XLE",
-        "asset_class": "unknown",
+        "asset_class": "equity",
         "latest_date": "2026-05-05",
         "latest_close": 59.45,
         "previous_date": "2026-04-02",
@@ -488,36 +619,91 @@
         "interval": "daily"
       },
       {
+        "provider": "alpha_vantage",
+        "symbol": "XOP",
+        "asset_class": "equity",
+        "latest_date": "2026-05-05",
+        "latest_close": 180.59,
+        "previous_date": "2026-04-02",
+        "previous_close": 177.72,
+        "percent_change": 1.6148998424487984,
+        "interval": "daily"
+      },
+      {
+        "provider": "alpha_vantage",
+        "symbol": "USO",
+        "asset_class": "equity",
+        "latest_date": "2026-05-08",
+        "latest_close": 133.59,
+        "previous_date": "2026-04-08",
+        "previous_close": 124.58,
+        "percent_change": 7.2323005297800655,
+        "interval": "daily"
+      },
+      {
+        "provider": "alpha_vantage",
+        "symbol": "IYT",
+        "asset_class": "equity",
+        "latest_date": "2026-05-08",
+        "latest_close": 80.78,
+        "previous_date": "2026-04-08",
+        "previous_close": 77.78,
+        "percent_change": 3.8570326562098223,
+        "interval": "daily"
+      },
+      {
+        "provider": "alpha_vantage",
+        "symbol": "JETS",
+        "asset_class": "equity",
+        "latest_date": "2026-05-05",
+        "latest_close": 26.06,
+        "previous_date": "2026-04-02",
+        "previous_close": 24.93,
+        "percent_change": 4.53269153630164,
+        "interval": "daily"
+      },
+      {
         "provider": "frankfurter",
         "symbol": "USDCAD",
-        "asset_class": "unknown",
-        "latest_date": "2026-05-05",
-        "latest_close": 1.3615,
-        "previous_date": null,
-        "previous_close": null,
-        "percent_change": null,
+        "asset_class": "fx",
+        "latest_date": "2026-05-08",
+        "latest_close": 1.3658,
+        "previous_date": "2026-04-08",
+        "previous_close": 1.386,
+        "percent_change": -1.4574314574314573,
         "interval": "daily_reference"
       },
       {
         "provider": "frankfurter",
         "symbol": "USDNOK",
-        "asset_class": "unknown",
-        "latest_date": "2026-05-05",
-        "latest_close": 9.2465,
-        "previous_date": null,
-        "previous_close": null,
-        "percent_change": null,
+        "asset_class": "fx",
+        "latest_date": "2026-05-08",
+        "latest_close": 9.2012,
+        "previous_date": "2026-04-08",
+        "previous_close": 9.528,
+        "percent_change": -3.429890848026872,
         "interval": "daily_reference"
       },
       {
         "provider": "frankfurter",
         "symbol": "USDBRL",
-        "asset_class": "unknown",
-        "latest_date": "2026-05-05",
-        "latest_close": 4.9525,
-        "previous_date": null,
-        "previous_close": null,
-        "percent_change": null,
+        "asset_class": "fx",
+        "latest_date": "2026-05-08",
+        "latest_close": 4.914,
+        "previous_date": "2026-04-08",
+        "previous_close": 5.0818,
+        "percent_change": -3.301979613522779,
+        "interval": "daily_reference"
+      },
+      {
+        "provider": "frankfurter",
+        "symbol": "USDJPY",
+        "asset_class": "fx",
+        "latest_date": "2026-05-08",
+        "latest_close": 156.76,
+        "previous_date": "2026-04-08",
+        "previous_close": 158.15,
+        "percent_change": -0.8789124249130664,
         "interval": "daily_reference"
       }
     ]
@@ -532,7 +718,18 @@
       "upward_interpretation": "Rising costs for energy consumers, windfall for producers.",
       "downward_interpretation": "Easing headline inflation pressure, risk to exporter fiscal balances.",
       "limitation": "Spot price doesn't reflect long-term contract structures.",
-      "latest_value": 99.89
+      "latest_value": 101.56
+    },
+    {
+      "indicator": "Energy Sector ETF (XLE)",
+      "source": "Alpha Vantage",
+      "lookup_type": "market_price",
+      "symbol": "XLE",
+      "why_it_matters": "Direct equity market reflection of energy sector profitability and sentiment.",
+      "upward_interpretation": "Market is pricing in sustained demand or margin expansion for energy firms.",
+      "downward_interpretation": "Concerns over demand destruction or peak cyclical earnings.",
+      "limitation": "XLE is dominated by a few large caps (XOM/CVX).",
+      "latest_value": 59.45
     }
   ],
   "transmission_channels": [
@@ -556,17 +753,435 @@
     ]
   },
   "data_freshness": {
-    "last_update": "2026-05-05"
+    "last_update": "2026-05-18"
   },
   "data_notes": [
-    "Macro series GASREGW not found in DB.",
-    "Macro series WPU051 not found in DB.",
-    "Macro series WPU0511 not found in DB.",
-    "Macro series WPU0543 not found in DB.",
     "Macro series NY.GDP.MKTP.CD not found in DB.",
-    "Market data for XOP not yet synced.",
-    "Market data for USO not yet synced.",
-    "Market data for IYT not yet synced.",
-    "Market data for JETS not yet synced."
-  ]
+    "Macro series WORLD.CRUDE_PRODUCTION not found in DB.",
+    "Market data for N225 not yet synced.",
+    "Market data for DAX not yet synced.",
+    "Market data for EWJ not yet synced.",
+    "Market data for EWG not yet synced.",
+    "Market data for EURUSD not yet synced."
+  ],
+  "signal_classification_template": {
+    "primary_type": "energy_supply_disruption",
+    "secondary_types": [
+      "maritime_chokepoint",
+      "petro_fx_sensitivity",
+      "commodity_repricing"
+    ],
+    "rationale": "Related events point to oil export disruption and tanker route risk rather than a pure demand shock."
+  },
+  "relevance_map": {
+    "CPIAUCSL": {
+      "display_name": "US CPI (headline)",
+      "up_meaning": "Sticky US inflation; tighter Fed reaction function likely.",
+      "down_meaning": "Disinflation progress; room for slower tightening or cuts."
+    },
+    "FEDFUNDS": {
+      "display_name": "US Federal Funds Rate",
+      "up_meaning": "Tighter US financial conditions; stronger USD bias.",
+      "down_meaning": "Easier US policy; support for risk assets and duration."
+    },
+    "DGS10": {
+      "display_name": "US 10Y Treasury yield",
+      "up_meaning": "Higher discount rates; pressure on growth valuations.",
+      "down_meaning": "Lower term premium; supportive for bonds and equities."
+    },
+    "DCOILWTICO": {
+      "display_name": "Global crude oil repricing proxy",
+      "up_meaning": "Supply shock or demand strength; inflation and petro-FX stress.",
+      "down_meaning": "Demand destruction or supply relief; inflation headwind eases."
+    },
+    "GASREGW": {
+      "display_name": "Consumer fuel cost pass-through",
+      "up_meaning": "Consumer energy burden rising; political sensitivity increases.",
+      "down_meaning": "Pump price relief; household real income support."
+    },
+    "DTWEXBGS": {
+      "display_name": "Broad US dollar index",
+      "up_meaning": "USD strength; EM and commodity importers under pressure.",
+      "down_meaning": "USD weakness; global liquidity and EM risk-on support."
+    },
+    "M2SL": {
+      "display_name": "US M2 money stock",
+      "up_meaning": "Liquidity expansion; supports risk assets (with lag).",
+      "down_meaning": "Liquidity contraction; tighter financial conditions."
+    },
+    "IPB53122S": {
+      "display_name": "US industrial production (semi)",
+      "up_meaning": "Manufacturing momentum; capacity utilization rising.",
+      "down_meaning": "Industrial slowdown; inventory cycle risk."
+    },
+    "WPU05": {
+      "display_name": "Upstream producer price pressure for fuels",
+      "up_meaning": "Upstream energy cost pressure feeding wholesale prices.",
+      "down_meaning": "Producer energy costs easing; margin relief downstream."
+    },
+    "WPU051": {
+      "display_name": "Refined petroleum product cost index",
+      "up_meaning": "Refined product inflation; margin squeeze for consumers.",
+      "down_meaning": "Refined product deflation; refining margin normalization."
+    },
+    "WPUFD4": {
+      "display_name": "US PPI final demand",
+      "up_meaning": "Broad producer inflation; margin compression risk.",
+      "down_meaning": "Producer disinflation; downstream CPI may follow."
+    },
+    "PCU334413334413": {
+      "display_name": "US PPI semiconductors",
+      "up_meaning": "Chip input costs rising; margin pressure on OEMs.",
+      "down_meaning": "Semi input deflation; supports device pricing power."
+    },
+    "0003427113": {
+      "display_name": "Japan CPI (2020 base)",
+      "up_meaning": "Domestic inflation firming; BoJ normalization risk rises.",
+      "down_meaning": "Japan disinflation; sustained ultra-loose policy bias."
+    },
+    "0004015804": {
+      "display_name": "Japan IIP — production (2020=100)",
+      "up_meaning": "Manufacturing cycle strengthening; export engine warming.",
+      "down_meaning": "Industrial output contraction; Asia supply chain softening."
+    },
+    "ICP.M.U2.N.000000.4.ANR": {
+      "display_name": "Euro area HICP (YoY)",
+      "up_meaning": "ECB may stay restrictive; EUR real rates supportive.",
+      "down_meaning": "ECB cut path more likely; duration rally potential."
+    },
+    "FM.D.U2.EUR.4F.KR.MRR_RT.LEV": {
+      "display_name": "ECB main refinancing rate",
+      "up_meaning": "Tighter euro-area conditions; bank NIM support.",
+      "down_meaning": "Euro-area easing; credit impulse turning supportive."
+    },
+    "EXR.D.USD.EUR.SP00.A": {
+      "display_name": "EUR/USD reference rate",
+      "up_meaning": "EUR strengthening vs USD; easier euro-area financial conditions abroad.",
+      "down_meaning": "EUR weakening; export competitiveness rises but import inflation risk."
+    },
+    "WCESTUS1": {
+      "display_name": "U.S. crude oil inventories ex-SPR — weekly supply/demand balance",
+      "up_meaning": "Stock build — oversupply or weak demand signal.",
+      "down_meaning": "Stock draw — tight physical market / supply-driven bid."
+    },
+    "WPULEUS3": {
+      "display_name": "U.S. refinery utilization — operable capacity usage",
+      "up_meaning": "High utilization; strong downstream demand for crude.",
+      "down_meaning": "Low utilization; maintenance or demand softness."
+    },
+    "WCRFPUS2": {
+      "display_name": "U.S. field crude production — domestic supply growth",
+      "up_meaning": "US supply growth; OPEC+ market share pressure.",
+      "down_meaning": "US supply restraint; supports global balances."
+    },
+    "OPEC.CRUDE_PRODUCTION": {
+      "display_name": "OPEC crude production — cartel supply strategy",
+      "up_meaning": "Cartel supply addition; bearish for prompt prices unless demand matches.",
+      "down_meaning": "OPEC supply restraint; supports price floor."
+    },
+    "WORLD.CRUDE_PRODUCTION": {
+      "display_name": "World crude production — global supply baseline",
+      "up_meaning": "Global supply expansion; bearish unless demand surprise.",
+      "down_meaning": "Global supply contraction; structural tightness."
+    },
+    "BCB.11": {
+      "display_name": "Brazil Selic (policy)",
+      "up_meaning": "Tight EM policy; risk-off for high-beta assets.",
+      "down_meaning": "EM easing cycle; carry and commodity support."
+    },
+    "BCB.1": {
+      "display_name": "USD/BRL (PTAX)",
+      "up_meaning": "BRL weakening (USD/BRL up) — EM stress, capital outflows.",
+      "down_meaning": "BRL strengthening — risk-on for LatAm assets."
+    },
+    "BCB.433": {
+      "display_name": "Brazil IPCA (monthly)",
+      "up_meaning": "EM inflation surprise; BCB may stay hawkish.",
+      "down_meaning": "EM disinflation; rate-cut path opens."
+    },
+    "FDI.AMS.TOT.INF": {
+      "display_name": "ASEAN total FDI inflows",
+      "up_meaning": "Supply-chain relocation and regional investment boom.",
+      "down_meaning": "FDI slowdown; near-shoring narrative weakening."
+    },
+    "IMTS.Annually": {
+      "display_name": "ASEAN trade in goods",
+      "up_meaning": "Regional trade expansion; manufacturing hub strength.",
+      "down_meaning": "Trade contraction; demand or logistics disruption."
+    },
+    "NY.GDP.MKTP.CD": {
+      "display_name": "Aggregate output exposure to energy costs",
+      "up_meaning": "Nominal output expansion in USD terms.",
+      "down_meaning": "Nominal GDP contraction or FX-driven decline."
+    },
+    "NY.GDP.MKTP.KD.ZG": {
+      "display_name": "Real GDP growth (%)",
+      "up_meaning": "Growth acceleration; cyclical risk-on support.",
+      "down_meaning": "Growth slowdown; recession risk rising."
+    },
+    "FP.CPI.TOTL.ZG": {
+      "display_name": "Consumer price inflation (%)",
+      "up_meaning": "Global inflation pressure; policy stays restrictive.",
+      "down_meaning": "Global disinflation; easing cycle possible."
+    },
+    "N225": {
+      "display_name": "Nikkei 225 — Japan risk sentiment on energy shocks",
+      "up_meaning": "Japan risk-on; yen carry and export sentiment supportive.",
+      "down_meaning": "Japan risk-off; BoJ/Fx or global growth concerns."
+    },
+    "DAX": {
+      "display_name": "DAX — European industrial / energy import sensitivity",
+      "up_meaning": "European cyclical optimism; export/industrial bid.",
+      "down_meaning": "European growth fears; energy or China drag."
+    },
+    "EURUSD": {
+      "display_name": "EUR/USD — European terms-of-trade and ECB reaction",
+      "up_meaning": "EUR strength vs USD; easier euro-area financial conditions abroad.",
+      "down_meaning": "EUR weakness; USD liquidity dominance."
+    },
+    "USDJPY": {
+      "display_name": "USD/JPY — Japan energy import bill and BoJ pressure",
+      "up_meaning": "USD strength vs JPY — BoJ divergence, carry unwind risk for Japan.",
+      "down_meaning": "JPY strength — risk-off or BoJ hawkish repricing."
+    },
+    "EWJ": {
+      "display_name": "Japan equity proxy when Nikkei index feed unavailable",
+      "up_meaning": "Japan equity risk-on proxy.",
+      "down_meaning": "Japan equity risk-off proxy."
+    },
+    "EWG": {
+      "display_name": "Germany/Europe equity proxy for DAX region",
+      "up_meaning": "Europe cyclical equity bid (Germany proxy).",
+      "down_meaning": "Europe equity risk-off (Germany proxy)."
+    },
+    "XLE": {
+      "display_name": "Energy equity market confirmation",
+      "up_meaning": "",
+      "down_meaning": ""
+    },
+    "XOP": {
+      "display_name": "Exploration & production equity proxy",
+      "up_meaning": "",
+      "down_meaning": ""
+    },
+    "USO": {
+      "display_name": "Crude oil futures ETF tracking",
+      "up_meaning": "",
+      "down_meaning": ""
+    },
+    "IYT": {
+      "display_name": "Transport-sector cost sensitivity",
+      "up_meaning": "",
+      "down_meaning": ""
+    },
+    "JETS": {
+      "display_name": "Airline fuel-cost pass-through proxy",
+      "up_meaning": "",
+      "down_meaning": ""
+    },
+    "USDCAD": {
+      "display_name": "Petro-state FX: Canadian dollar sensitivity",
+      "up_meaning": "",
+      "down_meaning": ""
+    },
+    "USDNOK": {
+      "display_name": "Petro-state FX: Norwegian krone sensitivity",
+      "up_meaning": "",
+      "down_meaning": ""
+    },
+    "USDBRL": {
+      "display_name": "EM petro-state FX: Brazilian real sensitivity",
+      "up_meaning": "",
+      "down_meaning": ""
+    },
+    "2709": {
+      "display_name": "Crude petroleum trade volume",
+      "up_meaning": "",
+      "down_meaning": ""
+    },
+    "2711": {
+      "display_name": "Natural gas trade volume",
+      "up_meaning": "",
+      "down_meaning": ""
+    },
+    "2805": {
+      "display_name": "Strategic metals trade volume",
+      "up_meaning": "",
+      "down_meaning": ""
+    }
+  },
+  "market_group_map": {
+    "XLE": {
+      "group": "Energy Producers",
+      "order": 1
+    },
+    "XOP": {
+      "group": "Energy Producers",
+      "order": 1
+    },
+    "USO": {
+      "group": "Oil Price Proxy",
+      "order": 2
+    },
+    "DCOILWTICO": {
+      "group": "Oil Price Proxy",
+      "order": 2
+    },
+    "IYT": {
+      "group": "Transport Sensitivity",
+      "order": 3
+    },
+    "JETS": {
+      "group": "Transport Sensitivity",
+      "order": 3
+    },
+    "USDCAD": {
+      "group": "Petro FX",
+      "order": 4
+    },
+    "USDNOK": {
+      "group": "Petro FX",
+      "order": 4
+    },
+    "USDBRL": {
+      "group": "Petro FX",
+      "order": 4
+    },
+    "N225": {
+      "group": "Japan Market",
+      "order": 5
+    },
+    "EWJ": {
+      "group": "Japan Market",
+      "order": 5
+    },
+    "DAX": {
+      "group": "Europe Market",
+      "order": 6
+    },
+    "EWG": {
+      "group": "Europe Market",
+      "order": 6
+    },
+    "EURUSD": {
+      "group": "Tri-Polar FX",
+      "order": 7
+    },
+    "USDJPY": {
+      "group": "Tri-Polar FX",
+      "order": 7
+    }
+  },
+  "watch_conditions_template": {
+    "escalation": [
+      {
+        "condition": "WTI and USO rise while IYT/JETS weaken",
+        "monitored_data": [
+          "DCOILWTICO",
+          "USO",
+          "IYT",
+          "JETS"
+        ]
+      },
+      {
+        "condition": "Additional tanker or port disruption events appear",
+        "monitored_data": [
+          "related_news"
+        ]
+      },
+      {
+        "condition": "Petro-state FX becomes more volatile",
+        "monitored_data": [
+          "USDCAD",
+          "USDNOK",
+          "USDBRL"
+        ]
+      }
+    ],
+    "deescalation": [
+      {
+        "condition": "Crude prices stabilize within 5% band",
+        "monitored_data": [
+          "DCOILWTICO",
+          "USO"
+        ]
+      },
+      {
+        "condition": "Related shipping / port alerts decline",
+        "monitored_data": [
+          "related_news"
+        ]
+      },
+      {
+        "condition": "Transport-sensitive assets recover",
+        "monitored_data": [
+          "IYT",
+          "JETS"
+        ]
+      }
+    ]
+  },
+  "exposure_matrix_details": [
+    {
+      "target": "Refiners",
+      "transmission": "crude input costs",
+      "sensitivity": "high",
+      "reason": "Margins can narrow when crude costs rise faster than refined product prices."
+    },
+    {
+      "target": "Airlines",
+      "transmission": "jet fuel procurement",
+      "sensitivity": "high",
+      "reason": "Fuel is the largest variable cost; hedging only delays exposure."
+    },
+    {
+      "target": "Heavy manufacturing",
+      "transmission": "energy-intensive processes",
+      "sensitivity": "medium",
+      "reason": "Natural gas and electricity costs flow through to production margins."
+    },
+    {
+      "target": "Energy-dependent EMs",
+      "transmission": "import bill / fiscal balance",
+      "sensitivity": "high",
+      "reason": "Oil-importing emerging markets face twin deficits when crude rises sharply."
+    }
+  ],
+  "market_group_interpretation": {
+    "Energy Producers": {
+      "positive_means": "confirming",
+      "negative_means": "stress",
+      "description": "Rising energy equities confirm supply-side pressure"
+    },
+    "Oil Price Proxy": {
+      "positive_means": "confirming",
+      "negative_means": "easing",
+      "description": "Crude price movement validates or contradicts disruption thesis"
+    },
+    "Transport Sensitivity": {
+      "positive_means": "resilient",
+      "negative_means": "stress",
+      "description": "Transport weakness under rising energy costs signals cost pass-through pressure"
+    },
+    "Petro FX": {
+      "positive_means": "stress",
+      "negative_means": "confirming",
+      "description": "USD strengthening vs petro-currencies indicates capital flow pressure on exporters"
+    },
+    "Japan Market": {
+      "positive_means": "resilient",
+      "negative_means": "stress",
+      "description": "Japan equities under energy import cost pressure"
+    },
+    "Europe Market": {
+      "positive_means": "resilient",
+      "negative_means": "stress",
+      "description": "European equities reacting to energy terms-of-trade"
+    },
+    "Tri-Polar FX": {
+      "positive_means": "mixed",
+      "negative_means": "mixed",
+      "description": "EUR/JPY moves frame US-dollar and regional policy divergence"
+    }
+  }
 }

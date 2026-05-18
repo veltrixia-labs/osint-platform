@@ -1,7 +1,8 @@
 """
 ECB Statistical Data Warehouse REST client (SDMX-JSON).
 
-No API key required. Base: https://sdw-wsrest.ecb.europa.eu/service/data/
+No API key required. Base: https://data-api.ecb.europa.eu/service/data/
+(Legacy sdw-wsrest.ecb.europa.eu is deprecated and may not resolve.)
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from data_sources.base_client import BaseAPIClient
 
 logger = logging.getLogger(__name__)
 
-ECB_DATA_BASE = "https://sdw-wsrest.ecb.europa.eu/service/data"
+ECB_DATA_BASE = "https://data-api.ecb.europa.eu/service/data"
 
 
 class ECBClient(BaseAPIClient):

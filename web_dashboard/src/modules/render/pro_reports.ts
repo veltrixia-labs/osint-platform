@@ -54,8 +54,16 @@ function covDot(level: string): string {
     return `<span class="intel-cov-dot" style="background:${c};"></span>${level.toUpperCase()}`;
 }
 function roleBadge(role: string): string {
-    const c: Record<string,string> = {trigger:'#f85149',escalation:'#d29922',confirmation:'#3fb950',context:'#8b949e',market_reaction:'#58a6ff',background:'#6e7681'};
-    return `<span class="intel-role-badge" style="border-color:${c[role]||'#8b949e'};color:${c[role]||'#8b949e'};">${role.replace('_',' ')}</span>`;
+    const c: Record<string,string> = {
+        trigger:'#f85149',
+        escalation:'#d29922',
+        confirmation:'#3fb950',
+        context:'#8b949e',
+        market_reaction:'#58a6ff',
+        background:'#6e7681',
+    };
+    const key = (role || 'context').toLowerCase();
+    return `<span class="intel-role-badge" style="border-color:${c[key]||'#8b949e'};color:${c[key]||'#8b949e'};">${key.replace(/_/g,' ')}</span>`;
 }
 function pctChip(symbol: string, pct: number|null): string {
     if (pct == null) return `<span class="intel-mover-chip intel-mover--na">${symbol} N/A</span>`;
@@ -72,7 +80,7 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
     const execSummary = p.executive_summary || '';
     const sigClass = p.signal_classification || {};
     const timeline = p.event_timeline || [];
-    const macro = p.structural_context?.macro_observations || [];
+    const macro = p.structural_context?.macro_display_cards || p.structural_context?.macro_observations || [];
     const market = p.market_confirmation || {};
     const breakdown = market.breakdown || [];
     const divCheck = p.divergence_check || {};
@@ -131,7 +139,7 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
 
     // 04 Event Timeline
     if (timeline.length > 0) {
-        html += `<div class="intel-panel">${sh('04','Event Timeline')}<div class="intel-timeline">${timeline.map((ev:any)=>`<div class="intel-tl-item"><div class="intel-tl-dot"></div><div class="intel-tl-content"><div class="intel-tl-head">${roleBadge(ev.role)}${ev.timestamp?`<span class="intel-tl-time">${ev.timestamp}</span>`:''}${ev.location_label?`<span class="intel-tl-loc">📍 ${ev.location_label}</span>`:''}</div><div class="intel-tl-title">${ev.source_url?`<a href="${ev.source_url}" target="_blank" rel="noopener">${ev.title}</a>`:ev.title}</div></div></div>`).join('')}</div></div>`;
+        html += `<div class="intel-panel">${sh('04','Event Timeline')}<div class="intel-timeline">${timeline.map((ev:any)=>`<div class="intel-tl-item"><div class="intel-tl-dot"></div><div class="intel-tl-content"><div class="intel-tl-head">${roleBadge(ev.type || ev.role)}${ev.timestamp?`<span class="intel-tl-time">${ev.timestamp}</span>`:''}${ev.location_label?`<span class="intel-tl-loc">📍 ${ev.location_label}</span>`:''}</div><div class="intel-tl-title">${ev.source_url?`<a href="${ev.source_url}" target="_blank" rel="noopener">${ev.title}</a>`:ev.title}</div></div></div>`).join('')}</div></div>`;
     }
 
     // 05 Structural Impact & Transmission
@@ -139,7 +147,7 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
 
     // 06 Quantitative Context
     if (macro.length > 0) {
-        html += `<div class="intel-panel">${sh('06','Quantitative Context')}<div class="intel-metric-grid">${macro.slice(0,6).map((m:any)=>`<div class="intel-metric-card"><div class="metric-label">${m.display_name || m.series_id}</div>${m.display_name ? `<div style="font-size:0.65rem;color:var(--text-secondary);font-family:monospace;margin-bottom:0.25rem;">${m.series_id}</div>` : ''}<div class="metric-value">${m.latest_value??'N/A'}</div><div class="metric-change" style="color:${(m.change_pct||0)>0?'var(--success)':'var(--danger)'}">${(m.change_pct||0)>0?'+':''}${m.change_pct?m.change_pct.toFixed(2):'0.00'}%</div></div>`).join('')}</div></div>`;
+        html += `<div class="intel-panel">${sh('06','Quantitative Context')}<div class="intel-metric-grid">${macro.slice(0,6).map((m:any)=>`<div class="intel-metric-card"><div class="metric-label">${m.display_name || m.series_id}</div>${m.display_name ? `<div style="font-size:0.65rem;color:var(--text-secondary);font-family:monospace;margin-bottom:0.25rem;">${m.series_id}</div>` : ''}<div class="metric-value">${m.latest_value??'N/A'}</div><div class="metric-change" style="color:${(m.change_pct||0)>0?'var(--success)':'var(--danger)'}">${(m.change_pct||0)>0?'+':''}${m.change_pct?m.change_pct.toFixed(2):'0.00'}%</div>${m.trend_meaning ? `<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:0.35rem;line-height:1.3;">${m.trend_meaning}</div>` : ''}</div>`).join('')}</div></div>`;
     }
 
     // 07 Market Confirmation Breakdown

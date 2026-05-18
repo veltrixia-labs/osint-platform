@@ -14,6 +14,10 @@ MARKET_INSTRUMENT_DEFINITIONS = [
     {"symbol": "USO", "name": "United States Oil Fund LP", "asset_class": "equity", "provider": "alpha_vantage", "domain_ids": ["energy_resource_risk", "global_market_intelligence"]},
     {"symbol": "IYT", "name": "iShares US Transportation ETF", "asset_class": "equity", "provider": "alpha_vantage", "domain_ids": ["energy_resource_risk", "supply_chain_intelligence"]},
     {"symbol": "JETS", "name": "U.S. Global Jets ETF", "asset_class": "equity", "provider": "alpha_vantage", "domain_ids": ["energy_resource_risk"]},
+    {"symbol": "N225", "name": "Nikkei 225", "asset_class": "index", "provider": "alpha_vantage", "domain_ids": ["energy_resource_risk", "global_market_intelligence"]},
+    {"symbol": "DAX", "name": "DAX Index", "asset_class": "index", "provider": "alpha_vantage", "domain_ids": ["energy_resource_risk", "global_market_intelligence"]},
+    {"symbol": "EWJ", "name": "iShares MSCI Japan ETF", "asset_class": "equity", "provider": "alpha_vantage", "domain_ids": ["energy_resource_risk", "global_market_intelligence", "ai_semiconductor_intelligence"]},
+    {"symbol": "EWG", "name": "iShares MSCI Germany ETF", "asset_class": "equity", "provider": "alpha_vantage", "domain_ids": ["energy_resource_risk", "global_market_intelligence"]},
     
     # Global / Macro
     {"symbol": "SPY", "name": "SPDR S&P 500 ETF Trust", "asset_class": "equity", "provider": "alpha_vantage", "domain_ids": ["global_market_intelligence", "crypto_geopolitics"]},
@@ -48,8 +52,8 @@ MARKET_INSTRUMENT_DEFINITIONS = [
     {"symbol": "USDCAD", "name": "USD / CAD", "asset_class": "fx", "provider": "frankfurter", "domain_ids": ["energy_resource_risk"], "base_currency": "USD", "quote_currency": "CAD"},
     {"symbol": "USDNOK", "name": "USD / NOK", "asset_class": "fx", "provider": "frankfurter", "domain_ids": ["energy_resource_risk"], "base_currency": "USD", "quote_currency": "NOK"},
     {"symbol": "USDBRL", "name": "USD / BRL", "asset_class": "fx", "provider": "frankfurter", "domain_ids": ["energy_resource_risk"], "base_currency": "USD", "quote_currency": "BRL"},
-    {"symbol": "USDJPY", "name": "USD / JPY", "asset_class": "fx", "provider": "frankfurter", "domain_ids": ["ai_semiconductor_intelligence", "global_market_intelligence"], "base_currency": "USD", "quote_currency": "JPY"},
-    {"symbol": "EURUSD", "name": "EUR / USD", "asset_class": "fx", "provider": "frankfurter", "domain_ids": ["global_market_intelligence"], "base_currency": "EUR", "quote_currency": "USD"},
+    {"symbol": "USDJPY", "name": "USD / JPY", "asset_class": "fx", "provider": "frankfurter", "domain_ids": ["energy_resource_risk", "ai_semiconductor_intelligence", "global_market_intelligence"], "base_currency": "USD", "quote_currency": "JPY"},
+    {"symbol": "EURUSD", "name": "EUR / USD", "asset_class": "fx", "provider": "frankfurter", "domain_ids": ["energy_resource_risk", "global_market_intelligence"], "base_currency": "EUR", "quote_currency": "USD"},
     {"symbol": "GBPUSD", "name": "GBP / USD", "asset_class": "fx", "provider": "frankfurter", "domain_ids": ["global_market_intelligence"], "base_currency": "GBP", "quote_currency": "USD"},
     {"symbol": "USDCNY", "name": "USD / CNY", "asset_class": "fx", "provider": "alpha_vantage", "domain_ids": ["supply_chain_intelligence"], "base_currency": "USD", "quote_currency": "CNY"},
 ]

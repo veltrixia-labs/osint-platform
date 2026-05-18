@@ -540,10 +540,11 @@ class ExternalDataFetcher:
                 s_id = s_info["series_id"]
                 logger.info("Fetching e-Stat statsDataId: %s", stats_data_id)
 
+                narrowing = s_info.get("narrowing")
                 observations = await asyncio.to_thread(
-                    client.get_stats_data_observations,
-                    stats_data_id,
-                    60,
+                    lambda sid=stats_data_id, nar=narrowing: client.get_stats_data_observations(
+                        sid, 60, narrowing=nar
+                    ),
                 )
                 rows_fetched += len(observations)
 

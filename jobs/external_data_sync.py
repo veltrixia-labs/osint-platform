@@ -165,3 +165,8 @@ async def run_daily_external_data_sync_pipeline() -> Dict[str, Any]:
         logger.warning("[ExternalDataSync] Could not persist system metrics: %s", metric_exc)
 
     return summary
+
+
+async def run_all_sync_steps() -> Dict[str, Any]:
+    """Alias for manual / one-shot full pipeline runs (same as daily sync)."""
+    return await run_daily_external_data_sync_pipeline()

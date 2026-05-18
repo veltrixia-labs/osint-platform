@@ -5,10 +5,11 @@ Aggregates macroeconomic structural data and market price data for a specific do
 to provide analytical context for Pro Structural Briefs.
 """
 
+import re
 import uuid
 import logging
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
+from typing import Optional, List, Dict, Any, Set
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +26,11 @@ from db.models import (
 from analysis.pro_domain_config import (
     PRO_DOMAIN_CONFIG,
     get_pro_domain_config,
-    infer_domain_from_topic
+    infer_domain_from_topic,
+)
+from analysis.pro_global_series import (
+    get_core_global_series_ids,
+    merge_relevance_maps,
 )
 
 logger = logging.getLogger(__name__)
@@ -75,12 +80,22 @@ async def build_pro_structural_context(
             "related_news": related_news[:5] # Limit to top 5
         }
 
-    # 3. Build Event Timeline from related_news with sequence-based role inference
-    event_timeline = _build_event_timeline(related_news, signal_ctx)
+    related_events = await _fetch_related_alert_events(
+        db, alert_log, resolved_domain_id, data_notes, limit=5
+    )
+
+    # 3. Event timeline: domain alerts + news evidence
+    event_timeline = _build_event_timeline(
+        related_news, signal_ctx, related_events=related_events
+    )
+
+    merged_relevance = merge_relevance_maps(config.get("relevance_map", {}))
 
     # 4. Structural Context Data
     structural_ctx = {
-        "macro_observations": await _get_macro_observations(db, config, lookback_days, data_notes),
+        "macro_observations": await _get_macro_observations(
+            db, config, lookback_days, data_notes, resolved_domain_id
+        ),
         "trade_flows": await _get_trade_flows(db, config, data_notes),
         "industry_stats": await _get_industry_stats(db, config, data_notes)
     }
@@ -101,6 +116,7 @@ async def build_pro_structural_context(
             "decision_relevant_questions": config["decision_relevant_questions"]
         },
         "signal": signal_ctx,
+        "related_events": related_events,
         "event_timeline": event_timeline,
         "structural_context": structural_ctx,
         "market_confirmation": market_ctx,
@@ -112,7 +128,7 @@ async def build_pro_structural_context(
         "data_notes": data_notes,
         # New analytical config fields (passed through for payload builder)
         "signal_classification_template": config.get("signal_classification_template", {}),
-        "relevance_map": config.get("relevance_map", {}),
+        "relevance_map": merged_relevance,
         "market_group_map": config.get("market_group_map", {}),
         "watch_conditions_template": config.get("watch_conditions_template", {}),
         "exposure_matrix_details": config.get("exposure_matrix_details", []),
@@ -121,8 +137,14 @@ async def build_pro_structural_context(
 
     return context
 
-async def _get_macro_observations(db: AsyncSession, config: dict, lookback_days: int, notes: list) -> List[dict]:
-    """Fetch latest macro observations for integrated external sources."""
+async def _get_macro_observations(
+    db: AsyncSession,
+    config: dict,
+    lookback_days: int,
+    notes: list,
+    domain_id: str,
+) -> List[dict]:
+    """Fetch latest macro observations for domain + global core series."""
     s_data = config.get("structural_data", {})
     series_ids = (
         s_data.get("fred_series", [])
@@ -135,7 +157,10 @@ async def _get_macro_observations(db: AsyncSession, config: dict, lookback_days:
         + s_data.get("opec_series", [])
         + s_data.get("asean_series", [])
     )
-    
+    for core_id in get_core_global_series_ids():
+        if core_id not in series_ids:
+            series_ids.append(core_id)
+
     if not series_ids:
         return []
 
@@ -363,55 +388,215 @@ def _calculate_freshness(structural: dict, market: dict) -> Dict[str, str]:
         
     return {"last_update": max(all_dates)}
 
-def _build_event_timeline(related_news: List[dict], signal_ctx: Optional[dict]) -> List[dict]:
-    """
-    Build an event timeline from related news items.
-    - Sorted by timestamp (items without timestamp go to the end)
-    - Role inference: trigger (first), then content-aware or sequence-based
-    """
-    if not related_news:
-        return []
+def _topic_match_keywords(
+    domain_id: str, topic: Optional[str], trigger_label: Optional[str]
+) -> Set[str]:
+    """Keywords for matching related alerts in the same narrative thread."""
+    keywords: Set[str] = set()
+    for token in re.split(r"[_\s\-]+", domain_id or ""):
+        if len(token) >= 4:
+            keywords.add(token.lower())
+    for token in re.split(r"[_\s\-]+", topic or ""):
+        if len(token) >= 4:
+            keywords.add(token.lower())
+    if trigger_label:
+        for token in re.findall(r"[A-Za-z]{4,}", trigger_label):
+            keywords.add(token.lower())
+    return keywords
 
-    # Keyword sets for content-aware role assignment
+
+def _alert_matches_domain_context(
+    row: AlertLog, domain_id: str, keywords: Set[str]
+) -> bool:
+    row_domain = infer_domain_from_topic(row.topic or "")
+    if row_domain == domain_id or (row.topic or "") == domain_id:
+        return True
+    label = (row.target_label or "").lower()
+    return bool(keywords) and any(kw in label for kw in keywords)
+
+
+async def _fetch_related_alert_events(
+    db: AsyncSession,
+    alert_log: Optional[AlertLog],
+    domain_id: str,
+    notes: list,
+    *,
+    limit: int = 5,
+    lookback_days: int = 7,
+) -> List[dict]:
+    """
+    Past alerts in the same domain / topic keyword thread (7-day window).
+    """
+    since = datetime.now(timezone.utc) - timedelta(days=lookback_days)
+    stmt = (
+        select(AlertLog)
+        .where(
+            AlertLog.triggered_at >= since,
+            AlertLog.suppressed == False,
+        )
+        .order_by(desc(AlertLog.triggered_at))
+        .limit(80)
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+
+    trigger_label = alert_log.target_label if alert_log else None
+    trigger_topic = alert_log.topic if alert_log else None
+    keywords = _topic_match_keywords(domain_id, trigger_topic, trigger_label)
+    current_id = str(alert_log.id) if alert_log else None
+
+    matched: List[AlertLog] = []
+    for row in rows:
+        if not _alert_matches_domain_context(row, domain_id, keywords):
+            continue
+        matched.append(row)
+
+    # Ensure trigger alert is included and first in timeline ordering later
+    if alert_log and all(str(a.id) != current_id for a in matched):
+        matched.insert(0, alert_log)
+
+    matched.sort(
+        key=lambda a: (a.intelligence_score or 0.0, a.triggered_at or datetime.min.replace(tzinfo=timezone.utc)),
+        reverse=True,
+    )
+    selected: List[AlertLog] = []
+    if alert_log:
+        selected.append(alert_log)
+    for row in matched:
+        if alert_log and str(row.id) == current_id:
+            continue
+        selected.append(row)
+        if len(selected) >= limit:
+            break
+
+    events: List[dict] = []
+    for row in selected:
+        events.append(
+            {
+                "alert_id": str(row.id),
+                "title": (row.target_label or "")[:200],
+                "topic": row.topic,
+                "severity": row.severity,
+                "trigger_type": row.trigger_type,
+                "timestamp": row.triggered_at.isoformat() if row.triggered_at else None,
+                "source": "alert_log",
+                "location_label": None,
+                "source_url": None,
+            }
+        )
+
+    if not events and alert_log:
+        notes.append("No related domain alerts in the last 7 days besides the trigger.")
+    elif len(events) < 2:
+        notes.append("Limited related alert history in the last 7 days.")
+
+    return events
+
+
+def _build_event_timeline(
+    related_news: List[dict],
+    signal_ctx: Optional[dict],
+    *,
+    related_events: Optional[List[dict]] = None,
+) -> List[dict]:
+    """
+    Merge related AlertLog events and news evidence into one chronological timeline.
+    """
+    raw: List[dict] = []
+
+    for ev in related_events or []:
+        raw.append(
+            {
+                "timestamp": ev.get("timestamp"),
+                "title": ev.get("title") or "",
+                "source_url": ev.get("source_url"),
+                "location_label": ev.get("location_label"),
+                "alert_id": ev.get("alert_id"),
+                "severity": ev.get("severity"),
+                "trigger_type": ev.get("trigger_type"),
+                "source": ev.get("source", "alert_log"),
+            }
+        )
+
+    seen_titles: Set[str] = {r["title"].lower() for r in raw if r.get("title")}
+
     _MARKET_KW = {"market", "stock", "etf", "bond", "yield", "price", "rally", "crash", "surge", "plunge", "trading"}
     _CONFIRM_KW = {"confirm", "verify", "report", "official", "statement", "announce"}
 
-    raw = []
-    for item in related_news[:8]:
-        title = item.get("title") or item.get("headline") or item.get("text", "")
+    for item in related_news[:5]:
+        title = (item.get("title") or item.get("headline") or item.get("text", "") or "")[:200]
+        if title.lower() in seen_titles:
+            continue
         source_url = item.get("url") or item.get("source_url") or item.get("link", "")
         timestamp = item.get("published") or item.get("timestamp") or item.get("date")
         location_label = item.get("location") or item.get("country") or None
-        raw.append({
-            "timestamp": timestamp,
-            "title": title[:200] if title else "",
-            "source_url": source_url,
-            "location_label": location_label
-        })
+        title_lower = title.lower()
+        if any(kw in title_lower for kw in _MARKET_KW):
+            role = "market_reaction"
+        elif any(kw in title_lower for kw in _CONFIRM_KW):
+            role = "confirmation"
+        else:
+            role = "context"
+        raw.append(
+            {
+                "timestamp": timestamp,
+                "title": title,
+                "source_url": source_url,
+                "location_label": location_label,
+                "source": "news",
+                "role": role,
+            }
+        )
+        seen_titles.add(title.lower())
 
-    # Sort: items with timestamps first (chronological), then items without
-    def _sort_key(item: dict):
+    def _sort_key(item: dict) -> tuple:
         ts = item.get("timestamp")
         if ts:
             return (0, str(ts))
         return (1, "")
+
     raw.sort(key=_sort_key)
 
-    # Assign roles
-    total = len(raw)
-    for idx, item in enumerate(raw):
-        title_lower = (item.get("title") or "").lower()
-        if idx == 0:
-            role = "trigger"
-        elif any(kw in title_lower for kw in _MARKET_KW):
-            role = "market_reaction"
-        elif any(kw in title_lower for kw in _CONFIRM_KW):
-            role = "confirmation"
-        elif idx == total - 1 and total >= 3:
-            role = "background"
-        else:
-            role = "context"
-        item["role"] = role
+    trigger_alert_id = (signal_ctx or {}).get("alert_id")
+    return _assign_timeline_types(raw, trigger_alert_id)
 
-    return raw
+
+def _assign_timeline_types(timeline: List[dict], trigger_alert_id: Optional[str]) -> List[dict]:
+    """Map entries to UI types: trigger, context, background."""
+    if not timeline:
+        return []
+
+    for item in timeline:
+        if trigger_alert_id and item.get("alert_id") == trigger_alert_id:
+            item["type"] = "trigger"
+            item["role"] = "trigger"
+        elif item.get("role") in ("background", "trigger", "context", "market_reaction", "confirmation"):
+            role = item["role"]
+            if role in ("market_reaction", "confirmation"):
+                item["type"] = "context"
+            elif role == "background":
+                item["type"] = "background"
+            else:
+                item["type"] = role
+        else:
+            item["type"] = None
+
+    non_trigger_idxs = [
+        i for i, item in enumerate(timeline) if item.get("type") not in ("trigger",)
+    ]
+    if not non_trigger_idxs:
+        return timeline
+
+    if len(non_trigger_idxs) == 1:
+        timeline[non_trigger_idxs[0]]["type"] = "context"
+        timeline[non_trigger_idxs[0]]["role"] = "context"
+    else:
+        first_i = non_trigger_idxs[0]
+        timeline[first_i]["type"] = "background"
+        timeline[first_i]["role"] = "background"
+        for i in non_trigger_idxs[1:]:
+            if timeline[i].get("type") is None:
+                timeline[i]["type"] = "context"
+                timeline[i]["role"] = "context"
+
+    return timeline
 

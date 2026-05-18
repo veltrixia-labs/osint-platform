@@ -10,26 +10,28 @@ from typing import Any, Dict, List
 ESTAT_SERIES_CATALOG: Dict[str, List[Dict[str, Any]]] = {
     "industrial_production": [
         {
-            "stats_data_id": "0003410537",
-            "series_id": "0003410537",
-            "name": "Japan Index of Industrial Production (IIP)",
+            "stats_data_id": "0004015804",
+            "series_id": "0004015804",
+            "name": "Japan IIP — monthly production index (2020=100, by industry)",
             "unit": "index",
             "frequency_hint": "monthly",
             "category": "industrial_production",
             "pro_use": "japan_manufacturing_cycle",
             "geography": "JP",
+            "narrowing": {"cdCat01": "0001000"},
         }
     ],
     "consumer_prices": [
         {
-            "stats_data_id": "0003423164",
-            "series_id": "0003423164",
-            "name": "Japan Consumer Price Index (CPI)",
+            "stats_data_id": "0003427113",
+            "series_id": "0003427113",
+            "name": "Japan Consumer Price Index (2020 base)",
             "unit": "index",
             "frequency_hint": "monthly",
             "category": "consumer_prices",
             "pro_use": "japan_inflation_context",
             "geography": "JP",
+            "narrowing": {"cdTab": "1", "cdCat01": "0001", "cdArea": "00000"},
         }
     ],
 }
