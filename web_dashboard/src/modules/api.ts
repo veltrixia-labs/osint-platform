@@ -404,7 +404,7 @@ export async function fetchExpertIntelligence(alertId?: string): Promise<ExpertI
     return resp.ok ? await resp.json() : null;
 }
 
-export async function fetchCheckoutSession(tier: string, reportId?: string) {
+export async function fetchCheckoutSession(tier: string, _reportId?: string) {
     const resp = await apiClient.post('/stripe/create-checkout', { tier });
     if (!resp.ok) {
         const err = await resp.json().catch(() => ({})) as { detail?: string };

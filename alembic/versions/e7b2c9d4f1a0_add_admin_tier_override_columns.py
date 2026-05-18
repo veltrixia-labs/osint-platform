@@ -16,20 +16,35 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _analyst_profile_columns() -> set[str]:
+    bind = op.get_bind()
+    insp = sa.inspect(bind)
+    return {col["name"] for col in insp.get_columns("analyst_profiles")}
+
+
 def upgrade() -> None:
-    op.add_column(
-        "analyst_profiles",
-        sa.Column("is_admin", sa.Boolean(), nullable=False, server_default=sa.false()),
-    )
-    op.add_column(
-        "analyst_profiles",
-        sa.Column("manual_tier", sa.String(), nullable=True),
-    )
+    columns = _analyst_profile_columns()
+
+    if "is_admin" not in columns:
+        op.add_column(
+            "analyst_profiles",
+            sa.Column("is_admin", sa.Boolean(), nullable=False, server_default=sa.false()),
+        )
+
+    if "manual_tier" not in columns:
+        op.add_column(
+            "analyst_profiles",
+            sa.Column("manual_tier", sa.String(), nullable=True),
+        )
+
     op.execute(
         "UPDATE analyst_profiles SET is_admin = true WHERE user_role = 'admin'"
     )
 
 
 def downgrade() -> None:
-    op.drop_column("analyst_profiles", "manual_tier")
-    op.drop_column("analyst_profiles", "is_admin")
+    columns = _analyst_profile_columns()
+    if "manual_tier" in columns:
+        op.drop_column("analyst_profiles", "manual_tier")
+    if "is_admin" in columns:
+        op.drop_column("analyst_profiles", "is_admin")
