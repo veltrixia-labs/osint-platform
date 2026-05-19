@@ -1847,7 +1847,7 @@ body.lp > :not(.lp-backdrop) {
 
 #terminal .lp-ui-panel--alerts,
 #terminal .lp-ui-panel--briefs {
-  min-height: 24rem;
+  min-height: 22.5rem;
 }
 
 .lp-ui-panel {
@@ -1899,21 +1899,47 @@ body.lp > :not(.lp-backdrop) {
 }
 
 .lp-ui-body--dense.lp-ui-body--alerts {
-  min-height: 22rem;
-  padding: 0.45rem 0.55rem;
+  min-height: 20rem;
+  padding: 0.48rem 0.55rem 0.52rem;
 }
 
 #terminal .lp-ui-panel--briefs .lp-ui-body--dense {
-  min-height: 22rem;
+  min-height: 20rem;
+  padding: 0.48rem 0.55rem 0.52rem;
 }
 
 .lp-alert-stream {
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0.34rem;
   flex: 1;
   min-height: 0;
   justify-content: flex-start;
+}
+
+@media (min-width: 768px) {
+  #terminal .lp-ui-body--dense.lp-ui-body--alerts,
+  #terminal .lp-ui-panel--briefs .lp-ui-body--dense {
+    min-height: 0;
+    flex: 1;
+  }
+
+  #terminal .lp-alert-stream {
+    justify-content: space-between;
+    gap: 0.32rem;
+    min-height: 100%;
+  }
+
+  #terminal #lp-brief-grid.lp-brief-grid--4 {
+    min-height: 0;
+    height: 100%;
+    align-content: stretch;
+    grid-auto-rows: 1fr;
+  }
+
+  #terminal #lp-brief-grid .pro-brief-card.cb-brief-card {
+    height: 100%;
+  }
 }
 
 .lp-terminal-showcase .u-flex-between {
@@ -1937,10 +1963,10 @@ body.lp > :not(.lp-backdrop) {
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 8px;
-  padding: 0.42rem 0.65rem 0.38rem;
+  padding: 0.4rem 0.62rem 0.36rem;
   display: flex;
   flex-direction: column;
-  gap: 0.22rem;
+  gap: 0.2rem;
   border-left: 4px solid var(--topic-color, var(--lp-accent));
   flex-shrink: 0;
   margin-bottom: 0;
@@ -2072,6 +2098,8 @@ body.lp > :not(.lp-backdrop) {
 .lp-panel-swapping .lp-alert-slot:nth-child(2) { animation-delay: 45ms; }
 .lp-panel-swapping .lp-alert-slot:nth-child(3) { animation-delay: 90ms; }
 .lp-panel-swapping .lp-alert-slot:nth-child(4) { animation-delay: 135ms; }
+.lp-panel-swapping .lp-alert-slot:nth-child(5) { animation-delay: 180ms; }
+.lp-panel-swapping .lp-alert-slot:nth-child(6) { animation-delay: 225ms; }
 
 .lp-panel-swapping .lp-brief-slot:nth-child(1) { animation-delay: 0ms; }
 .lp-panel-swapping .lp-brief-slot:nth-child(2) { animation-delay: 50ms; }
@@ -2096,7 +2124,7 @@ body.lp > :not(.lp-backdrop) {
 
 .lp-brief-grid--4 {
   grid-template-columns: 1fr 1fr;
-  gap: 0.45rem;
+  gap: 0.42rem;
   flex: 1;
   min-height: 18rem;
   align-content: start;

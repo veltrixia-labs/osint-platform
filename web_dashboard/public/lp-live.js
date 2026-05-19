@@ -2,7 +2,7 @@
  * LP Live Engine — production API sync, rotating alert & brief cards.
  */
 (function () {
-  const ALERT_CARD_COUNT = 7;
+  const ALERT_CARD_COUNT = 6;
   const BRIEF_CARD_COUNT = 4;
   const HERO_STREAM_COUNT = 9;
   const BRIEF_ROTATE_MS = 4200;
