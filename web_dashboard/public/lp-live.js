@@ -8,7 +8,9 @@
   const BRIEF_ROTATE_MS = 4200;
   const REFRESH_MS = 90000;
   const FRESHNESS_TICK_MS = 30000;
-  const FETCH_LIMIT = 48;
+  const FETCH_LIMIT = 96;
+  const MIN_ALERT_POOL = Math.max(ALERT_CARD_COUNT + 2, HERO_STREAM_COUNT + 2);
+  const MIN_BRIEF_POOL = BRIEF_CARD_COUNT * 3;
 
   const TOPIC_LABELS = {
     energy_resource_risk: { label: 'Energy & Resource Risk', color: '#d29922' },
@@ -133,6 +135,8 @@
       topic: 'ai_semiconductor_intelligence',
       severity: 'high',
       triggered_at: '2026-05-03T06:30:00.000Z',
+      related_news_count: 4,
+      evidence_list: [{}, {}, {}, {}],
     },
     {
       id: 'fl-004',
@@ -141,6 +145,8 @@
       topic: 'defense_technology',
       severity: 'elevated',
       triggered_at: '2026-05-02T22:18:00.000Z',
+      related_news_count: 5,
+      evidence_list: [{}, {}, {}, {}, {}],
     },
     {
       id: 'fl-005',
@@ -149,6 +155,8 @@
       topic: 'energy_resource_risk',
       severity: 'critical',
       triggered_at: '2026-05-02T19:44:00.000Z',
+      related_news_count: 6,
+      evidence_list: [{}, {}, {}, {}, {}, {}],
     },
     {
       id: 'fl-006',
@@ -158,6 +166,17 @@
       severity: 'elevated',
       triggered_at: '2026-05-02T16:02:00.000Z',
       related_news_count: 9,
+      evidence_list: [{}, {}, {}, {}, {}, {}, {}, {}, {}],
+    },
+    {
+      id: 'fl-007',
+      title: 'Central bank corridor \u2014 FX intervention watch',
+      target_label: 'Central bank corridor \u2014 FX intervention watch',
+      topic: 'global_market_intelligence',
+      severity: 'watch',
+      triggered_at: '2026-05-02T12:20:00.000Z',
+      related_news_count: 4,
+      evidence_list: [{}, {}, {}, {}],
     },
   ];
 
@@ -319,18 +338,124 @@
     return severityClass(sev).toUpperCase();
   }
 
+  function hasUsableSources(alert) {
+    if (!alert) return false;
+    if (Array.isArray(alert.sources) && alert.sources.length > 0) return true;
+    if (Array.isArray(alert.evidence_list) && alert.evidence_list.length > 0) return true;
+    return false;
+  }
+
   function sourceCount(alert) {
     if (!alert) return 0;
+    if (Array.isArray(alert.sources) && alert.sources.length) return alert.sources.length;
+    if (Array.isArray(alert.evidence_list) && alert.evidence_list.length) return alert.evidence_list.length;
     if (typeof alert.sources_count === 'number' && Number.isFinite(alert.sources_count)) {
       return Math.max(0, Math.floor(alert.sources_count));
     }
-    if (Array.isArray(alert.sources) && alert.sources.length) return alert.sources.length;
     if (typeof alert.source_count === 'number' && Number.isFinite(alert.source_count)) {
       return Math.max(0, Math.floor(alert.source_count));
     }
-    if (Array.isArray(alert.evidence_list)) return alert.evidence_list.length;
-    if (Array.isArray(alert.related_news)) return alert.related_news.length;
+    if (Array.isArray(alert.related_news) && alert.related_news.length) return alert.related_news.length;
     return pickCount(alert.related_news_count, 0);
+  }
+
+  function itemStableId(item) {
+    const id = item && (item.id ?? item.alert_id);
+    return id != null && String(id).trim() !== '' ? String(id).trim() : '';
+  }
+
+  function titleDedupeKey(item) {
+    const title = cleanTitle(item && (item.title || item.target_label || ''))
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!title || title === 'strategic intelligence alert') return '';
+    const topic = String((item && item.topic) || 'global')
+      .toLowerCase()
+      .trim();
+    return topic + '::' + title;
+  }
+
+  function dedupeKey(item, kind) {
+    const id = itemStableId(item);
+    if (id) return kind + ':id:' + id;
+    const titleKey = titleDedupeKey(item);
+    if (titleKey) return kind + ':title:' + titleKey;
+    return kind + ':ts:' + String(timestampMs(item));
+  }
+
+  /** Keep the newest row per id/title key. */
+  function dedupeNewestFirst(items, kind) {
+    const best = new Map();
+    items.forEach((item) => {
+      const key = dedupeKey(item, kind);
+      const prev = best.get(key);
+      if (!prev || timestampMs(item) >= timestampMs(prev)) {
+        best.set(key, item);
+      }
+    });
+    return [...best.values()];
+  }
+
+  function passesAlertQuality(alert) {
+    if (!alert) return false;
+    if (!hasUsableSources(alert)) return false;
+    const title = cleanTitle(alert.title || alert.target_label || '');
+    if (!title || title.length < 4) return false;
+    return true;
+  }
+
+  function passesBriefQuality(brief) {
+    if (!brief) return false;
+    if (newsCountForBrief(brief) < 1) return false;
+    const entityCount = entitiesCountForBrief(brief);
+    const sectorRows = normalizeSectorRowsForBrief(brief);
+    if (entityCount < 1 && !sectorRows.length) return false;
+    const title = cleanTitle(brief.title || brief.target_label || '');
+    if (!title || title.length < 4) return false;
+    const body = String(brief.content_markdown || '').trim();
+    if (body.length < 48) return false;
+    return true;
+  }
+
+  function mergeUniquePools(primary, supplement, kind, minSize) {
+    const seen = new Set();
+    const out = [];
+    const pushUnique = (list) => {
+      list.forEach((item) => {
+        const key = dedupeKey(item, kind);
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(item);
+      });
+    };
+    pushUnique(primary);
+    if (out.length < minSize) pushUnique(supplement);
+    return sortByTimestampDesc(out);
+  }
+
+  /**
+   * Quality-filter, de-duplicate, and backfill from fallback — never clone rows for density.
+   */
+  function prepareShowcasePool(rawItems, kind, fallbackItems, minPoolSize) {
+    const normalize = kind === 'alert' ? normalizeLiveAlert : normalizeBriefItem;
+    const qualityFn = kind === 'alert' ? passesAlertQuality : passesBriefQuality;
+
+    const primary = sortByTimestampDesc(
+      dedupeNewestFirst(
+        (rawItems || []).map(normalize).filter(qualityFn),
+        kind,
+      ),
+    );
+
+    const fallback = sortByTimestampDesc(
+      dedupeNewestFirst(
+        (fallbackItems || []).map(normalize).filter(qualityFn),
+        kind,
+      ),
+    );
+
+    return mergeUniquePools(primary, fallback, kind, minPoolSize);
   }
 
   function normalizeLiveAlert(raw) {
@@ -485,37 +610,23 @@
       .replace(/"/g, '&quot;');
   }
 
-  function expandPool(pool, fallback) {
-    const minLen = Math.max(ALERT_CARD_COUNT + 4, BRIEF_CARD_COUNT * 3, HERO_STREAM_COUNT + 2);
-    if (!pool.length) {
-      const out = [];
-      let i = 0;
-      while (out.length < minLen) {
-        out.push(fallback[i % fallback.length]);
-        i += 1;
-      }
-      return out;
-    }
-    const base = pool.map((row) => ({ ...row }));
-    let i = 0;
-    while (base.length < minLen) {
-      base.push({ ...pool[i % pool.length] });
-      i += 1;
-    }
-    return base;
-  }
-
   function windowItems(pool, offset, count) {
     const sorted = sortByTimestampDesc(pool);
+    if (!sorted.length) return [];
     const out = [];
-    for (let i = 0; i < count; i += 1) {
+    const limit = Math.min(count, sorted.length);
+    for (let i = 0; i < limit; i += 1) {
       out.push(sorted[(offset + i) % sorted.length]);
     }
     return out;
   }
 
   function newestItems(pool, count) {
-    return sortByTimestampDesc(pool).slice(0, count);
+    return sortByTimestampDesc(pool).slice(0, Math.min(count, pool.length));
+  }
+
+  function fillDisplaySlots(pool, count) {
+    return newestItems(pool, count);
   }
 
   function updateFreshnessBadges() {
@@ -573,7 +684,7 @@
   function renderShowcasePanels(animate) {
     const alertRoot = document.getElementById('lp-alert-stream');
     const briefRoot = document.getElementById('lp-brief-grid');
-    renderAlerts(alertRoot, newestItems(state.alertPool, ALERT_CARD_COUNT), animate);
+    renderAlerts(alertRoot, fillDisplaySlots(state.alertPool, ALERT_CARD_COUNT), animate);
     renderBriefs(briefRoot, windowItems(state.briefPool, state.briefOffset, BRIEF_CARD_COUNT), animate);
   }
 
@@ -713,7 +824,9 @@
     if (state.briefPool.length > BRIEF_CARD_COUNT) {
       state.briefOffset = (state.briefOffset + 1) % state.briefPool.length;
     }
-    state.heroOffset = (state.heroOffset + 1) % Math.max(state.alertPool.length, 1);
+    if (state.alertPool.length > HERO_STREAM_COUNT) {
+      state.heroOffset = (state.heroOffset + 1) % state.alertPool.length;
+    }
     renderShowcasePanels(true);
     renderHeroTerminal(
       document.querySelector('.lp-hero .lp-terminal-body'),
@@ -765,11 +878,11 @@
     state.lastFetchedAt = new Date().toISOString();
     state.newestDataAt = newestIsoFromPools(liveItems, freeItems);
 
-    state.briefPool = expandPool(freeItems, fallbackFree);
-    state.alertPool = expandPool(liveItems, fallbackLive);
+    state.briefPool = prepareShowcasePool(freeItems, 'brief', fallbackFree, MIN_BRIEF_POOL);
+    state.alertPool = prepareShowcasePool(liveItems, 'alert', fallbackLive, MIN_ALERT_POOL);
 
     renderShowcasePanels(false);
-    renderHeroTerminal(heroRoot, newestItems(state.alertPool, HERO_STREAM_COUNT));
+    renderHeroTerminal(heroRoot, fillDisplaySlots(state.alertPool, HERO_STREAM_COUNT));
 
     setSyncBadge(state.mode);
 
