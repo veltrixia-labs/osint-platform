@@ -47,17 +47,6 @@ function cleanBriefTitle(raw: string): string {
     return s || raw;
 }
 
-function extractBriefTriggerDetail(raw: string): string {
-    if (!raw) return '';
-    const m = raw.match(
-        /^(acceleration|entity_surge|pattern_risk|sector_surge|event_continuation|sustained_event|risk_pattern|risk_acceleration)\s*:\s*(.*)$/is,
-    );
-    if (!m) return '';
-    const type = m[1].replace(/_/g, ' ').toUpperCase();
-    const rest = (m[2] || '').trim();
-    return rest ? `${type} · ${rest}` : type;
-}
-
 function stripMarkdownLite(s: string): string {
     return s
         .replace(/\*\*([^*]+)\*\*/g, '$1')
@@ -826,29 +815,6 @@ function renderStructuredContent(
     return html;
 }
 
-function renderFeedCardSectorPreview(item: FreeAlertFeedItem, maxPills = 6): string {
-    const sectorRows = dedupeSectorRowsByEntityId(
-        normalizeSectorImpacts(item.sector_impacts, item.content_markdown || ''),
-    );
-    const { regional, structural } = partitionRegionalSectorRows(sectorRows);
-    const pills: SectorImpactRow[] = [
-        ...regional.slice(0, 2),
-        ...structural.slice(0, Math.max(0, maxPills - Math.min(regional.length, 2))),
-    ].slice(0, maxPills);
-    if (!pills.length) return '';
-    return `
-      <div class="cb-brief-card-tags" role="list" aria-label="Structural exposure">
-        ${pills
-            .map((r) =>
-                renderSectorPillHtml(
-                    r,
-                    isRegionalSectorBucket(r.sector) ? 'regional' : 'structural',
-                ),
-            )
-            .join('')}
-      </div>`;
-}
-
 function renderFeedCard(item: FreeAlertFeedItem, index: number, viewerTier: string = 'free'): string {
     const cardId = `cb-card-${index}`;
     const triggeredStr = formatDate(item.triggered_at);
@@ -864,24 +830,17 @@ function renderFeedCard(item: FreeAlertFeedItem, index: number, viewerTier: stri
         isPaidContextTier(viewerTier)
     );
     const entitiesCount = entityState.total || (item.related_entities_count ?? 0);
-    const rawTitle = item.title || item.target_label || 'Strategic Intelligence Alert';
-    const displayTitle = cleanBriefTitle(rawTitle);
-    const triggerDetail = escapeHtml(extractBriefTriggerDetail(rawTitle));
-    const triggerHtml = triggerDetail ? `<p class="cb-brief-card-trigger">${triggerDetail}</p>` : '';
+    const displayTitle = cleanBriefTitle(item.title || item.target_label || 'Strategic Intelligence Alert');
     const teaser = escapeHtml(extractTeaserFromMarkdown(item.content_markdown || ''));
-    const sectorPreview = renderFeedCardSectorPreview(item);
 
     return `
-    <div class="pro-brief-card cb-brief-card" id="${cardId}" data-domain-card="1" style="${topicVars}">
+    <div class="pro-brief-card cb-brief-card cb-brief-card--preview" id="${cardId}" data-domain-card="1" style="${topicVars}">
       <div class="cb-brief-card-head cb-brief-card-head--row">
         <span class="domain-chip meta-item-topic--tag">${topicStr}</span>
         <span class="cb-brief-ts">${escapeHtml(triggeredStr)}</span>
       </div>
-      <p class="cb-brief-card-kind">OSINT Intelligence Briefing</p>
       <h3 class="cb-brief-card-title">${escapeHtml(displayTitle)}</h3>
-      ${triggerHtml}
       <p class="cb-brief-card-teaser">${teaser}</p>
-      ${sectorPreview}
       <div class="cb-brief-card-footer">
         <div class="cb-brief-card-stats" aria-label="Evidence counts">
           <span class="cb-brief-stat-chip">📰 ${newsCount} news</span>

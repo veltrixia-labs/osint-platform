@@ -5925,6 +5925,17 @@ p {
   border-left: 4px solid var(--topic-color, var(--border));
 }
 
+/* Feed preview cards — structural entity tags only in the detail modal */
+.pro-brief-card.cb-brief-card--preview {
+  overflow: hidden;
+}
+
+.pro-brief-card.cb-brief-card--preview .cb-brief-card-tags,
+.pro-brief-card.cb-brief-card--preview .cb-brief-card-trigger,
+.pro-brief-card.cb-brief-card--preview .cb-brief-card-kind {
+  display: none !important;
+}
+
 .pro-brief-card.cb-brief-card .cb-open-context-btn {
   cursor: pointer;
 }

@@ -524,74 +524,23 @@
     return t || 'Open the full brief for structured context and evidence.';
   }
 
-  function classifySectorTagKind(sector) {
-    const s = (sector || '').toLowerCase();
-    if (/\b(oil|gas|lng|energy|petrol|crude|power)\b/.test(s)) return 'energy';
-    if (/\b(marine|maritime|shipping|logistics|port|vessel|tanker|freight)\b/.test(s)) return 'marine';
-    if (/\b(refin|industrial|manufact|chemic|materials|semiconductor)\b/.test(s)) return 'industry';
-    if (/\b(finance|bank|market|macro|rates|fx)\b/.test(s)) return 'finance';
-    if (/\b(defense|military|aerospace|security|nato|weapon)\b/.test(s)) return 'defense';
-    return 'default';
-  }
-
-  function isRegionalSector(sector) {
-    const s = (sector || '').trim().toLowerCase();
-    return s === 'country' || s === 'geography' || s === 'region' || s.includes('geopolitical');
-  }
-
-  function sectorPillHtml(row) {
-    const sector = row.sector || '';
-    const matched = row.matched_entities ?? row.matched ?? 0;
-    const regional = isRegionalSector(sector);
-    const kind = classifySectorTagKind(sector);
-    const base = regional
-      ? 'cb-sector-pill cb-sector-pill--regional'
-      : 'cb-sector-pill cb-sector-pill--structural cb-sector-pill--' + kind;
-    return '<div class="' + base + '" role="listitem"><span class="cb-sector-pill-label">' + escapeHtml(sector) + '</span><span class="cb-sector-pill-count">' + matched + '</span></div>';
-  }
-
-  function briefSectorPreview(item, maxPills) {
-    const rows = normalizeSectorRowsForBrief(item);
-    if (!rows.length) return '';
-    const limit = maxPills || 6;
-    const regional = rows.filter((r) => isRegionalSector(r.sector));
-    const structural = rows.filter((r) => !isRegionalSector(r.sector));
-    const pills = [
-      ...regional.slice(0, 2),
-      ...structural.slice(0, Math.max(0, limit - Math.min(regional.length, 2))),
-    ].slice(0, limit);
-    return (
-      '<div class="cb-brief-card-tags" role="list" aria-label="Structural exposure">' +
-      pills.map(sectorPillHtml).join('') +
-      '</div>'
-    );
-  }
-
   function briefCardHtml(item, index) {
     const meta = topicMeta(item.topic);
     const rawTitle = item.title || item.target_label || '';
     const title = cleanTitle(rawTitle);
     const ts = formatDisplayTimestamp(resolveTimestamp(item));
-    const triggerDetail = escapeHtml(extractTriggerDetail(rawTitle));
     const teaser = escapeHtml(extractTeaser(item.content_markdown));
     const newsCount = newsCountForBrief(item);
     const entitiesCount = entitiesCountForBrief(item);
     const topicVars = topicCssVars(item.topic);
-    const sectorTagsHtml = briefSectorPreview(item, 6);
-    const triggerHtml = triggerDetail
-      ? '<p class="cb-brief-card-trigger">' + triggerDetail + '</p>'
-      : '';
     return (
-      '<article class="pro-brief-card cb-brief-card lp-brief-slot" data-slot="' + index + '" data-domain-card="1" style="' + topicVars + '">' +
+      '<article class="pro-brief-card cb-brief-card cb-brief-card--preview lp-brief-slot" data-slot="' + index + '" data-domain-card="1" style="' + topicVars + '">' +
         '<div class="cb-brief-card-head cb-brief-card-head--row">' +
           '<span class="domain-chip meta-item-topic--tag">' + escapeHtml(meta.label) + '</span>' +
           '<span class="cb-brief-ts">' + escapeHtml(ts) + '</span>' +
         '</div>' +
-        '<p class="cb-brief-card-kind">OSINT Intelligence Briefing</p>' +
         '<h4 class="cb-brief-card-title">' + escapeHtml(title) + '</h4>' +
-        triggerHtml +
         '<p class="cb-brief-card-teaser">' + teaser + '</p>' +
-        sectorTagsHtml +
         '<div class="cb-brief-card-footer">' +
           '<div class="cb-brief-card-stats" aria-label="Evidence counts">' +
             '<span class="cb-brief-stat-chip">📰 ' + newsCount + ' news</span>' +

@@ -1687,6 +1687,16 @@ body.lp {
   min-height: 0;
 }
 
+#lp-brief-grid .pro-brief-card.cb-brief-card--preview {
+  overflow: hidden;
+}
+
+#lp-brief-grid .cb-brief-card--preview .cb-brief-card-tags,
+#lp-brief-grid .cb-brief-card--preview .cb-brief-card-trigger,
+#lp-brief-grid .cb-brief-card--preview .cb-brief-card-kind {
+  display: none !important;
+}
+
 #lp-brief-grid .cb-brief-card-head,
 #lp-brief-grid .cb-brief-card-head--row {
   display: flex;
