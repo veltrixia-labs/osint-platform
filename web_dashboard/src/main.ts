@@ -40,8 +40,23 @@ function setFeedHash(): void {
     history.replaceState({ tab: 'feed' }, '', `${dashboardBasePath()}#feed`)
 }
 
+function dismissLoginUI(): void {
+    app.classList.remove('login-page')
+    document.getElementById('login-overlay')?.remove()
+    if (!document.querySelector('.app-container') && app.querySelector('.login-container, .login-card')) {
+        app.innerHTML = ''
+    }
+}
+
+function isLoginScreenVisible(): boolean {
+    return (
+        app.classList.contains('login-page')
+        || Boolean(app.querySelector('.login-container, .login-card, #login-overlay'))
+    )
+}
+
 async function resumeDashboardAfterAuth(): Promise<void> {
-    setFeedHash()
+    dismissLoginUI()
     await initDashboard()
 }
 
@@ -49,8 +64,10 @@ async function openLoginOrFeed(): Promise<void> {
     if (localStorage.getItem('access_token')) {
         try {
             const me = await fetchMe()
-            if (isAuthenticatedUser(me)) {
-                await resumeDashboardAfterAuth()
+            if (me && isAuthenticatedUser(me)) {
+                dismissLoginUI()
+                if (!parseHashRoute(me.tier)) setFeedHash()
+                await initDashboard()
                 return
             }
         } catch {
@@ -83,6 +100,7 @@ function bindGlobalAppHandlers(): void {
 }
 
 bindGlobalAppHandlers()
+bindHashRouteSync()
 
 export async function renderLogin(message?: string, initialEmail?: string) {
     (window as any).stopPolling?.();
@@ -129,6 +147,7 @@ export async function renderLogin(message?: string, initialEmail?: string) {
         try {
             await login(email, pwd);
             dashboardInitGeneration += 1
+            setFeedHash()
             await resumeDashboardAfterAuth();
         } catch {
             errorDiv.textContent = 'Invalid email or password.';
@@ -187,6 +206,89 @@ export async function renderSignup() {
 }
 
 type TabId = 'feed' | 'free-feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'pro-map' | 'expert-intel'
+
+const BOOT_TABS: TabId[] = ['feed', 'free-feed', 'map', 'plans', 'legal', 'pro-insights', 'pro-map', 'expert-intel']
+
+type HashRoute = { tab: TabId; alertId?: string }
+
+type TabSwitchFn = (tab: TabId, focusAlertId?: string, skipPushState?: boolean) => void
+
+function normalizeHashTab(raw: string, tier?: string): TabId | null {
+    let tab = raw as TabId
+    if (tab === 'reports') {
+        if (tier && ['pro', 'experts', 'enterprise'].includes(tier)) return 'pro-insights'
+        return 'free-feed'
+    }
+    return BOOT_TABS.includes(tab) ? tab : null
+}
+
+function parseHashRoute(tier?: string): HashRoute | null {
+    const hash = window.location.hash.slice(1)
+    if (!hash) return null
+    const [base, query] = hash.split('?')
+    const tab = normalizeHashTab(base, tier)
+    if (!tab) return null
+    const alertId = new URLSearchParams(query || '').get('alert')
+    return { tab, alertId: alertId || undefined }
+}
+
+let hashRouteSyncBound = false
+let routeSyncInFlight: Promise<void> | null = null
+
+async function syncRouteFromHash(): Promise<void> {
+    if (routeSyncInFlight) return routeSyncInFlight
+
+    routeSyncInFlight = (async () => {
+        const onLogin = isLoginScreenVisible()
+        const dashboardReady = Boolean(document.querySelector('.app-container'))
+        const switchTab = (window as Window & { __dashboardHandleTabSwitch?: TabSwitchFn })
+            .__dashboardHandleTabSwitch
+
+        if (onLogin) {
+            dismissLoginUI()
+            await initDashboard()
+            return
+        }
+
+        if (dashboardReady && typeof switchTab === 'function') {
+            let tier: string | undefined
+            try {
+                const me = await fetchMe()
+                tier = me?.tier
+            } catch {
+                tier = undefined
+            }
+            const route = parseHashRoute(tier)
+            if (!route) return
+
+            const rawBase = window.location.hash.slice(1).split('?')[0]
+            if (rawBase === 'reports') {
+                history.replaceState(null, '', `#${route.tab}`)
+            }
+            switchTab(route.tab, route.alertId, true)
+            return
+        }
+
+        if (!dashboardReady) {
+            await initDashboard()
+        }
+    })().finally(() => {
+        routeSyncInFlight = null
+    })
+
+    return routeSyncInFlight
+}
+
+function bindHashRouteSync(): void {
+    if (hashRouteSyncBound) return
+    hashRouteSyncBound = true
+    window.addEventListener('hashchange', () => {
+        void syncRouteFromHash()
+    })
+    window.addEventListener('popstate', () => {
+        void syncRouteFromHash()
+    })
+}
 
 type PageHeaderMeta = {
     icon?: string
@@ -531,30 +633,8 @@ async function initDashboard() {
         handleTabSwitch('plans', undefined, true);
     });
 
-    window.addEventListener('hashchange', () => {
-        const hash = window.location.hash.slice(1);
-        if (!hash) return;
-        const [base, query] = hash.split('?');
-        let targetTab = base as TabId;
-        const params = new URLSearchParams(query || '');
-        
-        // Handle #reports redirect
-        if (targetTab === 'reports') {
-            const isProOrExpert = ['pro', 'experts', 'enterprise'].includes(user!.tier);
-            if (isProOrExpert) {
-                targetTab = 'pro-insights';
-                history.replaceState(null, '', '#pro-insights');
-            } else {
-                targetTab = 'free-feed';
-                history.replaceState(null, '', '#free-feed');
-            }
-        }
-
-        const validTabs: TabId[] = ['feed', 'free-feed', 'map', 'plans', 'legal', 'pro-insights', 'pro-map', 'expert-intel'];
-        if (validTabs.includes(targetTab)) {
-            handleTabSwitch(targetTab, params.get('alert') || undefined, true);
-        }
-    });
+    ;(window as Window & { __dashboardHandleTabSwitch?: TabSwitchFn }).__dashboardHandleTabSwitch =
+        handleTabSwitch
 
     window.addEventListener('view-report', (e: any) => {
         renderSingleReport(e.detail.reportId, currentTab);
@@ -702,9 +782,7 @@ async function initDashboard() {
         if (e.detail.tab) handleTabSwitch(e.detail.tab);
     });
 
-    const initialHash = window.location.hash.slice(1);
-    const initialBase = (initialHash.split('?')[0] || '') as TabId;
-    const bootTabs: TabId[] = ['feed', 'free-feed', 'map', 'plans', 'legal', 'pro-insights', 'pro-map', 'expert-intel'];
+    const initialRoute = parseHashRoute(user?.tier);
     const onSubscriptionPath = /\/subscription\/?$/.test(window.location.pathname);
 
     if (generation !== dashboardInitGeneration) return
@@ -712,8 +790,12 @@ async function initDashboard() {
     if (onSubscriptionPath) {
         history.replaceState({ tab: 'plans' }, '', '/subscription');
         handleTabSwitch('plans', undefined, true);
-    } else if (initialBase && bootTabs.includes(initialBase)) {
-        handleTabSwitch(initialBase, new URLSearchParams(initialHash.split('?')[1] || '').get('alert') || undefined, true);
+    } else if (initialRoute) {
+        const rawBase = window.location.hash.slice(1).split('?')[0];
+        if (rawBase === 'reports') {
+            history.replaceState(null, '', `#${initialRoute.tab}`);
+        }
+        handleTabSwitch(initialRoute.tab, initialRoute.alertId, true);
     } else {
         handleTabSwitch(isAuthenticatedUser(user) ? 'feed' : 'free-feed');
     }
@@ -724,7 +806,17 @@ const startHeartbeat = () => {
     setInterval(async () => { try { await fetchMe(); } catch (e) { } }, 5 * 60 * 1000);
 };
 
-initDashboard().then(() => { startHeartbeat(); });
+function bootstrapApp(): void {
+    void syncRouteFromHash().then(() => {
+        startHeartbeat();
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrapApp);
+} else {
+    bootstrapApp();
+}
 
 window.addEventListener('trigger-login', () => {
     void openLoginOrFeed();
