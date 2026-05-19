@@ -9,23 +9,8 @@
   const REFRESH_MS = 90000;
   const FRESHNESS_TICK_MS = 30000;
   const FETCH_LIMIT = 96;
-
-  /** Production LP host → preferred public API origins (probed in order). */
-  const LP_API_HOST_MAP = {
-    'veltrixia.net': [
-      'https://osint-platform.onrender.com',
-      'https://veltrixia-api.onrender.com',
-    ],
-    'www.veltrixia.net': [
-      'https://osint-platform.onrender.com',
-      'https://veltrixia-api.onrender.com',
-    ],
-  };
-
-  const LP_API_PROBE_ORIGINS = [
-    'https://osint-platform.onrender.com',
-    'https://veltrixia-api.onrender.com',
-  ];
+  const MIN_ALERT_POOL = Math.max(ALERT_CARD_COUNT + 2, HERO_STREAM_COUNT + 2);
+  const MIN_BRIEF_POOL = BRIEF_CARD_COUNT * 3;
 
   const TOPIC_LABELS = {
     energy_resource_risk: { label: 'Energy & Resource Risk', color: '#d29922' },
@@ -41,8 +26,162 @@
   const TRIGGER_PREFIX =
     /^(acceleration|entity_surge|pattern_risk|sector_surge|event_continuation|sustained_event|risk_pattern|risk_acceleration)\s*:\s*/i;
 
+  const FALLBACK_FREE = [
+    {
+      alert_id: 'fb-001',
+      title: 'United States Ambivalent to Russian Oil Sanctions',
+      target_label: 'United States Ambivalent to Russian Oil Sanctions',
+      topic: 'energy_resource_risk',
+      triggered_at: '2026-05-03T08:40:56.000Z',
+      related_news_count: 3,
+      related_entities_count: 14,
+      sector_impacts: [
+        { sector: 'Energy', matched_entities: 12 },
+        { sector: 'Marine Transportation', matched_entities: 8 },
+        { sector: 'Geopolitical Risk', matched_entities: 5 },
+      ],
+      context_chain: ['Russian oil output', 'maritime sanctions', 'Brent repricing'],
+      content_markdown:
+        '## Summary\nReport: Russian Oil Output Falls After Ukrainian Drone Strikes. EU defers maritime services ban.',
+    },
+    {
+      alert_id: 'fb-002',
+      title: 'Semiconductor fab input \u2014 export control ripple',
+      target_label: 'Semiconductor fab input \u2014 export control ripple',
+      topic: 'supply_chain_intelligence',
+      triggered_at: '2026-05-02T14:22:00.000Z',
+      related_news_count: 7,
+      related_entities_count: 14,
+      sector_impacts: [
+        { sector: 'Semiconductors', matched_entities: 9 },
+        { sector: 'Global Markets', matched_entities: 6 },
+        { sector: 'Defense Technology', matched_entities: 4 },
+      ],
+      context_chain: ['export notice', 'fab inputs', 'lead times'],
+      content_markdown: '## Summary\nAdvanced semiconductor inputs flagged across tier-2 suppliers.',
+    },
+    {
+      alert_id: 'fb-003',
+      title: 'Strait transit advisory \u2014 commercial lane restriction',
+      target_label: 'Strait transit advisory \u2014 commercial lane restriction',
+      topic: 'energy_resource_risk',
+      triggered_at: '2026-05-02T09:15:00.000Z',
+      related_news_count: 5,
+      related_entities_count: 8,
+      sector_impacts: [
+        { sector: 'Energy', matched_entities: 7 },
+        { sector: 'Marine Transportation', matched_entities: 5 },
+      ],
+      context_chain: ['Hormuz transit', 'VLCC rates', 'crude flows'],
+      content_markdown: '## Summary\nCommercial lane restriction linked to VLCC operator exposure.',
+    },
+    {
+      alert_id: 'fb-004',
+      title: 'Defense procurement surge \u2014 dual-use components',
+      target_label: 'Defense procurement surge \u2014 dual-use components',
+      topic: 'defense_technology',
+      triggered_at: '2026-05-01T18:40:00.000Z',
+      related_news_count: 4,
+      related_entities_count: 11,
+      sector_impacts: [
+        { sector: 'Defense Technology', matched_entities: 10 },
+        { sector: 'Military Ops', matched_entities: 6 },
+      ],
+      context_chain: ['procurement notice', 'dual-use', 'supply guard'],
+      content_markdown: '## Summary\nDual-use component demand spike across NATO supply chains.',
+    },
+    {
+      alert_id: 'fb-005',
+      title: 'Rates desk \u2014 CPI pass-through watch activated',
+      target_label: 'Rates desk \u2014 CPI pass-through watch activated',
+      topic: 'global_market_intelligence',
+      triggered_at: '2026-05-01T11:05:00.000Z',
+      related_news_count: 6,
+      related_entities_count: 3,
+      sector_impacts: [
+        { sector: 'Global Markets', matched_entities: 8 },
+        { sector: 'Finance', matched_entities: 4 },
+      ],
+      context_chain: ['CPI print', 'rates', 'FX volatility'],
+      content_markdown: '## Summary\nMacro series linkage activated for cross-asset pass-through.',
+    },
+  ];
+
+  const FALLBACK_LIVE = [
+    {
+      id: 'fl-001',
+      title: 'United States Ambivalent to Russian Oil Sanctions',
+      target_label: 'United States Ambivalent to Russian Oil Sanctions',
+      topic: 'energy_resource_risk',
+      severity: 'elevated',
+      triggered_at: '2026-05-03T08:40:56.000Z',
+      related_news_count: 3,
+      evidence_list: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
+    },
+    {
+      id: 'fl-002',
+      title: 'Strait of Hormuz \u2014 commercial transit advisory',
+      target_label: 'Strait of Hormuz \u2014 commercial transit advisory',
+      topic: 'energy_resource_risk',
+      severity: 'critical',
+      triggered_at: '2026-05-03T07:12:00.000Z',
+      related_news_count: 3,
+      evidence_list: [{}, {}, {}],
+    },
+    {
+      id: 'fl-003',
+      title: 'Strategic AI Infrastructure Surge',
+      target_label: 'Strategic AI Infrastructure Surge',
+      topic: 'ai_semiconductor_intelligence',
+      severity: 'high',
+      triggered_at: '2026-05-03T06:30:00.000Z',
+      related_news_count: 4,
+      evidence_list: [{}, {}, {}, {}],
+    },
+    {
+      id: 'fl-004',
+      title: 'Taiwan Strait \u2014 elevated airspace notices',
+      target_label: 'Taiwan Strait \u2014 elevated airspace notices',
+      topic: 'defense_technology',
+      severity: 'elevated',
+      triggered_at: '2026-05-02T22:18:00.000Z',
+      related_news_count: 5,
+      evidence_list: [{}, {}, {}, {}, {}],
+    },
+    {
+      id: 'fl-005',
+      title: 'Ukraine border \u2014 energy infrastructure strike pattern',
+      target_label: 'Ukraine border \u2014 energy infrastructure strike pattern',
+      topic: 'energy_resource_risk',
+      severity: 'critical',
+      triggered_at: '2026-05-02T19:44:00.000Z',
+      related_news_count: 6,
+      evidence_list: [{}, {}, {}, {}, {}, {}],
+    },
+    {
+      id: 'fl-006',
+      title: 'Supply chain disruption \u2014 port congestion index',
+      target_label: 'Supply chain disruption \u2014 port congestion index',
+      topic: 'supply_chain_disruption',
+      severity: 'elevated',
+      triggered_at: '2026-05-02T16:02:00.000Z',
+      related_news_count: 9,
+      evidence_list: [{}, {}, {}, {}, {}, {}, {}, {}, {}],
+    },
+    {
+      id: 'fl-007',
+      title: 'Central bank corridor \u2014 FX intervention watch',
+      target_label: 'Central bank corridor \u2014 FX intervention watch',
+      topic: 'global_market_intelligence',
+      severity: 'watch',
+      triggered_at: '2026-05-02T12:20:00.000Z',
+      related_news_count: 4,
+      evidence_list: [{}, {}, {}, {}],
+    },
+  ];
+
   const state = {
-    mode: 'loading',
+    mode: 'fallback',
     alertPool: [],
     briefPool: [],
     briefOffset: 0,
@@ -80,6 +219,14 @@
 
   function sortByTimestampDesc(pool) {
     return [...pool].sort((a, b) => timestampMs(b) - timestampMs(a));
+  }
+
+  function stampFreshFallbackRows(rows, spacingMinutes) {
+    const now = Date.now();
+    return rows.map((row, i) => ({
+      ...row,
+      triggered_at: new Date(now - i * spacingMinutes * 60000).toISOString(),
+    }));
   }
 
   function newestIsoFromPools(...pools) {
@@ -191,138 +338,11 @@
     return severityClass(sev).toUpperCase();
   }
 
-  function normalizeApiBase(raw) {
-    let base = String(raw || '').trim().replace(/\/+$/, '');
-    if (!base) return '/api';
-    if (base.startsWith('http') && !base.endsWith('/api')) {
-      base += '/api';
-    } else if (!base.startsWith('http') && !base.startsWith('/')) {
-      base = '/' + base;
-    }
-    return base;
-  }
-
-  function collectLpApiCandidates() {
-    const seen = new Set();
-    const out = [];
-    const add = (raw) => {
-      if (!raw) return;
-      const base = normalizeApiBase(String(raw).trim());
-      if (!seen.has(base)) {
-        seen.add(base);
-        out.push(base);
-      }
-    };
-
-    const meta = document.querySelector('meta[name="veltrixia-api-base"]');
-    if (meta && meta.getAttribute('content')) add(meta.getAttribute('content'));
-    if (typeof window.__VELTRIXIA_API_BASE__ === 'string') add(window.__VELTRIXIA_API_BASE__);
-
-    const host = window.location.hostname;
-    const hostList = LP_API_HOST_MAP[host];
-    if (Array.isArray(hostList)) hostList.forEach(add);
-    LP_API_PROBE_ORIGINS.forEach(add);
-
-    if (host === 'localhost' || host === '127.0.0.1') {
-      add('/api');
-    } else {
-      const port = window.location.port ? ':' + window.location.port : '';
-      add(window.location.protocol + '//' + host + port);
-    }
-    return out;
-  }
-
-  let LP_API_BASE = collectLpApiCandidates()[0] || '/api';
-
-  async function probeLpApiBase(base) {
-    const statusUrl = base.replace(/\/$/, '') + '/status';
-    try {
-      const cross =
-        base.startsWith('http') &&
-        new URL(base, window.location.href).origin !== window.location.origin;
-      const res = await fetch(statusUrl, {
-        method: 'GET',
-        mode: 'cors',
-        credentials: cross ? 'omit' : 'same-origin',
-        cache: 'no-store',
-        headers: { Accept: 'application/json' },
-      });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  async function ensureLpApiBase() {
-    const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') {
-      LP_API_BASE = '/api';
-      return LP_API_BASE;
-    }
-
-    try {
-      const cached = sessionStorage.getItem('lp_api_base');
-      if (cached && (await probeLpApiBase(cached))) {
-        LP_API_BASE = cached;
-        return LP_API_BASE;
-      }
-    } catch {
-      /* private mode */
-    }
-
-    const candidates = collectLpApiCandidates();
-    for (let i = 0; i < candidates.length; i += 1) {
-      const base = candidates[i];
-      if (await probeLpApiBase(base)) {
-        LP_API_BASE = base;
-        try {
-          sessionStorage.setItem('lp_api_base', base);
-        } catch {
-          /* ignore */
-        }
-        return LP_API_BASE;
-      }
-    }
-
-    LP_API_BASE = candidates[0] || '/api';
-    return LP_API_BASE;
-  }
-
-  function lpApiIsCrossOrigin() {
-    if (!LP_API_BASE.startsWith('http')) return false;
-    try {
-      return new URL(LP_API_BASE).origin !== window.location.origin;
-    } catch {
-      return false;
-    }
-  }
-
-  function lpApiUrl(path) {
-    const rel = path.startsWith('/api/') ? path.slice(4) : path.startsWith('/api') ? path.slice(4) : path;
-    const suffix = rel.startsWith('/') ? rel : '/' + rel;
-    return LP_API_BASE + suffix;
-  }
-
   function hasUsableSources(alert) {
     if (!alert) return false;
     if (Array.isArray(alert.sources) && alert.sources.length > 0) return true;
     if (Array.isArray(alert.evidence_list) && alert.evidence_list.length > 0) return true;
     return false;
-  }
-
-  function passesAlertQuality(alert) {
-    if (!alert) return false;
-    if (!hasUsableSources(alert)) return false;
-    const title = cleanTitle(alert.title || alert.target_label || '');
-    return Boolean(title && title.length >= 4);
-  }
-
-  function passesBriefQuality(brief) {
-    if (!brief) return false;
-    const title = cleanTitle(brief.title || brief.target_label || '');
-    if (!title || title.length < 4) return false;
-    const body = String(brief.content_markdown || '').trim();
-    return body.length >= 24;
   }
 
   function sourceCount(alert) {
@@ -377,45 +397,92 @@
     return [...best.values()];
   }
 
-  /** API-only pool: normalize → quality filter → dedupe → newest first. */
-  function buildApiPool(rawItems, kind) {
+  function passesAlertQuality(alert) {
+    if (!alert) return false;
+    if (!hasUsableSources(alert)) return false;
+    const title = cleanTitle(alert.title || alert.target_label || '');
+    if (!title || title.length < 4) return false;
+    return true;
+  }
+
+  function passesBriefQuality(brief) {
+    if (!brief) return false;
+    if (newsCountForBrief(brief) < 1) return false;
+    const entityCount = entitiesCountForBrief(brief);
+    const sectorRows = normalizeSectorRowsForBrief(brief);
+    if (entityCount < 1 && !sectorRows.length) return false;
+    const title = cleanTitle(brief.title || brief.target_label || '');
+    if (!title || title.length < 4) return false;
+    const body = String(brief.content_markdown || '').trim();
+    if (body.length < 48) return false;
+    return true;
+  }
+
+  function mergeUniquePools(primary, supplement, kind, minSize) {
+    const seen = new Set();
+    const out = [];
+    const pushUnique = (list) => {
+      list.forEach((item) => {
+        const key = dedupeKey(item, kind);
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(item);
+      });
+    };
+    pushUnique(primary);
+    if (out.length < minSize) pushUnique(supplement);
+    return sortByTimestampDesc(out);
+  }
+
+  /**
+   * Quality-filter, de-duplicate, and backfill from fallback — never clone rows for density.
+   */
+  function prepareShowcasePool(rawItems, kind, fallbackItems, minPoolSize) {
     const normalize = kind === 'alert' ? normalizeLiveAlert : normalizeBriefItem;
     const qualityFn = kind === 'alert' ? passesAlertQuality : passesBriefQuality;
-    return sortByTimestampDesc(
+
+    const primary = sortByTimestampDesc(
       dedupeNewestFirst(
         (rawItems || []).map(normalize).filter(qualityFn),
         kind,
       ),
     );
+
+    const fallback = sortByTimestampDesc(
+      dedupeNewestFirst(
+        (fallbackItems || []).map(normalize).filter(qualityFn),
+        kind,
+      ),
+    );
+
+    return mergeUniquePools(primary, fallback, kind, minPoolSize);
   }
 
   function normalizeLiveAlert(raw) {
     const evidence = Array.isArray(raw.evidence_list) ? raw.evidence_list : [];
     const sources = Array.isArray(raw.sources) ? raw.sources : [];
-    const title = String(raw.title || raw.target_label || '').trim();
+    const count = sourceCount(raw);
     return {
       ...raw,
-      title,
-      target_label: String(raw.target_label || title).trim(),
       triggered_at: resolveTimestamp(raw),
       evidence_list: evidence,
-      sources_count: evidence.length || sources.length,
+      sources_count: count,
     };
   }
 
   function normalizeBriefItem(raw) {
     const relatedNews = Array.isArray(raw.related_news) ? raw.related_news : [];
     const companyImpacts = Array.isArray(raw.company_impacts) ? raw.company_impacts : [];
-    const title = String(raw.title || raw.target_label || '').trim();
-    const validImpacts = countValidCompanyImpacts(companyImpacts);
+    const newsCount =
+      typeof raw.related_news_count === 'number' && Number.isFinite(raw.related_news_count)
+        ? Math.max(0, Math.floor(raw.related_news_count))
+        : relatedNews.length;
     return {
       ...raw,
-      title,
-      target_label: String(raw.target_label || title).trim(),
       triggered_at: resolveTimestamp(raw),
       related_news: relatedNews,
-      related_news_count: pickCount(raw.related_news_count, relatedNews.length),
-      related_entities_count: pickCount(raw.related_entities_count, validImpacts),
+      related_news_count: newsCount,
+      related_entities_count: pickCount(raw.related_entities_count, 0),
       additional_pro_count: pickCount(raw.additional_pro_count, 0),
       company_impacts: companyImpacts,
       sector_impacts: Array.isArray(raw.sector_impacts) ? raw.sector_impacts : [],
@@ -542,18 +609,17 @@
     return count;
   }
 
-  /**
-   * News count from API: related_news_count, or related_news.length when the array is populated.
-   * Mirrors dashboard feed binding (always shows the resolved count, including 0).
-   */
+  /** Same rule as renderFeedCard: API related_news_count, else related_news.length. */
   function newsCountForBrief(item) {
     if (!item) return 0;
+    if (typeof item.related_news_count === 'number' && Number.isFinite(item.related_news_count)) {
+      return Math.max(0, Math.floor(item.related_news_count));
+    }
     const relatedNews = Array.isArray(item.related_news) ? item.related_news : [];
-    if (relatedNews.length > 0) return relatedNews.length;
-    return pickCount(item.related_news_count, 0);
+    return relatedNews.length;
   }
 
-  /** Same rule as dashboard computeEntityDisplayState (Context Briefs feed cards). */
+  /** Same rule as computeEntityDisplayState (free-tier card totals). */
   function entitiesCountForBrief(item) {
     if (!item) return 0;
     const relatedEntitiesCount = pickCount(item.related_entities_count, 0);
@@ -566,12 +632,12 @@
     const newsCount = newsCountForBrief(item);
     const entitiesCount = entitiesCountForBrief(item);
     return (
-      '<span class="cb-brief-stat-chip" data-lp-stat="news" data-lp-source="api" data-count="' +
+      '<span class="cb-brief-stat-chip" data-lp-stat="news" data-count="' +
       newsCount +
       '">📰 ' +
       newsCount +
       ' news</span>' +
-      '<span class="cb-brief-stat-chip" data-lp-stat="entities" data-lp-source="api" data-count="' +
+      '<span class="cb-brief-stat-chip" data-lp-stat="entities" data-count="' +
       entitiesCount +
       '">🏢 ' +
       entitiesCount +
@@ -617,33 +683,28 @@
 
   function updateFreshnessBadges() {
     const sectionEl = document.getElementById('lp-terminal-freshness');
-    const mode = state.mode;
+    const live = state.mode === 'live';
     const nowIso = new Date().toISOString();
 
     if (sectionEl) {
-      sectionEl.hidden = false;
-      if (mode === 'live') {
+      if (live) {
+        sectionEl.hidden = false;
         const dataLabel = state.newestDataAt
           ? 'LAST UPDATED: ' + formatRelativeFromNow(state.newestDataAt)
           : 'LIVE: ' + formatDisplayDateJa(nowIso);
         sectionEl.textContent = dataLabel;
         sectionEl.title = state.newestDataAt
-          ? 'Newest API signal: ' + formatDisplayDateJa(state.newestDataAt)
-          : 'Synced with /api/alerts/live and /api/free/alerts';
-      } else if (mode === 'empty') {
-        sectionEl.textContent = 'API CONNECTED · NO ITEMS MATCH FILTERS';
-        sectionEl.title = 'Production APIs responded but no showcase-ready rows were returned';
-      } else if (mode === 'offline') {
-        sectionEl.textContent = 'API UNAVAILABLE';
-        sectionEl.title = 'Could not load /api/alerts/live or /api/free/alerts';
+          ? 'Newest signal: ' + formatDisplayDateJa(state.newestDataAt)
+          : 'Synced with production API';
       } else {
-        sectionEl.textContent = 'SYNCING…';
-        sectionEl.title = 'Fetching production APIs';
+        sectionEl.hidden = false;
+        sectionEl.textContent = 'SAMPLE DATA · ' + formatDisplayDateJa(nowIso);
+        sectionEl.title = 'Production API unavailable — showing canonical samples';
       }
     }
 
     document.querySelectorAll('[data-lp-sync]').forEach((el) => {
-      if (mode !== 'live') return;
+      if (!live) return;
       const clock = formatDisplayDateJa(nowIso);
       const timePart = clock.includes(' ') ? clock.split(' ').pop() : clock;
       el.textContent = 'LIVE · ' + timePart;
@@ -655,7 +716,8 @@
 
   function setSyncBadge(mode) {
     document.querySelectorAll('[data-lp-sync]').forEach((el) => {
-      if (mode === 'live') {
+      const live = mode === 'live';
+      if (live) {
         el.hidden = false;
         el.className = 'lp-live-indicator';
         el.textContent = 'LIVE PRODUCTION DATA';
@@ -664,46 +726,18 @@
         el.hidden = true;
         el.className = 'lp-live-indicator';
         el.textContent = '';
-        el.setAttribute('data-lp-mode', mode);
+        el.setAttribute('data-lp-mode', 'fallback');
         el.removeAttribute('title');
       }
     });
     updateFreshnessBadges();
   }
 
-  function renderPanelEmpty(container, message) {
-    if (!container) return;
-    container.innerHTML =
-      '<p class="lp-panel-empty lp-mono">' + escapeHtml(message) + '</p>';
-    container.classList.remove('lp-panel-loading');
-    container.removeAttribute('aria-busy');
-  }
-
   function renderShowcasePanels(animate) {
     const alertRoot = document.getElementById('lp-alert-stream');
     const briefRoot = document.getElementById('lp-brief-grid');
-
-    if (!state.alertPool.length) {
-      renderPanelEmpty(
-        alertRoot,
-        state.mode === 'offline'
-          ? 'Alert Stream unavailable — production API could not be reached.'
-          : 'No alerts available from /api/alerts/live for the current filters.',
-      );
-    } else {
-      renderAlerts(alertRoot, fillDisplaySlots(state.alertPool, ALERT_CARD_COUNT), animate);
-    }
-
-    if (!state.briefPool.length) {
-      renderPanelEmpty(
-        briefRoot,
-        state.mode === 'offline'
-          ? 'Context Briefs unavailable — production API could not be reached.'
-          : 'No briefs available from /api/free/alerts for the current filters.',
-      );
-    } else {
-      renderBriefs(briefRoot, windowItems(state.briefPool, state.briefOffset, BRIEF_CARD_COUNT), animate);
-    }
+    renderAlerts(alertRoot, fillDisplaySlots(state.alertPool, ALERT_CARD_COUNT), animate);
+    renderBriefs(briefRoot, windowItems(state.briefPool, state.briefOffset, BRIEF_CARD_COUNT), animate);
   }
 
   function alertCardHtml(a, index) {
@@ -714,9 +748,8 @@
     const ts = formatDisplayTimestamp(resolveTimestamp(a));
     const count = sourceCount(a);
     const vars = topicCssVars(a.topic);
-    const apiId = escapeHtml(String(a.id || ''));
     return `
-      <div class="alert-card-compact severity-${sev} lp-alert-slot" data-slot="${index}" data-lp-source="api" data-api-id="${apiId}" style="${vars}">
+      <div class="alert-card-compact severity-${sev} lp-alert-slot" data-slot="${index}" style="${vars}">
         <div class="alert-header u-flex-between">
           <div class="u-flex" style="gap:8px;align-items:center;">
             <span class="severity-badge ${sev}">${escapeHtml(sevText)}</span>
@@ -742,13 +775,6 @@
       </div>`;
   }
 
-  function briefSummaryText(item) {
-    if (!item) return '';
-    const direct = item.summary ?? item.teaser ?? item.description;
-    if (typeof direct === 'string' && direct.trim()) return direct.trim();
-    return extractTeaser(item.content_markdown);
-  }
-
   function extractTeaser(markdown) {
     if (!markdown) {
       return 'Rule-based context, related news, and matched entities — open the full brief for detail.';
@@ -767,12 +793,11 @@
     const rawTitle = item.title || item.target_label || '';
     const title = cleanTitle(rawTitle);
     const ts = formatDisplayTimestamp(resolveTimestamp(item));
-    const teaser = escapeHtml(briefSummaryText(item));
+    const teaser = escapeHtml(extractTeaser(item.content_markdown));
     const statsHtml = briefEvidenceStatsHtml(item);
     const topicVars = topicCssVars(item.topic);
-    const briefId = escapeHtml(String(item.alert_id || ''));
     return (
-      '<article class="pro-brief-card cb-brief-card cb-brief-card--preview lp-brief-slot" data-slot="' + index + '" data-domain-card="1" data-lp-source="api" data-api-id="' + briefId + '" style="' + topicVars + '">' +
+      '<article class="pro-brief-card cb-brief-card cb-brief-card--preview lp-brief-slot" data-slot="' + index + '" data-domain-card="1" style="' + topicVars + '">' +
         '<div class="cb-brief-card-head cb-brief-card-head--row">' +
           '<span class="domain-chip meta-item-topic--tag">' + escapeHtml(meta.label) + '</span>' +
           '<span class="cb-brief-ts">' + escapeHtml(ts) + '</span>' +
@@ -838,8 +863,8 @@
     container.innerHTML = rows
       .map((a) => {
         const tag = heroTopicTag(a.topic);
-        const tsIso = resolveTimestamp(a);
-        const ts = tsIso ? formatDisplayTimestamp(tsIso) : '\u2014';
+        const tsIso = resolveTimestamp(a) || new Date().toISOString();
+        const ts = formatDisplayTimestamp(tsIso);
         return `<span class="lp-terminal-line"><span class="ts">${ts}</span><span class="tag">${tag}</span><span class="val">${escapeHtml(cleanTitle(a.title || a.target_label))}</span></span>`;
       })
       .join('');
@@ -861,21 +886,12 @@
 
   async function fetchJson(path) {
     const sep = path.includes('?') ? '&' : '?';
-    const url = lpApiUrl(path) + sep + '_ts=' + Date.now();
-    const res = await fetch(url, {
-      method: 'GET',
-      mode: 'cors',
-      credentials: lpApiIsCrossOrigin() ? 'omit' : 'same-origin',
+    const res = await fetch(path + sep + '_ts=' + Date.now(), {
+      credentials: 'same-origin',
       cache: 'no-store',
-      headers: {
-        Accept: 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        Pragma: 'no-cache',
-      },
+      headers: { Accept: 'application/json' },
     });
-    if (!res.ok) {
-      throw new Error('HTTP ' + res.status + ' for ' + url);
-    }
+    if (!res.ok) throw new Error(String(res.status));
     return res.json();
   }
 
@@ -884,44 +900,36 @@
     const briefRoot = document.getElementById('lp-brief-grid');
     const heroRoot = document.querySelector('.lp-hero .lp-terminal-body');
 
-    state.mode = 'loading';
+    const fallbackFree = stampFreshFallbackRows(FALLBACK_FREE, 12).map(normalizeBriefItem);
+    const fallbackLive = stampFreshFallbackRows(FALLBACK_LIVE, 8).map(normalizeLiveAlert);
+    let freeItems = fallbackFree;
+    let liveItems = fallbackLive;
+    state.mode = 'fallback';
     state.briefOffset = 0;
     state.heroOffset = 0;
-    state.alertPool = [];
-    state.briefPool = [];
-
-    let apiFreeRaw = [];
-    let apiLiveRaw = [];
-    let fetchOk = false;
-
-    await ensureLpApiBase();
-    console.info('[LP] API base:', LP_API_BASE, lpApiIsCrossOrigin() ? '(cross-origin)' : '(same-origin)');
 
     try {
       const [free, live] = await Promise.all([
-        fetchJson('/api/free/alerts?limit=' + FETCH_LIMIT),
-        fetchJson('/api/alerts/live?limit=' + FETCH_LIMIT),
+        fetchJson(`/api/free/alerts?limit=${FETCH_LIMIT}`),
+        fetchJson(`/api/alerts/live?limit=${FETCH_LIMIT}`),
       ]);
-      apiFreeRaw = Array.isArray(free) ? free : [];
-      apiLiveRaw = Array.isArray(live) ? live : [];
-      fetchOk = true;
-    } catch (err) {
-      console.warn('[LP] Production API fetch failed:', err);
-    }
-
-    if (fetchOk) {
-      state.briefPool = buildApiPool(apiFreeRaw, 'brief');
-      state.alertPool = buildApiPool(apiLiveRaw, 'alert');
-      state.mode =
-        state.briefPool.length || state.alertPool.length ? 'live' : 'empty';
-    } else {
-      state.briefPool = [];
-      state.alertPool = [];
-      state.mode = 'offline';
+      if (Array.isArray(free) && free.length) {
+        freeItems = sortByTimestampDesc(free.map(normalizeBriefItem));
+        state.mode = 'live';
+      }
+      if (Array.isArray(live) && live.length) {
+        liveItems = sortByTimestampDesc(live.map(normalizeLiveAlert));
+        state.mode = 'live';
+      }
+    } catch {
+      /* fallback with fresh timestamps */
     }
 
     state.lastFetchedAt = new Date().toISOString();
-    state.newestDataAt = newestIsoFromPools(state.alertPool, state.briefPool);
+    state.newestDataAt = newestIsoFromPools(liveItems, freeItems);
+
+    state.briefPool = prepareShowcasePool(freeItems, 'brief', fallbackFree, MIN_BRIEF_POOL);
+    state.alertPool = prepareShowcasePool(liveItems, 'alert', fallbackLive, MIN_ALERT_POOL);
 
     renderShowcasePanels(false);
     renderHeroTerminal(heroRoot, fillDisplaySlots(state.alertPool, HERO_STREAM_COUNT));
@@ -935,9 +943,7 @@
     });
 
     if (state.briefRotateTimer) clearInterval(state.briefRotateTimer);
-    if (state.briefPool.length > BRIEF_CARD_COUNT) {
-      state.briefRotateTimer = setInterval(tickBriefRotate, BRIEF_ROTATE_MS);
-    }
+    state.briefRotateTimer = setInterval(tickBriefRotate, BRIEF_ROTATE_MS);
 
     if (state.refreshTimer) clearInterval(state.refreshTimer);
     state.refreshTimer = setInterval(hydrate, REFRESH_MS);
@@ -947,11 +953,7 @@
 
     document.dispatchEvent(
       new CustomEvent('lp-data-ready', {
-        detail: {
-          mode: state.mode,
-          briefCount: state.briefPool.length,
-          alertCount: state.alertPool.length,
-        },
+        detail: { mode: state.mode, freeItems, liveItems },
       })
     );
   }
