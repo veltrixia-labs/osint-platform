@@ -2,7 +2,7 @@
 
 :root {
   --lp-header-h: 3.25rem;
-  --lp-bg: #080b10;
+  --lp-bg: #0a0c10;
   --lp-surface: #0d1117;
   --lp-surface-2: #111820;
   --lp-border: rgba(255, 255, 255, 0.09);
@@ -506,24 +506,27 @@ body.lp {
   display: flex;
   flex-direction: column;
   padding: 1.5rem 1.35rem 1.35rem;
-  border-radius: 1.35rem;
+  border-radius: 1.5rem;
   border: 1px solid var(--lp-border);
   background: linear-gradient(
     155deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    rgba(13, 17, 23, 0.72) 45%,
-    rgba(8, 11, 16, 0.85) 100%
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(10, 12, 16, 0.88) 48%,
+    #0a0c10 100%
   );
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
   position: relative;
-  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.lp-pricing-card:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  transform: translateY(-2px);
+.lp-pricing-card.vx-pricing-card:hover {
+  transform: none;
+}
+
+.lp-pricing-card--coming-soon {
+  opacity: 0.94;
 }
 
 .lp-pricing-card--featured {
@@ -545,6 +548,24 @@ body.lp {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+
+.lp-pricing-ribbon--soon {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--lp-muted);
+  background-image: none;
+}
+
+.lp-pricing-price-original {
+  margin: 0 0 0.15rem;
+  line-height: 1;
+}
+
+.lp-pricing-original-amount {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--lp-dim);
+  text-decoration: line-through;
 }
 
 .lp-pricing-ribbon {
@@ -705,6 +726,16 @@ body.lp {
   background: rgba(255, 255, 255, 0.07);
 }
 
+.lp-pricing-cta--waitlist,
+.lp-pricing-cta--waitlist:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  color: var(--lp-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--lp-border-strong);
+  box-shadow: none;
+}
+
 .lp-pricing-footnote {
   margin: 1.75rem 0 0;
   font-size: 0.8rem;
@@ -720,6 +751,43 @@ body.lp {
 
 .lp-pricing-footnote a:hover {
   text-decoration: underline;
+}
+
+/* Ambient card pulse (mirrors theme-terminal.css for standalone LP) */
+@keyframes vx-ambient-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+    border-color: var(--lp-border);
+  }
+  50% {
+    transform: translateY(-5px);
+    box-shadow: 0 0 28px rgba(0, 209, 255, 0.2), 0 16px 40px rgba(0, 0, 0, 0.38);
+    border-color: rgba(0, 209, 255, 0.38);
+  }
+}
+
+.lp-pricing-grid .lp-pricing-card.vx-pricing-card {
+  animation: vx-ambient-float 6s ease-in-out infinite;
+  animation-delay: var(--vx-ambient-delay, 0s);
+}
+
+.lp-pricing-grid:hover .lp-pricing-card.vx-pricing-card {
+  animation-play-state: paused;
+}
+
+.lp-pricing-grid .lp-pricing-card.vx-pricing-card:hover {
+  animation: none !important;
+  transform: translateY(-6px) !important;
+  border-color: rgba(0, 209, 255, 0.55) !important;
+  box-shadow: 0 0 40px rgba(0, 209, 255, 0.45), 0 20px 48px rgba(0, 0, 0, 0.45) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-pricing-grid .lp-pricing-card.vx-pricing-card {
+    animation: none;
+  }
 }
 
 /* ── Tiers table (legacy) ── */

@@ -300,6 +300,79 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/* ── Pricing: ambient wave (LP + app Plans) ── */
+@keyframes vx-ambient-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    box-shadow: var(--inner-glow), 0 8px 28px rgba(0, 0, 0, 0.35);
+    border-color: var(--border);
+  }
+  50% {
+    transform: translateY(-5px);
+    box-shadow: var(--inner-glow), 0 0 28px rgba(0, 209, 255, 0.2), 0 16px 40px rgba(0, 0, 0, 0.42);
+    border-color: rgba(0, 209, 255, 0.38);
+  }
+}
+
+.plans-grid--pricing .plan-card.vx-pricing-card,
+.lp-pricing-grid .lp-pricing-card.vx-pricing-card {
+  animation: vx-ambient-float 6s ease-in-out infinite;
+  animation-delay: var(--vx-ambient-delay, 0s);
+}
+
+.plans-grid--pricing:hover .plan-card.vx-pricing-card,
+.lp-pricing-grid:hover .lp-pricing-card.vx-pricing-card {
+  animation-play-state: paused;
+}
+
+.plans-grid--pricing .plan-card.vx-pricing-card:hover,
+.lp-pricing-grid .lp-pricing-card.vx-pricing-card:hover {
+  animation: none !important;
+  transform: translateY(-6px) !important;
+  border-color: rgba(0, 209, 255, 0.55) !important;
+  box-shadow: var(--inner-glow-hover), 0 0 40px rgba(0, 209, 255, 0.45), 0 20px 48px rgba(0, 0, 0, 0.45) !important;
+}
+
+.subscription-tab[data-billing="monthly"] [data-billing-label="monthly"],
+.subscription-tab[data-billing="annual"] [data-billing-label="annual"],
+.lp-pricing-section[data-billing="monthly"] [data-billing-label="monthly"],
+.lp-pricing-section[data-billing="annual"] [data-billing-label="annual"] {
+  color: var(--text-primary);
+}
+
+.subscription-tab[data-billing="monthly"] [data-billing-label="annual"],
+.subscription-tab[data-billing="annual"] [data-billing-label="monthly"],
+.lp-pricing-section[data-billing="monthly"] [data-billing-label="annual"],
+.lp-pricing-section[data-billing="annual"] [data-billing-label="monthly"] {
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
+.subscription-tab[data-billing="annual"] .vx-pricing-switch-track,
+.lp-pricing-section[data-billing="annual"] .vx-pricing-switch-track,
+.lp-pricing-section[data-billing="annual"] .lp-pricing-switch-track {
+  background: rgba(0, 209, 255, 0.15);
+  border-color: rgba(0, 209, 255, 0.45);
+}
+
+.subscription-tab[data-billing="annual"] .vx-pricing-switch-thumb,
+.lp-pricing-section[data-billing="annual"] .vx-pricing-switch-thumb,
+.lp-pricing-section[data-billing="annual"] .lp-pricing-switch-thumb {
+  transform: translateX(1.45rem);
+  background: linear-gradient(135deg, #5eead4, #00d1ff);
+}
+
+.subscription-tab[data-billing="annual"] .plan-price-billed-note,
+.subscription-tab[data-billing="annual"] .lp-pricing-billed-note {
+  display: block;
+}
+
+.subscription-tab[data-billing="monthly"] .plan-price-billed-note,
+.subscription-tab[data-billing="monthly"] .lp-pricing-billed-note {
+  display: none !important;
+}
+
 /* ── Hover: remove lift, keep glow ── */
 @media (prefers-reduced-motion: no-preference) {
   #alerts-container .alert-card:hover,

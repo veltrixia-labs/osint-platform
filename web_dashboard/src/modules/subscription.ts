@@ -14,6 +14,12 @@ import type { TopicDef } from './topics';
 import { fetchCheckoutSession, cancelSubscription } from './api';
 import { promptCheckoutEmail } from './checkout_email_modal';
 import { ENTITLEMENT_MATRIX } from './topics';
+import {
+    formatUsd,
+    initBillingToggle,
+    renderBillingToggleHtml,
+    TIER_PRICES,
+} from './plan_pricing';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -43,12 +49,11 @@ interface PlanConfig {
     subtitle: string;
     explanation?: string;
     bestFor: string;
-    price: string;
-    originalPrice?: string;
     priceNote: string;
     color: string;
-    /** true = Stripe Checkout, false = contact-sales redirect */
+    /** true = Stripe Checkout, false = contact-sales / waitlist */
     directCheckout: boolean;
+    comingSoon?: boolean;
     contactUrl: string;
     features: string[];
     ctaText?: string;
@@ -58,33 +63,29 @@ interface PlanConfig {
 const PLANS: PlanConfig[] = [
     {
         id: 'free',
-        name: PLAN_NAME_MAP.free,
-        subtitle: 'The Entry Point for Global Intelligence',
+        name: 'Free',
+        subtitle: 'Situational Awareness',
         bestFor: TIER_BEST_FOR.free,
-        price: '$0',
         priceNote: 'forever',
         color: '#8b949e',
         directCheckout: false,
         contactUrl: '',
         features: [
             'Real-time Alert Stream headlines',
-            'Full Global Map access',
             'Context Briefs (Free-tier limited)',
             'Base news evidence',
             'Community support',
         ],
-        ctaText: 'Start Monitoring',
+        ctaText: 'Get Started',
     },
     {
         id: 'pro',
         name: PLAN_NAME_MAP.pro,
-        subtitle: 'Deep Structural Analysis',
-        explanation: 'Limited to the first 1,000 members',
+        subtitle: 'Structural Analysis',
+        explanation: 'Limited to the first 1,000 founding members',
         bestFor: TIER_BEST_FOR.pro,
-        price: '$39',
-        originalPrice: '$79',
         priceNote: 'month',
-        color: '#58a6ff',
+        color: '#00d1ff',
         directCheckout: true,
         contactUrl: '',
         features: [
@@ -94,55 +95,65 @@ const PLANS: PlanConfig[] = [
             'Exposure Matrix Analysis',
             'High-Fidelity Signal Access',
             'Transmission Flow Visualization',
-            'Key Findings Analysis',
         ],
-        ctaText: 'Become a Founding Pro',
-        highlight: 'EARLY ACCESS',
+        ctaText: 'Start 7-day Free Trial',
+        highlight: 'MOST POPULAR',
     },
     {
         id: 'experts',
         name: PLAN_NAME_MAP.experts,
-        subtitle: 'Advanced Strategic Foresight',
-        explanation: 'Limited to the first 100 members',
+        subtitle: 'Strategic Foresight',
+        explanation: 'Founding Expert access — launching soon',
         bestFor: TIER_BEST_FOR.experts,
-        price: '$149',
-        originalPrice: '$299',
         priceNote: 'month',
         color: '#3fb950',
-        directCheckout: true,
+        directCheckout: false,
+        comingSoon: true,
         contactUrl: '',
         features: [
-            'Coming Soon: Expert Foresight',
+            'Everything in Founding Pro',
             'Cross-domain Risk Forecasting',
             'Strategic Scenario Analysis',
             'Recommended Strategic Actions',
-            'Waitlist Priority for New Tools',
-            'Direct Analyst Access (Coming)',
-            'Unlimited Strategic Alerts',
+            'Expert specialty topics',
+            'Unlimited strategic alerts',
         ],
-        ctaText: 'Secure Founding Expert Spot',
-        highlight: 'FOUNDING MEMBER',
-    },
-    {
-        id: 'enterprise',
-        name: PLAN_NAME_MAP.enterprise,
-        subtitle: 'Expert Intelligence + Organization Controls',
-        bestFor: TIER_BEST_FOR.enterprise,
-        price: 'Contact',
-        priceNote: 'us',
-        color: '#bc8cff',
-        directCheckout: false,
-        contactUrl: 'mailto:sales@osint-platform.com?subject=Enterprise%20Plan%20Inquiry',
-        features: [
-            'Full Expert-tier features',
-            'Team & Admin Management',
-            'Custom domain configuration',
-            'Priority 1-on-1 support',
-            'Enterprise API Access',
-        ],
-        ctaText: 'Contact Sales',
+        ctaText: 'Join Waitlist',
+        highlight: 'COMING SOON',
     },
 ];
+
+const DISPLAY_PLANS = PLANS;
+
+function renderPlanPriceHtml(plan: PlanConfig): string {
+    if (plan.id === 'free') {
+        return `
+            <span class="plan-price-amount">$0</span>
+            <span class="plan-price-note">/${plan.priceNote}</span>
+        `;
+    }
+
+    const tier = TIER_PRICES[plan.id];
+    if (!tier) return '';
+
+    const hasOriginal = tier.monthlyOriginal != null;
+    const originalHtml = hasOriginal
+        ? `<div class="plan-price-standard">
+            <span class="plan-price-old plan-price-old--dynamic">${formatUsd(tier.monthlyOriginal!)}</span>
+           </div>`
+        : '';
+
+    return `
+        <div class="plan-price" data-price-tier="${plan.id}">
+            ${originalHtml}
+            <div class="plan-price-founding">
+                <span class="plan-price-amount plan-price-amount--dynamic pro-price-highlight">${formatUsd(tier.monthly)}</span>
+                <span class="plan-price-note">/ ${plan.priceNote}</span>
+            </div>
+            <p class="plan-price-billed-note" hidden>billed annually</p>
+        </div>
+    `;
+}
 
 interface ComparisonSection {
     type: 'section';
@@ -234,13 +245,21 @@ function renderUpgradeButton(plan: PlanConfig, currentUser: UserMe): string {
 
     const ctaText = plan.ctaText || `Upgrade to ${plan.name}`;
 
+    if (plan.comingSoon) {
+        return `<button type="button" class="plan-cta-btn plan-cta-btn--waitlist" disabled aria-disabled="true">${ctaText}</button>`;
+    }
+
+    if (plan.id === 'free' && !plan.directCheckout) {
+        return `<button type="button" class="plan-cta-btn plan-cta-btn--muted" data-plan="free" id="upgrade-btn-free">${ctaText}</button>`;
+    }
+
     // Determine if it's an upgrade or contact sales
     if (!plan.directCheckout) {
         return `<a class="plan-cta-btn plan-cta-btn--contact" href="${plan.contactUrl}" target="_blank" rel="noopener">${ctaText}</a>`;
     }
 
     // Direct Stripe Checkout
-    return `<button class="plan-cta-btn" data-plan="${plan.id}" id="upgrade-btn-${plan.id}">${ctaText}</button>`;
+    return `<button type="button" class="plan-cta-btn plan-cta-btn--trial" data-plan="${plan.id}" id="upgrade-btn-${plan.id}">${ctaText}</button>`;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -392,34 +411,16 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
     }
 
     // Build plan cards
-    const planCards = PLANS.map(plan => {
+    const planCards = DISPLAY_PLANS.map((plan, index) => {
         const isCurrent = user.tier === plan.id;
         const featureList = plan.features.map(f => `<li>${f}</li>`).join('');
         const ctaHtml = renderUpgradeButton(plan, user);
 
-        // Pricing Display Logic
-        let priceHtml = '';
-        if (plan.originalPrice) {
-            priceHtml = `
-                <div class="plan-price-standard">
-                    <span class="plan-price-old">${plan.originalPrice}</span>
-                    <span class="plan-price-standard-label">Standard</span>
-                </div>
-                <div class="plan-price-founding">
-                    <span class="plan-price-amount ${plan.id === 'pro' ? 'pro-price-highlight' : ''}">${plan.price}</span>
-                    <span class="plan-price-note">/${plan.priceNote}</span>
-                </div>
-            `;
-        } else {
-            priceHtml = `
-                <span class="plan-price-amount">${plan.price}</span>
-                <span class="plan-price-note">/${plan.priceNote}</span>
-            `;
-        }
-
+        const priceHtml = renderPlanPriceHtml(plan);
+        const comingSoonClass = plan.comingSoon ? ' plan-card--coming-soon' : '';
+        const featuredClass = plan.id === 'pro' ? ' plan-card--featured' : '';
         return `
-        <div class="plan-card plan-card--${plan.id} ${isCurrent ? 'plan-card--active' : ''}" style="--plan-color: ${plan.color}">
-            ${plan.id === 'pro' ? '<div class="plan-ribbon">Most Popular</div>' : ''}
+        <div class="plan-card plan-card--${plan.id}${featuredClass}${comingSoonClass} ${isCurrent ? 'plan-card--active' : ''} vx-pricing-card" style="--plan-color: ${plan.color}; --vx-ambient-delay: ${index * 2}s">
             ${plan.highlight ? `<div class="plan-ribbon plan-ribbon--premium">${plan.highlight}</div>` : ''}
             
             <div class="plan-header">
@@ -429,9 +430,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                 ${plan.explanation ? `<p class="plan-explanation">${plan.explanation}</p>` : ''}
             </div>
 
-            <div class="plan-price">
-                ${priceHtml}
-            </div>
+            ${priceHtml.includes('data-price-tier') ? priceHtml : `<div class="plan-price">${priceHtml}</div>`}
 
             <div class="plan-features-wrap">
                 <ul class="plan-features">${featureList}</ul>
@@ -446,7 +445,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         if (item.type === 'section') {
             return `
             <tr class="comparison-section-header">
-                <td colspan="5">
+                <td colspan="4">
                     <div class="section-label">${item.label}</div>
                     <div class="comparison-section-subtitle">${item.subtitle}</div>
                 </td>
@@ -454,10 +453,10 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         }
         
         const { feat, vals, isHighlight } = item;
-        const [free, pro, exp, ent] = vals;
+        const [free, pro, exp] = vals;
         
         const highlightCell = (val: string, tier: string) => {
-            const isExpertCol = tier === 'experts' || tier === 'enterprise';
+            const isExpertCol = tier === 'experts';
             const classes = [
                 user.tier === tier ? 'cmp-current' : '',
                 isExpertCol ? 'comparison-column--expert-highlight' : ''
@@ -470,7 +469,6 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
             ${highlightCell(free, 'free')}
             ${highlightCell(pro, 'pro')}
             ${highlightCell(exp, 'experts')}
-            ${highlightCell(ent, 'enterprise')}
         </tr>`;
     }).join('');
 
@@ -496,7 +494,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         : '';
 
     container.innerHTML = `
-    <div class="subscription-tab">
+    <div class="subscription-tab" data-billing="monthly">
         ${upsellBannerHtml}
         <!-- Current Status Redesign -->
         <div class="sub-status-card">
@@ -517,7 +515,8 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         </div>
 
         <!-- Plan Cards -->
-        <div class="plans-grid">
+        ${renderBillingToggleHtml('app-billing-toggle')}
+        <div class="plans-grid plans-grid--pricing">
             ${planCards}
         </div>
 
@@ -532,7 +531,6 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                             <th class="${user.tier === 'free' ? 'cmp-current' : ''}">${getTierDisplayName('free')}</th>
                             <th class="${user.tier === 'pro' ? 'cmp-current' : ''}">${getTierDisplayName('pro')}</th>
                             <th class="${user.tier === 'experts' ? 'cmp-current' : ''}">${getTierDisplayName('experts')}</th>
-                            <th class="${user.tier === 'enterprise' ? 'cmp-current' : ''}">${getTierDisplayName('enterprise')}</th>
                         </tr>
                     </thead>
                     <tbody>${tableRows}</tbody>
@@ -627,5 +625,11 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
     // Grace period banner link
     container.querySelector<HTMLAnchorElement>('#grace-upgrade-link')?.addEventListener('click', (e) => {
         e.preventDefault(); onNavigatePlans();
+    });
+
+    initBillingToggle(container, 'app-billing-toggle');
+
+    container.querySelector<HTMLButtonElement>('#upgrade-btn-free')?.addEventListener('click', () => {
+        window.location.hash = '#feed';
     });
 }

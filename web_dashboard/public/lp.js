@@ -1,5 +1,5 @@
 /**
- * LP interactions: hero terminal pulse.
+ * LP interactions: hero terminal pulse + pricing billing toggle.
  * System Workflow: see lp-workflow.js
  */
 (function () {
@@ -18,19 +18,10 @@
     }, 2800);
   }
 
-  startHeroPulse();
-  document.addEventListener('lp-data-ready', startHeroPulse);
-
   /** Stripe Payment Link URLs — set when available; falls back to app.html#plans */
   const STRIPE_CHECKOUT = {
-    pro: {
-      monthly: '',
-      annual: '',
-    },
-    experts: {
-      monthly: '',
-      annual: '',
-    },
+    pro: { monthly: '', annual: '' },
+    experts: { monthly: '', annual: '' },
   };
 
   function initPricingBilling() {
@@ -38,7 +29,7 @@
     const toggle = document.getElementById('lp-billing-toggle');
     if (!section || !toggle) return;
 
-    const priceBlocks = section.querySelectorAll('[data-price-monthly][data-price-annual]');
+    const priceBlocks = section.querySelectorAll('[data-price-tier], [data-price-monthly][data-price-annual]');
     const trialLinks = section.querySelectorAll('a[data-tier][data-href-monthly]');
 
     function setBilling(mode) {
@@ -49,7 +40,19 @@
       priceBlocks.forEach((block) => {
         const amountEl = block.querySelector('.lp-pricing-amount');
         if (!amountEl) return;
-        amountEl.textContent = annual ? block.dataset.priceAnnual : block.dataset.priceMonthly;
+
+        if (block.dataset.priceTier === 'pro' || block.dataset.priceTier === 'experts') {
+          const monthly = block.dataset.priceMonthly;
+          const annualAmt = block.dataset.priceAnnual;
+          if (monthly && annualAmt) amountEl.textContent = annual ? annualAmt : monthly;
+        }
+
+        const originalEl = block.querySelector('.lp-pricing-original-amount');
+        const origM = block.dataset.originalMonthly;
+        const origA = block.dataset.originalAnnual;
+        if (originalEl && origM && origA) {
+          originalEl.textContent = annual ? '$' + origA : '$' + origM;
+        }
       });
 
       trialLinks.forEach((link) => {
@@ -67,5 +70,7 @@
     setBilling('monthly');
   }
 
+  startHeroPulse();
+  document.addEventListener('lp-data-ready', startHeroPulse);
   initPricingBilling();
 })();
