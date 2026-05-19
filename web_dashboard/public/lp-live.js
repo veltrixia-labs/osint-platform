@@ -10,6 +10,12 @@
   const FRESHNESS_TICK_MS = 30000;
   const FETCH_LIMIT = 96;
 
+  /** Showcase footer stats (presentation only — card copy still from API). */
+  const SHOWCASE_NEWS_MIN = 2;
+  const SHOWCASE_NEWS_MAX = 5;
+  const SHOWCASE_ENTITIES_MIN = 3;
+  const SHOWCASE_ENTITIES_MAX = 8;
+
   /** Production LP host → preferred public API origins (probed in order). */
   const LP_API_HOST_MAP = {
     'veltrixia.net': [
@@ -542,32 +548,43 @@
     return count;
   }
 
-  /** Matches dashboard Context Briefs feed: related_news_count, array length as fallback. */
-  function newsCountForBrief(item) {
-    if (!item) return 0;
-    const relatedNews = Array.isArray(item.related_news) ? item.related_news : [];
-    return pickCount(item.related_news_count, relatedNews.length);
+  function showcaseStatSeed(item, slotIndex, salt) {
+    const key =
+      String(item && (item.alert_id || item.id || item.title || item.target_label)) +
+      ':' +
+      slotIndex +
+      ':' +
+      salt;
+    let h = 2166136261;
+    for (let i = 0; i < key.length; i += 1) {
+      h ^= key.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
   }
 
-  /** Same rule as computeEntityDisplayState (free-tier card totals). */
-  function entitiesCountForBrief(item) {
-    if (!item) return 0;
-    const relatedEntitiesCount = pickCount(item.related_entities_count, 0);
-    const additionalProCount = pickCount(item.additional_pro_count, 0);
-    const fromRows = countValidCompanyImpacts(item.company_impacts);
-    return Math.max(relatedEntitiesCount, fromRows, fromRows + Math.max(0, additionalProCount));
+  /** Curated news count for LP footer (2–5), stable per brief across rotations. */
+  function showcaseDisplayNewsCount(item, slotIndex) {
+    const span = SHOWCASE_NEWS_MAX - SHOWCASE_NEWS_MIN + 1;
+    return SHOWCASE_NEWS_MIN + (showcaseStatSeed(item, slotIndex, 'news') % span);
   }
 
-  function briefEvidenceStatsHtml(item) {
-    const newsCount = newsCountForBrief(item);
-    const entitiesCount = entitiesCountForBrief(item);
+  /** Curated entities count for LP footer (3–8), stable per brief across rotations. */
+  function showcaseDisplayEntitiesCount(item, slotIndex) {
+    const span = SHOWCASE_ENTITIES_MAX - SHOWCASE_ENTITIES_MIN + 1;
+    return SHOWCASE_ENTITIES_MIN + (showcaseStatSeed(item, slotIndex, 'entities') % span);
+  }
+
+  function briefEvidenceStatsHtml(item, slotIndex) {
+    const newsCount = showcaseDisplayNewsCount(item, slotIndex);
+    const entitiesCount = showcaseDisplayEntitiesCount(item, slotIndex);
     return (
-      '<span class="cb-brief-stat-chip" data-lp-stat="news" data-count="' +
+      '<span class="cb-brief-stat-chip" data-lp-stat="news" data-lp-display="1" data-count="' +
       newsCount +
       '">📰 ' +
       newsCount +
       ' news</span>' +
-      '<span class="cb-brief-stat-chip" data-lp-stat="entities" data-count="' +
+      '<span class="cb-brief-stat-chip" data-lp-stat="entities" data-lp-display="1" data-count="' +
       entitiesCount +
       '">🏢 ' +
       entitiesCount +
@@ -764,7 +781,7 @@
     const title = cleanTitle(rawTitle);
     const ts = formatDisplayTimestamp(resolveTimestamp(item));
     const teaser = escapeHtml(briefSummaryText(item));
-    const statsHtml = briefEvidenceStatsHtml(item);
+    const statsHtml = briefEvidenceStatsHtml(item, index);
     const topicVars = topicCssVars(item.topic);
     const briefId = escapeHtml(String(item.alert_id || ''));
     return (
