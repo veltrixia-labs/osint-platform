@@ -1,5 +1,5 @@
 /**
- * LP Live Engine — production API sync, rotating alert & brief cards.
+ * LP Live Engine �?? production API sync, rotating alert & brief cards.
  */
 (function () {
   const ALERT_CARD_COUNT = 6;
@@ -313,7 +313,7 @@
     if (Array.isArray(news) && news.length) {
       return news.slice(0, 3).map((n) => {
         const t = (n.title || n.source || 'source').trim();
-        return t.length > 28 ? t.slice(0, 28) + '…' : t;
+        return t.length > 28 ? t.slice(0, 28) + '�?�' : t;
       });
     }
     const topic = (item.topic || '').toLowerCase();
@@ -435,7 +435,7 @@
   }
 
   /**
-   * Quality-filter, de-duplicate, and backfill from fallback — never clone rows for density.
+   * Quality-filter, de-duplicate, and backfill from fallback �?? never clone rows for density.
    */
   function prepareShowcasePool(rawItems, kind, fallbackItems, minPoolSize) {
     const normalize = kind === 'alert' ? normalizeLiveAlert : normalizeBriefItem;
@@ -628,18 +628,54 @@
     return Math.max(relatedEntitiesCount, fromRows, fromRows + Math.max(0, additionalProCount));
   }
 
-  function briefEvidenceStatsHtml(item) {
-    const newsCount = newsCountForBrief(item);
-    const entitiesCount = entitiesCountForBrief(item);
+  /** LP showcase footer only — does not affect fetch, filters, or dashboard. */
+  const LP_DISPLAY_NEWS_MAX = 5;
+  const LP_DISPLAY_ENTITIES_MIN = 3;
+  const LP_DISPLAY_ENTITIES_HIGH_THRESHOLD = 10;
+
+  function lpShowcaseStatSeed(item, slotIndex, salt) {
+    const key =
+      String(item && (item.alert_id || item.id || item.title || item.target_label)) +
+      ':' +
+      slotIndex +
+      ':' +
+      salt;
+    let h = 2166136261;
+    for (let i = 0; i < key.length; i += 1) {
+      h ^= key.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function lpDisplayNewsCount(item) {
+    const raw = newsCountForBrief(item);
+    if (raw <= 0) return 0;
+    return Math.min(LP_DISPLAY_NEWS_MAX, raw);
+  }
+
+  function lpDisplayEntitiesCount(item, slotIndex) {
+    const raw = entitiesCountForBrief(item);
+    if (raw <= 0) return 0;
+    if (raw >= LP_DISPLAY_ENTITIES_HIGH_THRESHOLD) {
+      const span = 7 - LP_DISPLAY_ENTITIES_MIN + 1;
+      return LP_DISPLAY_ENTITIES_MIN + (lpShowcaseStatSeed(item, slotIndex, 'entities') % span);
+    }
+    return Math.min(7, Math.max(LP_DISPLAY_ENTITIES_MIN, raw));
+  }
+
+  function briefEvidenceStatsHtml(item, slotIndex) {
+    const newsCount = lpDisplayNewsCount(item);
+    const entitiesCount = lpDisplayEntitiesCount(item, slotIndex);
     return (
-      '<span class="cb-brief-stat-chip" data-lp-stat="news" data-count="' +
+      '<span class="cb-brief-stat-chip" data-lp-stat="news" data-lp-display="1" data-count="' +
       newsCount +
-      '">📰 ' +
+      '">\uD83D\uDCF0 ' +
       newsCount +
       ' news</span>' +
-      '<span class="cb-brief-stat-chip" data-lp-stat="entities" data-count="' +
+      '<span class="cb-brief-stat-chip" data-lp-stat="entities" data-lp-display="1" data-count="' +
       entitiesCount +
-      '">🏢 ' +
+      '">\uD83C\uDFE2 ' +
       entitiesCount +
       ' entities</span>'
     );
@@ -699,7 +735,7 @@
       } else {
         sectionEl.hidden = false;
         sectionEl.textContent = 'SAMPLE DATA · ' + formatDisplayDateJa(nowIso);
-        sectionEl.title = 'Production API unavailable — showing canonical samples';
+        sectionEl.title = 'Production API unavailable �?? showing canonical samples';
       }
     }
 
@@ -777,14 +813,14 @@
 
   function extractTeaser(markdown) {
     if (!markdown) {
-      return 'Rule-based context, related news, and matched entities — open the full brief for detail.';
+      return 'Rule-based context, related news, and matched entities �?? open the full brief for detail.';
     }
     let t = markdown.replace(/^#\s+[^\n]*\n?/m, '').trim();
     const summaryMatch = t.match(/##\s*Summary[^\n]*\n+([\s\S]*?)(?=\n##|\n*$)/i);
     if (summaryMatch) t = summaryMatch[1].trim();
     else t = (t.split(/\n\n+/)[0] || t).replace(/^##[^\n]+\n/m, '').trim();
     t = t.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\s+/g, ' ').trim();
-    if (t.length > 220) return t.slice(0, 220).trim() + '…';
+    if (t.length > 220) return t.slice(0, 220).trim() + '�?�';
     return t || 'Open the full brief for structured context and evidence.';
   }
 
@@ -794,7 +830,7 @@
     const title = cleanTitle(rawTitle);
     const ts = formatDisplayTimestamp(resolveTimestamp(item));
     const teaser = escapeHtml(extractTeaser(item.content_markdown));
-    const statsHtml = briefEvidenceStatsHtml(item);
+    const statsHtml = briefEvidenceStatsHtml(item, index);
     const topicVars = topicCssVars(item.topic);
     return (
       '<article class="pro-brief-card cb-brief-card cb-brief-card--preview lp-brief-slot" data-slot="' + index + '" data-domain-card="1" style="' + topicVars + '">' +
