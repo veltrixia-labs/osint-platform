@@ -10,6 +10,23 @@
   const FRESHNESS_TICK_MS = 30000;
   const FETCH_LIMIT = 96;
 
+  /** Production LP host → preferred public API origins (probed in order). */
+  const LP_API_HOST_MAP = {
+    'veltrixia.net': [
+      'https://osint-platform.onrender.com',
+      'https://veltrixia-api.onrender.com',
+    ],
+    'www.veltrixia.net': [
+      'https://osint-platform.onrender.com',
+      'https://veltrixia-api.onrender.com',
+    ],
+  };
+
+  const LP_API_PROBE_ORIGINS = [
+    'https://osint-platform.onrender.com',
+    'https://veltrixia-api.onrender.com',
+  ];
+
   const TOPIC_LABELS = {
     energy_resource_risk: { label: 'Energy & Resource Risk', color: '#d29922' },
     global_market_intelligence: { label: 'Global Market Intel', color: '#58a6ff' },
@@ -174,6 +191,140 @@
     return severityClass(sev).toUpperCase();
   }
 
+  function normalizeApiBase(raw) {
+    let base = String(raw || '').trim().replace(/\/+$/, '');
+    if (!base) return '/api';
+    if (base.startsWith('http') && !base.endsWith('/api')) {
+      base += '/api';
+    } else if (!base.startsWith('http') && !base.startsWith('/')) {
+      base = '/' + base;
+    }
+    return base;
+  }
+
+  function collectLpApiCandidates() {
+    const seen = new Set();
+    const out = [];
+    const add = (raw) => {
+      if (!raw) return;
+      const base = normalizeApiBase(String(raw).trim());
+      if (!seen.has(base)) {
+        seen.add(base);
+        out.push(base);
+      }
+    };
+
+    const meta = document.querySelector('meta[name="veltrixia-api-base"]');
+    if (meta && meta.getAttribute('content')) add(meta.getAttribute('content'));
+    if (typeof window.__VELTRIXIA_API_BASE__ === 'string') add(window.__VELTRIXIA_API_BASE__);
+
+    const host = window.location.hostname;
+    const hostList = LP_API_HOST_MAP[host];
+    if (Array.isArray(hostList)) hostList.forEach(add);
+    LP_API_PROBE_ORIGINS.forEach(add);
+
+    if (host === 'localhost' || host === '127.0.0.1') {
+      add('/api');
+    } else {
+      const port = window.location.port ? ':' + window.location.port : '';
+      add(window.location.protocol + '//' + host + port);
+    }
+    return out;
+  }
+
+  let LP_API_BASE = collectLpApiCandidates()[0] || '/api';
+
+  async function probeLpApiBase(base) {
+    const statusUrl = base.replace(/\/$/, '') + '/status';
+    try {
+      const cross =
+        base.startsWith('http') &&
+        new URL(base, window.location.href).origin !== window.location.origin;
+      const res = await fetch(statusUrl, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: cross ? 'omit' : 'same-origin',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async function ensureLpApiBase() {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      LP_API_BASE = '/api';
+      return LP_API_BASE;
+    }
+
+    try {
+      const cached = sessionStorage.getItem('lp_api_base');
+      if (cached && (await probeLpApiBase(cached))) {
+        LP_API_BASE = cached;
+        return LP_API_BASE;
+      }
+    } catch {
+      /* private mode */
+    }
+
+    const candidates = collectLpApiCandidates();
+    for (let i = 0; i < candidates.length; i += 1) {
+      const base = candidates[i];
+      if (await probeLpApiBase(base)) {
+        LP_API_BASE = base;
+        try {
+          sessionStorage.setItem('lp_api_base', base);
+        } catch {
+          /* ignore */
+        }
+        return LP_API_BASE;
+      }
+    }
+
+    LP_API_BASE = candidates[0] || '/api';
+    return LP_API_BASE;
+  }
+
+  function lpApiIsCrossOrigin() {
+    if (!LP_API_BASE.startsWith('http')) return false;
+    try {
+      return new URL(LP_API_BASE).origin !== window.location.origin;
+    } catch {
+      return false;
+    }
+  }
+
+  function lpApiUrl(path) {
+    const rel = path.startsWith('/api/') ? path.slice(4) : path.startsWith('/api') ? path.slice(4) : path;
+    const suffix = rel.startsWith('/') ? rel : '/' + rel;
+    return LP_API_BASE + suffix;
+  }
+
+  function hasUsableSources(alert) {
+    if (!alert) return false;
+    if (Array.isArray(alert.sources) && alert.sources.length > 0) return true;
+    if (Array.isArray(alert.evidence_list) && alert.evidence_list.length > 0) return true;
+    return false;
+  }
+
+  function passesAlertQuality(alert) {
+    if (!alert) return false;
+    if (!hasUsableSources(alert)) return false;
+    const title = cleanTitle(alert.title || alert.target_label || '');
+    return Boolean(title && title.length >= 4);
+  }
+
+  function passesBriefQuality(brief) {
+    if (!brief) return false;
+    const title = cleanTitle(brief.title || brief.target_label || '');
+    if (!title || title.length < 4) return false;
+    const body = String(brief.content_markdown || '').trim();
+    return body.length >= 24;
+  }
+
   function sourceCount(alert) {
     if (!alert) return 0;
     if (Array.isArray(alert.sources) && alert.sources.length) return alert.sources.length;
@@ -226,11 +377,15 @@
     return [...best.values()];
   }
 
-  /** API-only pool: normalize → dedupe → newest first (same rows as dashboard APIs). */
+  /** API-only pool: normalize → quality filter → dedupe → newest first. */
   function buildApiPool(rawItems, kind) {
     const normalize = kind === 'alert' ? normalizeLiveAlert : normalizeBriefItem;
+    const qualityFn = kind === 'alert' ? passesAlertQuality : passesBriefQuality;
     return sortByTimestampDesc(
-      dedupeNewestFirst((rawItems || []).map(normalize), kind),
+      dedupeNewestFirst(
+        (rawItems || []).map(normalize).filter(qualityFn),
+        kind,
+      ),
     );
   }
 
@@ -702,8 +857,11 @@
 
   async function fetchJson(path) {
     const sep = path.includes('?') ? '&' : '?';
-    const res = await fetch(path + sep + '_ts=' + Date.now(), {
-      credentials: 'same-origin',
+    const url = lpApiUrl(path) + sep + '_ts=' + Date.now();
+    const res = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: lpApiIsCrossOrigin() ? 'omit' : 'same-origin',
       cache: 'no-store',
       headers: {
         Accept: 'application/json',
@@ -711,7 +869,9 @@
         Pragma: 'no-cache',
       },
     });
-    if (!res.ok) throw new Error(String(res.status));
+    if (!res.ok) {
+      throw new Error('HTTP ' + res.status + ' for ' + url);
+    }
     return res.json();
   }
 
@@ -730,10 +890,13 @@
     let apiLiveRaw = [];
     let fetchOk = false;
 
+    await ensureLpApiBase();
+    console.info('[LP] API base:', LP_API_BASE, lpApiIsCrossOrigin() ? '(cross-origin)' : '(same-origin)');
+
     try {
       const [free, live] = await Promise.all([
-        fetchJson(`/api/free/alerts?limit=${FETCH_LIMIT}`),
-        fetchJson(`/api/alerts/live?limit=${FETCH_LIMIT}`),
+        fetchJson('/api/free/alerts?limit=' + FETCH_LIMIT),
+        fetchJson('/api/alerts/live?limit=' + FETCH_LIMIT),
       ]);
       apiFreeRaw = Array.isArray(free) ? free : [];
       apiLiveRaw = Array.isArray(live) ? live : [];

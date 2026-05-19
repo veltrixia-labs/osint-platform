@@ -37,6 +37,12 @@ ENDPOINT_LIMITS: Dict[str, Dict[str, Tuple[int, int]]] = {
         TIER_PRO: (120, 60),
         TIER_ENTERPRISE: (200, 60),
     },
+    "/api/alerts/live": {
+        TIER_GUEST: (30, 60),
+        TIER_FREE: (60, 60),
+        TIER_PRO: (120, 60),
+        TIER_ENTERPRISE: (200, 60),
+    },
 }
 
 class RateLimiter:
