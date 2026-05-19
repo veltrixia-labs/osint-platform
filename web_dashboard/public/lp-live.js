@@ -473,14 +473,19 @@
   function normalizeBriefItem(raw) {
     const relatedNews = Array.isArray(raw.related_news) ? raw.related_news : [];
     const companyImpacts = Array.isArray(raw.company_impacts) ? raw.company_impacts : [];
+    const newsCount =
+      typeof raw.related_news_count === 'number' && Number.isFinite(raw.related_news_count)
+        ? Math.max(0, Math.floor(raw.related_news_count))
+        : relatedNews.length;
     return {
       ...raw,
       triggered_at: resolveTimestamp(raw),
       related_news: relatedNews,
-      related_news_count: pickCount(raw.related_news_count, relatedNews.length),
-      related_entities_count: pickCount(raw.related_entities_count, companyImpacts.length),
+      related_news_count: newsCount,
+      related_entities_count: pickCount(raw.related_entities_count, 0),
+      additional_pro_count: pickCount(raw.additional_pro_count, 0),
       company_impacts: companyImpacts,
-      sector_impacts: Array.isArray(raw.sector_impacts) ? raw.sector_impacts : raw.sector_impacts,
+      sector_impacts: Array.isArray(raw.sector_impacts) ? raw.sector_impacts : [],
     };
   }
 
@@ -579,18 +584,65 @@
     return dedupeSectorRows(rows.filter((r) => r.sector));
   }
 
-  function newsCountForBrief(item) {
-    const relatedNews = Array.isArray(item.related_news) ? item.related_news : [];
-    return pickCount(item.related_news_count, relatedNews.length);
+  function isPlaceholderCompanyName(name) {
+    const n = String(name || '').toLowerCase();
+    return (
+      n.includes('no significantly affected') ||
+      n.includes('no direct exposure') ||
+      n.includes('not identified')
+    );
   }
 
+  /** Mirrors app companyImpactsToIndustryRows row count (deduped, non-placeholder). */
+  function countValidCompanyImpacts(impacts) {
+    if (!Array.isArray(impacts)) return 0;
+    const seen = new Set();
+    let count = 0;
+    impacts.forEach((impact) => {
+      const name = (impact.company_name || '').trim();
+      if (!name || isPlaceholderCompanyName(name)) return;
+      const entityKey = String(impact.entity_id || '').trim() || name.toLowerCase();
+      if (seen.has(entityKey)) return;
+      seen.add(entityKey);
+      count += 1;
+    });
+    return count;
+  }
+
+  /** Same rule as renderFeedCard: API related_news_count, else related_news.length. */
+  function newsCountForBrief(item) {
+    if (!item) return 0;
+    if (typeof item.related_news_count === 'number' && Number.isFinite(item.related_news_count)) {
+      return Math.max(0, Math.floor(item.related_news_count));
+    }
+    const relatedNews = Array.isArray(item.related_news) ? item.related_news : [];
+    return relatedNews.length;
+  }
+
+  /** Same rule as computeEntityDisplayState (free-tier card totals). */
   function entitiesCountForBrief(item) {
-    const companyImpacts = Array.isArray(item.company_impacts) ? item.company_impacts : [];
-    const sectorRows = normalizeSectorRowsForBrief(item);
-    const fromSectors = sectorRows.reduce((sum, r) => sum + (r.matched || 0), 0);
-    const fromCompanies = companyImpacts.length;
-    const declared = pickCount(item.related_entities_count, fromCompanies);
-    return Math.max(declared, fromCompanies, fromSectors > 0 ? fromSectors : 0);
+    if (!item) return 0;
+    const relatedEntitiesCount = pickCount(item.related_entities_count, 0);
+    const additionalProCount = pickCount(item.additional_pro_count, 0);
+    const fromRows = countValidCompanyImpacts(item.company_impacts);
+    return Math.max(relatedEntitiesCount, fromRows, fromRows + Math.max(0, additionalProCount));
+  }
+
+  function briefEvidenceStatsHtml(item) {
+    const newsCount = newsCountForBrief(item);
+    const entitiesCount = entitiesCountForBrief(item);
+    return (
+      '<span class="cb-brief-stat-chip" data-lp-stat="news" data-count="' +
+      newsCount +
+      '">📰 ' +
+      newsCount +
+      ' news</span>' +
+      '<span class="cb-brief-stat-chip" data-lp-stat="entities" data-count="' +
+      entitiesCount +
+      '">🏢 ' +
+      entitiesCount +
+      ' entities</span>'
+    );
   }
 
   function extractTriggerDetail(raw) {
@@ -742,8 +794,7 @@
     const title = cleanTitle(rawTitle);
     const ts = formatDisplayTimestamp(resolveTimestamp(item));
     const teaser = escapeHtml(extractTeaser(item.content_markdown));
-    const newsCount = newsCountForBrief(item);
-    const entitiesCount = entitiesCountForBrief(item);
+    const statsHtml = briefEvidenceStatsHtml(item);
     const topicVars = topicCssVars(item.topic);
     return (
       '<article class="pro-brief-card cb-brief-card cb-brief-card--preview lp-brief-slot" data-slot="' + index + '" data-domain-card="1" style="' + topicVars + '">' +
@@ -755,8 +806,7 @@
         '<p class="cb-brief-card-teaser">' + teaser + '</p>' +
         '<div class="cb-brief-card-footer">' +
           '<div class="cb-brief-card-stats" aria-label="Evidence counts">' +
-            '<span class="cb-brief-stat-chip">📰 ' + newsCount + ' news</span>' +
-            '<span class="cb-brief-stat-chip">🏢 ' + entitiesCount + ' entities</span>' +
+            statsHtml +
           '</div>' +
           '<a class="btn-fb cb-open-context-btn" href="app.html#briefs">View Full Context \u2192</a>' +
         '</div>' +
