@@ -79,7 +79,10 @@
         <section id="terminal" class="lp-section lp-engine-section">
             <div class="lp-wrap">
                 <p class="lp-kicker">The Live Engine Showcase</p>
-                <h2 class="lp-h2">The intelligence terminal — synced with production data.</h2>
+                <div class="lp-terminal-title-row">
+                    <h2 class="lp-h2">The intelligence terminal — synced with production data.</h2>
+                    <span id="lp-terminal-freshness" class="lp-freshness-badge lp-mono" hidden aria-live="polite"></span>
+                </div>
                 <p class="lp-lead">
                     Preview panels load from the same APIs as the dashboard
                     (<span class="lp-mono">/api/alerts/live</span>, <span class="lp-mono">/api/free/alerts</span>).
@@ -93,7 +96,7 @@
                             <span>Alert Stream</span>
                             <span class="lp-live-indicator" data-lp-sync hidden></span>
                         </div>
-                        <div class="lp-ui-body lp-ui-body--dense">
+                        <div class="lp-ui-body lp-ui-body--dense lp-ui-body--alerts">
                             <div id="lp-alert-stream" class="lp-alert-stream lp-panel-loading" aria-label="Alert stream preview" aria-busy="true">
                                 <p class="lp-panel-skeleton lp-mono">Loading live signals…</p>
                             </div>
@@ -242,7 +245,7 @@
                 </div>
 
                 <p class="lp-pricing-footnote">
-                    Founding Pro includes a 7-day free trial. Founding Expert is coming soon — join the waitlist to secure early access pricing.
+                    Founding Pro includes a 7-day free trial. Founding Expert is coming soon  Ejoin the waitlist to secure early access pricing.
                     <a href="app.html#plans">Full feature matrix</a> inside the terminal.
                 </p>
             </div>
@@ -276,7 +279,7 @@
                     </div>
                     <aside class="lp-report lp-terminal--evidence" aria-label="Report evidence panel example">
                         <header class="lp-report-header">
-                            <h3 class="lp-report-title">Export controls — semiconductor supply chain</h3>
+                            <h3 class="lp-report-title">Export controls  Esemiconductor supply chain</h3>
                             <span class="lp-report-id lp-mono">RPT-2026-0412-7F3A</span>
                         </header>
                         <div class="lp-report-body">
@@ -304,11 +307,11 @@
                                 <p class="lp-report-label">Context chain</p>
                                 <div class="lp-chain lp-mono">
                                     <span class="lp-chain-node">export notice</span>
-                                    <span class="lp-chain-arrow">→</span>
+                                    <span class="lp-chain-arrow">ↁE/span>
                                     <span class="lp-chain-node">fab inputs</span>
-                                    <span class="lp-chain-arrow">→</span>
+                                    <span class="lp-chain-arrow">ↁE/span>
                                     <span class="lp-chain-node">lead times</span>
-                                    <span class="lp-chain-arrow">→</span>
+                                    <span class="lp-chain-arrow">ↁE/span>
                                     <span class="lp-chain-node">pricing pressure</span>
                                 </div>
                             </div>

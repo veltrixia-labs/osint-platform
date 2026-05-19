@@ -2,10 +2,13 @@
  * LP Live Engine — production API sync, rotating alert & brief cards.
  */
 (function () {
-  const CARD_COUNT = 4;
+  const ALERT_CARD_COUNT = 7;
+  const BRIEF_CARD_COUNT = 4;
   const HERO_STREAM_COUNT = 9;
-  const ROTATE_MS = 4200;
-  const FETCH_LIMIT = 24;
+  const BRIEF_ROTATE_MS = 4200;
+  const REFRESH_MS = 90000;
+  const FRESHNESS_TICK_MS = 30000;
+  const FETCH_LIMIT = 48;
 
   const TOPIC_LABELS = {
     energy_resource_risk: { label: 'Energy & Resource Risk', color: '#d29922' },
@@ -162,9 +165,13 @@
     mode: 'fallback',
     alertPool: [],
     briefPool: [],
-    alertOffset: 0,
     briefOffset: 0,
-    rotateTimer: null,
+    heroOffset: 0,
+    lastFetchedAt: null,
+    newestDataAt: null,
+    briefRotateTimer: null,
+    refreshTimer: null,
+    freshnessTimer: null,
   };
 
   function topicMeta(topic) {
@@ -177,10 +184,59 @@
     return item.triggered_at || item.timestamp || item.generated_at || null;
   }
 
+  function parseTimestamp(iso) {
+    if (iso == null || iso === '') return null;
+    let s = String(iso).trim();
+    if (!s) return null;
+    if (/^\d{4}-\d{2}-\d{2}\s/.test(s)) s = s.replace(' ', 'T');
+    const d = new Date(s);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function timestampMs(item) {
+    const d = parseTimestamp(resolveTimestamp(item));
+    return d ? d.getTime() : 0;
+  }
+
+  function sortByTimestampDesc(pool) {
+    return [...pool].sort((a, b) => timestampMs(b) - timestampMs(a));
+  }
+
+  function stampFreshFallbackRows(rows, spacingMinutes) {
+    const now = Date.now();
+    return rows.map((row, i) => ({
+      ...row,
+      triggered_at: new Date(now - i * spacingMinutes * 60000).toISOString(),
+    }));
+  }
+
+  function newestIsoFromPools(...pools) {
+    let max = 0;
+    pools.flat().forEach((item) => {
+      const ms = timestampMs(item);
+      if (ms > max) max = ms;
+    });
+    return max ? new Date(max).toISOString() : null;
+  }
+
+  function formatRelativeFromNow(iso) {
+    const d = parseTimestamp(iso);
+    if (!d) return 'just now';
+    const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins === 1) return '1 min ago';
+    if (mins < 60) return mins + ' mins ago';
+    const hours = Math.floor(mins / 60);
+    if (hours === 1) return '1 hour ago';
+    if (hours < 24) return hours + ' hours ago';
+    const days = Math.floor(hours / 24);
+    return days === 1 ? '1 day ago' : days + ' days ago';
+  }
+
   function formatDisplayDateJa(iso) {
     if (!iso) return '\u2014';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return String(iso);
+    const d = parseTimestamp(iso);
+    if (!d) return String(iso);
     const h = String(d.getHours()).padStart(2, '0');
     const m = String(d.getMinutes()).padStart(2, '0');
     return d.getMonth() + 1 + '\u6708' + d.getDate() + '\u65e5 ' + h + ':' + m;
@@ -189,8 +245,8 @@
   /** Same-day: absolute JP time; within 7d: relative; older: absolute date. */
   function formatDisplayTimestamp(iso) {
     if (!iso) return '\u2014';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return String(iso);
+    const d = parseTimestamp(iso);
+    if (!d) return String(iso);
     const now = new Date();
     const sameDay =
       d.getFullYear() === now.getFullYear() &&
@@ -430,7 +486,7 @@
   }
 
   function expandPool(pool, fallback) {
-    const minLen = Math.max(CARD_COUNT * 2, HERO_STREAM_COUNT + 2);
+    const minLen = Math.max(ALERT_CARD_COUNT + 4, BRIEF_CARD_COUNT * 3, HERO_STREAM_COUNT + 2);
     if (!pool.length) {
       const out = [];
       let i = 0;
@@ -450,11 +506,49 @@
   }
 
   function windowItems(pool, offset, count) {
+    const sorted = sortByTimestampDesc(pool);
     const out = [];
     for (let i = 0; i < count; i += 1) {
-      out.push(pool[(offset + i) % pool.length]);
+      out.push(sorted[(offset + i) % sorted.length]);
     }
     return out;
+  }
+
+  function newestItems(pool, count) {
+    return sortByTimestampDesc(pool).slice(0, count);
+  }
+
+  function updateFreshnessBadges() {
+    const sectionEl = document.getElementById('lp-terminal-freshness');
+    const live = state.mode === 'live';
+    const nowIso = new Date().toISOString();
+
+    if (sectionEl) {
+      if (live) {
+        sectionEl.hidden = false;
+        const dataLabel = state.newestDataAt
+          ? 'LAST UPDATED: ' + formatRelativeFromNow(state.newestDataAt)
+          : 'LIVE: ' + formatDisplayDateJa(nowIso);
+        sectionEl.textContent = dataLabel;
+        sectionEl.title = state.newestDataAt
+          ? 'Newest signal: ' + formatDisplayDateJa(state.newestDataAt)
+          : 'Synced with production API';
+      } else {
+        sectionEl.hidden = false;
+        sectionEl.textContent = 'SAMPLE DATA · ' + formatDisplayDateJa(nowIso);
+        sectionEl.title = 'Production API unavailable — showing canonical samples';
+      }
+    }
+
+    document.querySelectorAll('[data-lp-sync]').forEach((el) => {
+      if (!live) return;
+      const clock = formatDisplayDateJa(nowIso);
+      const timePart = clock.includes(' ') ? clock.split(' ').pop() : clock;
+      el.textContent = 'LIVE · ' + timePart;
+      el.title = state.newestDataAt
+        ? 'Newest: ' + formatDisplayDateJa(state.newestDataAt)
+        : 'Live production sync';
+    });
   }
 
   function setSyncBadge(mode) {
@@ -465,7 +559,6 @@
         el.className = 'lp-live-indicator';
         el.textContent = 'LIVE PRODUCTION DATA';
         el.setAttribute('data-lp-mode', 'live');
-        el.title = 'Synced with production API';
       } else {
         el.hidden = true;
         el.className = 'lp-live-indicator';
@@ -474,6 +567,14 @@
         el.removeAttribute('title');
       }
     });
+    updateFreshnessBadges();
+  }
+
+  function renderShowcasePanels(animate) {
+    const alertRoot = document.getElementById('lp-alert-stream');
+    const briefRoot = document.getElementById('lp-brief-grid');
+    renderAlerts(alertRoot, newestItems(state.alertPool, ALERT_CARD_COUNT), animate);
+    renderBriefs(briefRoot, windowItems(state.briefPool, state.briefOffset, BRIEF_CARD_COUNT), animate);
   }
 
   function alertCardHtml(a, index) {
@@ -554,7 +655,7 @@
 
   function renderAlerts(container, alerts, animate) {
     if (!container) return;
-    const html = alerts.slice(0, CARD_COUNT).map((a, i) => alertCardHtml(a, i)).join('');
+    const html = alerts.slice(0, ALERT_CARD_COUNT).map((a, i) => alertCardHtml(a, i)).join('');
     if (animate) container.classList.add('lp-panel-swapping');
     container.innerHTML = html;
     if (animate) {
@@ -566,7 +667,7 @@
 
   function renderBriefs(container, items, animate) {
     if (!container) return;
-    const html = items.slice(0, CARD_COUNT).map((item, i) => briefCardHtml(item, i)).join('');
+    const html = items.slice(0, BRIEF_CARD_COUNT).map((item, i) => briefCardHtml(item, i)).join('');
     if (animate) container.classList.add('lp-panel-swapping');
     container.innerHTML = html;
     if (animate) {
@@ -594,10 +695,6 @@
     return (parts[0] || 'sig').slice(0, 3).toUpperCase();
   }
 
-  function heroAlerts(pool, offset) {
-    return windowItems(pool, offset, HERO_STREAM_COUNT);
-  }
-
   function renderHeroTerminal(container, alerts) {
     if (!container) return;
     const rows = alerts.length ? alerts.slice(0, HERO_STREAM_COUNT) : [];
@@ -612,23 +709,25 @@
       .join('');
   }
 
-  function tickRotate() {
-    state.alertOffset = (state.alertOffset + 1) % state.alertPool.length;
-    state.briefOffset = (state.briefOffset + 1) % state.briefPool.length;
-
-    const alertRoot = document.getElementById('lp-alert-stream');
-    const briefRoot = document.getElementById('lp-brief-grid');
-
-    renderAlerts(alertRoot, windowItems(state.alertPool, state.alertOffset, CARD_COUNT), true);
-    renderBriefs(briefRoot, windowItems(state.briefPool, state.briefOffset, CARD_COUNT), true);
+  function tickBriefRotate() {
+    if (state.briefPool.length > BRIEF_CARD_COUNT) {
+      state.briefOffset = (state.briefOffset + 1) % state.briefPool.length;
+    }
+    state.heroOffset = (state.heroOffset + 1) % Math.max(state.alertPool.length, 1);
+    renderShowcasePanels(true);
     renderHeroTerminal(
       document.querySelector('.lp-hero .lp-terminal-body'),
-      heroAlerts(state.alertPool, state.alertOffset)
+      windowItems(state.alertPool, state.heroOffset, HERO_STREAM_COUNT),
     );
   }
 
   async function fetchJson(path) {
-    const res = await fetch(path, { credentials: 'same-origin' });
+    const sep = path.includes('?') ? '&' : '?';
+    const res = await fetch(path + sep + '_ts=' + Date.now(), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
     if (!res.ok) throw new Error(String(res.status));
     return res.json();
   }
@@ -638,9 +737,13 @@
     const briefRoot = document.getElementById('lp-brief-grid');
     const heroRoot = document.querySelector('.lp-hero .lp-terminal-body');
 
-    let freeItems = FALLBACK_FREE.map(normalizeBriefItem);
-    let liveItems = FALLBACK_LIVE.map(normalizeLiveAlert);
+    const fallbackFree = stampFreshFallbackRows(FALLBACK_FREE, 12).map(normalizeBriefItem);
+    const fallbackLive = stampFreshFallbackRows(FALLBACK_LIVE, 8).map(normalizeLiveAlert);
+    let freeItems = fallbackFree;
+    let liveItems = fallbackLive;
     state.mode = 'fallback';
+    state.briefOffset = 0;
+    state.heroOffset = 0;
 
     try {
       const [free, live] = await Promise.all([
@@ -648,23 +751,25 @@
         fetchJson(`/api/alerts/live?limit=${FETCH_LIMIT}`),
       ]);
       if (Array.isArray(free) && free.length) {
-        freeItems = free.map(normalizeBriefItem);
+        freeItems = sortByTimestampDesc(free.map(normalizeBriefItem));
         state.mode = 'live';
       }
       if (Array.isArray(live) && live.length) {
-        liveItems = live.map(normalizeLiveAlert);
+        liveItems = sortByTimestampDesc(live.map(normalizeLiveAlert));
         state.mode = 'live';
       }
     } catch {
-      /* fallback */
+      /* fallback with fresh timestamps */
     }
 
-    state.briefPool = expandPool(freeItems, FALLBACK_FREE.map(normalizeBriefItem));
-    state.alertPool = expandPool(liveItems, FALLBACK_LIVE.map(normalizeLiveAlert));
+    state.lastFetchedAt = new Date().toISOString();
+    state.newestDataAt = newestIsoFromPools(liveItems, freeItems);
 
-    renderAlerts(alertRoot, windowItems(state.alertPool, 0, CARD_COUNT), false);
-    renderBriefs(briefRoot, windowItems(state.briefPool, 0, CARD_COUNT), false);
-    renderHeroTerminal(heroRoot, heroAlerts(state.alertPool, 0));
+    state.briefPool = expandPool(freeItems, fallbackFree);
+    state.alertPool = expandPool(liveItems, fallbackLive);
+
+    renderShowcasePanels(false);
+    renderHeroTerminal(heroRoot, newestItems(state.alertPool, HERO_STREAM_COUNT));
 
     setSyncBadge(state.mode);
 
@@ -674,8 +779,14 @@
       el.removeAttribute('aria-busy');
     });
 
-    if (state.rotateTimer) clearInterval(state.rotateTimer);
-    state.rotateTimer = setInterval(tickRotate, ROTATE_MS);
+    if (state.briefRotateTimer) clearInterval(state.briefRotateTimer);
+    state.briefRotateTimer = setInterval(tickBriefRotate, BRIEF_ROTATE_MS);
+
+    if (state.refreshTimer) clearInterval(state.refreshTimer);
+    state.refreshTimer = setInterval(hydrate, REFRESH_MS);
+
+    if (state.freshnessTimer) clearInterval(state.freshnessTimer);
+    state.freshnessTimer = setInterval(updateFreshnessBadges, FRESHNESS_TICK_MS);
 
     document.dispatchEvent(
       new CustomEvent('lp-data-ready', {
