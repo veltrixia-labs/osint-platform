@@ -494,23 +494,21 @@ body.lp > :not(.lp-backdrop) {
 
 .lp-hero h1 {
   margin: 0 0 1.25rem;
-  font-size: clamp(1.85rem, 4.5vw, 2.65rem);
+  font-size: clamp(2rem, 4.8vw, 2.85rem);
   font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1.12;
-  color: var(--lp-text);
-  background: linear-gradient(180deg, #ffffff 0%, #c8d4e4 55%, #9aa8b8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.055em;
+  line-height: 1.08;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 48px rgba(0, 212, 255, 0.06);
 }
 
 .lp-hero-sub {
   margin: 0 0 1.75rem;
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   color: var(--lp-muted);
-  max-width: 42ch;
-  line-height: 1.75;
+  max-width: 46ch;
+  line-height: 1.65;
+  letter-spacing: -0.01em;
 }
 
 .lp-hero-actions {
