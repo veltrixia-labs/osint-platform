@@ -24,9 +24,9 @@ function tagNode(node: BackboneNode, apiSector?: string): TaggedBackboneNode {
     };
 }
 
-let map: L.Map;
-let layerGroup: L.LayerGroup;
-let hoverLayerGroup: L.LayerGroup;
+let map: L.Map | undefined;
+let layerGroup: L.LayerGroup | undefined;
+let hoverLayerGroup: L.LayerGroup | undefined;
 
 const markerByNodeName = new Map<string, L.Marker>();
 let currentRenderedNodes: TaggedBackboneNode[] = [];
@@ -36,60 +36,227 @@ let popupOpenNodeName: string | null = null;
 
 let activeStrategicFilters = new Set<'all' | StrategicTopicCode>(['all']);
 
-export const renderMap = async (container: HTMLElement, _tier?: string, _focusAlertId?: string) => {
-    if (!map) {
-        container.innerHTML = `
-            <div style="width:100%; height:100%; min-height:650px; position:relative;">
-                <div id="map-filter" style="position:absolute; top:12px; left:12px; z-index:1000;"></div>
-                <div style="display:flex; width:100%; height:100%; min-height:650px;">
-                    <div id="map-instance" style="flex:1; min-height:650px;"></div>
-                    <div id="map-node-list" style="
-                        width:280px;
-                        padding:10px;
-                        background:rgba(10,14,20,0.92);
-                        border-left:1px solid rgba(255,255,255,0.08);
-                        overflow-y:auto;
-                        font-size:12px;
-                    "></div>
-                </div>
-            </div>
-        `;
+let mapRenderGeneration = 0;
+let mapRouteListenersBound = false;
 
-        map = L.map('map-instance', {
-            zoomControl: false,
-            worldCopyJump: true
-        }).setView([20, 0], 2);
+const MAP_SHELL_HTML = `
+    <div class="map-page-shell" style="width:100%; height:100%; min-height:650px; position:relative;">
+        <div id="map-filter" style="position:absolute; top:12px; left:12px; z-index:1000;"></div>
+        <div class="map-page-shell__body" style="display:flex; width:100%; height:100%; min-height:650px;">
+            <div id="map-instance" class="map-instance-host" style="flex:1; min-height:650px;"></div>
+            <div id="map-node-list" class="map-node-list-panel" style="
+                width:280px;
+                padding:10px;
+                background:rgba(10,14,20,0.92);
+                border-left:1px solid rgba(255,255,255,0.08);
+                overflow-y:auto;
+                font-size:12px;
+            "></div>
+        </div>
+    </div>
+`;
 
-        L.control.zoom({
-            position: 'bottomright'
-        }).addTo(map);
+function mapLoadingHtml(): string {
+    return `
+        <div class="map-page-loading" role="status" aria-live="polite" aria-busy="true">
+            <div class="map-page-loading__grid" aria-hidden="true"></div>
+            <div class="map-page-loading__scan" aria-hidden="true"></div>
+            <p class="map-page-loading__label">Loading Global Map…</p>
+            <p class="map-page-loading__hint">Synchronizing strategic entity backbone</p>
+        </div>
+    `;
+}
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CARTO',
-            subdomains: 'abcd',
-            maxZoom: 20
-        }).addTo(map);
+function isMapHashActive(): boolean {
+    const base = window.location.hash.slice(1).split('?')[0];
+    return base === 'map';
+}
 
-        layerGroup = L.layerGroup().addTo(map);
-        hoverLayerGroup = L.layerGroup().addTo(map);
+function isMapContainerVisible(container: HTMLElement): boolean {
+    if (container.style.display === 'none') return false;
+    const rect = container.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+}
 
-        initMapFilter();
+function isMapEngineHealthy(container: HTMLElement): boolean {
+    const mapEl = container.querySelector('#map-instance');
+    if (!map || !layerGroup || !hoverLayerGroup || !mapEl) return false;
+    const mapWithContainer = map as L.Map & { _container?: HTMLElement };
+    return mapWithContainer._container === mapEl;
+}
 
-        map.on('zoomend', () => {
-            if (popupOpenNodeName) return;
-            renderBackboneMap();
-        });
+/** Tear down Leaflet when dashboard DOM is replaced (login / full re-init). */
+export function resetMapEngine(): void {
+    mapRenderGeneration += 1;
+    popupOpenNodeName = null;
+    markerByNodeName.clear();
+    currentRenderedNodes = [];
+
+    if (map) {
+        try {
+            map.off();
+            map.remove();
+        } catch {
+            /* detached container */
+        }
+    }
+    map = undefined;
+    layerGroup = undefined;
+    hoverLayerGroup = undefined;
+}
+
+function showMapLoading(container: HTMLElement): void {
+    container.classList.add('map-page-container--loading');
+    container.innerHTML = mapLoadingHtml();
+}
+
+function scheduleMapInvalidate(): void {
+    if (!map) return;
+    const run = () => {
+        try {
+            map?.invalidateSize({ animate: false, pan: false });
+        } catch {
+            /* ignore */
+        }
+    };
+    run();
+    [50, 150, 350, 600].forEach(ms => window.setTimeout(run, ms));
+}
+
+async function waitForVisibleMapContainer(container: HTMLElement, maxMs = 900): Promise<void> {
+    const started = performance.now();
+    while (performance.now() - started < maxMs) {
+        const mapEl = container.querySelector('#map-instance') as HTMLElement | null;
+        if (mapEl && isMapContainerVisible(container) && mapEl.offsetWidth > 0 && mapEl.offsetHeight > 0) {
+            return;
+        }
+        await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    }
+}
+
+async function ensureMapEngine(container: HTMLElement): Promise<L.Map> {
+    if (isMapEngineHealthy(container)) {
+        return map!;
     }
 
-    await renderBackboneMap();
+    if (map) {
+        resetMapEngine();
+    }
 
-    setTimeout(() => {
-        map.invalidateSize();
-    }, 100);
+    container.innerHTML = MAP_SHELL_HTML;
+    container.classList.remove('map-page-container--loading');
+
+    await waitForVisibleMapContainer(container);
+
+    const mapElement = container.querySelector('#map-instance');
+    if (!mapElement) {
+        throw new Error('Map mount point missing');
+    }
+
+    map = L.map(mapElement as HTMLElement, {
+        zoomControl: false,
+        worldCopyJump: true,
+    }).setView([20, 0], 2);
+
+    L.control.zoom({
+        position: 'bottomright',
+    }).addTo(map);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 20,
+    }).addTo(map);
+
+    layerGroup = L.layerGroup().addTo(map);
+    hoverLayerGroup = L.layerGroup().addTo(map);
+
+    initMapFilter();
+
+    map.on('zoomend', () => {
+        if (popupOpenNodeName) return;
+        void renderBackboneMap();
+    });
+
+    return map;
+}
+
+function bindMapRouteListeners(): void {
+    if (mapRouteListenersBound) return;
+    mapRouteListenersBound = true;
+
+    let routeRefreshTimer: number | undefined;
+    const refreshIfMapRoute = () => {
+        if (!isMapHashActive()) return;
+        const container = document.getElementById('map-page-container') as HTMLElement | null;
+        if (!container || container.style.display === 'none') return;
+        window.clearTimeout(routeRefreshTimer);
+        routeRefreshTimer = window.setTimeout(() => {
+            void renderMap(container);
+        }, 120);
+    };
+
+    window.addEventListener('hashchange', refreshIfMapRoute);
+    window.addEventListener('popstate', refreshIfMapRoute);
+    window.addEventListener('pageshow', (ev: PageTransitionEvent) => {
+        if (!ev.persisted) return;
+        refreshIfMapRoute();
+    });
+}
+
+export const renderMap = async (container: HTMLElement, _tier?: string, _focusAlertId?: string) => {
+    bindMapRouteListeners();
+    const generation = ++mapRenderGeneration;
+    const needsShell = !isMapEngineHealthy(container);
+
+    if (needsShell) {
+        showMapLoading(container);
+    } else {
+        container.classList.add('map-page-container--loading');
+    }
+
+    try {
+        await ensureMapEngine(container);
+        if (generation !== mapRenderGeneration) return;
+
+        await waitForVisibleMapContainer(container);
+        if (generation !== mapRenderGeneration) return;
+
+        await renderBackboneMap();
+        if (generation !== mapRenderGeneration) return;
+
+        scheduleMapInvalidate();
+    } catch (e) {
+        console.error('[Map] render failed:', e);
+        if (generation !== mapRenderGeneration) return;
+        container.innerHTML = `
+            <div class="map-page-loading map-page-loading--error" role="alert">
+                <p class="map-page-loading__label">Global Map unavailable</p>
+                <p class="map-page-loading__hint">Could not initialize the map view. Retry in a moment.</p>
+                <button type="button" class="map-page-loading__retry" data-map-retry>Retry</button>
+            </div>
+        `;
+        container.querySelector('[data-map-retry]')?.addEventListener('click', () => {
+            resetMapEngine();
+            void renderMap(container, _tier, _focusAlertId);
+        });
+    } finally {
+        if (generation === mapRenderGeneration) {
+            container.classList.remove('map-page-container--loading');
+        }
+    }
 };
 
 async function renderBackboneMap() {
+    if (!layerGroup || !map) return;
+
+    const list = document.getElementById('map-node-list');
+    if (list) {
+        list.innerHTML = '<div class="map-node-list-loading">Loading entities…</div>';
+    }
+
     layerGroup.clearLayers();
+    hoverLayerGroup?.clearLayers();
 
     try {
         const sectorsToLoad = activeStrategicFilters.has('all')
@@ -109,10 +276,18 @@ async function renderBackboneMap() {
         updateFilterButtonStates();
     } catch (e) {
         console.error('Failed to load backbone:', e);
+        if (list) {
+            list.innerHTML = '<div class="map-node-list-loading map-node-list-loading--error">Failed to load entities.</div>';
+        }
     }
 }
 
 function renderBackboneNodes(nodes: TaggedBackboneNode[]) {
+    const activeMap = map;
+    const activeLayerGroup = layerGroup;
+    const activeHoverLayerGroup = hoverLayerGroup;
+    if (!activeMap || !activeLayerGroup || !activeHoverLayerGroup) return;
+
     currentRenderedNodes = nodes;
     markerByNodeName.clear();
 
@@ -141,7 +316,7 @@ function renderBackboneNodes(nodes: TaggedBackboneNode[]) {
             return !!selectedNode?.top_dependencies?.some(dep => dep.target === node.name);
         });
 
-        const zoom = map.getZoom();
+        const zoom = activeMap.getZoom();
         const showLabel = zoom >= 6 || isSelected || isDependencyTarget;
 
         const icon = L.divIcon({
@@ -222,14 +397,14 @@ function renderBackboneNodes(nodes: TaggedBackboneNode[]) {
         `;
 
         const marker = L.marker([node.location.lat, node.location.lng], { icon })
-            .addTo(layerGroup)
+            .addTo(activeLayerGroup)
             .bindPopup(popup)
             .on('click', () => {
                 if (!node.location) return;
 
-                map.flyTo(
+                activeMap.flyTo(
                     [node.location.lat, node.location.lng],
-                    5, // ← ズームレベル（後で調整OK）
+                    5,
                     {
                         duration: 0.8,
                         easeLinearity: 0.25
@@ -257,7 +432,7 @@ function renderBackboneNodes(nodes: TaggedBackboneNode[]) {
                     selectedNodeNames.add(node.name);
                 }
 
-                renderBackboneMap();
+                void renderBackboneMap();
             });
         });
 
@@ -268,11 +443,11 @@ function renderBackboneNodes(nodes: TaggedBackboneNode[]) {
         });
 
         marker.on('mouseover', () => {
-            hoverLayerGroup.clearLayers();
+            activeHoverLayerGroup.clearLayers();
 
             if (selectedNodeNames.has(node.name)) return;
 
-            renderSelectedDependencyLines(node, nodeByName, hoverLayerGroup, true);
+            renderSelectedDependencyLines(node, nodeByName, activeHoverLayerGroup, true);
 
             marker.getElement()
                 ?.querySelector('.backbone-marker')
@@ -280,7 +455,7 @@ function renderBackboneNodes(nodes: TaggedBackboneNode[]) {
         });
 
         marker.on('mouseout', () => {
-            hoverLayerGroup.clearLayers();
+            activeHoverLayerGroup.clearLayers();
 
             marker.getElement()
                 ?.querySelector('.backbone-marker')
@@ -355,7 +530,7 @@ function renderNodeList(nodes: TaggedBackboneNode[]) {
             const node = currentRenderedNodes.find(n => n.name === name);
             const marker = markerByNodeName.get(name);
 
-            if (!node?.location || !marker) return;
+            if (!node?.location || !marker || !map) return;
 
             map.flyTo([node.location.lat, node.location.lng], 6, {
                 duration: 0.8,
@@ -372,17 +547,16 @@ function renderNodeList(nodes: TaggedBackboneNode[]) {
 function renderSelectedDependencyLines(
     selectedNode: TaggedBackboneNode,
     nodeByName: Map<string, TaggedBackboneNode>,
-    targetLayer: L.LayerGroup = layerGroup,
+    targetLayer: L.LayerGroup = layerGroup!,
     isPreview: boolean = false
 ) {
-    if (!selectedNode.location) return;
+    if (!selectedNode.location || !targetLayer) return;
 
     const color = getTopicColor(selectedNode.strategicCode);
 
     (selectedNode.top_dependencies || []).slice(0, 5).forEach(dep => {
         let target = nodeByName.get(dep.target);
 
-        // 完全一致しない場合のゆるい検索
         if (!target) {
             target = Array.from(nodeByName.values()).find(n =>
                 n.name.toLowerCase().includes(dep.target.toLowerCase()) ||
@@ -416,9 +590,9 @@ function renderSelectedDependencyLines(
 }
 
 function getStrengthColor(value: number): string {
-    if (value >= 0.7) return '#ff6b6b'; // 赤
-    if (value >= 0.4) return '#f1c40f'; // 黄
-    return '#2ecc71'; // 緑
+    if (value >= 0.7) return '#ff6b6b';
+    if (value >= 0.4) return '#f1c40f';
+    return '#2ecc71';
 }
 
 function initMapFilter() {
@@ -466,7 +640,7 @@ function initMapFilter() {
                 }
             }
 
-            renderBackboneMap();
+            void renderBackboneMap();
         });
     });
 }

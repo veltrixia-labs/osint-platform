@@ -547,6 +547,128 @@ p {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
+  position: relative;
+  background: #0b0e14;
+}
+
+#map-page-container.map-page-container--loading {
+  min-height: 650px;
+}
+
+.map-page-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  height: 100%;
+  min-height: 650px;
+  padding: 2rem;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 35%, rgba(0, 212, 255, 0.08), transparent 62%),
+    linear-gradient(180deg, #0d1118 0%, #0b0e14 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.map-page-loading__grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, #000 20%, transparent 75%);
+}
+
+.map-page-loading__scan {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  height: 40%;
+  top: -45%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(0, 212, 255, 0.12),
+    transparent
+  );
+  animation: mapLoadingScan 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes mapLoadingScan {
+  0% {
+    top: -45%;
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.85;
+  }
+  100% {
+    top: 105%;
+    opacity: 0;
+  }
+}
+
+.map-page-loading__label {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e6edf3;
+  letter-spacing: 0.02em;
+  z-index: 1;
+}
+
+.map-page-loading__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8b949e;
+  z-index: 1;
+}
+
+.map-page-loading__retry {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(88, 166, 255, 0.45);
+  background: rgba(88, 166, 255, 0.12);
+  color: #58a6ff;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.map-page-loading__retry:hover {
+  background: rgba(88, 166, 255, 0.2);
+}
+
+.map-node-list-loading {
+  padding: 1rem 0.5rem;
+  font-size: 0.75rem;
+  color: #8b949e;
+  animation: mapSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+.map-node-list-loading--error {
+  color: #ff7b72;
+  animation: none;
+}
+
+@keyframes mapSkeletonPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.map-instance-host {
+  background: #0b0e14;
 }
 
 .header-row {

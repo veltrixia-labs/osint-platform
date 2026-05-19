@@ -8,7 +8,7 @@ export * from './reports';
 export * from './analysts';
 export * from './impact_panel';
 
-export { renderMap } from './map';
+export { renderMap, resetMapEngine } from './map';
 export { renderNavigation, updateNavActiveState } from './nav';
 export { renderProInsights, renderExpertIntel } from './insights';
 export { renderFreeAlertFeed } from './context_briefs';

@@ -8,7 +8,7 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
+import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 // (Pro reports now handled within Pro Insights hub)
 import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, confirmCheckoutSession, completeStripeSignup, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase } from './modules/api'
@@ -458,6 +458,7 @@ async function initDashboard() {
     let currentTab: TabId = 'feed';
 
     const renderBaseUI = () => {
+        resetMapEngine()
         const graceBanner = user ? renderGracePeriodBanner(user) : '';
         app.innerHTML = `
       <div class="mobile-header">
@@ -623,7 +624,13 @@ async function initDashboard() {
             else if (tab === 'briefs') renderFreeFeed();
             else if (tab === 'plans') renderSubscriptionTab(user!, alertsContainer, () => handleTabSwitch('plans'));
             else if (tab === 'reports') renderReports();
-            else if (tab === 'map') renderMap(mapContainer!, user!.tier, focusAlertId);
+            else if (tab === 'map') {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        void renderMap(mapContainer!, user!.tier, focusAlertId);
+                    });
+                });
+            }
             else if (tab === 'pro-insights') renderPro(alertsContainer, user!, () => handleTabSwitch('plans'));
             else if (tab === 'pro-map') renderProMap();
             else if (tab === 'expert-intel') renderExpert(alertsContainer, user!, () => handleTabSwitch('plans'));
