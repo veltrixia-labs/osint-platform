@@ -815,6 +815,29 @@ function renderStructuredContent(
     return html;
 }
 
+function renderFeedCardSectorPreview(item: FreeAlertFeedItem, maxPills = 6): string {
+    const sectorRows = dedupeSectorRowsByEntityId(
+        normalizeSectorImpacts(item.sector_impacts, item.content_markdown || ''),
+    );
+    const { regional, structural } = partitionRegionalSectorRows(sectorRows);
+    const pills: SectorImpactRow[] = [
+        ...regional.slice(0, 2),
+        ...structural.slice(0, Math.max(0, maxPills - Math.min(regional.length, 2))),
+    ].slice(0, maxPills);
+    if (!pills.length) return '';
+    return `
+      <div class="cb-brief-card-tags" role="list" aria-label="Structural exposure">
+        ${pills
+            .map((r) =>
+                renderSectorPillHtml(
+                    r,
+                    isRegionalSectorBucket(r.sector) ? 'regional' : 'structural',
+                ),
+            )
+            .join('')}
+      </div>`;
+}
+
 function renderFeedCard(item: FreeAlertFeedItem, index: number, viewerTier: string = 'free'): string {
     const cardId = `cb-card-${index}`;
     const triggeredStr = formatDate(item.triggered_at);
@@ -832,18 +855,20 @@ function renderFeedCard(item: FreeAlertFeedItem, index: number, viewerTier: stri
     const entitiesCount = entityState.total || (item.related_entities_count ?? 0);
     const displayTitle = cleanBriefTitle(item.title || item.target_label || 'Strategic Intelligence Alert');
     const teaser = escapeHtml(extractTeaserFromMarkdown(item.content_markdown || ''));
+    const sectorPreview = renderFeedCardSectorPreview(item);
 
     return `
     <div class="pro-brief-card cb-brief-card" id="${cardId}" data-domain-card="1" style="${topicVars}">
       <div class="cb-brief-card-head u-flex-between">
         <span class="domain-chip meta-item-topic--tag">${topicStr}</span>
         <div class="cb-brief-card-head-meta">
-          <span class="cb-brief-kind">Context Brief</span>
+          <span class="cb-brief-kind">OSINT Intelligence Briefing</span>
           <span class="cb-brief-ts">${escapeHtml(triggeredStr)}</span>
         </div>
       </div>
       <h3 class="cb-brief-card-title">${escapeHtml(displayTitle)}</h3>
       <p class="cb-brief-card-teaser">${teaser}</p>
+      ${sectorPreview}
       <div class="cb-brief-card-stats" aria-label="Evidence counts">
         <span class="cb-brief-stat-chip">📰 ${newsCount} news</span>
         <span class="cb-brief-stat-chip">🏢 ${entitiesCount} entities</span>
@@ -881,7 +906,7 @@ export function renderFreeAlertFeed(
                 <div class="empty-subtitle">${
                     hadItems && filterLabel
                         ? 'Try another topic filter or check Alert Stream after the next pipeline run.'
-                        : 'There are no Context Briefs yet. New briefs appear after alerts are processed and the free-feed job runs.'
+                        : 'There are no Context Briefs yet. New briefs appear after alerts are processed and the context pipeline runs.'
                 }</div>
             </div>`;
         return;

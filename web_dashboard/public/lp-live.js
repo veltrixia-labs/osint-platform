@@ -26,7 +26,12 @@
       topic: 'energy_resource_risk',
       triggered_at: '2026-05-03T08:40:56.000Z',
       related_news_count: 3,
-      related_entities_count: 0,
+      related_entities_count: 14,
+      sector_impacts: [
+        { sector: 'Energy', matched_entities: 12 },
+        { sector: 'Marine Transportation', matched_entities: 8 },
+        { sector: 'Geopolitical Risk', matched_entities: 5 },
+      ],
       context_chain: ['Russian oil output', 'maritime sanctions', 'Brent repricing'],
       content_markdown:
         '## Summary\nReport: Russian Oil Output Falls After Ukrainian Drone Strikes. EU defers maritime services ban.',
@@ -39,6 +44,11 @@
       triggered_at: '2026-05-02T14:22:00.000Z',
       related_news_count: 7,
       related_entities_count: 14,
+      sector_impacts: [
+        { sector: 'Semiconductors', matched_entities: 9 },
+        { sector: 'Global Markets', matched_entities: 6 },
+        { sector: 'Defense Technology', matched_entities: 4 },
+      ],
       context_chain: ['export notice', 'fab inputs', 'lead times'],
       content_markdown: '## Summary\nAdvanced semiconductor inputs flagged across tier-2 suppliers.',
     },
@@ -50,6 +60,10 @@
       triggered_at: '2026-05-02T09:15:00.000Z',
       related_news_count: 5,
       related_entities_count: 8,
+      sector_impacts: [
+        { sector: 'Energy', matched_entities: 7 },
+        { sector: 'Marine Transportation', matched_entities: 5 },
+      ],
       context_chain: ['Hormuz transit', 'VLCC rates', 'crude flows'],
       content_markdown: '## Summary\nCommercial lane restriction linked to VLCC operator exposure.',
     },
@@ -61,6 +75,10 @@
       triggered_at: '2026-05-01T18:40:00.000Z',
       related_news_count: 4,
       related_entities_count: 11,
+      sector_impacts: [
+        { sector: 'Defense Technology', matched_entities: 10 },
+        { sector: 'Military Ops', matched_entities: 6 },
+      ],
       context_chain: ['procurement notice', 'dual-use', 'supply guard'],
       content_markdown: '## Summary\nDual-use component demand spike across NATO supply chains.',
     },
@@ -72,6 +90,10 @@
       triggered_at: '2026-05-01T11:05:00.000Z',
       related_news_count: 6,
       related_entities_count: 3,
+      sector_impacts: [
+        { sector: 'Global Markets', matched_entities: 8 },
+        { sector: 'Finance', matched_entities: 4 },
+      ],
       context_chain: ['CPI print', 'rates', 'FX volatility'],
       content_markdown: '## Summary\nMacro series linkage activated for cross-asset pass-through.',
     },
@@ -254,30 +276,78 @@
       </article>`;
   }
 
+  function extractTeaser(markdown) {
+    if (!markdown) {
+      return 'Rule-based context, related news, and matched entities — open the full brief for detail.';
+    }
+    let t = markdown.replace(/^#\s+[^\n]*\n?/m, '').trim();
+    const summaryMatch = t.match(/##\s*Summary[^\n]*\n+([\s\S]*?)(?=\n##|\n*$)/i);
+    if (summaryMatch) t = summaryMatch[1].trim();
+    else t = (t.split(/\n\n+/)[0] || t).replace(/^##[^\n]+\n/m, '').trim();
+    t = t.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\s+/g, ' ').trim();
+    if (t.length > 220) return t.slice(0, 220).trim() + '…';
+    return t || 'Open the full brief for structured context and evidence.';
+  }
+
+  function classifySectorTagKind(sector) {
+    const s = (sector || '').toLowerCase();
+    if (/\b(oil|gas|lng|energy|petrol|crude|power)\b/.test(s)) return 'energy';
+    if (/\b(marine|maritime|shipping|logistics|port|vessel|tanker|freight)\b/.test(s)) return 'marine';
+    if (/\b(refin|industrial|manufact|chemic|materials|semiconductor)\b/.test(s)) return 'industry';
+    if (/\b(finance|bank|market|macro|rates|fx)\b/.test(s)) return 'finance';
+    if (/\b(defense|military|aerospace|security|nato|weapon)\b/.test(s)) return 'defense';
+    return 'default';
+  }
+
+  function isRegionalSector(sector) {
+    const s = (sector || '').trim().toLowerCase();
+    return s === 'country' || s === 'geography' || s === 'region' || s.includes('geopolitical');
+  }
+
+  function sectorPillHtml(row) {
+    const sector = row.sector || '';
+    const matched = row.matched_entities ?? row.matched ?? 0;
+    const regional = isRegionalSector(sector);
+    const kind = classifySectorTagKind(sector);
+    const base = regional
+      ? 'cb-sector-pill cb-sector-pill--regional'
+      : 'cb-sector-pill cb-sector-pill--structural cb-sector-pill--' + kind;
+    return '<div class="' + base + '" role="listitem"><span class="cb-sector-pill-label">' + escapeHtml(sector) + '</span><span class="cb-sector-pill-count">' + matched + '</span></div>';
+  }
+
+  function briefSectorPreview(item, maxPills) {
+    const rows = Array.isArray(item.sector_impacts) ? item.sector_impacts : [];
+    if (!rows.length) return '';
+    return '<div class="cb-brief-card-tags" role="list" aria-label="Structural exposure">' + rows.slice(0, maxPills || 6).map(sectorPillHtml).join('') + '</div>';
+  }
+
   function briefCardHtml(item, index) {
     const meta = topicMeta(item.topic);
     const title = cleanTitle(item.title || item.target_label);
-    const chain = contextChainFromItem(item);
-    const chainHtml = chain
-      .map(
-        (node, i) =>
-          `<span class="lp-chain-node">${escapeHtml(node)}</span>` +
-          (i < chain.length - 1 ? '<span class="lp-chain-arrow">→</span>' : '')
-      )
-      .join('');
-    return `
-      <article class="lp-brief-card lp-brief-slot" data-slot="${index}" style="border-left:3px solid ${meta.color}">
-        <div class="lp-brief-head">
-          <span class="lp-brief-chip" style="color:${meta.color}">${escapeHtml(meta.label)}</span>
-          <span class="lp-brief-kind lp-mono">Context Brief</span>
-        </div>
-        <h4 class="lp-brief-title">${escapeHtml(title)}</h4>
-        <div class="lp-brief-chain lp-mono" aria-label="Context chain">${chainHtml}</div>
-        <div class="lp-brief-stats lp-mono">
-          <span class="lp-brief-stat">📰 ${item.related_news_count ?? 0} news</span>
-          <span class="lp-brief-stat">🏢 ${item.related_entities_count ?? 0} entities</span>
-        </div>
-      </article>`;
+    const ts = formatTs(item.triggered_at);
+    const teaser = escapeHtml(extractTeaser(item.content_markdown));
+    const newsCount = item.related_news_count ?? 0;
+    const entitiesCount = item.related_entities_count ?? 0;
+    const topicVars = '--topic-color:' + meta.color + ';--domain-accent:' + meta.color + ';';
+    const sectorTagsHtml = briefSectorPreview(item, 6);
+    return (
+      '<article class="pro-brief-card cb-brief-card lp-brief-slot" data-slot="' + index + '" data-domain-card="1" style="' + topicVars + '">' +
+        '<div class="cb-brief-card-head u-flex-between">' +
+          '<span class="domain-chip meta-item-topic--tag">' + escapeHtml(meta.label) + '</span>' +
+          '<div class="cb-brief-card-head-meta">' +
+            '<span class="cb-brief-kind">OSINT Intelligence Briefing</span>' +
+            '<span class="cb-brief-ts">' + escapeHtml(ts) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<h4 class="cb-brief-card-title">' + escapeHtml(title) + '</h4>' +
+        '<p class="cb-brief-card-teaser">' + teaser + '</p>' +
+        sectorTagsHtml +
+        '<div class="cb-brief-card-stats" aria-label="Evidence counts">' +
+          '<span class="cb-brief-stat-chip">📰 ' + newsCount + ' news</span>' +
+          '<span class="cb-brief-stat-chip">🏢 ' + entitiesCount + ' entities</span>' +
+        '</div>' +
+      '</article>'
+    );
   }
 
   function renderAlerts(container, alerts, animate) {

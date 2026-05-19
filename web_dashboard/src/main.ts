@@ -91,7 +91,7 @@ function bindGlobalAppHandlers(): void {
             if (confirm('Sign out?')) {
                 logout().then(() => {
                     localStorage.removeItem('access_token')
-                    window.location.href = '/#free-feed'
+                    window.location.href = '/app.html#feed'
                     window.location.reload()
                 })
             }
@@ -205,19 +205,25 @@ export async function renderSignup() {
     });
 }
 
-type TabId = 'feed' | 'free-feed' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'pro-map' | 'expert-intel'
+type TabId = 'feed' | 'briefs' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'pro-map' | 'expert-intel'
 
-const BOOT_TABS: TabId[] = ['feed', 'free-feed', 'map', 'plans', 'legal', 'pro-insights', 'pro-map', 'expert-intel']
+const BOOT_TABS: TabId[] = ['feed', 'briefs', 'map', 'plans', 'legal', 'pro-insights', 'pro-map', 'expert-intel']
+
+/** Legacy hash aliases (e.g. bookmarks, old LP links). */
+const HASH_TAB_ALIASES: Record<string, TabId> = {
+    'free-feed': 'briefs',
+}
 
 type HashRoute = { tab: TabId; alertId?: string }
 
 type TabSwitchFn = (tab: TabId, focusAlertId?: string, skipPushState?: boolean) => void
 
 function normalizeHashTab(raw: string, tier?: string): TabId | null {
-    let tab = raw as TabId
+    const resolved = (HASH_TAB_ALIASES[raw] ?? raw) as TabId
+    let tab = resolved
     if (tab === 'reports') {
         if (tier && ['pro', 'experts', 'enterprise'].includes(tier)) return 'pro-insights'
-        return 'free-feed'
+        return 'briefs'
     }
     return BOOT_TABS.includes(tab) ? tab : null
 }
@@ -262,7 +268,7 @@ async function syncRouteFromHash(): Promise<void> {
             if (!route) return
 
             const rawBase = window.location.hash.slice(1).split('?')[0]
-            if (rawBase === 'reports') {
+            if (rawBase === 'reports' || rawBase === 'free-feed') {
                 history.replaceState(null, '', `#${route.tab}`)
             }
             switchTab(route.tab, route.alertId, true)
@@ -303,7 +309,7 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
         title: 'Alert Stream',
         subtitle: 'Real-time intelligence signals — high-frequency monitoring of global volatility.',
     },
-    'free-feed': {
+    briefs: {
         icon: '🛰',
         title: 'Context Briefs',
         subtitle: 'Strategic intelligence synthesis — bridging global news signals with high-fidelity structural analysis.',
@@ -449,7 +455,7 @@ async function initDashboard() {
 
     if (user) app.classList.remove('login-page');
 
-    let currentTab: TabId = 'free-feed';
+    let currentTab: TabId = 'feed';
 
     const renderBaseUI = () => {
         const graceBanner = user ? renderGracePeriodBanner(user) : '';
@@ -528,7 +534,7 @@ async function initDashboard() {
         const showSubtitle = Boolean(meta?.subtitle)
         const showProCta = Boolean(
             meta?.proCta
-            && (tab === 'map' || tab === 'free-feed')
+            && (tab === 'map' || tab === 'briefs')
             && !isProOrAbove(user?.tier)
         )
 
@@ -600,7 +606,7 @@ async function initDashboard() {
             }
         }
         if (topicFilterBar) {
-            topicFilterBar.style.display = tab === 'feed' || tab === 'free-feed' ? 'flex' : 'none';
+            topicFilterBar.style.display = tab === 'feed' || tab === 'briefs' ? 'flex' : 'none';
         }
 
         // Stop any active DashboardState polling to prevent background /api/alerts requests
@@ -608,13 +614,13 @@ async function initDashboard() {
 
         if (mainContent) mainContent.style.opacity = '0';
         setTimeout(() => {
-            const isFeedLike = ['feed', 'free-feed', 'plans', 'reports', 'legal', 'pro-insights', 'expert-intel'].includes(tab);
+            const isFeedLike = ['feed', 'briefs', 'plans', 'reports', 'legal', 'pro-insights', 'expert-intel'].includes(tab);
             if (feedContainer) feedContainer.style.display = isFeedLike ? 'block' : 'none';
             if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
             if (proMapContainer) proMapContainer.style.display = (tab === 'pro-map') ? 'flex' : 'none';
 
             if (tab === 'feed') renderIntelligenceFeed();
-            else if (tab === 'free-feed') renderFreeFeed();
+            else if (tab === 'briefs') renderFreeFeed();
             else if (tab === 'plans') renderSubscriptionTab(user!, alertsContainer, () => handleTabSwitch('plans'));
             else if (tab === 'reports') renderReports();
             else if (tab === 'map') renderMap(mapContainer!, user!.tier, focusAlertId);
@@ -792,12 +798,12 @@ async function initDashboard() {
         handleTabSwitch('plans', undefined, true);
     } else if (initialRoute) {
         const rawBase = window.location.hash.slice(1).split('?')[0];
-        if (rawBase === 'reports') {
+        if (rawBase === 'reports' || rawBase === 'free-feed') {
             history.replaceState(null, '', `#${initialRoute.tab}`);
         }
         handleTabSwitch(initialRoute.tab, initialRoute.alertId, true);
     } else {
-        handleTabSwitch(isAuthenticatedUser(user) ? 'feed' : 'free-feed');
+        handleTabSwitch('feed');
     }
 }
 

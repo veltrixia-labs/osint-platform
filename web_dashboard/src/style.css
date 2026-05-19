@@ -5991,6 +5991,18 @@ p {
   overflow: hidden;
 }
 
+.cb-brief-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+}
+
+.cb-brief-card-tags .cb-sector-pill {
+  font-size: 0.72rem;
+  padding: 0.28rem 0.5rem 0.28rem 0.4rem;
+}
+
 .cb-brief-card-stats {
   display: flex;
   flex-wrap: wrap;

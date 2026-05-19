@@ -21,7 +21,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
     // Core – available to all
     { id: 'feed',         label: 'Alert Stream',        icon: '📡', minTier: 'free',    group: 'core' },
-    { id: 'free-feed',    label: 'Context Briefs',       icon: '🛰',  minTier: 'free',    group: 'core' },
+    { id: 'briefs',       label: 'Context Briefs',       icon: '🛰',  minTier: 'free',    group: 'core' },
     { id: 'map',          label: 'Global Map',           icon: '🌐', minTier: 'free',    group: 'core' },
     // Premium – gated
     { id: 'pro-insights', label: 'Pro Insights',         icon: '💎', minTier: 'pro',     group: 'premium' },
