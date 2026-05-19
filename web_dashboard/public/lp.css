@@ -2436,6 +2436,15 @@ body.lp > :not(.lp-backdrop) {
   box-shadow: 0 0 10px rgba(63, 185, 80, 0.15);
 }
 
+.lp-panel-empty {
+  margin: 0;
+  padding: 1.25rem 1rem;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--lp-dim);
+  text-align: center;
+}
+
 /* System log stream */
 .lp-sys-terminal {
   margin-top: 1.25rem;
