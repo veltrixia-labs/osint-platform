@@ -225,7 +225,9 @@ export function renderNavigation(
 
     // Footer upgrade button
     container.querySelector('#upgrade-button')?.addEventListener('click', () => {
-        setPlansUpsellContext('全てのプロ機能を確認して、解析を次のレベルへ進めましょう。');
+        setPlansUpsellContext(
+            'Explore Founding plans to unlock advanced structural intelligence and predictive foresight.',
+        );
         onTabSwitch('plans');
     });
 

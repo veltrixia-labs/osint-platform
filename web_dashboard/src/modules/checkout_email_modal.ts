@@ -31,15 +31,15 @@ function getOrCreateCheckoutEmailModal(): HTMLElement {
             aria-modal="true"
             aria-labelledby="checkout-email-modal-title"
         >
-            <button type="button" class="checkout-email-modal-close" aria-label="閉じる">×</button>
+            <button type="button" class="checkout-email-modal-close" aria-label="Close">×</button>
             <h2 id="checkout-email-modal-title" class="checkout-email-modal-title">
-                Founding メンバーとして参加
+                Join as a Founding Member
             </h2>
             <p class="checkout-email-modal-desc">
-                決済後にアカウントが作成されます。領収書を受け取るメールアドレスを入力してください。
+                Your account is created after checkout. Enter the email address for your receipt and login credentials.
             </p>
             <form class="checkout-email-modal-form" novalidate>
-                <label class="checkout-email-modal-label" for="checkout-email-input">メールアドレス</label>
+                <label class="checkout-email-modal-label" for="checkout-email-input">Email address</label>
                 <input
                     id="checkout-email-input"
                     class="checkout-email-modal-input"
@@ -52,7 +52,7 @@ function getOrCreateCheckoutEmailModal(): HTMLElement {
                 />
                 <p class="checkout-email-modal-error" role="alert" hidden></p>
                 <button type="submit" class="checkout-email-modal-submit" disabled>
-                    Stripe 決済へ進む（安全な外部サイト）
+                    Continue to Stripe (secure checkout)
                 </button>
             </form>
         </div>
@@ -131,7 +131,7 @@ function wireCheckoutEmailModalOnce(modalRoot: HTMLElement): void {
     input.addEventListener('input', updateSubmitState);
     input.addEventListener('blur', () => {
         if (input.value.trim() && !isValidCheckoutEmail(input.value)) {
-            setError('有効なメールアドレスを入力してください。');
+            setError('Please enter a valid email address.');
         }
     });
 
@@ -139,7 +139,7 @@ function wireCheckoutEmailModalOnce(modalRoot: HTMLElement): void {
         e.preventDefault();
         const normalized = normalizeCheckoutEmail(input.value);
         if (!isValidCheckoutEmail(normalized)) {
-            setError('有効なメールアドレスを入力してください。');
+            setError('Please enter a valid email address.');
             input.focus();
             return;
         }

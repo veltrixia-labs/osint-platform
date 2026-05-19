@@ -22,8 +22,83 @@ import {
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 
+let dashboardInitGeneration = 0
+
+function isAuthenticatedUser(user: UserMe | null): boolean {
+    if (!user || user.id === 'free-access') return false
+    if (user.id === 'dev-override') return true
+    return Boolean(user.email?.trim())
+}
+
+function dashboardBasePath(): string {
+    const path = window.location.pathname.split('?')[0] || '/app.html'
+    if (path === '/' || path.endsWith('/index.html')) return 'app.html'
+    return path
+}
+
+function setFeedHash(): void {
+    history.replaceState({ tab: 'feed' }, '', `${dashboardBasePath()}#feed`)
+}
+
+async function resumeDashboardAfterAuth(): Promise<void> {
+    setFeedHash()
+    await initDashboard()
+}
+
+async function openLoginOrFeed(): Promise<void> {
+    if (localStorage.getItem('access_token')) {
+        try {
+            const me = await fetchMe()
+            if (isAuthenticatedUser(me)) {
+                await resumeDashboardAfterAuth()
+                return
+            }
+        } catch {
+            /* fall through to login form */
+        }
+    }
+    await renderLogin()
+}
+
+function bindGlobalAppHandlers(): void {
+    const appEl = app as HTMLDivElement & { __authHandlersBound?: boolean }
+    if (appEl.__authHandlersBound) return
+    appEl.__authHandlersBound = true
+
+    app.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement
+        if (target.id === 'sidebar-login-btn') {
+            void openLoginOrFeed()
+        }
+        if (target.id === 'sidebar-logout-btn') {
+            if (confirm('Sign out?')) {
+                logout().then(() => {
+                    localStorage.removeItem('access_token')
+                    window.location.href = '/#free-feed'
+                    window.location.reload()
+                })
+            }
+        }
+    })
+}
+
+bindGlobalAppHandlers()
+
 export async function renderLogin(message?: string, initialEmail?: string) {
     (window as any).stopPolling?.();
+
+    if (localStorage.getItem('access_token')) {
+        try {
+            const me = await fetchMe()
+            if (isAuthenticatedUser(me)) {
+                await resumeDashboardAfterAuth()
+                return
+            }
+        } catch {
+            /* show login form */
+        }
+    }
+
     app.className = 'login-page'
     app.innerHTML = `
     <div class="login-container">
@@ -53,7 +128,8 @@ export async function renderLogin(message?: string, initialEmail?: string) {
         loginBtn.setAttribute('disabled', 'true');
         try {
             await login(email, pwd);
-            await initDashboard();
+            dashboardInitGeneration += 1
+            await resumeDashboardAfterAuth();
         } catch {
             errorDiv.textContent = 'Invalid email or password.';
         } finally {
@@ -240,6 +316,7 @@ async function handlePaymentReturn(): Promise<UserMe | null> {
 }
 
 async function initDashboard() {
+    const generation = ++dashboardInitGeneration
     let user: UserMe | null = null;
     const hasToken = Boolean(localStorage.getItem('access_token'));
 
@@ -266,21 +343,9 @@ async function initDashboard() {
         }
     }
 
-    if (user) app.classList.remove('login-page');
+    if (generation !== dashboardInitGeneration) return
 
-    app.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        if (target.id === 'sidebar-login-btn') { renderLogin(); }
-        if (target.id === 'sidebar-logout-btn') {
-            if (confirm('Sign out?')) {
-                logout().then(() => {
-                    localStorage.removeItem('access_token');
-                    window.location.href = '/#free-feed';
-                    window.location.reload();
-                });
-            }
-        }
-    });
+    if (user) app.classList.remove('login-page');
 
     let currentTab: TabId = 'free-feed';
 
@@ -289,7 +354,7 @@ async function initDashboard() {
         app.innerHTML = `
       <div class="mobile-header">
         <div class="u-flex"><span style="font-weight:700; color:var(--accent);">VELTRIXIA</span></div>
-        <button class="hamburger" id="mobile-menu-btn">笘ｰ</button>
+        <button class="hamburger" id="mobile-menu-btn" type="button" aria-label="Open menu">&#9776;</button>
       </div>
       <div class="mobile-overlay" id="mobile-overlay"></div>
       <div class="app-container dashboard-terminal">
@@ -326,6 +391,8 @@ async function initDashboard() {
             document.querySelector('#mobile-overlay')?.classList.toggle('active');
         });
     };
+
+    if (generation !== dashboardInitGeneration) return
 
     renderBaseUI();
     const alertsContainer = document.querySelector<HTMLElement>('#alerts-list')!
@@ -513,7 +580,7 @@ async function initDashboard() {
             if (data.error || data.lastStatus >= 400) {
                 alertsContainer.innerHTML = `
                     <div class="u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 8px; background: rgba(255,123,114,0.05); margin-top: 2rem;">
-                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">笞・・/div>
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;" aria-hidden="true">&#9888;</div>
                         <div style="color: #ff7b72; font-weight: 600;">${data.lastStatus === 401 ? 'Intelligence Access Restricted' : 'Strategic Pipeline Offline'}</div>
                         <div style="font-size: var(--font-xs); color: #8b949e; margin-top: 0.5rem;">
                             ${data.lastStatus === 401 ? 'Your current tier does not have clearance for this signal stream.' : 'The analysis engine is currently unreachable. Reconnecting...'}
@@ -574,7 +641,7 @@ async function initDashboard() {
             const msg = err?.message || 'Connection error';
             alertsContainer.innerHTML = `
                 <div class="empty-state u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 12px; margin-top: 2rem; max-width: 520px; margin-left: auto; margin-right: auto;">
-                    <div class="empty-icon">笞・・/div>
+                    <div class="empty-icon" aria-hidden="true">&#9888;</div>
                     <div class="empty-title" style="color: #ff7b72;">Could not load Context Briefs</div>
                     <div class="empty-subtitle" style="margin-top: 0.5rem;">${msg}</div>
                     <div class="empty-subtitle" style="margin-top: 0.75rem; font-size: 0.8rem; color: #8b949e;">
@@ -592,7 +659,7 @@ async function initDashboard() {
             if (reports.length === 0) {
                 alertsContainer.innerHTML = `
                     <div class="u-p-2 u-text-center" style="opacity:0.5; border: 1px dashed var(--border); border-radius: 8px; margin-top: 2rem;">
-                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">淘</div>
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;" aria-hidden="true">&#9888;</div>
                         <div style="font-size: var(--font-m); font-weight: 500;">No intelligence reports published yet.</div>
                         <div style="font-size: var(--font-xs); margin-top: 0.25rem;">Reports are generated following significant strategic pivots.</div>
                     </div>
@@ -640,13 +707,15 @@ async function initDashboard() {
     const bootTabs: TabId[] = ['feed', 'free-feed', 'map', 'plans', 'legal', 'pro-insights', 'pro-map', 'expert-intel'];
     const onSubscriptionPath = /\/subscription\/?$/.test(window.location.pathname);
 
+    if (generation !== dashboardInitGeneration) return
+
     if (onSubscriptionPath) {
         history.replaceState({ tab: 'plans' }, '', '/subscription');
         handleTabSwitch('plans', undefined, true);
     } else if (initialBase && bootTabs.includes(initialBase)) {
         handleTabSwitch(initialBase, new URLSearchParams(initialHash.split('?')[1] || '').get('alert') || undefined, true);
     } else {
-        handleTabSwitch('free-feed');
+        handleTabSwitch(isAuthenticatedUser(user) ? 'feed' : 'free-feed');
     }
 }
 
@@ -657,4 +726,6 @@ const startHeartbeat = () => {
 
 initDashboard().then(() => { startHeartbeat(); });
 
-window.addEventListener('trigger-login', () => renderLogin());
+window.addEventListener('trigger-login', () => {
+    void openLoginOrFeed();
+});
