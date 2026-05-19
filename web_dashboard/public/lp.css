@@ -529,6 +529,10 @@ body.lp {
   opacity: 0.94;
 }
 
+.lp-pricing-card--featured .lp-pricing-price-block {
+  margin-top: 0.75rem;
+}
+
 .lp-pricing-card--featured {
   border-color: rgba(0, 209, 255, 0.45);
   box-shadow:

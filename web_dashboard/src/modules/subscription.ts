@@ -82,7 +82,6 @@ const PLANS: PlanConfig[] = [
         id: 'pro',
         name: PLAN_NAME_MAP.pro,
         subtitle: 'Structural Analysis',
-        explanation: 'Limited to the first 1,000 founding members',
         bestFor: TIER_BEST_FOR.pro,
         priceNote: 'month',
         color: '#00d1ff',
