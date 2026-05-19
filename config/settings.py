@@ -25,9 +25,23 @@ class Settings(BaseSettings):
     
     # Stripe Configuration
     stripe_secret_key: str = os.getenv("STRIPE_SECRET_KEY", "")
+    stripe_webhook_secret: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+    # Per-interval price IDs (May 2026 founding plans)
+    stripe_price_id_pro_monthly: str = os.getenv(
+        "STRIPE_PRICE_ID_PRO_MONTHLY", "price_1TYffzCc1F7MyO7MLab3Q6zu"
+    )
+    stripe_price_id_pro_annual: str = os.getenv(
+        "STRIPE_PRICE_ID_PRO_ANNUAL", "price_1TYffzCc1F7MyO7MET0aN1Fh"
+    )
+    stripe_price_id_experts_monthly: str = os.getenv(
+        "STRIPE_PRICE_ID_EXPERTS_MONTHLY", "price_1TYfhxCc1F7MyO7MtdZk1pEv"
+    )
+    stripe_price_id_experts_annual: str = os.getenv(
+        "STRIPE_PRICE_ID_EXPERTS_ANNUAL", "price_1TYfhxCc1F7MyO7MaaibN5sL"
+    )
+    # Legacy aliases (monthly) — prefer STRIPE_PRICE_ID_*_MONTHLY in new deploys
     stripe_price_id_pro: str = os.getenv("STRIPE_PRICE_ID_PRO", "")
     stripe_price_id_experts: str = os.getenv("STRIPE_PRICE_ID_EXPERTS", "")
-    stripe_webhook_secret: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     domain_url: str = os.getenv("DOMAIN_URL", "http://localhost:8000")
 
     # Data Retention Policy (Hours/Days)
@@ -53,10 +67,14 @@ class Settings(BaseSettings):
             raise RuntimeError("STRIPE_SECRET_KEY is required for payment features.")
         if not self.stripe_webhook_secret:
             raise RuntimeError("STRIPE_WEBHOOK_SECRET is required for secure webhook processing.")
-        if not self.stripe_price_id_pro:
-            raise RuntimeError("STRIPE_PRICE_ID_PRO is required for Pro subscriptions.")
-        if not self.stripe_price_id_experts:
-            raise RuntimeError("STRIPE_PRICE_ID_EXPERTS is required for Experts subscriptions.")
+        if not self.stripe_price_id_pro_monthly:
+            raise RuntimeError("STRIPE_PRICE_ID_PRO_MONTHLY is required for Pro subscriptions.")
+        if not self.stripe_price_id_pro_annual:
+            raise RuntimeError("STRIPE_PRICE_ID_PRO_ANNUAL is required for Pro subscriptions.")
+        if not self.stripe_price_id_experts_monthly:
+            raise RuntimeError("STRIPE_PRICE_ID_EXPERTS_MONTHLY is required for Expert subscriptions.")
+        if not self.stripe_price_id_experts_annual:
+            raise RuntimeError("STRIPE_PRICE_ID_EXPERTS_ANNUAL is required for Expert subscriptions.")
 
     model_config = SettingsConfigDict(
         env_file=".env", 

@@ -19,6 +19,7 @@ import {
     initBillingToggle,
     renderBillingToggleHtml,
     TIER_PRICES,
+    type BillingMode,
 } from './plan_pricing';
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -392,9 +393,19 @@ export function renderLockedTopicOverlay(container: HTMLElement, topic: TopicDef
 // Plans & Billing Page
 // ──────────────────────────────────────────────────────────────────────────────
 
+function parsePlansHashBilling(): BillingMode | null {
+    const hash = window.location.hash.slice(1);
+    if (!hash.startsWith('plans')) return null;
+    const q = hash.indexOf('?');
+    if (q < 0) return null;
+    const billing = new URLSearchParams(hash.slice(q + 1)).get('billing');
+    return billing === 'annual' ? 'annual' : billing === 'monthly' ? 'monthly' : null;
+}
+
 export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNavigatePlans: () => void): void {
     const days = getDaysUntilExpiry(user.expires_at);
     const grace = isInGracePeriod(user);
+    const initialBilling = parsePlansHashBilling() || 'monthly';
 
     // Build expiry string
     let expiryHtml = '';
@@ -493,7 +504,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         : '';
 
     container.innerHTML = `
-    <div class="subscription-tab" data-billing="monthly">
+    <div class="subscription-tab" data-billing="${initialBilling}">
         ${upsellBannerHtml}
         <!-- Current Status Redesign -->
         <div class="sub-status-card">
@@ -552,6 +563,9 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
     container.querySelectorAll<HTMLButtonElement>('.plan-cta-btn[data-plan]').forEach(btn => {
         btn.addEventListener('click', async () => {
             const tier = btn.dataset.plan!;
+            const tab = container.querySelector<HTMLElement>('.subscription-tab');
+            const billing: BillingMode =
+                tab?.dataset.billing === 'annual' ? 'annual' : 'monthly';
             const originalText = btn.textContent;
             btn.disabled = true;
             btn.textContent = 'Redirecting…';
@@ -573,6 +587,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                 const response = await fetchCheckoutSession(tier, {
                     email: checkoutEmail,
                     reportId: reportId || undefined,
+                    billing,
                 });
                 if (response.url) {
                     window.location.href = response.url;

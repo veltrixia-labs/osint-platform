@@ -11,9 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.auth import get_current_user_from_access
 from api.rate_limit import rate_limit
 from api.stripe_service import (
+    _checkout_session_kwargs,
     apply_subscription_state,
     create_checkout_session_for_user,
     process_stripe_webhook_event,
+    resolve_price_id,
 )
 from config.settings import settings
 from db.database import get_db
@@ -30,6 +32,7 @@ async def create_checkout_session_get(
     tier: str,
     report_id: Optional[str] = None,
     return_url: Optional[str] = None,
+    billing: Optional[str] = "monthly",
     current_user: tuple = Depends(get_current_user_from_access),
     _rt: tuple = Depends(rate_limit("/api/payments/checkout-session")),
 ):
@@ -40,25 +43,21 @@ async def create_checkout_session_get(
             base = return_url.rstrip("/")
             success_url = f"{base}/dashboard?payment=success&session_id={{CHECKOUT_SESSION_ID}}"
             cancel_url = f"{base}/dashboard?payment=cancel"
-            price_id = None
-            from api.stripe_service import TIER_TO_PRICE
-
             tier_norm = tier.strip().lower()
-            price_id = TIER_TO_PRICE.get(tier_norm)
-            if not price_id:
-                raise HTTPException(status_code=400, detail=f"Invalid tier: {tier}")
+            price_id = resolve_price_id(tier_norm, billing)
             session = stripe.checkout.Session.create(
                 client_reference_id=str(user.id),
                 success_url=success_url + (f"&report_id={report_id}" if report_id else ""),
                 cancel_url=cancel_url + (f"&report_id={report_id}" if report_id else ""),
-                payment_method_types=["card"],
-                mode="subscription",
                 line_items=[{"price": price_id, "quantity": 1}],
-                metadata={"user_id": str(user.id), "tier": tier_norm},
+                metadata={"user_id": str(user.id), "tier": tier_norm, "billing": billing or "monthly"},
                 customer=user.stripe_customer_id if user.stripe_customer_id else None,
+                **_checkout_session_kwargs(),
             )
         else:
-            session = create_checkout_session_for_user(user, tier, report_id=report_id)
+            session = create_checkout_session_for_user(
+                user, tier, billing=billing, report_id=report_id
+            )
         return {"url": session.url, "session_id": session.id}
     except HTTPException:
         raise
@@ -79,7 +78,8 @@ async def create_checkout_post(
         raise HTTPException(status_code=400, detail="tier is required")
     user, _, _ = current_user
     try:
-        session = create_checkout_session_for_user(user, tier)
+        billing = data.get("billing", "monthly")
+        session = create_checkout_session_for_user(user, tier, billing=billing)
         return {"url": session.url, "session_id": session.id}
     except HTTPException:
         raise

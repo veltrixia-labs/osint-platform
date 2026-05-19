@@ -7,7 +7,7 @@ import logging
 import secrets
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Optional, Tuple
+from typing import Any, Literal, Optional, Tuple
 
 import stripe
 from fastapi import HTTPException
@@ -23,12 +23,63 @@ logger = logging.getLogger(__name__)
 
 stripe.api_key = settings.stripe_secret_key
 
-PRICE_TO_TIER = {
-    settings.stripe_price_id_pro: "pro",
-    settings.stripe_price_id_experts: "experts",
-}
-TIER_TO_PRICE = {v: k for k, v in PRICE_TO_TIER.items()}
+BillingInterval = Literal["monthly", "annual"]
+CHECKOUT_TRIAL_DAYS = 7
 ALLOWED_CHECKOUT_TIERS = frozenset({"pro", "experts"})
+
+
+def _legacy_pro_monthly() -> str:
+    return settings.stripe_price_id_pro or settings.stripe_price_id_pro_monthly
+
+
+def _legacy_experts_monthly() -> str:
+    return settings.stripe_price_id_experts or settings.stripe_price_id_experts_monthly
+
+
+def build_price_to_tier_map() -> dict[str, str]:
+    """Map every configured Stripe price id → internal tier."""
+    pairs: list[tuple[str, str]] = []
+    for price_id, tier in (
+        (settings.stripe_price_id_pro_monthly, "pro"),
+        (settings.stripe_price_id_pro_annual, "pro"),
+        (settings.stripe_price_id_experts_monthly, "experts"),
+        (settings.stripe_price_id_experts_annual, "experts"),
+        (_legacy_pro_monthly(), "pro"),
+        (_legacy_experts_monthly(), "experts"),
+    ):
+        if price_id:
+            pairs.append((price_id, tier))
+    return dict(pairs)
+
+
+PRICE_TO_TIER = build_price_to_tier_map()
+
+
+def normalize_billing_interval(billing: Optional[str]) -> BillingInterval:
+    norm = (billing or "monthly").strip().lower()
+    if norm in ("annual", "year", "yearly"):
+        return "annual"
+    return "monthly"
+
+
+def resolve_price_id(tier: str, billing: Optional[str] = "monthly") -> str:
+    """Select Stripe Price ID for tier + billing interval."""
+    tier_norm = (tier or "").strip().lower()
+    interval = normalize_billing_interval(billing)
+
+    table: dict[tuple[str, BillingInterval], str] = {
+        ("pro", "monthly"): _legacy_pro_monthly(),
+        ("pro", "annual"): settings.stripe_price_id_pro_annual,
+        ("experts", "monthly"): _legacy_experts_monthly(),
+        ("experts", "annual"): settings.stripe_price_id_experts_annual,
+    }
+    price_id = table.get((tier_norm, interval), "")
+    if not price_id:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No Stripe price configured for tier={tier_norm} billing={interval}",
+        )
+    return price_id
 
 
 def checkout_redirect_urls() -> Tuple[str, str]:
@@ -40,6 +91,14 @@ def checkout_redirect_urls() -> Tuple[str, str]:
 
 def resolve_tier_from_price_id(price_id: str) -> str:
     return PRICE_TO_TIER.get(price_id, "free")
+
+
+def _checkout_session_kwargs() -> dict[str, Any]:
+    return {
+        "payment_method_types": ["card"],
+        "mode": "subscription",
+        "subscription_data": {"trial_period_days": CHECKOUT_TRIAL_DAYS},
+    }
 
 
 async def is_event_processed(db: AsyncSession, event_id: str) -> bool:
@@ -160,7 +219,12 @@ async def get_profile_by_id(db: AsyncSession, analyst_id: str) -> Optional[Analy
     return (await db.execute(stmt)).scalars().first()
 
 
-def create_guest_checkout_session(email: str, tier: str) -> stripe.checkout.Session:
+def create_guest_checkout_session(
+    email: str,
+    tier: str,
+    *,
+    billing: Optional[str] = "monthly",
+) -> stripe.checkout.Session:
     """Checkout for visitors without an account (email collected by Stripe)."""
     tier_norm = (tier or "").strip().lower()
     if tier_norm not in ALLOWED_CHECKOUT_TIERS:
@@ -169,9 +233,8 @@ def create_guest_checkout_session(email: str, tier: str) -> stripe.checkout.Sess
             detail=f"Invalid tier. Allowed: {sorted(ALLOWED_CHECKOUT_TIERS)}",
         )
 
-    price_id = TIER_TO_PRICE.get(tier_norm)
-    if not price_id:
-        raise HTTPException(status_code=400, detail="Stripe price not configured for tier")
+    price_id = resolve_price_id(tier_norm, billing)
+    interval = normalize_billing_interval(billing)
 
     normalized = normalize_checkout_email(email)
     if not normalized or "@" not in normalized:
@@ -181,11 +244,15 @@ def create_guest_checkout_session(email: str, tier: str) -> stripe.checkout.Sess
     return stripe.checkout.Session.create(
         success_url=success_url,
         cancel_url=cancel_url,
-        payment_method_types=["card"],
-        mode="subscription",
         line_items=[{"price": price_id, "quantity": 1}],
         customer_email=normalized,
-        metadata={"tier": tier_norm, "checkout_email": normalized, "guest_checkout": "true"},
+        metadata={
+            "tier": tier_norm,
+            "billing": interval,
+            "checkout_email": normalized,
+            "guest_checkout": "true",
+        },
+        **_checkout_session_kwargs(),
     )
 
 
@@ -193,6 +260,7 @@ def create_checkout_session_for_user(
     user: AnalystProfile,
     tier: str,
     *,
+    billing: Optional[str] = "monthly",
     report_id: Optional[str] = None,
 ) -> stripe.checkout.Session:
     tier_norm = (tier or "").strip().lower()
@@ -202,9 +270,8 @@ def create_checkout_session_for_user(
             detail=f"Invalid tier. Allowed: {sorted(ALLOWED_CHECKOUT_TIERS)}",
         )
 
-    price_id = TIER_TO_PRICE.get(tier_norm)
-    if not price_id:
-        raise HTTPException(status_code=400, detail="Stripe price not configured for tier")
+    price_id = resolve_price_id(tier_norm, billing)
+    interval = normalize_billing_interval(billing)
 
     success_url, cancel_url = checkout_redirect_urls()
     if report_id:
@@ -215,12 +282,11 @@ def create_checkout_session_for_user(
         client_reference_id=str(user.id),
         success_url=success_url,
         cancel_url=cancel_url,
-        payment_method_types=["card"],
-        mode="subscription",
         line_items=[{"price": price_id, "quantity": 1}],
-        metadata={"user_id": str(user.id), "tier": tier_norm},
+        metadata={"user_id": str(user.id), "tier": tier_norm, "billing": interval},
         customer=user.stripe_customer_id if user.stripe_customer_id else None,
         customer_email=user.email if not user.stripe_customer_id else None,
+        **_checkout_session_kwargs(),
     )
 
 

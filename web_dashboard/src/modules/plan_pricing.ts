@@ -16,10 +16,19 @@ export const TIER_PRICES: Record<string, TierPriceConfig> = {
     experts: { monthly: 149, annual: 129, monthlyOriginal: 299, annualOriginal: 249 },
 };
 
-/** Stripe Payment Link URLs — fill when available; app checkout API used as fallback */
-export const STRIPE_PAYMENT_LINKS: Record<string, { monthly: string; annual: string }> = {
-    pro: { monthly: '', annual: '' },
-    experts: { monthly: '', annual: '' },
+/**
+ * Stripe Price IDs (server uses env vars with these defaults).
+ * Checkout is created via POST /api/stripe/create-checkout with tier + billing.
+ */
+export const STRIPE_PRICE_IDS: Record<string, { monthly: string; annual: string }> = {
+    pro: {
+        monthly: 'price_1TYffzCc1F7MyO7MLab3Q6zu',
+        annual: 'price_1TYffzCc1F7MyO7MET0aN1Fh',
+    },
+    experts: {
+        monthly: 'price_1TYfhxCc1F7MyO7MtdZk1pEv',
+        annual: 'price_1TYfhxCc1F7MyO7MaaibN5sL',
+    },
 };
 
 export function formatUsd(amount: number): string {
@@ -70,9 +79,9 @@ function updateCheckoutTargets(root: HTMLElement, mode: BillingMode): void {
     root.querySelectorAll<HTMLAnchorElement>('a[data-tier][data-href-monthly]').forEach((link) => {
         const tier = link.dataset.tier;
         if (!tier) return;
-        const stripe = STRIPE_PAYMENT_LINKS[tier]?.[mode] ?? '';
         const fallback = mode === 'annual' ? link.dataset.hrefAnnual : link.dataset.hrefMonthly;
-        link.href = stripe || fallback || 'app.html#plans';
+        link.href = fallback || `app.html#plans?tier=${tier}&billing=${mode}`;
+        link.dataset.stripePriceId = STRIPE_PRICE_IDS[tier]?.[mode] ?? '';
     });
 
     root.querySelectorAll<HTMLButtonElement>('button.plan-cta-btn[data-plan]').forEach((btn) => {

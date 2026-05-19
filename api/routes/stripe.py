@@ -37,6 +37,10 @@ router = APIRouter(tags=["stripe"])
 
 class CreateCheckoutRequest(BaseModel):
     tier: str = Field(..., description="pro or experts")
+    billing: str = Field(
+        default="monthly",
+        description="monthly or annual — selects the Stripe Price ID",
+    )
     email: Optional[str] = Field(
         default=None,
         description="Required for guest checkout when not logged in",
@@ -61,7 +65,9 @@ async def create_checkout(
 
     try:
         if user:
-            session = create_checkout_session_for_user(user, body.tier)
+            session = create_checkout_session_for_user(
+                user, body.tier, billing=body.billing
+            )
         else:
             email = normalize_checkout_email(body.email)
             if not email:
@@ -69,7 +75,9 @@ async def create_checkout(
                     status_code=400,
                     detail="email is required when not logged in",
                 )
-            session = create_guest_checkout_session(email, body.tier)
+            session = create_guest_checkout_session(
+                email, body.tier, billing=body.billing
+            )
         return {"url": session.url, "session_id": session.id}
     except HTTPException:
         raise

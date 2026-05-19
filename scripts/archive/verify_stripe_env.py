@@ -14,11 +14,17 @@ def verify():
         print("STRIPE_SECRET_KEY: MISSING")
         
     # 2. Price ID
-    pid = os.getenv("STRIPE_PRICE_ID_PRO")
-    if pid:
-        print(f"STRIPE_PRICE_ID_PRO: Found (Starts with: {pid[:9]}...)")
-    else:
-        print("STRIPE_PRICE_ID_PRO: MISSING")
+    for key in (
+        "STRIPE_PRICE_ID_PRO_MONTHLY",
+        "STRIPE_PRICE_ID_PRO_ANNUAL",
+        "STRIPE_PRICE_ID_EXPERTS_MONTHLY",
+        "STRIPE_PRICE_ID_EXPERTS_ANNUAL",
+    ):
+        pid = os.getenv(key)
+        if pid:
+            print(f"{key}: Found ({pid[:12]}...)")
+        else:
+            print(f"{key}: MISSING")
         
     # 3. Domain URL
     domain = os.getenv("DOMAIN_URL")

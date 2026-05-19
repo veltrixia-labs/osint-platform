@@ -18,10 +18,16 @@
     }, 2800);
   }
 
-  /** Stripe Payment Link URLs — set when available; falls back to app.html#plans */
-  const STRIPE_CHECKOUT = {
-    pro: { monthly: '', annual: '' },
-    experts: { monthly: '', annual: '' },
+  /** Stripe Price IDs — checkout via app Plans + POST /api/stripe/create-checkout */
+  const STRIPE_PRICE_IDS = {
+    pro: {
+      monthly: 'price_1TYffzCc1F7MyO7MLab3Q6zu',
+      annual: 'price_1TYffzCc1F7MyO7MET0aN1Fh',
+    },
+    experts: {
+      monthly: 'price_1TYfhxCc1F7MyO7MtdZk1pEv',
+      annual: 'price_1TYfhxCc1F7MyO7MaaibN5sL',
+    },
   };
 
   function initPricingBilling() {
@@ -57,9 +63,12 @@
 
       trialLinks.forEach((link) => {
         const tier = link.dataset.tier;
-        const stripeUrl = tier && STRIPE_CHECKOUT[tier] ? STRIPE_CHECKOUT[tier][mode] : '';
+        if (!tier) return;
         const fallback = annual ? link.dataset.hrefAnnual : link.dataset.hrefMonthly;
-        link.href = stripeUrl || fallback || 'app.html#plans';
+        link.href = fallback || 'app.html#plans?tier=' + tier + '&billing=' + mode;
+        if (STRIPE_PRICE_IDS[tier]) {
+          link.dataset.stripePriceId = STRIPE_PRICE_IDS[tier][mode];
+        }
       });
     }
 

@@ -404,9 +404,12 @@ export async function fetchExpertIntelligence(alertId?: string): Promise<ExpertI
 
 export async function fetchCheckoutSession(
     tier: string,
-    opts?: { email?: string; reportId?: string },
+    opts?: { email?: string; reportId?: string; billing?: 'monthly' | 'annual' },
 ) {
-    const body: { tier: string; email?: string } = { tier };
+    const body: { tier: string; billing: string; email?: string } = {
+        tier,
+        billing: opts?.billing || 'monthly',
+    };
     if (opts?.email) body.email = opts.email.trim().toLowerCase();
     const resp = await apiClient.post('/stripe/create-checkout', body);
     if (!resp.ok) {
