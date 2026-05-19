@@ -5940,12 +5940,37 @@ p {
 }
 
 .cb-brief-card-head {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .cb-brief-card-head.u-flex-between {
   align-items: flex-start;
   gap: 0.75rem;
+}
+
+.cb-brief-card-head--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.cb-brief-card-kind {
+  margin: 0 0 0.5rem;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.cb-brief-card-trigger {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .cb-brief-card-head-meta {
@@ -6003,11 +6028,19 @@ p {
   padding: 0.28rem 0.5rem 0.28rem 0.4rem;
 }
 
+.cb-brief-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
 .cb-brief-card-stats {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0;
 }
 
 .cb-brief-stat-chip {
@@ -6022,6 +6055,11 @@ p {
 
 .cb-brief-card-actions {
   margin-top: auto;
+}
+
+.cb-brief-card-footer .cb-open-context-btn {
+  width: 100%;
+  margin: 0;
 }
 
 .cb-brief-card-actions .pro-brief-btn {

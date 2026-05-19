@@ -14,9 +14,12 @@
     ai_semiconductor_intelligence: { label: 'AI & Semiconductors', color: '#bc8cff' },
     defense_technology: { label: 'Defense Technology', color: '#f85149' },
     supply_chain_intelligence: { label: 'Supply Chain Intel', color: '#3fb950' },
-    supply_chain_disruption: { label: 'Supply Chain Disruption', color: '#3fb950' },
+    supply_chain_disruption: { label: 'Supply Chain Intel', color: '#3fb950' },
     global: { label: 'Global Briefing', color: '#58a6ff' },
   };
+
+  const TRIGGER_PREFIX =
+    /^(acceleration|entity_surge|pattern_risk|sector_surge|event_continuation|sustained_event|risk_pattern|risk_acceleration)\s*:\s*/i;
 
   const FALLBACK_FREE = [
     {
@@ -38,8 +41,8 @@
     },
     {
       alert_id: 'fb-002',
-      title: 'Semiconductor fab input — export control ripple',
-      target_label: 'Semiconductor fab input — export control ripple',
+      title: 'Semiconductor fab input \u2014 export control ripple',
+      target_label: 'Semiconductor fab input \u2014 export control ripple',
       topic: 'supply_chain_intelligence',
       triggered_at: '2026-05-02T14:22:00.000Z',
       related_news_count: 7,
@@ -54,8 +57,8 @@
     },
     {
       alert_id: 'fb-003',
-      title: 'Strait transit advisory — commercial lane restriction',
-      target_label: 'Strait transit advisory — commercial lane restriction',
+      title: 'Strait transit advisory \u2014 commercial lane restriction',
+      target_label: 'Strait transit advisory \u2014 commercial lane restriction',
       topic: 'energy_resource_risk',
       triggered_at: '2026-05-02T09:15:00.000Z',
       related_news_count: 5,
@@ -69,8 +72,8 @@
     },
     {
       alert_id: 'fb-004',
-      title: 'Defense procurement surge — dual-use components',
-      target_label: 'Defense procurement surge — dual-use components',
+      title: 'Defense procurement surge \u2014 dual-use components',
+      target_label: 'Defense procurement surge \u2014 dual-use components',
       topic: 'defense_technology',
       triggered_at: '2026-05-01T18:40:00.000Z',
       related_news_count: 4,
@@ -84,8 +87,8 @@
     },
     {
       alert_id: 'fb-005',
-      title: 'Rates desk — CPI pass-through watch activated',
-      target_label: 'Rates desk — CPI pass-through watch activated',
+      title: 'Rates desk \u2014 CPI pass-through watch activated',
+      target_label: 'Rates desk \u2014 CPI pass-through watch activated',
       topic: 'global_market_intelligence',
       triggered_at: '2026-05-01T11:05:00.000Z',
       related_news_count: 6,
@@ -111,8 +114,8 @@
     },
     {
       id: 'fl-002',
-      title: 'Strait of Hormuz — commercial transit advisory',
-      target_label: 'Strait of Hormuz — commercial transit advisory',
+      title: 'Strait of Hormuz \u2014 commercial transit advisory',
+      target_label: 'Strait of Hormuz \u2014 commercial transit advisory',
       topic: 'energy_resource_risk',
       severity: 'critical',
       triggered_at: '2026-05-03T07:12:00.000Z',
@@ -128,24 +131,24 @@
     },
     {
       id: 'fl-004',
-      title: 'Taiwan Strait — elevated airspace notices',
-      target_label: 'Taiwan Strait — elevated airspace notices',
+      title: 'Taiwan Strait \u2014 elevated airspace notices',
+      target_label: 'Taiwan Strait \u2014 elevated airspace notices',
       topic: 'defense_technology',
       severity: 'elevated',
       triggered_at: '2026-05-02T22:18:00.000Z',
     },
     {
       id: 'fl-005',
-      title: 'Ukraine border — energy infrastructure strike pattern',
-      target_label: 'Ukraine border — energy infrastructure strike pattern',
+      title: 'Ukraine border \u2014 energy infrastructure strike pattern',
+      target_label: 'Ukraine border \u2014 energy infrastructure strike pattern',
       topic: 'energy_resource_risk',
       severity: 'critical',
       triggered_at: '2026-05-02T19:44:00.000Z',
     },
     {
       id: 'fl-006',
-      title: 'Supply chain disruption — port congestion index',
-      target_label: 'Supply chain disruption — port congestion index',
+      title: 'Supply chain disruption \u2014 port congestion index',
+      target_label: 'Supply chain disruption \u2014 port congestion index',
       topic: 'supply_chain_disruption',
       severity: 'elevated',
       triggered_at: '2026-05-02T16:02:00.000Z',
@@ -167,18 +170,18 @@
     return TOPIC_LABELS[key] || { label: (topic || 'Global').replace(/_/g, ' '), color: '#58a6ff' };
   }
 
-  function formatTs(iso) {
-    if (!iso) return '—';
+  function formatDisplayDateJa(iso) {
+    if (!iso) return '\u2014';
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'UTC',
-      timeZoneName: 'short',
-    });
+    const h = String(d.getHours()).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return d.getMonth() + 1 + '\u6708' + d.getDate() + '\u65e5 ' + h + ':' + m;
+  }
+
+  function topicCssVars(topic) {
+    const meta = topicMeta(topic);
+    return `--topic-color:${meta.color};--domain-accent:${meta.color};`;
   }
 
   function cleanTitle(raw) {
@@ -217,6 +220,30 @@
     return 'watch';
   }
 
+  function severityLabel(sev) {
+    return severityClass(sev).toUpperCase();
+  }
+
+  function sourceCount(alert) {
+    if (Array.isArray(alert.evidence_list) && alert.evidence_list.length) {
+      return alert.evidence_list.length;
+    }
+    if (alert.related_news_count != null) return alert.related_news_count;
+    if (Array.isArray(alert.related_news) && alert.related_news.length) {
+      return alert.related_news.length;
+    }
+    return 0;
+  }
+
+  function extractTriggerDetail(raw) {
+    if (!raw) return '';
+    const m = raw.match(TRIGGER_PREFIX);
+    if (!m) return '';
+    const type = m[1].replace(/_/g, ' ').toUpperCase();
+    const rest = raw.replace(TRIGGER_PREFIX, '').trim();
+    return rest ? `${type} · ${rest}` : type;
+  }
+
   function escapeHtml(s) {
     return String(s)
       .replace(/&/g, '&amp;')
@@ -245,35 +272,53 @@
 
   function setSyncBadge(mode) {
     document.querySelectorAll('[data-lp-sync]').forEach((el) => {
-      el.classList.add('lp-neon-badge');
       const live = mode === 'live';
-      el.textContent = live ? 'LIVE DATA' : 'SAMPLE';
-      el.classList.toggle('lp-neon-badge--on', live);
-      el.setAttribute('data-lp-mode', live ? 'live' : 'sample');
-      el.title = live ? 'Synced with production API' : 'Canonical sample — API offline';
+      if (live) {
+        el.hidden = false;
+        el.className = 'lp-live-indicator';
+        el.textContent = 'LIVE PRODUCTION DATA';
+        el.setAttribute('data-lp-mode', 'live');
+        el.title = 'Synced with production API';
+      } else {
+        el.hidden = true;
+        el.className = 'lp-live-indicator';
+        el.textContent = '';
+        el.setAttribute('data-lp-mode', 'fallback');
+        el.removeAttribute('title');
+      }
     });
   }
 
   function alertCardHtml(a, index) {
     const meta = topicMeta(a.topic);
     const sev = severityClass(a.severity);
+    const sevText = severityLabel(a.severity);
     const title = cleanTitle(a.title || a.target_label);
-    const ts = formatTs(a.triggered_at);
-    const src =
-      a.evidence_list?.length != null
-        ? `${a.evidence_list.length} sources`
-        : a.related_news_count != null
-          ? `${a.related_news_count} sources`
-          : 'live';
+    const ts = formatDisplayDateJa(a.triggered_at);
+    const count = sourceCount(a);
+    const countSuffix = count ? ` (${count})` : '';
+    const vars = topicCssVars(a.topic);
     return `
-      <article class="lp-alert lp-alert-slot" data-slot="${index}" style="--lp-alert-topic:${meta.color}">
-        <div class="lp-alert-meta">
-          <span class="lp-alert-topic">${escapeHtml(meta.label)}</span>
-          <span class="lp-alert-sev lp-alert-sev--${sev}">${sev.toUpperCase()}</span>
+      <div class="alert-card-compact severity-${sev} lp-alert-slot" data-slot="${index}" style="${vars}">
+        <div class="alert-header u-flex-between">
+          <div class="u-flex" style="gap:8px;align-items:center;">
+            <span class="severity-badge ${sev}">${escapeHtml(sevText)}</span>
+            <span class="timestamp">${escapeHtml(ts)}</span>
+          </div>
+          <div class="alert-header-meta">
+            <span class="meta-item-topic meta-item-topic--tag">${escapeHtml(meta.label)}</span>
+          </div>
         </div>
-        <h4 class="lp-alert-title">${escapeHtml(title)}</h4>
-        <p class="lp-alert-ts lp-mono">${escapeHtml(ts)} · ${escapeHtml(String(src))}</p>
-      </article>`;
+        <div class="alert-content-terminal">
+          <div class="alert-main-row">
+            <h3 class="alert-headline-compact">${escapeHtml(title)}</h3>
+          </div>
+          <div class="source-terminal-row">
+            <span class="source-label">SOURCES:</span>
+            <a class="source-modal-trigger" href="app.html#feed">View Sources${escapeHtml(countSuffix)}</a>
+          </div>
+        </div>
+      </div>`;
   }
 
   function extractTeaser(markdown) {
@@ -323,28 +368,35 @@
 
   function briefCardHtml(item, index) {
     const meta = topicMeta(item.topic);
-    const title = cleanTitle(item.title || item.target_label);
-    const ts = formatTs(item.triggered_at);
+    const rawTitle = item.title || item.target_label || '';
+    const title = cleanTitle(rawTitle);
+    const ts = formatDisplayDateJa(item.triggered_at);
+    const triggerDetail = escapeHtml(extractTriggerDetail(rawTitle));
     const teaser = escapeHtml(extractTeaser(item.content_markdown));
     const newsCount = item.related_news_count ?? 0;
     const entitiesCount = item.related_entities_count ?? 0;
-    const topicVars = '--topic-color:' + meta.color + ';--domain-accent:' + meta.color + ';';
+    const topicVars = topicCssVars(item.topic);
     const sectorTagsHtml = briefSectorPreview(item, 6);
+    const triggerHtml = triggerDetail
+      ? '<p class="cb-brief-card-trigger">' + triggerDetail + '</p>'
+      : '';
     return (
       '<article class="pro-brief-card cb-brief-card lp-brief-slot" data-slot="' + index + '" data-domain-card="1" style="' + topicVars + '">' +
-        '<div class="cb-brief-card-head u-flex-between">' +
+        '<div class="cb-brief-card-head cb-brief-card-head--row">' +
           '<span class="domain-chip meta-item-topic--tag">' + escapeHtml(meta.label) + '</span>' +
-          '<div class="cb-brief-card-head-meta">' +
-            '<span class="cb-brief-kind">OSINT Intelligence Briefing</span>' +
-            '<span class="cb-brief-ts">' + escapeHtml(ts) + '</span>' +
-          '</div>' +
+          '<span class="cb-brief-ts">' + escapeHtml(ts) + '</span>' +
         '</div>' +
+        '<p class="cb-brief-card-kind">OSINT Intelligence Briefing</p>' +
         '<h4 class="cb-brief-card-title">' + escapeHtml(title) + '</h4>' +
+        triggerHtml +
         '<p class="cb-brief-card-teaser">' + teaser + '</p>' +
         sectorTagsHtml +
-        '<div class="cb-brief-card-stats" aria-label="Evidence counts">' +
-          '<span class="cb-brief-stat-chip">📰 ' + newsCount + ' news</span>' +
-          '<span class="cb-brief-stat-chip">🏢 ' + entitiesCount + ' entities</span>' +
+        '<div class="cb-brief-card-footer">' +
+          '<div class="cb-brief-card-stats" aria-label="Evidence counts">' +
+            '<span class="cb-brief-stat-chip">📰 ' + newsCount + ' news</span>' +
+            '<span class="cb-brief-stat-chip">🏢 ' + entitiesCount + ' entities</span>' +
+          '</div>' +
+          '<a class="btn-fb cb-open-context-btn" href="app.html#briefs">View Full Context →</a>' +
         '</div>' +
       '</article>'
     );
@@ -404,7 +456,7 @@
       .map((a) => {
         const tag = heroTopicTag(a.topic);
         const d = new Date(a.triggered_at || Date.now());
-        const ts = Number.isNaN(d.getTime()) ? '—' : d.toISOString().slice(11, 19) + 'Z';
+        const ts = Number.isNaN(d.getTime()) ? '\u2014' : d.toISOString().slice(11, 19) + 'Z';
         return `<span class="lp-terminal-line"><span class="ts">${ts}</span><span class="tag">${tag}</span><span class="val">${escapeHtml(cleanTitle(a.title || a.target_label))}</span></span>`;
       })
       .join('');
