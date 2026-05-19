@@ -111,6 +111,7 @@
       severity: 'elevated',
       triggered_at: '2026-05-03T08:40:56.000Z',
       related_news_count: 3,
+      evidence_list: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
     },
     {
       id: 'fl-002',
@@ -120,6 +121,7 @@
       severity: 'critical',
       triggered_at: '2026-05-03T07:12:00.000Z',
       related_news_count: 3,
+      evidence_list: [{}, {}, {}],
     },
     {
       id: 'fl-003',
@@ -170,13 +172,50 @@
     return TOPIC_LABELS[key] || { label: (topic || 'Global').replace(/_/g, ' '), color: '#58a6ff' };
   }
 
+  function resolveTimestamp(item) {
+    if (!item) return null;
+    return item.triggered_at || item.timestamp || item.generated_at || null;
+  }
+
   function formatDisplayDateJa(iso) {
     if (!iso) return '\u2014';
     const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
+    if (Number.isNaN(d.getTime())) return String(iso);
     const h = String(d.getHours()).padStart(2, '0');
     const m = String(d.getMinutes()).padStart(2, '0');
     return d.getMonth() + 1 + '\u6708' + d.getDate() + '\u65e5 ' + h + ':' + m;
+  }
+
+  /** Same-day: absolute JP time; within 7d: relative; older: absolute date. */
+  function formatDisplayTimestamp(iso) {
+    if (!iso) return '\u2014';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso);
+    const now = new Date();
+    const sameDay =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    if (sameDay) return formatDisplayDateJa(iso);
+    const diffMs = now.getTime() - d.getTime();
+    if (diffMs >= 0 && diffMs < 7 * 24 * 60 * 60 * 1000) {
+      const mins = Math.floor(diffMs / 60000);
+      if (mins < 1) return '\u305f\u3063\u305f\u4eca';
+      if (mins < 60) return mins + '\u5206\u524d';
+      const hours = Math.floor(mins / 60);
+      if (hours < 24) return hours + '\u6642\u9593\u524d';
+      const days = Math.floor(hours / 24);
+      return days + '\u65e5\u524d';
+    }
+    return formatDisplayDateJa(iso);
+  }
+
+  function pickCount(primary, fallbackLen) {
+    if (typeof primary === 'number' && Number.isFinite(primary)) return Math.max(0, Math.floor(primary));
+    if (typeof primary === 'string' && primary.trim() !== '' && !Number.isNaN(Number(primary))) {
+      return Math.max(0, Math.floor(Number(primary)));
+    }
+    return typeof fallbackLen === 'number' ? Math.max(0, fallbackLen) : 0;
   }
 
   function topicCssVars(topic) {
@@ -225,14 +264,152 @@
   }
 
   function sourceCount(alert) {
-    if (Array.isArray(alert.evidence_list) && alert.evidence_list.length) {
-      return alert.evidence_list.length;
+    if (!alert) return 0;
+    if (typeof alert.sources_count === 'number' && Number.isFinite(alert.sources_count)) {
+      return Math.max(0, Math.floor(alert.sources_count));
     }
-    if (alert.related_news_count != null) return alert.related_news_count;
-    if (Array.isArray(alert.related_news) && alert.related_news.length) {
-      return alert.related_news.length;
+    if (Array.isArray(alert.sources) && alert.sources.length) return alert.sources.length;
+    if (typeof alert.source_count === 'number' && Number.isFinite(alert.source_count)) {
+      return Math.max(0, Math.floor(alert.source_count));
     }
-    return 0;
+    if (Array.isArray(alert.evidence_list)) return alert.evidence_list.length;
+    if (Array.isArray(alert.related_news)) return alert.related_news.length;
+    return pickCount(alert.related_news_count, 0);
+  }
+
+  function normalizeLiveAlert(raw) {
+    const evidence = Array.isArray(raw.evidence_list) ? raw.evidence_list : [];
+    const sources = Array.isArray(raw.sources) ? raw.sources : [];
+    const count = sourceCount(raw);
+    return {
+      ...raw,
+      triggered_at: resolveTimestamp(raw),
+      evidence_list: evidence,
+      sources_count: count,
+    };
+  }
+
+  function normalizeBriefItem(raw) {
+    const relatedNews = Array.isArray(raw.related_news) ? raw.related_news : [];
+    const companyImpacts = Array.isArray(raw.company_impacts) ? raw.company_impacts : [];
+    return {
+      ...raw,
+      triggered_at: resolveTimestamp(raw),
+      related_news: relatedNews,
+      related_news_count: pickCount(raw.related_news_count, relatedNews.length),
+      related_entities_count: pickCount(raw.related_entities_count, companyImpacts.length),
+      company_impacts: companyImpacts,
+      sector_impacts: Array.isArray(raw.sector_impacts) ? raw.sector_impacts : raw.sector_impacts,
+    };
+  }
+
+  function parseMarkdownTable(markdown) {
+    const lines = String(markdown || '')
+      .trim()
+      .split('\n')
+      .filter((l) => l.trim().includes('|'));
+    if (lines.length < 3) return [];
+    const headers = lines[0]
+      .split('|')
+      .map((c) => c.trim())
+      .filter(Boolean);
+    return lines.slice(2).map((row) => {
+      const cells = row
+        .split('|')
+        .map((c) => c.trim())
+        .filter((_, i, arr) => i > 0 && i < arr.length - 1);
+      const obj = {};
+      headers.forEach((h, i) => {
+        obj[h.toLowerCase().replace(/\s+/g, '_')] = cells[i] || '';
+      });
+      return obj;
+    });
+  }
+
+  function sectorRowsFromNamedList(list) {
+    if (!Array.isArray(list)) return [];
+    return list
+      .map((entry) => {
+        if (typeof entry === 'string') {
+          return { sector: entry.trim(), matched: 0 };
+        }
+        if (!entry || typeof entry !== 'object') return null;
+        const sector = String(
+          entry.sector || entry.name || entry.label || entry.category || entry.tag || '',
+        ).trim();
+        if (!sector) return null;
+        const matched = pickCount(
+          entry.matched_entities ?? entry.matched ?? entry.count ?? entry.entity_count ?? entry.score,
+          0,
+        );
+        return { sector, matched };
+      })
+      .filter(Boolean);
+  }
+
+  function sectorRowsFromCompanyImpacts(impacts) {
+    if (!Array.isArray(impacts) || !impacts.length) return [];
+    const map = new Map();
+    impacts.forEach((c) => {
+      const sector = String(c.sector || c.industry || 'Exposure').trim();
+      if (!sector) return;
+      map.set(sector, (map.get(sector) || 0) + 1);
+    });
+    return [...map.entries()].map(([sector, matched]) => ({ sector, matched }));
+  }
+
+  function sectorRowsFromMarkdown(body) {
+    return parseMarkdownTable(body)
+      .map((obj) => {
+        const sector = String(obj.sector || obj.name || obj.category || '').trim();
+        const rawN = obj.matched_entities ?? obj.entities ?? obj.count ?? '0';
+        const matched = parseInt(String(rawN).replace(/[^\d-]/g, ''), 10) || 0;
+        return { sector, matched };
+      })
+      .filter((r) => r.sector && !r.sector.toLowerCase().includes('no sector coverage'));
+  }
+
+  function dedupeSectorRows(rows) {
+    const seen = new Set();
+    const out = [];
+    rows.forEach((r) => {
+      const key = (r.sector || '').trim().toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      out.push({ sector: r.sector, matched: r.matched || 0 });
+    });
+    return out.sort((a, b) => b.matched - a.matched);
+  }
+
+  function normalizeSectorRowsForBrief(item) {
+    const rows = [];
+    if (Array.isArray(item.sector_impacts) && item.sector_impacts.length) {
+      item.sector_impacts.forEach((r) => {
+        rows.push({
+          sector: String(r.sector || '').trim(),
+          matched: pickCount(r.matched_entities ?? r.matched, 0),
+        });
+      });
+    }
+    rows.push(...sectorRowsFromNamedList(item.tags));
+    rows.push(...sectorRowsFromNamedList(item.categories));
+    if (!rows.length) rows.push(...sectorRowsFromCompanyImpacts(item.company_impacts));
+    if (!rows.length) rows.push(...sectorRowsFromMarkdown(item.content_markdown || ''));
+    return dedupeSectorRows(rows.filter((r) => r.sector));
+  }
+
+  function newsCountForBrief(item) {
+    const relatedNews = Array.isArray(item.related_news) ? item.related_news : [];
+    return pickCount(item.related_news_count, relatedNews.length);
+  }
+
+  function entitiesCountForBrief(item) {
+    const companyImpacts = Array.isArray(item.company_impacts) ? item.company_impacts : [];
+    const sectorRows = normalizeSectorRowsForBrief(item);
+    const fromSectors = sectorRows.reduce((sum, r) => sum + (r.matched || 0), 0);
+    const fromCompanies = companyImpacts.length;
+    const declared = pickCount(item.related_entities_count, fromCompanies);
+    return Math.max(declared, fromCompanies, fromSectors > 0 ? fromSectors : 0);
   }
 
   function extractTriggerDetail(raw) {
@@ -253,10 +430,20 @@
   }
 
   function expandPool(pool, fallback) {
-    const base = pool.length ? [...pool] : [];
+    const minLen = Math.max(CARD_COUNT * 2, HERO_STREAM_COUNT + 2);
+    if (!pool.length) {
+      const out = [];
+      let i = 0;
+      while (out.length < minLen) {
+        out.push(fallback[i % fallback.length]);
+        i += 1;
+      }
+      return out;
+    }
+    const base = pool.map((row) => ({ ...row }));
     let i = 0;
-    while (base.length < Math.max(CARD_COUNT * 2, HERO_STREAM_COUNT + 2)) {
-      base.push(fallback[i % fallback.length]);
+    while (base.length < minLen) {
+      base.push({ ...pool[i % pool.length] });
       i += 1;
     }
     return base;
@@ -294,9 +481,8 @@
     const sev = severityClass(a.severity);
     const sevText = severityLabel(a.severity);
     const title = cleanTitle(a.title || a.target_label);
-    const ts = formatDisplayDateJa(a.triggered_at);
+    const ts = formatDisplayTimestamp(resolveTimestamp(a));
     const count = sourceCount(a);
-    const countSuffix = count ? ` (${count})` : '';
     const vars = topicCssVars(a.topic);
     return `
       <div class="alert-card-compact severity-${sev} lp-alert-slot" data-slot="${index}" style="${vars}">
@@ -313,10 +499,14 @@
           <div class="alert-main-row">
             <h3 class="alert-headline-compact">${escapeHtml(title)}</h3>
           </div>
-          <div class="source-terminal-row">
+          ${
+            count > 0
+              ? `<div class="source-terminal-row">
             <span class="source-label">SOURCES:</span>
-            <a class="source-modal-trigger" href="app.html#feed">View Sources${escapeHtml(countSuffix)}</a>
-          </div>
+            <a class="source-modal-trigger" href="app.html#feed">View Sources (${count})</a>
+          </div>`
+              : ''
+          }
         </div>
       </div>`;
   }
@@ -361,20 +551,31 @@
   }
 
   function briefSectorPreview(item, maxPills) {
-    const rows = Array.isArray(item.sector_impacts) ? item.sector_impacts : [];
+    const rows = normalizeSectorRowsForBrief(item);
     if (!rows.length) return '';
-    return '<div class="cb-brief-card-tags" role="list" aria-label="Structural exposure">' + rows.slice(0, maxPills || 6).map(sectorPillHtml).join('') + '</div>';
+    const limit = maxPills || 6;
+    const regional = rows.filter((r) => isRegionalSector(r.sector));
+    const structural = rows.filter((r) => !isRegionalSector(r.sector));
+    const pills = [
+      ...regional.slice(0, 2),
+      ...structural.slice(0, Math.max(0, limit - Math.min(regional.length, 2))),
+    ].slice(0, limit);
+    return (
+      '<div class="cb-brief-card-tags" role="list" aria-label="Structural exposure">' +
+      pills.map(sectorPillHtml).join('') +
+      '</div>'
+    );
   }
 
   function briefCardHtml(item, index) {
     const meta = topicMeta(item.topic);
     const rawTitle = item.title || item.target_label || '';
     const title = cleanTitle(rawTitle);
-    const ts = formatDisplayDateJa(item.triggered_at);
+    const ts = formatDisplayTimestamp(resolveTimestamp(item));
     const triggerDetail = escapeHtml(extractTriggerDetail(rawTitle));
     const teaser = escapeHtml(extractTeaser(item.content_markdown));
-    const newsCount = item.related_news_count ?? 0;
-    const entitiesCount = item.related_entities_count ?? 0;
+    const newsCount = newsCountForBrief(item);
+    const entitiesCount = entitiesCountForBrief(item);
     const topicVars = topicCssVars(item.topic);
     const sectorTagsHtml = briefSectorPreview(item, 6);
     const triggerHtml = triggerDetail
@@ -396,7 +597,7 @@
             '<span class="cb-brief-stat-chip">📰 ' + newsCount + ' news</span>' +
             '<span class="cb-brief-stat-chip">🏢 ' + entitiesCount + ' entities</span>' +
           '</div>' +
-          '<a class="btn-fb cb-open-context-btn" href="app.html#briefs">View Full Context →</a>' +
+          '<a class="btn-fb cb-open-context-btn" href="app.html#briefs">View Full Context \u2192</a>' +
         '</div>' +
       '</article>'
     );
@@ -455,8 +656,8 @@
     container.innerHTML = rows
       .map((a) => {
         const tag = heroTopicTag(a.topic);
-        const d = new Date(a.triggered_at || Date.now());
-        const ts = Number.isNaN(d.getTime()) ? '\u2014' : d.toISOString().slice(11, 19) + 'Z';
+        const tsIso = resolveTimestamp(a) || new Date().toISOString();
+        const ts = formatDisplayTimestamp(tsIso);
         return `<span class="lp-terminal-line"><span class="ts">${ts}</span><span class="tag">${tag}</span><span class="val">${escapeHtml(cleanTitle(a.title || a.target_label))}</span></span>`;
       })
       .join('');
@@ -488,8 +689,8 @@
     const briefRoot = document.getElementById('lp-brief-grid');
     const heroRoot = document.querySelector('.lp-hero .lp-terminal-body');
 
-    let freeItems = [...FALLBACK_FREE];
-    let liveItems = [...FALLBACK_LIVE];
+    let freeItems = FALLBACK_FREE.map(normalizeBriefItem);
+    let liveItems = FALLBACK_LIVE.map(normalizeLiveAlert);
     state.mode = 'fallback';
 
     try {
@@ -498,19 +699,19 @@
         fetchJson(`/api/alerts/live?limit=${FETCH_LIMIT}`),
       ]);
       if (Array.isArray(free) && free.length) {
-        freeItems = free;
+        freeItems = free.map(normalizeBriefItem);
         state.mode = 'live';
       }
       if (Array.isArray(live) && live.length) {
-        liveItems = live;
+        liveItems = live.map(normalizeLiveAlert);
         state.mode = 'live';
       }
     } catch {
       /* fallback */
     }
 
-    state.briefPool = expandPool(freeItems, FALLBACK_FREE);
-    state.alertPool = expandPool(liveItems, FALLBACK_LIVE);
+    state.briefPool = expandPool(freeItems, FALLBACK_FREE.map(normalizeBriefItem));
+    state.alertPool = expandPool(liveItems, FALLBACK_LIVE.map(normalizeLiveAlert));
 
     renderAlerts(alertRoot, windowItems(state.alertPool, 0, CARD_COUNT), false);
     renderBriefs(briefRoot, windowItems(state.briefPool, 0, CARD_COUNT), false);
