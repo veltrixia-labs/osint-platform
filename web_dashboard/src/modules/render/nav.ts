@@ -1,5 +1,6 @@
 import type { UserMe } from '../api';
 import { toggleAdminTier } from '../api';
+import { closeMobileSidebar } from '../mobile_nav';
 
 /**
  * [Phase 3] Role-aware Navigation Renderer
@@ -220,6 +221,13 @@ export function renderNavigation(
             } else {
                 onTabSwitch(tabId);
             }
+            closeMobileSidebar();
+        });
+    });
+
+    container.querySelectorAll('.nav-legal-row a').forEach((link) => {
+        link.addEventListener('click', () => {
+            closeMobileSidebar();
         });
     });
 
@@ -229,6 +237,11 @@ export function renderNavigation(
             'Explore Founding plans to unlock advanced structural intelligence and predictive foresight.',
         );
         onTabSwitch('plans');
+        closeMobileSidebar();
+    });
+
+    container.querySelector('#sidebar-login-btn')?.addEventListener('click', () => {
+        closeMobileSidebar();
     });
 
     container.querySelectorAll('.nav-dev-btn').forEach(btn => {

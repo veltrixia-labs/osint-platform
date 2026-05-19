@@ -1,0 +1,213 @@
+/**
+ * Mobile dashboard layout — loaded after theme-terminal.css.
+ */
+
+@media (max-width: 768px) {
+  body.mobile-nav-open {
+    overflow: hidden;
+  }
+
+  /* Compact header: brand + menu only */
+  .mobile-header {
+    padding: 0.65rem 1rem;
+    min-height: 52px;
+    gap: 0.75rem;
+  }
+
+  .mobile-header-brand {
+    font-weight: 700;
+    font-size: 0.92rem;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    line-height: 1.2;
+  }
+
+  .dashboard-terminal .sidebar .sidebar-header {
+    display: none;
+  }
+
+  #app {
+    padding: 0 0 calc(3.25rem + env(safe-area-inset-bottom, 0px)) 0;
+  }
+
+  .app-container.dashboard-terminal {
+    padding: 0.5rem 0.75rem 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .main-content {
+    padding: 0.75rem;
+    border-radius: 12px;
+    min-width: 0;
+  }
+
+  .page-title {
+    font-size: clamp(1.15rem, 4.5vw, 1.35rem);
+  }
+
+  .page-subtitle {
+    font-size: 0.82rem;
+  }
+
+  /* Topic chips: horizontal scroll */
+  .topic-filter-bar {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    gap: 0.5rem;
+    padding: 0.35rem 0 0.65rem;
+    margin-bottom: 0.65rem;
+    mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
+  }
+
+  .topic-filter-bar::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .topic-btn {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  /* Feed cards: full width stack, ~15% tighter density */
+  #alerts-container.main-feed,
+  #alerts-list {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  #alerts-container .alert-card-compact {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem 0.72rem 0.48rem;
+    margin-bottom: 0.35rem;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+  }
+
+  #alerts-container .alert-card-compact .alert-headline-compact {
+    font-size: 0.92rem;
+    line-height: 1.35;
+  }
+
+  #alerts-container .alert-card-compact .timestamp,
+  #alerts-container .alert-card-compact .severity-badge,
+  #alerts-container .alert-card-compact .meta-item-topic--tag {
+    font-size: 0.68rem;
+  }
+
+  #alerts-container .alert-card-compact .source-terminal-row {
+    font-size: 0.75rem;
+  }
+
+  .cb-briefs-grid--context,
+  .cb-briefs-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem;
+  }
+
+  .pro-brief-card.cb-brief-card,
+  .pro-brief-card.cb-brief-card--preview {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0.72rem 0.85rem;
+    font-size: 0.85rem;
+  }
+
+  .pro-brief-card.cb-brief-card .cb-brief-card-title {
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+
+  .pro-brief-card.cb-brief-card .cb-brief-card-teaser {
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .pro-brief-card.cb-brief-card .cb-brief-stat-chip {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.45rem;
+  }
+
+  .pulse-bar {
+    font-size: 0.78rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Touch targets */
+  .sidebar-nav-link {
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    margin-bottom: 2px;
+  }
+
+  .nav-upgrade-btn {
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .nav-dev-btn {
+    min-height: 44px;
+  }
+
+  .page-premium-cta {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Sync HUD: compact bottom bar (drawer footer keeps full detail) */
+  .mobile-status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 0.4rem 1rem;
+    padding-bottom: calc(0.4rem + env(safe-area-inset-bottom, 0px));
+    background: rgba(8, 10, 14, 0.94);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .mobile-status-bar .nav-sync-hud {
+    width: 100%;
+    max-width: 28rem;
+    padding: 0.15rem 0;
+    font-size: 0.6rem;
+  }
+
+  .nav-role-footer #sync-hud {
+    display: none;
+  }
+
+  #map-page-container,
+  #pro-map-container {
+    min-height: 50vh;
+    height: auto;
+    padding: 0.5rem;
+  }
+
+  .header-row {
+    gap: 0.65rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-status-bar {
+    display: none !important;
+  }
+}

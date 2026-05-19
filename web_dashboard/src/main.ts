@@ -1,6 +1,7 @@
 import './theme.css'
 import './style.css'
 import './theme-terminal.css'
+import './mobile-responsive.css'
 declare const __APP_BUILD_INFO__: string;
 console.log(`[Antigravity] Resolved API base: ${getResolvedApiBase()} (VITE_API_BASE_URL=${String(import.meta.env.VITE_API_BASE_URL ?? '')})`);
 console.log(`[Antigravity] Mode: ${import.meta.env.MODE}`);
@@ -17,6 +18,7 @@ import {
     renderGracePeriodBanner,
     renderSubscriptionTab,
 } from './modules/subscription'
+import { bindMobileSidebarControls, closeMobileSidebar } from './modules/mobile_nav'
 
 
 
@@ -461,11 +463,11 @@ async function initDashboard() {
         resetMapEngine()
         const graceBanner = user ? renderGracePeriodBanner(user) : '';
         app.innerHTML = `
-      <div class="mobile-header">
-        <div class="u-flex"><span style="font-weight:700; color:var(--accent);">VELTRIXIA</span></div>
-        <button class="hamburger" id="mobile-menu-btn" type="button" aria-label="Open menu">&#9776;</button>
-      </div>
-      <div class="mobile-overlay" id="mobile-overlay"></div>
+      <header class="mobile-header">
+        <span class="mobile-header-brand">VELTRIXIA LABS</span>
+        <button class="hamburger" id="mobile-menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar">&#9776;</button>
+      </header>
+      <div class="mobile-overlay" id="mobile-overlay" aria-hidden="true"></div>
       <div class="app-container dashboard-terminal">
         <aside class="sidebar" id="sidebar">
           <div class="sidebar-header u-flex"><h2>VELTRIXIA LABS</h2></div>
@@ -494,11 +496,15 @@ async function initDashboard() {
           <div id="pro-map-container" style="display:none;"></div>
         </main>
       </div>
+      <footer class="mobile-status-bar" aria-live="polite">
+        <div id="mobile-sync-hud" class="nav-sync-hud">
+          <span class="sync-dot sync-dot--init"></span>
+          <span class="sync-label">SYNC: INITIALIZING...</span>
+          <span class="sync-time"></span>
+        </div>
+      </footer>
       `;
-        document.querySelector('#mobile-menu-btn')?.addEventListener('click', () => {
-            document.querySelector('#sidebar')?.classList.toggle('active');
-            document.querySelector('#mobile-overlay')?.classList.toggle('active');
-        });
+        bindMobileSidebarControls();
     };
 
     if (generation !== dashboardInitGeneration) return
@@ -561,29 +567,28 @@ async function initDashboard() {
     // [v42] Connectivity Sync Listener: Restores real-time HUD status updates
     window.addEventListener('api-sync-status' as any, (e: CustomEvent) => {
         const { status } = e.detail;
-        const hud = document.getElementById('sync-hud');
-        if (!hud) return;
+        document.querySelectorAll('#sync-hud, #mobile-sync-hud').forEach((hud) => {
+            const dot = hud.querySelector('.sync-dot');
+            const label = hud.querySelector('.sync-label');
+            const time = hud.querySelector('.sync-time');
 
-        const dot = hud.querySelector('.sync-dot');
-        const label = hud.querySelector('.sync-label');
-        const time = hud.querySelector('.sync-time');
-
-        if (dot) {
-            // Remove all possible status classes
-            dot.classList.remove('sync-dot--init', 'sync-dot--stable', 'sync-dot--retrying', 'sync-dot--offline');
-            dot.classList.add(`sync-dot--${status}`);
-        }
-        if (label) {
-            label.textContent = `SYNC: ${status.toUpperCase()}`;
-        }
-        if (time) {
-            time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
+            if (dot) {
+                dot.classList.remove('sync-dot--init', 'sync-dot--stable', 'sync-dot--retrying', 'sync-dot--offline');
+                dot.classList.add(`sync-dot--${status}`);
+            }
+            if (label) {
+                label.textContent = `SYNC: ${status.toUpperCase()}`;
+            }
+            if (time) {
+                time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+        });
     });
 
     renderNavigation(user, document.querySelector('#sidebar-nav-container')!, (tabId) => handleTabSwitch(tabId as TabId));
 
     const handleTabSwitch = (tab: TabId, focusAlertId?: string, skipPushState = false) => {
+        closeMobileSidebar();
         currentTab = tab;
         updateNavActiveState('sidebar-nav-container', tab);
         if (!skipPushState) {
