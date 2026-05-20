@@ -1,26 +1,40 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import { resolve } from 'path'
 
-export default defineConfig({
-  build: {
-    rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        app: resolve(__dirname, 'app.html'),
+const dashboardDir = resolve(__dirname)
+const repoRoot = resolve(__dirname, '..')
+
+export default defineConfig(({ mode }) => {
+  const parentVite = loadEnv(mode, repoRoot, 'VITE_')
+  const localVite = loadEnv(mode, dashboardDir, 'VITE_')
+  const define: Record<string, string> = {
+    __APP_BUILD_INFO__: JSON.stringify(new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })),
+  }
+  // Inject repo-root VITE_* (e.g. VITE_DEV_TIER) when not set under web_dashboard/.
+  for (const [key, value] of Object.entries(parentVite)) {
+    if (localVite[key] === undefined) {
+      define[`import.meta.env.${key}`] = JSON.stringify(value)
+    }
+  }
+
+  return {
+    build: {
+      rollupOptions: {
+        input: {
+          main: resolve(dashboardDir, 'index.html'),
+          app: resolve(dashboardDir, 'app.html'),
+        },
       },
     },
-  },
-  define: {
-    __APP_BUILD_INFO__: JSON.stringify(new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }))
-  },
-  // Load `.env*` from web_dashboard/ so `web_dashboard/.env.production` applies on `vite build`.
-  envDir: __dirname,
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true,
-      }
-    }
+    define,
+    envDir: dashboardDir,
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:8000',
+          changeOrigin: true,
+        },
+      },
+    },
   }
 })

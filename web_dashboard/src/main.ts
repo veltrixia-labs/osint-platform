@@ -5,6 +5,7 @@ import './mobile-responsive.css'
 declare const __APP_BUILD_INFO__: string;
 console.log(`[Antigravity] Resolved API base: ${getResolvedApiBase()} (VITE_API_BASE_URL=${String(import.meta.env.VITE_API_BASE_URL ?? '')})`);
 console.log(`[Antigravity] Mode: ${import.meta.env.MODE}`);
+console.log(`[Antigravity] VITE_DEV_TIER: ${String(import.meta.env.VITE_DEV_TIER ?? '(unset)')}`);
 console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
@@ -342,6 +343,28 @@ function isLocalDevHost(): boolean {
     return host === 'localhost' || host === '127.0.0.1';
 }
 
+const DEV_TIER_SESSION_KEY = 'vel_dev_tier_override';
+
+/** Pro/Expert tier from VITE_DEV_TIER and optional session override (localhost only). */
+function getConfiguredDevTier(): string | undefined {
+    const fromEnv = (import.meta.env.VITE_DEV_TIER as string | undefined)?.toLowerCase()?.trim();
+    const fromSession = sessionStorage.getItem(DEV_TIER_SESSION_KEY)?.toLowerCase()?.trim();
+    const tier = fromSession || fromEnv;
+    if (!tier || tier === 'free') return undefined;
+    return tier;
+}
+
+function shouldApplyDevOverride(hasToken: boolean, user: UserMe | null): boolean {
+    const devTier = getConfiguredDevTier();
+    // Use MODE (not DEV): `vite build` sets DEV=false even for --mode development.
+    if (import.meta.env.MODE !== 'development' || !isLocalDevHost() || !devTier) return false;
+    if (!hasToken) return true;
+    if (!user) return true;
+    if (user.id === 'dev-override') return true;
+    if (user.tier === 'free' || user.id === 'free-access') return true;
+    return false;
+}
+
 function buildAnonymousUser(): UserMe {
     return {
         id: 'free-access',
@@ -444,13 +467,11 @@ async function initDashboard() {
         if (refreshed) user = refreshed;
     }
 
-    if (!user) {
-        const devTier = (import.meta.env.VITE_DEV_TIER as string | undefined)?.toLowerCase();
-        if (devTier && devTier !== 'free' && isLocalDevHost() && !hasToken) {
-            user = buildDevOverrideUser(devTier);
-        } else {
-            user = buildAnonymousUser();
-        }
+    if (shouldApplyDevOverride(hasToken, user)) {
+        user = buildDevOverrideUser(getConfiguredDevTier()!);
+        console.log(`[Antigravity] Dev override active: tier=${user.tier} (id=${user.id})`);
+    } else if (!user) {
+        user = buildAnonymousUser();
     }
 
     if (generation !== dashboardInitGeneration) return

@@ -162,7 +162,20 @@ export function renderNavigation(
               `;
 
     const isAdmin = user.is_admin === true || user.role === 'admin';
-    const devConsoleHtml = isAdmin
+    const localDevConsoleHtml = isDevOverride
+        ? `
+            <div class="nav-dev-console">
+                <div class="nav-dev-console-label">Local Dev Tier</div>
+                <div class="nav-dev-console-actions">
+                    <button type="button" class="nav-dev-btn" data-local-dev-tier="experts">Expert UI</button>
+                    <button type="button" class="nav-dev-btn" data-local-dev-tier="pro">Pro UI</button>
+                    <button type="button" class="nav-dev-btn nav-dev-btn--reset" data-local-dev-tier="">Reset tier</button>
+                </div>
+                <div class="nav-dev-console-hint">Set LOCAL_DEV_TIER=${tier} in API .env for matching API access.</div>
+            </div>
+        `
+        : '';
+    const adminDevConsoleHtml = isAdmin
         ? `
             <div class="nav-dev-console">
                 <div class="nav-dev-console-label">Dev Console</div>
@@ -175,6 +188,7 @@ export function renderNavigation(
             </div>
         `
         : '';
+    const devConsoleHtml = localDevConsoleHtml || adminDevConsoleHtml;
 
     const footerHtml = `
         <div class="nav-role-footer">
@@ -244,7 +258,19 @@ export function renderNavigation(
         closeMobileSidebar();
     });
 
-    container.querySelectorAll('.nav-dev-btn').forEach(btn => {
+    container.querySelectorAll('[data-local-dev-tier]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tier = (btn as HTMLElement).dataset.localDevTier ?? '';
+            if (tier) {
+                sessionStorage.setItem('vel_dev_tier_override', tier);
+            } else {
+                sessionStorage.removeItem('vel_dev_tier_override');
+            }
+            window.location.reload();
+        });
+    });
+
+    container.querySelectorAll('.nav-dev-btn[data-dev-tier]').forEach(btn => {
         btn.addEventListener('click', async () => {
             const tier = (btn as HTMLElement).dataset.devTier ?? '';
             const targetTier = tier === '' ? null : tier;
