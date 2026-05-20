@@ -8,9 +8,8 @@
  * - Pure CSS/SVG components for "Speed of Judgment"
  */
 
-import type { 
-    ProInsights, ExpertIntelligence, UserMe 
-} from '../api';
+import type { ProInsights, UserMe } from '../api';
+import type { ExpertIntelligence } from '../api';
 import { fetchProInsights, fetchExpertIntelligence } from '../api';
 import { getTopicDef, getTopicCssVars, getTopicDisplayLabel, UI_TOPIC_PREVIEW_CODES } from '../topics';
 import { renderLockedFeature } from '../subscription';
@@ -103,10 +102,19 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
             console.error("Failed to load Pro Insights data:", err);
         }
 
-        // Hub display stats
+        const coverageDomains =
+            data?.coverage_domains ??
+            (data?.risk_summary ? Object.keys(data.risk_summary).length : UI_TOPIC_PREVIEW_CODES.length);
+        const activeDomains =
+            data?.active_domains ??
+            (data?.risk_summary
+                ? Object.values(data.risk_summary).filter((s: { intensity?: number }) => (s?.intensity ?? 0) > 0).length
+                : 0);
+
         const hubStats = {
-            coverage_domains: 6,
-            latest_report: new Date().toLocaleDateString()
+            coverage_domains: coverageDomains,
+            active_domains: activeDomains,
+            latest_report: new Date().toLocaleDateString(),
         };
         // Log automation state for devs only
         console.debug('[ProInsights] Automation state: dry_run=true');
@@ -153,7 +161,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
                 <div class="pro-stat-card glow-blue">
                     <div class="pro-stat-title">Coverage Domains</div>
                     <div class="pro-stat-value">${hubStats.coverage_domains}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">monitored domains</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">monitored · ${hubStats.active_domains} active</div>
                 </div>
                 <div class="pro-stat-card" style="grid-column: span 1;">
                     <div class="pro-stat-title" style="margin-bottom: 0.75rem;">Analysis Layers</div>
@@ -233,7 +241,19 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
     container.innerHTML = `<div class="intelligence-loader">Decrypting Strategic Outlook...</div>`;
 
     try {
-        const data: ExpertIntelligence = (await fetchExpertIntelligence())!;
+        const data: ExpertIntelligence | null = await fetchExpertIntelligence();
+        if (!data) {
+            container.innerHTML = `
+                <div class="empty-state u-p-2 u-text-center">
+                    <div class="empty-title">Expert intelligence unavailable</div>
+                    <div class="empty-subtitle">Could not load strategic outlook. Confirm API access and tier.</div>
+                </div>`;
+            return;
+        }
+
+        const scenarios = (data.scenario_outlook as any[]) ?? [];
+        const impactChains = (data.full_impact_chains as any[]) ?? [];
+        const crossRisks = (data.cross_domain_risks as any[]) ?? [];
 
         // 2. Build Expert-grade Layout
         container.innerHTML = `
@@ -243,7 +263,7 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
                 <!-- Column 1: Scenarios & Actions (Decision Center) -->
                 <div class="decision-center">
                     <h2 class="section-title">Strategic Outlook</h2>
-                    ${(data.scenario_outlook as any[]).map((s: any) => `
+                    ${scenarios.length ? scenarios.map((s: any) => `
                         <div class="scenario-card">
                             <div class="u-flex-between u-m-bottom-s">
                                 <h3 class="scenario-title">${s.title}</h3>
@@ -282,14 +302,14 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
                             </div>
                         </div>
                     </div>
-                `).join('')}
+                `).join('') : '<p class="u-p-2" style="opacity:0.6;">No scenario outlook in the current window.</p>'}
             </div>
 
             <div class="dashboard-grid">
                 <!-- Causal Impact Chains -->
                 ${renderCard('Active Causal Chains', `
                     <div class="impact-chain-preview-list">
-                        ${(data.full_impact_chains as any[]).map((chain: any) => `
+                        ${impactChains.length ? impactChains.map((chain: any) => `
                             <div class="impact-chain-item" data-alert-id="${chain.alert_id}">
                                 <div class="impact-chain-header">
                                     <span class="chain-title">${chain.title}</span>
@@ -302,14 +322,14 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
                                     ${chain.impacts.length > 5 ? '<span class="chain-more">+</span>' : ''}
                                 </div>
                             </div>
-                        `).join('')}
+                        `).join('') : '<p style="opacity:0.6;font-size:0.85rem;">No impact chains with gated metadata yet.</p>'}
                     </div>
                 `, 'Full recursive analysis of ripples across domains')}
 
                 <!-- Cross-Domain Risks -->
                 ${renderCard('Strategic Correlation', `
                     <div class="cross-domain-list">
-                        ${(data.cross_domain_risks as any[]).map((r: any) => `
+                        ${crossRisks.length ? crossRisks.map((r: any) => `
                             <div class="cross-domain-item">
                                 <div class="domain-pair">
                                     <span>${getTopicDef(r.origin).label}</span>
@@ -318,7 +338,7 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
                                 </div>
                                 ${renderIntensityBar(r.intensity, 'Interaction Strength', '#bc8cff')}
                             </div>
-                        `).join('')}
+                        `).join('') : '<p style="opacity:0.6;font-size:0.85rem;">No cross-domain correlations in the current window.</p>'}
                     </div>
                 `, 'Systemic risks bridging primary and tertiary sectors')}
             </div>

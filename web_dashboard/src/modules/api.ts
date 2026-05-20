@@ -123,14 +123,18 @@ export interface HealthData {
 }
 
 export interface ProInsights {
-    time_pressure: string;
-    causal_logic: string;
-    action_priority: string;
-    strategic_context: string;
+    time_pressure?: string;
+    causal_logic?: string;
+    action_priority?: string;
+    strategic_context?: string;
     risk_summary?: Record<string, any>;
     sector_distribution?: Record<string, number>;
-    top_entities?: any[];
+    top_entities?: { name: string; count: number; entity_comment?: string }[];
     momentum_alerts?: Alert[];
+    early_warnings?: { id: string; title: string; severity: string; timestamp: string }[];
+    coverage_domains?: number;
+    active_domains?: number;
+    focus_alert_id?: string | null;
 }
 
 export interface ExpertIntelligence {
@@ -391,13 +395,13 @@ export async function updateWatchlist(id: string, kw: string[]) {
 }
 
 export async function fetchProInsights(alertId?: string): Promise<ProInsights | null> {
-    const path = alertId ? `/alerts/${alertId}/insights/pro` : '/analytics/insights/pro';
+    const path = alertId ? `/alerts/${alertId}/insights/pro` : '/insights/pro';
     const resp = await apiClient.get(path);
     return resp.ok ? await resp.json() : null;
 }
 
 export async function fetchExpertIntelligence(alertId?: string): Promise<ExpertIntelligence | null> {
-    const path = alertId ? `/alerts/${alertId}/insights/expert` : '/analytics/insights/expert';
+    const path = alertId ? `/alerts/${alertId}/insights/expert` : '/insights/expert';
     const resp = await apiClient.get(path);
     return resp.ok ? await resp.json() : null;
 }
