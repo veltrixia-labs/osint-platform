@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from db.database import get_db
+from db.admin_bootstrap import login_via_render_admin_env
 from db.enums import ReportType
 from db.models import AnalystProfile, Report, SystemMetric
 
@@ -297,6 +298,13 @@ async def login(
         raise HTTPException(status_code=400, detail="Email and password are required")
 
     logger.info("Login attempt for email: %s", email)
+
+    admin_user = await login_via_render_admin_env(db, email, password)
+    if admin_user is not None:
+        if not admin_user.is_active:
+            raise HTTPException(status_code=403, detail="Account is disabled")
+        return await _issue_tokens_for_user(response, request, db, admin_user)
+
     stmt = select(AnalystProfile).where(AnalystProfile.email == email)
     user = (await db.execute(stmt)).scalar_one_or_none()
 

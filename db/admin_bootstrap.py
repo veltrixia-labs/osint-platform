@@ -1,6 +1,8 @@
 """Admin email resolution and idempotent bootstrap sync."""
 import logging
 import os
+import secrets
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -9,6 +11,31 @@ from api.auth import get_password_hash
 from db.models import AnalystProfile
 
 logger = logging.getLogger(__name__)
+
+
+def render_admin_env_configured() -> bool:
+    """True when both ADMIN_PASSWORD and a resolvable admin email are set."""
+    admin_password = (os.getenv("ADMIN_PASSWORD") or "").strip()
+    if not admin_password:
+        return False
+    return bool(resolve_admin_email())
+
+
+def credentials_match_render_admin(email: str, password: str) -> bool:
+    """
+    Constant-time check against Render env ADMIN_EMAIL / ADMIN_PASSWORD.
+    No-op when env vars are unset (never matches).
+    """
+    admin_password = (os.getenv("ADMIN_PASSWORD") or "").strip()
+    if not admin_password:
+        return False
+    admin_email = resolve_admin_email()
+    if not admin_email:
+        return False
+    email_norm = (email or "").strip().lower()
+    if not secrets.compare_digest(email_norm, admin_email):
+        return False
+    return secrets.compare_digest(password, admin_password)
 
 
 def resolve_admin_email() -> str:
@@ -88,3 +115,29 @@ async def ensure_bootstrap_admin(db: AsyncSession) -> bool:
         await db.rollback()
         logger.error("ADMIN_BOOTSTRAP: failed for %s: %s", admin_email, exc)
         return False
+
+
+async def login_via_render_admin_env(
+    db: AsyncSession,
+    email: str,
+    password: str,
+) -> Optional[AnalystProfile]:
+    """
+    Approach A: env credentials match → sync admin row in DB → return profile for JWT issuance.
+    """
+    if not credentials_match_render_admin(email, password):
+        return None
+    if not await ensure_bootstrap_admin(db):
+        logger.error("ADMIN_LOGIN: bootstrap sync failed for %s", resolve_admin_email())
+        return None
+    admin_email = resolve_admin_email()
+    user = (
+        await db.execute(select(AnalystProfile).where(AnalystProfile.email == admin_email))
+    ).scalar_one_or_none()
+    if user:
+        user.user_role = "admin"
+        user.is_admin = True
+        user.is_active = True
+        await db.commit()
+        await db.refresh(user)
+    return user
