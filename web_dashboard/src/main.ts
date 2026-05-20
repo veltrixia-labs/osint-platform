@@ -601,6 +601,7 @@ async function initDashboard() {
         const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
         const proMapContainer = document.querySelector<HTMLElement>('#pro-map-container');
         applyPageHeader(tab);
+        mainContent?.classList.toggle('main-content--global-map', tab === 'map');
 
         const pulseBarEl = document.querySelector<HTMLElement>('#pulse-bar');
         if (pulseBarEl) {

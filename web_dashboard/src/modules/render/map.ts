@@ -10,6 +10,11 @@ import {
     strategicTopicFromBackboneApi,
     type StrategicTopicCode,
 } from '../topics';
+import {
+    applyMobileMapLayout,
+    getMapNodeListBody,
+    wireMobileMapLayout,
+} from './map_mobile_layout';
 
 type TaggedBackboneNode = BackboneNode & { strategicCode: StrategicTopicCode };
 
@@ -40,18 +45,19 @@ let mapRenderGeneration = 0;
 let mapRouteListenersBound = false;
 
 const MAP_SHELL_HTML = `
-    <div class="map-page-shell" style="width:100%; height:100%; min-height:650px; position:relative;">
-        <div id="map-filter" style="position:absolute; top:12px; left:12px; z-index:1000;"></div>
-        <div class="map-page-shell__body" style="display:flex; width:100%; height:100%; min-height:650px;">
-            <div id="map-instance" class="map-instance-host" style="flex:1; min-height:650px;"></div>
-            <div id="map-node-list" class="map-node-list-panel" style="
-                width:280px;
-                padding:10px;
-                background:rgba(10,14,20,0.92);
-                border-left:1px solid rgba(255,255,255,0.08);
-                overflow-y:auto;
-                font-size:12px;
-            "></div>
+    <div class="map-page-shell">
+        <div id="map-filter" class="map-filter-bar" aria-label="Map topic filters"></div>
+        <div class="map-page-shell__body">
+            <div id="map-instance" class="map-instance-host" role="application" aria-label="Global strategic map"></div>
+            <aside id="map-node-list" class="map-node-list-panel map-node-list-panel--collapsed" data-map-list-panel aria-label="Visible entities">
+                <div class="map-node-list-panel__header">
+                    <button type="button" class="map-node-list-panel__toggle" data-map-list-toggle aria-expanded="false" aria-controls="map-node-list-body">
+                        <span class="map-node-list-panel__toggle-icon" aria-hidden="true">📊</span>
+                        <span class="map-node-list-panel__toggle-label" data-map-list-toggle-label>+ Expand List</span>
+                    </button>
+                </div>
+                <div id="map-node-list-body" class="map-node-list-panel__body" data-map-list-body hidden></div>
+            </aside>
         </div>
     </div>
 `;
@@ -172,6 +178,7 @@ async function ensureMapEngine(container: HTMLElement): Promise<L.Map> {
     hoverLayerGroup = L.layerGroup().addTo(map);
 
     initMapFilter();
+    wireMobileMapLayout(container, scheduleMapInvalidate);
 
     map.on('zoomend', () => {
         if (popupOpenNodeName) return;
@@ -225,6 +232,8 @@ export const renderMap = async (container: HTMLElement, _tier?: string, _focusAl
         await renderBackboneMap();
         if (generation !== mapRenderGeneration) return;
 
+        const mapContainer = container;
+        applyMobileMapLayout(mapContainer, scheduleMapInvalidate);
         scheduleMapInvalidate();
     } catch (e) {
         console.error('[Map] render failed:', e);
@@ -250,7 +259,7 @@ export const renderMap = async (container: HTMLElement, _tier?: string, _focusAl
 async function renderBackboneMap() {
     if (!layerGroup || !map) return;
 
-    const list = document.getElementById('map-node-list');
+    const list = getMapNodeListBody();
     if (list) {
         list.innerHTML = '<div class="map-node-list-loading">Loading entities…</div>';
     }
@@ -467,7 +476,7 @@ function renderBackboneNodes(nodes: TaggedBackboneNode[]) {
 }
 
 function renderNodeList(nodes: TaggedBackboneNode[]) {
-    const list = document.getElementById('map-node-list');
+    const list = getMapNodeListBody();
     if (!list) return;
 
     const groups = new Map<StrategicTopicCode, TaggedBackboneNode[]>();
