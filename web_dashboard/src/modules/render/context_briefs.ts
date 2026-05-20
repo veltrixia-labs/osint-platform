@@ -399,11 +399,21 @@ function getOrCreateContextBriefModal(): HTMLElement {
     return root;
 }
 
+/** Clear any expand/collapse inline sizing so CSS height:auto / grid rows win again. */
+function resetContextBriefExpandSizing(wrap: HTMLElement, hidden: HTMLElement): void {
+    const props = ['height', 'max-height', 'min-height'] as const;
+    for (const p of props) {
+        hidden.style.removeProperty(p);
+        wrap.style.removeProperty(p);
+    }
+}
+
 function wireContextBriefModalOnce(modalRoot: HTMLElement): void {
     if (contextBriefModalWired) return;
     contextBriefModalWired = true;
 
     const modalBody = modalRoot.querySelector('.cb-modal-body') as HTMLElement;
+    const modalPanel = modalRoot.querySelector('.cb-modal-panel') as HTMLElement | null;
     const modalTitleEl = modalRoot.querySelector('#cb-modal-title') as HTMLElement;
     const backdrop = modalRoot.querySelector('.cb-modal-backdrop') as HTMLElement;
     const closeBtn = modalRoot.querySelector('.cb-modal-close') as HTMLButtonElement;
@@ -414,6 +424,11 @@ function wireContextBriefModalOnce(modalRoot: HTMLElement): void {
         modalRoot.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('cb-modal-scroll-lock');
         modalBody.innerHTML = '';
+        modalBody.style.height = '';
+        modalBody.style.maxHeight = '';
+        modalBody.style.minHeight = '';
+        modalPanel?.style.removeProperty('height');
+        modalPanel?.style.removeProperty('min-height');
         document.removeEventListener('keydown', onDocKey);
     };
 
@@ -428,6 +443,12 @@ function wireContextBriefModalOnce(modalRoot: HTMLElement): void {
         if (!state || index < 0 || index >= state.detailBodies.length) return;
         modalTitleEl.textContent = state.modalTitles[index] || 'Context Brief';
         modalBody.innerHTML = state.detailBodies[index] || '';
+        modalBody.style.height = '';
+        modalBody.style.maxHeight = '';
+        modalBody.style.minHeight = '';
+        modalPanel?.style.removeProperty('height');
+        modalPanel?.style.removeProperty('min-height');
+        modalBody.scrollTop = 0;
         modalRoot.classList.add('cb-modal-root--open');
         modalRoot.setAttribute('aria-hidden', 'false');
         document.body.classList.add('cb-modal-scroll-lock');
@@ -453,6 +474,7 @@ function wireContextBriefModalOnce(modalRoot: HTMLElement): void {
                 const expanded = expBtn.getAttribute('data-cb-expand-btn') === '1';
                 if (expanded) {
                     wrap.classList.remove('cb-expand-wrap--open');
+                    resetContextBriefExpandSizing(wrap as HTMLElement, hidden);
                     hidden.setAttribute('aria-hidden', 'true');
                     expBtn.setAttribute('data-cb-expand-btn', '0');
                     expBtn.setAttribute('aria-expanded', 'false');
@@ -460,6 +482,7 @@ function wireContextBriefModalOnce(modalRoot: HTMLElement): void {
                     expBtn.textContent = n > 0 ? `+ ${n} more items ↓` : '';
                     expBtn.style.display = n > 0 ? '' : 'none';
                 } else {
+                    resetContextBriefExpandSizing(wrap as HTMLElement, hidden);
                     wrap.classList.add('cb-expand-wrap--open');
                     hidden.setAttribute('aria-hidden', 'false');
                     expBtn.setAttribute('data-cb-expand-btn', '1');
