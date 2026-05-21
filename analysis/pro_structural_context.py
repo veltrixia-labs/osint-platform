@@ -421,7 +421,7 @@ async def _fetch_related_alert_events(
     domain_id: str,
     notes: list,
     *,
-    limit: int = 5,
+    limit: int = 8,
     lookback_days: int = 7,
 ) -> List[dict]:
     """

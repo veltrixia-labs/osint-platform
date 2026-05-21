@@ -890,21 +890,44 @@ def get_domain_data_requirements(domain_id: str) -> dict:
         "market": config.get("market_data", {})
     }
 
+_STRATEGIC_TOPIC_TO_DOMAIN: Dict[str, str] = {
+    "ENERGY": "energy_resource_risk",
+    "MARKET": "global_market_intelligence",
+    "GEOPOLITICS": "global_market_intelligence",
+    "AI_TECH": "ai_semiconductor_intelligence",
+    "CRYPTO": "crypto_geopolitics",
+    "DEFENSE": "defense_technology",
+    "SUPPLY_CHAIN": "supply_chain_intelligence",
+}
+
+
 def infer_domain_from_topic(topic: str) -> str:
     """Map a topic (e.g. from an alert) to a Pro domain ID."""
-    # For now, we assume a 1:1 mapping between topic names and domain IDs
+    if not topic:
+        return "global_market_intelligence"
     if topic in PRO_DOMAIN_CONFIG:
         return topic
-    # Add manual mappings if needed
+    normalized = topic.strip().replace("-", "_")
+    upper = normalized.upper()
+    if upper in _STRATEGIC_TOPIC_TO_DOMAIN:
+        return _STRATEGIC_TOPIC_TO_DOMAIN[upper]
+    lower = normalized.lower()
     mapping = {
         "energy": "energy_resource_risk",
+        "energy_resource_risk": "energy_resource_risk",
         "market": "global_market_intelligence",
+        "global_market_intelligence": "global_market_intelligence",
+        "geopolitics": "global_market_intelligence",
         "semi": "ai_semiconductor_intelligence",
+        "ai_semiconductor_intelligence": "ai_semiconductor_intelligence",
         "defense": "defense_technology",
+        "defense_technology": "defense_technology",
         "supply": "supply_chain_intelligence",
-        "crypto": "crypto_geopolitics"
+        "supply_chain_intelligence": "supply_chain_intelligence",
+        "crypto": "crypto_geopolitics",
+        "crypto_geopolitics": "crypto_geopolitics",
     }
-    return mapping.get(topic, "global_market_intelligence")
+    return mapping.get(lower, "global_market_intelligence")
 
 def get_market_symbols_for_domain(domain_id: str) -> list:
     """Retrieve all Alpha Vantage symbols associated with a domain."""

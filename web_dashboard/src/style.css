@@ -7519,72 +7519,38 @@ body.cb-modal-scroll-lock {
   padding: 2px 6px;
 }
 
-/* Pro Insight — Expert tab upsell (page header) */
-.pro-expert-upsell {
-  width: 100%;
-  max-width: 52rem;
-  padding: 0.6rem 0.95rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: linear-gradient(145deg, rgba(22, 27, 34, 0.72) 0%, rgba(13, 17, 23, 0.45) 100%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.pro-expert-upsell[hidden] {
-  display: none !important;
-}
-
-.pro-expert-upsell-text {
+/* Pro Insight — Expert upgrade (Free→Pro page-premium-cta pattern + expert gradient) */
+.page-expert-upsell-lead {
   margin: 0;
-  font-size: 0.78rem;
+  max-width: 52rem;
+  font-size: 0.8125rem;
   font-weight: 400;
   line-height: 1.5;
   letter-spacing: 0.01em;
   color: var(--text-secondary);
+  opacity: 0.85;
 }
 
-/* Pro → Expert tier badge (gradient glass, not a plain link) */
-.pro-expert-tier-badge {
-  display: inline-flex;
-  align-items: center;
-  margin: 0 0.2rem;
-  padding: 0.2rem 0.65rem;
-  border-radius: 8px;
-  border: 1px solid transparent;
+.page-expert-upsell-lead[hidden] {
+  display: none !important;
+}
+
+.page-premium-cta--expert {
+  margin-top: 0.15rem;
+  color: #c4f0ff;
   background:
-    linear-gradient(145deg, rgba(188, 140, 255, 0.22), rgba(88, 166, 255, 0.12)) padding-box,
-    linear-gradient(120deg, #d4a853, #bc8cff 45%, #58a6ff 80%, #3fb950) border-box;
-  color: #e8d5ff;
-  font-size: inherit;
-  font-weight: 800;
-  font-family: inherit;
-  line-height: 1.25;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-  vertical-align: baseline;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow:
-    0 0 18px color-mix(in srgb, #bc8cff 22%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    color 0.2s ease;
+    linear-gradient(rgba(88, 166, 255, 0.08), rgba(188, 140, 255, 0.06)) padding-box,
+    linear-gradient(135deg, #22d3ee, #8b5cf6 45%, #6366f1 75%, #a855f7) border-box;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.12);
 }
 
-.pro-expert-tier-badge:hover,
-.pro-expert-tier-badge:focus-visible {
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow:
-    0 0 24px color-mix(in srgb, #bc8cff 35%, transparent),
-    0 0 12px color-mix(in srgb, #58a6ff 18%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  outline: none;
+.page-premium-cta--expert:hover,
+.page-premium-cta--expert:focus-visible {
+  color: #f0f9ff;
+  background:
+    linear-gradient(rgba(34, 211, 238, 0.14), rgba(139, 92, 246, 0.12)) padding-box,
+    linear-gradient(135deg, #22d3ee, #8b5cf6 45%, #6366f1 75%, #c084fc) border-box;
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.35);
 }
 
 /* Expert pricing card — apex tier visual override */

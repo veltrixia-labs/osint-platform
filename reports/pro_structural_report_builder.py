@@ -5,8 +5,12 @@ Converts structured context (macro statistics and market data) into a
 human-readable Markdown report for Pro users.
 """
 
+from datetime import datetime, timezone
 from typing import Any, List, Optional, Dict
 import math
+
+MIN_EVENT_TIMELINE_ITEMS = 3
+TARGET_EVENT_TIMELINE_ITEMS = 5
 
 from reports.text_encoding import sanitize_unicode_tree
 from analysis.pro_global_series import (
@@ -440,6 +444,130 @@ def _finalize_event_timeline_for_payload(
     return _assign_timeline_types(timeline, trigger_alert_id)
 
 
+def _ensure_event_timeline_floor(
+    timeline: List[dict],
+    *,
+    sig: dict,
+    s_ctx: dict,
+    m_ctx: dict,
+    domain: dict,
+    related_events: List[dict],
+) -> List[dict]:
+    """
+    Guarantee 3–5 chronological timeline entries so section 04 never disappears.
+    Supplements sparse alert/news inputs with macro and market confirmation shifts.
+    """
+    from analysis.pro_structural_context import _assign_timeline_types
+
+    out: List[dict] = [dict(item) for item in timeline]
+    seen_titles: set[str] = {(e.get("title") or "").strip().lower() for e in out if e.get("title")}
+
+    def _append(entry: dict) -> None:
+        title = (entry.get("title") or "").strip()
+        if not title:
+            return
+        key = title.lower()
+        if key in seen_titles:
+            return
+        out.append(entry)
+        seen_titles.add(key)
+
+    for ev in related_events or []:
+        if len(out) >= TARGET_EVENT_TIMELINE_ITEMS:
+            break
+        _append(
+            {
+                **ev,
+                "type": ev.get("type") or "context",
+                "role": ev.get("role") or "context",
+            }
+        )
+
+    for obs in (s_ctx.get("macro_observations") or s_ctx.get("macro_display_cards") or [])[:10]:
+        if len(out) >= TARGET_EVENT_TIMELINE_ITEMS:
+            break
+        chg = obs.get("change_pct")
+        if chg is None:
+            continue
+        label = obs.get("display_name") or obs.get("series_id") or "Macro series"
+        sid = obs.get("series_id", "")
+        _append(
+            {
+                "timestamp": obs.get("latest_date"),
+                "title": f"Structural data shift: {label} ({chg:+.2f}% lookback)",
+                "source": "macro_data",
+                "source_url": None,
+                "location_label": None,
+                "type": "context",
+                "role": "context",
+                "series_id": sid,
+            }
+        )
+
+    for price in (m_ctx.get("latest_prices") or [])[:8]:
+        if len(out) >= TARGET_EVENT_TIMELINE_ITEMS:
+            break
+        pct = price.get("percent_change")
+        sym = price.get("symbol") or "Instrument"
+        if pct is None:
+            continue
+        _append(
+            {
+                "timestamp": None,
+                "title": f"Market confirmation: {sym} {pct:+.2f}% session move",
+                "source": "market_data",
+                "source_url": None,
+                "location_label": None,
+                "type": "market_reaction",
+                "role": "market_reaction",
+            }
+        )
+
+    if sig.get("title"):
+        _append(
+            {
+                "timestamp": sig.get("triggered_at"),
+                "title": sig.get("title"),
+                "alert_id": sig.get("alert_id"),
+                "source": "primary_signal",
+                "source_url": None,
+                "location_label": None,
+                "type": "trigger",
+                "role": "trigger",
+            }
+        )
+
+    domain_name = domain.get("display_name") or domain.get("domain_id") or "Domain"
+    filler_idx = 0
+    while len(out) < MIN_EVENT_TIMELINE_ITEMS:
+        filler_idx += 1
+        _append(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "title": (
+                    f"Monitoring pulse {filler_idx}: {domain_name} structural lattice "
+                    "synchronized with latest macro and market feeds"
+                ),
+                "source": "synthetic_monitoring",
+                "source_url": None,
+                "location_label": None,
+                "type": "background",
+                "role": "background",
+            }
+        )
+
+    def _sort_key(item: dict) -> tuple:
+        ts = item.get("timestamp")
+        if ts:
+            return (0, str(ts))
+        return (1, item.get("title") or "")
+
+    out.sort(key=_sort_key)
+    trigger_alert_id = sig.get("alert_id")
+    typed = _assign_timeline_types(out, trigger_alert_id)
+    return typed[:TARGET_EVENT_TIMELINE_ITEMS]
+
+
 def _compute_market_status(prices: List[dict]) -> str:
     pos_movers = [p for p in prices if (p.get("percent_change") or 0) > 0.5]
     neg_movers = [p for p in prices if (p.get("percent_change") or 0) < -0.5]
@@ -534,6 +662,14 @@ def build_pro_structural_report_payload(context: dict) -> dict:
         context.get("event_timeline", []),
         context.get("related_events", []),
         sig,
+    )
+    event_timeline = _ensure_event_timeline_floor(
+        event_timeline,
+        sig=sig,
+        s_ctx=s_ctx,
+        m_ctx=m_ctx,
+        domain=domain,
+        related_events=context.get("related_events", []),
     )
 
     # --- 3. Relevance Map (from domain config) ---

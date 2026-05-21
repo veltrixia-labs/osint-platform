@@ -1,6 +1,6 @@
 import type { ProStructuralReportItem } from '../api';
 import { fetchProStructuralReports, fetchProStructuralReport } from '../api';
-import { simpleMarkdown, getDomainSlugClass, formatIntelDate, formatIntelDateTime } from './utils';
+import { simpleMarkdown, getDomainSlugClass, formatIntelDateTime, formatIntelPreciseTimestamp } from './utils';
 import {
     getTopicCssVars,
     getTopicDisplayLabel,
@@ -69,7 +69,8 @@ export async function renderProStructuralBriefs(
                     const dc = getDomainSlugClass(r.topic);
                     const topicVars = getTopicCssVars(r.topic);
                     const topicLabel = getTopicDisplayLabel(r.topic);
-                    return `<div class="pro-brief-card ${dc}" data-id="${r.id}" style="${topicVars}"><div class="u-flex-between" style="margin-bottom:1rem;"><span class="domain-chip meta-item-topic--tag">${topicLabel}</span><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">${(r.report_type || 'PRO_STRUCTURAL').replace(/_/g, ' ')}</span><span style="font-size:0.75rem;color:var(--text-secondary);">${formatIntelDate(r.created_at)}</span></div></div><h3 style="margin:0 0 1rem;font-size:1.2rem;line-height:1.4;color:var(--text-primary);">${r.title}</h3><div style="font-size:0.9rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1.5rem;flex-grow:1;">${r.teaser_md || 'Detailed structural analysis of transmission channels, macro-economic dependencies, and market confirmation signals.'}</div><button class="btn-fb pro-brief-btn" style="width:100%;pointer-events:none;">View Full Brief →</button></div>`;
+                    const createdStr = formatIntelPreciseTimestamp(r.created_at);
+                    return `<div class="pro-brief-card ${dc}" data-id="${r.id}" style="${topicVars}"><div class="u-flex-between" style="margin-bottom:1rem;"><span class="domain-chip meta-item-topic--tag">${topicLabel}</span><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">${(r.report_type || 'PRO_STRUCTURAL').replace(/_/g, ' ')}</span><span class="pro-brief-ts" style="font-size:0.75rem;color:var(--text-secondary);font-family:ui-monospace,monospace;">${createdStr}</span></div></div><h3 style="margin:0 0 1rem;font-size:1.2rem;line-height:1.4;color:var(--text-primary);">${r.title}</h3><div style="font-size:0.9rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1.5rem;flex-grow:1;">${r.teaser_md || 'Detailed structural analysis of transmission channels, macro-economic dependencies, and market confirmation signals.'}</div><button class="btn-fb pro-brief-btn" style="width:100%;pointer-events:none;">View Full Brief →</button></div>`;
                 })
                 .join(''),
         );
@@ -179,10 +180,14 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
     }
     html += `<div style="margin-top:0.75rem;"><span class="intel-sig-label">Geo Confidence</span> <span class="intel-div-val" style="font-size:0.8rem;color:${sc(geoCtx.confidence==='coordinates'?'high':geoCtx.confidence==='inferred'?'medium':'low')}">${(geoCtx.confidence||'unavailable').toUpperCase()}</span></div></div>`;
 
-    // 04 Event Timeline
-    if (timeline.length > 0) {
-        html += `<div class="intel-panel">${sh('04','Event Timeline')}<div class="intel-timeline">${timeline.map((ev:any)=>`<div class="intel-tl-item"><div class="intel-tl-dot"></div><div class="intel-tl-content"><div class="intel-tl-head">${roleBadge(ev.type || ev.role)}${ev.timestamp?`<span class="intel-tl-time">${ev.timestamp}</span>`:''}${ev.location_label?`<span class="intel-tl-loc">📍 ${ev.location_label}</span>`:''}</div><div class="intel-tl-title">${ev.source_url?`<a href="${ev.source_url}" target="_blank" rel="noopener">${ev.title}</a>`:ev.title}</div></div></div>`).join('')}</div></div>`;
-    }
+    // 04 Event Timeline — always render (backend guarantees minimum entries)
+    const tlItems = timeline.length > 0
+        ? timeline
+        : [{ type: 'context', title: 'Timeline synchronizing — check back after the next intelligence cycle.', timestamp: null }];
+    html += `<div class="intel-panel">${sh('04','Event Timeline')}<div class="intel-timeline">${tlItems.map((ev: any) => {
+        const tsLabel = ev.timestamp ? formatIntelPreciseTimestamp(ev.timestamp) : '';
+        return `<div class="intel-tl-item"><div class="intel-tl-dot"></div><div class="intel-tl-content"><div class="intel-tl-head">${roleBadge(ev.type || ev.role)}${tsLabel ? `<span class="intel-tl-time">${tsLabel}</span>` : ''}${ev.location_label ? `<span class="intel-tl-loc">📍 ${ev.location_label}</span>` : ''}</div><div class="intel-tl-title">${ev.source_url ? `<a href="${ev.source_url}" target="_blank" rel="noopener">${ev.title}</a>` : ev.title}</div></div></div>`;
+    }).join('')}</div></div>`;
 
     // 05 Structural Impact & Transmission
     html += `<div class="intel-panel">${sh('05','Structural Impact & Transmission')}${flows.length?`<div class="intel-transmission-flow">${flows.map((f:string,i:number)=>`<div class="flow-step">${f}</div>${i<flows.length-1?'<div class="flow-arrow">→</div>':''}`).join('')}</div>`:'<p class="intel-body-text">No specific transmission channels defined.</p>'}</div>`;

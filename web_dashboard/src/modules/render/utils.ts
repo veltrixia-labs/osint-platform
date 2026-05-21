@@ -46,6 +46,19 @@ export function formatIntelTime(
     return d.toLocaleTimeString(INTEL_DATE_LOCALE, options);
 }
 
+/**
+ * Precise UTC timestamp for Pro cards (YYYY-MM-DD HH:mm:ss), aligned with feed density.
+ */
+export function formatIntelPreciseTimestamp(
+    dateInput: string | Date | number | null | undefined,
+): string {
+    if (dateInput == null || dateInput === '') return '';
+    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (Number.isNaN(d.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+}
+
 /** Compact English date+time for feed cards (Alert Stream, Context Briefs). */
 export function formatIntelFeedTimestamp(iso: string): string {
     const d = new Date(iso);

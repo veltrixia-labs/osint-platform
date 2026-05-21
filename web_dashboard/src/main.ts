@@ -515,13 +515,12 @@ async function initDashboard() {
               </h1>
               <div id="page-subtitle-wrap" class="page-subtitle-wrap" hidden>
                 <p id="page-subtitle" class="page-subtitle"></p>
-                <div id="page-expert-upsell" class="pro-expert-upsell" hidden>
-                  <p class="pro-expert-upsell-text">
-                    Elevate your analytical layer. While Pro provides historical structures,
-                    <button type="button" id="page-expert-upsell-link" class="pro-expert-tier-badge" aria-label="View Expert tier pricing">Expert Tier</button>
-                    unlocks real-time LLM predictive simulations, deep network visualizations, and automated trend projections.
-                  </p>
-                </div>
+                <p id="page-expert-upsell-lead" class="page-expert-upsell-lead" hidden>
+                  Unlock Advanced LLM Analytics &amp; Risk Forecasting — Elevate your tactical edge with deep intelligence modeling, trend projections, and full predictive simulations.
+                </p>
+                <button type="button" id="page-expert-upsell-link" class="page-premium-cta page-premium-cta--expert" hidden>
+                  Upgrade to Expert<span class="page-premium-cta-arrow" aria-hidden="true">→</span>
+                </button>
                 <a id="page-pro-cta" class="page-premium-cta" href="/subscription" hidden></a>
               </div>
             </div>
@@ -555,7 +554,7 @@ async function initDashboard() {
     const pageSubtitleWrap = document.querySelector<HTMLElement>('#page-subtitle-wrap')
     const pageSubtitle = document.querySelector<HTMLElement>('#page-subtitle')
     const pageProCta = document.querySelector<HTMLAnchorElement>('#page-pro-cta')
-    const pageExpertUpsell = document.querySelector<HTMLElement>('#page-expert-upsell')
+    const pageExpertUpsellLead = document.querySelector<HTMLElement>('#page-expert-upsell-lead')
     const pageExpertUpsellLink = document.querySelector<HTMLButtonElement>('#page-expert-upsell-link')
 
     const pageTitleIcon = document.querySelector<HTMLElement>('#page-title-icon')
@@ -590,8 +589,11 @@ async function initDashboard() {
         if (pageSubtitle) {
             pageSubtitle.textContent = showSubtitle ? meta!.subtitle! : ''
         }
-        if (pageExpertUpsell) {
-            pageExpertUpsell.hidden = !showExpertUpsell
+        if (pageExpertUpsellLead) {
+            pageExpertUpsellLead.hidden = !showExpertUpsell
+        }
+        if (pageExpertUpsellLink) {
+            pageExpertUpsellLink.hidden = !showExpertUpsell
         }
         if (pageProCta) {
             if (showProCta && meta?.proCta) {
