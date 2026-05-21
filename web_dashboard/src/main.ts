@@ -10,7 +10,7 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
+import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 import { formatIntelTime } from './modules/render/utils'
 // (Pro reports now handled within Pro Insights hub)
@@ -209,9 +209,9 @@ export async function renderSignup() {
     });
 }
 
-type TabId = 'feed' | 'briefs' | 'plans' | 'reports' | 'map' | 'legal' | 'pro-insights' | 'pro-map' | 'expert-intel'
+type TabId = 'feed' | 'briefs' | 'plans' | 'reports' | 'map' | 'legal' | 'market-pulse' | 'pro-insights' | 'pro-map' | 'expert-intel'
 
-const BOOT_TABS: TabId[] = ['feed', 'briefs', 'map', 'plans', 'legal', 'pro-insights', 'pro-map', 'expert-intel']
+const BOOT_TABS: TabId[] = ['feed', 'briefs', 'map', 'plans', 'legal', 'market-pulse', 'pro-insights', 'pro-map', 'expert-intel']
 
 /** Legacy hash aliases (e.g. bookmarks, old LP links). */
 const HASH_TAB_ALIASES: Record<string, TabId> = {
@@ -226,7 +226,7 @@ function normalizeHashTab(raw: string, tier?: string): TabId | null {
     const resolved = (HASH_TAB_ALIASES[raw] ?? raw) as TabId
     let tab = resolved
     if (tab === 'reports') {
-        if (tier && ['pro', 'experts', 'enterprise'].includes(tier)) return 'pro-insights'
+        if (tier && ['pro', 'experts', 'enterprise'].includes(tier)) return 'market-pulse'
         return 'briefs'
     }
     return BOOT_TABS.includes(tab) ? tab : null
@@ -333,11 +333,17 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
         },
     },
     'pro-map': { title: 'Pro Interactive Map' },
+    'market-pulse': {
+        icon: '📈',
+        title: 'Market Pulse',
+        subtitle:
+            'Real-time quantitative domain pressure, sector distribution indices, and historical risk trend lines for tactical monitoring.',
+    },
     'pro-insights': {
         icon: '💎',
         title: 'Pro Insight',
         subtitle:
-            'Provides advanced, domain-specific structural analysis cross-referenced with quantitative macroeconomic data and aggregated systemic risk alerts for professional intelligence.',
+            'In-depth structural intelligence briefs — qualitative transmission analysis, exposure matrices, and domain-filtered long-form reports.',
         showExpertUpsell: true,
     },
     'expert-intel': { title: 'Expert Intelligence' },
@@ -682,7 +688,7 @@ async function initDashboard() {
 
         if (mainContent) mainContent.style.opacity = '0';
         setTimeout(() => {
-            const isFeedLike = ['feed', 'briefs', 'plans', 'reports', 'legal', 'pro-insights', 'expert-intel'].includes(tab);
+            const isFeedLike = ['feed', 'briefs', 'plans', 'reports', 'legal', 'market-pulse', 'pro-insights', 'expert-intel'].includes(tab);
             if (feedContainer) feedContainer.style.display = isFeedLike ? 'block' : 'none';
             if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
             if (proMapContainer) proMapContainer.style.display = (tab === 'pro-map') ? 'flex' : 'none';
@@ -698,6 +704,7 @@ async function initDashboard() {
                     });
                 });
             }
+            else if (tab === 'market-pulse') renderMarketPulse(alertsContainer, user!, () => handleTabSwitch('plans'));
             else if (tab === 'pro-insights') renderPro(alertsContainer, user!, () => handleTabSwitch('plans'));
             else if (tab === 'pro-map') renderProMap();
             else if (tab === 'expert-intel') {

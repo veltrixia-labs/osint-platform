@@ -24,7 +24,8 @@ const NAV_ITEMS: NavItem[] = [
     { id: 'feed',         label: 'Alert Stream',        icon: '📡', minTier: 'free',    group: 'core' },
     { id: 'briefs',       label: 'Context Briefs',       icon: '🛰',  minTier: 'free',    group: 'core' },
     { id: 'map',          label: 'Global Map',           icon: '🌐', minTier: 'free',    group: 'core' },
-    // Premium – gated
+    // Premium – gated (quantitative pulse → qualitative briefs → spatial map)
+    { id: 'market-pulse', label: 'Market Pulse',         icon: 'trending_up', minTier: 'pro', group: 'premium' },
     { id: 'pro-insights', label: 'Pro Insight',          icon: '💎', minTier: 'pro',     group: 'premium' },
     { id: 'pro-map',      label: 'Pro Interactive Map', icon: 'travel_explore', minTier: 'pro', group: 'premium' },
     { id: 'expert-intel', label: 'Expert Intelligence',  icon: '🔬', minTier: 'experts', group: 'premium' },
@@ -32,7 +33,7 @@ const NAV_ITEMS: NavItem[] = [
     { id: 'plans',        label: 'Subscription Plans',   icon: '⭐', minTier: 'free',    group: 'account' },
 ];
 
-const FREE_LOCKED_TABS = new Set(['pro-insights', 'pro-map']);
+const FREE_LOCKED_TABS = new Set(['market-pulse', 'pro-insights', 'pro-map']);
 
 const TIER_ORDER = ['free', 'pro', 'experts'];
 

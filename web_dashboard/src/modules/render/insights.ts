@@ -8,9 +8,10 @@
  * - Pure CSS/SVG components for "Speed of Judgment"
  */
 
-import type { ProInsights, UserMe } from '../api';
+import type { UserMe } from '../api';
 import type { ExpertIntelligence } from '../api';
-import { fetchProInsights, fetchExpertIntelligence } from '../api';
+import { fetchExpertIntelligence } from '../api';
+import { renderIntensityBar, renderProPanel } from './pro_dashboard_primitives';
 import {
     getTopicDef,
     getTopicCssVars,
@@ -24,35 +25,6 @@ import { renderProStructuralBriefs, renderProStructuralBriefDetail } from './pro
 // ──────────────────────────────────────────────────────────────────────────────
 // Component Primitives (Pure CSS / SVG)
 // ──────────────────────────────────────────────────────────────────────────────
-
-/** Renders a "Dashboard Card" wrapper */
-function renderCard(title: string, content: string, footer?: string, accentColor = '#58a6ff'): string {
-    return `
-    <div class="insight-card pro-insight-panel" style="--accent: ${accentColor}">
-        <div class="insight-card-header">
-            <h3 class="insight-card-title">${title}</h3>
-        </div>
-        <div class="insight-card-body">
-            ${content}
-        </div>
-        ${footer ? `<div class="insight-card-footer">${footer}</div>` : ''}
-    </div>`;
-}
-
-/** Renders a horizontal "Intensity Bar" */
-function renderIntensityBar(value: number, label: string, color = '#58a6ff'): string {
-    const percent = Math.min(Math.max(value * 10, 0), 100);
-    return `
-    <div class="intensity-bar-wrap">
-        <div class="intensity-bar-label">
-            <span>${label}</span>
-            <span style="color: ${color}">${value.toFixed(1)}</span>
-        </div>
-        <div class="intensity-bar-bg">
-            <div class="intensity-bar-fill" style="width: ${percent}%; background: ${color}; box-shadow: 0 0 10px ${color}44;"></div>
-        </div>
-    </div>`;
-}
 
 /** Renders a small priority badge */
 function renderPriorityBadge(priority: string, minimal = false): string {
@@ -144,70 +116,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
 
     // Internal navigation handler for switching between Hub and Detail view
     const showHub = async () => {
-        let data: ProInsights | null = null;
-        try {
-            data = await fetchProInsights();
-        } catch (err) {
-            console.error("Failed to load Pro Insights data:", err);
-        }
-
-        // Log automation state for devs only
-        console.debug('[ProInsights] Automation state: dry_run=true');
-
-        const riskSummaryHtml = data && data.risk_summary && Object.keys(data.risk_summary).length > 0
-            ? Object.entries((data.risk_summary || {}) as any).map(([topic, stat]: [string, any]) => {
-                const def = getTopicDef(topic === 'null' ? null : topic);
-                return `
-                <div class="bluf-stat-card bluf-stat-card--compact" style="--accent: ${def.color}">
-                    <div class="bluf-header u-flex-between">
-                        <div class="bluf-topic">${def.icon} ${def.label}</div>
-                        <div class="bluf-trend bluf-trend--${stat.trend}">${stat.trend === 'rising' ? '▲' : '■'}</div>
-                    </div>
-                    <div class="u-flex u-flex-baseline">
-                        <div class="bluf-value">${(stat.intensity || 0).toFixed(1)}</div>
-                        ${stat.intensity_delta !== undefined ? `
-                            <div class="bluf-delta ${stat.intensity_delta > 0.5 ? 'rising' : stat.intensity_delta < -0.5 ? 'falling' : ''}" style="margin-left: 8px; font-size: 0.75rem; font-weight: 800;">
-                                ${stat.intensity_delta > 0 ? '↑' : stat.intensity_delta < 0 ? '↓' : ''} ${Math.abs(stat.intensity_delta).toFixed(1)} <span style="font-weight:400; opacity:0.6;">(24h)</span>
-                            </div>
-                        ` : ''}
-                        ${stat.spike_detected ? `<div class="spike-badge" title="UNUSUAL MOMENTUM DETECTED">SPIKE</div>` : ''}
-                    </div>
-                    <div class="bluf-label">${stat.why_it_matters || ''}</div>
-                    ${stat.anomaly_detected ? `<div class="anomaly-warning-pill">⚠️ ANOMALY DETECTED</div>` : ''}
-                    <div class="bluf-latest-wrap">
-                        <span class="bluf-latest-label">TOP SIGNAL</span>
-                        <div class="bluf-latest">${stat.top_signal || 'None'}</div>
-                    </div>
-                </div>`;
-            }).join('')
-            : `<div class="u-p-2 u-text-center" style="grid-column: 1/-1; opacity:0.6; font-size: 0.9rem;">Intelligence gathering in progress...</div>`;
-
-        const sectorDistributionHtml =
-            data && data.sector_distribution
-                ? `
-            <section class="pro-insight-sector pro-insight-section">
-                ${renderCard(
-                    'Sector Distribution',
-                    `
-                    <div class="sector-dist-list">
-                        ${Object.entries((data.sector_distribution || {}) as any)
-                            .map(([topic, count]: [string, any]) => {
-                                const def = getTopicDef(topic === 'null' ? null : topic);
-                                return renderIntensityBar(count, def.label, def.color);
-                            })
-                            .join('')}
-                    </div>
-                `,
-                )}
-            </section>`
-                : '';
-
-        const pressuresPanel = renderCard(
-            'Active Market Pressures',
-            `<div class="dashboard-row bluf-row pro-bluf-row" role="list">${riskSummaryHtml}</div>`,
-        );
-
-        const monitoredDomainsPanel = renderCard(
+        const monitoredDomainsPanel = renderProPanel(
             'Monitored Domains',
             `<div class="domain-chips-container pro-domain-filter-bar" role="group" aria-label="Filter structural briefs by domain">${renderDomainFilterButtons()}</div>`,
         );
@@ -215,12 +124,6 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
         container.innerHTML = `
         <div class="cb-briefs-page pro-insight-hub">
         <div class="insights-dashboard pro-dashboard pro-insight-page">
-            <section class="pro-insight-pressures pro-insight-section" aria-labelledby="pro-pressures-heading">
-                ${pressuresPanel}
-            </section>
-
-            ${sectorDistributionHtml}
-
             <section class="pro-insight-filters pro-insight-section" aria-label="Monitored Domains">
                 ${monitoredDomainsPanel}
             </section>
@@ -333,7 +236,7 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
 
             <div class="dashboard-grid">
                 <!-- Causal Impact Chains -->
-                ${renderCard('Active Causal Chains', `
+                ${renderProPanel('Active Causal Chains', `
                     <div class="impact-chain-preview-list">
                         ${impactChains.length ? impactChains.map((chain: any) => `
                             <div class="impact-chain-item" data-alert-id="${chain.alert_id}">
@@ -353,7 +256,7 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
                 `, 'Full recursive analysis of ripples across domains')}
 
                 <!-- Cross-Domain Risks -->
-                ${renderCard('Strategic Correlation', `
+                ${renderProPanel('Strategic Correlation', `
                     <div class="cross-domain-list">
                         ${crossRisks.length ? crossRisks.map((r: any) => `
                             <div class="cross-domain-item">
