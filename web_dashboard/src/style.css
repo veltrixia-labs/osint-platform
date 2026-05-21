@@ -7447,30 +7447,128 @@ body.cb-modal-scroll-lock {
 .pro-insight-page {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
-  padding-top: 0.25rem;
+  gap: 1.25rem;
+  padding-top: 0.15rem;
 }
 
 .pro-section-title {
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 1rem;
-  padding-bottom: 0.5rem;
+  margin: 0 0 0.65rem;
+  padding-bottom: 0.45rem;
   border-bottom: 1px solid var(--border);
 }
 
 .pro-insight-pressures .pro-bluf-row {
-  gap: 1.25rem;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
 }
 
-.pro-insight-page .pro-bluf-row .bluf-stat-card {
-  padding: 1.5rem;
-  border-radius: 12px;
+.pro-insight-page .pro-bluf-row .bluf-stat-card,
+.pro-insight-page .pro-bluf-row .bluf-stat-card--compact {
+  padding: 1rem;
+  border-radius: 10px;
   background: linear-gradient(145deg, var(--bg-secondary) 0%, rgba(22, 27, 34, 0.65) 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  gap: 0.85rem;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.pro-insight-page .pro-bluf-row .bluf-topic {
+  font-size: 0.62rem;
+  letter-spacing: 1.1px;
+}
+
+.pro-insight-page .pro-bluf-row .bluf-value {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.pro-insight-page .pro-bluf-row .bluf-delta {
+  font-size: 0.68rem !important;
+}
+
+.pro-insight-page .pro-bluf-row .bluf-label {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  margin-top: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pro-insight-page .pro-bluf-row .bluf-latest-wrap {
+  margin-top: 0;
+}
+
+.pro-insight-page .pro-bluf-row .bluf-latest-label {
+  font-size: 0.5rem;
+  margin-bottom: 1px;
+}
+
+.pro-insight-page .pro-bluf-row .bluf-latest {
+  font-size: 0.7rem;
+}
+
+.pro-insight-page .pro-bluf-row .anomaly-warning-pill,
+.pro-insight-page .pro-bluf-row .spike-badge {
+  font-size: 0.58rem;
+  padding: 2px 6px;
+}
+
+/* Pro Insight — Expert tab upsell (page header) */
+.pro-expert-upsell {
+  width: 100%;
+  max-width: 52rem;
+  padding: 0.6rem 0.95rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: linear-gradient(145deg, rgba(22, 27, 34, 0.72) 0%, rgba(13, 17, 23, 0.45) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.pro-expert-upsell[hidden] {
+  display: none !important;
+}
+
+.pro-expert-upsell-text {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
+}
+
+.pro-expert-upsell-link {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0.15rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, #bc8cff 42%, var(--border));
+  background: color-mix(in srgb, #bc8cff 14%, transparent);
+  color: #bc8cff;
+  font-size: inherit;
+  font-weight: 700;
+  font-family: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  vertical-align: baseline;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.pro-expert-upsell-link:hover,
+.pro-expert-upsell-link:focus-visible {
+  background: color-mix(in srgb, #bc8cff 24%, transparent);
+  border-color: #bc8cff;
+  color: #d2b8ff;
+  outline: none;
 }
 
 .pro-insight-sector .insight-card {

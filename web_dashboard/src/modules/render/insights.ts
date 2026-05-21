@@ -158,7 +158,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
             ? Object.entries((data.risk_summary || {}) as any).map(([topic, stat]: [string, any]) => {
                 const def = getTopicDef(topic === 'null' ? null : topic);
                 return `
-                <div class="bluf-stat-card" style="--accent: ${def.color}">
+                <div class="bluf-stat-card bluf-stat-card--compact" style="--accent: ${def.color}">
                     <div class="bluf-header u-flex-between">
                         <div class="bluf-topic">${def.icon} ${def.label}</div>
                         <div class="bluf-trend bluf-trend--${stat.trend}">${stat.trend === 'rising' ? '▲' : '■'}</div>

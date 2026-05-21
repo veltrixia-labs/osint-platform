@@ -305,6 +305,7 @@ type PageHeaderMeta = {
     title: string
     subtitle?: string
     proCta?: { label: string; href: string }
+    showExpertUpsell?: boolean
 }
 
 const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
@@ -336,7 +337,8 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
         icon: '💎',
         title: 'Pro Insight',
         subtitle:
-            '収集・分析されたアラートに基づき、定量マクロ経済データとクロス集計された、プロフェッショナル向けの高度なドメイン別構造分析レポートを提供します',
+            'Provides advanced, domain-specific structural analysis cross-referenced with quantitative macroeconomic data and aggregated systemic risk alerts for professional intelligence.',
+        showExpertUpsell: true,
     },
     'expert-intel': { title: 'Expert Intelligence' },
     plans: { title: 'Plans & Access' },
@@ -513,6 +515,13 @@ async function initDashboard() {
               </h1>
               <div id="page-subtitle-wrap" class="page-subtitle-wrap" hidden>
                 <p id="page-subtitle" class="page-subtitle"></p>
+                <div id="page-expert-upsell" class="pro-expert-upsell" hidden>
+                  <p class="pro-expert-upsell-text">
+                    Looking for predictive risk modeling? Advanced LLM-driven deep analytics and future projections are available in the
+                    <button type="button" id="page-expert-upsell-link" class="pro-expert-upsell-link">Expert</button>
+                    tab.
+                  </p>
+                </div>
                 <a id="page-pro-cta" class="page-premium-cta" href="/subscription" hidden></a>
               </div>
             </div>
@@ -546,6 +555,8 @@ async function initDashboard() {
     const pageSubtitleWrap = document.querySelector<HTMLElement>('#page-subtitle-wrap')
     const pageSubtitle = document.querySelector<HTMLElement>('#page-subtitle')
     const pageProCta = document.querySelector<HTMLAnchorElement>('#page-pro-cta')
+    const pageExpertUpsell = document.querySelector<HTMLElement>('#page-expert-upsell')
+    const pageExpertUpsellLink = document.querySelector<HTMLButtonElement>('#page-expert-upsell-link')
 
     const pageTitleIcon = document.querySelector<HTMLElement>('#page-title-icon')
     const pageTitleText = document.querySelector<HTMLElement>('#page-title-text')
@@ -574,9 +585,13 @@ async function initDashboard() {
             && (tab === 'map' || tab === 'briefs')
             && !isProOrAbove(user?.tier)
         )
+        const showExpertUpsell = Boolean(meta?.showExpertUpsell && tab === 'pro-insights')
 
         if (pageSubtitle) {
             pageSubtitle.textContent = showSubtitle ? meta!.subtitle! : ''
+        }
+        if (pageExpertUpsell) {
+            pageExpertUpsell.hidden = !showExpertUpsell
         }
         if (pageProCta) {
             if (showProCta && meta?.proCta) {
@@ -590,7 +605,7 @@ async function initDashboard() {
             }
         }
         if (pageSubtitleWrap) {
-            pageSubtitleWrap.hidden = !(showSubtitle || showProCta)
+            pageSubtitleWrap.hidden = !(showSubtitle || showProCta || showExpertUpsell)
         }
     }
 
@@ -684,6 +699,12 @@ async function initDashboard() {
 
     ;(window as Window & { __dashboardHandleTabSwitch?: TabSwitchFn }).__dashboardHandleTabSwitch =
         handleTabSwitch
+
+    pageExpertUpsellLink?.addEventListener('click', (e) => {
+        e.preventDefault()
+        document.querySelector<HTMLElement>('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' })
+        handleTabSwitch('expert-intel')
+    })
 
     window.addEventListener('view-report', (e: any) => {
         renderSingleReport(e.detail.reportId, currentTab);
