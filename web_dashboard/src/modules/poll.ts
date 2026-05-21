@@ -8,8 +8,11 @@ export class DashboardState {
     isPaused = false;
     error: string | null = null;
     lastStatus = 200;
+    consecutiveFailures = 0;
     userTier: string = 'free';
     currentTopic: string | null = null;
+
+    private static readonly OFFLINE_FAILURE_THRESHOLD = 3;
 
     private subscribers: ((state: DashboardState) => void)[] = [];
 
@@ -53,23 +56,41 @@ export class DashboardState {
 
             if (alertsResp) {
                 this.lastStatus = alertsResp.status;
-                
-                if (!alertsResp.ok && alertsResp.status !== 0) {
-                    this.error = `HTTP ${alertsResp.status}`;
-                } else if (alertsResp.status === 0) {
-                    this.error = "Offline";
-                } else {
+
+                if (alertsResp.ok) {
+                    this.consecutiveFailures = 0;
                     this.error = null;
                     const data = await alertsResp.json();
                     this.alerts = Array.isArray(data) ? data : [];
                     this.health = (healthResp && healthResp.ok) ? await healthResp.json() : null;
+                } else if (alertsResp.status === 429) {
+                    this.error = null;
+                    this.consecutiveFailures = 0;
+                } else if (alertsResp.status === 401 || alertsResp.status === 403) {
+                    this.consecutiveFailures += 1;
+                    this.error = `HTTP ${alertsResp.status}`;
+                } else {
+                    this.consecutiveFailures += 1;
+                    const terminal =
+                        alertsResp.status === 0 ||
+                        this.consecutiveFailures >= DashboardState.OFFLINE_FAILURE_THRESHOLD;
+                    this.error = terminal
+                        ? alertsResp.status === 0
+                            ? 'Offline'
+                            : `HTTP ${alertsResp.status}`
+                        : null;
                 }
             }
 
             this.notify();
         } catch (err) {
             console.error("Dashboard polling error:", err);
-            this.error = "Sync Failure";
+            this.consecutiveFailures += 1;
+            this.lastStatus = 0;
+            this.error =
+                this.consecutiveFailures >= DashboardState.OFFLINE_FAILURE_THRESHOLD
+                    ? 'Sync Failure'
+                    : null;
             this.notify();
         }
     }

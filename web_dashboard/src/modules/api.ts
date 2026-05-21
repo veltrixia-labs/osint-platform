@@ -9,36 +9,89 @@ export const ALERT_STREAM_DISPLAY_LIMIT = 30;
 /** Default page size for Context Briefs list endpoints. */
 export const CONTEXT_BRIEFS_DISPLAY_LIMIT = 40;
 
+/** Dashboard hosts that serve static files only (API is on Render). */
+const STATIC_DASHBOARD_HOSTS = new Set(['veltrixia.net', 'www.veltrixia.net']);
+const DEFAULT_REMOTE_API_ORIGIN = 'https://osint-platform.onrender.com';
+
+const FETCH_RETRY_ATTEMPTS = 3;
+const FETCH_RETRY_BASE_MS = 400;
+
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Read `<meta name="veltrixia-api-base" content="https://…">` (no trailing /api). */
+function readMetaApiOrigin(): string | null {
+    if (typeof document === 'undefined') return null;
+    const content = document.querySelector('meta[name="veltrixia-api-base"]')?.getAttribute('content')?.trim();
+    if (!content) return null;
+    return content.replace(/\/$/, '');
+}
+
+/** Normalize any origin or /api URL to an absolute `…/api` prefix. */
+function normalizeApiBase(originOrBase: string): string {
+    let raw = originOrBase.trim().replace(/\/$/, '');
+    if (!raw) return '/api';
+    if (!raw.startsWith('http')) {
+        return raw.endsWith('/api') ? raw : `${raw}/api`;
+    }
+    if (!raw.endsWith('/api')) {
+        raw = `${raw}/api`;
+    }
+    return raw;
+}
+
 /**
- * Resolve API prefix for fetch():
- * 1. VITE_API_BASE_URL when set at build time (Render / CI).
- * 2. Same-origin `/api` when the dashboard is served from a non-local host (production).
- * 3. `/api` for local dev (Vite proxy to the backend).
+ * Resolve API prefix for all dashboard fetches (single source of truth).
+ * 1. `<meta name="veltrixia-api-base">` (production split: static site → Render API).
+ * 2. `VITE_API_BASE_URL` at build time when set to an absolute URL.
+ * 3. Known static dashboard hosts → DEFAULT_REMOTE_API_ORIGIN.
+ * 4. Same-origin `/api` when API and UI share a host.
+ * 5. `/api` on localhost (Vite proxy).
  */
 function resolveApiBase(): string {
+    const fromMeta = readMetaApiOrigin();
+    if (fromMeta) {
+        return normalizeApiBase(fromMeta);
+    }
+
     const fromEnv = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
     if (fromEnv) {
-        let raw = fromEnv;
-        if (raw.startsWith('http') && !raw.endsWith('/api')) {
-            raw = raw.replace(/\/$/, '') + '/api';
-        }
-        return raw;
+        return normalizeApiBase(fromEnv);
     }
+
     if (typeof globalThis !== 'undefined' && 'location' in globalThis) {
         const loc = (globalThis as unknown as Window).location;
-        if (loc?.hostname && loc.hostname !== 'localhost' && loc.hostname !== '127.0.0.1') {
+        const host = loc?.hostname ?? '';
+        if (host === 'localhost' || host === '127.0.0.1') {
+            return '/api';
+        }
+        if (STATIC_DASHBOARD_HOSTS.has(host)) {
+            return normalizeApiBase(DEFAULT_REMOTE_API_ORIGIN);
+        }
+        if (host) {
             const port = loc.port ? `:${loc.port}` : '';
-            return `${loc.protocol}//${loc.hostname}${port}/api`;
+            return `${loc.protocol}//${host}${port}/api`;
         }
     }
     return '/api';
 }
 
-const API_BASE = resolveApiBase();
+let cachedApiBase: string | null = null;
 
 /** Exposed for startup logging / debugging (no secrets). */
 export function getResolvedApiBase(): string {
-    return API_BASE;
+    if (!cachedApiBase) {
+        cachedApiBase = resolveApiBase();
+    }
+    return cachedApiBase;
+}
+
+/** Build absolute URL for an API path (`/alerts`, `/free/alerts`, …). */
+export function buildApiUrl(path: string): string {
+    const base = getResolvedApiBase().replace(/\/$/, '');
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    return `${base}${normalizedPath}`;
 }
 
 // --- Types & Interfaces ---
@@ -229,22 +282,65 @@ function dispatchSyncEvent(status: SyncStatus) {
 
 // --- Core Fetch with Auth ---
 
-async function fetchWithAuth(url: string, options: RequestInit = {}, skipSyncEvent = false): Promise<Response> {
+function isRetryableStatus(status: number): boolean {
+    return status === 0 || status === 429 || status >= 500;
+}
+
+function updateSyncStatusFromResponse(resp: Response, skipSyncEvent: boolean, attempt: number, maxAttempts: number): void {
+    if (skipSyncEvent) return;
+    if (resp.ok) {
+        dispatchSyncEvent('stable');
+        return;
+    }
+    if (resp.status === 429 || (resp.status >= 500 && attempt < maxAttempts - 1)) {
+        dispatchSyncEvent('retrying');
+        return;
+    }
+    if (resp.status >= 500 || resp.status === 0) {
+        dispatchSyncEvent(attempt >= maxAttempts - 1 ? 'offline' : 'retrying');
+        return;
+    }
+    // 4xx (except terminal cases): stay stable so feed does not flash offline for auth/config
+    dispatchSyncEvent('stable');
+}
+
+async function fetchWithAuth(
+    url: string,
+    options: RequestInit = {},
+    skipSyncEvent = false,
+    attempt = 0,
+): Promise<Response> {
     if (getLoggingOut()) return new Response(null, { status: 401 });
 
     const headers = new Headers(options.headers || {});
+    if (!headers.has('Accept')) headers.set('Accept', 'application/json');
     const token = localStorage.getItem('access_token');
     if (token) headers.set('Authorization', `Bearer ${token}`);
 
+    const fetchOptions: RequestInit = {
+        ...options,
+        headers,
+        mode: 'cors',
+        credentials: 'include',
+        cache: options.cache ?? 'no-store',
+    };
+
     try {
-        const resp = await fetch(url, { ...options, headers });
-        if (!skipSyncEvent) {
-            if (resp.ok) dispatchSyncEvent('stable');
-            else if (resp.status >= 500) dispatchSyncEvent('retrying');
+        const resp = await fetch(url, fetchOptions);
+        if (isRetryableStatus(resp.status) && attempt < FETCH_RETRY_ATTEMPTS - 1) {
+            if (!skipSyncEvent) dispatchSyncEvent('retrying');
+            await sleep(FETCH_RETRY_BASE_MS * (attempt + 1));
+            return fetchWithAuth(url, options, skipSyncEvent, attempt + 1);
         }
+        updateSyncStatusFromResponse(resp, skipSyncEvent, attempt, FETCH_RETRY_ATTEMPTS);
         return resp;
     } catch (e) {
-        console.error(`[API Connectivity Error] URL: ${url}`, e);
+        console.error(`[API Connectivity Error] URL: ${url} (attempt ${attempt + 1})`, e);
+        if (attempt < FETCH_RETRY_ATTEMPTS - 1) {
+            if (!skipSyncEvent) dispatchSyncEvent('retrying');
+            await sleep(FETCH_RETRY_BASE_MS * (attempt + 1));
+            return fetchWithAuth(url, options, skipSyncEvent, attempt + 1);
+        }
         if (!skipSyncEvent) dispatchSyncEvent('offline');
         return new Response(JSON.stringify({ error: 'network_error' }), { status: 0 });
     }
@@ -255,11 +351,11 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, skipSyncEve
 export const apiClient = {
     async get(path: string, options: RequestInit = {}, skipSyncEvent = false) {
         const separator = path.includes('?') ? '&' : '?';
-        const url = `${API_BASE}${path}${separator}_t=${Date.now()}`;
+        const url = `${buildApiUrl(path)}${separator}_t=${Date.now()}`;
         return fetchWithAuth(url, { ...options, method: 'GET' }, skipSyncEvent);
     },
     async post(path: string, body?: any, options: RequestInit = {}, skipSyncEvent = false) {
-        const url = `${API_BASE}${path}`;
+        const url = buildApiUrl(path);
         return fetchWithAuth(url, {
             ...options,
             method: 'POST',

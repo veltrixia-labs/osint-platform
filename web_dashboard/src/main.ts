@@ -696,16 +696,24 @@ async function initDashboard() {
         state.subscribe((data) => {
             if (currentTab !== 'feed') return;
 
-            // [v12.0] Feed Error Separation Logic
-            if (data.error || data.lastStatus >= 400) {
+            // [v12.0] Feed Error Separation Logic — keep last good data during retries / rate limits
+            const showFeedOffline =
+                data.error &&
+                data.lastStatus !== 429 &&
+                (data.lastStatus === 401 ||
+                    data.lastStatus === 403 ||
+                    (data.consecutiveFailures >= 3 &&
+                        (data.lastStatus === 0 || data.lastStatus >= 500)));
+
+            if (showFeedOffline && data.alerts.length === 0) {
                 alertsContainer.innerHTML = `
                     <div class="u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 8px; background: rgba(255,123,114,0.05); margin-top: 2rem;">
                         <div style="font-size: 1.5rem; margin-bottom: 0.5rem;" aria-hidden="true">&#9888;</div>
-                        <div style="color: #ff7b72; font-weight: 600;">${data.lastStatus === 401 ? 'Intelligence Access Restricted' : 'Strategic Pipeline Offline'}</div>
+                        <div style="color: #ff7b72; font-weight: 600;">${data.lastStatus === 401 || data.lastStatus === 403 ? 'Intelligence Access Restricted' : 'Strategic Pipeline Offline'}</div>
                         <div style="font-size: var(--font-xs); color: #8b949e; margin-top: 0.5rem;">
-                            ${data.lastStatus === 401 ? 'Your current tier does not have clearance for this signal stream.' : 'The analysis engine is currently unreachable. Reconnecting...'}
+                            ${data.lastStatus === 401 || data.lastStatus === 403 ? 'Your current tier does not have clearance for this signal stream.' : 'The analysis engine is currently unreachable. Reconnecting...'}
                         </div>
-                        ${data.lastStatus === 401 ? `<button class="btn-fb u-m-top-1" onclick="window.dispatchEvent(new CustomEvent('trigger-tab', {detail:{tab:'plans'}}))">Upgrade Clearance</button>` : ''}
+                        ${data.lastStatus === 401 || data.lastStatus === 403 ? `<button class="btn-fb u-m-top-1" onclick="window.dispatchEvent(new CustomEvent('trigger-tab', {detail:{tab:'plans'}}))">Upgrade Clearance</button>` : ''}
                     </div>
                 `;
                 return;

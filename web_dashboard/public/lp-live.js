@@ -920,10 +920,24 @@
     );
   }
 
+  function apiPrefix() {
+    var meta = document.querySelector('meta[name="veltrixia-api-base"]');
+    var origin = meta && meta.getAttribute('content');
+    if (origin) return origin.replace(/\/$/, '') + '/api';
+    return window.location.origin + '/api';
+  }
+
+  function apiUrl(path) {
+    var rel = path.indexOf('/api') === 0 ? path.slice(4) : path;
+    return apiPrefix() + rel;
+  }
+
   async function fetchJson(path) {
     const sep = path.includes('?') ? '&' : '?';
-    const res = await fetch(path + sep + '_ts=' + Date.now(), {
-      credentials: 'same-origin',
+    const url = apiUrl(path) + sep + '_ts=' + Date.now();
+    const res = await fetch(url, {
+      mode: 'cors',
+      credentials: 'include',
       cache: 'no-store',
       headers: { Accept: 'application/json' },
     });
