@@ -15,6 +15,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import AsyncSessionLocal
 from db.models import Report, AlertLog
 from jobs.pro_brief_trigger_policy import select_candidate_alerts_for_pro_briefs
+from jobs.pro_generation_policy import (
+    PRO_DISABLE_GENERATION_CAPS,
+    pro_automation_dry_run,
+    pro_automation_enabled,
+)
+from jobs.pro_realtime_stream import run_continuous_pro_intelligence_stream
 from jobs.pro_report_generator import run_pro_structural_report_generation
 
 logger = logging.getLogger(__name__)
@@ -106,17 +112,19 @@ class ProAutomationManager:
         if not candidates:
             return results
 
-        # 2. Check Daily Cap
-        current_daily_count = await self.count_reports_generated_today()
-        if current_daily_count >= self.MAX_DAILY_REPORTS:
-            results["skipped"].append({
-                "reason": f"System-wide daily cap reached ({current_daily_count}/{self.MAX_DAILY_REPORTS})"
-            })
-            results["skipped_count"] = len(candidates)
-            return results
+        # 2. Check Daily Cap (disabled in real-time mode)
+        remaining_daily_quota = self.MAX_DAILY_REPORTS
+        if not PRO_DISABLE_GENERATION_CAPS:
+            current_daily_count = await self.count_reports_generated_today()
+            if current_daily_count >= self.MAX_DAILY_REPORTS:
+                results["skipped"].append({
+                    "reason": f"System-wide daily cap reached ({current_daily_count}/{self.MAX_DAILY_REPORTS})"
+                })
+                results["skipped_count"] = len(candidates)
+                return results
+            remaining_daily_quota = self.MAX_DAILY_REPORTS - current_daily_count
 
         # 3. Process Candidates
-        remaining_daily_quota = self.MAX_DAILY_REPORTS - current_daily_count
         
         for candidate in candidates:
             if remaining_daily_quota <= 0:
@@ -166,18 +174,22 @@ class ProAutomationManager:
                 logger.info(f"  [SKIP] Alert {alert_id} ({domain_id}): {reason}")
                 continue
 
-            # 5. Check Domain Cap
-            domain_count = await self.count_reports_by_domain_today(domain_id)
-            if domain_count >= self.MAX_REPORTS_PER_DOMAIN_PER_DAY:
-                reason = f"Domain cap reached for '{domain_id}' ({domain_count}/{self.MAX_REPORTS_PER_DOMAIN_PER_DAY})"
-                results["skipped"].append({
-                    "alert_id": alert_id,
-                    "domain_id": domain_id,
-                    "reason": reason
-                })
-                results["skipped_count"] += 1
-                logger.info(f"  [SKIP] Alert {alert_id} ({domain_id}): {reason}")
-                continue
+            # 5. Check Domain Cap (disabled in real-time mode)
+            if not PRO_DISABLE_GENERATION_CAPS:
+                domain_count = await self.count_reports_by_domain_today(domain_id)
+                if domain_count >= self.MAX_REPORTS_PER_DOMAIN_PER_DAY:
+                    reason = (
+                        f"Domain cap reached for '{domain_id}' "
+                        f"({domain_count}/{self.MAX_REPORTS_PER_DOMAIN_PER_DAY})"
+                    )
+                    results["skipped"].append({
+                        "alert_id": alert_id,
+                        "domain_id": domain_id,
+                        "reason": reason,
+                    })
+                    results["skipped_count"] += 1
+                    logger.info(f"  [SKIP] Alert {alert_id} ({domain_id}): {reason}")
+                    continue
 
             # 6. Generate Report
             if dry_run:
@@ -194,7 +206,8 @@ class ProAutomationManager:
                     report = await run_pro_structural_report_generation(
                         alert_id=alert_id,
                         domain_id=domain_id,
-                        report_type="weekly"
+                        report_type="weekly",
+                        force_rebuild=True,
                     )
                     results["generated_reports"].append({
                         "alert_id": alert_id,
@@ -217,25 +230,36 @@ class ProAutomationManager:
 
 async def run_scheduled_pro_automation() -> Dict[str, Any]:
     """
-    Wrapper for scheduler integration. Reads ENV and runs the automation cycle.
+    Wrapper for scheduler integration.
+
+    Real-time mode (default): continuous INSERT stream for all core domains, then
+    optional alert-driven candidates. Duplicate guards and daily caps are off.
     """
-    enabled = os.getenv("ENABLE_PRO_AUTOMATION", "false").lower() == "true"
-    dry_run = os.getenv("PRO_AUTOMATION_DRY_RUN", "true").lower() == "true"
+    enabled = pro_automation_enabled()
+    dry_run = pro_automation_dry_run()
     limit = int(os.getenv("PRO_AUTOMATION_LIMIT", "5"))
-    
+
     if not enabled:
-        logger.info("Pro Structural Brief Automation is DISABLED (ENABLE_PRO_AUTOMATION=false).")
+        logger.info("Pro Structural Brief Automation is DISABLED.")
         return {"status": "disabled", "skipped": True}
 
-    logger.info(f"Starting Pro Structural Brief Automation (dry_run={dry_run}, limit={limit})")
-    
+    logger.info(
+        "Starting Pro Structural Brief Automation (realtime stream + candidates, dry_run=%s)",
+        dry_run,
+    )
+
     try:
+        stream_results: Dict[str, Any] = {}
+        if not dry_run:
+            stream_results = await run_continuous_pro_intelligence_stream()
+
         async with AsyncSessionLocal() as db:
             manager = ProAutomationManager(db)
             enabled_domains = manager.enabled_domains
             logger.info(f"Enabled Pro Domains: {enabled_domains}")
-            
+
             results = await manager.run_once(limit=limit, dry_run=dry_run)
+            results["continuous_stream"] = stream_results
             
             logger.info(
                 f"Pro Automation Cycle Finished: Found={results['candidates_found']}, "

@@ -731,6 +731,12 @@ def build_pro_structural_report_payload(context: dict) -> dict:
     exec_summary, key_findings = _build_executive_summary(
         domain, sig, sig_class, status, coverage_matrix, divergence_check, breakdown, geo_context
     )
+    predictive = context.get("predictive_forecast") or {}
+    if predictive.get("alert_cluster_depleted") and predictive.get("headline"):
+        exec_summary = f"{predictive['headline']} {exec_summary}"
+        for vec in (predictive.get("risk_vectors") or [])[:3]:
+            if vec not in key_findings:
+                key_findings.append(vec)
     if m_ctx.get("supply_driven"):
         key_findings = [
             "Physical crude up with US inventory draw — supply-driven confirmation",
@@ -743,9 +749,19 @@ def build_pro_structural_report_payload(context: dict) -> dict:
         sid: relevance_display_name(relevance_map, sid) for sid in relevance_map
     }
 
+    analysis_generated_at = (
+        context.get("analysis_generated_at")
+        or datetime.now(timezone.utc).isoformat()
+    )
+
     payload = {
         "payload_schema_version": "pro_structural_v2",
         "generator": "reports.pro_structural_report_builder",
+        "analysis_generated_at": analysis_generated_at,
+        "force_rebuild": context.get("force_rebuild", True),
+        "realtime_mode": context.get("realtime_mode", True),
+        "alert_cluster_window_hours": context.get("alert_cluster_window_hours", 24),
+        "predictive_forecast": context.get("predictive_forecast"),
         "domain": {
             "domain_id": domain.get("domain_id"),
             "display_name": domain.get("display_name"),

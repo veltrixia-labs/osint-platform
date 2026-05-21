@@ -273,6 +273,17 @@ async def run_daily_external_data_sync_pipeline() -> Dict[str, Any]:
     except Exception as metric_exc:
         logger.warning("[ExternalDataSync] Could not persist system metrics: %s", metric_exc)
 
+    try:
+        from jobs.pro_generation_policy import pro_regen_after_external_sync
+        from jobs.pro_realtime_stream import run_continuous_pro_intelligence_stream
+
+        if pro_regen_after_external_sync():
+            logger.info("[ExternalDataSync] Triggering Pro realtime intelligence stream (force INSERT).")
+            summary["pro_intelligence_stream"] = await run_continuous_pro_intelligence_stream()
+    except Exception as pro_exc:
+        logger.error("[ExternalDataSync] Pro realtime stream hook failed: %s", pro_exc)
+        summary["pro_intelligence_stream"] = {"status": "error", "error": str(pro_exc)}
+
     return summary
 
 

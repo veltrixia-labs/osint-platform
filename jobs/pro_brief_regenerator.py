@@ -15,6 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import AsyncSessionLocal
 from db.models import AlertLog, Report
+from analysis.pro_domain_config import infer_domain_from_topic
+from analysis.pro_structural_context import resolve_latest_domain_alert
+from jobs.pro_generation_policy import PRO_FORCE_REALTIME_REBUILD
 from jobs.pro_report_generator import run_pro_structural_report_generation
 
 logger = logging.getLogger(__name__)
@@ -99,9 +102,11 @@ async def regenerate_pro_structural_briefs(
     *,
     domains: Optional[List[str]] = None,
     purge_first: bool = False,
+    force_rebuild: bool = PRO_FORCE_REALTIME_REBUILD,
 ) -> Dict[str, Any]:
     """
-    Purge (optional) and regenerate one brief per domain from the latest alert.
+    Regenerate one fresh brief per domain (always INSERT when force_rebuild=True).
+    Purge is optional and off by default in real-time mode.
     """
     target_domains = domains or CORE_PRO_DOMAINS
     generated: List[Dict[str, Any]] = []
@@ -118,19 +123,25 @@ async def regenerate_pro_structural_briefs(
     for domain_id in target_domains:
         alert_id: Optional[str] = None
         async with AsyncSessionLocal() as db:
-            stmt = (
-                select(AlertLog)
-                .where(AlertLog.topic == domain_id, AlertLog.suppressed == False)  # noqa: E712
-                .order_by(desc(AlertLog.triggered_at))
-                .limit(1)
-            )
-            alert = (await db.execute(stmt)).scalar_one_or_none()
+            alert = await resolve_latest_domain_alert(db, domain_id)
+            if not alert:
+                stmt = (
+                    select(AlertLog)
+                    .where(AlertLog.suppressed == False)  # noqa: E712
+                    .order_by(desc(AlertLog.triggered_at))
+                    .limit(80)
+                )
+                for row in (await db.execute(stmt)).scalars().all():
+                    if infer_domain_from_topic(row.topic or "") == domain_id:
+                        alert = row
+                        break
             alert_id = str(alert.id) if alert else None
 
         try:
             report = await run_pro_structural_report_generation(
                 alert_id=alert_id,
                 domain_id=domain_id,
+                force_rebuild=force_rebuild,
             )
             payload = report.structured_payload or {}
             generated.append(
@@ -161,6 +172,7 @@ async def regenerate_pro_structural_briefs(
         "domains": target_domains,
         "purged_count": purged,
         "purge_first": purge_first,
+        "force_rebuild": force_rebuild,
         "generated": generated,
         "errors": errors,
         "audit_before": before_audit,

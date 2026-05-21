@@ -241,9 +241,13 @@ def register_jobs():
     # Phase 4: Self-Learning Feedback Loop (Daily at 02:00)
     schedule.every().day.at("02:00").do(schedule_async, "learning_loop", run_learning_wrapper)
 
-    # Phase 7: Pro Structural Brief Automation
-    pro_interval = int(os.getenv("PRO_AUTOMATION_INTERVAL_HOURS", "6"))
+    # Phase 7: Pro Structural Brief Automation (real-time default: hourly continuous INSERT stream)
+    pro_interval = int(os.getenv("PRO_AUTOMATION_INTERVAL_HOURS", "1"))
     schedule.every(pro_interval).hours.do(schedule_async, "pro_automation", pro_automation_wrapper)
+    logger.info(
+        "Registered pro_automation every %sh (realtime stream; ENABLE_PRO_AUTOMATION ignored when force mode on).",
+        pro_interval,
+    )
 
 async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""

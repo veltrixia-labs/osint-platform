@@ -35,12 +35,106 @@ from analysis.pro_global_series import (
 
 logger = logging.getLogger(__name__)
 
+# Live alert clustering window (aligned with jobs.pro_generation_policy)
+ALERT_CLUSTER_WINDOW_HOURS = 24
+
+
+async def resolve_latest_domain_alert(
+    db: AsyncSession,
+    domain_id: str,
+    *,
+    window_hours: int = ALERT_CLUSTER_WINDOW_HOURS,
+) -> Optional[AlertLog]:
+    """
+    Pick the highest-scoring alert in the live clustering window for a Pro domain.
+    """
+    since = datetime.now(timezone.utc) - timedelta(hours=window_hours)
+    stmt = (
+        select(AlertLog)
+        .where(
+            AlertLog.triggered_at >= since,
+            AlertLog.suppressed == False,  # noqa: E712
+        )
+        .order_by(desc(AlertLog.triggered_at), desc(AlertLog.intelligence_score))
+        .limit(120)
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+    best: Optional[AlertLog] = None
+    best_score = -1.0
+    for row in rows:
+        if infer_domain_from_topic(row.topic or "") != domain_id:
+            continue
+        score = float(row.intelligence_score or 0.0)
+        if best is None or score > best_score:
+            best = row
+            best_score = score
+    return best
+
+
+def _build_predictive_forecast(
+    domain_id: str,
+    domain_display: str,
+    macro_obs: List[dict],
+    market_ctx: dict,
+    *,
+    alert_depleted: bool,
+) -> Dict[str, Any]:
+    """
+    Rule-based macro risk outlook when the 24h alert cluster is empty.
+    Keeps the intelligence stream alive without LLM dependency.
+    """
+    generated_at = datetime.now(timezone.utc).isoformat()
+    risk_vectors: List[str] = []
+    for obs in (macro_obs or [])[:8]:
+        chg = obs.get("change_pct")
+        label = obs.get("display_name") or obs.get("series_id") or "Macro series"
+        if chg is None:
+            continue
+        if chg > 0.75:
+            risk_vectors.append(f"{label}: upward structural pressure ({chg:+.2f}% lookback)")
+        elif chg < -0.75:
+            risk_vectors.append(f"{label}: downward structural pressure ({chg:+.2f}% lookback)")
+        else:
+            risk_vectors.append(f"{label}: range-bound ({chg:+.2f}% lookback)")
+
+    prices = market_ctx.get("latest_prices") or []
+    for price in prices[:4]:
+        pct = price.get("percent_change")
+        sym = price.get("symbol") or "Instrument"
+        if pct is None:
+            continue
+        risk_vectors.append(f"{sym}: session move {pct:+.2f}% (market confirmation layer)")
+
+    mode = "macro_predictive" if alert_depleted else "alert_anchored"
+    if alert_depleted and not risk_vectors:
+        risk_vectors.append(
+            f"No live alerts in the last {ALERT_CLUSTER_WINDOW_HOURS}h; "
+            "quantitative feeds are the sole active signal layer."
+        )
+
+    headline = (
+        f"Predictive structural outlook for {domain_display}: "
+        + (risk_vectors[0] if risk_vectors else "monitoring macro and market feeds in real time.")
+    )
+    return {
+        "mode": mode,
+        "generated_at": generated_at,
+        "headline": headline,
+        "risk_vectors": risk_vectors,
+        "confidence": "moderate" if len(risk_vectors) >= 2 else "low",
+        "alert_cluster_depleted": alert_depleted,
+    }
+
+
 async def build_pro_structural_context(
     db: AsyncSession,
     alert_log: Optional[AlertLog] = None,
     domain_id: Optional[str] = None,
     topic: Optional[str] = None,
-    lookback_days: int = 30
+    lookback_days: int = 30,
+    *,
+    force_rebuild: bool = True,
+    analysis_generated_at: Optional[datetime] = None,
 ) -> Dict[str, Any]:
     """
     Builds a rich context dictionary for a Pro Structural Brief.
@@ -60,8 +154,21 @@ async def build_pro_structural_context(
         resolved_domain_id = "global_market_intelligence"
 
     data_notes = []
-    
-    # 2. Signal / Alert Context
+    analysis_ts = analysis_generated_at or datetime.now(timezone.utc)
+
+    # 2. Signal / Alert Context — bind to 24h domain cluster when no explicit alert
+    if not alert_log and resolved_domain_id:
+        alert_log = await resolve_latest_domain_alert(db, resolved_domain_id)
+        if alert_log:
+            data_notes.append(
+                f"Anchored to latest {ALERT_CLUSTER_WINDOW_HOURS}h domain alert cluster."
+            )
+        else:
+            data_notes.append(
+                f"No alerts in the last {ALERT_CLUSTER_WINDOW_HOURS}h for this domain; "
+                "using macro predictive forecasting layer."
+            )
+
     signal_ctx = None
     related_news = []
     if alert_log:
@@ -82,7 +189,12 @@ async def build_pro_structural_context(
         }
 
     related_events = await _fetch_related_alert_events(
-        db, alert_log, resolved_domain_id, data_notes, limit=5
+        db,
+        alert_log,
+        resolved_domain_id,
+        data_notes,
+        limit=8,
+        window_hours=ALERT_CLUSTER_WINDOW_HOURS,
     )
 
     # 3. Event timeline: domain alerts + news evidence
@@ -106,6 +218,15 @@ async def build_pro_structural_context(
 
     # 6. Complement Watch Indicators
     watch_indicators = await _complement_watch_indicators(db, config.get("watch_indicators", []), data_notes)
+
+    alert_depleted = alert_log is None and not related_events
+    predictive_forecast = _build_predictive_forecast(
+        resolved_domain_id,
+        config.get("display_name", resolved_domain_id),
+        structural_ctx.get("macro_observations") or structural_ctx.get("macro_display_cards") or [],
+        market_ctx,
+        alert_depleted=alert_depleted,
+    )
 
     # 7. Build Final Context
     context = {
@@ -133,7 +254,12 @@ async def build_pro_structural_context(
         "market_group_map": config.get("market_group_map", {}),
         "watch_conditions_template": config.get("watch_conditions_template", {}),
         "exposure_matrix_details": config.get("exposure_matrix_details", []),
-        "market_group_interpretation": config.get("market_group_interpretation", {})
+        "market_group_interpretation": config.get("market_group_interpretation", {}),
+        "predictive_forecast": predictive_forecast,
+        "analysis_generated_at": analysis_ts.isoformat(),
+        "force_rebuild": force_rebuild,
+        "alert_cluster_window_hours": ALERT_CLUSTER_WINDOW_HOURS,
+        "realtime_mode": True,
     }
 
     return context
@@ -434,20 +560,25 @@ async def _fetch_related_alert_events(
     notes: list,
     *,
     limit: int = 8,
-    lookback_days: int = 7,
+    lookback_days: Optional[int] = None,
+    window_hours: Optional[int] = None,
 ) -> List[dict]:
     """
-    Past alerts in the same domain / topic keyword thread (7-day window).
+    Alerts in the same domain / topic keyword thread (24h cluster window by default).
     """
-    since = datetime.now(timezone.utc) - timedelta(days=lookback_days)
+    if window_hours is not None:
+        since = datetime.now(timezone.utc) - timedelta(hours=window_hours)
+    else:
+        days = lookback_days if lookback_days is not None else 1
+        since = datetime.now(timezone.utc) - timedelta(days=days)
     stmt = (
         select(AlertLog)
         .where(
             AlertLog.triggered_at >= since,
-            AlertLog.suppressed == False,
+            AlertLog.suppressed == False,  # noqa: E712
         )
-        .order_by(desc(AlertLog.triggered_at))
-        .limit(80)
+        .order_by(desc(AlertLog.triggered_at), desc(AlertLog.intelligence_score))
+        .limit(120)
     )
     rows = (await db.execute(stmt)).scalars().all()
 
@@ -497,10 +628,15 @@ async def _fetch_related_alert_events(
             }
         )
 
+    window_label = (
+        f"{window_hours}h"
+        if window_hours is not None
+        else f"{lookback_days or 1}d"
+    )
     if not events and alert_log:
-        notes.append("No related domain alerts in the last 7 days besides the trigger.")
+        notes.append(f"No related domain alerts in the last {window_label} besides the trigger.")
     elif len(events) < 2:
-        notes.append("Limited related alert history in the last 7 days.")
+        notes.append(f"Limited related alert history in the last {window_label}.")
 
     return events
 
