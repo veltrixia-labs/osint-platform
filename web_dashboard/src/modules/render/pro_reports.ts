@@ -1,17 +1,26 @@
 import type { ProStructuralReportItem } from '../api';
 import { fetchProStructuralReports, fetchProStructuralReport } from '../api';
 import { simpleMarkdown, getDomainSlugClass, formatIntelDate, formatIntelDateTime } from './utils';
-import { getTopicCssVars, getTopicDisplayLabel } from '../topics';
+import {
+    getTopicCssVars,
+    getTopicDisplayLabel,
+    normalizeTopicCode,
+    type StrategicTopicCode,
+} from '../topics';
 import L from 'leaflet';
 
 /**
  * Renders the list of Pro Structural Briefs.
  */
-export async function renderProStructuralBriefs(container: HTMLElement, onSelect: (id: string) => void) {
+export async function renderProStructuralBriefs(
+    container: HTMLElement,
+    onSelect: (id: string) => void,
+    topicFilter: StrategicTopicCode | null = null,
+) {
     container.innerHTML = `
         <div class="pro-briefs-container">
             <h2 style="font-size: 1.3rem; color: #c9d1d9; margin: 0 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">Latest Structural Briefs</h2>
-            <div id="briefs-list" class="pro-briefs-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+            <div id="briefs-list" class="pro-briefs-grid pro-briefs-grid--loading">
                 <div class="u-p-2 u-text-center">Synchronizing intelligence assets...</div>
             </div>
         </div>
@@ -20,17 +29,50 @@ export async function renderProStructuralBriefs(container: HTMLElement, onSelect
         const reports: ProStructuralReportItem[] = await fetchProStructuralReports();
         const listContainer = container.querySelector('#briefs-list') as HTMLElement;
         if (!listContainer) return;
+
+        const filtered = topicFilter
+            ? reports.filter((r) => normalizeTopicCode(r.topic) === topicFilter)
+            : reports;
+
+        const paintGrid = (html: string) => {
+            listContainer.classList.remove('pro-briefs-grid--loading', 'pro-briefs-grid--settled');
+            listContainer.classList.add('pro-briefs-grid--transition');
+            listContainer.style.opacity = '0';
+            listContainer.innerHTML = html;
+            requestAnimationFrame(() => {
+                listContainer.style.opacity = '1';
+                listContainer.classList.add('pro-briefs-grid--settled');
+                window.setTimeout(() => {
+                    listContainer.classList.remove('pro-briefs-grid--transition');
+                }, 320);
+            });
+        };
+
         if (reports.length === 0) {
-            listContainer.style.display = 'block';
-            listContainer.innerHTML = `<div class="u-p-2 u-text-center" style="background: var(--card-bg); border: 1px dashed var(--border); border-radius: 12px; margin-top: 2rem;"><div style="font-size: 2.5rem; margin-bottom: 1rem;">📡</div><div style="font-weight: 600; color: #c9d1d9; margin-bottom: 0.5rem;">No Structural Briefs Detected</div><div style="color: #8b949e; font-size: 0.9rem;">Intelligence pipelines are active.</div></div>`;
+            paintGrid(
+                `<div class="pro-briefs-empty u-p-2 u-text-center"><div style="font-size: 2.5rem; margin-bottom: 1rem;">📡</div><div style="font-weight: 600; color: #c9d1d9; margin-bottom: 0.5rem;">No Structural Briefs Detected</div><div style="color: #8b949e; font-size: 0.9rem;">Intelligence pipelines are active.</div></div>`,
+            );
             return;
         }
-        listContainer.innerHTML = reports.map(r => {
-            const dc = getDomainSlugClass(r.topic);
-            const topicVars = getTopicCssVars(r.topic);
-            const topicLabel = getTopicDisplayLabel(r.topic);
-            return `<div class="pro-brief-card ${dc}" data-id="${r.id}" style="${topicVars}"><div class="u-flex-between" style="margin-bottom:1rem;"><span class="domain-chip meta-item-topic--tag">${topicLabel}</span><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">${(r.report_type||'PRO_STRUCTURAL').replace(/_/g,' ')}</span><span style="font-size:0.75rem;color:var(--text-secondary);">${formatIntelDate(r.created_at)}</span></div></div><h3 style="margin:0 0 1rem;font-size:1.2rem;line-height:1.4;color:var(--text-primary);">${r.title}</h3><div style="font-size:0.9rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1.5rem;flex-grow:1;">${r.teaser_md||'Detailed structural analysis of transmission channels, macro-economic dependencies, and market confirmation signals.'}</div><button class="btn-fb pro-brief-btn" style="width:100%;pointer-events:none;">View Full Brief →</button></div>`;
-        }).join('');
+
+        if (!filtered.length) {
+            const filterLabel = topicFilter ? getTopicDisplayLabel(topicFilter) : null;
+            paintGrid(
+                `<div class="pro-briefs-empty u-p-2 u-text-center"><div class="empty-title" style="color: #c9d1d9; font-weight: 600; margin-bottom: 0.5rem;">No Structural Briefs for ${filterLabel}</div><div style="color: #8b949e; font-size: 0.9rem;">Select another domain or clear the filter to view all briefs.</div></div>`,
+            );
+            return;
+        }
+
+        paintGrid(
+            filtered
+                .map((r) => {
+                    const dc = getDomainSlugClass(r.topic);
+                    const topicVars = getTopicCssVars(r.topic);
+                    const topicLabel = getTopicDisplayLabel(r.topic);
+                    return `<div class="pro-brief-card ${dc}" data-id="${r.id}" style="${topicVars}"><div class="u-flex-between" style="margin-bottom:1rem;"><span class="domain-chip meta-item-topic--tag">${topicLabel}</span><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">${(r.report_type || 'PRO_STRUCTURAL').replace(/_/g, ' ')}</span><span style="font-size:0.75rem;color:var(--text-secondary);">${formatIntelDate(r.created_at)}</span></div></div><h3 style="margin:0 0 1rem;font-size:1.2rem;line-height:1.4;color:var(--text-primary);">${r.title}</h3><div style="font-size:0.9rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1.5rem;flex-grow:1;">${r.teaser_md || 'Detailed structural analysis of transmission channels, macro-economic dependencies, and market confirmation signals.'}</div><button class="btn-fb pro-brief-btn" style="width:100%;pointer-events:none;">View Full Brief →</button></div>`;
+                })
+                .join(''),
+        );
         listContainer.querySelectorAll('.pro-brief-card').forEach(card => {
             (card as HTMLElement).addEventListener('click', () => { const id = card.getAttribute('data-id'); if (id) onSelect(id); });
         });

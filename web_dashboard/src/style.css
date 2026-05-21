@@ -7443,6 +7443,27 @@ body.cb-modal-scroll-lock {
   margin-bottom: 2.5rem;
 }
 
+.pro-hub-grid--two {
+  grid-template-columns: minmax(220px, 0.95fr) minmax(320px, 1.35fr);
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .pro-hub-grid--two {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pro-stat-card--layers,
+.pro-stat-card--domains {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.pro-stat-card--domains {
+  min-width: 0;
+}
+
 /* Premium Stat Cards */
 .pro-stat-card {
   box-sizing: border-box;
@@ -7500,6 +7521,35 @@ body.cb-modal-scroll-lock {
   flex-wrap: wrap;
 }
 
+/* Pro Hub — interactive domain filters (Context Briefs parity) */
+button.domain-chip.pro-domain-filter-btn {
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.25;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+button.domain-chip.pro-domain-filter-btn:hover {
+  background: color-mix(in srgb, var(--topic-color) 22%, transparent);
+  border-color: color-mix(in srgb, var(--topic-color) 55%, transparent);
+  transform: translateY(-1px);
+}
+
+button.domain-chip.pro-domain-filter-btn--active,
+button.domain-chip.pro-domain-filter-btn[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--topic-color) 28%, transparent);
+  color: var(--topic-color);
+  border-color: var(--topic-color);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--topic-color) 35%, transparent),
+    0 4px 14px color-mix(in srgb, var(--topic-color) 18%, transparent);
+}
+
 /* Analysis Layers (Pro Insights Hub) */
 .pro-analysis-layers {
   display: flex;
@@ -7525,6 +7575,35 @@ body.cb-modal-scroll-lock {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
+  transition: opacity 0.28s ease;
+}
+
+.pro-briefs-grid--transition {
+  will-change: opacity;
+}
+
+.pro-briefs-grid--settled .pro-brief-card {
+  animation: pro-brief-card-in 0.32s ease both;
+}
+
+@keyframes pro-brief-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pro-briefs-empty {
+  grid-column: 1 / -1;
+  background: var(--card-bg);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  margin-top: 0.5rem;
+  padding: 2rem 1.5rem;
 }
 
 .pro-brief-card {

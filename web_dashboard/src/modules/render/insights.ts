@@ -11,11 +11,16 @@
 import type { ProInsights, UserMe } from '../api';
 import type { ExpertIntelligence } from '../api';
 import { fetchProInsights, fetchExpertIntelligence } from '../api';
-import { getTopicDef, getTopicCssVars, getTopicDisplayLabel, UI_TOPIC_PREVIEW_CODES } from '../topics';
+import {
+    getTopicDef,
+    getTopicCssVars,
+    getTopicDisplayLabel,
+    normalizeTopicCode,
+    UI_TOPIC_PREVIEW_CODES,
+    type StrategicTopicCode,
+} from '../topics';
 import { renderLockedFeature } from '../subscription';
 import { renderProStructuralBriefs, renderProStructuralBriefDetail } from './pro_reports';
-import { formatIntelDate } from './utils';
-
 // ──────────────────────────────────────────────────────────────────────────────
 // Component Primitives (Pure CSS / SVG)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -94,6 +99,38 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
 
     container.innerHTML = `<div class="intelligence-loader">Initializing Pro Suite...</div>`;
 
+    let selectedDomain: StrategicTopicCode | null = null;
+
+    const updateDomainFilterUi = (root: HTMLElement) => {
+        root.querySelectorAll<HTMLButtonElement>('.pro-domain-filter-btn').forEach((btn) => {
+            const code = btn.dataset.domain ?? '';
+            const active = !!code && selectedDomain === normalizeTopicCode(code);
+            btn.classList.toggle('pro-domain-filter-btn--active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+    };
+
+    let domainFilterDelegationBound = false;
+    const ensureDomainFilterDelegation = (root: HTMLElement, onSelectBrief: (id: string) => void) => {
+        if (domainFilterDelegationBound) return;
+        domainFilterDelegationBound = true;
+        root.addEventListener('click', async (e) => {
+            const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.pro-domain-filter-btn');
+            if (!btn || !root.contains(btn)) return;
+            const code = btn.dataset.domain;
+            if (!code) return;
+            const norm = normalizeTopicCode(code);
+            selectedDomain = selectedDomain === norm ? null : norm;
+            updateDomainFilterUi(root);
+            const briefsContainer = root.querySelector(
+                '#pro-hub-structural-briefs-container',
+            ) as HTMLElement | null;
+            if (briefsContainer) {
+                await renderProStructuralBriefs(briefsContainer, onSelectBrief, selectedDomain);
+            }
+        });
+    };
+
     // Internal navigation handler for switching between Hub and Detail view
     const showHub = async () => {
         let data: ProInsights | null = null;
@@ -103,20 +140,6 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
             console.error("Failed to load Pro Insights data:", err);
         }
 
-        const coverageDomains =
-            data?.coverage_domains ??
-            (data?.risk_summary ? Object.keys(data.risk_summary).length : UI_TOPIC_PREVIEW_CODES.length);
-        const activeDomains =
-            data?.active_domains ??
-            (data?.risk_summary
-                ? Object.values(data.risk_summary).filter((s: { intensity?: number }) => (s?.intensity ?? 0) > 0).length
-                : 0);
-
-        const hubStats = {
-            coverage_domains: coverageDomains,
-            active_domains: activeDomains,
-            latest_report: formatIntelDate(new Date()),
-        };
         // Log automation state for devs only
         console.debug('[ProInsights] Automation state: dry_run=true');
 
@@ -157,14 +180,9 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
                 </p>
             </div>
 
-            <!-- Coverage Stats & Analysis Layers -->
-            <div class="pro-hub-grid">
-                <div class="pro-stat-card glow-blue">
-                    <div class="pro-stat-title">Coverage Domains</div>
-                    <div class="pro-stat-value">${hubStats.coverage_domains}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">monitored · ${hubStats.active_domains} active</div>
-                </div>
-                <div class="pro-stat-card" style="grid-column: span 1;">
+            <!-- Analysis Layers & Monitored Domains -->
+            <div class="pro-hub-grid pro-hub-grid--two">
+                <div class="pro-stat-card pro-stat-card--layers">
                     <div class="pro-stat-title" style="margin-bottom: 0.75rem;">Analysis Layers</div>
                     <div class="pro-analysis-layers">
                         <span class="pro-layer-chip">Signals</span>
@@ -173,12 +191,14 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
                         <span class="pro-layer-chip">Exposure Mapping</span>
                     </div>
                 </div>
-                <div class="pro-stat-card" style="grid-column: span 2;">
+                <div class="pro-stat-card pro-stat-card--domains">
                     <div class="pro-stat-title" style="margin-bottom: 0.5rem;">Monitored Domains</div>
-                    <div class="domain-chips-container">
-                        ${UI_TOPIC_PREVIEW_CODES.map(code =>
-                            `<span class="domain-chip meta-item-topic--tag" style="${getTopicCssVars(code)}">${getTopicDisplayLabel(code)}</span>`
-                        ).join('')}
+                    <div class="domain-chips-container" role="group" aria-label="Filter structural briefs by domain">
+                        ${UI_TOPIC_PREVIEW_CODES.map((code) => {
+                            const norm = normalizeTopicCode(code);
+                            const active = selectedDomain === norm;
+                            return `<button type="button" class="domain-chip pro-domain-filter-btn meta-item-topic--tag${active ? ' pro-domain-filter-btn--active' : ''}" data-domain="${code}" style="${getTopicCssVars(code)}" aria-pressed="${active ? 'true' : 'false'}">${getTopicDisplayLabel(code)}</button>`;
+                        }).join('')}
                     </div>
                 </div>
             </div>
@@ -209,16 +229,19 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
             ` : ''}
         </div>`;
 
-        // Render the Structural Briefs list into the specific container
-        const briefsContainer = container.querySelector('#pro-hub-structural-briefs-container') as HTMLElement;
-        if (briefsContainer) {
-            await renderProStructuralBriefs(briefsContainer, (id: string) => {
-                // When a brief is clicked, render its details into the main container
-                renderProStructuralBriefDetail(id, container, () => {
-                    // And when the back button is clicked, restore the hub
-                    showHub();
-                });
+        const onSelectBrief = (id: string) => {
+            renderProStructuralBriefDetail(id, container, () => {
+                showHub();
             });
+        };
+
+        ensureDomainFilterDelegation(container, onSelectBrief);
+
+        const briefsContainer = container.querySelector(
+            '#pro-hub-structural-briefs-container',
+        ) as HTMLElement;
+        if (briefsContainer) {
+            await renderProStructuralBriefs(briefsContainer, onSelectBrief, selectedDomain);
         }
     };
 
