@@ -7443,25 +7443,53 @@ body.cb-modal-scroll-lock {
   margin-bottom: 2.5rem;
 }
 
-.pro-hub-grid--two {
-  grid-template-columns: minmax(220px, 0.95fr) minmax(320px, 1.35fr);
-  align-items: stretch;
+/* Pro Insight page layout (header lives in .page-header-block via main.ts) */
+.pro-insight-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding-top: 0.25rem;
 }
 
-@media (max-width: 900px) {
-  .pro-hub-grid--two {
-    grid-template-columns: 1fr;
-  }
+.pro-section-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
 }
 
-.pro-stat-card--layers,
-.pro-stat-card--domains {
+.pro-insight-pressures .pro-bluf-row {
+  gap: 1.25rem;
+}
+
+.pro-insight-page .pro-bluf-row .bluf-stat-card {
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: linear-gradient(145deg, var(--bg-secondary) 0%, rgba(22, 27, 34, 0.65) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  gap: 0.85rem;
+}
+
+.pro-insight-sector .insight-card {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
-.pro-stat-card--domains {
-  min-width: 0;
+.pro-insight-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pro-insight-filters-label {
+  margin-bottom: 0;
+}
+
+.pro-domain-filter-bar {
+  padding: 0.15rem 0 0.35rem;
 }
 
 /* Premium Stat Cards */
@@ -7548,6 +7576,19 @@ button.domain-chip.pro-domain-filter-btn[aria-pressed='true'] {
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--topic-color) 35%, transparent),
     0 4px 14px color-mix(in srgb, var(--topic-color) 18%, transparent);
+}
+
+button.domain-chip.pro-domain-filter-btn--all {
+  --topic-color: var(--accent);
+}
+
+button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent),
+    0 4px 14px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 /* Analysis Layers (Pro Insights Hub) */

@@ -332,7 +332,12 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
         },
     },
     'pro-map': { title: 'Pro Interactive Map' },
-    'pro-insights': { title: 'Pro Insights' },
+    'pro-insights': {
+        icon: '💎',
+        title: 'Pro Insight',
+        subtitle:
+            '収集・分析されたアラートに基づき、定量マクロ経済データとクロス集計された、プロフェッショナル向けの高度なドメイン別構造分析レポートを提供します',
+    },
     'expert-intel': { title: 'Expert Intelligence' },
     plans: { title: 'Plans & Access' },
     reports: { title: 'Reports' },

@@ -101,13 +101,22 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
 
     let selectedDomain: StrategicTopicCode | null = null;
 
+    const renderDomainFilterButtons = (): string => {
+        const allActive = selectedDomain === null;
+        const allBtn = `<button type="button" class="domain-chip pro-domain-filter-btn pro-domain-filter-btn--all${allActive ? ' pro-domain-filter-btn--active' : ''}" data-domain="" aria-pressed="${allActive ? 'true' : 'false'}">All</button>`;
+        const domainBtns = UI_TOPIC_PREVIEW_CODES.map((code) => {
+            const norm = normalizeTopicCode(code);
+            const active = selectedDomain === norm;
+            return `<button type="button" class="domain-chip pro-domain-filter-btn meta-item-topic--tag${active ? ' pro-domain-filter-btn--active' : ''}" data-domain="${code}" style="${getTopicCssVars(code)}" aria-pressed="${active ? 'true' : 'false'}">${getTopicDisplayLabel(code)}</button>`;
+        }).join('');
+        return allBtn + domainBtns;
+    };
+
     const updateDomainFilterUi = (root: HTMLElement) => {
-        root.querySelectorAll<HTMLButtonElement>('.pro-domain-filter-btn').forEach((btn) => {
-            const code = btn.dataset.domain ?? '';
-            const active = !!code && selectedDomain === normalizeTopicCode(code);
-            btn.classList.toggle('pro-domain-filter-btn--active', active);
-            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-        });
+        const bar = root.querySelector('.pro-domain-filter-bar');
+        if (bar) {
+            bar.innerHTML = renderDomainFilterButtons();
+        }
     };
 
     let domainFilterDelegationBound = false;
@@ -117,10 +126,12 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
         root.addEventListener('click', async (e) => {
             const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.pro-domain-filter-btn');
             if (!btn || !root.contains(btn)) return;
-            const code = btn.dataset.domain;
-            if (!code) return;
-            const norm = normalizeTopicCode(code);
-            selectedDomain = selectedDomain === norm ? null : norm;
+            const code = btn.dataset.domain ?? '';
+            if (code === '') {
+                selectedDomain = null;
+            } else {
+                selectedDomain = normalizeTopicCode(code);
+            }
             updateDomainFilterUi(root);
             const briefsContainer = root.querySelector(
                 '#pro-hub-structural-briefs-container',
@@ -171,62 +182,47 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
             }).join('')
             : `<div class="u-p-2 u-text-center" style="grid-column: 1/-1; opacity:0.6; font-size: 0.9rem;">Intelligence gathering in progress...</div>`;
 
+        const sectorDistributionHtml =
+            data && data.sector_distribution
+                ? `
+            <section class="pro-insight-sector">
+                ${renderCard(
+                    'Sector Distribution',
+                    `
+                    <div class="sector-dist-list">
+                        ${Object.entries((data.sector_distribution || {}) as any)
+                            .map(([topic, count]: [string, any]) => {
+                                const def = getTopicDef(topic === 'null' ? null : topic);
+                                return renderIntensityBar(count, def.label, def.color);
+                            })
+                            .join('')}
+                    </div>
+                `,
+                )}
+            </section>`
+                : '';
+
         container.innerHTML = `
-        <div class="insights-dashboard pro-dashboard">
-            <div class="u-m-bottom-2">
-                <h1 style="font-size: 1.8rem; margin: 0; color: #c9d1d9;">Pro Insights Hub</h1>
-                <p style="color: #8b949e; margin-top: 0.5rem; max-width: 600px;">
-                    Professional-grade structural intelligence, market confirmation, and cascading risk analysis.
-                </p>
-            </div>
-
-            <!-- Analysis Layers & Monitored Domains -->
-            <div class="pro-hub-grid pro-hub-grid--two">
-                <div class="pro-stat-card pro-stat-card--layers">
-                    <div class="pro-stat-title" style="margin-bottom: 0.75rem;">Analysis Layers</div>
-                    <div class="pro-analysis-layers">
-                        <span class="pro-layer-chip">Signals</span>
-                        <span class="pro-layer-chip">Macro Data</span>
-                        <span class="pro-layer-chip">Market Confirmation</span>
-                        <span class="pro-layer-chip">Exposure Mapping</span>
-                    </div>
+        <div class="insights-dashboard pro-dashboard pro-insight-page">
+            <section class="pro-insight-pressures" aria-labelledby="pro-pressures-heading">
+                <h2 id="pro-pressures-heading" class="pro-section-title">Active Market Pressures</h2>
+                <div class="dashboard-row bluf-row pro-bluf-row">
+                    ${riskSummaryHtml}
                 </div>
-                <div class="pro-stat-card pro-stat-card--domains">
-                    <div class="pro-stat-title" style="margin-bottom: 0.5rem;">Monitored Domains</div>
-                    <div class="domain-chips-container" role="group" aria-label="Filter structural briefs by domain">
-                        ${UI_TOPIC_PREVIEW_CODES.map((code) => {
-                            const norm = normalizeTopicCode(code);
-                            const active = selectedDomain === norm;
-                            return `<button type="button" class="domain-chip pro-domain-filter-btn meta-item-topic--tag${active ? ' pro-domain-filter-btn--active' : ''}" data-domain="${code}" style="${getTopicCssVars(code)}" aria-pressed="${active ? 'true' : 'false'}">${getTopicDisplayLabel(code)}</button>`;
-                        }).join('')}
-                    </div>
-                </div>
-            </div>
+            </section>
 
-            <!-- Structural Briefs Embedded Section -->
-            <div id="pro-hub-structural-briefs-container" class="u-m-bottom-2">
+            ${sectorDistributionHtml}
+
+            <section class="pro-insight-filters" aria-label="Monitored Domains">
+                <div class="pro-stat-title pro-insight-filters-label">Monitored Domains</div>
+                <div class="domain-chips-container pro-domain-filter-bar" role="group" aria-label="Filter structural briefs by domain">
+                    ${renderDomainFilterButtons()}
+                </div>
+            </section>
+
+            <div id="pro-hub-structural-briefs-container">
                 <!-- Injected via renderProStructuralBriefs -->
             </div>
-
-            <!-- Row 1: BLUF Summary -->
-            <h2 style="font-size: 1.3rem; color: #c9d1d9; margin: 2rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">Active Market Pressures</h2>
-            <div class="dashboard-row bluf-row">
-                ${riskSummaryHtml}
-            </div>
-            
-            ${data && data.sector_distribution ? `
-            <div class="dashboard-grid" style="margin-top: 2rem;">
-                <!-- Sector Distribution -->
-                ${renderCard('Sector Distribution', `
-                    <div class="sector-dist-list">
-                        ${Object.entries((data.sector_distribution || {}) as any).map(([topic, count]: [string, any]) => {
-                            const def = getTopicDef(topic === 'null' ? null : topic);
-                            return renderIntensityBar(count, def.label, def.color);
-                        }).join('')}
-                    </div>
-                `)}
-            </div>
-            ` : ''}
         </div>`;
 
         const onSelectBrief = (id: string) => {

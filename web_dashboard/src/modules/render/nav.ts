@@ -25,7 +25,7 @@ const NAV_ITEMS: NavItem[] = [
     { id: 'briefs',       label: 'Context Briefs',       icon: '🛰',  minTier: 'free',    group: 'core' },
     { id: 'map',          label: 'Global Map',           icon: '🌐', minTier: 'free',    group: 'core' },
     // Premium – gated
-    { id: 'pro-insights', label: 'Pro Insights',         icon: '💎', minTier: 'pro',     group: 'premium' },
+    { id: 'pro-insights', label: 'Pro Insight',          icon: '💎', minTier: 'pro',     group: 'premium' },
     { id: 'pro-map',      label: 'Pro Interactive Map', icon: 'travel_explore', minTier: 'pro', group: 'premium' },
     { id: 'expert-intel', label: 'Expert Intelligence',  icon: '🔬', minTier: 'experts', group: 'premium' },
     // Account
