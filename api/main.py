@@ -13,6 +13,11 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from dotenv import load_dotenv
+from pathlib import Path
+
+# Load .env before DB/auth modules read os.environ (Render: set vars in dashboard too).
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -21,11 +26,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from db.database import get_db
-from db.admin_bootstrap import login_via_render_admin_env
 from db.enums import ReportType
 from db.models import AnalystProfile, Report, SystemMetric
-
-load_dotenv()
 
 from api.auth import (
     get_password_hash, verify_password, create_access_token,
@@ -113,7 +115,8 @@ async def startup_event():
             await seed_admin(session)
         logger.info("[Antigravity] Startup initialization complete. Scheduler is running.")
     except Exception as e:
-        logger.error(f"Error during API startup initialization: {e}", exc_info=True)
+        # Never abort process startup — API must stay up for health checks and public feeds.
+        logger.error("Error during API startup initialization: %s", e, exc_info=True)
 
 
 @app.middleware("http")
@@ -298,6 +301,8 @@ async def login(
         raise HTTPException(status_code=400, detail="Email and password are required")
 
     logger.info("Login attempt for email: %s", email)
+
+    from db.admin_bootstrap import login_via_render_admin_env
 
     admin_user = await login_via_render_admin_env(db, email, password)
     if admin_user is not None:

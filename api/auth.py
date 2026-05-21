@@ -1,10 +1,10 @@
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Tuple, Any
+from typing import Optional, Tuple, Any, Union
 from jose import JWTError, jwt
-from argon2 import PasswordHasher
 from fastapi import Request, Response, HTTPException, status, Depends
+from api.password_utils import get_password_hash, verify_password
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from db.database import get_db
@@ -18,18 +18,9 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
-ph = PasswordHasher()
 blacklist_manager = BlacklistManager(os.getenv("REDIS_URL"))
 session_manager = SessionManager(blacklist_manager)
 
-def get_password_hash(password: str) -> str:
-    return ph.hash(password)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        return ph.verify(hashed_password, plain_password)
-    except:
-        return False
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -92,7 +83,7 @@ async def get_current_user_from_access(token: str = Depends(oauth2_scheme), db: 
         raise credentials_exception
 
 def resolve_optional_user(
-    current_user: Optional[AnalystProfile] | tuple | Any,
+    current_user: Optional[Union[AnalystProfile, tuple, Any]],
 ) -> Optional[AnalystProfile]:
     """Normalize Depends output: optional user profile or (user, session_id, version) tuple."""
     if current_user is None:

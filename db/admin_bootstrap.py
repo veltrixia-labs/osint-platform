@@ -7,7 +7,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from api.auth import get_password_hash
+from api.password_utils import get_password_hash
 from db.models import AnalystProfile
 
 logger = logging.getLogger(__name__)
@@ -21,11 +21,27 @@ def render_admin_env_configured() -> bool:
     return bool(resolve_admin_email())
 
 
+def _safe_compare_text(left: str, right: str) -> bool:
+    """Constant-time string compare; never raises on length/encoding edge cases."""
+    if not left or not right:
+        return False
+    try:
+        a = left.encode("utf-8")
+        b = right.encode("utf-8")
+        if len(a) != len(b):
+            return False
+        return secrets.compare_digest(a, b)
+    except Exception:
+        return False
+
+
 def credentials_match_render_admin(email: str, password: str) -> bool:
     """
     Constant-time check against Render env ADMIN_EMAIL / ADMIN_PASSWORD.
     No-op when env vars are unset (never matches).
     """
+    if not email or not password:
+        return False
     admin_password = (os.getenv("ADMIN_PASSWORD") or "").strip()
     if not admin_password:
         return False
@@ -33,9 +49,9 @@ def credentials_match_render_admin(email: str, password: str) -> bool:
     if not admin_email:
         return False
     email_norm = (email or "").strip().lower()
-    if not secrets.compare_digest(email_norm, admin_email):
+    if not _safe_compare_text(email_norm, admin_email):
         return False
-    return secrets.compare_digest(password, admin_password)
+    return _safe_compare_text(password, admin_password)
 
 
 def resolve_admin_email() -> str:
@@ -67,7 +83,16 @@ async def ensure_bootstrap_admin(db: AsyncSession) -> bool:
         logger.warning("ADMIN_BOOTSTRAP: ADMIN_PASSWORD not set. Skipping.")
         return False
 
-    admin_email = resolve_admin_email()
+    try:
+        admin_email = resolve_admin_email()
+    except Exception as exc:
+        logger.error("ADMIN_BOOTSTRAP: invalid admin email config: %s", exc)
+        return False
+
+    if not admin_email:
+        logger.warning("ADMIN_BOOTSTRAP: could not resolve admin email. Skipping.")
+        return False
+
     legacy_chat_id = (os.getenv("ADMIN_CHAT_ID") or "admin").strip()
 
     try:
@@ -124,20 +149,25 @@ async def login_via_render_admin_env(
 ) -> Optional[AnalystProfile]:
     """
     Approach A: env credentials match → sync admin row in DB → return profile for JWT issuance.
+    Never raises — login route treats None as normal auth fallback.
     """
-    if not credentials_match_render_admin(email, password):
+    try:
+        if not credentials_match_render_admin(email, password):
+            return None
+        if not await ensure_bootstrap_admin(db):
+            logger.error("ADMIN_LOGIN: bootstrap sync failed for %s", resolve_admin_email())
+            return None
+        admin_email = resolve_admin_email()
+        user = (
+            await db.execute(select(AnalystProfile).where(AnalystProfile.email == admin_email))
+        ).scalar_one_or_none()
+        if user:
+            user.user_role = "admin"
+            user.is_admin = True
+            user.is_active = True
+            await db.commit()
+            await db.refresh(user)
+        return user
+    except Exception as exc:
+        logger.error("ADMIN_LOGIN: unexpected error for %s: %s", email, exc, exc_info=True)
         return None
-    if not await ensure_bootstrap_admin(db):
-        logger.error("ADMIN_LOGIN: bootstrap sync failed for %s", resolve_admin_email())
-        return None
-    admin_email = resolve_admin_email()
-    user = (
-        await db.execute(select(AnalystProfile).where(AnalystProfile.email == admin_email))
-    ).scalar_one_or_none()
-    if user:
-        user.user_role = "admin"
-        user.is_admin = True
-        user.is_active = True
-        await db.commit()
-        await db.refresh(user)
-    return user
