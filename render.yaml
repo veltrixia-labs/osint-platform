@@ -21,7 +21,8 @@ services:
         value: "true"
       - key: PRO_AUTOMATION_ENABLED_DOMAINS
         value: "energy_resource_risk,global_market_intelligence,ai_semiconductor_intelligence,supply_chain_intelligence,crypto_geopolitics,defense_technology"
-      # Set in Render dashboard (secret): PRO_BRIEF_REGEN_SECRET — for /api/dev/rebuild-pro-platform?purge=true
+      # Set in Render dashboard (secret): PRO_BRIEF_REGEN_SECRET
+      # POST /api/dev/sync-external-data?rebuild=true&purge=true  OR  /api/dev/backfill-and-rebuild?purge=true
 
   - type: web
     name: osint-web
