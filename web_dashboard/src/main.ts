@@ -663,6 +663,7 @@ async function initDashboard() {
         const proMapContainer = document.querySelector<HTMLElement>('#pro-map-container');
         applyPageHeader(tab);
         mainContent?.classList.toggle('main-content--global-map', tab === 'map');
+        mainContent?.classList.toggle('main-content--pro-insight', tab === 'pro-insights');
 
         const pulseBarEl = document.querySelector<HTMLElement>('#pulse-bar');
         if (pulseBarEl) {
