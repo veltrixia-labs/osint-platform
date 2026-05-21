@@ -7484,6 +7484,31 @@ body.cb-modal-scroll-lock {
   margin-top: 0;
 }
 
+/* Hub panels — same chrome as Sector Distribution (.insight-card) */
+.pro-insight-page .pro-insight-panel,
+.pro-insight-page .pro-insight-sector .insight-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.pro-insight-page .pro-insight-panel .insight-card-header,
+.pro-insight-page .pro-insight-sector .insight-card-header {
+  padding: 1.25rem;
+}
+
+.pro-insight-page .pro-insight-panel .insight-card-body,
+.pro-insight-page .pro-insight-sector .insight-card-body {
+  padding: 1.25rem;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.pro-insight-page .pro-insight-panel .insight-card-title,
+.pro-insight-page .pro-insight-sector .insight-card-title {
+  margin: 0 0 1rem;
+}
+
 .pro-insight-page .pro-section-title {
   font-size: 1.15rem;
   font-weight: 600;
@@ -7493,25 +7518,23 @@ body.cb-modal-scroll-lock {
   border-bottom: 1px solid var(--border);
 }
 
-.pro-insight-sector .insight-card-title {
-  margin: 0 0 1rem;
-}
-
-.pro-insight-pressures .pro-bluf-row {
+.pro-insight-pressures .pro-insight-panel .insight-card-body .pro-bluf-row {
   display: grid;
   width: 100%;
+  min-width: 0;
   gap: 0.75rem;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  box-sizing: border-box;
 }
 
 @media (max-width: 1280px) {
-  .pro-insight-pressures .pro-bluf-row {
+  .pro-insight-pressures .pro-insight-panel .insight-card-body .pro-bluf-row {
     grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
   }
 }
 
 @media (max-width: 640px) {
-  .pro-insight-pressures .pro-bluf-row {
+  .pro-insight-pressures .pro-insight-panel .insight-card-body .pro-bluf-row {
     grid-template-columns: 1fr;
   }
 }
@@ -7718,30 +7741,25 @@ body.cb-modal-scroll-lock {
   -webkit-backdrop-filter: blur(12px);
 }
 
-.pro-insight-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.pro-insight-filters-label {
-  margin-bottom: 1.25rem;
+.pro-insight-filters .pro-domain-filter-bar {
+  padding: 0;
+  margin: 0;
 }
 
 .pro-insight-briefs .pro-briefs-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
   width: 100%;
   min-width: 0;
 }
 
-.pro-insight-briefs .pro-briefs-container > .pro-section-title {
-  margin-bottom: 1.25rem;
+.pro-insight-briefs .pro-insight-panel .insight-card-body {
+  padding: 1.25rem;
 }
 
 .pro-insight-briefs .pro-briefs-grid {
-  margin-top: 0;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .pro-domain-filter-bar {

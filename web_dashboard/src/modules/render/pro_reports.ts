@@ -21,9 +21,15 @@ export async function renderProStructuralBriefs(
 ) {
     container.innerHTML = `
         <div class="pro-briefs-container">
-            <h2 class="pro-section-title">Latest Structural Briefs</h2>
-            <div id="briefs-list" class="pro-briefs-grid pro-briefs-grid--loading">
-                <div class="u-p-2 u-text-center">Synchronizing intelligence assets...</div>
+            <div class="insight-card pro-insight-panel">
+                <div class="insight-card-header">
+                    <h3 class="insight-card-title">Latest Structural Briefs</h3>
+                </div>
+                <div class="insight-card-body">
+                    <div id="briefs-list" class="pro-briefs-grid pro-briefs-grid--loading">
+                        <div class="u-p-2 u-text-center">Synchronizing intelligence assets...</div>
+                    </div>
+                </div>
             </div>
         </div>
     `;

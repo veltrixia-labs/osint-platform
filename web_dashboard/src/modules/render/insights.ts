@@ -28,7 +28,7 @@ import { renderProStructuralBriefs, renderProStructuralBriefDetail } from './pro
 /** Renders a "Dashboard Card" wrapper */
 function renderCard(title: string, content: string, footer?: string, accentColor = '#58a6ff'): string {
     return `
-    <div class="insight-card" style="--accent: ${accentColor}">
+    <div class="insight-card pro-insight-panel" style="--accent: ${accentColor}">
         <div class="insight-card-header">
             <h3 class="insight-card-title">${title}</h3>
         </div>
@@ -202,23 +202,27 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
             </section>`
                 : '';
 
+        const pressuresPanel = renderCard(
+            'Active Market Pressures',
+            `<div class="dashboard-row bluf-row pro-bluf-row" role="list">${riskSummaryHtml}</div>`,
+        );
+
+        const monitoredDomainsPanel = renderCard(
+            'Monitored Domains',
+            `<div class="domain-chips-container pro-domain-filter-bar" role="group" aria-label="Filter structural briefs by domain">${renderDomainFilterButtons()}</div>`,
+        );
+
         container.innerHTML = `
         <div class="cb-briefs-page pro-insight-hub">
         <div class="insights-dashboard pro-dashboard pro-insight-page">
             <section class="pro-insight-pressures pro-insight-section" aria-labelledby="pro-pressures-heading">
-                <h2 id="pro-pressures-heading" class="pro-section-title">Active Market Pressures</h2>
-                <div class="dashboard-row bluf-row pro-bluf-row">
-                    ${riskSummaryHtml}
-                </div>
+                ${pressuresPanel}
             </section>
 
             ${sectorDistributionHtml}
 
             <section class="pro-insight-filters pro-insight-section" aria-label="Monitored Domains">
-                <h2 class="pro-section-title pro-insight-filters-label">Monitored Domains</h2>
-                <div class="domain-chips-container pro-domain-filter-bar" role="group" aria-label="Filter structural briefs by domain">
-                    ${renderDomainFilterButtons()}
-                </div>
+                ${monitoredDomainsPanel}
             </section>
 
             <section id="pro-hub-structural-briefs-container" class="pro-insight-briefs pro-insight-section" aria-label="Latest Structural Briefs">
