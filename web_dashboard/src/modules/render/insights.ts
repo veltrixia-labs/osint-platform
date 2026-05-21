@@ -203,7 +203,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
                 : '';
 
         container.innerHTML = `
-        <div class="pro-insight-shell">
+        <div class="cb-briefs-page pro-insight-hub">
         <div class="insights-dashboard pro-dashboard pro-insight-page">
             <section class="pro-insight-pressures" aria-labelledby="pro-pressures-heading">
                 <h2 id="pro-pressures-heading" class="pro-section-title">Active Market Pressures</h2>
