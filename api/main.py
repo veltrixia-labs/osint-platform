@@ -128,6 +128,16 @@ async def add_no_cache_header(request: Request, call_next):
     return response
 
 
+@app.middleware("http")
+async def ensure_json_utf8_charset(request: Request, call_next):
+    """Ensure JSON responses declare UTF-8 for correct client decoding."""
+    response = await call_next(request)
+    content_type = response.headers.get("content-type", "")
+    if content_type.startswith("application/json") and "charset" not in content_type.lower():
+        response.headers["content-type"] = "application/json; charset=utf-8"
+    return response
+
+
 logger.info("--- OSINT SCHEDULER STARTUP ---")
 logger.info("SCHEDULER_V2_ACTIVE: SUCCESS_ASYNC_NATIVE")
 logger.info(f"--- OSINT API BOOTING [Version: {COMMIT_HASH}] ---")

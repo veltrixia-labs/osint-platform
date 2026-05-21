@@ -3,6 +3,8 @@
  * OSINT Risk Intelligence API Client
  */
 
+import { parseApiJson } from './text_encoding';
+
 /** Default page size for Alert Stream list endpoints. */
 export const ALERT_STREAM_DISPLAY_LIMIT = 30;
 
@@ -247,7 +249,7 @@ function createNetworkErrorResponse(): Response {
     return new Response(JSON.stringify({ error: 'network_error', synthetic: true }), {
         status: SYNTHETIC_NETWORK_STATUS,
         statusText: 'Network Unavailable',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
     });
 }
 
@@ -631,7 +633,7 @@ export async function fetchFreeAlerts(
                 : `Could not load alerts (HTTP ${resp.status}).`
         );
     }
-    const data = await resp.json();
+    const data = await parseApiJson<FreeAlertFeedItem[]>(resp);
     if (!Array.isArray(data)) {
         console.error('[API] fetchFreeAlerts: expected JSON array, got', typeof data);
         throw new Error('Invalid response from server.');
@@ -642,7 +644,7 @@ export async function fetchFreeAlerts(
 export async function fetchFreeAlert(id: string): Promise<FreeAlertFeedItem> {
     const resp = await apiClient.get(`/free/alerts/${id}`);
     if (!resp.ok) throw new Error('Free alert not found');
-    return await resp.json();
+    return await parseApiJson<FreeAlertFeedItem>(resp);
 }
 
 export async function fetchAnalysts(): Promise<AnalystProfile[]> {
@@ -750,11 +752,11 @@ export async function fetchBackbone(sector: string): Promise<BackboneNode[]> {
 
 export async function fetchProStructuralReports(): Promise<ProStructuralReportList> {
     const resp = await apiClient.get('/pro/reports');
-    return resp.ok ? await resp.json() : [];
+    return resp.ok ? await parseApiJson<ProStructuralReportList>(resp) : [];
 }
 
 export async function fetchProStructuralReport(id: string): Promise<ProStructuralReportItem> {
     const resp = await apiClient.get(`/pro/reports/${id}`);
     if (!resp.ok) throw new Error("Pro report not found");
-    return await resp.json();
+    return await parseApiJson<ProStructuralReportItem>(resp);
 }

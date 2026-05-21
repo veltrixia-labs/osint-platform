@@ -35,6 +35,30 @@ export function formatIntelDateTime(
     return d.toLocaleString(INTEL_DATE_LOCALE, options);
 }
 
+/** English-only time (e.g. pulse bar). */
+export function formatIntelTime(
+    dateInput: string | Date | number | null | undefined,
+    options: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' },
+): string {
+    if (dateInput == null || dateInput === '') return '';
+    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString(INTEL_DATE_LOCALE, options);
+}
+
+/** Compact English date+time for feed cards (Alert Stream, Context Briefs). */
+export function formatIntelFeedTimestamp(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso || '—';
+    return formatIntelDateTime(d, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
 /**
  * Formats an intensity value for UI display.
  */

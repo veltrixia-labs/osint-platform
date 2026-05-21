@@ -8,6 +8,7 @@ import {
     type StrategicTopicCode,
 } from '../topics';
 import { resolveAlertHeadline } from '../alert_display';
+import { formatIntelFeedTimestamp, formatIntelTime } from './utils';
 
 /**
  * [v34] Simplified Evidence Modal for Live Alerts (Non-global)
@@ -106,7 +107,7 @@ export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
     }
 
     const severityClass = latest.severity.toLowerCase();
-    const timeStr = new Date(latest.triggered_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const timeStr = formatIntelTime(latest.triggered_at);
     const canonicalTopic = normalizeTopicCode(latest.topic);
     const topicColor = getTopicColor(canonicalTopic);
     const topicLabel = getTopicDisplayLabel(canonicalTopic);
@@ -167,11 +168,9 @@ export function renderAlerts(
         const topicLabel = getTopicDisplayLabel(canonicalTopic);
         const headline = resolveAlertHeadline(alert);
         const severityClass = alert.severity.toLowerCase();
-        const date = new Date(alert.triggered_at);
-
-        const displayDate = isNaN(date.getTime()) ? 'Recent' : date.toLocaleString(undefined, {
-            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
+        const displayDate = alert.triggered_at
+            ? formatIntelFeedTimestamp(alert.triggered_at)
+            : 'Recent';
 
         const status = alert.backbone_discovery_status || 'idle';
         const statusMap: Record<string, { label: string, class: string }> = {

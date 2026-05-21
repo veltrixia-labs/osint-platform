@@ -12,6 +12,7 @@ console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
 import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
+import { formatIntelTime } from './modules/render/utils'
 // (Pro reports now handled within Pro Insights hub)
 import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, confirmCheckoutSession, completeStripeSignup, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase, initApiBase } from './modules/api'
 import type { UserMe } from './modules/api'
@@ -604,7 +605,7 @@ async function initDashboard() {
                 label.textContent = `SYNC: ${status.toUpperCase()}`;
             }
             if (time) {
-                time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                time.textContent = formatIntelTime(new Date(), { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             }
         });
     });

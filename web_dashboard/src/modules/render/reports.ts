@@ -1,5 +1,5 @@
 import { getTopicDef, canAccessReport, normalizeReportType, REPORT_TYPE_LABELS, REPORT_TYPE_MIN_TIER } from '../topics';
-import { sanitizeMarkdownIntensities, simpleMarkdown } from './utils';
+import { sanitizeMarkdownIntensities, simpleMarkdown, formatIntelDate } from './utils';
 
 /**
  * Renders the full Situational Report detail view.
@@ -8,7 +8,7 @@ import { sanitizeMarkdownIntensities, simpleMarkdown } from './utils';
 export function renderReportDetail(report: any, userTier: string, container: HTMLElement, onBack?: () => void) {
     const dateStr = report.created_at || "";
     const cleanDate = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
-    const date = new Date(cleanDate).toLocaleDateString();
+    const date = formatIntelDate(cleanDate);
 
     // [v30] Dynamic Topic Sync: Infer topic from title suffix if possible
     let effectiveTopic = report.topic_code ?? null;

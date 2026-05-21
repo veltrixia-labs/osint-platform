@@ -8,6 +8,7 @@ human-readable Markdown report for Pro users.
 from typing import Any, List, Optional, Dict
 import math
 
+from reports.text_encoding import sanitize_unicode_tree
 from analysis.pro_global_series import (
     energy_supply_driven_market_status,
     merge_relevance_maps,
@@ -567,7 +568,7 @@ def build_pro_structural_report_payload(context: dict) -> dict:
         sid: relevance_display_name(relevance_map, sid) for sid in relevance_map
     }
 
-    return {
+    payload = {
         "domain": {
             "domain_id": domain.get("domain_id"),
             "display_name": domain.get("display_name"),
@@ -619,6 +620,7 @@ def build_pro_structural_report_payload(context: dict) -> dict:
             "missing_data": []
         }
     }
+    return sanitize_unicode_tree(payload)
 
 
 def _build_market_breakdown(prices: list, group_map: dict, interp_map: dict) -> list:

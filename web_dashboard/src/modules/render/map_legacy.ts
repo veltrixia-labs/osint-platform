@@ -11,7 +11,7 @@ import type { Alert } from '../api';
 import { fetchAlerts, fetchAlert, apiClient } from '../api';
 import { getTopicDef } from '../topics';
 import { STRATEGIC_ASSETS } from '../infrastructure';
-import { getAlertCoords, getNodeCoords } from './utils';
+import { getAlertCoords, getNodeCoords, formatIntelDateTime } from './utils';
 import { renderImpactSidebar, hideImpactSidebar } from './impact_panel';
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -543,7 +543,7 @@ function createTacticalPopup(alert: Alert, color: string, detailed = false): str
                 ` : ''}
                 
                 <div style="font-size: 0.65rem; opacity: 0.5; margin-top: 10px;">
-                    DETECTED: ${new Date(alert.triggered_at).toLocaleString('en-US', { timeStyle: 'short', dateStyle: 'medium' })}
+                    DETECTED: ${formatIntelDateTime(alert.triggered_at)}
                 </div>
             </div>
             <div class="tactical-card-footer" style="justify-content: flex-end;">

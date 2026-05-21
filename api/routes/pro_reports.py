@@ -16,6 +16,7 @@ from db.database import AsyncSessionLocal
 from db.models import Report, AnalystProfile, AlertLog
 from api.gating import get_effective_tier, TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE, TIER_GUEST
 from api.auth import get_optional_current_user
+from reports.text_encoding import sanitize_unicode_tree
 
 router = APIRouter(prefix="/pro", tags=["Pro Reports"])
 
@@ -76,13 +77,13 @@ async def get_pro_reports(
     return [
         {
             "id": str(r.id),
-            "title": r.title,
+            "title": sanitize_unicode_tree(r.title),
             "report_type": r.report_type,
             "topic": r.topic_code,
             "plan_required": r.plan_required,
             "is_premium": r.is_premium,
             "created_at": r.created_at.isoformat() if r.created_at else None,
-            "teaser_md": r.teaser_md
+            "teaser_md": sanitize_unicode_tree(r.teaser_md),
         }
         for r in reports
     ]
@@ -158,12 +159,12 @@ async def get_pro_report_detail(
         
     return {
         "id": str(report.id),
-        "title": report.title,
+        "title": sanitize_unicode_tree(report.title),
         "report_type": report.report_type,
         "topic": report.topic_code,
         "plan_required": report.plan_required,
         "is_premium": report.is_premium,
         "created_at": report.created_at.isoformat() if report.created_at else None,
-        "content_markdown": report.content_markdown,
-        "structured_payload": report.structured_payload
+        "content_markdown": sanitize_unicode_tree(report.content_markdown),
+        "structured_payload": sanitize_unicode_tree(report.structured_payload),
     }

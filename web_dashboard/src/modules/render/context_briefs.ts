@@ -3,7 +3,7 @@
  * Context Briefs renderer — High-detail data without AI scoring.
  * Layout aligns with Pro Insights / Latest Structural Briefs (grid + premium cards).
  */
-import { simpleMarkdown } from './utils';
+import { simpleMarkdown, formatIntelFeedTimestamp } from './utils';
 import type { FreeAlertFeedItem } from '../api';
 import {
     getTopicDisplayLabel,
@@ -26,15 +26,6 @@ type ContextNewsRow = {
     url?: string | null;
     source_url?: string | null;
 };
-
-function formatDate(iso: string): string {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso || '—';
-    return d.toLocaleString(undefined, {
-        month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
-}
 
 /** Strip trigger-style prefixes (e.g. acceleration:, entity_surge:) for display titles. */
 function cleanBriefTitle(raw: string): string {
@@ -840,7 +831,7 @@ function renderStructuredContent(
 
 function renderFeedCard(item: FreeAlertFeedItem, index: number, viewerTier: string = 'free'): string {
     const cardId = `cb-card-${index}`;
-    const triggeredStr = formatDate(item.triggered_at);
+    const triggeredStr = formatIntelFeedTimestamp(item.triggered_at);
     const canonicalTopic = normalizeTopicCode(item.topic);
     const topicStr = getTopicDisplayLabel(canonicalTopic);
     const topicVars = getTopicCssVars(canonicalTopic);

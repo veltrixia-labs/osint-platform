@@ -16,6 +16,7 @@ from db.database import AsyncSessionLocal
 from db.models import Report, AlertLog
 from analysis.pro_structural_context import build_pro_structural_context
 from reports.pro_structural_report_builder import build_pro_structural_report, build_pro_structural_report_payload
+from reports.text_encoding import sanitize_unicode_tree
 from analysis.pro_domain_config import get_pro_domain_config, infer_domain_from_topic
 
 logger = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ async def run_pro_structural_report_generation(
         )
         
         # 3. Build Report Markdown & Payload
-        report_md = build_pro_structural_report(context)
+        report_md = sanitize_unicode_tree(build_pro_structural_report(context))
         payload = build_pro_structural_report_payload(context)
         
         # 4. Prepare Metadata

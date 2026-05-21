@@ -1,5 +1,6 @@
 import { updateWatchlist } from '../api';
 import type { AnalystProfile } from '../api';
+import { formatIntelTime } from './utils';
 
 /**
  * Renders the primary sidebar containing strategic entities and analyst profile info.
@@ -64,7 +65,7 @@ export function renderSidebar(analysts: AnalystProfile[], container: HTMLElement
             </div>
             <div style="font-size: 0.6rem; opacity: 0.4; text-align: center; margin-top: 0.5rem; line-height: 1.4;">
                 System Status: <span style="color:#3fb950;">Stable</span><br>
-                Last Refined: ${new Date().toLocaleTimeString()}
+                Last Refined: ${formatIntelTime(new Date(), { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </div>
             <div style="font-size: 0.6rem; opacity: 0.3; text-align: center; margin-top: 8px;">&copy; 2026 VELTRIXIA LABS</div>
         </div>

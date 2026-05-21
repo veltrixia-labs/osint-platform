@@ -10,6 +10,7 @@
  */
 
 import type { UserMe } from './api';
+import { formatIntelDate } from './render/utils';
 import type { TopicDef } from './topics';
 import { fetchCheckoutSession, cancelSubscription } from './api';
 import { promptCheckoutEmail } from './checkout_email_modal';
@@ -410,7 +411,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
     // Build expiry string
     let expiryHtml = '';
     if (user.expires_at) {
-        const formatted = new Date(user.expires_at).toLocaleDateString('en-US', {
+        const formatted = formatIntelDate(user.expires_at, {
             year: 'numeric', month: 'long', day: 'numeric'
         });
         if (grace) {
