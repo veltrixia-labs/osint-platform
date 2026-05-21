@@ -1,8 +1,11 @@
 """
-Pro Report Builder.
+Pro Report Builder (LEGACY — not used by Pro Insights UI).
 
-Orchestrates multiple analysis layers (BEA Macro, BEA Industry, BLS PPI)
-to generate a consolidated quantitative report in JSON format.
+Orchestrates BEA Macro / Industry + BLS PPI into a standalone JSON report.
+The live Pro Insights pipeline uses:
+  analysis/pro_structural_context.py
+  reports/pro_structural_report_builder.py
+  jobs/pro_report_generator.py
 """
 
 import logging

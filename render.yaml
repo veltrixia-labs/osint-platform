@@ -14,6 +14,14 @@ services:
         value: production
       - key: PYTHON_VERSION
         value: "3.11.9"
+      # Pro Structural automation (off by default; enable after data pipelines verified)
+      - key: ENABLE_PRO_AUTOMATION
+        value: "false"
+      - key: PRO_AUTOMATION_DRY_RUN
+        value: "true"
+      - key: PRO_AUTOMATION_ENABLED_DOMAINS
+        value: "energy_resource_risk,global_market_intelligence,ai_semiconductor_intelligence,supply_chain_intelligence,crypto_geopolitics,defense_technology"
+      # Set in Render dashboard (secret): PRO_BRIEF_REGEN_SECRET — for /api/dev/generate-pro-structural-briefs?purge=true
 
   - type: web
     name: osint-web

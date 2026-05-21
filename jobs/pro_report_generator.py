@@ -60,13 +60,18 @@ async def run_pro_structural_report_generation(
         domain_info = context.get("domain", {})
         display_name = domain_info.get("display_name", "General Intelligence")
         
-        # 5. Create Report Record
+        # 5. Teaser for hub list cards
+        exec_summary = (payload.get("executive_summary") or "") if isinstance(payload, dict) else ""
+        teaser_md = (exec_summary[:277] + "...") if len(exec_summary) > 280 else exec_summary
+
+        # 6. Create Report Record
         new_report = Report(
             report_type="pro_structural", # Explicitly identify as structural brief
             title=f"Structural Impact Brief - {display_name}",
             topic_code=domain_info.get("domain_id", topic or "global"),
             content_markdown=report_md,
             structured_payload=payload,
+            teaser_md=teaser_md or None,
             plan_required="pro",
             is_premium=True,
             confidence_level="High",

@@ -569,6 +569,8 @@ def build_pro_structural_report_payload(context: dict) -> dict:
     }
 
     payload = {
+        "payload_schema_version": "pro_structural_v2",
+        "generator": "reports.pro_structural_report_builder",
         "domain": {
             "domain_id": domain.get("domain_id"),
             "display_name": domain.get("display_name"),
