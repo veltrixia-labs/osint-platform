@@ -77,7 +77,8 @@ async def build_pro_structural_context(
             "title": alert_log.target_label,
             "topic": alert_log.topic,
             "triggered_at": alert_log.triggered_at.isoformat() if alert_log.triggered_at else None,
-            "related_news": related_news[:5] # Limit to top 5
+            "source_url": _first_evidence_url(meta),
+            "related_news": related_news[:5]  # Limit to top 5
         }
 
     related_events = await _fetch_related_alert_events(
@@ -415,6 +416,17 @@ def _alert_matches_domain_context(
     return bool(keywords) and any(kw in label for kw in keywords)
 
 
+def _first_evidence_url(meta: Optional[dict]) -> Optional[str]:
+    """Primary external URL from alert metadata evidence_list."""
+    if not meta:
+        return None
+    for item in meta.get("evidence_list") or []:
+        url = item.get("url") or item.get("link") or item.get("source_url")
+        if url and str(url).strip():
+            return str(url).strip()
+    return None
+
+
 async def _fetch_related_alert_events(
     db: AsyncSession,
     alert_log: Optional[AlertLog],
@@ -470,6 +482,7 @@ async def _fetch_related_alert_events(
 
     events: List[dict] = []
     for row in selected:
+        row_meta = row.metadata_json or {}
         events.append(
             {
                 "alert_id": str(row.id),
@@ -480,7 +493,7 @@ async def _fetch_related_alert_events(
                 "timestamp": row.triggered_at.isoformat() if row.triggered_at else None,
                 "source": "alert_log",
                 "location_label": None,
-                "source_url": None,
+                "source_url": _first_evidence_url(row_meta),
             }
         )
 
@@ -540,7 +553,8 @@ def _build_event_timeline(
             {
                 "timestamp": timestamp,
                 "title": title,
-                "source_url": source_url,
+                "alert_id": None,
+                "source_url": (str(source_url).strip() if source_url else None) or None,
                 "location_label": location_label,
                 "source": "news",
                 "role": role,

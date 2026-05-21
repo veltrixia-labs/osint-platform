@@ -1,6 +1,8 @@
 import type { ProStructuralReportItem } from '../api';
-import { fetchProStructuralReports, fetchProStructuralReport } from '../api';
+import { fetchProStructuralReports, fetchProStructuralReport, fetchAlert } from '../api';
 import { simpleMarkdown, getDomainSlugClass, formatIntelDateTime, formatIntelPreciseTimestamp } from './utils';
+import { showEvidenceModal } from './alerts';
+import { resolveAlertHeadline } from '../alert_display';
 import {
     getTopicCssVars,
     getTopicDisplayLabel,
@@ -85,8 +87,96 @@ export async function renderProStructuralBriefs(
 }
 
 /* --- Helpers --- */
+const PRO_SECTION_GUIDES: Record<string, string> = {
+    '01': 'Summary of the detected anomaly, primary risk dimensions, and data verification status.',
+    '02': 'Categorizes the core event type and secondary structural dependencies triggering the shift.',
+    '03': 'Identifies the spatial nexus and geographical point of origin for the systemic risk.',
+    '04': 'Chronological tracking of factual real-world incidents acting as the structural catalyst.',
+    '05': 'Visualizes the cascading domino effect from political decisions down to material availability.',
+    '06': 'Hard macroeconomic statistics and live asset prices reinforcing the analytical core.',
+    '07': 'Audits whether the financial markets have already priced in the geopolitical shock.',
+    '08': 'Measures the valuation gap between sentiment and quantitative market tracking.',
+    '09': 'Defines actionable thresholds that will either amplify or defuse this structural risk.',
+    '10': 'Core security ETFs and sector spending metrics mapped for real-time monitoring.',
+    '11': 'Dual-perspective modeling weighing long-term revenue visibility against sudden policy shifts.',
+    '12': 'Direct tactical mapping showing how specific business tiers and suppliers are impacted.',
+    '13': 'Evaluates data fidelity and limitation notes to calibrate your decision-making confidence.',
+};
+
+function escHtml(s: string): string {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function escAttr(s: string): string {
+    return escHtml(s).replace(/'/g, '&#39;');
+}
+
 function sh(num: string, title: string): string {
-    return `<div class="intel-section-head"><span class="intel-section-num">${num}</span><h3 class="intel-section-title">${title}</h3></div>`;
+    const guide = PRO_SECTION_GUIDES[num];
+    const guideHtml = guide
+        ? `<span class="intel-section-guide-wrap">
+            <button type="button" class="intel-section-guide" aria-label="About ${escAttr(title)}">
+                <span class="intel-section-guide-icon" aria-hidden="true">ℹ</span>
+            </button>
+            <span class="intel-section-guide-popover" role="tooltip">${escHtml(guide)}</span>
+           </span>`
+        : '';
+    return `<div class="intel-section-head"><span class="intel-section-num">${num}</span><h3 class="intel-section-title">${title}</h3>${guideHtml}</div>`;
+}
+
+async function openTimelineEvidence(alertId: string, sourceUrl: string, title: string): Promise<void> {
+    if (alertId) {
+        try {
+            const alert = await fetchAlert(alertId);
+            const modalTitle = resolveAlertHeadline(alert).text || alert.target_label || title;
+            showEvidenceModal(modalTitle, alert.evidence_list || []);
+            return;
+        } catch (err) {
+            console.warn('Timeline alert fetch failed, falling back to URL', err);
+        }
+    }
+    if (sourceUrl) {
+        window.open(sourceUrl, '_blank', 'noopener,noreferrer');
+    }
+}
+
+function wireProBriefInteractions(root: HTMLElement): void {
+    root.querySelectorAll('.intel-section-guide').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const wrap = btn.closest('.intel-section-guide-wrap');
+            const pop = wrap?.querySelector('.intel-section-guide-popover');
+            if (!pop) return;
+            const wasOpen = pop.classList.contains('is-open');
+            root.querySelectorAll('.intel-section-guide-popover.is-open').forEach((el) => el.classList.remove('is-open'));
+            if (!wasOpen) pop.classList.add('is-open');
+        });
+    });
+
+    root.querySelectorAll('.intel-tl-item--actionable').forEach((row) => {
+        const el = row as HTMLElement;
+        const handler = () => {
+            void openTimelineEvidence(
+                el.dataset.alertId || '',
+                el.dataset.sourceUrl || '',
+                el.dataset.timelineTitle || '',
+            );
+        };
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handler();
+        });
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handler();
+            }
+        });
+    });
 }
 function sc(s: string): string {
     const m: Record<string,string> = {confirming:'var(--success)',stress:'var(--danger)',mixed:'#d29922',divergent:'var(--danger)',limited:'var(--text-secondary)',elevated:'var(--danger)',medium:'#d29922',low:'var(--text-secondary)',high:'var(--success)',neutral:'var(--accent)',unavailable:'var(--text-secondary)',easing:'#58a6ff',resilient:'var(--success)',risk_on:'var(--success)',flight_to_safety:'#d29922',inflationary:'var(--danger)',deflationary:'#58a6ff',usd_strength:'#d29922',usd_weakness:'#58a6ff',strong:'var(--success)',moderate:'#d29922'};
@@ -186,7 +276,14 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
         : [{ type: 'context', title: 'Timeline synchronizing — check back after the next intelligence cycle.', timestamp: null }];
     html += `<div class="intel-panel">${sh('04','Event Timeline')}<div class="intel-timeline">${tlItems.map((ev: any) => {
         const tsLabel = ev.timestamp ? formatIntelPreciseTimestamp(ev.timestamp) : '';
-        return `<div class="intel-tl-item"><div class="intel-tl-dot"></div><div class="intel-tl-content"><div class="intel-tl-head">${roleBadge(ev.type || ev.role)}${tsLabel ? `<span class="intel-tl-time">${tsLabel}</span>` : ''}${ev.location_label ? `<span class="intel-tl-loc">📍 ${ev.location_label}</span>` : ''}</div><div class="intel-tl-title">${ev.source_url ? `<a href="${ev.source_url}" target="_blank" rel="noopener">${ev.title}</a>` : ev.title}</div></div></div>`;
+        const alertId = ev.alert_id ? String(ev.alert_id) : '';
+        const sourceUrl = ev.source_url ? String(ev.source_url) : '';
+        const actionable = !!(alertId || sourceUrl);
+        const itemCls = actionable ? 'intel-tl-item intel-tl-item--actionable' : 'intel-tl-item';
+        const attrs = actionable
+            ? ` role="button" tabindex="0" data-alert-id="${escAttr(alertId)}" data-source-url="${escAttr(sourceUrl)}" data-timeline-title="${escAttr(ev.title || '')}"`
+            : '';
+        return `<div class="${itemCls}"${attrs}><div class="intel-tl-dot"></div><div class="intel-tl-content"><div class="intel-tl-head">${roleBadge(ev.type || ev.role)}${tsLabel ? `<span class="intel-tl-time">${tsLabel}</span>` : ''}${ev.location_label ? `<span class="intel-tl-loc">📍 ${escHtml(ev.location_label)}</span>` : ''}</div><div class="intel-tl-title">${escHtml(ev.title || '')}</div></div></div>`;
     }).join('')}</div></div>`;
 
     // 05 Structural Impact & Transmission
@@ -252,6 +349,7 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
 
     html += `</div>`;
     contentContainer.innerHTML = html;
+    wireProBriefInteractions(contentContainer);
 
     // Leaflet
     if (hasLocation) {

@@ -8141,6 +8141,75 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.intel-section-guide-wrap {
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.intel-section-guide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  cursor: help;
+  font-size: 0.72rem;
+  line-height: 1;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.intel-section-guide:hover,
+.intel-section-guide:focus-visible {
+  color: var(--accent);
+  border-color: rgba(88, 166, 255, 0.35);
+  background: rgba(88, 166, 255, 0.1);
+  outline: none;
+}
+
+.intel-section-guide-icon {
+  font-family: system-ui, sans-serif;
+  font-weight: 600;
+}
+
+.intel-section-guide-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 40;
+  width: min(300px, calc(100vw - 2.5rem));
+  padding: 0.75rem 0.9rem;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  background: rgba(22, 27, 34, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+}
+
+.intel-section-guide-wrap:hover .intel-section-guide-popover,
+.intel-section-guide-wrap:focus-within .intel-section-guide-popover,
+.intel-section-guide-popover.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .intel-section-num {
@@ -8237,6 +8306,21 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
 .intel-tl-item {
   position: relative;
   padding-bottom: 1.25rem;
+}
+
+.intel-tl-item--actionable {
+  cursor: pointer;
+  border-radius: 8px;
+  margin-left: -0.35rem;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+  transition: background 0.15s ease;
+}
+
+.intel-tl-item--actionable:hover,
+.intel-tl-item--actionable:focus-visible {
+  background: rgba(88, 166, 255, 0.08);
+  outline: none;
 }
 
 .intel-tl-item:last-child {

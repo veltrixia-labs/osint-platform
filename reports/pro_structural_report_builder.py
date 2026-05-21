@@ -420,6 +420,33 @@ def compact_number(val: Any) -> str:
     return f"{val:.2f}"
 
 
+def _normalize_timeline_entry(item: dict) -> dict:
+    """Fixed schema for UI: alert_id, source_url, type/role, evidence_actionable."""
+    out = dict(item)
+    aid = out.get("alert_id")
+    if aid is not None:
+        s = str(aid).strip()
+        out["alert_id"] = s or None
+    else:
+        out["alert_id"] = None
+    url = out.get("source_url")
+    if url is not None:
+        s = str(url).strip()
+        out["source_url"] = s or None
+    else:
+        out["source_url"] = None
+    role = out.get("role") or out.get("type") or "context"
+    out["role"] = role
+    out["type"] = out.get("type") or role
+    out.setdefault("title", "")
+    out["evidence_actionable"] = bool(out["alert_id"] or out["source_url"])
+    return out
+
+
+def _normalize_event_timeline(timeline: List[dict]) -> List[dict]:
+    return [_normalize_timeline_entry(item) for item in timeline]
+
+
 def _finalize_event_timeline_for_payload(
     event_timeline: List[dict],
     related_events: List[dict],
@@ -441,7 +468,7 @@ def _finalize_event_timeline_for_payload(
         timeline = [dict(item) for item in related_events]
 
     trigger_alert_id = (signal or {}).get("alert_id")
-    return _assign_timeline_types(timeline, trigger_alert_id)
+    return _normalize_event_timeline(_assign_timeline_types(timeline, trigger_alert_id))
 
 
 def _ensure_event_timeline_floor(
@@ -530,7 +557,7 @@ def _ensure_event_timeline_floor(
                 "title": sig.get("title"),
                 "alert_id": sig.get("alert_id"),
                 "source": "primary_signal",
-                "source_url": None,
+                "source_url": sig.get("source_url"),
                 "location_label": None,
                 "type": "trigger",
                 "role": "trigger",
@@ -565,7 +592,7 @@ def _ensure_event_timeline_floor(
     out.sort(key=_sort_key)
     trigger_alert_id = sig.get("alert_id")
     typed = _assign_timeline_types(out, trigger_alert_id)
-    return typed[:TARGET_EVENT_TIMELINE_ITEMS]
+    return _normalize_event_timeline(typed[:TARGET_EVENT_TIMELINE_ITEMS])
 
 
 def _compute_market_status(prices: List[dict]) -> str:
