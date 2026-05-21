@@ -16,7 +16,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import AsyncSessionLocal
 from db.models import AlertLog, Report
 from jobs.pro_report_generator import run_pro_structural_report_generation
-from jobs.pro_backfill_pipeline import run_backfill_and_rebuild, run_sync_external_data
 
 logger = logging.getLogger(__name__)
 
@@ -182,6 +181,8 @@ async def run_pro_platform_rebuild(
     started = datetime.now(timezone.utc)
     macro_sync: Optional[Dict[str, Any]] = None
     if sync_macro_first:
+        from jobs.pro_backfill_pipeline import run_sync_external_data
+
         macro_sync = await run_sync_external_data(
             full_pipeline=full_macro_pipeline,
             include_market=True,

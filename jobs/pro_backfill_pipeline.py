@@ -18,7 +18,6 @@ from jobs.external_data_sync import (
     run_daily_external_data_sync_pipeline,
     run_pro_macro_data_sync,
 )
-from jobs.pro_brief_regenerator import regenerate_pro_structural_briefs
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +149,8 @@ async def run_backfill_and_rebuild(
         full_pipeline=full_sync,
         include_market=True,
     )
+
+    from jobs.pro_brief_regenerator import regenerate_pro_structural_briefs
 
     regen_result = await regenerate_pro_structural_briefs(
         domains=domains,
