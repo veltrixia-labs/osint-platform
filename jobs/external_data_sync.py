@@ -18,6 +18,18 @@ from jobs.external_data_fetcher import ExternalDataFetcher
 
 logger = logging.getLogger(__name__)
 
+# Pro backfill priority: BEA/BLS/FRED/EIA + trade/energy strategy (no 20min delay)
+PRO_MACRO_SYNC_STEPS: List[tuple[str, str, str]] = [
+    ("fred", "FRED", "sync_fred"),
+    ("bls", "BLS", "sync_bls"),
+    ("bea", "BEA GDPbyIndustry", "sync_bea_industry_stats"),
+    ("eia", "Energy Stats (EIA)", "sync_eia_energy_stats"),
+    ("opec", "Energy Strategy (OPEC)", "sync_opec_energy_stats"),
+    ("comtrade", "UN Comtrade", "sync_comtrade"),
+    ("worldbank", "World Bank", "sync_worldbank"),
+    ("census", "Census CBP", "sync_census_cbp"),
+]
+
 # (step_id, log label, fetcher method name)
 EXTERNAL_SYNC_STEPS: List[tuple[str, str, str]] = [
     ("fred", "FRED", "sync_fred"),
@@ -95,6 +107,122 @@ async def _run_one_step(step_id: str, label: str, method_name: str) -> Dict[str,
         }
 
 
+async def _run_steps(
+    steps: List[tuple[str, str, str]],
+    *,
+    inter_step_delay: float,
+) -> Dict[str, Any]:
+    pipeline_started = datetime.now(timezone.utc)
+    step_results: List[Dict[str, Any]] = []
+
+    for index, (step_id, label, method_name) in enumerate(steps):
+        step_results.append(await _run_one_step(step_id, label, method_name))
+        if index < len(steps) - 1 and inter_step_delay > 0:
+            logger.info(
+                "[ExternalDataSync] Inter-step delay %.0fs before next source…",
+                inter_step_delay,
+            )
+            await asyncio.sleep(inter_step_delay)
+
+    success_count = sum(1 for r in step_results if r.get("status") == "success")
+    failed = [r["step"] for r in step_results if r.get("status") == "failed"]
+    finished = datetime.now(timezone.utc)
+    return {
+        "status": "completed",
+        "started_at": pipeline_started.isoformat(),
+        "finished_at": finished.isoformat(),
+        "elapsed_sec": (finished - pipeline_started).total_seconds(),
+        "steps_total": len(steps),
+        "steps_success": success_count,
+        "steps_failed": failed,
+        "steps": step_results,
+    }
+
+
+async def run_pro_macro_data_sync(
+    *,
+    full_pipeline: bool = False,
+    skip_inter_step_delay: bool = True,
+    sync_market_data: bool = True,
+) -> Dict[str, Any]:
+    """
+    One-shot Pro coverage sync: priority macro sources + optional market prices.
+
+    Targets Hormuz/energy series (WTI, GPR*, EIA inventories, OPEC/Comtrade flows).
+    """
+    if _is_sync_disabled():
+        return {"status": "skipped", "reason": "EXTERNAL_DATA_SYNC_DISABLED"}
+
+    from analysis.pro_global_series import ENERGY_GEOPOLITICAL_SERIES_IDS
+    from data_sources.bls_series_catalog import get_bls_series_ids
+    from data_sources.fred_series_catalog import get_fred_series_ids
+    from jobs.market_data_fetcher import MarketDataFetcher
+
+    core_pro_domains = [
+        "energy_resource_risk",
+        "global_market_intelligence",
+        "ai_semiconductor_intelligence",
+        "supply_chain_intelligence",
+        "crypto_geopolitics",
+        "defense_technology",
+    ]
+
+    pipeline_started = datetime.now(timezone.utc)
+    logger.info("[ProMacroSync] === Pro macro backfill started ===")
+
+    steps = EXTERNAL_SYNC_STEPS if full_pipeline else PRO_MACRO_SYNC_STEPS
+    delay = 0.0 if skip_inter_step_delay else _inter_step_delay_seconds()
+    macro_summary = await _run_steps(steps, inter_step_delay=delay)
+
+    # Extra-targeted FRED pull (crude + GPR) even if catalog sync partially failed
+    fred_extra: Dict[str, Any] = {"status": "skipped"}
+    try:
+        async with AsyncSessionLocal() as session:
+            from jobs.external_data_fetcher import ExternalDataFetcher
+
+            fetcher = ExternalDataFetcher(session)
+            priority_fred = list(
+                dict.fromkeys(
+                    get_fred_series_ids() + list(ENERGY_GEOPOLITICAL_SERIES_IDS)
+                )
+            )
+            fred_extra = await fetcher.sync_fred(series_ids=priority_fred)
+            bls_extra = await fetcher.sync_bls(series_ids=get_bls_series_ids())
+        fred_extra = {"fred": fred_extra, "bls": bls_extra, "status": "ok"}
+    except Exception as exc:
+        logger.error("[ProMacroSync] Targeted FRED/BLS refresh failed: %s", exc)
+        fred_extra = {"status": "failed", "error": str(exc)}
+
+    market_summary: Dict[str, Any] = {"status": "skipped"}
+    if sync_market_data:
+        market_results: List[Dict[str, Any]] = []
+        try:
+            async with AsyncSessionLocal() as session:
+                mf = MarketDataFetcher(session)
+                for domain_id in core_pro_domains:
+                    res = await mf.sync_alpha_vantage_sample(domain_id=domain_id)
+                    market_results.append({"domain_id": domain_id, "result": res})
+                    await asyncio.sleep(2)
+                fx_res = await mf.sync_frankfurter_fx_history(days=31)
+                market_results.append({"domain_id": "_fx", "result": fx_res})
+            market_summary = {"status": "ok", "domains": market_results}
+        except Exception as exc:
+            logger.error("[ProMacroSync] Market data sync failed: %s", exc)
+            market_summary = {"status": "failed", "error": str(exc)}
+
+    finished = datetime.now(timezone.utc)
+    return {
+        "status": "completed",
+        "mode": "full" if full_pipeline else "pro_priority",
+        "started_at": pipeline_started.isoformat(),
+        "finished_at": finished.isoformat(),
+        "elapsed_sec": (finished - pipeline_started).total_seconds(),
+        "macro_pipeline": macro_summary,
+        "fred_bls_targeted": fred_extra,
+        "market_data": market_summary,
+    }
+
+
 async def run_daily_external_data_sync_pipeline() -> Dict[str, Any]:
     """
     Run all ExternalDataFetcher sync methods once, sequentially, with jitter between steps.
@@ -107,31 +235,12 @@ async def run_daily_external_data_sync_pipeline() -> Dict[str, Any]:
     pipeline_started = datetime.now(timezone.utc)
     logger.info("[ExternalDataSync] === Daily macro sync pipeline started (UTC %s) ===", pipeline_started.isoformat())
 
-    step_results: List[Dict[str, Any]] = []
     delay = _inter_step_delay_seconds()
-
-    for index, (step_id, label, method_name) in enumerate(EXTERNAL_SYNC_STEPS):
-        step_results.append(await _run_one_step(step_id, label, method_name))
-        if index < len(EXTERNAL_SYNC_STEPS) - 1 and delay > 0:
-            logger.info(
-                "[ExternalDataSync] Inter-step delay %.0fs before next source…",
-                delay,
-            )
-            await asyncio.sleep(delay)
-
-    success_count = sum(1 for r in step_results if r.get("status") == "success")
-    failed = [r["step"] for r in step_results if r.get("status") == "failed"]
-    finished = datetime.now(timezone.utc)
-    summary = {
-        "status": "completed",
-        "started_at": pipeline_started.isoformat(),
-        "finished_at": finished.isoformat(),
-        "elapsed_sec": (finished - pipeline_started).total_seconds(),
-        "steps_total": len(EXTERNAL_SYNC_STEPS),
-        "steps_success": success_count,
-        "steps_failed": failed,
-        "steps": step_results,
-    }
+    summary = await _run_steps(EXTERNAL_SYNC_STEPS, inter_step_delay=delay)
+    summary["started_at"] = pipeline_started.isoformat()
+    success_count = summary["steps_success"]
+    failed = summary["steps_failed"]
+    finished = datetime.fromisoformat(summary["finished_at"])
 
     if failed:
         logger.error(

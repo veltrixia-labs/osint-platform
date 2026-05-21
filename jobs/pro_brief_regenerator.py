@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import AsyncSessionLocal
 from db.models import AlertLog, Report
 from jobs.pro_report_generator import run_pro_structural_report_generation
+from jobs.external_data_sync import run_pro_macro_data_sync
 
 logger = logging.getLogger(__name__)
 
@@ -165,4 +166,39 @@ async def regenerate_pro_structural_briefs(
         "errors": errors,
         "audit_before": before_audit,
         "audit_after": after_audit,
+    }
+
+
+async def run_pro_platform_rebuild(
+    *,
+    purge_first: bool = True,
+    sync_macro_first: bool = True,
+    full_macro_pipeline: bool = False,
+    domains: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """
+    Full production refresh: external macro/market sync → purge → regenerate Pro V2 briefs.
+    """
+    started = datetime.now(timezone.utc)
+    macro_sync: Optional[Dict[str, Any]] = None
+    if sync_macro_first:
+        macro_sync = await run_pro_macro_data_sync(
+            full_pipeline=full_macro_pipeline,
+            skip_inter_step_delay=True,
+            sync_market_data=True,
+        )
+
+    regen = await regenerate_pro_structural_briefs(
+        domains=domains,
+        purge_first=purge_first,
+    )
+
+    finished = datetime.now(timezone.utc)
+    return {
+        "status": "ok",
+        "started_at": started.isoformat(),
+        "finished_at": finished.isoformat(),
+        "elapsed_sec": (finished - started).total_seconds(),
+        "macro_sync": macro_sync,
+        "regeneration": regen,
     }

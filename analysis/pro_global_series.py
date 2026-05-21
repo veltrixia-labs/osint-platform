@@ -56,6 +56,21 @@ ENERGY_SUPPLY_MACRO_IDS = {
     "crude_inventory": "WCESTUS1",
 }
 
+# Hormuz / energy-geopolitics priority (FRED + EIA + OPEC in domain config)
+ENERGY_GEOPOLITICAL_SERIES_IDS = [
+    "DCOILWTICO",
+    "GASREGW",
+    "GPRH",
+    "GPRHT",
+    "GPRA",
+    "WCESTUS1",
+    "WPULEUS3",
+    "WCRFPUS2",
+]
+
+MIN_MACRO_DISPLAY_CARDS = 6
+MAX_MACRO_DISPLAY_CARDS = 12
+
 # display_name + directional meanings for all synced global sources
 GLOBAL_RELEVANCE_MAP: Dict[str, Dict[str, str]] = {
   # US / FRED
@@ -78,6 +93,21 @@ GLOBAL_RELEVANCE_MAP: Dict[str, Dict[str, str]] = {
         "display_name": "WTI crude oil (spot)",
         "up_meaning": "Supply shock or demand strength; inflation and petro-FX stress.",
         "down_meaning": "Demand destruction or supply relief; inflation headwind eases.",
+    },
+    "GPRH": {
+        "display_name": "Geopolitical Risk Index (GPR)",
+        "up_meaning": "Elevated geopolitical stress; safe-haven and energy risk premia.",
+        "down_meaning": "Geopolitical risk easing; supports risk assets and trade lanes.",
+    },
+    "GPRHT": {
+        "display_name": "GPR — Threats sub-index",
+        "up_meaning": "Rising threat rhetoric and conflict risk around chokepoints.",
+        "down_meaning": "Threat intensity moderating versus recent peaks.",
+    },
+    "GPRA": {
+        "display_name": "GPR — Acts sub-index",
+        "up_meaning": "Material geopolitical acts (sanctions, strikes, closures) increasing.",
+        "down_meaning": "Fewer realized geopolitical acts in the observation window.",
     },
     "GASREGW": {
         "display_name": "US retail gasoline price",
@@ -373,6 +403,164 @@ def select_quantitative_context_cards(
 
     selected_ids = global_slots + dynamic_ids[:3]
     return [by_id[sid] for sid in selected_ids[:limit] if sid in by_id]
+
+
+def _synthetic_macro_card(
+    series_id: str,
+    display_name: str,
+    *,
+    source: str = "domain_config",
+    latest_value: Any = "—",
+    change_pct: Optional[float] = None,
+    trend_meaning: Optional[str] = None,
+) -> Dict[str, Any]:
+    return {
+        "series_id": series_id,
+        "source": source,
+        "latest_value": latest_value,
+        "latest_date": None,
+        "change_pct": change_pct,
+        "display_name": display_name,
+        "trend_meaning": trend_meaning,
+        "is_synthetic": True,
+    }
+
+
+def pad_macro_display_cards(
+    context: Dict[str, Any],
+    cards: List[Dict[str, Any]],
+    *,
+    min_cards: int = MIN_MACRO_DISPLAY_CARDS,
+    max_cards: int = MAX_MACRO_DISPLAY_CARDS,
+) -> List[Dict[str, Any]]:
+    """
+    When external_observations are sparse, fill Section 06 density from market
+    movers, watch indicators, and domain-config structural matrices.
+    """
+    if len(cards) >= min_cards:
+        return cards[:max_cards]
+
+    out = list(cards)
+    seen = {c.get("series_id") for c in out if c.get("series_id")}
+    relevance = context.get("relevance_map") or {}
+    if relevance and not isinstance(next(iter(relevance.values()), None), dict):
+        relevance = merge_relevance_maps(relevance)
+
+    m_ctx = context.get("market_confirmation") or {}
+    for price in m_ctx.get("latest_prices") or []:
+        if len(out) >= min_cards:
+            break
+        sym = price.get("symbol")
+        if not sym or sym in seen:
+            continue
+        pct = price.get("percent_change")
+        meaning = None
+        if pct is not None:
+            meaning = (
+                "Market confirmation signal (synthetic macro slot)."
+                if abs(pct) <= 0.1
+                else f"Market mover {pct:+.2f}% over lookback (fills sparse macro DB)."
+            )
+        out.append(
+            _synthetic_macro_card(
+                f"MARKET::{sym}",
+                f"{sym} (market)",
+                source="market_data",
+                latest_value=price.get("latest_price"),
+                change_pct=pct,
+                trend_meaning=meaning,
+            )
+        )
+        seen.add(f"MARKET::{sym}")
+
+    for idx, w in enumerate(context.get("watch_indicators") or []):
+        if len(out) >= min_cards:
+            break
+        label = w.get("indicator") or w.get("series_id") or f"Watch {idx + 1}"
+        sid = f"WATCH::{label[:40]}"
+        if sid in seen:
+            continue
+        out.append(
+            _synthetic_macro_card(
+                sid,
+                label,
+                source=w.get("source", "watch_indicator"),
+                latest_value=w.get("latest_value", "—"),
+                trend_meaning=w.get("why_it_matters"),
+            )
+        )
+        seen.add(sid)
+
+    for idx, channel in enumerate(context.get("transmission_channels") or []):
+        if len(out) >= min_cards:
+            break
+        sid = f"CHANNEL::{idx}"
+        if sid in seen:
+            continue
+        out.append(
+            _synthetic_macro_card(
+                sid,
+                f"Transmission: {channel}",
+                source="domain_config",
+                trend_meaning="Rule-based transmission channel from domain matrix.",
+            )
+        )
+        seen.add(sid)
+
+    for idx, exp in enumerate(context.get("exposure_matrix_details") or []):
+        if len(out) >= min_cards:
+            break
+        target = exp.get("target") or f"Exposure {idx + 1}"
+        sid = f"EXPOSURE::{target[:32]}"
+        if sid in seen:
+            continue
+        sens = (exp.get("sensitivity") or "medium").upper()
+        out.append(
+            _synthetic_macro_card(
+                sid,
+                f"Exposure: {target}",
+                source="domain_config",
+                latest_value=sens,
+                trend_meaning=exp.get("reason") or exp.get("transmission"),
+            )
+        )
+        seen.add(sid)
+
+    domain = context.get("domain") or {}
+    for idx, q in enumerate(domain.get("decision_relevant_questions") or []):
+        if len(out) >= min_cards:
+            break
+        sid = f"QUESTION::{idx}"
+        if sid in seen:
+            continue
+        out.append(
+            _synthetic_macro_card(
+                sid,
+                "Decision lens",
+                source="domain_config",
+                latest_value="—",
+                trend_meaning=q,
+            )
+        )
+        seen.add(sid)
+
+    for sid, meta in list(relevance.items()):
+        if len(out) >= min_cards:
+            break
+        if sid in seen or sid.startswith(("FALLBACK::", "MARKET::", "WATCH::")):
+            continue
+        if isinstance(meta, dict) and meta.get("display_name"):
+            out.append(
+                _synthetic_macro_card(
+                    f"RELEVANCE::{sid}",
+                    meta["display_name"],
+                    source="relevance_map",
+                    trend_meaning=meta.get("up_meaning") or "Configured structural relevance (awaiting live observation).",
+                )
+            )
+            seen.add(f"RELEVANCE::{sid}")
+
+    return out[:max_cards]
 
 
 def energy_supply_driven_market_status(

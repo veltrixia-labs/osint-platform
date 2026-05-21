@@ -49,6 +49,29 @@ FRED_SERIES_CATALOG = {
             "pro_use": "gasoline_price_context"
         }
     ],
+    "geopolitical_risk": [
+        {
+            "series_id": "GPRH",
+            "name": "Geopolitical Risk Index (historical)",
+            "unit": "index",
+            "frequency_hint": "monthly",
+            "pro_use": "geopolitical_risk_context"
+        },
+        {
+            "series_id": "GPRHT",
+            "name": "Geopolitical Risk Index — Threats",
+            "unit": "index",
+            "frequency_hint": "monthly",
+            "pro_use": "geopolitical_threat_context"
+        },
+        {
+            "series_id": "GPRA",
+            "name": "Geopolitical Risk Index — Acts",
+            "unit": "index",
+            "frequency_hint": "monthly",
+            "pro_use": "geopolitical_acts_context"
+        }
+    ],
     "currency": [
         {
             "series_id": "DTWEXBGS",

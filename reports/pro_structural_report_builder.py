@@ -10,8 +10,11 @@ import math
 
 from reports.text_encoding import sanitize_unicode_tree
 from analysis.pro_global_series import (
+    MAX_MACRO_DISPLAY_CARDS,
+    MIN_MACRO_DISPLAY_CARDS,
     energy_supply_driven_market_status,
     merge_relevance_maps,
+    pad_macro_display_cards,
     relevance_display_name,
     select_quantitative_context_cards,
     trend_meaning_for_observation,
@@ -134,9 +137,12 @@ def _build_quantitative_context(ctx: dict) -> str:
     
     display_cards = s_ctx.get("macro_display_cards") or s_ctx.get("macro_observations", [])
     all_macro = s_ctx.get("macro_observations", [])
+    if not display_cards:
+        display_cards = pad_macro_display_cards(ctx, [], min_cards=MIN_MACRO_DISPLAY_CARDS)
+
     if display_cards:
         lines.append("<div class=\"metric-card-grid\">")
-        for o in display_cards[:6]:
+        for o in display_cards[:MAX_MACRO_DISPLAY_CARDS]:
             val = format_value(o.get("latest_value"))
             change = format_percent(o.get("change_pct"))
             label = o.get("display_name") or o.get("series_id", "")
@@ -149,6 +155,11 @@ def _build_quantitative_context(ctx: dict) -> str:
                 lines.append(f"    <blockquote class=\"highlight-box\">{meaning}</blockquote>")
             lines.append("  </div>")
         lines.append("</div>")
+    else:
+        lines.append(
+            "<p class=\"intel-body-text\">Quantitative cards are populated from domain structural "
+            "matrices while external macro series sync completes.</p>"
+        )
 
     # Raw Tables hidden in details
     lines.append("<details>")
@@ -469,8 +480,9 @@ def _apply_macro_and_market_priorities(context: dict) -> dict:
     config = get_pro_domain_config(domain_id) or {}
     structural_data = config.get("structural_data", {})
     display_cards = select_quantitative_context_cards(
-        enriched, domain_id, structural_data, limit=6
+        enriched, domain_id, structural_data, limit=MAX_MACRO_DISPLAY_CARDS
     )
+    display_cards = pad_macro_display_cards(ctx, display_cards, min_cards=MIN_MACRO_DISPLAY_CARDS)
     picked = {c["series_id"] for c in display_cards}
     s_ctx["macro_display_cards"] = display_cards
     s_ctx["macro_observations"] = display_cards + [
