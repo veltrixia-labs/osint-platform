@@ -7545,30 +7545,141 @@ body.cb-modal-scroll-lock {
   color: var(--text-secondary);
 }
 
-.pro-expert-upsell-link {
+/* Pro → Expert tier badge (gradient glass, not a plain link) */
+.pro-expert-tier-badge {
   display: inline-flex;
   align-items: center;
-  margin: 0 0.15rem;
-  padding: 0.12rem 0.5rem;
-  border-radius: 6px;
-  border: 1px solid color-mix(in srgb, #bc8cff 42%, var(--border));
-  background: color-mix(in srgb, #bc8cff 14%, transparent);
-  color: #bc8cff;
+  margin: 0 0.2rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(145deg, rgba(188, 140, 255, 0.22), rgba(88, 166, 255, 0.12)) padding-box,
+    linear-gradient(120deg, #d4a853, #bc8cff 45%, #58a6ff 80%, #3fb950) border-box;
+  color: #e8d5ff;
   font-size: inherit;
-  font-weight: 700;
+  font-weight: 800;
   font-family: inherit;
-  line-height: 1.2;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   cursor: pointer;
   vertical-align: baseline;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 0 18px color-mix(in srgb, #bc8cff 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
 }
 
-.pro-expert-upsell-link:hover,
-.pro-expert-upsell-link:focus-visible {
-  background: color-mix(in srgb, #bc8cff 24%, transparent);
-  border-color: #bc8cff;
-  color: #d2b8ff;
+.pro-expert-tier-badge:hover,
+.pro-expert-tier-badge:focus-visible {
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 24px color-mix(in srgb, #bc8cff 35%, transparent),
+    0 0 12px color-mix(in srgb, #58a6ff 18%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
   outline: none;
+}
+
+/* Expert pricing card — apex tier visual override */
+.plan-card--expert-apex {
+  --plan-color: #bc8cff;
+  position: relative;
+  border: 1px solid color-mix(in srgb, #bc8cff 45%, var(--border));
+  background:
+    linear-gradient(165deg, rgba(22, 27, 34, 0.92) 0%, rgba(13, 17, 23, 0.78) 55%, rgba(88, 166, 255, 0.06) 100%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #d4a853 18%, transparent),
+    0 12px 40px color-mix(in srgb, #bc8cff 18%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.plan-card--expert-apex::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, #d4a853 0%, #bc8cff 35%, #58a6ff 65%, #3fb950 100%);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.plan-card--expert-apex .plan-name {
+  background: linear-gradient(90deg, #f0e6ff, #bc8cff 50%, #58a6ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.plan-tier-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+.plan-tier-badge {
+  display: inline-block;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.55rem;
+  border-radius: 4px;
+  color: #0d1117;
+  background: linear-gradient(90deg, #d4a853, #bc8cff);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 12px color-mix(in srgb, #bc8cff 40%, transparent);
+}
+
+.plan-tier-badge + .plan-tier-badge {
+  background: linear-gradient(90deg, #58a6ff, #3fb950);
+}
+
+.plan-ribbon--expert-apex {
+  background: linear-gradient(135deg, #d4a853, #bc8cff 50%, #58a6ff);
+  color: #0d1117;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.plan-card--expert-apex .plan-features li::before {
+  color: #bc8cff;
+}
+
+.plan-card--focus-pulse {
+  animation: plan-card-focus-pulse 1.2s ease-in-out 2;
+}
+
+@keyframes plan-card-focus-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, #d4a853 18%, transparent),
+      0 12px 40px color-mix(in srgb, #bc8cff 18%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, #bc8cff 55%, transparent),
+      0 16px 48px color-mix(in srgb, #bc8cff 32%, transparent),
+      0 0 28px color-mix(in srgb, #58a6ff 22%, transparent);
+  }
 }
 
 .pro-insight-sector .insight-card {

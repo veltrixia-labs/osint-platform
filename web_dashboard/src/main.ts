@@ -517,9 +517,9 @@ async function initDashboard() {
                 <p id="page-subtitle" class="page-subtitle"></p>
                 <div id="page-expert-upsell" class="pro-expert-upsell" hidden>
                   <p class="pro-expert-upsell-text">
-                    Looking for predictive risk modeling? Advanced LLM-driven deep analytics and future projections are available in the
-                    <button type="button" id="page-expert-upsell-link" class="pro-expert-upsell-link">Expert</button>
-                    tab.
+                    Elevate your analytical layer. While Pro provides historical structures,
+                    <button type="button" id="page-expert-upsell-link" class="pro-expert-tier-badge" aria-label="View Expert tier pricing">Expert Tier</button>
+                    unlocks real-time LLM predictive simulations, deep network visualizations, and automated trend projections.
                   </p>
                 </div>
                 <a id="page-pro-cta" class="page-premium-cta" href="/subscription" hidden></a>
@@ -632,6 +632,20 @@ async function initDashboard() {
 
     renderNavigation(user, document.querySelector('#sidebar-nav-container')!, (tabId) => handleTabSwitch(tabId as TabId));
 
+    const routeToExpertPricing = () => {
+        sessionStorage.setItem('plansFocusTier', 'experts');
+        sessionStorage.setItem(
+            'plansContextBriefUpsell',
+            JSON.stringify({
+                message:
+                    'Expert tier unlocks LLM predictive vectoring, cross-border scenario modeling, and elevated alert intensity protocols.',
+                ts: Date.now(),
+            }),
+        );
+        document.querySelector<HTMLElement>('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+        handleTabSwitch('plans');
+    };
+
     const handleTabSwitch = (tab: TabId, focusAlertId?: string, skipPushState = false) => {
         closeMobileSidebar();
         currentTab = tab;
@@ -684,7 +698,15 @@ async function initDashboard() {
             }
             else if (tab === 'pro-insights') renderPro(alertsContainer, user!, () => handleTabSwitch('plans'));
             else if (tab === 'pro-map') renderProMap();
-            else if (tab === 'expert-intel') renderExpert(alertsContainer, user!, () => handleTabSwitch('plans'));
+            else if (tab === 'expert-intel') {
+                const isExpertPlus =
+                    user!.tier === 'experts' || user!.tier === 'enterprise'
+                if (!isExpertPlus) {
+                    routeToExpertPricing()
+                } else {
+                    renderExpert(alertsContainer, user!, () => handleTabSwitch('plans'))
+                }
+            }
 
             if (mainContent) mainContent.style.opacity = '1';
         }, 50);
@@ -698,12 +720,11 @@ async function initDashboard() {
     });
 
     ;(window as Window & { __dashboardHandleTabSwitch?: TabSwitchFn }).__dashboardHandleTabSwitch =
-        handleTabSwitch
+        handleTabSwitch;
 
     pageExpertUpsellLink?.addEventListener('click', (e) => {
         e.preventDefault()
-        document.querySelector<HTMLElement>('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' })
-        handleTabSwitch('expert-intel')
+        routeToExpertPricing()
     })
 
     window.addEventListener('view-report', (e: any) => {

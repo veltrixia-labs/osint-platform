@@ -230,7 +230,16 @@ export function renderNavigation(
             const tabId = (el as HTMLElement).dataset.tab!;
 
             if (!accessible) {
-                setPlansUpsellContext('Pro / Expert access is required for this module. Please review the full scope of Pro / Expert capabilities.');
+                if (tabId === 'expert-intel') {
+                    sessionStorage.setItem('plansFocusTier', 'experts');
+                    setPlansUpsellContext(
+                        'Expert tier unlocks LLM predictive vectoring, cross-border scenario modeling, and elevated alert intensity protocols.',
+                    );
+                } else {
+                    setPlansUpsellContext(
+                        'Pro / Expert access is required for this module. Please review the full scope of Pro / Expert capabilities.',
+                    );
+                }
                 onTabSwitch('plans');
             } else {
                 onTabSwitch(tabId);

@@ -60,6 +60,8 @@ interface PlanConfig {
     features: string[];
     ctaText?: string;
     highlight?: string;
+    /** Expert apex card — cyberpunk tier badges */
+    tierBadges?: string[];
 }
 
 const PLANS: PlanConfig[] = [
@@ -103,24 +105,25 @@ const PLANS: PlanConfig[] = [
     {
         id: 'experts',
         name: PLAN_NAME_MAP.experts,
-        subtitle: 'Strategic Foresight',
-        explanation: 'Founding Expert access — launching soon',
+        subtitle: 'Predictive Intelligence',
+        explanation: 'Autonomous foresight layer — LLM vectoring over 24h clustering windows',
         bestFor: TIER_BEST_FOR.experts,
         priceNote: 'month',
-        color: '#3fb950',
-        directCheckout: false,
-        comingSoon: true,
+        color: '#bc8cff',
+        directCheckout: true,
         contactUrl: '',
+        tierBadges: ['NEURAL PREDICTIVE MODE UNLOCKED', 'FOR ENTERPRISE & ARCHITECTS'],
         features: [
             'Everything in Founding Pro',
-            'Cross-domain Risk Forecasting',
-            'Strategic Scenario Analysis',
-            'Recommended Strategic Actions',
-            'Expert specialty topics',
-            'Unlimited strategic alerts',
+            'LLM Predictive Vectoring',
+            'Cross-Border Scenario Modeling',
+            'Suppression Override Protocol (1.5× Intensity Alert)',
+            'Deep Network Visualization Suite',
+            '24h Clustering Window — Automated Trend Projections',
+            'Expert specialty topics & unlimited strategic alerts',
         ],
-        ctaText: 'Join Waitlist',
-        highlight: 'COMING SOON',
+        ctaText: 'Upgrade to Expert',
+        highlight: 'APEX INTELLIGENCE',
     },
 ];
 
@@ -430,11 +433,19 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         const priceHtml = renderPlanPriceHtml(plan);
         const comingSoonClass = plan.comingSoon ? ' plan-card--coming-soon' : '';
         const featuredClass = plan.id === 'pro' ? ' plan-card--featured' : '';
+        const expertApexClass = plan.id === 'experts' ? ' plan-card--expert-apex' : '';
+        const tierBadgesHtml =
+            plan.tierBadges?.length
+                ? `<div class="plan-tier-badges">${plan.tierBadges
+                      .map((b) => `<span class="plan-tier-badge">${b}</span>`)
+                      .join('')}</div>`
+                : '';
         return `
-        <div class="plan-card plan-card--${plan.id}${featuredClass}${comingSoonClass} ${isCurrent ? 'plan-card--active' : ''} vx-pricing-card" style="--plan-color: ${plan.color}; --vx-ambient-delay: ${index * 2}s">
-            ${plan.highlight ? `<div class="plan-ribbon plan-ribbon--premium">${plan.highlight}</div>` : ''}
+        <div id="plan-card-${plan.id}" class="plan-card plan-card--${plan.id}${featuredClass}${expertApexClass}${comingSoonClass} ${isCurrent ? 'plan-card--active' : ''} vx-pricing-card" style="--plan-color: ${plan.color}; --vx-ambient-delay: ${index * 2}s">
+            ${plan.highlight ? `<div class="plan-ribbon plan-ribbon--${plan.id === 'experts' ? 'expert-apex' : 'premium'}">${plan.highlight}</div>` : ''}
             
             <div class="plan-header">
+                ${tierBadgesHtml}
                 <div class="plan-best-for">${plan.bestFor}</div>
                 <h2 class="plan-name">${plan.name}</h2>
                 <p class="plan-subtitle">${plan.subtitle}</p>
@@ -643,6 +654,17 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
     });
 
     initBillingToggle(container, 'app-billing-toggle');
+
+    const focusTier = sessionStorage.getItem('plansFocusTier');
+    if (focusTier === 'experts') {
+        sessionStorage.removeItem('plansFocusTier');
+        requestAnimationFrame(() => {
+            const card = container.querySelector<HTMLElement>('#plan-card-experts');
+            card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card?.classList.add('plan-card--focus-pulse');
+            window.setTimeout(() => card?.classList.remove('plan-card--focus-pulse'), 2400);
+        });
+    }
 
     container.querySelector<HTMLButtonElement>('#upgrade-btn-free')?.addEventListener('click', () => {
         window.location.hash = '#feed';
