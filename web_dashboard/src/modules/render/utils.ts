@@ -1,6 +1,40 @@
 import type { Alert } from '../api';
 import { normalizeTopicCode } from '../topics';
 
+const INTEL_DATE_LOCALE = 'en-US';
+
+/**
+ * English-only date for intelligence terminals (ignores browser locale).
+ */
+export function formatIntelDate(
+    dateInput: string | Date | number | null | undefined,
+    options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' },
+): string {
+    if (dateInput == null || dateInput === '') return '';
+    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString(INTEL_DATE_LOCALE, options);
+}
+
+/**
+ * English-only date/time for intelligence terminals (ignores browser locale).
+ */
+export function formatIntelDateTime(
+    dateInput: string | Date | number | null | undefined,
+    options: Intl.DateTimeFormatOptions = {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    },
+): string {
+    if (dateInput == null || dateInput === '') return '';
+    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleString(INTEL_DATE_LOCALE, options);
+}
+
 /**
  * Formats an intensity value for UI display.
  */

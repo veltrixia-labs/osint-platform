@@ -7445,6 +7445,10 @@ body.cb-modal-scroll-lock {
 
 /* Premium Stat Cards */
 .pro-stat-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background: linear-gradient(145deg, var(--bg-secondary) 0%, rgba(22, 27, 34, 0.6) 100%);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -8031,8 +8035,12 @@ body.cb-modal-scroll-lock {
 }
 
 .intel-metric-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background: rgba(0, 0, 0, 0.2);
-  padding: 1rem;
+  padding: 1rem 1.25rem;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
@@ -8072,9 +8080,11 @@ body.cb-modal-scroll-lock {
 }
 
 .intel-score-card {
+  box-sizing: border-box;
   flex: 1;
+  min-width: 0;
   background: rgba(0, 0, 0, 0.2);
-  padding: 1rem;
+  padding: 1rem 1.25rem;
   border-radius: 8px;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.04);
@@ -8317,11 +8327,14 @@ body.cb-modal-scroll-lock {
 }
 
 .intel-cov-item {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   background: rgba(0, 0, 0, 0.15);
-  padding: 0.75rem;
+  padding: 1rem 1.25rem;
   border-radius: 8px;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.04);
@@ -8360,10 +8373,14 @@ body.cb-modal-scroll-lock {
 }
 
 .intel-status-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 1rem;
+  padding: 1rem 1.25rem;
   text-align: center;
 }
 
@@ -8374,12 +8391,15 @@ body.cb-modal-scroll-lock {
   letter-spacing: 0.12em;
   color: var(--text-secondary);
   margin-bottom: 0.35rem;
+  line-height: 1.35;
 }
 
 .intel-status-val {
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.05em;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
 /* Market mover chips */
@@ -8502,6 +8522,22 @@ body.cb-modal-scroll-lock {
   .intel-status-bar {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .intel-status-card,
+  .intel-score-card,
+  .intel-metric-card,
+  .intel-cov-item,
+  .pro-stat-card {
+    padding: 0.75rem 12px;
+  }
+}
+
+/* Pro brief grid: terminal bento wrapper has padding:0 — keep card inner spacing */
+.pro-briefs-grid .pro-brief-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: 1rem 1.25rem;
 }
 
 /* ==============================

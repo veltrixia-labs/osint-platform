@@ -14,6 +14,7 @@ import { fetchProInsights, fetchExpertIntelligence } from '../api';
 import { getTopicDef, getTopicCssVars, getTopicDisplayLabel, UI_TOPIC_PREVIEW_CODES } from '../topics';
 import { renderLockedFeature } from '../subscription';
 import { renderProStructuralBriefs, renderProStructuralBriefDetail } from './pro_reports';
+import { formatIntelDate } from './utils';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Component Primitives (Pure CSS / SVG)
@@ -114,7 +115,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
         const hubStats = {
             coverage_domains: coverageDomains,
             active_domains: activeDomains,
-            latest_report: new Date().toLocaleDateString(),
+            latest_report: formatIntelDate(new Date()),
         };
         // Log automation state for devs only
         console.debug('[ProInsights] Automation state: dry_run=true');
