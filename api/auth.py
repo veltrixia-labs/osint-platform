@@ -1,7 +1,7 @@
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 from jose import JWTError, jwt
 from argon2 import PasswordHasher
 from fastapi import Request, Response, HTTPException, status, Depends
@@ -90,6 +90,17 @@ async def get_current_user_from_access(token: str = Depends(oauth2_scheme), db: 
         return user, uuid.UUID(session_id), version
     except JWTError:
         raise credentials_exception
+
+def resolve_optional_user(
+    current_user: Optional[AnalystProfile] | tuple | Any,
+) -> Optional[AnalystProfile]:
+    """Normalize Depends output: optional user profile or (user, session_id, version) tuple."""
+    if current_user is None:
+        return None
+    if isinstance(current_user, tuple):
+        return current_user[0] if current_user else None
+    return current_user
+
 
 async def get_optional_current_user(token: Optional[str] = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> Optional[AnalystProfile]:
     if not token:

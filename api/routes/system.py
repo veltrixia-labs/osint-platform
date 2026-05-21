@@ -19,7 +19,7 @@ from api.gating import (
     get_effective_tier, get_plan_limits, get_watchlist_limit, get_alert_limit,
     can_access_report_type, get_allowed_topics, get_restricted_topics, TIER_GUEST
 )
-from api.auth import get_current_user_from_access, get_optional_current_user, blacklist_manager
+from api.auth import get_current_user_from_access, get_optional_current_user, blacklist_manager, resolve_optional_user
 
 router = APIRouter(tags=["system"])
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ async def get_usage(
 ):
     """Return real-time usage statistics against the user's plan limits."""
     # current_user is (user, session_id, version) or None
-    user = current_user[0] if current_user else None
+    user = resolve_optional_user(current_user)
     tier = await get_effective_tier(user)
     limits = get_plan_limits(tier)
 
@@ -92,7 +92,7 @@ async def get_system_metrics(
     db: AsyncSession = Depends(get_db),
     current_user: Optional[tuple] = Depends(get_optional_current_user)
 ):
-    user = current_user[0] if current_user else None
+    user = resolve_optional_user(current_user)
     user_role = user.user_role if user else "guest"
 
     # Caching

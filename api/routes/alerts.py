@@ -36,6 +36,35 @@ async def get_alerts(
     current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/alerts")),
     db: AsyncSession = Depends(get_db)
 ):
+    try:
+        return await _get_alerts_impl(
+            severity=severity,
+            suppressed=suppressed,
+            analyst_id=analyst_id,
+            topic=topic,
+            limit=limit,
+            since=since,
+            current_user=current_user,
+            db=db,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Alert fetch failed (get_alerts): %s", e, exc_info=True)
+        return []
+
+
+async def _get_alerts_impl(
+    *,
+    severity: Optional[str],
+    suppressed: Optional[bool],
+    analyst_id: Optional[str],
+    topic: Optional[str],
+    limit: int,
+    since: Optional[datetime],
+    current_user: Optional[AnalystProfile],
+    db: AsyncSession,
+) -> list:
     user = current_user
     tier = await get_effective_tier(user)
 
@@ -176,6 +205,20 @@ async def get_live_alerts(
     db: AsyncSession = Depends(get_db)
 ):
     """Provides a high-speed stream of high-fidelity signals for the dashboard pulse."""
+    try:
+        return await _get_live_alerts_impl(limit, current_user, db)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Alert fetch failed (get_live_alerts): %s", e, exc_info=True)
+        return []
+
+
+async def _get_live_alerts_impl(
+    limit: int,
+    current_user: Optional[AnalystProfile],
+    db: AsyncSession,
+) -> list:
     stmt = select(AlertLog).where(AlertLog.is_high_fidelity == True).order_by(AlertLog.triggered_at.desc()).limit(limit)
     result = await db.execute(stmt)
     alerts = result.scalars().all()

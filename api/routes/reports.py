@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from db.models import Report
 from db.database import get_db
 from db.enums import ReportType
-from api.auth import get_current_user_from_access, get_optional_current_user
+from api.auth import get_current_user_from_access, get_optional_current_user, resolve_optional_user
 from api.gating import get_effective_tier, is_tier_sufficient, TIER_FREE
 
 router = APIRouter(tags=["reports"])
@@ -79,7 +79,7 @@ async def list_reports(
     topic: Optional[str] = None
 ):
     response.headers["X-API-Version"] = "2026-03-24-REBRAND-V1"
-    user = current_user[0] if current_user else None
+    user = resolve_optional_user(current_user)
     user_role = user.user_role if user else "guest"
     tier = await get_effective_tier(user)
 

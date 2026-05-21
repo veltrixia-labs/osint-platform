@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +14,7 @@ from db.enums import PlanTier
 from api.gating import requires_tier, get_effective_tier, _gate_cascading_impacts
 
 router = APIRouter(tags=["insights"])
+logger = logging.getLogger(__name__)
 
 STRATEGIC_TOPICS = [
     "energy_resource_risk",
@@ -21,6 +24,28 @@ STRATEGIC_TOPICS = [
     "defense_technology",
     "supply_chain_intelligence",
 ]
+
+EMPTY_PRO_INSIGHTS: dict[str, Any] = {
+    "risk_summary": {},
+    "momentum_alerts": [],
+    "early_warnings": [],
+    "sector_distribution": {},
+    "top_entities": [],
+    "coverage_domains": len(STRATEGIC_TOPICS),
+    "active_domains": 0,
+    "focus_alert_id": None,
+}
+
+EMPTY_EXPERT_INTEL: dict[str, Any] = {
+    "full_impact_chains": [],
+    "scenario_outlook": [],
+    "cross_domain_risks": [],
+    "counterfactuals": [],
+    "tail_risks": [],
+    "adversarial_take": "",
+    "confidence_score": 0.0,
+    "focus_alert_id": None,
+}
 
 MATTER_TEMPLATES = {
     "energy_resource_risk": "Rising extraction costs in primary basins may pressure downstream manufacturing margins.",
@@ -326,7 +351,13 @@ async def get_pro_insights(
 ):
     """Tier: Pro+ — decision-grade summary of current risks and momentum."""
     _ = user_data
-    return await build_pro_insights_payload(db, topic=topic)
+    try:
+        return await build_pro_insights_payload(db, topic=topic)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Alert fetch failed (get_pro_insights): %s", e, exc_info=True)
+        return dict(EMPTY_PRO_INSIGHTS)
 
 
 @router.get("/alerts/{alert_id}/insights/pro")
@@ -337,8 +368,14 @@ async def get_pro_insights_for_alert(
 ):
     """Tier: Pro+ — insights scoped to a single alert's topic and signal."""
     _ = user_data
-    alert = await _load_alert_or_404(db, alert_id)
-    return await build_pro_insights_payload(db, focus_alert=alert)
+    try:
+        alert = await _load_alert_or_404(db, alert_id)
+        return await build_pro_insights_payload(db, focus_alert=alert)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Alert fetch failed (get_pro_insights_for_alert): %s", e, exc_info=True)
+        return dict(EMPTY_PRO_INSIGHTS)
 
 
 @router.get("/insights/expert")
@@ -349,7 +386,13 @@ async def get_expert_intelligence(
     """Tier: Expert+ — strategic impact chains and scenario outlook."""
     user = user_data
     tier = await get_effective_tier(user)
-    return await build_expert_intelligence_payload(db, tier=tier)
+    try:
+        return await build_expert_intelligence_payload(db, tier=tier)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Alert fetch failed (get_expert_intelligence): %s", e, exc_info=True)
+        return dict(EMPTY_EXPERT_INTEL)
 
 
 @router.get("/alerts/{alert_id}/insights/expert")
@@ -361,5 +404,11 @@ async def get_expert_intelligence_for_alert(
     """Tier: Expert+ — intelligence focused on one alert's impact chain."""
     user = user_data
     tier = await get_effective_tier(user)
-    alert = await _load_alert_or_404(db, alert_id)
-    return await build_expert_intelligence_payload(db, focus_alert=alert, tier=tier)
+    try:
+        alert = await _load_alert_or_404(db, alert_id)
+        return await build_expert_intelligence_payload(db, focus_alert=alert, tier=tier)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Alert fetch failed (get_expert_intelligence_for_alert): %s", e, exc_info=True)
+        return dict(EMPTY_EXPERT_INTEL)

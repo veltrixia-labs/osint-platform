@@ -5,7 +5,7 @@ from typing import Optional, List, Dict, Any, Union
 from fastapi import HTTPException, Depends
 from db.models import AnalystProfile
 from sqlalchemy.ext.asyncio import AsyncSession
-from api.auth import get_current_user_from_access, get_optional_current_user
+from api.auth import get_current_user_from_access, get_optional_current_user, resolve_optional_user
 import os
 
 logger = logging.getLogger(__name__)
@@ -186,9 +186,8 @@ def can_receive_more_alerts(tier: str, delivered_today_count: int) -> bool:
 
 def requires_tier(min_tier: str):
     """FastAPI dependency to enforce a minimum subscription tier."""
-    async def tier_checker(current_user: Optional[tuple] = Depends(get_optional_current_user)):
-        # current_user is (user, session_id, version) or None
-        user = current_user[0] if current_user else None
+    async def tier_checker(current_user=Depends(get_optional_current_user)):
+        user = resolve_optional_user(current_user)
         effective = await get_effective_tier(user)
 
         # 1. Check for Guest Access

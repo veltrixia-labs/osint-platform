@@ -4,7 +4,7 @@ from typing import Dict, Tuple, Optional
 from fastapi import HTTPException, Request, Depends
 from api.auth import blacklist_manager
 from api.gating import get_effective_tier, TIER_GUEST, TIER_FREE, TIER_PRO, TIER_ENTERPRISE
-from api.auth import get_current_user_from_access, get_optional_current_user
+from api.auth import get_optional_current_user, resolve_optional_user
 
 logger = logging.getLogger(__name__)
 
@@ -78,11 +78,10 @@ def rate_limit(endpoint: str = None):
     """FastAPI decorator for tiered rate limiting. Supports Guests via IP."""
     async def rate_limit_checker(
         request: Request,
-        current_user: Optional[tuple] = Depends(get_optional_current_user)
+        current_user=Depends(get_optional_current_user),
     ):
-        # current_user is (user, session_id, version) or None
-        user = current_user[0] if current_user else None
-        
+        user = resolve_optional_user(current_user)
+
         if user:
             user_id = str(user.id)
             tier = await get_effective_tier(user)

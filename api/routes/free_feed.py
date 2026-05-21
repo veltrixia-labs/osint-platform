@@ -25,12 +25,13 @@ logger = logging.getLogger(__name__)
 def _alertlog_has_free_alert_clause():
     """
     Match rows that carry a persisted free_alert payload.
-    JSON path + text fallback: some drivers/serializations differ from a plain
-    substring search on cast-to-text alone.
+    Text search on cast JSON is portable across Postgres/SQLite drivers.
     """
-    key = AlertLog.metadata_json["free_alert"]
     text_blob = cast(AlertLog.metadata_json, String)
-    return or_(key.is_not(None), text_blob.contains('"free_alert"'))
+    return or_(
+        text_blob.contains('"free_alert"'),
+        text_blob.contains("'free_alert'"),
+    )
 
 
 def _extract_free_alert(alert_log: AlertLog) -> Optional[dict]:
@@ -84,23 +85,18 @@ def _serialize(alert_log: AlertLog, free_alert: dict, subscription_tier: Optiona
     }
 
 
-@router.get("/free/alerts")
-async def list_free_alerts(
-    topic:   Optional[str] = Query(None, description="Filter by topic code"),
-    limit:   int           = Query(40, ge=1, le=100),
-    _rate: Optional[AnalystProfile] = Depends(rate_limit("/api/free/alerts")),
-    current_user: Optional[AnalystProfile] = Depends(get_optional_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Public Context Briefs list (no JWT required). Optional auth upgrades payload caps.
-    Only AlertLogs that have a persisted metadata_json.free_alert are returned.
-    """
+async def _list_free_alerts_impl(
+    *,
+    topic: Optional[str],
+    limit: int,
+    current_user: Optional[AnalystProfile],
+    db: AsyncSession,
+) -> list:
     stmt = (
         select(AlertLog)
         .where(_alertlog_has_free_alert_clause())
         .order_by(AlertLog.triggered_at.desc())
-        .limit(limit * 3)          # over-fetch to allow Python-side dedup / topic filter
+        .limit(limit * 3)
     )
 
     if topic:
@@ -146,6 +142,29 @@ async def list_free_alerts(
     return output
 
 
+@router.get("/free/alerts")
+async def list_free_alerts(
+    topic:   Optional[str] = Query(None, description="Filter by topic code"),
+    limit:   int           = Query(40, ge=1, le=100),
+    _rate: Optional[AnalystProfile] = Depends(rate_limit("/api/free/alerts")),
+    current_user: Optional[AnalystProfile] = Depends(get_optional_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Public Context Briefs list (no JWT required). Optional auth upgrades payload caps.
+    Only AlertLogs that have a persisted metadata_json.free_alert are returned.
+    """
+    try:
+        return await _list_free_alerts_impl(
+            topic=topic, limit=limit, current_user=current_user, db=db
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Alert fetch failed (list_free_alerts): %s", e, exc_info=True)
+        return []
+
+
 @router.get("/free/alerts/{alert_id}")
 async def get_free_alert(
     alert_id: uuid.UUID,
@@ -156,18 +175,24 @@ async def get_free_alert(
     """
     Public single Context Brief (no JWT required). Optional auth upgrades payload caps.
     """
-    stmt = select(AlertLog).where(AlertLog.id == alert_id)
-    row = (await db.execute(stmt)).scalar_one_or_none()
+    try:
+        stmt = select(AlertLog).where(AlertLog.id == alert_id)
+        row = (await db.execute(stmt)).scalar_one_or_none()
 
-    if not row:
-        raise HTTPException(status_code=404, detail="Alert not found")
+        if not row:
+            raise HTTPException(status_code=404, detail="Alert not found")
 
-    fa = _extract_free_alert(row)
-    if fa is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Free Alert Feed data not yet generated for this alert"
-        )
+        fa = _extract_free_alert(row)
+        if fa is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Free Alert Feed data not yet generated for this alert",
+            )
 
-    tier = await get_effective_tier(current_user)
-    return _serialize(row, fa, tier)
+        tier = await get_effective_tier(current_user)
+        return _serialize(row, fa, tier)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Alert fetch failed (get_free_alert %s): %s", alert_id, e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to load free alert") from e
