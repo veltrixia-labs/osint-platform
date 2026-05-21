@@ -7462,22 +7462,39 @@ body.cb-modal-scroll-lock {
 }
 
 /* Pro Insight page layout (header lives in .page-header-block via main.ts) */
+.pro-insight-page.insights-dashboard {
+  gap: 0;
+}
+
 .pro-insight-page {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0;
   padding-top: 0.15rem;
   width: 100%;
   min-width: 0;
 }
 
-.pro-section-title {
+/* Uniform vertical rhythm between major sections (≈ mt-10) */
+.pro-insight-page > .pro-insight-section {
+  margin-top: 2.5rem;
+}
+
+.pro-insight-page > .pro-insight-section:first-child {
+  margin-top: 0;
+}
+
+.pro-insight-page .pro-section-title {
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 0.65rem;
+  margin: 0 0 1.25rem;
   padding-bottom: 0.45rem;
   border-bottom: 1px solid var(--border);
+}
+
+.pro-insight-sector .insight-card-title {
+  margin: 0 0 1rem;
 }
 
 .pro-insight-pressures .pro-bluf-row {
@@ -7704,11 +7721,27 @@ body.cb-modal-scroll-lock {
 .pro-insight-filters {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0;
 }
 
 .pro-insight-filters-label {
-  margin-bottom: 0;
+  margin-bottom: 1.25rem;
+}
+
+.pro-insight-briefs .pro-briefs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.pro-insight-briefs .pro-briefs-container > .pro-section-title {
+  margin-bottom: 1.25rem;
+}
+
+.pro-insight-briefs .pro-briefs-grid {
+  margin-top: 0;
 }
 
 .pro-domain-filter-bar {

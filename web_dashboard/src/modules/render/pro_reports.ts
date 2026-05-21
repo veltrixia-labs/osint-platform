@@ -21,7 +21,7 @@ export async function renderProStructuralBriefs(
 ) {
     container.innerHTML = `
         <div class="pro-briefs-container">
-            <h2 style="font-size: 1.3rem; color: #c9d1d9; margin: 0 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">Latest Structural Briefs</h2>
+            <h2 class="pro-section-title">Latest Structural Briefs</h2>
             <div id="briefs-list" class="pro-briefs-grid pro-briefs-grid--loading">
                 <div class="u-p-2 u-text-center">Synchronizing intelligence assets...</div>
             </div>

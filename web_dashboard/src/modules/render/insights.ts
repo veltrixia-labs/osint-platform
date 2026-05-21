@@ -185,7 +185,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
         const sectorDistributionHtml =
             data && data.sector_distribution
                 ? `
-            <section class="pro-insight-sector">
+            <section class="pro-insight-sector pro-insight-section">
                 ${renderCard(
                     'Sector Distribution',
                     `
@@ -205,7 +205,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
         container.innerHTML = `
         <div class="cb-briefs-page pro-insight-hub">
         <div class="insights-dashboard pro-dashboard pro-insight-page">
-            <section class="pro-insight-pressures" aria-labelledby="pro-pressures-heading">
+            <section class="pro-insight-pressures pro-insight-section" aria-labelledby="pro-pressures-heading">
                 <h2 id="pro-pressures-heading" class="pro-section-title">Active Market Pressures</h2>
                 <div class="dashboard-row bluf-row pro-bluf-row">
                     ${riskSummaryHtml}
@@ -214,16 +214,16 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
 
             ${sectorDistributionHtml}
 
-            <section class="pro-insight-filters" aria-label="Monitored Domains">
-                <div class="pro-stat-title pro-insight-filters-label">Monitored Domains</div>
+            <section class="pro-insight-filters pro-insight-section" aria-label="Monitored Domains">
+                <h2 class="pro-section-title pro-insight-filters-label">Monitored Domains</h2>
                 <div class="domain-chips-container pro-domain-filter-bar" role="group" aria-label="Filter structural briefs by domain">
                     ${renderDomainFilterButtons()}
                 </div>
             </section>
 
-            <div id="pro-hub-structural-briefs-container">
+            <section id="pro-hub-structural-briefs-container" class="pro-insight-briefs pro-insight-section" aria-label="Latest Structural Briefs">
                 <!-- Injected via renderProStructuralBriefs -->
-            </div>
+            </section>
         </div>
         </div>`;
 
