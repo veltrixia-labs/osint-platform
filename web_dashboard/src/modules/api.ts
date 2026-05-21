@@ -20,25 +20,29 @@ function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Read `<meta name="veltrixia-api-base" content="https://…">` (no trailing /api). */
+/** Read `<meta name="veltrixia-api-base" content="https://…">` (origin only, no `/api`). */
 function readMetaApiOrigin(): string | null {
     if (typeof document === 'undefined') return null;
     const content = document.querySelector('meta[name="veltrixia-api-base"]')?.getAttribute('content')?.trim();
     if (!content) return null;
-    return content.replace(/\/$/, '');
+    let origin = content.replace(/\/+$/, '');
+    if (origin.toLowerCase().endsWith('/api')) {
+        origin = origin.slice(0, -4);
+    }
+    return origin;
 }
 
-/** Normalize any origin or /api URL to an absolute `…/api` prefix. */
+/** Normalize any origin or `/api` URL to exactly one `…/api` suffix. */
 function normalizeApiBase(originOrBase: string): string {
-    let raw = originOrBase.trim().replace(/\/$/, '');
+    let raw = originOrBase.trim().replace(/\/+$/, '');
     if (!raw) return '/api';
+    if (raw.toLowerCase().endsWith('/api')) {
+        raw = raw.slice(0, -4);
+    }
     if (!raw.startsWith('http')) {
-        return raw.endsWith('/api') ? raw : `${raw}/api`;
+        return `${raw}/api`;
     }
-    if (!raw.endsWith('/api')) {
-        raw = `${raw}/api`;
-    }
-    return raw;
+    return `${raw}/api`;
 }
 
 /**
@@ -87,11 +91,40 @@ export function getResolvedApiBase(): string {
     return cachedApiBase;
 }
 
+/**
+ * Route paths are `/alerts`, `/free/alerts`, … (no `/api` prefix).
+ * Base already ends with `/api` — strip duplicate `/api` to avoid `/api/api/...`.
+ */
+function normalizeApiPath(path: string): string {
+    let p = (path || '').trim();
+    if (!p.startsWith('/')) p = `/${p}`;
+    if (p.startsWith('/api/')) return p.slice(4);
+    if (p === '/api') return '/';
+    return p;
+}
+
 /** Build absolute URL for an API path (`/alerts`, `/free/alerts`, …). */
 export function buildApiUrl(path: string): string {
     const base = getResolvedApiBase().replace(/\/$/, '');
-    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-    return `${base}${normalizedPath}`;
+    return `${base}${normalizeApiPath(path)}`;
+}
+
+/** HTTP status safe for `new Response()` (200–599 only). */
+export function safeHttpStatus(code: unknown, fallback = 503): number {
+    const n = typeof code === 'number' ? code : Number(code);
+    if (Number.isFinite(n) && n >= 200 && n < 600) return Math.trunc(n);
+    return fallback;
+}
+
+/** Synthetic response when fetch fails after retries (must not use status 0). */
+export const SYNTHETIC_NETWORK_STATUS = 503;
+
+function createNetworkErrorResponse(): Response {
+    return new Response(JSON.stringify({ error: 'network_error', synthetic: true }), {
+        status: SYNTHETIC_NETWORK_STATUS,
+        statusText: 'Network Unavailable',
+        headers: { 'Content-Type': 'application/json' },
+    });
 }
 
 // --- Types & Interfaces ---
@@ -283,7 +316,7 @@ function dispatchSyncEvent(status: SyncStatus) {
 // --- Core Fetch with Auth ---
 
 function isRetryableStatus(status: number): boolean {
-    return status === 0 || status === 429 || status >= 500;
+    return status === 429 || status >= 500;
 }
 
 function updateSyncStatusFromResponse(resp: Response, skipSyncEvent: boolean, attempt: number, maxAttempts: number): void {
@@ -296,7 +329,7 @@ function updateSyncStatusFromResponse(resp: Response, skipSyncEvent: boolean, at
         dispatchSyncEvent('retrying');
         return;
     }
-    if (resp.status >= 500 || resp.status === 0) {
+    if (resp.status >= 500) {
         dispatchSyncEvent(attempt >= maxAttempts - 1 ? 'offline' : 'retrying');
         return;
     }
@@ -342,7 +375,7 @@ async function fetchWithAuth(
             return fetchWithAuth(url, options, skipSyncEvent, attempt + 1);
         }
         if (!skipSyncEvent) dispatchSyncEvent('offline');
-        return new Response(JSON.stringify({ error: 'network_error' }), { status: 0 });
+        return createNetworkErrorResponse();
     }
 }
 

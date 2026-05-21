@@ -1,4 +1,4 @@
-import { apiClient, ALERT_STREAM_DISPLAY_LIMIT, type Alert } from './api';
+import { apiClient, ALERT_STREAM_DISPLAY_LIMIT, SYNTHETIC_NETWORK_STATUS, type Alert } from './api';
 
 export class DashboardState {
     alerts: Alert[] = [];
@@ -71,11 +71,12 @@ export class DashboardState {
                     this.error = `HTTP ${alertsResp.status}`;
                 } else {
                     this.consecutiveFailures += 1;
+                    const isNetworkSynthetic = alertsResp.status === SYNTHETIC_NETWORK_STATUS;
                     const terminal =
-                        alertsResp.status === 0 ||
+                        isNetworkSynthetic ||
                         this.consecutiveFailures >= DashboardState.OFFLINE_FAILURE_THRESHOLD;
                     this.error = terminal
-                        ? alertsResp.status === 0
+                        ? isNetworkSynthetic
                             ? 'Offline'
                             : `HTTP ${alertsResp.status}`
                         : null;
@@ -86,7 +87,7 @@ export class DashboardState {
         } catch (err) {
             console.error("Dashboard polling error:", err);
             this.consecutiveFailures += 1;
-            this.lastStatus = 0;
+            this.lastStatus = SYNTHETIC_NETWORK_STATUS;
             this.error =
                 this.consecutiveFailures >= DashboardState.OFFLINE_FAILURE_THRESHOLD
                     ? 'Sync Failure'

@@ -702,8 +702,7 @@ async function initDashboard() {
                 data.lastStatus !== 429 &&
                 (data.lastStatus === 401 ||
                     data.lastStatus === 403 ||
-                    (data.consecutiveFailures >= 3 &&
-                        (data.lastStatus === 0 || data.lastStatus >= 500)));
+                    (data.consecutiveFailures >= 3 && data.lastStatus >= 500));
 
             if (showFeedOffline && data.alerts.length === 0) {
                 alertsContainer.innerHTML = `
