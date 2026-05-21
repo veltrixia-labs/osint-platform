@@ -1,0 +1,26 @@
+# Render Blueprint — API + static dashboard
+# Dashboard static site (osint-web): build web_dashboard, publish dist/
+# API service (osint-platform): MUST use the start command below (not a static site).
+
+services:
+  - type: web
+    name: osint-platform
+    runtime: python
+    buildCommand: pip install -r requirements.txt && pip install -e . --no-deps && alembic upgrade head
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/status
+    envVars:
+      - key: ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+
+  - type: web
+    name: osint-web
+    runtime: static
+    buildCommand: cd web_dashboard && npm ci && npm run build
+    staticPublishPath: web_dashboard/dist
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://osint-platform.onrender.com/api/*

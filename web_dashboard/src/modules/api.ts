@@ -54,6 +54,18 @@ function normalizeApiBase(originOrBase: string): string {
  * 5. `/api` on localhost (Vite proxy).
  */
 function resolveApiBase(): string {
+    if (typeof globalThis !== 'undefined' && 'location' in globalThis) {
+        const loc = (globalThis as unknown as Window).location;
+        const host = loc?.hostname ?? '';
+        if (host === 'localhost' || host === '127.0.0.1') {
+            return '/api';
+        }
+        if (STATIC_DASHBOARD_HOSTS.has(host)) {
+            const port = loc.port ? `:${loc.port}` : '';
+            return `${loc.protocol}//${host}${port}/api`;
+        }
+    }
+
     const fromMeta = readMetaApiOrigin();
     if (fromMeta) {
         return normalizeApiBase(fromMeta);
@@ -67,12 +79,6 @@ function resolveApiBase(): string {
     if (typeof globalThis !== 'undefined' && 'location' in globalThis) {
         const loc = (globalThis as unknown as Window).location;
         const host = loc?.hostname ?? '';
-        if (host === 'localhost' || host === '127.0.0.1') {
-            return '/api';
-        }
-        if (STATIC_DASHBOARD_HOSTS.has(host)) {
-            return normalizeApiBase(DEFAULT_REMOTE_API_ORIGIN);
-        }
         if (host) {
             const port = loc.port ? `:${loc.port}` : '';
             return `${loc.protocol}//${host}${port}/api`;
@@ -81,14 +87,132 @@ function resolveApiBase(): string {
     return '/api';
 }
 
+const API_PROBE_CACHE_KEY = 'veltrixia_resolved_api_base';
+
 let cachedApiBase: string | null = null;
+let apiBaseInitPromise: Promise<string> | null = null;
+
+/** Origins to probe for a live `/api/status` (order matters). */
+function getApiOriginCandidates(): string[] {
+    const seen = new Set<string>();
+    const add = (origin: string | null | undefined) => {
+        if (!origin) return;
+        const o = origin.replace(/\/+$/, '');
+        if (o && !seen.has(o)) seen.add(o);
+    };
+
+    if (typeof globalThis !== 'undefined' && 'location' in globalThis) {
+        const loc = (globalThis as unknown as Window).location;
+        const host = loc?.hostname ?? '';
+        if (host && host !== 'localhost' && host !== '127.0.0.1') {
+            add(loc.origin);
+        }
+    }
+
+    add(readMetaApiOrigin());
+
+    const fromEnv = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+    if (fromEnv) {
+        let raw = fromEnv;
+        if (raw.toLowerCase().endsWith('/api')) raw = raw.slice(0, -4);
+        add(raw);
+    }
+
+    add(DEFAULT_REMOTE_API_ORIGIN);
+    return [...seen];
+}
+
+function statusProbeUrl(origin: string): string {
+    return `${normalizeApiBase(origin)}/status`;
+}
+
+async function probeApiOrigin(origin: string): Promise<boolean> {
+    const url = statusProbeUrl(origin);
+    try {
+        const resp = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
+            cache: 'no-store',
+            headers: { Accept: 'application/json' },
+        });
+        if (!resp.ok) return false;
+        const body = (await resp.json()) as { status?: string; message?: string };
+        return body?.status === 'ok' || Boolean(body?.message?.toLowerCase().includes('running'));
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Probe candidate API hosts and cache the first healthy `/api/status`.
+ * Call once before dashboard data loads (initDashboard).
+ */
+export async function initApiBase(): Promise<string> {
+    if (apiBaseInitPromise) return apiBaseInitPromise;
+
+    apiBaseInitPromise = (async () => {
+        const cached = sessionStorage.getItem(API_PROBE_CACHE_KEY);
+        if (cached) {
+            cachedApiBase = cached;
+            const origin = cached.replace(/\/api$/i, '');
+            if (await probeApiOrigin(origin)) {
+                console.log(`[API] Using cached base: ${cached}`);
+                return cached;
+            }
+            sessionStorage.removeItem(API_PROBE_CACHE_KEY);
+            cachedApiBase = null;
+        }
+
+        for (const origin of getApiOriginCandidates()) {
+            if (await probeApiOrigin(origin)) {
+                cachedApiBase = normalizeApiBase(origin);
+                sessionStorage.setItem(API_PROBE_CACHE_KEY, cachedApiBase);
+                console.log(`[API] Discovered live API base: ${cachedApiBase}`);
+                return cachedApiBase;
+            }
+            console.warn(`[API] Probe failed for origin: ${origin}`);
+        }
+
+        cachedApiBase = resolveApiBase();
+        console.error(
+            `[API] No live API found. Probes failed for: ${getApiOriginCandidates().join(', ')}. ` +
+                'Ensure the Render osint-platform service is running (uvicorn api.main:app).',
+        );
+        return cachedApiBase;
+    })();
+
+    return apiBaseInitPromise;
+}
 
 /** Exposed for startup logging / debugging (no secrets). */
 export function getResolvedApiBase(): string {
     if (!cachedApiBase) {
-        cachedApiBase = resolveApiBase();
+        const cached = typeof sessionStorage !== 'undefined'
+            ? sessionStorage.getItem(API_PROBE_CACHE_KEY)
+            : null;
+        cachedApiBase = cached || resolveApiBase();
     }
     return cachedApiBase;
+}
+
+export function isCrossOriginApiRequest(url: string): boolean {
+    if (!url.startsWith('http') || typeof window === 'undefined') return false;
+    try {
+        return new URL(url).origin !== window.location.origin;
+    } catch {
+        return false;
+    }
+}
+
+export async function isSyntheticNetworkResponse(resp: Response): Promise<boolean> {
+    if (resp.status !== SYNTHETIC_NETWORK_STATUS) return false;
+    try {
+        const body = (await resp.clone().json()) as { synthetic?: boolean };
+        return body?.synthetic === true;
+    } catch {
+        return resp.status === SYNTHETIC_NETWORK_STATUS;
+    }
 }
 
 /**
@@ -350,11 +474,12 @@ async function fetchWithAuth(
     const token = localStorage.getItem('access_token');
     if (token) headers.set('Authorization', `Bearer ${token}`);
 
+    const crossOrigin = isCrossOriginApiRequest(url);
     const fetchOptions: RequestInit = {
         ...options,
         headers,
         mode: 'cors',
-        credentials: 'include',
+        credentials: crossOrigin ? 'omit' : 'include',
         cache: options.cache ?? 'no-store',
     };
 
@@ -494,6 +619,12 @@ export async function fetchFreeAlerts(
     if (!resp.ok) {
         const detail = await resp.text().catch(() => '');
         console.error('[API] fetchFreeAlerts HTTP', resp.status, detail?.slice(0, 200));
+        if (await isSyntheticNetworkResponse(resp)) {
+            throw new Error(
+                `API host unreachable (${getResolvedApiBase()}). ` +
+                    'The Render API service may be stopped (check osint-platform deploy / uvicorn).',
+            );
+        }
         throw new Error(
             resp.status === 429
                 ? 'Rate limited. Try again in a minute.'

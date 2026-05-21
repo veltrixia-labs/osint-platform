@@ -13,7 +13,7 @@ import { DashboardState } from './modules/poll'
 import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 // (Pro reports now handled within Pro Insights hub)
-import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, confirmCheckoutSession, completeStripeSignup, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase } from './modules/api'
+import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, confirmCheckoutSession, completeStripeSignup, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase, initApiBase } from './modules/api'
 import type { UserMe } from './modules/api'
 import {
     renderGracePeriodBanner,
@@ -450,6 +450,9 @@ async function handlePaymentReturn(): Promise<UserMe | null> {
 
 async function initDashboard() {
     const generation = ++dashboardInitGeneration
+    await initApiBase();
+    console.log(`[Antigravity] Resolved API base (after probe): ${getResolvedApiBase()}`);
+
     let user: UserMe | null = null;
     const hasToken = Boolean(localStorage.getItem('access_token'));
 

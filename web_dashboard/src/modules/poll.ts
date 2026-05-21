@@ -1,4 +1,4 @@
-import { apiClient, ALERT_STREAM_DISPLAY_LIMIT, SYNTHETIC_NETWORK_STATUS, type Alert } from './api';
+import { apiClient, ALERT_STREAM_DISPLAY_LIMIT, SYNTHETIC_NETWORK_STATUS, isSyntheticNetworkResponse, type Alert } from './api';
 
 export class DashboardState {
     alerts: Alert[] = [];
@@ -57,7 +57,13 @@ export class DashboardState {
             if (alertsResp) {
                 this.lastStatus = alertsResp.status;
 
-                if (alertsResp.ok) {
+                if (await isSyntheticNetworkResponse(alertsResp)) {
+                    this.consecutiveFailures += 1;
+                    this.error =
+                        this.consecutiveFailures >= DashboardState.OFFLINE_FAILURE_THRESHOLD
+                            ? 'API unreachable'
+                            : null;
+                } else if (alertsResp.ok) {
                     this.consecutiveFailures = 0;
                     this.error = null;
                     const data = await alertsResp.json();
