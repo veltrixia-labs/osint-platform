@@ -44,7 +44,7 @@ def build_pro_structural_report(context: dict) -> str:
 
 def _build_executive_snapshot(ctx: dict) -> str:
     domain = ctx.get("domain", {})
-    sig = ctx.get("signal", {})
+    sig = ctx.get("signal") or {}
     s_ctx = ctx.get("structural_context", {})
     m_ctx = ctx.get("market_confirmation", {})
     watch_inds = ctx.get("watch_indicators", [])
@@ -514,7 +514,7 @@ def build_pro_structural_report_payload(context: dict) -> dict:
     """
     context = _apply_macro_and_market_priorities(context)
     domain = context.get("domain", {})
-    sig = context.get("signal", {})
+    sig = context.get("signal") or {}
     s_ctx = context.get("structural_context", {})
     m_ctx = context.get("market_confirmation", {})
     prices = m_ctx.get("latest_prices", [])
