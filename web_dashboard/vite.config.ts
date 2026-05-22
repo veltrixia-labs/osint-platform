@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
         input: {
           main: resolve(dashboardDir, 'index.html'),
           app: resolve(dashboardDir, 'app.html'),
+          login: resolve(dashboardDir, 'login.html'),
         },
       },
     },

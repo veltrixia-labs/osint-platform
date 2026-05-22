@@ -1,5 +1,6 @@
 import type { UserMe } from '../api';
 import { toggleAdminTier } from '../api';
+import { isAuthSessionPending } from '../auth_session';
 import { closeMobileSidebar } from '../mobile_nav';
 
 /**
@@ -74,9 +75,12 @@ export function renderNavigation(
     onTabSwitch: (tabId: string) => void,
     activeTab: string = 'feed'
 ): void {
+    const sessionPending = isAuthSessionPending();
     const tier = user.tier || 'free';
     const isDevOverride = user.id === 'dev-override';
-    const isAnonymous = user.id === 'free-access' || (!isDevOverride && !user.email);
+    const isAnonymous =
+        !sessionPending
+        && (user.id === 'free-access' || (!isDevOverride && !user.email));
     
     // Determine tier display label
     let displayTierLabel = TIER_LABELS[tier] || 'Free Access';
@@ -85,6 +89,9 @@ export function renderNavigation(
     if (isDevOverride) {
         displayTierLabel = tier === 'pro' ? 'PRO ACCESS' : (TIER_LABELS[tier] || tier.toUpperCase());
         displayEmail = 'Local Dev Override';
+    } else if (sessionPending) {
+        displayTierLabel = 'VERIFYING SESSION';
+        displayEmail = 'Validating access…';
     } else if (isAnonymous) {
         displayTierLabel = 'FREE ACCESS';
         displayEmail = 'Free Access';
@@ -119,8 +126,11 @@ export function renderNavigation(
                 <div class="nav-group-label">${title}</div>
                 ${visibleItems.map(item => {
                     const isActive = item.id === activeTab;
-                    const isLockedForFree = tier === 'free' && FREE_LOCKED_TABS.has(item.id);
-                    const accessible = !isLockedForFree && canAccess(tier, item.minTier);
+                    const isLockedForFree =
+                        !sessionPending && tier === 'free' && FREE_LOCKED_TABS.has(item.id);
+                    const accessible =
+                        sessionPending
+                        || (!isLockedForFree && canAccess(tier, item.minTier));
                     return `
                         <div
                             class="sidebar-nav-link ${isActive ? 'sidebar-nav-link--active' : ''} ${isLockedForFree ? 'sidebar-nav-link--premium-gate' : ''}"
@@ -144,7 +154,13 @@ export function renderNavigation(
         ? `<button type="button" class="nav-upgrade-btn nav-upgrade-btn--ghost" id="sidebar-login-btn">Sign In</button>`
         : `<button type="button" class="nav-upgrade-btn nav-upgrade-btn--ghost" id="sidebar-logout-btn">Sign Out</button>`;
 
-    const footerCtaHtml = !isPaidTier
+    const footerCtaHtml = sessionPending
+        ? `
+                <div style="font-size: 0.65rem; color: #8b949e; text-align: center; letter-spacing: 0.5px; padding: 4px 0;">
+                    Verifying subscription…
+                </div>
+          `
+        : !isPaidTier
         ? `
                 <button class="nav-upgrade-btn nav-upgrade-btn--premium" id="upgrade-button">
                     Upgrade to Pro / Expert

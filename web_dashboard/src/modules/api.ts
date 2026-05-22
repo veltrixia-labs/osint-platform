@@ -566,12 +566,29 @@ export async function logout() {
     return resp;
 }
 
-export async function fetchMe(_cache?: any): Promise<UserMe | null> {
+export type FetchMeResult =
+    | { status: 'ok'; user: UserMe }
+    | { status: 'unauthorized' }
+    | { status: 'error' };
+
+export async function fetchMeDetailed(): Promise<FetchMeResult> {
     try {
         const resp = await apiClient.get('/auth/me', {}, true);
-        if (!resp.ok) return null;
-        return await resp.json();
-    } catch { return null; }
+        if (resp.ok) {
+            return { status: 'ok', user: await resp.json() };
+        }
+        if (resp.status === 401 || resp.status === 403) {
+            return { status: 'unauthorized' };
+        }
+        return { status: 'error' };
+    } catch {
+        return { status: 'error' };
+    }
+}
+
+export async function fetchMe(_cache?: any): Promise<UserMe | null> {
+    const result = await fetchMeDetailed();
+    return result.status === 'ok' ? result.user : null;
 }
 
 /** Admin-only: set manual_tier override (null clears → Stripe/subscription applies). */

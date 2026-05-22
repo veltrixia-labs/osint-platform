@@ -17,6 +17,15 @@ import { formatIntelTime } from './modules/render/utils'
 import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, confirmCheckoutSession, completeStripeSignup, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase, initApiBase } from './modules/api'
 import type { UserMe } from './modules/api'
 import {
+    AuthRedirectError,
+    clearStaleAuthTokens,
+    isAuthSessionPending,
+    isLoginPath,
+    redirectToLogin,
+    renderAuthBootScreen,
+    resolveAuthSession,
+} from './modules/auth_session'
+import {
     renderGracePeriodBanner,
     renderSubscriptionTab,
 } from './modules/subscription'
@@ -74,9 +83,14 @@ async function openLoginOrFeed(): Promise<void> {
                 await initDashboard()
                 return
             }
+            clearStaleAuthTokens()
         } catch {
-            /* fall through to login form */
+            clearStaleAuthTokens()
         }
+    }
+    if (!isLoginPath()) {
+        redirectToLogin()
+        return
     }
     await renderLogin()
 }
@@ -109,6 +123,9 @@ bindHashRouteSync()
 export async function renderLogin(message?: string, initialEmail?: string) {
     (window as any).stopPolling?.();
 
+    const urlMsg = new URLSearchParams(window.location.search).get('msg');
+    const displayMessage = message || urlMsg || undefined;
+
     if (localStorage.getItem('access_token')) {
         try {
             const me = await fetchMe()
@@ -127,7 +144,7 @@ export async function renderLogin(message?: string, initialEmail?: string) {
         <div class="login-card">
             <h1>VELTRIXIA LABS</h1>
             <p class="login-subtitle">Sign in with your email</p>
-            ${message ? `<div id="login-message" style="color: #3fb950; margin-bottom: 1rem; font-size: 0.9rem;">${message}</div>` : ''}
+            ${displayMessage ? `<div id="login-message" style="color: #ff7b72; margin-bottom: 1rem; font-size: 0.9rem;">${displayMessage}</div>` : ''}
             <input type="email" id="login-email" placeholder="Email Address" required value="${initialEmail || ''}" />
             <input type="password" id="password" placeholder="Password" required />
             <button type="button" id="login-btn" class="login-primary-btn">Log In</button>
@@ -151,6 +168,10 @@ export async function renderLogin(message?: string, initialEmail?: string) {
         try {
             await login(email, pwd);
             dashboardInitGeneration += 1
+            if (isLoginPath()) {
+                window.location.replace(`${dashboardBasePath()}#feed`);
+                return;
+            }
             setFeedHash()
             await resumeDashboardAfterAuth();
         } catch {
@@ -462,33 +483,45 @@ async function handlePaymentReturn(): Promise<UserMe | null> {
     return fetchMe();
 }
 
+function applyDevOverrideToUser(hasToken: boolean, user: UserMe | null): UserMe {
+    if (shouldApplyDevOverride(hasToken, user)) {
+        const devUser = buildDevOverrideUser(getConfiguredDevTier()!);
+        console.log(`[Antigravity] Dev override active: tier=${devUser.tier} (id=${devUser.id})`);
+        return devUser;
+    }
+    if (!user || !isAuthenticatedUser(user)) {
+        return buildAnonymousUser();
+    }
+    return user;
+}
+
 async function initDashboard() {
     const generation = ++dashboardInitGeneration
+    const hasToken = Boolean(localStorage.getItem('access_token'));
+
+    if (hasToken) {
+        renderAuthBootScreen(app);
+    }
+
     await initApiBase();
     console.log(`[Antigravity] Resolved API base (after probe): ${getResolvedApiBase()}`);
 
-    let user: UserMe | null = null;
-    const hasToken = Boolean(localStorage.getItem('access_token'));
-
+    let user: UserMe;
     try {
-        user = await fetchMe();
-    } catch {
-        user = null;
+        user = await resolveAuthSession({
+            hasToken,
+            applyDevOverride: (me) => applyDevOverrideToUser(hasToken, me),
+        });
+    } catch (e) {
+        if (e instanceof AuthRedirectError) return;
+        throw e;
     }
 
-    if (user) {
-        const refreshed = await handlePaymentReturn();
-        if (refreshed) user = refreshed;
-    } else {
-        const refreshed = await handlePaymentReturn();
-        if (refreshed) user = refreshed;
-    }
+    if (generation !== dashboardInitGeneration) return
 
-    if (shouldApplyDevOverride(hasToken, user)) {
-        user = buildDevOverrideUser(getConfiguredDevTier()!);
-        console.log(`[Antigravity] Dev override active: tier=${user.tier} (id=${user.id})`);
-    } else if (!user) {
-        user = buildAnonymousUser();
+    const paymentRefresh = await handlePaymentReturn();
+    if (paymentRefresh && isAuthenticatedUser(paymentRefresh)) {
+        user = applyDevOverrideToUser(hasToken, paymentRefresh);
     }
 
     if (generation !== dashboardInitGeneration) return
@@ -712,8 +745,14 @@ async function initDashboard() {
                     });
                 });
             }
-            else if (tab === 'market-pulse') renderMarketPulse(alertsContainer, user!, () => handleTabSwitch('plans'));
-            else if (tab === 'pro-insights') renderPro(alertsContainer, user!, () => handleTabSwitch('plans'));
+            else if (tab === 'market-pulse') {
+                if (isAuthSessionPending()) return;
+                renderMarketPulse(alertsContainer, user!, () => handleTabSwitch('plans'));
+            }
+            else if (tab === 'pro-insights') {
+                if (isAuthSessionPending()) return;
+                renderPro(alertsContainer, user!, () => handleTabSwitch('plans'));
+            }
             else if (tab === 'pro-map') renderProMap();
             else if (tab === 'expert-intel') {
                 const isExpertPlus =
@@ -922,6 +961,15 @@ const startHeartbeat = () => {
 };
 
 function bootstrapApp(): void {
+    if (isLoginPath()) {
+        void (async () => {
+            await initApiBase();
+            const msg = new URLSearchParams(window.location.search).get('msg');
+            await renderLogin(msg || undefined);
+        })();
+        return;
+    }
+
     void syncRouteFromHash().then(() => {
         startHeartbeat();
     });

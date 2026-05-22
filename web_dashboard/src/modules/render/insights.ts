@@ -20,6 +20,7 @@ import {
     UI_TOPIC_PREVIEW_CODES,
     type StrategicTopicCode,
 } from '../topics';
+import { isAuthSessionPending } from '../auth_session';
 import { renderLockedFeature } from '../subscription';
 import { renderProStructuralBriefs, renderProStructuralBriefDetail } from './pro_reports';
 
@@ -79,6 +80,11 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
     disposeProInsightsView();
     const sessionId = proInsightsSession;
     container.dataset.dashboardView = 'pro-insights';
+
+    if (isAuthSessionPending()) {
+        container.innerHTML = `<div class="intelligence-loader">Validating session…</div>`;
+        return;
+    }
 
     // 1. Tier Enforcement
     if (user.tier === 'free') {
@@ -203,6 +209,11 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function renderExpertIntel(container: HTMLElement, user: UserMe, onNavigatePlans: () => void) {
+    if (isAuthSessionPending()) {
+        container.innerHTML = `<div class="intelligence-loader">Validating session…</div>`;
+        return;
+    }
+
     // 1. Tier Enforcement
     if (user.tier !== 'experts' && user.tier !== 'enterprise') {
         container.innerHTML = renderLockedFeature('Expert Strategic Suite', 'experts');

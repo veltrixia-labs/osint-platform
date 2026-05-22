@@ -5127,6 +5127,35 @@ p {
   animation: pulse 2s infinite;
 }
 
+.auth-boot-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--bg-primary, #0d1117);
+}
+
+.auth-boot-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.auth-boot-inner .sync-label {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary, #8b949e);
+}
+
+.auth-boot-sub {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #8b949e);
+}
+
 @keyframes pulse {
   0% {
     opacity: 0.5;

@@ -5,6 +5,7 @@
 import type { ProInsights, UserMe } from '../api';
 import { fetchProInsights } from '../api';
 import { getTopicDef } from '../topics';
+import { isAuthSessionPending } from '../auth_session';
 import { renderLockedFeature } from '../subscription';
 import {
     ACTIVE_MARKET_PRESSURES_GUIDE_HTML,
@@ -163,6 +164,11 @@ function renderTrendSection(series: TrendSeries[], range: TrendRange, activeRang
 export async function renderMarketPulse(container: HTMLElement, user: UserMe, onNavigatePlans: () => void): Promise<void> {
     disposeMarketPulseView();
     const sessionId = marketPulseSession;
+
+    if (isAuthSessionPending()) {
+        container.innerHTML = `<div class="intelligence-loader">Validating session…</div>`;
+        return;
+    }
 
     if (user.tier === 'free') {
         container.innerHTML = renderLockedFeature('Market Pulse', 'pro');
