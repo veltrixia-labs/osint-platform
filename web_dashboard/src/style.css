@@ -7714,6 +7714,65 @@ body.cb-modal-scroll-lock {
   text-align: left;
 }
 
+.intel-section-guide-popover--rich:has(.intel-guide-content--pressures) {
+  width: min(280px, calc(100vw - 2rem));
+  padding: 0.6rem 0.75rem;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.intel-guide-content--pressures .intel-guide-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.intel-guide-content--pressures .intel-guide-title strong {
+  font-weight: 700;
+}
+
+.intel-guide-content--pressures .intel-guide-body,
+.intel-guide-content--pressures .intel-guide-subhead {
+  margin: 0 0 0.4rem;
+  font-size: 0.68rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.intel-guide-content--pressures .intel-guide-subhead {
+  margin-top: 0.45rem;
+  margin-bottom: 0.25rem;
+  color: var(--text-primary);
+}
+
+.intel-guide-content--pressures .intel-guide-subhead strong {
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.intel-guide-list--compact {
+  margin: 0;
+  padding-left: 0.95rem;
+  list-style: disc;
+}
+
+.intel-guide-list--compact li {
+  margin-bottom: 0.35rem;
+  font-size: 0.68rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.intel-guide-list--compact li strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.intel-guide-list--compact li:last-child {
+  margin-bottom: 0;
+}
+
 .intel-guide-title {
   margin: 0 0 0.5rem;
   font-size: 0.8rem;

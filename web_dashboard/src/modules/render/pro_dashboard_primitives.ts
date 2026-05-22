@@ -16,8 +16,16 @@ export const HISTORICAL_RISK_TREND_GUIDE_HTML = `
 <p class="intel-guide-body">A chronological visualization of normalized domain pressure indexes across key sectors over the past 24 hours, 7 days, or 30 days. This chart allows for comparative analysis of relative risk volatility and trend waveforms.</p>`;
 
 export const ACTIVE_MARKET_PRESSURES_GUIDE_HTML = `
+<div class="intel-guide-content intel-guide-content--pressures">
 <p class="intel-guide-title"><strong>Active Market Pressures</strong></p>
-<p class="intel-guide-body">A real-time dashboard aggregating and quantifying sudden volatility, anomaly detection, and incoming signal intensity for each targeted sector.</p>`;
+<p class="intel-guide-body">A real-time dashboard tracking sudden volatility and incoming signal intensity for targeted sectors.</p>
+<p class="intel-guide-subhead"><strong>How to read:</strong></p>
+<ul class="intel-guide-list intel-guide-list--compact">
+<li><strong>Score (e.g., 8.5):</strong> The current normalized domain pressure index.</li>
+<li><strong>Delta (e.g., &uarr; 0.7):</strong> The net change in the score over the last 24 hours.</li>
+<li><strong>SPIKE / ANOMALY Badge:</strong> This alert specifically triggers when the underlying raw signal intensity increases by <strong>1.5x or more within a 24-hour clustering window</strong>, highlighting sudden, accelerating threats regardless of the baseline score.</li>
+</ul>
+</div>`;
 
 function effectiveRiskIntensity(stat: Record<string, unknown>): number {
     const ui = Number(stat.intensity);
