@@ -60,36 +60,46 @@ function buildTrendSeries(riskSummary: Record<string, unknown> | undefined, rang
     });
 }
 
+/** Normalized domain pressure index scale (0.0–1.0). */
+const TREND_Y_MIN = 0;
+const TREND_Y_MAX = 1;
+const TREND_Y_TICKS = [0, 0.25, 0.5, 0.75, 1];
+
 function renderTrendChartSvg(series: TrendSeries[], range: TrendRange): string {
     const width = 880;
     const height = 220;
-    const padX = 36;
+    const padLeft = 44;
+    const padRight = 28;
     const padY = 28;
-    const innerW = width - padX * 2;
+    const plotX = padLeft;
+    const innerW = width - padLeft - padRight;
     const innerH = height - padY * 2;
 
     if (!series.length) {
         return `<div class="mp-trend-empty">Awaiting domain pressure telemetry...</div>`;
     }
 
-    const allVals = series.flatMap((s) => s.points);
-    const minV = Math.min(...allVals, 0);
-    const maxV = Math.max(...allVals, 1);
-    const span = maxV - minV || 1;
+    const toX = (i: number, len: number) => plotX + (i / Math.max(1, len - 1)) * innerW;
+    const toY = (v: number) => {
+        const clamped = Math.min(TREND_Y_MAX, Math.max(TREND_Y_MIN, v));
+        return padY + innerH - ((clamped - TREND_Y_MIN) / (TREND_Y_MAX - TREND_Y_MIN)) * innerH;
+    };
 
-    const toX = (i: number, len: number) => padX + (i / Math.max(1, len - 1)) * innerW;
-    const toY = (v: number) => padY + innerH - ((v - minV) / span) * innerH;
-
-    const gridLines = [0.25, 0.5, 0.75].map((frac) => {
-        const y = padY + innerH * (1 - frac);
-        return `<line x1="${padX}" y1="${y}" x2="${width - padX}" y2="${y}" class="mp-trend-grid-line"/>`;
+    const yAxis = TREND_Y_TICKS.map((tick) => {
+        const y = toY(tick);
+        const label = tick.toFixed(1);
+        return `
+            <line x1="${padLeft - 5}" y1="${y.toFixed(1)}" x2="${padLeft}" y2="${y.toFixed(1)}" class="mp-trend-axis-tick"/>
+            <text x="${padLeft - 8}" y="${(y + 3.5).toFixed(1)}" text-anchor="end" class="mp-trend-y-label">${label}</text>
+            <line x1="${padLeft}" y1="${y.toFixed(1)}" x2="${width - padRight}" y2="${y.toFixed(1)}" class="mp-trend-grid-line"/>
+        `;
     }).join('');
 
     const paths = series
         .map((s) => {
             const coords = s.points.map((v, i) => `${toX(i, s.points.length).toFixed(1)},${toY(v).toFixed(1)}`);
             const line = coords.join(' ');
-            const area = `${coords.join(' ')} L ${toX(s.points.length - 1, s.points.length).toFixed(1)},${(padY + innerH).toFixed(1)} L ${padX},${(padY + innerH).toFixed(1)} Z`;
+            const area = `${coords.join(' ')} L ${toX(s.points.length - 1, s.points.length).toFixed(1)},${(padY + innerH).toFixed(1)} L ${plotX},${(padY + innerH).toFixed(1)} Z`;
             return `
                 <path class="mp-trend-area" d="M ${area}" fill="${s.color}" fill-opacity="0.12" stroke="none"/>
                 <path class="mp-trend-line" d="M ${line}" fill="none" stroke="${s.color}" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
@@ -116,11 +126,12 @@ function renderTrendChartSvg(series: TrendSeries[], range: TrendRange): string {
                     </linearGradient>
                 </defs>
                 <rect x="0" y="0" width="${width}" height="${height}" fill="url(#mp-trend-glow)" opacity="0.35"/>
-                ${gridLines}
+                <line x1="${padLeft}" y1="${padY}" x2="${padLeft}" y2="${padY + innerH}" class="mp-trend-y-axis"/>
+                ${yAxis}
                 ${paths}
             </svg>
             <div class="mp-trend-legend">${legend}</div>
-            <div class="mp-trend-axis-label">${rangeLabel} · normalized domain pressure index</div>
+            <div class="mp-trend-axis-label">${rangeLabel} · Y-axis: normalized index (0.0–1.0)</div>
         </div>`;
 }
 
@@ -204,7 +215,7 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
                 <section class="pro-insight-pressures pro-insight-section" aria-labelledby="mp-pressures-heading">
                     ${renderProPanel(
                         'Active Market Pressures',
-                        `<div class="dashboard-row bluf-row pro-bluf-row" role="list">${riskHtml}</div>`,
+                        `<div class="dashboard-row bluf-row pro-bluf-row pro-bluf-row--mp-six" role="list">${riskHtml}</div>`,
                         undefined,
                         '#58a6ff',
                         renderPanelGuide('Active Market Pressures', ACTIVE_MARKET_PRESSURES_GUIDE_HTML),
