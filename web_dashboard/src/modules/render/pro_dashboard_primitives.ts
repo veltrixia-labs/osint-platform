@@ -2,7 +2,7 @@
  * Shared Pro dashboard UI primitives (Market Pulse + Pro Insights + Expert).
  */
 
-import { getTopicDef } from '../topics';
+import { getTopicDef, getTopicColor, normalizeTopicCode } from '../topics';
 
 export const SECTOR_DISTRIBUTION_GUIDE_HTML = `
 <p class="intel-guide-title"><strong>Sector Distribution Guide</strong></p>
@@ -10,6 +10,21 @@ export const SECTOR_DISTRIBUTION_GUIDE_HTML = `
 <li><strong>Intelligence Volume Index:</strong> Represents the total cumulative data points, active alerts, and structured contextual inputs currently ingested within each specific domain.</li>
 <li><strong>Operational Utility:</strong> This bar ratio visualizes VELTRIXIA&rsquo;s cognitive focus. A sudden spike or extension in a specific sector&rsquo;s bar reflects a heavy influx of real-time signals, indicating an escalating operational friction or high-density risk event in that market vertical.</li>
 </ul>`;
+
+/** Module A — Risk Contagion & Lead-Lag Tracker */
+export const LEAD_LAG_GUIDE_HTML = `
+<p class="intel-guide-title"><strong>Risk Contagion &amp; Lead-Lag Tracker</strong></p>
+<p class="intel-guide-body">Quantifies the directional propagation of risk across sectors by calculating the real-time Cross-Correlation Function (CCF). It identifies leading indicators and measures the precise time delay (lag) of risk transmission.</p>`;
+
+/** Module B — Momentum & Acceleration Gauge */
+export const MOMENTUM_GAUGE_GUIDE_HTML = `
+<p class="intel-guide-title"><strong>Momentum &amp; Acceleration Gauge</strong></p>
+<p class="intel-guide-body">Applies fluid-dynamic derivatives to quantify risk velocity (dI/dt) and acceleration (d²I/dt²). This reveals whether a threat is expanding exponentially (burst potential) or stabilizing, serving as an early-warning metric before scores peak.</p>`;
+
+/** Module C — Verified Source Evidence Stream */
+export const EVIDENCE_STREAM_GUIDE_HTML = `
+<p class="intel-guide-title"><strong>Verified Source Evidence Stream</strong></p>
+<p class="intel-guide-body">A live, horizontal timeline of the raw OSINT signals, news feeds, and intelligence nodes causing current domain spikes. Provides strict end-to-end transparency and auditability for automated platform risk triggers.</p>`;
 
 export const HISTORICAL_RISK_TREND_GUIDE_HTML = `
 <p class="intel-guide-title"><strong>Historical Risk Trend</strong></p>
@@ -161,4 +176,197 @@ export function buildRiskSummaryCardsHtml(riskSummary: Record<string, unknown> |
                 </div>`;
         })
         .join('');
+}
+
+// ── Module A: Risk Contagion & Lead-Lag Tracker ────────────────────────────────
+
+const DOMAIN_SHORT: Record<string, string> = {
+    energy_resource_risk:       'Energy',
+    global_market_intelligence: 'Market',
+    crypto_geopolitics:         'Crypto',
+    ai_semiconductor_intelligence: 'AI/Semi',
+    defense_technology:         'Defense',
+    supply_chain_intelligence:  'Supply Chain',
+};
+
+export function renderLeadLagNetwork(
+    matrix: { source: string; target: string; lag_hours: number; correlation: number }[],
+    _riskSummary: Record<string, unknown> | undefined,
+): string {
+    if (!matrix || matrix.length === 0) {
+        return `<p class="mp-module-empty">Awaiting cross-sector correlation data — insufficient active domain signals.</p>`;
+    }
+
+    const rows = matrix.map(pair => {
+        const srcColor = getTopicColor(pair.source);
+        const tgtColor = getTopicColor(pair.target);
+        const srcShort = DOMAIN_SHORT[pair.source] || pair.source;
+        const tgtShort = DOMAIN_SHORT[pair.target] || pair.target;
+        const r = pair.correlation;
+        const absR = Math.abs(r);
+        const lagSign = r >= 0 ? '+' : '';
+        // Line opacity scales with |R|
+        const lineOpacity = (0.3 + absR * 0.55).toFixed(2);
+        const lineWidth = absR >= 0.65 ? 2.5 : 1.5;
+        const rClass = absR >= 0.7 ? 'leadlag-r--high' : absR >= 0.5 ? 'leadlag-r--mid' : 'leadlag-r--low';
+
+        return `
+        <div class="leadlag-pair">
+            <span class="leadlag-badge" style="--badge-color:${srcColor}">${srcShort}</span>
+            <span class="leadlag-connector" style="opacity:${lineOpacity};">
+                <span class="leadlag-line" style="border-width:${lineWidth}px;"></span>
+                <span class="leadlag-annotation">
+                    <span class="leadlag-lag">${lagSign}${pair.lag_hours.toFixed(1)}h</span>
+                    <span class="leadlag-sep">/</span>
+                    <span class="leadlag-corr ${rClass}">R=${r.toFixed(2)}</span>
+                </span>
+                <span class="leadlag-arrow">&#8250;</span>
+            </span>
+            <span class="leadlag-badge" style="--badge-color:${tgtColor}">${tgtShort}</span>
+        </div>`;
+    }).join('');
+
+    return `<div class="leadlag-network">${rows}</div>`;
+}
+
+// ── Module B: Momentum & Acceleration Gauge ────────────────────────────────────
+
+export function renderMomentumGauges(
+    riskSummary: Record<string, unknown> | undefined,
+): string {
+    if (!riskSummary || Object.keys(riskSummary).length === 0) {
+        return `<p class="mp-module-empty">Awaiting sector telemetry for derivative computation...</p>`;
+    }
+
+    const DOMAIN_ORDER = [
+        'energy_resource_risk',
+        'global_market_intelligence',
+        'crypto_geopolitics',
+        'ai_semiconductor_intelligence',
+        'defense_technology',
+        'supply_chain_intelligence',
+    ];
+
+    const cols = DOMAIN_ORDER.map(topic => {
+        const stat = (riskSummary as any)[topic] || {};
+        const def = getTopicDef(topic);
+        const color = def.color;
+        const shortLabel = DOMAIN_SHORT[topic] || def.label;
+
+        const v: number = stat.velocity ?? 0;
+        const a: number = stat.acceleration ?? 0;
+        const vLabel: string = stat.v_label ?? 'stable';
+        const aLabel: string = stat.a_label ?? 'stable';
+
+        // Velocity arrow
+        const vIcon =
+            vLabel === 'rising'
+                ? '<span class="momentum-arrow momentum-arrow--up" aria-label="Rising velocity">↑</span>'
+                : vLabel === 'falling'
+                ? '<span class="momentum-arrow momentum-arrow--down" aria-label="Falling velocity">↓</span>'
+                : '<span class="momentum-arrow momentum-arrow--stable" aria-label="Stable">—</span>';
+
+        // Acceleration: double-up arrow for high accel
+        const isHighAccel = aLabel === 'accelerating' && Math.abs(a) > 0.3;
+        const aIcon = isHighAccel
+            ? '<span class="momentum-arrow momentum-arrow--burst" aria-label="High acceleration">⇈</span>'
+            : aLabel === 'accelerating'
+            ? '<span class="momentum-arrow momentum-arrow--accel" aria-label="Accelerating">↑</span>'
+            : aLabel === 'decelerating'
+            ? '<span class="momentum-arrow momentum-arrow--decel" aria-label="Decelerating">↓</span>'
+            : '<span class="momentum-arrow momentum-arrow--stable" aria-label="Stable acceleration">·</span>';
+
+        // Gauge fill: map velocity magnitude to 0-100%
+        const vMag = Math.min(1, Math.abs(v) / 1.2);
+        const fillColor = vLabel === 'falling' ? '#f85149' : color;
+
+        return `
+        <div class="momentum-col" style="--col-color:${color}">
+            <div class="momentum-label">${shortLabel}</div>
+            <div class="momentum-gauge-wrap">
+                <div class="momentum-gauge-bg">
+                    <div class="momentum-gauge-fill" style="height:${(vMag*100).toFixed(1)}%; background:${fillColor}; box-shadow:0 0 8px ${fillColor}55;"></div>
+                </div>
+                <div class="momentum-arrows">
+                    <div class="momentum-v">${vIcon}</div>
+                    <div class="momentum-a">${aIcon}</div>
+                </div>
+            </div>
+            <div class="momentum-values">
+                <span class="momentum-v-val" title="Velocity (dI/dt)">V: ${v >= 0 ? '+' : ''}${v.toFixed(2)}</span>
+                <span class="momentum-a-val" title="Acceleration (d²I/dt²)">A: ${a >= 0 ? '+' : ''}${a.toFixed(3)}</span>
+            </div>
+        </div>`;
+    }).join('');
+
+    return `<div class="momentum-grid">${cols}</div>`;
+}
+
+// ── Module C: Verified Source Evidence Stream ──────────────────────────────────
+
+type EvidenceStreamItem = {
+    alert_id: string;
+    topic: string;
+    source_name: string;
+    title: string;
+    confidence_score: number;
+    url?: string | null;
+    triggered_at?: string | null;
+    evidence_list?: any[];
+};
+
+export function renderEvidenceStream(items: EvidenceStreamItem[]): string {
+    if (!items || items.length === 0) {
+        return `<p class="mp-module-empty">Monitoring OSINT anchor signals — no correlated evidence in current window.</p>`;
+    }
+
+    const cards = items.map((item, idx) => {
+        const color = getTopicColor(normalizeTopicCode(item.topic));
+        const def = getTopicDef(item.topic || null);
+        const score = item.confidence_score ?? 0;
+        const scoreClass = score >= 0.75 ? 'ev-score--high' : score >= 0.45 ? 'ev-score--mid' : 'ev-score--low';
+        const truncTitle = item.title.length > 90 ? item.title.slice(0, 87) + '…' : item.title;
+        const sourceDisplay = item.source_name.toUpperCase();
+
+        // Encode evidence_list to a data attribute (JSON, single-quoted safely via base64 is risky;
+        // we store the index and let the click delegate look it up from the live items array)
+        return `
+        <div class="evidence-card"
+             data-ev-index="${idx}"
+             data-ev-alert-id="${escAttrInline(item.alert_id)}"
+             data-ev-title="${escAttrInline(truncTitle)}"
+             style="--ev-color:${color}; border-left-color:${color};"
+             role="button"
+             tabindex="0"
+             aria-label="View source evidence: ${escAttrInline(truncTitle)}">
+            <div class="ev-source">${escHtmlInline(sourceDisplay)}</div>
+            <div class="ev-title">${escHtmlInline(truncTitle)}</div>
+            <div class="ev-footer">
+                <span class="ev-sector" style="color:${color}">${def.icon} ${def.label}</span>
+                <span class="ev-score ${scoreClass}">CF: ${(score * 100).toFixed(0)}%</span>
+            </div>
+        </div>`;
+    }).join('');
+
+    return `
+    <div class="evidence-stream-wrap">
+        <div class="evidence-ticker" id="mp-evidence-ticker">
+            <div class="evidence-track">
+                ${cards}
+                ${cards}<!-- Duplicate for seamless loop -->
+            </div>
+        </div>
+    </div>`;
+}
+
+function escHtmlInline(s: string): string {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function escAttrInline(s: string): string {
+    return escHtmlInline(s).replace(/'/g, '&#39;');
 }

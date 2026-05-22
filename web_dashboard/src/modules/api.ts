@@ -347,6 +347,24 @@ export interface ProInsights {
     coverage_domains?: number;
     active_domains?: number;
     focus_alert_id?: string | null;
+    /** Module A — Risk Contagion Lead-Lag Tracker */
+    lead_lag_matrix?: {
+        source: string;
+        target: string;
+        lag_hours: number;
+        correlation: number;
+    }[];
+    /** Module C — Verified Source Evidence Stream */
+    evidence_stream?: {
+        alert_id: string;
+        topic: string;
+        source_name: string;
+        title: string;
+        confidence_score: number;
+        url?: string | null;
+        triggered_at?: string | null;
+        evidence_list?: any[];
+    }[];
 }
 
 export interface ExpertIntelligence {

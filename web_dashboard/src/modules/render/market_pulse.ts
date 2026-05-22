@@ -7,14 +7,19 @@ import { fetchProInsights } from '../api';
 import { getTopicDef } from '../topics';
 import { isAuthSessionPending } from '../auth_session';
 import { renderLockedFeature } from '../subscription';
+import { showEvidenceModal } from './alerts';
 import {
     ACTIVE_MARKET_PRESSURES_GUIDE_HTML,
     buildRiskSummaryCardsHtml,
     HISTORICAL_RISK_TREND_GUIDE_HTML,
-    renderIntensityBar,
+    LEAD_LAG_GUIDE_HTML,
+    MOMENTUM_GAUGE_GUIDE_HTML,
+    EVIDENCE_STREAM_GUIDE_HTML,
     renderPanelGuide,
     renderProPanel,
-    SECTOR_DISTRIBUTION_GUIDE_HTML,
+    renderLeadLagNetwork,
+    renderMomentumGauges,
+    renderEvidenceStream,
 } from './pro_dashboard_primitives';
 
 const MARKET_PULSE_REFRESH_MS = 60_000;
@@ -202,15 +207,19 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
         const riskSummary = (data?.risk_summary || {}) as Record<string, unknown>;
         const series = buildTrendSeries(riskSummary, range);
         const riskHtml = buildRiskSummaryCardsHtml(riskSummary);
-        const sectorHtml =
-            data?.sector_distribution && Object.keys(data.sector_distribution).length > 0
-                ? Object.entries(data.sector_distribution as Record<string, number>)
-                      .map(([topic, count]) => {
-                          const def = getTopicDef(topic === 'null' ? null : topic);
-                          return renderIntensityBar(count, def.label, def.color);
-                      })
-                      .join('')
-                : `<p class="u-p-2" style="opacity:0.6;font-size:0.85rem;">Sector distribution indexing...</p>`;
+
+        // ── Module A: Lead-Lag Network ─────────────────────────────────────────
+        const leadLagHtml = renderLeadLagNetwork(
+            data?.lead_lag_matrix ?? [],
+            riskSummary,
+        );
+
+        // ── Module B: Momentum & Acceleration Gauges ───────────────────────
+        const momentumHtml = renderMomentumGauges(riskSummary);
+
+        // ── Module C: Verified Source Evidence Stream ──────────────────────
+        const evidenceItems = data?.evidence_stream ?? [];
+        const evidenceHtml = renderEvidenceStream(evidenceItems);
 
         container.innerHTML = `
         <div class="cb-briefs-page market-pulse-hub">
@@ -231,18 +240,44 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
                         ),
                     )}
                 </section>
-                <section class="pro-insight-sector pro-insight-section">
+
+                <!-- Module A: Risk Contagion & Lead-Lag Tracker -->
+                <section class="pro-insight-leadlag pro-insight-section" aria-label="Risk Contagion Lead-Lag Tracker">
                     ${renderProPanel(
-                        'Sector Distribution',
-                        `<div class="sector-dist-list">${sectorHtml}</div>`,
+                        'Risk Contagion &amp; Lead-Lag Tracker',
+                        leadLagHtml,
                         undefined,
                         '#58a6ff',
-                        renderPanelGuide('Sector Distribution', SECTOR_DISTRIBUTION_GUIDE_HTML),
+                        renderPanelGuide('Risk Contagion & Lead-Lag Tracker', LEAD_LAG_GUIDE_HTML),
+                    )}
+                </section>
+
+                <!-- Module B: Momentum & Acceleration Gauge -->
+                <section class="pro-insight-momentum pro-insight-section" aria-label="Momentum and Acceleration Gauge">
+                    ${renderProPanel(
+                        'Momentum &amp; Acceleration Gauge',
+                        momentumHtml,
+                        undefined,
+                        '#58a6ff',
+                        renderPanelGuide('Momentum & Acceleration Gauge', MOMENTUM_GAUGE_GUIDE_HTML),
+                    )}
+                </section>
+
+                <!-- Module C: Verified Source Evidence Stream -->
+                <section class="pro-insight-evidence pro-insight-section" aria-label="Verified Source Evidence Stream">
+                    ${renderProPanel(
+                        'Verified Source Evidence Stream',
+                        evidenceHtml,
+                        undefined,
+                        '#58a6ff',
+                        renderPanelGuide('Verified Source Evidence Stream', EVIDENCE_STREAM_GUIDE_HTML),
                     )}
                 </section>
             </div>
         </div>`;
 
+        // Store live evidenceItems on container for click delegate access
+        (container as any).__mpEvidenceItems = evidenceItems;
     };
 
     marketPulseActiveRange = activeRange;
@@ -250,15 +285,44 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
 
     if (container.dataset.mpTrendClickBound !== '1') {
         container.dataset.mpTrendClickBound = '1';
+
+        // Range-selector clicks (existing)
         container.addEventListener('click', (e) => {
             if (container.dataset.dashboardView !== 'market-pulse') return;
             const btn = (e.target as HTMLElement).closest('.mp-trend-range-btn') as HTMLElement | null;
-            if (!btn) return;
-            const next = btn.dataset.range as TrendRange;
-            if (next && marketPulseRepaint && next !== marketPulseActiveRange) {
-                marketPulseActiveRange = next;
-                marketPulseRepaint(next);
+            if (btn) {
+                const next = btn.dataset.range as TrendRange;
+                if (next && marketPulseRepaint && next !== marketPulseActiveRange) {
+                    marketPulseActiveRange = next;
+                    marketPulseRepaint(next);
+                }
+                return;
             }
+
+            // Module C: Evidence card click → Source Evidence Modal
+            const card = (e.target as HTMLElement).closest('.evidence-card') as HTMLElement | null;
+            if (card) {
+                const items: ProInsights['evidence_stream'] =
+                    (container as any).__mpEvidenceItems ?? [];
+                const idx = parseInt(card.dataset.evIndex ?? '-1', 10);
+                // We duplicate cards for the loop — clamp idx to real item count
+                const realIdx = items && items.length > 0 ? idx % items.length : -1;
+                const item = realIdx >= 0 ? items![realIdx] : null;
+                if (item) {
+                    showEvidenceModal(
+                        item.title,
+                        item.evidence_list ?? (item.url ? [{ title: item.title, url: item.url, source: item.source_name }] : []),
+                    );
+                }
+            }
+        });
+
+        // Keyboard accessibility for evidence cards
+        container.addEventListener('keydown', (e) => {
+            if (container.dataset.dashboardView !== 'market-pulse') return;
+            if ((e as KeyboardEvent).key !== 'Enter' && (e as KeyboardEvent).key !== ' ') return;
+            const card = (e.target as HTMLElement).closest('.evidence-card') as HTMLElement | null;
+            if (card) card.click();
         });
     }
 

@@ -17,6 +17,8 @@ from analysis.intensity_pressure import (
     build_domain_pressure_metrics,
     raw_intensity_from_alert,
 )
+from analysis.pressure_derivatives import enrich_risk_summary_with_derivatives
+from analysis.lead_lag_engine import compute_lead_lag_matrix
 
 router = APIRouter(tags=["insights"])
 logger = logging.getLogger(__name__)
@@ -39,6 +41,10 @@ EMPTY_PRO_INSIGHTS: dict[str, Any] = {
     "coverage_domains": len(STRATEGIC_TOPICS),
     "active_domains": 0,
     "focus_alert_id": None,
+    # Module A — Risk Contagion Lead-Lag Tracker
+    "lead_lag_matrix": [],
+    # Module C — Verified Source Evidence Stream
+    "evidence_stream": [],
 }
 
 EMPTY_EXPERT_INTEL: dict[str, Any] = {
@@ -241,11 +247,65 @@ async def build_pro_insights_payload(
     )
     risk_summary = await _build_risk_summary(db, now, lookback)
 
+    # ── Module B: Momentum & Acceleration — enrich risk_summary in-place ──────
+    enrich_risk_summary_with_derivatives(risk_summary)
+
+    # ── Module A: Risk Contagion Lead-Lag Matrix ───────────────────────────────
+    lead_lag_matrix = compute_lead_lag_matrix(risk_summary)
+
     active_domains = sum(
         1
         for t in STRATEGIC_TOPICS
         if (risk_summary.get(t) or {}).get("intensity", 0) > 0
     )
+
+    # ── Module C: Verified Source Evidence Stream ──────────────────────────────
+    # Flatten the top-5 highest-intensity alerts' evidence metadata into
+    # a compact stream array for the horizontal ticker.
+    stmt_evidence = (
+        select(AlertLog)
+        .where(
+            AlertLog.triggered_at >= lookback,
+            AlertLog.suppressed == False,  # noqa: E712
+            AlertLog.intensity.isnot(None),
+        )
+        .order_by(AlertLog.intensity.desc())
+        .limit(20)  # fetch extra; we filter to top 5 with evidence below
+    )
+    evidence_alerts_raw = list((await db.execute(stmt_evidence)).scalars().all())
+
+    evidence_stream: list[dict[str, Any]] = []
+    for a in evidence_alerts_raw:
+        if len(evidence_stream) >= 5:
+            break
+        meta = a.metadata_json or {}
+        ev_list = meta.get("evidence_list", [])
+        if not ev_list:
+            continue
+        top_ev = ev_list[0] if ev_list else {}
+        source_name = (
+            top_ev.get("source")
+            or top_ev.get("domain")
+            or top_ev.get("type")
+            or "OSINT"
+        )
+        display_title = (
+            meta.get("display_title")
+            or a.target_label
+            or "Intelligence Signal"
+        )
+        url = top_ev.get("url") or top_ev.get("link") or None
+        evidence_stream.append({
+            "alert_id": str(a.id),
+            "topic": a.topic or "",
+            "source_name": str(source_name)[:60],
+            "title": str(display_title)[:120],
+            "confidence_score": round(float(a.fidelity_score or 0.0), 2),
+            "url": url,
+            "triggered_at": a.triggered_at.isoformat() if a.triggered_at else None,
+            # Full evidence list for the modal
+            "evidence_list": ev_list,
+        })
 
     return {
         "risk_summary": risk_summary,
@@ -272,6 +332,9 @@ async def build_pro_insights_payload(
         "coverage_domains": len(STRATEGIC_TOPICS),
         "active_domains": active_domains,
         "focus_alert_id": str(focus_alert.id) if focus_alert else None,
+        # ── New quantitative modules ────────────────────────────────────────
+        "lead_lag_matrix": lead_lag_matrix,
+        "evidence_stream": evidence_stream,
     }
 
 
