@@ -7502,6 +7502,26 @@ body.cb-modal-scroll-lock {
 .pro-insight-page > .pro-insight-section,
 .market-pulse-page > .pro-insight-section {
   margin-top: 2.5rem;
+  overflow: visible;
+  position: relative;
+}
+
+.market-pulse-page .pro-insight-pressures {
+  z-index: 2;
+}
+
+.market-pulse-page .pro-insight-pressures .pro-insight-panel.insight-card {
+  overflow: visible;
+}
+
+.market-pulse-page .pro-insight-pressures .insight-card-header,
+.market-pulse-page .pro-insight-pressures .insight-card-body {
+  overflow: visible;
+}
+
+.market-pulse-page .pro-insight-pressures .insight-card-header {
+  position: relative;
+  z-index: 1;
 }
 
 .pro-insight-page > .pro-insight-section:first-child,
@@ -7707,6 +7727,28 @@ body.cb-modal-scroll-lock {
   left: auto;
   right: 0;
   max-width: min(360px, calc(100vw - 2rem));
+}
+
+/* Popover opens upward (e.g. Active Market Pressures — avoids clipping below) */
+.intel-section-guide-wrap--popover-above .intel-section-guide-popover {
+  top: auto;
+  bottom: calc(100% + 8px);
+  transform: translateY(-4px);
+}
+
+.intel-section-guide-wrap--popover-above:hover .intel-section-guide-popover,
+.intel-section-guide-wrap--popover-above:focus-within .intel-section-guide-popover {
+  transform: translateY(0);
+}
+
+.intel-section-guide-wrap--inline:hover,
+.intel-section-guide-wrap--inline:focus-within {
+  z-index: 100;
+}
+
+.intel-section-guide-wrap--inline:hover .intel-section-guide-popover,
+.intel-section-guide-wrap--inline:focus-within .intel-section-guide-popover {
+  z-index: 101;
 }
 
 .intel-section-guide-popover--rich {
@@ -8690,7 +8732,7 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  z-index: 40;
+  z-index: 100;
   width: min(300px, calc(100vw - 2.5rem));
   padding: 0.75rem 0.9rem;
   font-size: 0.78rem;

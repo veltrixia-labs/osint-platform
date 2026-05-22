@@ -69,9 +69,17 @@ export function escAttr(s: string): string {
     return escHtml(s).replace(/'/g, '&#39;');
 }
 
+export type PanelGuidePlacement = 'below' | 'above';
+
 /** ℹ️ guide control — shared glassmorphism popover (inline next to panel titles). */
-export function renderPanelGuide(ariaLabel: string, guideInnerHtml: string): string {
-    return `<span class="intel-section-guide-wrap intel-section-guide-wrap--inline">
+export function renderPanelGuide(
+    ariaLabel: string,
+    guideInnerHtml: string,
+    placement: PanelGuidePlacement = 'below',
+): string {
+    const placementClass =
+        placement === 'above' ? ' intel-section-guide-wrap--popover-above' : '';
+    return `<span class="intel-section-guide-wrap intel-section-guide-wrap--inline${placementClass}">
             <button type="button" class="intel-section-guide" aria-label="About ${escAttr(ariaLabel)}">
                 <span class="intel-section-guide-icon" aria-hidden="true">ℹ</span>
             </button>

@@ -218,7 +218,11 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
                         `<div class="dashboard-row bluf-row pro-bluf-row pro-bluf-row--mp-six" role="list">${riskHtml}</div>`,
                         undefined,
                         '#58a6ff',
-                        renderPanelGuide('Active Market Pressures', ACTIVE_MARKET_PRESSURES_GUIDE_HTML),
+                        renderPanelGuide(
+                            'Active Market Pressures',
+                            ACTIVE_MARKET_PRESSURES_GUIDE_HTML,
+                            'above',
+                        ),
                     )}
                 </section>
                 <section class="pro-insight-sector pro-insight-section">
