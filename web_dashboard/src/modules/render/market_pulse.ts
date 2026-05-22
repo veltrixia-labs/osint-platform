@@ -14,10 +14,24 @@ import {
     renderPanelGuide,
     renderProPanel,
     SECTOR_DISTRIBUTION_GUIDE_HTML,
-    wirePanelGuideTooltips,
 } from './pro_dashboard_primitives';
 
 const MARKET_PULSE_REFRESH_MS = 60_000;
+
+let marketPulseSession = 0;
+let marketPulsePollTimer: ReturnType<typeof setInterval> | null = null;
+let marketPulseActiveRange: TrendRange = '24h';
+let marketPulseRepaint: ((range: TrendRange) => void) | null = null;
+
+/** Stop background refresh so other tabs are not overwritten. */
+export function disposeMarketPulseView(): void {
+    marketPulseSession += 1;
+    marketPulseRepaint = null;
+    if (marketPulsePollTimer !== null) {
+        clearInterval(marketPulsePollTimer);
+        marketPulsePollTimer = null;
+    }
+}
 
 export type TrendRange = '24h' | '7d' | '30d';
 
@@ -136,18 +150,22 @@ function renderTrendSection(series: TrendSeries[], range: TrendRange, activeRang
 }
 
 export async function renderMarketPulse(container: HTMLElement, user: UserMe, onNavigatePlans: () => void): Promise<void> {
+    disposeMarketPulseView();
+    const sessionId = marketPulseSession;
+
     if (user.tier === 'free') {
         container.innerHTML = renderLockedFeature('Market Pulse', 'pro');
         container.querySelector('#locked-goto-plans')?.addEventListener('click', () => onNavigatePlans());
         return;
     }
 
+    container.dataset.dashboardView = 'market-pulse';
     container.innerHTML = `<div class="intelligence-loader">Synchronizing market pulse telemetry...</div>`;
 
     let data: ProInsights | null = null;
-    let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     const loadInsights = async (): Promise<void> => {
+        if (sessionId !== marketPulseSession) return;
         try {
             data = await fetchProInsights();
         } catch (err) {
@@ -156,25 +174,13 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
     };
 
     await loadInsights();
+    if (sessionId !== marketPulseSession) return;
 
     let activeRange: TrendRange = '24h';
 
-    const stopPolling = () => {
-        if (pollTimer !== null) {
-            clearInterval(pollTimer);
-            pollTimer = null;
-        }
-    };
-
-    const startPolling = () => {
-        stopPolling();
-        pollTimer = setInterval(async () => {
-            await loadInsights();
-            paint(activeRange);
-        }, MARKET_PULSE_REFRESH_MS);
-    };
-
     const paint = (range: TrendRange) => {
+        if (sessionId !== marketPulseSession) return;
+        if (container.dataset.dashboardView !== 'market-pulse') return;
         activeRange = range;
         const riskSummary = (data?.risk_summary || {}) as Record<string, unknown>;
         const series = buildTrendSeries(riskSummary, range);
@@ -218,14 +224,29 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
 
     };
 
-    container.addEventListener('click', (e) => {
-        const btn = (e.target as HTMLElement).closest('.mp-trend-range-btn') as HTMLElement | null;
-        if (!btn) return;
-        const next = btn.dataset.range as TrendRange;
-        if (next && next !== activeRange) paint(next);
-    });
+    marketPulseActiveRange = activeRange;
+    marketPulseRepaint = paint;
 
-    wirePanelGuideTooltips(container);
+    if (container.dataset.mpTrendClickBound !== '1') {
+        container.dataset.mpTrendClickBound = '1';
+        container.addEventListener('click', (e) => {
+            if (container.dataset.dashboardView !== 'market-pulse') return;
+            const btn = (e.target as HTMLElement).closest('.mp-trend-range-btn') as HTMLElement | null;
+            if (!btn) return;
+            const next = btn.dataset.range as TrendRange;
+            if (next && marketPulseRepaint && next !== marketPulseActiveRange) {
+                marketPulseActiveRange = next;
+                marketPulseRepaint(next);
+            }
+        });
+    }
+
     paint(activeRange);
-    startPolling();
+
+    marketPulsePollTimer = setInterval(async () => {
+        if (sessionId !== marketPulseSession) return;
+        if (container.dataset.dashboardView !== 'market-pulse') return;
+        await loadInsights();
+        paint(activeRange);
+    }, MARKET_PULSE_REFRESH_MS);
 }

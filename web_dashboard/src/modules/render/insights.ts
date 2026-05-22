@@ -61,6 +61,8 @@ function renderCategoryBadge(category: string): string {
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function renderProInsights(container: HTMLElement, user: UserMe, onNavigatePlans: () => void) {
+    container.dataset.dashboardView = 'pro-insights';
+
     // 1. Tier Enforcement
     if (user.tier === 'free') {
         container.innerHTML = renderLockedFeature('Pro Insights Dashboard', 'pro');

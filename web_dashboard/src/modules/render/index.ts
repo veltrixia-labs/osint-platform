@@ -11,6 +11,6 @@ export * from './impact_panel';
 export { renderMap, resetMapEngine } from './map';
 export { renderNavigation, updateNavActiveState } from './nav';
 export { renderProInsights, renderExpertIntel } from './insights';
-export { renderMarketPulse } from './market_pulse';
+export { renderMarketPulse, disposeMarketPulseView } from './market_pulse';
 export { renderFreeAlertFeed } from './context_briefs';
 export { renderProMap } from './pro_map';
