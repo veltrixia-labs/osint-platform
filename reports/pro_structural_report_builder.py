@@ -421,8 +421,43 @@ def compact_number(val: Any) -> str:
     return f"{val:.2f}"
 
 
+def _timeline_supporting_sources(entry: dict) -> List[dict]:
+    """Normalize evidence rows for the Source Evidence modal (url/link aliases)."""
+    existing = entry.get("supporting_sources")
+    if isinstance(existing, list) and existing:
+        normalized: List[dict] = []
+        for row in existing:
+            if not isinstance(row, dict):
+                continue
+            url = row.get("url") or row.get("link") or row.get("source_url")
+            title = (
+                row.get("title")
+                or row.get("headline")
+                or entry.get("title")
+                or "Source Signal"
+            )
+            domain = row.get("domain") or row.get("type") or entry.get("source") or "OSINT"
+            item = {"title": str(title), "domain": str(domain)}
+            if url:
+                item["url"] = str(url).strip()
+            normalized.append(item)
+        if normalized:
+            return normalized
+
+    title = (entry.get("title") or "Timeline event").strip()
+    source_name = entry.get("source_name") or entry.get("source") or "OSINT"
+    url = entry.get("source_url") or entry.get("url") or entry.get("link")
+    if url:
+        url_s = str(url).strip()
+        if url_s:
+            return [{"title": title, "url": url_s, "domain": str(source_name)}]
+    if title:
+        return [{"title": title, "domain": str(source_name)}]
+    return []
+
+
 def _normalize_timeline_entry(item: dict) -> dict:
-    """Fixed schema for UI: alert_id, source_url, type/role, evidence_actionable."""
+    """Fixed schema for UI: alert_id, source_url, type/role, supporting_sources."""
     out = dict(item)
     aid = out.get("alert_id")
     if aid is not None:
@@ -430,7 +465,7 @@ def _normalize_timeline_entry(item: dict) -> dict:
         out["alert_id"] = s or None
     else:
         out["alert_id"] = None
-    url = out.get("source_url")
+    url = out.get("source_url") or out.get("url") or out.get("link")
     if url is not None:
         s = str(url).strip()
         out["source_url"] = s or None
@@ -440,7 +475,14 @@ def _normalize_timeline_entry(item: dict) -> dict:
     out["role"] = role
     out["type"] = out.get("type") or role
     out.setdefault("title", "")
-    out["evidence_actionable"] = bool(out["alert_id"] or out["source_url"])
+    snippet = out.get("evidence_text") or out.get("summary") or out.get("raw_text")
+    if snippet and not out.get("evidence_text"):
+        out["evidence_text"] = str(snippet).strip()
+    out["source_name"] = out.get("source_name") or out.get("source") or "OSINT"
+    out["supporting_sources"] = _timeline_supporting_sources(out)
+    out["evidence_actionable"] = bool(
+        out["alert_id"] or out["source_url"] or out["supporting_sources"]
+    )
     return out
 
 

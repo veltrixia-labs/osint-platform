@@ -164,19 +164,73 @@ function sh(num: string, title: string): string {
     return `<div class="intel-section-head"><span class="intel-section-num">${num}</span><h3 class="intel-section-title">${title}</h3>${guideHtml}</div>`;
 }
 
-async function openTimelineEvidence(alertId: string, sourceUrl: string, title: string): Promise<void> {
+type TimelineEvidenceItem = { title?: string; url?: string; link?: string; domain?: string; type?: string };
+
+function parseTimelineEvidencePayload(raw: string): TimelineEvidenceItem[] {
+    if (!raw) return [];
+    try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+}
+
+function normalizeTimelineEvidenceList(items: TimelineEvidenceItem[]): TimelineEvidenceItem[] {
+    return items
+        .map((item) => {
+            const url = item.url || item.link;
+            const title = item.title || 'Source Signal';
+            const domain = item.domain || item.type || 'OSINT';
+            return url ? { title, url, domain } : { title, domain };
+        })
+        .filter((item) => item.title || item.url);
+}
+
+function mergeTimelineEvidence(
+    primary: TimelineEvidenceItem[],
+    fallback: TimelineEvidenceItem[],
+): TimelineEvidenceItem[] {
+    const merged = normalizeTimelineEvidenceList(primary);
+    if (merged.length > 0) return merged;
+    return normalizeTimelineEvidenceList(fallback);
+}
+
+async function openTimelineEvidence(
+    alertId: string,
+    embeddedSourcesJson: string,
+    sourceUrl: string,
+    title: string,
+): Promise<void> {
+    const embedded = normalizeTimelineEvidenceList(parseTimelineEvidencePayload(embeddedSourcesJson));
+    const urlFallback: TimelineEvidenceItem[] = sourceUrl
+        ? [{ title: title || 'Timeline source', url: sourceUrl, domain: 'OSINT' }]
+        : title
+          ? [{ title, domain: 'OSINT' }]
+          : [];
+
     if (alertId) {
         try {
             const alert = await fetchAlert(alertId);
             const modalTitle = resolveAlertHeadline(alert).text || alert.target_label || title;
-            showEvidenceModal(modalTitle, alert.evidence_list || []);
+            const fromAlert = (alert.evidence_list || []) as TimelineEvidenceItem[];
+            const alertUrlFallback: TimelineEvidenceItem[] = alert.source_url
+                ? [{ title: modalTitle, url: alert.source_url, domain: 'OSINT' }]
+                : [];
+            const evidence = mergeTimelineEvidence(
+                fromAlert,
+                mergeTimelineEvidence(embedded, mergeTimelineEvidence(urlFallback, alertUrlFallback)),
+            );
+            showEvidenceModal(modalTitle, evidence);
             return;
         } catch (err) {
-            console.warn('Timeline alert fetch failed, falling back to URL', err);
+            console.warn('Timeline alert fetch failed, using embedded timeline sources', err);
         }
     }
-    if (sourceUrl) {
-        window.open(sourceUrl, '_blank', 'noopener,noreferrer');
+
+    const evidence = mergeTimelineEvidence(embedded, urlFallback);
+    if (evidence.length > 0) {
+        showEvidenceModal(title || 'Timeline event', evidence);
     }
 }
 
@@ -198,6 +252,7 @@ function wireProBriefInteractions(root: HTMLElement): void {
         const handler = () => {
             void openTimelineEvidence(
                 el.dataset.alertId || '',
+                el.dataset.evidenceSources || '',
                 el.dataset.sourceUrl || '',
                 el.dataset.timelineTitle || '',
             );
@@ -314,10 +369,20 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
         const tsLabel = ev.timestamp ? formatIntelPreciseTimestamp(ev.timestamp) : '';
         const alertId = ev.alert_id ? String(ev.alert_id) : '';
         const sourceUrl = ev.source_url ? String(ev.source_url) : '';
-        const actionable = !!(alertId || sourceUrl);
+        const supporting = Array.isArray(ev.supporting_sources) && ev.supporting_sources.length
+            ? ev.supporting_sources
+            : sourceUrl || ev.title
+              ? [{
+                  title: ev.title || 'Timeline event',
+                  url: sourceUrl || undefined,
+                  domain: ev.source_name || ev.source || 'OSINT',
+              }]
+              : [];
+        const actionable = !!(alertId || sourceUrl || supporting.length);
         const itemCls = actionable ? 'intel-tl-item intel-tl-item--actionable' : 'intel-tl-item';
+        const evidenceJson = escAttr(JSON.stringify(supporting));
         const attrs = actionable
-            ? ` role="button" tabindex="0" data-alert-id="${escAttr(alertId)}" data-source-url="${escAttr(sourceUrl)}" data-timeline-title="${escAttr(ev.title || '')}"`
+            ? ` role="button" tabindex="0" data-alert-id="${escAttr(alertId)}" data-source-url="${escAttr(sourceUrl)}" data-evidence-sources="${evidenceJson}" data-timeline-title="${escAttr(ev.title || '')}"`
             : '';
         return `<div class="${itemCls}"${attrs}><div class="intel-tl-dot"></div><div class="intel-tl-content"><div class="intel-tl-head">${roleBadge(ev.type || ev.role)}${tsLabel ? `<span class="intel-tl-time">${tsLabel}</span>` : ''}${ev.location_label ? `<span class="intel-tl-loc">📍 ${escHtml(ev.location_label)}</span>` : ''}</div><div class="intel-tl-title">${escHtml(ev.title || '')}</div></div></div>`;
     }).join('')}</div></div>`;
