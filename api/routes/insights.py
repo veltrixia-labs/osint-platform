@@ -13,6 +13,10 @@ from db.models import AlertLog
 from db.enums import PlanTier
 from api.gating import requires_tier, get_effective_tier, _gate_cascading_impacts
 from processor.topic_registry import internal_topic_for_fallback
+from analysis.intensity_pressure import (
+    build_domain_pressure_metrics,
+    raw_intensity_from_alert,
+)
 
 router = APIRouter(tags=["insights"])
 logger = logging.getLogger(__name__)
@@ -101,16 +105,6 @@ def _domain_id_for_alert_topic(topic: str | None) -> str:
     return internal_topic_for_fallback(topic or "")
 
 
-def _effective_alert_intensity(alert: AlertLog) -> float:
-    raw = float(alert.intensity or 0.0)
-    if raw > 0:
-        return raw
-    score = float(alert.intelligence_score or 0.0)
-    if score > 0:
-        return max(0.1, score * 10.0)
-    return 0.0
-
-
 async def _build_risk_summary(
     db: AsyncSession,
     now: datetime,
@@ -164,21 +158,19 @@ async def _build_risk_summary(
         latest = max(
             domain_recent,
             key=lambda a: (
-                _effective_alert_intensity(a),
+                raw_intensity_from_alert(a),
                 a.triggered_at or datetime.min.replace(tzinfo=timezone.utc),
             ),
         )
-        curr = _effective_alert_intensity(latest)
-        prev_peak = max(
-            (_effective_alert_intensity(a) for a in prev_by_domain[t]),
-            default=0.0,
+        pressure = build_domain_pressure_metrics(
+            domain_recent,
+            prev_by_domain[t],
+            now,
         )
-        delta = curr - prev_peak
+        delta = float(pressure.get("intensity_delta", 0.0))
 
         risk_summary[t] = {
-            "intensity": round(curr, 2),
-            "intensity_delta": round(delta, 1),
-            "spike_detected": delta > 2.0,
+            **pressure,
             "why_it_matters": MATTER_TEMPLATES.get(
                 t, "Sector activity indicates shifting baseline risks."
             ),
@@ -189,12 +181,6 @@ async def _build_risk_summary(
                 else "falling"
                 if delta < -0.5
                 else "stable"
-            ),
-            "anomaly_detected": curr > 8.5,
-            "anomaly_description": (
-                f"Statistical outlier detected in {t} momentum curves."
-                if curr > 8.5
-                else None
             ),
             "timestamp": (
                 latest.triggered_at.isoformat() if latest.triggered_at else None

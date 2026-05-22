@@ -28,7 +28,7 @@ ALERT_ENABLED = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
 
 # Duplicate suppression: skip same headline within window unless intensity reignites.
 ALERT_DEDUP_WINDOW_HOURS = int(os.getenv("ALERT_DEDUP_WINDOW_HOURS", "24"))
-REIGNITE_INTENSITY_FACTOR = float(os.getenv("REIGNITE_INTENSITY_FACTOR", "1.1"))
+REIGNITE_INTENSITY_FACTOR = float(os.getenv("REIGNITE_INTENSITY_FACTOR", "1.5"))
 RECENT_ALERTS_FETCH_LIMIT = int(os.getenv("ALERT_DEDUP_FETCH_LIMIT", "400"))
 
 ALLOWED_TREND_BASE_TYPES = frozenset({
@@ -102,6 +102,15 @@ def _alert_title_keys(display_label: str, sig_target_label: str | None) -> set[s
     keys = {_normalize_alert_title(display_label), _normalize_alert_title(sig_target_label or "")}
     keys.discard("")
     return keys
+
+
+def _raw_intensity_for_alert(alert_log: AlertLog) -> float:
+    """Uncapped intensity for dedupe / reignite (never the asymptotic UI index)."""
+    meta = alert_log.metadata_json if isinstance(alert_log.metadata_json, dict) else {}
+    raw = meta.get("raw_intensity")
+    if raw is not None:
+        return float(raw)
+    return float(alert_log.intensity or 0.0)
 
 
 def _prior_alert_title_keys(alert_log: AlertLog) -> set[str]:
@@ -265,6 +274,7 @@ class AlertManager:
                     "description": sig.description or "",
                     "display_title": display_label,
                     "internal_topic": internal_topic,
+                    "raw_intensity": round(float(intensity), 3),
             }
             if loc_detail:
                 meta_base["location_entity_id"] = loc_detail.entity_id
@@ -504,7 +514,7 @@ class AlertManager:
             if not prev_keys & new_keys:
                 continue
 
-            last_intensity = float(prev.intensity or 0.0)
+            last_intensity = _raw_intensity_for_alert(prev)
             if last_intensity <= 0:
                 logger.info(
                     "Alert suppressed: duplicate headline within %sh (prior intensity unset) display=%r",

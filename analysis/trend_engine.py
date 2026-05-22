@@ -240,9 +240,7 @@ def _compress_trends(signals: List[TrendSignal], start: datetime, end: datetime,
     if not top_3:
         return []
 
-    # Normalization scale (Target max is 10.0)
     top_score = top_3[0]["combined_score"] if top_3 else 1.0
-    scale = 10.0 / top_score if top_score > 0 else 1.0
 
     patterns = []
     CONTROLLED_TERMS = ["strategic", "infrastructure", "market", "security", "energy"]
@@ -309,16 +307,20 @@ def _compress_trends(signals: List[TrendSignal], start: datetime, end: datetime,
         description = f"Semantic risk pattern identified around {label}. "
         description += f"Supported by {len(g['items'])} correlated developments across {len(geos) if geos else 1} geographical nodes."
         
-        # 6. Strict 0-10 Clamping
-        final_score = round(min(max(float(g["combined_score"] * scale), 0.1), 10.0), 1)
-        
+        # 6. Store uncapped raw intensity (UI scaling applied downstream in API)
+        raw_combined = max(float(g["combined_score"]), 0.1)
+        rank_ratio = round(raw_combined / top_score, 3) if top_score > 0 else 1.0
+        final_score = round(raw_combined, 2)
+
         metrics = {
             "baseline": round(sum(i["signal"].metrics_json.get("baseline", 0) for i in g["items"]) / len(g["items"]), 2),
             "recent": round(sum(i["signal"].metrics_json.get("recent", 0) for i in g["items"]) / len(g["items"]), 2),
             "delta": round(sum(i["signal"].metrics_json.get("delta", 0) for i in g["items"]) / len(g["items"]), 2),
             "supporting_events": unique_supporting,
             "supporting_events_count": len(unique_supporting),
-            "supporting_cluster_count": int(sum(i["signal"].metrics_json.get("supporting_cluster_count", 0) for i in g["items"]))
+            "supporting_cluster_count": int(sum(i["signal"].metrics_json.get("supporting_cluster_count", 0) for i in g["items"])),
+            "raw_intensity": final_score,
+            "pattern_rank_ratio": rank_ratio,
         }
         
         patterns.append(TrendSignal(

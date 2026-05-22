@@ -20,11 +20,33 @@ export const ACTIVE_MARKET_PRESSURES_GUIDE_HTML = `
 <p class="intel-guide-body">A real-time dashboard aggregating and quantifying sudden volatility, anomaly detection, and incoming signal intensity for each targeted sector.</p>`;
 
 function effectiveRiskIntensity(stat: Record<string, unknown>): number {
-    const raw = Number(stat.intensity);
-    if (Number.isFinite(raw) && raw > 0) return raw;
+    const ui = Number(stat.intensity);
+    if (Number.isFinite(ui) && ui > 0) return ui;
     const score = Number(stat.intelligence_score);
     if (Number.isFinite(score) && score > 0) return score * 10;
     return 0;
+}
+
+function formatPressureIndex(stat: Record<string, unknown>): string {
+    const v = effectiveRiskIntensity(stat);
+    return v >= 9.5 ? v.toFixed(2) : v.toFixed(1);
+}
+
+function renderPressureBadge(stat: Record<string, unknown>): string {
+    const variant = String(stat.pressure_badge_variant || '');
+    const label = String(stat.pressure_badge_label || '');
+    if (variant && label) {
+        const cls =
+            variant === 'sustained'
+                ? 'pressure-badge pressure-badge--sustained'
+                : 'pressure-badge pressure-badge--anomaly';
+        const prefix = variant === 'anomaly' ? '⚠️ ' : '';
+        return `<div class="${cls}" role="status">${prefix}${escHtml(label)}</div>`;
+    }
+    if (stat.anomaly_detected) {
+        return `<div class="pressure-badge pressure-badge--anomaly" role="status">⚠️ ANOMALY DETECTED</div>`;
+    }
+    return '';
 }
 
 export function escHtml(s: string): string {
@@ -106,7 +128,7 @@ export function buildRiskSummaryCardsHtml(riskSummary: Record<string, unknown> |
                         <div class="bluf-trend bluf-trend--${stat.trend}">${stat.trend === 'rising' ? '▲' : '■'}</div>
                     </div>
                     <div class="u-flex u-flex-baseline">
-                        <div class="bluf-value">${effectiveRiskIntensity(stat).toFixed(1)}</div>
+                        <div class="bluf-value">${formatPressureIndex(stat)}</div>
                         ${stat.intensity_delta !== undefined ? `
                             <div class="bluf-delta ${stat.intensity_delta > 0.5 ? 'rising' : stat.intensity_delta < -0.5 ? 'falling' : ''}" style="margin-left: 8px; font-size: 0.75rem; font-weight: 800;">
                                 ${stat.intensity_delta > 0 ? '↑' : stat.intensity_delta < 0 ? '↓' : ''} ${Math.abs(stat.intensity_delta).toFixed(1)} <span style="font-weight:400; opacity:0.6;">(24h)</span>
@@ -115,7 +137,7 @@ export function buildRiskSummaryCardsHtml(riskSummary: Record<string, unknown> |
                         ${stat.spike_detected ? `<div class="spike-badge" title="UNUSUAL MOMENTUM DETECTED">SPIKE</div>` : ''}
                     </div>
                     <div class="bluf-label">${stat.why_it_matters || ''}</div>
-                    ${stat.anomaly_detected ? `<div class="anomaly-warning-pill">⚠️ ANOMALY DETECTED</div>` : ''}
+                    ${renderPressureBadge(stat)}
                     <div class="bluf-latest-wrap">
                         <span class="bluf-latest-label">TOP SIGNAL</span>
                         <div class="bluf-latest">${stat.top_signal || 'None'}</div>
