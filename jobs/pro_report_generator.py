@@ -17,6 +17,7 @@ from db.models import Report, AlertLog
 from analysis.pro_structural_context import build_pro_structural_context, resolve_latest_domain_alert
 from reports.pro_structural_report_builder import build_pro_structural_report, build_pro_structural_report_payload
 from reports.text_encoding import sanitize_unicode_tree
+from analysis.pro_structural_compiler import build_dynamic_structural_title
 from analysis.pro_domain_config import infer_domain_from_topic
 from jobs.pro_generation_policy import pro_compile_dedup_enabled
 from jobs.pro_structural_dedup import (
@@ -108,6 +109,7 @@ async def _run_pro_structural_report_generation_locked(
         # 4. Prepare Metadata
         domain_info = context.get("domain", {})
         display_name = domain_info.get("display_name", "General Intelligence")
+        brief_title = context.get("brief_title") or build_dynamic_structural_title(context)
         
         # 5. Teaser for hub list cards
         exec_summary = (payload.get("executive_summary") or "") if isinstance(payload, dict) else ""
@@ -124,6 +126,7 @@ async def _run_pro_structural_report_generation_locked(
             payload["force_rebuild"] = force_rebuild
             payload["analysis_generated_at"] = analysis_ts.isoformat()
             payload["compile_anchor_key"] = anchor_key
+            payload["brief_title"] = brief_title
             payload["insert_mode"] = "insert"
 
         use_dedup = pro_compile_dedup_enabled() and not force_rebuild
@@ -140,7 +143,7 @@ async def _run_pro_structural_report_generation_locked(
                     )
                     return existing
 
-                existing.title = f"Structural Impact Brief - {display_name}"
+                existing.title = brief_title
                 existing.content_markdown = report_md
                 existing.structured_payload = payload
                 existing.teaser_md = teaser_md or None
@@ -162,7 +165,7 @@ async def _run_pro_structural_report_generation_locked(
 
         new_report = Report(
             report_type="pro_structural",
-            title=f"Structural Impact Brief - {display_name}",
+            title=brief_title,
             topic_code=topic_code,
             content_markdown=report_md,
             structured_payload=payload,

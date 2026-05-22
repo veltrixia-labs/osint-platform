@@ -29,8 +29,9 @@ def build_pro_structural_report(context: dict) -> str:
     Generates a full Markdown report based on the provided context.
     """
     context = _apply_macro_and_market_priorities(context)
+    brief_title = sanitize_unicode_tree(context.get("brief_title") or "Structural Impact Brief")
     sections = [
-        "# Structural Impact Brief",
+        f"# {brief_title}",
         _build_executive_snapshot(context),
         _build_signal_brief(context),
         _build_market_relevance(context),
@@ -453,22 +454,24 @@ def _finalize_event_timeline_for_payload(
     signal: Optional[dict],
 ) -> List[dict]:
     """
-    Ensure related_events are reflected in event_timeline with type (trigger/context/background).
+    Merge correlated timeline rows only (no blind append of unrelated alert logs).
     """
     from analysis.pro_structural_context import _assign_timeline_types
+    from analysis.pro_structural_compiler import filter_correlated_timeline_events
 
     timeline = [dict(item) for item in event_timeline]
     seen = {(e.get("alert_id"), e.get("title")) for e in timeline}
     for ev in related_events or []:
+        if ev.get("structural_correlation") is not None and float(ev["structural_correlation"]) < 0.22:
+            continue
         key = (ev.get("alert_id"), ev.get("title"))
         if key not in seen:
             timeline.append(dict(ev))
             seen.add(key)
-    if not timeline and related_events:
-        timeline = [dict(item) for item in related_events]
 
     trigger_alert_id = (signal or {}).get("alert_id")
-    return _normalize_event_timeline(_assign_timeline_types(timeline, trigger_alert_id))
+    typed = _assign_timeline_types(timeline, trigger_alert_id)
+    return _normalize_event_timeline(filter_correlated_timeline_events(typed))
 
 
 def _ensure_event_timeline_floor(
@@ -479,10 +482,10 @@ def _ensure_event_timeline_floor(
     m_ctx: dict,
     domain: dict,
     related_events: List[dict],
+    relevance_map: Optional[dict] = None,
 ) -> List[dict]:
     """
-    Guarantee 3–5 chronological timeline entries so section 04 never disappears.
-    Supplements sparse alert/news inputs with macro and market confirmation shifts.
+    Enrich timeline with correlated macro/market shifts only (no synthetic filler rows).
     """
     from analysis.pro_structural_context import _assign_timeline_types
 
@@ -510,6 +513,10 @@ def _ensure_event_timeline_floor(
             }
         )
 
+    from analysis.pro_structural_compiler import structural_correlation_score
+
+    relevance = relevance_map or {}
+    macro_vocab = {"phrases": set(), "series_ids": set(relevance.keys()) if relevance else set()}
     for obs in (s_ctx.get("macro_observations") or s_ctx.get("macro_display_cards") or [])[:10]:
         if len(out) >= TARGET_EVENT_TIMELINE_ITEMS:
             break
@@ -518,16 +525,21 @@ def _ensure_event_timeline_floor(
             continue
         label = obs.get("display_name") or obs.get("series_id") or "Macro series"
         sid = obs.get("series_id", "")
+        title = f"Structural data shift: {label} ({chg:+.2f}% lookback)"
+        coeff = structural_correlation_score(title, macro_vocab)
+        if coeff < 0.18 and sid not in (relevance or {}):
+            continue
         _append(
             {
                 "timestamp": obs.get("latest_date"),
-                "title": f"Structural data shift: {label} ({chg:+.2f}% lookback)",
+                "title": title,
                 "source": "macro_data",
                 "source_url": None,
                 "location_label": None,
                 "type": "context",
                 "role": "context",
                 "series_id": sid,
+                "structural_correlation": round(max(coeff, 0.35), 3),
             }
         )
 
@@ -537,6 +549,8 @@ def _ensure_event_timeline_floor(
         pct = price.get("percent_change")
         sym = price.get("symbol") or "Instrument"
         if pct is None:
+            continue
+        if relevance and sym not in relevance:
             continue
         _append(
             {
@@ -564,25 +578,6 @@ def _ensure_event_timeline_floor(
             }
         )
 
-    domain_name = domain.get("display_name") or domain.get("domain_id") or "Domain"
-    filler_idx = 0
-    while len(out) < MIN_EVENT_TIMELINE_ITEMS:
-        filler_idx += 1
-        _append(
-            {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "title": (
-                    f"Monitoring pulse {filler_idx}: {domain_name} structural lattice "
-                    "synchronized with latest macro and market feeds"
-                ),
-                "source": "synthetic_monitoring",
-                "source_url": None,
-                "location_label": None,
-                "type": "background",
-                "role": "background",
-            }
-        )
-
     def _sort_key(item: dict) -> tuple:
         ts = item.get("timestamp")
         if ts:
@@ -591,8 +586,11 @@ def _ensure_event_timeline_floor(
 
     out.sort(key=_sort_key)
     trigger_alert_id = sig.get("alert_id")
+    from analysis.pro_structural_compiler import filter_correlated_timeline_events
+
     typed = _assign_timeline_types(out, trigger_alert_id)
-    return _normalize_event_timeline(typed[:TARGET_EVENT_TIMELINE_ITEMS])
+    filtered = filter_correlated_timeline_events(typed)
+    return _normalize_event_timeline(filtered[:TARGET_EVENT_TIMELINE_ITEMS])
 
 
 def _compute_market_status(prices: List[dict]) -> str:
@@ -697,6 +695,7 @@ def build_pro_structural_report_payload(context: dict) -> dict:
         m_ctx=m_ctx,
         domain=domain,
         related_events=context.get("related_events", []),
+        relevance_map=context.get("relevance_map"),
     )
 
     # --- 3. Relevance Map (from domain config) ---
@@ -757,6 +756,7 @@ def build_pro_structural_report_payload(context: dict) -> dict:
     payload = {
         "payload_schema_version": "pro_structural_v2",
         "generator": "reports.pro_structural_report_builder",
+        "brief_title": sanitize_unicode_tree(context.get("brief_title") or ""),
         "analysis_generated_at": analysis_generated_at,
         "force_rebuild": context.get("force_rebuild", True),
         "realtime_mode": context.get("realtime_mode", True),

@@ -32,6 +32,17 @@ from analysis.pro_global_series import (
     get_core_global_series_ids,
     merge_relevance_maps,
 )
+from analysis.pro_structural_compiler import (
+    MIN_ALERT_CORRELATION,
+    MIN_NEWS_CORRELATION,
+    _tokenize,
+    build_dynamic_structural_title,
+    build_sector_vocabulary,
+    filter_correlated_news_items,
+    filter_correlated_timeline_events,
+    structural_correlation_score,
+)
+from reports.text_encoding import sanitize_unicode_text, sanitize_unicode_tree
 
 logger = logging.getLogger(__name__)
 
@@ -181,12 +192,26 @@ async def build_pro_structural_context(
 
         signal_ctx = {
             "alert_id": str(alert_log.id),
-            "title": alert_log.target_label,
+            "title": sanitize_unicode_text(alert_log.target_label or ""),
             "topic": alert_log.topic,
             "triggered_at": alert_log.triggered_at.isoformat() if alert_log.triggered_at else None,
             "source_url": _first_evidence_url(meta),
             "related_news": related_news[:5]  # Limit to top 5
         }
+
+    merged_relevance = merge_relevance_maps(config.get("relevance_map", {}))
+    sector_vocabulary = build_sector_vocabulary(config, merged_relevance)
+    trigger_tokens: Set[str] = set()
+    if signal_ctx and signal_ctx.get("title"):
+        trigger_tokens = _tokenize(signal_ctx["title"])
+
+    related_news = filter_correlated_news_items(
+        related_news,
+        sector_vocabulary,
+        trigger_tokens=trigger_tokens,
+    )
+    if signal_ctx:
+        signal_ctx["related_news"] = related_news[:5]
 
     related_events = await _fetch_related_alert_events(
         db,
@@ -195,14 +220,18 @@ async def build_pro_structural_context(
         data_notes,
         limit=8,
         window_hours=ALERT_CLUSTER_WINDOW_HOURS,
+        vocabulary=sector_vocabulary,
+        trigger_tokens=trigger_tokens,
     )
 
-    # 3. Event timeline: domain alerts + news evidence
+    # 3. Event timeline: correlated domain alerts + news only
     event_timeline = _build_event_timeline(
-        related_news, signal_ctx, related_events=related_events
+        related_news,
+        signal_ctx,
+        related_events=related_events,
+        vocabulary=sector_vocabulary,
+        trigger_tokens=trigger_tokens,
     )
-
-    merged_relevance = merge_relevance_maps(config.get("relevance_map", {}))
 
     # 4. Structural Context Data
     structural_ctx = {
@@ -261,6 +290,9 @@ async def build_pro_structural_context(
         "alert_cluster_window_hours": ALERT_CLUSTER_WINDOW_HOURS,
         "realtime_mode": True,
     }
+
+    context["brief_title"] = build_dynamic_structural_title(context)
+    context = sanitize_unicode_tree(context)
 
     return context
 
@@ -562,6 +594,8 @@ async def _fetch_related_alert_events(
     limit: int = 8,
     lookback_days: Optional[int] = None,
     window_hours: Optional[int] = None,
+    vocabulary: Optional[Dict[str, Any]] = None,
+    trigger_tokens: Optional[Set[str]] = None,
 ) -> List[dict]:
     """
     Alerts in the same domain / topic keyword thread (24h cluster window by default).
@@ -587,9 +621,20 @@ async def _fetch_related_alert_events(
     keywords = _topic_match_keywords(domain_id, trigger_topic, trigger_label)
     current_id = str(alert_log.id) if alert_log else None
 
+    vocab = vocabulary or build_sector_vocabulary(
+        get_pro_domain_config(domain_id) or {}, {}
+    )
+    t_tokens = trigger_tokens or set()
+
     matched: List[AlertLog] = []
     for row in rows:
         if not _alert_matches_domain_context(row, domain_id, keywords):
+            continue
+        label = sanitize_unicode_text(row.target_label or "")
+        score = structural_correlation_score(label, vocab, trigger_tokens=t_tokens)
+        if infer_domain_from_topic(row.topic or "") == domain_id:
+            score = max(score, 0.55)
+        if score < MIN_ALERT_CORRELATION:
             continue
         matched.append(row)
 
@@ -617,7 +662,7 @@ async def _fetch_related_alert_events(
         events.append(
             {
                 "alert_id": str(row.id),
-                "title": (row.target_label or "")[:200],
+                "title": sanitize_unicode_text((row.target_label or "")[:200]),
                 "topic": row.topic,
                 "severity": row.severity,
                 "trigger_type": row.trigger_type,
@@ -646,23 +691,33 @@ def _build_event_timeline(
     signal_ctx: Optional[dict],
     *,
     related_events: Optional[List[dict]] = None,
+    vocabulary: Optional[Dict[str, Any]] = None,
+    trigger_tokens: Optional[Set[str]] = None,
 ) -> List[dict]:
     """
     Merge related AlertLog events and news evidence into one chronological timeline.
     """
     raw: List[dict] = []
 
+    vocab = vocabulary or {"phrases": set(), "series_ids": set()}
+    t_tokens = trigger_tokens or set()
+
     for ev in related_events or []:
+        title = sanitize_unicode_text(ev.get("title") or "")
+        coeff = structural_correlation_score(title, vocab, trigger_tokens=t_tokens)
+        if ev.get("alert_id") == (signal_ctx or {}).get("alert_id"):
+            coeff = max(coeff, 1.0)
         raw.append(
             {
                 "timestamp": ev.get("timestamp"),
-                "title": ev.get("title") or "",
+                "title": title,
                 "source_url": ev.get("source_url"),
                 "location_label": ev.get("location_label"),
                 "alert_id": ev.get("alert_id"),
                 "severity": ev.get("severity"),
                 "trigger_type": ev.get("trigger_type"),
                 "source": ev.get("source", "alert_log"),
+                "structural_correlation": round(coeff, 3),
             }
         )
 
@@ -672,7 +727,12 @@ def _build_event_timeline(
     _CONFIRM_KW = {"confirm", "verify", "report", "official", "statement", "announce"}
 
     for item in related_news[:5]:
-        title = (item.get("title") or item.get("headline") or item.get("text", "") or "")[:200]
+        title = sanitize_unicode_text(
+            (item.get("title") or item.get("headline") or item.get("text", "") or "")[:200]
+        )
+        coeff = structural_correlation_score(title, vocab, trigger_tokens=t_tokens)
+        if coeff < MIN_NEWS_CORRELATION:
+            continue
         if title.lower() in seen_titles:
             continue
         source_url = item.get("url") or item.get("source_url") or item.get("link", "")
@@ -694,6 +754,7 @@ def _build_event_timeline(
                 "location_label": location_label,
                 "source": "news",
                 "role": role,
+                "structural_correlation": round(coeff, 3),
             }
         )
         seen_titles.add(title.lower())
@@ -707,7 +768,8 @@ def _build_event_timeline(
     raw.sort(key=_sort_key)
 
     trigger_alert_id = (signal_ctx or {}).get("alert_id")
-    return _assign_timeline_types(raw, trigger_alert_id)
+    typed = _assign_timeline_types(raw, trigger_alert_id)
+    return filter_correlated_timeline_events(typed)
 
 
 def _assign_timeline_types(timeline: List[dict], trigger_alert_id: Optional[str]) -> List[dict]:

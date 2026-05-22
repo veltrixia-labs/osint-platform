@@ -22,8 +22,16 @@ async def main() -> None:
     counts = Counter((r.topic_code or "global") for r in rows)
     dupes = {k: v for k, v in counts.items() if v > 1}
     print(f"total_rows={len(rows)} domains={len(counts)} duplicates={dupes or 'none'}")
+    for r in rows:
+        payload = r.structured_payload or {}
+        title = (r.title or "")[:96]
+        generic = title.startswith("Structural Impact Brief -")
+        tl = len(payload.get("event_timeline") or [])
+        print(f"  {r.topic_code}: generic_title={generic} timeline={tl} title={title}")
     if dupes:
         raise SystemExit(1)
+    if any((r.title or "").startswith("Structural Impact Brief -") for r in rows):
+        print("WARN: some titles still use legacy template prefix")
 
 
 if __name__ == "__main__":
