@@ -7655,8 +7655,14 @@ body.cb-modal-scroll-lock {
 }
 
 .intel-section-guide-wrap--inline .intel-section-guide-popover {
-  left: 0;
+  left: auto;
+  right: 0;
+}
+
+.intel-section-guide-popover--fixed {
+  position: fixed;
   right: auto;
+  z-index: 200;
 }
 
 .intel-section-guide-popover--rich {
@@ -7681,6 +7687,11 @@ body.cb-modal-scroll-lock {
 
 .intel-guide-list li:last-child {
   margin-bottom: 0;
+}
+
+.intel-guide-body {
+  margin: 0;
+  line-height: 1.55;
 }
 
 .pro-insight-page .pro-insight-panel .insight-card-title,

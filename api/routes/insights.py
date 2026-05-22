@@ -12,6 +12,7 @@ from db.database import get_db
 from db.models import AlertLog
 from db.enums import PlanTier
 from api.gating import requires_tier, get_effective_tier, _gate_cascading_impacts
+from processor.topic_registry import internal_topic_for_fallback
 
 router = APIRouter(tags=["insights"])
 logger = logging.getLogger(__name__)
@@ -95,62 +96,111 @@ async def _fetch_top_entities(
     return top_entities
 
 
+def _domain_id_for_alert_topic(topic: str | None) -> str:
+    """Map AlertLog.topic (strategic UPPER codes or legacy snake_case) to API domain keys."""
+    return internal_topic_for_fallback(topic or "")
+
+
+def _effective_alert_intensity(alert: AlertLog) -> float:
+    raw = float(alert.intensity or 0.0)
+    if raw > 0:
+        return raw
+    score = float(alert.intelligence_score or 0.0)
+    if score > 0:
+        return max(0.1, score * 10.0)
+    return 0.0
+
+
 async def _build_risk_summary(
     db: AsyncSession,
     now: datetime,
     lookback: datetime,
 ) -> dict[str, Any]:
+    prev_lookback = lookback - timedelta(hours=24)
+
+    stmt_recent = (
+        select(AlertLog)
+        .where(
+            AlertLog.triggered_at >= lookback,
+            AlertLog.suppressed == False,  # noqa: E712
+        )
+        .order_by(desc(AlertLog.triggered_at))
+    )
+    stmt_prev = (
+        select(AlertLog)
+        .where(
+            AlertLog.triggered_at >= prev_lookback,
+            AlertLog.triggered_at < lookback,
+            AlertLog.suppressed == False,  # noqa: E712
+        )
+        .order_by(desc(AlertLog.triggered_at))
+    )
+    recent_alerts = list((await db.execute(stmt_recent)).scalars().all())
+    prev_alerts = list((await db.execute(stmt_prev)).scalars().all())
+
+    def _bucket(alerts: list[AlertLog]) -> dict[str, list[AlertLog]]:
+        buckets: dict[str, list[AlertLog]] = {t: [] for t in STRATEGIC_TOPICS}
+        for alert in alerts:
+            domain = _domain_id_for_alert_topic(alert.topic)
+            if domain in buckets:
+                buckets[domain].append(alert)
+        return buckets
+
+    recent_by_domain = _bucket(recent_alerts)
+    prev_by_domain = _bucket(prev_alerts)
+
     risk_summary: dict[str, Any] = {}
     for t in STRATEGIC_TOPICS:
-        stmt_t = (
-            select(AlertLog)
-            .where(AlertLog.topic == t)
-            .order_by(AlertLog.triggered_at.desc())
-            .limit(1)
-        )
-        latest = (await db.execute(stmt_t)).scalar_one_or_none()
-
-        stmt_prev = (
-            select(AlertLog)
-            .where(AlertLog.topic == t, AlertLog.triggered_at < lookback)
-            .order_by(AlertLog.triggered_at.desc())
-            .limit(1)
-        )
-        prev = (await db.execute(stmt_prev)).scalar_one_or_none()
-
-        delta = (latest.intensity - prev.intensity) if (latest and prev) else 0.0
-
-        if latest:
-            risk_summary[t] = {
-                "intensity": latest.intensity,
-                "intensity_delta": round(delta, 1),
-                "spike_detected": delta > 2.0,
-                "why_it_matters": MATTER_TEMPLATES.get(
-                    t, "Sector activity indicates shifting baseline risks."
-                ),
-                "top_signal": latest.target_label,
-                "trend": (
-                    "rising"
-                    if delta > 0.5
-                    else "falling"
-                    if delta < -0.5
-                    else "stable"
-                ),
-                "anomaly_detected": latest.intensity > 8.5,
-                "anomaly_description": (
-                    f"Statistical outlier detected in {t} momentum curves."
-                    if latest.intensity > 8.5
-                    else None
-                ),
-                "timestamp": latest.triggered_at.isoformat(),
-            }
-        else:
+        domain_recent = recent_by_domain[t]
+        if not domain_recent:
             risk_summary[t] = {
                 "intensity": 0.0,
                 "intensity_delta": 0.0,
                 "status": "no_active_signals",
                 "why_it_matters": "No significant volatility detected in this window.",
             }
+            continue
+
+        latest = max(
+            domain_recent,
+            key=lambda a: (
+                _effective_alert_intensity(a),
+                a.triggered_at or datetime.min.replace(tzinfo=timezone.utc),
+            ),
+        )
+        curr = _effective_alert_intensity(latest)
+        prev_peak = max(
+            (_effective_alert_intensity(a) for a in prev_by_domain[t]),
+            default=0.0,
+        )
+        delta = curr - prev_peak
+
+        risk_summary[t] = {
+            "intensity": round(curr, 2),
+            "intensity_delta": round(delta, 1),
+            "spike_detected": delta > 2.0,
+            "why_it_matters": MATTER_TEMPLATES.get(
+                t, "Sector activity indicates shifting baseline risks."
+            ),
+            "top_signal": latest.target_label,
+            "trend": (
+                "rising"
+                if delta > 0.5
+                else "falling"
+                if delta < -0.5
+                else "stable"
+            ),
+            "anomaly_detected": curr > 8.5,
+            "anomaly_description": (
+                f"Statistical outlier detected in {t} momentum curves."
+                if curr > 8.5
+                else None
+            ),
+            "timestamp": (
+                latest.triggered_at.isoformat() if latest.triggered_at else None
+            ),
+            "intelligence_score": latest.intelligence_score,
+        }
     return risk_summary
 
 
@@ -194,7 +244,11 @@ async def build_pro_insights_payload(
     if effective_topic:
         stmt_dist = stmt_dist.where(AlertLog.topic == effective_topic)
     dist_res = await db.execute(stmt_dist)
-    sector_distribution = {row[0]: row[1] for row in dist_res.all()}
+    sector_distribution: dict[str, int] = {t: 0 for t in STRATEGIC_TOPICS}
+    for row in dist_res.all():
+        domain = _domain_id_for_alert_topic(row[0])
+        if domain in sector_distribution:
+            sector_distribution[domain] += int(row[1] or 0)
 
     top_entities = await _fetch_top_entities(
         db, lookback, topic=effective_topic, limit=10

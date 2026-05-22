@@ -7,13 +7,17 @@ import { fetchProInsights } from '../api';
 import { getTopicDef } from '../topics';
 import { renderLockedFeature } from '../subscription';
 import {
+    ACTIVE_MARKET_PRESSURES_GUIDE_HTML,
     buildRiskSummaryCardsHtml,
+    HISTORICAL_RISK_TREND_GUIDE_HTML,
     renderIntensityBar,
     renderPanelGuide,
     renderProPanel,
     SECTOR_DISTRIBUTION_GUIDE_HTML,
     wirePanelGuideTooltips,
 } from './pro_dashboard_primitives';
+
+const MARKET_PULSE_REFRESH_MS = 60_000;
 
 export type TrendRange = '24h' | '7d' | '30d';
 
@@ -125,6 +129,9 @@ function renderTrendSection(series: TrendSeries[], range: TrendRange, activeRang
             ${renderTrendChartSvg(series, range)}
         </div>
         `,
+        undefined,
+        '#58a6ff',
+        renderPanelGuide('Historical Risk Trend', HISTORICAL_RISK_TREND_GUIDE_HTML),
     );
 }
 
@@ -138,17 +145,38 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
     container.innerHTML = `<div class="intelligence-loader">Synchronizing market pulse telemetry...</div>`;
 
     let data: ProInsights | null = null;
-    try {
-        data = await fetchProInsights();
-    } catch (err) {
-        console.error('Failed to load Market Pulse data:', err);
-    }
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+    const loadInsights = async (): Promise<void> => {
+        try {
+            data = await fetchProInsights();
+        } catch (err) {
+            console.error('Failed to load Market Pulse data:', err);
+        }
+    };
+
+    await loadInsights();
 
     let activeRange: TrendRange = '24h';
-    const riskSummary = (data?.risk_summary || {}) as Record<string, unknown>;
+
+    const stopPolling = () => {
+        if (pollTimer !== null) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    };
+
+    const startPolling = () => {
+        stopPolling();
+        pollTimer = setInterval(async () => {
+            await loadInsights();
+            paint(activeRange);
+        }, MARKET_PULSE_REFRESH_MS);
+    };
 
     const paint = (range: TrendRange) => {
         activeRange = range;
+        const riskSummary = (data?.risk_summary || {}) as Record<string, unknown>;
         const series = buildTrendSeries(riskSummary, range);
         const riskHtml = buildRiskSummaryCardsHtml(riskSummary);
         const sectorHtml =
@@ -171,6 +199,9 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
                     ${renderProPanel(
                         'Active Market Pressures',
                         `<div class="dashboard-row bluf-row pro-bluf-row" role="list">${riskHtml}</div>`,
+                        undefined,
+                        '#58a6ff',
+                        renderPanelGuide('Active Market Pressures', ACTIVE_MARKET_PRESSURES_GUIDE_HTML),
                     )}
                 </section>
                 <section class="pro-insight-sector pro-insight-section">
@@ -185,14 +216,16 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
             </div>
         </div>`;
 
-        container.querySelectorAll('.mp-trend-range-btn').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const next = (btn as HTMLElement).dataset.range as TrendRange;
-                if (next && next !== activeRange) paint(next);
-            });
-        });
-        wirePanelGuideTooltips(container);
     };
 
+    container.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest('.mp-trend-range-btn') as HTMLElement | null;
+        if (!btn) return;
+        const next = btn.dataset.range as TrendRange;
+        if (next && next !== activeRange) paint(next);
+    });
+
+    wirePanelGuideTooltips(container);
     paint(activeRange);
+    startPolling();
 }
