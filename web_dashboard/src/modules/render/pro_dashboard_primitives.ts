@@ -4,12 +4,65 @@
 
 import { getTopicDef } from '../topics';
 
+export const SECTOR_DISTRIBUTION_GUIDE_HTML = `
+<p class="intel-guide-title"><strong>Sector Distribution Guide</strong></p>
+<ul class="intel-guide-list">
+<li><strong>Intelligence Volume Index:</strong> Represents the total cumulative data points, active alerts, and structured contextual inputs currently ingested within each specific domain.</li>
+<li><strong>Operational Utility:</strong> This bar ratio visualizes VELTRIXIA&rsquo;s cognitive focus. A sudden spike or extension in a specific sector&rsquo;s bar reflects a heavy influx of real-time signals, indicating an escalating operational friction or high-density risk event in that market vertical.</li>
+</ul>`;
+
+export function escHtml(s: string): string {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+export function escAttr(s: string): string {
+    return escHtml(s).replace(/'/g, '&#39;');
+}
+
+/** ℹ️ guide control — shared glassmorphism popover (inline next to panel titles). */
+export function renderPanelGuide(ariaLabel: string, guideInnerHtml: string): string {
+    return `<span class="intel-section-guide-wrap intel-section-guide-wrap--inline">
+            <button type="button" class="intel-section-guide" aria-label="About ${escAttr(ariaLabel)}">
+                <span class="intel-section-guide-icon" aria-hidden="true">ℹ</span>
+            </button>
+            <span class="intel-section-guide-popover intel-section-guide-popover--rich" role="tooltip">${guideInnerHtml}</span>
+           </span>`;
+}
+
+export function wirePanelGuideTooltips(root: HTMLElement): void {
+    root.querySelectorAll('.intel-section-guide').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const wrap = btn.closest('.intel-section-guide-wrap');
+            const pop = wrap?.querySelector('.intel-section-guide-popover');
+            if (!pop) return;
+            const wasOpen = pop.classList.contains('is-open');
+            root.querySelectorAll('.intel-section-guide-popover.is-open').forEach((el) => el.classList.remove('is-open'));
+            if (!wasOpen) pop.classList.add('is-open');
+        });
+    });
+}
+
 /** Glass panel wrapper (Sector Distribution chrome). */
-export function renderProPanel(title: string, content: string, footer?: string, accentColor = '#58a6ff'): string {
+export function renderProPanel(
+    title: string,
+    content: string,
+    footer?: string,
+    accentColor = '#58a6ff',
+    guideHtml?: string,
+): string {
+    const headerClass = guideHtml
+        ? 'insight-card-header insight-card-header--with-guide'
+        : 'insight-card-header';
     return `
     <div class="insight-card pro-insight-panel" style="--accent: ${accentColor}">
-        <div class="insight-card-header">
+        <div class="${headerClass}">
             <h3 class="insight-card-title">${title}</h3>
+            ${guideHtml || ''}
         </div>
         <div class="insight-card-body">
             ${content}

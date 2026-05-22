@@ -9,7 +9,10 @@ import { renderLockedFeature } from '../subscription';
 import {
     buildRiskSummaryCardsHtml,
     renderIntensityBar,
+    renderPanelGuide,
     renderProPanel,
+    SECTOR_DISTRIBUTION_GUIDE_HTML,
+    wirePanelGuideTooltips,
 } from './pro_dashboard_primitives';
 
 export type TrendRange = '24h' | '7d' | '30d';
@@ -171,7 +174,13 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
                     )}
                 </section>
                 <section class="pro-insight-sector pro-insight-section">
-                    ${renderProPanel('Sector Distribution', `<div class="sector-dist-list">${sectorHtml}</div>`)}
+                    ${renderProPanel(
+                        'Sector Distribution',
+                        `<div class="sector-dist-list">${sectorHtml}</div>`,
+                        undefined,
+                        '#58a6ff',
+                        renderPanelGuide('Sector Distribution', SECTOR_DISTRIBUTION_GUIDE_HTML),
+                    )}
                 </section>
             </div>
         </div>`;
@@ -182,6 +191,7 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
                 if (next && next !== activeRange) paint(next);
             });
         });
+        wirePanelGuideTooltips(container);
     };
 
     paint(activeRange);

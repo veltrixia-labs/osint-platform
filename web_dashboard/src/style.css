@@ -7637,9 +7637,62 @@ body.cb-modal-scroll-lock {
   box-sizing: border-box;
 }
 
+.insight-card-header--with-guide {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.insight-card-header--with-guide .insight-card-title {
+  margin: 0;
+  flex: 0 1 auto;
+}
+
+.intel-section-guide-wrap--inline {
+  margin-left: 0;
+  flex-shrink: 0;
+}
+
+.intel-section-guide-wrap--inline .intel-section-guide-popover {
+  left: 0;
+  right: auto;
+}
+
+.intel-section-guide-popover--rich {
+  width: min(360px, calc(100vw - 2.5rem));
+  text-align: left;
+}
+
+.intel-guide-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+}
+
+.intel-guide-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+
+.intel-guide-list li {
+  margin-bottom: 0.45rem;
+}
+
+.intel-guide-list li:last-child {
+  margin-bottom: 0;
+}
+
 .pro-insight-page .pro-insight-panel .insight-card-title,
-.pro-insight-page .pro-insight-sector .insight-card-title {
+.pro-insight-page .pro-insight-sector .insight-card-title,
+.market-pulse-page .pro-insight-panel .insight-card-title,
+.market-pulse-page .pro-insight-sector .insight-card-title {
   margin: 0 0 1rem;
+}
+
+.market-pulse-page .insight-card-header--with-guide .insight-card-title,
+.pro-insight-page .insight-card-header--with-guide .insight-card-title {
+  margin: 0;
 }
 
 .pro-insight-page .pro-section-title {
