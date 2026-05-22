@@ -5,7 +5,7 @@ Provides endpoints for Pro and Expert users to access advanced
 structural impact reports.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import desc
@@ -17,8 +17,14 @@ from db.models import Report, AnalystProfile, AlertLog
 from api.gating import get_effective_tier, TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE, TIER_GUEST
 from api.auth import get_optional_current_user
 from reports.text_encoding import sanitize_unicode_tree
+from jobs.pro_structural_reports import pro_structural_report_filters
 
 router = APIRouter(prefix="/pro", tags=["Pro Reports"])
+
+_NO_STORE_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    "Pragma": "no-cache",
+}
 
 async def get_db():
     async with AsyncSessionLocal() as session:
@@ -51,8 +57,9 @@ async def require_authenticated_pro_tier(
 
 @router.get("/reports")
 async def get_pro_reports(
+    response: Response,
     db: AsyncSession = Depends(get_db),
-    tier: str = Depends(get_current_tier)
+    tier: str = Depends(get_current_tier),
 ):
     """
     Fetch a list of recent Pro Structural Briefs.
@@ -61,15 +68,18 @@ async def get_pro_reports(
     # Allowed tiers for Pro reports
     allowed_tiers = [TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE]
     
+    for key, value in _NO_STORE_HEADERS.items():
+        response.headers[key] = value
+
     if tier not in allowed_tiers:
-        # Return empty list instead of 403 to allow UI to render 'locked' state gracefully if needed
-        # but here we follow the instruction to return reports only for Pro/Expert.
         return []
-        
-    stmt = select(Report).where(
-        Report.plan_required == "pro",
-        Report.is_premium == True
-    ).order_by(desc(Report.created_at)).limit(50)
+
+    stmt = (
+        select(Report)
+        .where(*pro_structural_report_filters())
+        .order_by(desc(Report.created_at))
+        .limit(50)
+    )
     
     result = await db.execute(stmt)
     reports = result.scalars().all()

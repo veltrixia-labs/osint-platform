@@ -59,6 +59,23 @@ export function formatIntelPreciseTimestamp(
     return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
 }
 
+/** Relative freshness label for live Pro Insight cards (e.g. "Just now", "5m ago"). */
+export function formatIntelRelativeTimestamp(
+    dateInput: string | Date | number | null | undefined,
+): string {
+    if (dateInput == null || dateInput === '') return '';
+    const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if (Number.isNaN(d.getTime())) return '';
+    const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (sec < 45) return 'Just now';
+    const mins = Math.floor(sec / 60);
+    if (mins < 60) return mins === 1 ? '1m ago' : `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return hours === 1 ? '1h ago' : `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return days === 1 ? '1d ago' : `${days}d ago`;
+}
+
 /** Compact English date+time for feed cards (Alert Stream, Context Briefs). */
 export function formatIntelFeedTimestamp(iso: string): string {
     const d = new Date(iso);

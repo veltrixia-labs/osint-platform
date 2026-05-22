@@ -9,24 +9,50 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.settings import settings
 from db.models import Report
+from jobs.pro_structural_reports import pro_structural_report_filters
 
 logger = logging.getLogger(__name__)
 
 
 def _pro_structural_filter():
-    return (
-        Report.plan_required == "pro",
-        Report.is_premium == True,  # noqa: E712
-        or_(
-            Report.report_type == "pro_structural",
-            Report.title.ilike("Structural Impact Brief%"),
-        ),
+    return pro_structural_report_filters()
+
+
+async def count_all_pro_structural_reports(db: AsyncSession) -> int:
+    stmt = select(func.count(Report.id)).where(*_pro_structural_filter())
+    return int((await db.execute(stmt)).scalar() or 0)
+
+
+async def run_pro_structural_full_purge(
+    db: AsyncSession,
+    *,
+    dry_run: bool = False,
+) -> dict:
+    """
+    Cleanup-first: delete every Pro Structural Brief row before regenerating fresh reports.
+    """
+    pending = await count_all_pro_structural_reports(db)
+    deleted = 0
+    mode = "[DRY RUN] " if dry_run else ""
+
+    if pending and not dry_run:
+        stmt = delete(Report).where(*_pro_structural_filter())
+        result = await db.execute(stmt)
+        deleted = int(result.rowcount or 0)
+        await db.commit()
+
+    logger.info(
+        "%sPro structural full purge: pending=%s deleted=%s",
+        mode,
+        pending,
+        deleted if not dry_run else 0,
     )
+    return {"pending_delete": pending, "deleted": deleted if not dry_run else 0, "dry_run": dry_run}
 
 
 async def count_pro_structural_reports_older_than(

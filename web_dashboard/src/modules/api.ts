@@ -751,12 +751,18 @@ export async function fetchBackbone(sector: string): Promise<BackboneNode[]> {
 }
 
 export async function fetchProStructuralReports(): Promise<ProStructuralReportList> {
-    const resp = await apiClient.get('/pro/reports');
+    const resp = await apiClient.get('/pro/reports', {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    });
     return resp.ok ? await parseApiJson<ProStructuralReportList>(resp) : [];
 }
 
 export async function fetchProStructuralReport(id: string): Promise<ProStructuralReportItem> {
-    const resp = await apiClient.get(`/pro/reports/${id}`);
+    const resp = await apiClient.get(`/pro/reports/${id}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    });
     if (!resp.ok) throw new Error("Pro report not found");
     return await parseApiJson<ProStructuralReportItem>(resp);
 }

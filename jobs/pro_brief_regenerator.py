@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import AsyncSessionLocal
 from db.models import AlertLog, Report
+from jobs.pro_structural_reports import pro_structural_report_filters
 from analysis.pro_domain_config import infer_domain_from_topic
 from analysis.pro_structural_context import resolve_latest_domain_alert
 from jobs.pro_generation_policy import PRO_FORCE_REALTIME_REBUILD
@@ -89,8 +90,8 @@ async def purge_pro_structural_reports(
     *,
     domain_ids: Optional[List[str]] = None,
 ) -> int:
-    """Delete existing pro_structural reports (optional domain filter)."""
-    stmt = delete(Report).where(Report.report_type == "pro_structural")
+    """Delete existing Pro Insight structural brief rows (optional domain filter)."""
+    stmt = delete(Report).where(*pro_structural_report_filters())
     if domain_ids:
         stmt = stmt.where(Report.topic_code.in_(domain_ids))
     result = await db.execute(stmt)

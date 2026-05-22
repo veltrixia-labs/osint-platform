@@ -25,7 +25,6 @@ from jobs.cleanup_job import (
 )
 from jobs.entity_lifecycle import run_entity_lifecycle  # [v10.21]
 from processor.impact_discovery import ImpactDiscoveryEngine # [v12.0]
-from jobs.pro_automation_manager import run_scheduled_pro_automation
 from jobs.external_data_sync import run_daily_external_data_sync_pipeline
 
 logging.basicConfig(level=logging.INFO)
@@ -180,8 +179,10 @@ async def run_ops_monitoring():
     await run_entity_lifecycle(db_pressure_critical=False)
 
 async def pro_automation_wrapper():
-    """Wrapper for Pro Structural Brief automation."""
-    await run_scheduled_pro_automation()
+    """Rule-based Pro Structural Brief compile (6 domains, no LLM)."""
+    from jobs.pro_realtime_stream import run_continuous_pro_intelligence_stream
+
+    await run_continuous_pro_intelligence_stream()
 
 
 async def run_external_data_sync_wrapper():
@@ -307,10 +308,18 @@ async def run_startup_checks():
         await enforce_metadata_limits(session)
         await audit_metadata_sizes(session)
 
-    if os.getenv("PRO_AUTOMATION_ON_STARTUP", "true").lower() in ("true", "1", "yes"):
-        logger.info("Triggering startup Pro Structural Brief automation cycle...")
+    pro_on_startup = os.getenv("PRO_AUTOMATION_ON_STARTUP", "true").lower() in ("true", "1", "yes")
+    logger.info("PRO_AUTOMATION_ON_STARTUP=%s", pro_on_startup)
+    if pro_on_startup:
+        logger.info("Triggering immediate rule-based Pro Structural Brief compile (6 domains)...")
         try:
-            await pro_automation_wrapper()
+            stream = await pro_automation_wrapper()
+            logger.info(
+                "Startup pro compile complete: inserted=%s status=%s elapsed_sec=%.2f",
+                stream.get("inserted_count"),
+                stream.get("status"),
+                stream.get("elapsed_sec") or 0,
+            )
         except Exception as e:
             logger.error("Startup pro_automation failed: %s", e)
 
