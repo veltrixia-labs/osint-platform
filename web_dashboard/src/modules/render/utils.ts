@@ -59,6 +59,32 @@ export function formatIntelPreciseTimestamp(
     return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
 }
 
+/** Dedupe Pro Insight list rows by id, then keep newest per topic. */
+export function dedupeProStructuralBriefs<T extends { id: string; topic?: string | null; created_at?: string | null }>(
+    items: T[],
+): T[] {
+    const byId = new Map<string, T>();
+    for (const item of items) {
+        if (item?.id) byId.set(item.id, item);
+    }
+    const unique = [...byId.values()];
+    const byTopic = new Map<string, T>();
+    const sorted = [...unique].sort((a, b) => {
+        const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return tb - ta;
+    });
+    for (const item of sorted) {
+        const topic = (item.topic ?? 'global').trim() || 'global';
+        if (!byTopic.has(topic)) byTopic.set(topic, item);
+    }
+    return [...byTopic.values()].sort((a, b) => {
+        const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return tb - ta;
+    });
+}
+
 /** Relative freshness label for live Pro Insight cards (e.g. "Just now", "5m ago"). */
 export function formatIntelRelativeTimestamp(
     dateInput: string | Date | number | null | undefined,

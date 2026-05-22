@@ -70,6 +70,8 @@ async def main() -> None:
         )
         if stream.get("errors"):
             _log(f"errors: {stream['errors']}")
+        if stream.get("pruned_duplicates"):
+            _log(f"pruned_duplicates: {stream['pruned_duplicates']}")
 
         async with AsyncSessionLocal() as db:
             final = await count_all_pro_structural_reports(db)

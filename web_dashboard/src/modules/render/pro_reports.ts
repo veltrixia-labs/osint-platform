@@ -6,6 +6,7 @@ import {
     formatIntelDateTime,
     formatIntelPreciseTimestamp,
     formatIntelRelativeTimestamp,
+    dedupeProStructuralBriefs,
 } from './utils';
 import { showEvidenceModal } from './alerts';
 import { resolveAlertHeadline } from '../alert_display';
@@ -48,7 +49,9 @@ export async function renderProStructuralBriefs(
     }
 
     try {
-        const reports: ProStructuralReportItem[] = await fetchProStructuralReports();
+        const reports: ProStructuralReportItem[] = dedupeProStructuralBriefs(
+            await fetchProStructuralReports(),
+        );
         if (!listContainer) return;
 
         const filtered = topicFilter
@@ -66,7 +69,8 @@ export async function renderProStructuralBriefs(
 
         const paintGrid = (html: string) => {
             if (refreshOnly) {
-                listContainer!.innerHTML = html;
+                listContainer!.replaceChildren();
+                listContainer!.insertAdjacentHTML('beforeend', html);
                 bindCards();
                 return;
             }

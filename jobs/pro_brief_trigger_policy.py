@@ -15,10 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import AlertLog, Report
 from analysis.pro_domain_config import get_pro_domain_config, infer_domain_from_topic
 from analysis.pro_structural_context import build_pro_structural_context
-from jobs.pro_generation_policy import (
-    ALERT_CLUSTER_WINDOW_HOURS,
-    PRO_DISABLE_DUPLICATE_GUARDS,
-)
+from jobs.pro_generation_policy import ALERT_CLUSTER_WINDOW_HOURS, pro_disable_duplicate_guards
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +105,7 @@ async def check_recent_duplicate_reports(
     Legacy duplicate guard — disabled when PRO_DISABLE_DUPLICATE_GUARDS is True
     (real-time mode always INSERTs a new report).
     """
-    if PRO_DISABLE_DUPLICATE_GUARDS:
+    if pro_disable_duplicate_guards():
         return [], {
             "duplicate_structural_brief": False,
             "duplicate_general_report": False,
@@ -209,7 +206,7 @@ async def should_generate_pro_brief(
     diagnostics["has_structural"] = has_structural
     diagnostics["has_market"] = has_market
     # Real-time mode: macro OR market is enough to keep the stream alive
-    if PRO_DISABLE_DUPLICATE_GUARDS:
+    if pro_disable_duplicate_guards():
         diagnostics["passed_data_gate"] = has_structural or has_market
     else:
         diagnostics["passed_data_gate"] = has_structural and has_market

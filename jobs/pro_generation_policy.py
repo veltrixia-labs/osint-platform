@@ -9,11 +9,25 @@ from __future__ import annotations
 
 import os
 
-# Code-level defaults: always-on real-time pipeline (env cannot disable force INSERT)
+# Code-level defaults: always-on real-time pipeline
 PRO_FORCE_REALTIME_REBUILD = True
-PRO_DISABLE_DUPLICATE_GUARDS = True
 PRO_DISABLE_GENERATION_CAPS = True
 ALERT_CLUSTER_WINDOW_HOURS = 24
+
+
+def pro_compile_dedup_enabled() -> bool:
+    return os.getenv("PRO_COMPILE_DEDUP", "true").lower() in ("true", "1", "yes")
+
+
+def pro_disable_duplicate_guards() -> bool:
+    """When compile dedup is on, skip duplicate INSERTs unless explicitly overridden."""
+    if pro_compile_dedup_enabled():
+        return os.getenv("PRO_DISABLE_DUPLICATE_GUARDS", "false").lower() in ("true", "1", "yes")
+    return os.getenv("PRO_DISABLE_DUPLICATE_GUARDS", "true").lower() in ("true", "1", "yes")
+
+
+# Back-compat for imports expecting a module-level bool
+PRO_DISABLE_DUPLICATE_GUARDS = pro_disable_duplicate_guards()
 
 
 def pro_automation_enabled() -> bool:

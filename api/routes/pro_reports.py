@@ -18,6 +18,7 @@ from api.gating import get_effective_tier, TIER_PRO, TIER_EXPERTS, TIER_ENTERPRI
 from api.auth import get_optional_current_user
 from reports.text_encoding import sanitize_unicode_tree
 from jobs.pro_structural_reports import pro_structural_report_filters
+from jobs.pro_structural_dedup import latest_reports_per_topic
 
 router = APIRouter(prefix="/pro", tags=["Pro Reports"])
 
@@ -82,8 +83,8 @@ async def get_pro_reports(
     )
     
     result = await db.execute(stmt)
-    reports = result.scalars().all()
-    
+    reports = latest_reports_per_topic(result.scalars().all())
+
     return [
         {
             "id": str(r.id),
