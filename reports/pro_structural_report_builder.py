@@ -731,7 +731,10 @@ def build_pro_structural_report_payload(context: dict) -> dict:
         domain, sig, sig_class, status, coverage_matrix, divergence_check, breakdown, geo_context
     )
     predictive = context.get("predictive_forecast") or {}
-    if predictive.get("alert_cluster_depleted") and predictive.get("headline"):
+    title_override = context.get("executive_summary_override")
+    if isinstance(title_override, str) and title_override.strip():
+        exec_summary = title_override
+    elif predictive.get("alert_cluster_depleted") and predictive.get("headline"):
         exec_summary = f"{predictive['headline']} {exec_summary}"
         for vec in (predictive.get("risk_vectors") or [])[:3]:
             if vec not in key_findings:

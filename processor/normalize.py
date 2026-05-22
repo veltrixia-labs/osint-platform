@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Item, RawItem
 from processor.lightweight_topic import infer_topic_from_text
+from reports.text_encoding import sanitize_unicode_text
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +73,8 @@ async def run_normalize(db: AsyncSession):
     for raw in raw_items:
         payload = raw.payload_json or {}
         url = payload.get("link", "")
-        title = payload.get("title", "")
-        summary = payload.get("summary", "")
+        title = sanitize_unicode_text(payload.get("title", "") or "")
+        summary = sanitize_unicode_text(payload.get("summary", "") or "")
 
         if not url or not title:
             continue

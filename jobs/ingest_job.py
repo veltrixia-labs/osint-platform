@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import AsyncSessionLocal
 from db.models import RawItem, SourceRegistry
+from reports.text_encoding import sanitize_unicode_text
 import feedparser
 
 logging.basicConfig(level=logging.INFO)
@@ -56,10 +57,10 @@ async def fetch_feed(source: dict) -> list[dict]:
     for entry in parsed.entries:
         items.append(
             {
-                "title": entry.get("title", ""),
-                "link": entry.get("link", ""),
-                "published": entry.get("published", ""),
-                "summary": entry.get("summary", ""),
+                "title": sanitize_unicode_text(entry.get("title", "") or ""),
+                "link": sanitize_unicode_text(entry.get("link", "") or ""),
+                "published": sanitize_unicode_text(entry.get("published", "") or ""),
+                "summary": sanitize_unicode_text(entry.get("summary", "") or ""),
             }
         )
     return items

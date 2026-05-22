@@ -36,7 +36,6 @@ from analysis.pro_structural_compiler import (
     MIN_ALERT_CORRELATION,
     MIN_NEWS_CORRELATION,
     _tokenize,
-    build_dynamic_structural_title,
     build_sector_vocabulary,
     filter_correlated_news_items,
     filter_correlated_timeline_events,
@@ -291,7 +290,6 @@ async def build_pro_structural_context(
         "realtime_mode": True,
     }
 
-    context["brief_title"] = build_dynamic_structural_title(context)
     context = sanitize_unicode_tree(context)
 
     return context

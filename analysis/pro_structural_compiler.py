@@ -155,6 +155,122 @@ def _title_clip(text: str, max_len: int = 96) -> str:
     return clean[: max_len - 1].rsplit(" ", 1)[0] + "…"
 
 
+_FEED_PREFIX_RE = re.compile(
+    r"^(?:"
+    r"Rocket Report|Breaking(?:\s+News)?|Live(?:\s+Updates)?|Update|Exclusive|Watch|"
+    r"Alert|News Alert|Daily Report|Morning Brief|Opinion|Analysis|"
+    r"[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+Report"
+    r")\s*:\s*",
+    re.I,
+)
+
+_DOMAIN_THEME_PREFIX: Dict[str, str] = {
+    "energy_resource_risk": "Strategic Energy Repricing",
+    "global_market_intelligence": "Global Market Structural Shift",
+    "ai_semiconductor_intelligence": "Semiconductor Supply Structural Pressure",
+    "supply_chain_intelligence": "Supply Chain Structural Disruption",
+    "crypto_geopolitics": "Digital Asset Geopolitical Repricing",
+    "defense_technology": "Strategic Aerospace Escalation",
+}
+
+_DOMAIN_EXPOSURE_HOOK: Dict[str, str] = {
+    "energy_resource_risk": "Assessing Crude Corridor & Refining Utilization Exposure",
+    "global_market_intelligence": "Assessing Cross-Asset Risk Transmission & Liquidity Exposure",
+    "ai_semiconductor_intelligence": "Assessing Fab Capacity & Export-Control Exposure",
+    "supply_chain_intelligence": "Assessing Logistics Bottleneck & Inventory Exposure",
+    "crypto_geopolitics": "Assessing Stablecoin Rails & Regulatory Transmission Exposure",
+    "defense_technology": "Assessing Aerospace Escalation & Defense Supply Exposure",
+}
+
+_RAW_FEED_VERB_RE = re.compile(
+    r"\b(claims?|says?|said|reports?|according to|announces?|launches?|taps|partners?|"
+    r"unveils?|files|beats|misses|earnings|IPO)\b",
+    re.I,
+)
+
+_GEO_TOKENS = frozenset(
+    {
+        "russia",
+        "europe",
+        "european",
+        "china",
+        "ukraine",
+        "middle",
+        "east",
+        "hormuz",
+        "strait",
+        "nato",
+        "iran",
+        "israel",
+        "taiwan",
+        "korea",
+        "india",
+        "belarus",
+        "logistics",
+        "aerospace",
+        "semiconductor",
+        "energy",
+        "oil",
+        "crude",
+    }
+)
+
+
+def strip_feed_artifacts(text: str) -> str:
+    """Remove RSS/channel prefixes and trailing feed clutter from a headline."""
+    t = sanitize_unicode_text(text or "")
+    while True:
+        match = _FEED_PREFIX_RE.match(t)
+        if not match:
+            break
+        t = t[match.end() :].strip()
+    if ";" in t:
+        t = t.split(";", 1)[0].strip()
+    t = re.sub(r"\s+[-–—]\s+[^.!?]{0,80}$", "", t).strip()
+    return t
+
+
+def _exposure_hook_from_headline(headline: str, domain_id: str) -> str:
+    if _RAW_FEED_VERB_RE.search(headline):
+        return _DOMAIN_EXPOSURE_HOOK.get(domain_id, "Cross-Sector Structural Exposure Assessment")
+
+    lower = headline.lower()
+    geo_hits = [tok for tok in _GEO_TOKENS if tok in lower]
+    if "europe" in lower and ("russia" in lower or "belarus" in lower):
+        return "Assessing Russia-Europe Logistics & Security Exposure"
+    if "hormuz" in lower or "strait" in lower:
+        return "Assessing Maritime Chokepoint & Energy Corridor Exposure"
+    if len(geo_hits) >= 2:
+        a, b = geo_hits[0].title(), geo_hits[1].title()
+        return f"Assessing {a}-{b} Structural Exposure"
+    if geo_hits:
+        return f"Assessing {geo_hits[0].title()} Sector & Supply-Chain Exposure"
+
+    hook = re.sub(
+        r"\b(claims?|says?|said|reports?|according to|announces?|launches?)\b.*",
+        "",
+        headline,
+        flags=re.I,
+    ).strip(" ,:-")
+    if len(hook) >= 20:
+        return f"Assessing {hook[:72]}"
+    return "Cross-Sector Structural Exposure Assessment"
+
+
+def synthesize_structural_title(raw_headline: str, context: Dict[str, Any]) -> str:
+    """
+    Convert a raw OSINT headline into an objective macro-structural intelligence title.
+    """
+    domain = context.get("domain") or {}
+    domain_id = (domain.get("domain_id") or "global_market_intelligence").strip()
+    theme = _DOMAIN_THEME_PREFIX.get(domain_id, f"{domain.get('display_name', 'Structural')} Assessment")
+    core = strip_feed_artifacts(raw_headline)
+    if not core or len(core) < 8:
+        return _title_clip(f"{theme}: Cross-Sector Exposure Assessment")
+    hook = _exposure_hook_from_headline(core, domain_id)
+    return _title_clip(f"{theme}: {hook}")
+
+
 def build_dynamic_structural_title(context: Dict[str, Any]) -> str:
     """
     Context title from anchor OSINT signal + structural macro pressure (not generic sector template).
@@ -169,13 +285,13 @@ def build_dynamic_structural_title(context: Dict[str, Any]) -> str:
     if trigger_title and len(trigger_title) >= 12:
         generic = trigger_title.lower().startswith("structural impact brief")
         if not generic:
-            return _title_clip(trigger_title)
+            return synthesize_structural_title(trigger_title, context)
 
     for ev in timeline:
         if ev.get("type") == "trigger" and ev.get("title"):
             t = sanitize_unicode_text(ev["title"])
             if t and len(t) >= 12:
-                return _title_clip(t)
+                return synthesize_structural_title(t, context)
 
     macro = (s_ctx.get("macro_observations") or s_ctx.get("macro_display_cards") or [])
     top = macro[0] if macro else {}

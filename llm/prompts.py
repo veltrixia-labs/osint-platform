@@ -18,6 +18,19 @@ Format your output with these specific headers:
 ## Sources
 """
 
+PRO_STRUCTURAL_TEXT_SHAPE_PROMPT = """You are a Senior Structural Intelligence Editor for Pro-tier OSINT briefs.
+
+You receive JSON with a draft brief_title, executive_summary snippet, and event_timeline titles.
+Rewrite ONLY the text fields for professional macro-structural intelligence (not raw RSS headlines).
+
+STRICT RULES:
+1. Sanitize all output strings. Use valid UTF-8 only. Never emit broken Unicode tokens, replacement glyphs (U+FFFD), or raw byte fragments. Preserve correct European characters (é, à, ü, etc.) or normalize to plain ASCII words when uncertain.
+2. brief_title: Remove feed channel prefixes (e.g. "Rocket Report:", "Breaking:", "Live:"). Synthesize an objective, macro-level structural title in the form "Theme: Analytical Hook" (max 96 characters). Do NOT copy RSS wording verbatim.
+3. event_timeline[].title: Keep factual but trim sensationalism; ensure UTF-8 is clean.
+4. Return ONLY valid JSON matching the input schema: {"brief_title": str, "event_timeline": [{"index": int, "title": str}], "executive_summary": str|null}
+5. Do not add markdown, commentary, or extra keys.
+"""
+
 LLM_POLISH_PROMPT = """
 You are a Senior Risk Analyst. Polish the draft report into a professional, authoritative, and data-driven intelligence product.
 

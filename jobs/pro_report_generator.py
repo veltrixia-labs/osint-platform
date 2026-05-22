@@ -17,7 +17,7 @@ from db.models import Report, AlertLog
 from analysis.pro_structural_context import build_pro_structural_context, resolve_latest_domain_alert
 from reports.pro_structural_report_builder import build_pro_structural_report, build_pro_structural_report_payload
 from reports.text_encoding import sanitize_unicode_tree
-from analysis.pro_structural_compiler import build_dynamic_structural_title
+from llm.pro_structural_shaper import shape_pro_structural_context
 from analysis.pro_domain_config import infer_domain_from_topic
 from jobs.pro_generation_policy import pro_compile_dedup_enabled
 from jobs.pro_structural_dedup import (
@@ -101,7 +101,8 @@ async def _run_pro_structural_report_generation_locked(
             force_rebuild=force_rebuild,
             analysis_generated_at=analysis_ts,
         )
-        
+        context = await shape_pro_structural_context(context)
+
         # 3. Build Report Markdown & Payload
         report_md = sanitize_unicode_tree(build_pro_structural_report(context))
         payload = build_pro_structural_report_payload(context)
@@ -109,7 +110,7 @@ async def _run_pro_structural_report_generation_locked(
         # 4. Prepare Metadata
         domain_info = context.get("domain", {})
         display_name = domain_info.get("display_name", "General Intelligence")
-        brief_title = context.get("brief_title") or build_dynamic_structural_title(context)
+        brief_title = context.get("brief_title") or "Structural Risk Outlook"
         
         # 5. Teaser for hub list cards
         exec_summary = (payload.get("executive_summary") or "") if isinstance(payload, dict) else ""
