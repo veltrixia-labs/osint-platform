@@ -18,9 +18,10 @@ from jobs.alert_manager import run_alert_manager
 from jobs.threads_publisher_job import run_threads_publisher
 from jobs.learning_loop import run_learning_job
 from jobs.cleanup_job import (
-    run_alert_cleanup, run_retention_cleanup, run_db_size_check, 
-    enforce_metadata_limits, audit_metadata_sizes, update_system_metric, 
-    run_retention_audit, run_trend_cleanup, run_visual_cleanup
+    run_alert_cleanup, run_retention_cleanup, run_db_size_check,
+    enforce_metadata_limits, audit_metadata_sizes, update_system_metric,
+    run_retention_audit, run_trend_cleanup, run_visual_cleanup,
+    run_pro_structural_retention_wrapper,
 )
 from jobs.entity_lifecycle import run_entity_lifecycle  # [v10.21]
 from processor.impact_discovery import ImpactDiscoveryEngine # [v12.0]
@@ -241,13 +242,31 @@ def register_jobs():
     # Phase 4: Self-Learning Feedback Loop (Daily at 02:00)
     schedule.every().day.at("02:00").do(schedule_async, "learning_loop", run_learning_wrapper)
 
-    # Phase 7: Pro Structural Brief Automation (real-time default: hourly continuous INSERT stream)
-    pro_interval = int(os.getenv("PRO_AUTOMATION_INTERVAL_HOURS", "1"))
-    schedule.every(pro_interval).hours.do(schedule_async, "pro_automation", pro_automation_wrapper)
-    logger.info(
-        "Registered pro_automation every %sh (realtime stream; ENABLE_PRO_AUTOMATION ignored when force mode on).",
-        pro_interval,
+    # Phase 7: Pro Structural Brief Automation (continuous INSERT stream)
+    pro_interval_min = int(os.getenv("PRO_AUTOMATION_INTERVAL_MINUTES", "30"))
+    if pro_interval_min > 0:
+        schedule.every(pro_interval_min).minutes.do(
+            schedule_async, "pro_automation", pro_automation_wrapper
+        )
+        logger.info(
+            "Registered pro_automation every %s minutes (continuous structural brief INSERT stream).",
+            pro_interval_min,
+        )
+    else:
+        pro_interval_h = int(os.getenv("PRO_AUTOMATION_INTERVAL_HOURS", "1"))
+        schedule.every(pro_interval_h).hours.do(
+            schedule_async, "pro_automation", pro_automation_wrapper
+        )
+        logger.info("Registered pro_automation every %sh.", pro_interval_h)
+
+    # Pro Insight retention (90-day default)
+    pro_retention_time = os.getenv("PRO_STRUCTURAL_RETENTION_UTC_TIME", "04:15")
+    schedule.every().day.at(pro_retention_time).do(
+        schedule_async,
+        "pro_structural_retention",
+        run_pro_structural_retention_wrapper,
     )
+    logger.info("Registered pro_structural_retention daily at %s.", pro_retention_time)
 
 async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""
@@ -287,6 +306,13 @@ async def run_startup_checks():
         await run_db_size_check(session)
         await enforce_metadata_limits(session)
         await audit_metadata_sizes(session)
+
+    if os.getenv("PRO_AUTOMATION_ON_STARTUP", "true").lower() in ("true", "1", "yes"):
+        logger.info("Triggering startup Pro Structural Brief automation cycle...")
+        try:
+            await pro_automation_wrapper()
+        except Exception as e:
+            logger.error("Startup pro_automation failed: %s", e)
 
 async def main():
     logger.info("--- OSINT SCHEDULER STARTUP ---")

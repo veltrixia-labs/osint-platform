@@ -352,11 +352,12 @@ async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None):
     threshold = now - timedelta(days=settings.report_retention_days)
     
     try:
-        # 1. Report Cleanup
-        PERSISTENT_TYPES = ["weekly_global", "monthly_global"]
+        # 1. Report Cleanup (excludes pro_structural — see run_pro_structural_retention_cleanup)
+        PERSISTENT_TYPES = ["weekly_global", "monthly_global", "pro_structural"]
         report_stmt = delete(Report).where(
             Report.created_at < threshold,
-            Report.report_type.notin_(PERSISTENT_TYPES)
+            Report.report_type.notin_(PERSISTENT_TYPES),
+            ~Report.title.ilike("Structural Impact Brief%"),
         )
         if not dry_run:
             report_res = await db.execute(report_stmt)
@@ -475,6 +476,14 @@ async def _is_monthly_summary_ready(db: AsyncSession) -> bool:
     stmt = select(Report).where(Report.report_type == "monthly_global", Report.created_at >= threshold)
     result = await db.execute(stmt)
     return result.scalars().first() is not None
+
+
+async def run_pro_structural_retention_wrapper():
+    """Scheduled purge of Pro Insight structural briefs older than PRO_STRUCTURAL_RETENTION_DAYS."""
+    from jobs.pro_structural_retention import run_pro_structural_retention_cleanup
+
+    async with AsyncSessionLocal() as session:
+        await run_pro_structural_retention_cleanup(session, dry_run=settings.retention_dry_run)
 
 # --- CLI Implementation ---
 

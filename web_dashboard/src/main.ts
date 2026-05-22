@@ -10,7 +10,7 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
+import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 import { formatIntelTime } from './modules/render/utils'
 // (Pro reports now handled within Pro Insights hub)
@@ -660,6 +660,9 @@ async function initDashboard() {
             disposeMarketPulseView();
             const alertsHost = document.querySelector<HTMLElement>('#alerts-list');
             if (alertsHost) delete alertsHost.dataset.dashboardView;
+        }
+        if (tab !== 'pro-insights') {
+            disposeProInsightsView();
         }
         currentTab = tab;
         updateNavActiveState('sidebar-nav-container', tab);

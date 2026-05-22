@@ -18,8 +18,13 @@ export async function renderProStructuralBriefs(
     container: HTMLElement,
     onSelect: (id: string) => void,
     topicFilter: StrategicTopicCode | null = null,
+    options?: { refreshOnly?: boolean },
 ) {
-    container.innerHTML = `
+    const refreshOnly = options?.refreshOnly === true;
+    let listContainer = container.querySelector('#briefs-list') as HTMLElement | null;
+
+    if (!listContainer) {
+        container.innerHTML = `
         <div class="pro-briefs-container">
             <div class="insight-card pro-insight-panel">
                 <div class="insight-card-header">
@@ -33,25 +38,41 @@ export async function renderProStructuralBriefs(
             </div>
         </div>
     `;
+        listContainer = container.querySelector('#briefs-list') as HTMLElement;
+    }
+
     try {
         const reports: ProStructuralReportItem[] = await fetchProStructuralReports();
-        const listContainer = container.querySelector('#briefs-list') as HTMLElement;
         if (!listContainer) return;
 
         const filtered = topicFilter
             ? reports.filter((r) => normalizeTopicCode(r.topic) === topicFilter)
             : reports;
 
+        const bindCards = () => {
+            listContainer!.querySelectorAll('.pro-brief-card').forEach((card) => {
+                (card as HTMLElement).addEventListener('click', () => {
+                    const id = card.getAttribute('data-id');
+                    if (id) onSelect(id);
+                });
+            });
+        };
+
         const paintGrid = (html: string) => {
-            listContainer.classList.remove('pro-briefs-grid--loading', 'pro-briefs-grid--settled');
-            listContainer.classList.add('pro-briefs-grid--transition');
-            listContainer.style.opacity = '0';
-            listContainer.innerHTML = html;
+            if (refreshOnly) {
+                listContainer!.innerHTML = html;
+                bindCards();
+                return;
+            }
+            listContainer!.classList.remove('pro-briefs-grid--loading', 'pro-briefs-grid--settled');
+            listContainer!.classList.add('pro-briefs-grid--transition');
+            listContainer!.style.opacity = '0';
+            listContainer!.innerHTML = html;
             requestAnimationFrame(() => {
-                listContainer.style.opacity = '1';
-                listContainer.classList.add('pro-briefs-grid--settled');
+                listContainer!.style.opacity = '1';
+                listContainer!.classList.add('pro-briefs-grid--settled');
                 window.setTimeout(() => {
-                    listContainer.classList.remove('pro-briefs-grid--transition');
+                    listContainer!.classList.remove('pro-briefs-grid--transition');
                 }, 320);
             });
         };
@@ -82,9 +103,7 @@ export async function renderProStructuralBriefs(
                 })
                 .join(''),
         );
-        listContainer.querySelectorAll('.pro-brief-card').forEach(card => {
-            (card as HTMLElement).addEventListener('click', () => { const id = card.getAttribute('data-id'); if (id) onSelect(id); });
-        });
+        bindCards();
     } catch (e) {
         console.error("Failed to fetch Pro briefs", e);
         const lc = container.querySelector('#briefs-list') as HTMLElement;

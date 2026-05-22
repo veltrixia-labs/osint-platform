@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     alert_retention_hours: int = int(os.getenv("ALERT_RETENTION_HOURS", 24))
     raw_retention_days: int = int(os.getenv("RAW_RETENTION_DAYS", 30))
     report_retention_days: int = int(os.getenv("REPORT_RETENTION_DAYS", 30))
+    pro_structural_retention_days: int = int(os.getenv("PRO_STRUCTURAL_RETENTION_DAYS", 90))
     retention_dry_run: bool = os.getenv("RETENTION_DRY_RUN", "false").lower() == "true"
 
     # DB Pressure Monitoring (MB)

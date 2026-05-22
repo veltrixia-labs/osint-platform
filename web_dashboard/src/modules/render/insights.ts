@@ -22,6 +22,21 @@ import {
 } from '../topics';
 import { renderLockedFeature } from '../subscription';
 import { renderProStructuralBriefs, renderProStructuralBriefDetail } from './pro_reports';
+
+const PRO_INSIGHTS_REFRESH_MS = 60_000;
+
+let proInsightsSession = 0;
+let proInsightsPollTimer: ReturnType<typeof setInterval> | null = null;
+
+/** Stop background Pro Insight refresh when leaving the tab. */
+export function disposeProInsightsView(): void {
+    proInsightsSession += 1;
+    if (proInsightsPollTimer !== null) {
+        clearInterval(proInsightsPollTimer);
+        proInsightsPollTimer = null;
+    }
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Component Primitives (Pure CSS / SVG)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -61,6 +76,8 @@ function renderCategoryBadge(category: string): string {
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function renderProInsights(container: HTMLElement, user: UserMe, onNavigatePlans: () => void) {
+    disposeProInsightsView();
+    const sessionId = proInsightsSession;
     container.dataset.dashboardView = 'pro-insights';
 
     // 1. Tier Enforcement
@@ -116,8 +133,26 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
         });
     };
 
+    let hubViewActive = true;
+
+    const refreshBriefsList = async () => {
+        if (sessionId !== proInsightsSession) return;
+        if (!hubViewActive || container.dataset.dashboardView !== 'pro-insights') return;
+        const briefsContainer = container.querySelector(
+            '#pro-hub-structural-briefs-container',
+        ) as HTMLElement | null;
+        if (!briefsContainer) return;
+        await renderProStructuralBriefs(briefsContainer, onSelectBriefRef, selectedDomain, {
+            refreshOnly: true,
+        });
+    };
+
+    let onSelectBriefRef = (_id: string) => {};
+
     // Internal navigation handler for switching between Hub and Detail view
     const showHub = async () => {
+        if (sessionId !== proInsightsSession) return;
+        hubViewActive = true;
         const monitoredDomainsPanel = renderProPanel(
             'Monitored Domains',
             `<div class="domain-chips-container pro-domain-filter-bar" role="group" aria-label="Filter structural briefs by domain">${renderDomainFilterButtons()}</div>`,
@@ -137,10 +172,12 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
         </div>`;
 
         const onSelectBrief = (id: string) => {
+            hubViewActive = false;
             renderProStructuralBriefDetail(id, container, () => {
-                showHub();
+                void showHub();
             });
         };
+        onSelectBriefRef = onSelectBrief;
 
         ensureDomainFilterDelegation(container, onSelectBrief);
 
@@ -154,6 +191,11 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
 
     // Initialize hub
     await showHub();
+    if (sessionId !== proInsightsSession) return;
+
+    proInsightsPollTimer = setInterval(() => {
+        void refreshBriefsList();
+    }, PRO_INSIGHTS_REFRESH_MS);
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
