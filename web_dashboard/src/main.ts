@@ -117,6 +117,9 @@ function bindGlobalAppHandlers(): void {
     })
 }
 
+let hashRouteSyncBound = false
+let routeSyncInFlight: Promise<void> | null = null
+
 bindGlobalAppHandlers()
 bindHashRouteSync()
 
@@ -262,9 +265,6 @@ function parseHashRoute(tier?: string): HashRoute | null {
     const alertId = new URLSearchParams(query || '').get('alert')
     return { tab, alertId: alertId || undefined }
 }
-
-let hashRouteSyncBound = false
-let routeSyncInFlight: Promise<void> | null = null
 
 async function syncRouteFromHash(): Promise<void> {
     if (routeSyncInFlight) return routeSyncInFlight
