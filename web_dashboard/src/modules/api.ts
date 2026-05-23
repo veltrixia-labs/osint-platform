@@ -105,8 +105,7 @@ function getApiOriginCandidates(): string[] {
 
     if (typeof globalThis !== 'undefined' && 'location' in globalThis) {
         const loc = (globalThis as unknown as Window).location;
-        const host = loc?.hostname ?? '';
-        if (host && host !== 'localhost' && host !== '127.0.0.1') {
+        if (loc?.origin) {
             add(loc.origin);
         }
     }
@@ -130,6 +129,8 @@ function statusProbeUrl(origin: string): string {
 
 async function probeApiOrigin(origin: string): Promise<boolean> {
     const url = statusProbeUrl(origin);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
     try {
         const resp = await fetch(url, {
             method: 'GET',
@@ -137,11 +138,14 @@ async function probeApiOrigin(origin: string): Promise<boolean> {
             credentials: 'omit',
             cache: 'no-store',
             headers: { Accept: 'application/json' },
+            signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         if (!resp.ok) return false;
         const body = (await resp.json()) as { status?: string; message?: string };
         return body?.status === 'ok' || Boolean(body?.message?.toLowerCase().includes('running'));
     } catch {
+        clearTimeout(timeoutId);
         return false;
     }
 }
