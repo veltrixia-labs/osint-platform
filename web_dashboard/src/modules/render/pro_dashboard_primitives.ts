@@ -13,8 +13,19 @@ export const SECTOR_DISTRIBUTION_GUIDE_HTML = `
 
 /** Module A — Risk Contagion & Lead-Lag Tracker */
 export const LEAD_LAG_GUIDE_HTML = `
-<p class="intel-guide-title"><strong>Risk Contagion &amp; Lead-Lag Tracker</strong></p>
-<p class="intel-guide-body">Quantifies the directional propagation of risk across sectors by calculating the real-time Cross-Correlation Function (CCF). It identifies leading indicators and measures the precise time delay (lag) of risk transmission.</p>`;
+<div class="pro-guide-content">
+  <strong>Risk Contagion & Lead-Lag Tracker</strong>
+  <p>Quantifies the directional propagation of risk across sectors by calculating the real-time Cross-Correlation Function (CCF).</p>
+  <ul style="margin-top: 8px; padding-left: 16px; opacity: 0.9; line-height: 1.4;">
+    <li style="margin-bottom: 4px;"><strong>Lag (e.g., +6.0h):</strong> The time delay before the source sector's risk impacts the target sector.</li>
+    <li><strong>R (Correlation):</strong> Measures relationship strength (-1.0 to 1.0).
+      <ul style="margin-top: 4px; padding-left: 16px; list-style-type: circle;">
+        <li><strong>R &gt; 0:</strong> Positive correlation (moves in the same direction).</li>
+        <li><strong>R &lt; 0:</strong> Inverse correlation (moves in the opposite direction). <em>*A negative R is a strong predictive signal, not a lack of correlation.</em></li>
+      </ul>
+    </li>
+  </ul>
+</div>`;
 
 /** Module B — Momentum & Acceleration Gauge */
 export const MOMENTUM_GAUGE_GUIDE_HTML = `
