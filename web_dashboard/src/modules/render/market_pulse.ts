@@ -289,6 +289,39 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
         // Range-selector clicks (existing)
         container.addEventListener('click', (e) => {
             if (container.dataset.dashboardView !== 'market-pulse') return;
+
+            // ── Guide ℹ️ toggle ─────────────────────────────────────────
+            const guideBtn = (e.target as HTMLElement).closest('.intel-section-guide') as HTMLElement | null;
+            if (guideBtn && !guideBtn.classList.contains('intel-section-guide-close')) {
+                e.stopPropagation();
+                const wrap = guideBtn.closest('.intel-section-guide-wrap');
+                const pop = wrap?.querySelector('.intel-section-guide-popover');
+                if (pop) {
+                    const wasOpen = pop.classList.contains('is-open');
+                    container.querySelectorAll('.intel-section-guide-popover.is-open').forEach((el) => {
+                        el.classList.remove('is-open');
+                        el.closest('.intel-section-guide-wrap')?.querySelector('.intel-section-guide')?.setAttribute('aria-expanded', 'false');
+                    });
+                    if (!wasOpen) {
+                        pop.classList.add('is-open');
+                        guideBtn.setAttribute('aria-expanded', 'true');
+                    }
+                }
+                return;
+            }
+
+            // ── Guide × close ───────────────────────────────────────────
+            const closeBtn = (e.target as HTMLElement).closest('.intel-section-guide-close') as HTMLElement | null;
+            if (closeBtn) {
+                e.stopPropagation();
+                const pop = closeBtn.closest('.intel-section-guide-popover');
+                if (pop) {
+                    pop.classList.remove('is-open');
+                    pop.closest('.intel-section-guide-wrap')?.querySelector('.intel-section-guide')?.setAttribute('aria-expanded', 'false');
+                }
+                return;
+            }
+
             const btn = (e.target as HTMLElement).closest('.mp-trend-range-btn') as HTMLElement | null;
             if (btn) {
                 const next = btn.dataset.range as TrendRange;

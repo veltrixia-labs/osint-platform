@@ -115,6 +115,17 @@ function bindGlobalAppHandlers(): void {
             }
         }
     })
+
+    // Close any open guide popover when clicking outside of a guide wrap
+    document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement
+        if (!target.closest('.intel-section-guide-wrap')) {
+            document.querySelectorAll('.intel-section-guide-popover.is-open').forEach((el) => {
+                el.classList.remove('is-open')
+                el.closest('.intel-section-guide-wrap')?.querySelector('.intel-section-guide')?.setAttribute('aria-expanded', 'false')
+            })
+        }
+    }, { capture: false })
 }
 
 let hashRouteSyncBound = false

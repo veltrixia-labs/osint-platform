@@ -7747,11 +7747,6 @@ body.cb-modal-scroll-lock {
   transition: opacity 0.18s ease, color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-.intel-section-guide-wrap--inline:hover .intel-section-guide,
-.intel-section-guide-wrap--inline:focus-within .intel-section-guide {
-  opacity: 1;
-}
-
 .intel-section-guide-wrap--inline .intel-section-guide-popover {
   left: auto;
   right: 0;
@@ -7765,18 +7760,15 @@ body.cb-modal-scroll-lock {
   transform: translateY(-4px);
 }
 
-.intel-section-guide-wrap--popover-above:hover .intel-section-guide-popover,
-.intel-section-guide-wrap--popover-above:focus-within .intel-section-guide-popover {
+.intel-section-guide-wrap--popover-above .intel-section-guide-popover.is-open {
   transform: translateY(0);
 }
 
-.intel-section-guide-wrap--inline:hover,
-.intel-section-guide-wrap--inline:focus-within {
+.intel-section-guide-wrap--inline:has(.intel-section-guide-popover.is-open) {
   z-index: 100;
 }
 
-.intel-section-guide-wrap--inline:hover .intel-section-guide-popover,
-.intel-section-guide-wrap--inline:focus-within .intel-section-guide-popover {
+.intel-section-guide-wrap--inline .intel-section-guide-popover.is-open {
   z-index: 101;
 }
 
@@ -8763,16 +8755,16 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
   top: calc(100% + 8px);
   z-index: 100;
   width: min(300px, calc(100vw - 2.5rem));
-  padding: 0.75rem 0.9rem;
+  padding: 0.85rem 1rem 0.75rem 0.9rem;
   font-size: 0.78rem;
   line-height: 1.55;
   color: var(--text-primary);
-  background: rgba(22, 27, 34, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(22, 27, 34, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 10px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   opacity: 0;
   visibility: hidden;
   transform: translateY(4px);
@@ -8780,17 +8772,49 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
   pointer-events: none;
 }
 
-.intel-section-guide-wrap:hover .intel-section-guide,
-.intel-section-guide-wrap:focus-within .intel-section-guide {
-  opacity: 1;
-}
-
-.intel-section-guide-wrap:hover .intel-section-guide-popover,
-.intel-section-guide-wrap:focus-within .intel-section-guide-popover {
+/* Show popover on .is-open (JS-driven click — all guide variants) */
+.intel-section-guide-popover.is-open {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
   pointer-events: auto;
+}
+
+.intel-section-guide-wrap:has(.intel-section-guide-popover.is-open) .intel-section-guide {
+  opacity: 1;
+  color: var(--accent);
+  border-color: rgba(88, 166, 255, 0.45);
+  background: rgba(88, 166, 255, 0.12);
+}
+
+/* Close (×) button inside the popover */
+.intel-section-guide-close {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.45rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.intel-section-guide-close:hover,
+.intel-section-guide-close:focus-visible {
+  opacity: 1;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
 }
 
 .intel-section-num {

@@ -155,10 +155,13 @@ function sh(num: string, title: string): string {
     const guide = PRO_SECTION_GUIDES[num];
     const guideHtml = guide
         ? `<span class="intel-section-guide-wrap">
-            <button type="button" class="intel-section-guide" aria-label="About ${escAttr(title)}">
+            <button type="button" class="intel-section-guide" aria-label="About ${escAttr(title)}" aria-expanded="false">
                 <span class="intel-section-guide-icon" aria-hidden="true">ℹ</span>
             </button>
-            <span class="intel-section-guide-popover" role="tooltip">${escHtml(guide)}</span>
+            <span class="intel-section-guide-popover" role="tooltip">
+                <button type="button" class="intel-section-guide-close" aria-label="Close guide" tabindex="0">×</button>
+                ${escHtml(guide)}
+            </span>
            </span>`
         : '';
     return `<div class="intel-section-head"><span class="intel-section-num">${num}</span><h3 class="intel-section-title">${title}</h3>${guideHtml}</div>`;
@@ -242,8 +245,24 @@ function wireProBriefInteractions(root: HTMLElement): void {
             const pop = wrap?.querySelector('.intel-section-guide-popover');
             if (!pop) return;
             const wasOpen = pop.classList.contains('is-open');
-            root.querySelectorAll('.intel-section-guide-popover.is-open').forEach((el) => el.classList.remove('is-open'));
-            if (!wasOpen) pop.classList.add('is-open');
+            root.querySelectorAll('.intel-section-guide-popover.is-open').forEach((el) => {
+                el.classList.remove('is-open');
+                el.closest('.intel-section-guide-wrap')?.querySelector('.intel-section-guide')?.setAttribute('aria-expanded', 'false');
+            });
+            if (!wasOpen) {
+                pop.classList.add('is-open');
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
+
+    root.querySelectorAll('.intel-section-guide-close').forEach((closeBtn) => {
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const pop = closeBtn.closest('.intel-section-guide-popover');
+            if (!pop) return;
+            pop.classList.remove('is-open');
+            pop.closest('.intel-section-guide-wrap')?.querySelector('.intel-section-guide')?.setAttribute('aria-expanded', 'false');
         });
     });
 
