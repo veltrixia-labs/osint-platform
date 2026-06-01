@@ -142,38 +142,6 @@
     font-size: 0.75rem;
   }
 
-  .cb-briefs-grid--context,
-  .cb-briefs-grid {
-    grid-template-columns: 1fr !important;
-    gap: 0.65rem;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .pro-brief-card.cb-brief-card,
-  .pro-brief-card.cb-brief-card--preview {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    padding: 0.62rem 0.75rem;
-    margin: 0 0 8px;
-    font-size: 0.85rem;
-  }
-
-  .pro-brief-card.cb-brief-card .cb-brief-card-title {
-    font-size: 0.95rem;
-    line-height: 1.35;
-  }
-
-  .pro-brief-card.cb-brief-card .cb-brief-card-teaser {
-    font-size: 0.8rem;
-    line-height: 1.45;
-  }
-
-  .pro-brief-card.cb-brief-card .cb-brief-stat-chip {
-    font-size: 0.72rem;
-    padding: 0.2rem 0.45rem;
-  }
 
   .pulse-bar {
     font-size: 0.78rem;

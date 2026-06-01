@@ -39,7 +39,7 @@
       { tag: 'INFER', cls: 'infer', text: 'scenario_fork: A=escalation (p=0.42) · B=contained (p=0.38) · C=noise (p=0.20)' },
       { tag: 'INFER', cls: 'infer', text: 'logic_check: no contradictions · evidence_coverage=HIGH' },
       { tag: 'INFER', cls: 'infer', text: 'brief_id=RPT-2026-0516-7F3A · citations=7 · chain_hash=0x9c4e…' },
-      { tag: 'INFER', cls: 'infer', text: 'publish_queue: Context Brief ready · map pulse lat/lng locked' },
+      { tag: 'INFER', cls: 'infer', text: 'publish_queue: structural brief ready · map pulse lat/lng locked' },
     ],
   ];
 

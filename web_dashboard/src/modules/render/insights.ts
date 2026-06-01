@@ -22,6 +22,7 @@ import {
 } from '../topics';
 import { isAuthSessionPending } from '../auth_session';
 import { renderLockedFeature } from '../subscription';
+import { DEV_MODE_AUDIT } from '../dev_mode';
 import { renderProStructuralBriefs, renderProStructuralBriefDetail } from './pro_reports';
 
 const PRO_INSIGHTS_REFRESH_MS = 60_000;
@@ -86,8 +87,8 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
         return;
     }
 
-    // 1. Tier Enforcement
-    if (user.tier === 'free') {
+    // 1. Tier Enforcement (bypassed in Dev Mode / Audit Build)
+    if (user.tier === 'free' && !DEV_MODE_AUDIT) {
         container.innerHTML = renderLockedFeature('Pro Insights Dashboard', 'pro');
         const btn = container.querySelector('#locked-goto-plans');
         btn?.addEventListener('click', () => onNavigatePlans());
@@ -165,7 +166,7 @@ export async function renderProInsights(container: HTMLElement, user: UserMe, on
         );
 
         container.innerHTML = `
-        <div class="cb-briefs-page pro-insight-hub">
+        <div class="pro-hub-page pro-insight-hub">
         <div class="insights-dashboard pro-dashboard pro-insight-page">
             <section class="pro-insight-filters pro-insight-section" aria-label="Monitored Domains">
                 ${monitoredDomainsPanel}
@@ -214,8 +215,8 @@ export async function renderExpertIntel(container: HTMLElement, user: UserMe, on
         return;
     }
 
-    // 1. Tier Enforcement
-    if (user.tier !== 'experts' && user.tier !== 'enterprise') {
+    // 1. Tier Enforcement (bypassed in Dev Mode / Audit Build)
+    if (user.tier !== 'experts' && user.tier !== 'enterprise' && !DEV_MODE_AUDIT) {
         container.innerHTML = renderLockedFeature('Expert Strategic Suite', 'experts');
         const btn = container.querySelector('#locked-goto-plans');
         btn?.addEventListener('click', () => onNavigatePlans());

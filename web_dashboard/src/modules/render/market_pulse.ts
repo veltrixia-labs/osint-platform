@@ -2,169 +2,167 @@
  * Market Pulse — quantitative indicators, sector index, historical risk trends.
  */
 
-import type { ProInsights, UserMe } from '../api';
-import { fetchProInsights } from '../api';
-import { getTopicDef } from '../topics';
+import type { MacroRegime, ProInsights, UserMe } from '../api';
+import { fetchMacroRegime, fetchProInsights } from '../api';
 import { isAuthSessionPending } from '../auth_session';
 import { renderLockedFeature } from '../subscription';
-import { showEvidenceModal } from './alerts';
+import { DEV_MODE_AUDIT } from '../dev_mode';
 import {
-    ACTIVE_MARKET_PRESSURES_GUIDE_HTML,
-    buildRiskSummaryCardsHtml,
-    HISTORICAL_RISK_TREND_GUIDE_HTML,
     LEAD_LAG_GUIDE_HTML,
-    MOMENTUM_GAUGE_GUIDE_HTML,
-    EVIDENCE_STREAM_GUIDE_HTML,
     renderPanelGuide,
     renderProPanel,
-    renderLeadLagNetwork,
-    renderMomentumGauges,
-    renderEvidenceStream,
 } from './pro_dashboard_primitives';
+import { RadialNetworkEngine } from './radial_network';
+
+const REGIME_BANNER_STYLE_ID = 'market-pulse-regime-styles';
+function injectRegimeBannerStyles(): void {
+    if (typeof document === 'undefined' || document.getElementById(REGIME_BANNER_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = REGIME_BANNER_STYLE_ID;
+    style.textContent = `
+        .market-regime-banner {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 18px;
+            margin-bottom: 14px;
+            border-radius: 14px;
+            background: linear-gradient(135deg,
+                color-mix(in srgb, var(--regime-accent, #38bdf8) 16%, rgba(15,23,42,0.55)),
+                color-mix(in srgb, var(--regime-accent, #38bdf8) 6%, rgba(15,23,42,0.30)));
+            border: 1px solid color-mix(in srgb, var(--regime-accent, #38bdf8) 55%, rgba(125,211,252,0.25));
+            backdrop-filter: blur(18px) saturate(140%);
+            -webkit-backdrop-filter: blur(18px) saturate(140%);
+            box-shadow:
+                0 8px 28px rgba(2,6,23,0.45),
+                inset 0 0 0 1px rgba(255,255,255,0.04),
+                0 0 24px var(--regime-glow, rgba(56,189,248,0.30));
+            color: #e2e8f0;
+            transition: border-color 0.30s ease, box-shadow 0.30s ease, background 0.30s ease;
+            cursor: default;
+        }
+        .market-regime-banner .regime-emoji {
+            font-size: 1.8rem;
+            line-height: 1;
+            filter: drop-shadow(0 0 8px var(--regime-glow, transparent));
+        }
+        .market-regime-banner .regime-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .market-regime-banner .regime-label {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--regime-accent, #e2e8f0);
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            text-shadow: 0 0 12px var(--regime-glow, transparent);
+        }
+        .market-regime-banner .regime-rationale {
+            font-size: 0.74rem;
+            color: #cbd5e1;
+            line-height: 1.45;
+        }
+        .market-regime-banner .regime-components {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            font-size: 0.68rem;
+            color: #94a3b8;
+            font-variant-numeric: tabular-nums;
+        }
+        .market-regime-banner .regime-comp {
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(2,6,23,0.42);
+            border: 1px solid rgba(148,163,184,0.18);
+        }
+        .market-regime-banner .regime-comp .k { color: #64748b; }
+        .market-regime-banner .regime-comp .v.pos { color: #6ee7b7; }
+        .market-regime-banner .regime-comp .v.neg { color: #fca5a5; }
+        .market-regime-banner .regime-comp .v.flat { color: #cbd5e1; }
+        .market-regime-banner.loading .regime-label { color: #94a3b8; }
+
+        @media (max-width: 720px) {
+            .market-regime-banner .regime-components { display: none; }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function renderRegimeBannerHtml(): string {
+    return `
+        <section class="pro-insight-regime" aria-label="Market Regime Indicator">
+            <div id="market-regime-banner" class="market-regime-banner loading">
+                <span class="regime-emoji">⏳</span>
+                <div class="regime-text">
+                    <span class="regime-label">Detecting regime…</span>
+                    <span class="regime-rationale">Computing 30-day RoC across DGS10, DCOILWTICO, VIXCLS.</span>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function fmtRoc(v: number | null | undefined): { txt: string; cls: string } {
+    if (v == null || !Number.isFinite(v)) return { txt: 'n/a', cls: 'flat' };
+    const sign = v > 0 ? '+' : '';
+    const cls = v > 0.5 ? 'pos' : v < -0.5 ? 'neg' : 'flat';
+    return { txt: `${sign}${v.toFixed(2)}%`, cls };
+}
+
+function applyRegimeToBanner(banner: HTMLElement, regime: MacroRegime | null): void {
+    if (!regime) {
+        banner.classList.add('loading');
+        return;
+    }
+    banner.classList.remove('loading');
+    banner.style.setProperty('--regime-accent', regime.accent_color);
+    banner.style.setProperty('--regime-glow', regime.glow_color);
+    const c = regime.components || {} as MacroRegime['components'];
+    const rates = fmtRoc(c.rates_roc_pct);
+    const oil = fmtRoc(c.oil_roc_pct);
+    const vix = fmtRoc(c.vix_roc_pct);
+    banner.innerHTML = `
+        <span class="regime-emoji" aria-hidden="true">${regime.emoji}</span>
+        <div class="regime-text">
+            <span class="regime-label">${regime.label}</span>
+            <span class="regime-rationale" title="${regime.rationale.replace(/"/g, '&quot;')}">
+                ${regime.rationale}
+            </span>
+        </div>
+        <div class="regime-components" aria-label="Component rates of change">
+            <span class="regime-comp"><span class="k">Rates 30d</span> <span class="v ${rates.cls}">${rates.txt}</span></span>
+            <span class="regime-comp"><span class="k">Oil 30d</span> <span class="v ${oil.cls}">${oil.txt}</span></span>
+            <span class="regime-comp"><span class="k">VIX 30d</span> <span class="v ${vix.cls}">${vix.txt}</span></span>
+        </div>
+    `;
+}
+
+async function refreshRegimeBanner(container: HTMLElement): Promise<void> {
+    const banner = container.querySelector<HTMLElement>('#market-regime-banner');
+    if (!banner) return;
+    const regime = await fetchMacroRegime();
+    applyRegimeToBanner(banner, regime);
+}
 
 const MARKET_PULSE_REFRESH_MS = 60_000;
 
 let marketPulseSession = 0;
 let marketPulsePollTimer: ReturnType<typeof setInterval> | null = null;
-let marketPulseActiveRange: TrendRange = '24h';
-let marketPulseRepaint: ((range: TrendRange) => void) | null = null;
 
 /** Stop background refresh so other tabs are not overwritten. */
 export function disposeMarketPulseView(): void {
     marketPulseSession += 1;
-    marketPulseRepaint = null;
     if (marketPulsePollTimer !== null) {
         clearInterval(marketPulsePollTimer);
         marketPulsePollTimer = null;
     }
 }
 
-export type TrendRange = '24h' | '7d' | '30d';
-
-type TrendSeries = { id: string; label: string; color: string; points: number[] };
-
-function seededWave(seed: string, index: number): number {
-    let h = 0;
-    for (let i = 0; i < seed.length; i++) h = (h << 5) - h + seed.charCodeAt(i);
-    return Math.sin(h * 0.001 + index * 1.35) * 0.12;
-}
-
-function buildTrendSeries(riskSummary: Record<string, unknown> | undefined, range: TrendRange): TrendSeries[] {
-    if (!riskSummary) return [];
-    const pointCount = range === '24h' ? 24 : range === '7d' ? 7 : 30;
-    return Object.entries(riskSummary).map(([topic, raw]) => {
-        const stat = raw as Record<string, unknown>;
-        const def = getTopicDef(topic === 'null' ? null : topic);
-        const base = Math.min(1, Math.max(0.08, ((stat.intensity as number) || 5) / 10));
-        const delta = ((stat.intensity_delta as number) || 0) * 0.04;
-        const points = Array.from({ length: pointCount }, (_, i) => {
-            const t = i / Math.max(1, pointCount - 1);
-            const drift = delta * (t - 0.5);
-            return Math.min(1, Math.max(0.04, base + drift + seededWave(topic, i)));
-        });
-        return { id: topic, label: def.label, color: def.color, points };
-    });
-}
-
-/** Normalized domain pressure index scale (0.0–1.0). */
-const TREND_Y_MIN = 0;
-const TREND_Y_MAX = 1;
-const TREND_Y_TICKS = [0, 0.25, 0.5, 0.75, 1];
-
-function renderTrendChartSvg(series: TrendSeries[], range: TrendRange): string {
-    const width = 880;
-    const height = 220;
-    const padLeft = 44;
-    const padRight = 28;
-    const padY = 28;
-    const plotX = padLeft;
-    const innerW = width - padLeft - padRight;
-    const innerH = height - padY * 2;
-
-    if (!series.length) {
-        return `<div class="mp-trend-empty">Awaiting domain pressure telemetry...</div>`;
-    }
-
-    const toX = (i: number, len: number) => plotX + (i / Math.max(1, len - 1)) * innerW;
-    const toY = (v: number) => {
-        const clamped = Math.min(TREND_Y_MAX, Math.max(TREND_Y_MIN, v));
-        return padY + innerH - ((clamped - TREND_Y_MIN) / (TREND_Y_MAX - TREND_Y_MIN)) * innerH;
-    };
-
-    const yAxis = TREND_Y_TICKS.map((tick) => {
-        const y = toY(tick);
-        const label = tick.toFixed(1);
-        return `
-            <line x1="${padLeft - 5}" y1="${y.toFixed(1)}" x2="${padLeft}" y2="${y.toFixed(1)}" class="mp-trend-axis-tick"/>
-            <text x="${padLeft - 8}" y="${(y + 3.5).toFixed(1)}" text-anchor="end" class="mp-trend-y-label">${label}</text>
-            <line x1="${padLeft}" y1="${y.toFixed(1)}" x2="${width - padRight}" y2="${y.toFixed(1)}" class="mp-trend-grid-line"/>
-        `;
-    }).join('');
-
-    const paths = series
-        .map((s) => {
-            const coords = s.points.map((v, i) => `${toX(i, s.points.length).toFixed(1)},${toY(v).toFixed(1)}`);
-            const line = coords.join(' ');
-            const area = `${coords.join(' ')} L ${toX(s.points.length - 1, s.points.length).toFixed(1)},${(padY + innerH).toFixed(1)} L ${plotX},${(padY + innerH).toFixed(1)} Z`;
-            return `
-                <path class="mp-trend-area" d="M ${area}" fill="${s.color}" fill-opacity="0.12" stroke="none"/>
-                <path class="mp-trend-line" d="M ${line}" fill="none" stroke="${s.color}" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
-            `;
-        })
-        .join('');
-
-    const legend = series
-        .map(
-            (s) =>
-                `<span class="mp-trend-legend-item"><span class="mp-trend-legend-dot" style="background:${s.color}"></span>${s.label}</span>`,
-        )
-        .join('');
-
-    const rangeLabel = range === '24h' ? 'Last 24 hours' : range === '7d' ? 'Last 7 days' : 'Last 30 days';
-
-    return `
-        <div class="mp-trend-chart-wrap">
-            <svg class="mp-trend-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Historical risk trend ${rangeLabel}">
-                <defs>
-                    <linearGradient id="mp-trend-glow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="rgba(88,166,255,0.18)"/>
-                        <stop offset="100%" stop-color="rgba(88,166,255,0)"/>
-                    </linearGradient>
-                </defs>
-                <rect x="0" y="0" width="${width}" height="${height}" fill="url(#mp-trend-glow)" opacity="0.35"/>
-                <line x1="${padLeft}" y1="${padY}" x2="${padLeft}" y2="${padY + innerH}" class="mp-trend-y-axis"/>
-                ${yAxis}
-                ${paths}
-            </svg>
-            <div class="mp-trend-legend">${legend}</div>
-            <div class="mp-trend-axis-label">${rangeLabel} · Y-axis: normalized index (0.0–1.0)</div>
-        </div>`;
-}
-
-function renderTrendSection(series: TrendSeries[], range: TrendRange, activeRange: TrendRange): string {
-    const btn = (r: TrendRange, label: string) =>
-        `<button type="button" class="mp-trend-range-btn${activeRange === r ? ' mp-trend-range-btn--active' : ''}" data-range="${r}" aria-pressed="${activeRange === r}">${label}</button>`;
-
-    return renderProPanel(
-        'Historical Risk Trend',
-        `
-        <div class="mp-trend-toolbar">
-            <span class="mp-trend-toolbar-label">Window</span>
-            <div class="mp-trend-range-group" role="group" aria-label="Trend time window">
-                ${btn('24h', '24H')}
-                ${btn('7d', '7D')}
-                ${btn('30d', '30D')}
-            </div>
-        </div>
-        <div class="mp-trend-chart-host" data-active-range="${range}">
-            ${renderTrendChartSvg(series, range)}
-        </div>
-        `,
-        undefined,
-        '#58a6ff',
-        renderPanelGuide('Historical Risk Trend', HISTORICAL_RISK_TREND_GUIDE_HTML),
-    );
-}
 
 export async function renderMarketPulse(container: HTMLElement, user: UserMe, onNavigatePlans: () => void): Promise<void> {
     disposeMarketPulseView();
@@ -175,7 +173,9 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
         return;
     }
 
-    if (user.tier === 'free') {
+    // Dev Mode / Audit Build: bypass the locked-feature overlay so reviewers
+    // see the full Market Pulse hub regardless of subscription tier.
+    if (user.tier === 'free' && !DEV_MODE_AUDIT) {
         container.innerHTML = renderLockedFeature('Market Pulse', 'pro');
         container.querySelector('#locked-goto-plans')?.addEventListener('click', () => onNavigatePlans());
         return;
@@ -198,173 +198,128 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
     await loadInsights();
     if (sessionId !== marketPulseSession) return;
 
-    let activeRange: TrendRange = '24h';
+    let shellRendered = false;
 
-    const paint = (range: TrendRange) => {
+    const paint = () => {
         if (sessionId !== marketPulseSession) return;
         if (container.dataset.dashboardView !== 'market-pulse') return;
-        activeRange = range;
         const riskSummary = (data?.risk_summary || {}) as Record<string, unknown>;
-        const series = buildTrendSeries(riskSummary, range);
-        const riskHtml = buildRiskSummaryCardsHtml(riskSummary);
 
-        // ── Module A: Lead-Lag Network ─────────────────────────────────────────
-        const leadLagHtml = renderLeadLagNetwork(
-            data?.lead_lag_matrix ?? [],
-            riskSummary,
-        );
-
-        // ── Module B: Momentum & Acceleration Gauges ───────────────────────
-        const momentumHtml = renderMomentumGauges(riskSummary);
-
-        // ── Module C: Verified Source Evidence Stream ──────────────────────
-        const evidenceItems = data?.evidence_stream ?? [];
-        const evidenceHtml = renderEvidenceStream(evidenceItems);
-
-        container.innerHTML = `
-        <div class="cb-briefs-page market-pulse-hub">
+        if (!shellRendered) {
+            injectRegimeBannerStyles();
+            container.innerHTML = `
+        <div class="pro-hub-page market-pulse-hub">
             <div class="insights-dashboard pro-dashboard market-pulse-page">
-                <section class="market-pulse-trend pro-insight-section">
-                    ${renderTrendSection(series, range, range)}
-                </section>
-                <section class="pro-insight-pressures pro-insight-section" aria-labelledby="mp-pressures-heading">
+
+                ${renderRegimeBannerHtml()}
+
+                <!-- System Entropy Gauge (statistical mechanics) -->
+                <section class="pro-insight-entropy pro-insight-section" aria-label="Market Entropy Gauge">
                     ${renderProPanel(
-                        'Active Market Pressures',
-                        `<div class="dashboard-row bluf-row pro-bluf-row pro-bluf-row--mp-six" role="list">${riskHtml}</div>`,
+                        'Market Entropy Gauge',
+                        '<div id="market-entropy-container" class="w-full"></div>',
                         undefined,
-                        '#58a6ff',
-                        renderPanelGuide(
-                            'Active Market Pressures',
-                            ACTIVE_MARKET_PRESSURES_GUIDE_HTML,
-                            'above',
-                        ),
+                        '#22d3ee',
+                        renderPanelGuide('Market Entropy Gauge', '<p>Shannon entropy <code>S = -Σ pᵢ ln pᵢ</code> over the last 24h of alerts, combining topic dispersion (60%) and intensity dispersion (40%). Values above the engine threshold trigger a Breakout Warning state.</p>')
                     )}
                 </section>
 
-                <!-- Module A: Risk Contagion & Lead-Lag Tracker -->
+                <!-- Choke-Point Fluid-Dynamics Map -->
+                <section class="pro-insight-chokepoints pro-insight-section" aria-label="Fluid-Dynamics Choke-Point Analyzer">
+                    ${renderProPanel(
+                        'Fluid-Dynamics Choke-Point Analyzer',
+                        '<div id="choke-point-container" class="w-full"></div>',
+                        undefined,
+                        '#f59e0b',
+                        renderPanelGuide('Fluid-Dynamics Choke-Point Analyzer', '<p>Models global logistics as a fluid network. Each maritime node&#39;s halo encodes the restriction factor <code>sigmoid(OSINT_viscosity / physical_Q − baseline)</code>; click to inspect downstream sector drag.</p>')
+                    )}
+                </section>
+
+                <!-- Module A: Risk Contagion & Lead-Lag Tracker (Radial Grid) -->
                 <section class="pro-insight-leadlag pro-insight-section" aria-label="Risk Contagion Lead-Lag Tracker">
                     ${renderProPanel(
                         'Risk Contagion &amp; Lead-Lag Tracker',
-                        leadLagHtml,
+                        `<div id="radial-network-container"></div>`,
                         undefined,
                         '#58a6ff',
-                        renderPanelGuide('Risk Contagion & Lead-Lag Tracker', LEAD_LAG_GUIDE_HTML),
+                        renderPanelGuide('Risk Contagion &amp; Lead-Lag Tracker', LEAD_LAG_GUIDE_HTML),
                     )}
                 </section>
 
-                <!-- Module B: Momentum & Acceleration Gauge -->
-                <section class="pro-insight-momentum pro-insight-section" aria-label="Momentum and Acceleration Gauge">
+                <!-- Macro Transmission Channel -->
+                <section class="pro-insight-transmission pro-insight-section" aria-label="Macro Transmission Channel">
                     ${renderProPanel(
-                        'Momentum &amp; Acceleration Gauge',
-                        momentumHtml,
+                        'Macro Transmission Channel',
+                        '<div id="macro-transmission-chart" class="w-full min-h-[350px]"></div>',
                         undefined,
                         '#58a6ff',
-                        renderPanelGuide('Momentum & Acceleration Gauge', MOMENTUM_GAUGE_GUIDE_HTML),
+                        renderPanelGuide('Macro Transmission Channel', '<p>Visualizes the quantitative lag and correlation between any tradeable macro indicator (WTI, US 10Y, VIX, Copper, USD) and any strategic sector. Click a heatmap cell to load it here instantly.</p>')
                     )}
                 </section>
 
-                <!-- Module C: Verified Source Evidence Stream -->
-                <section class="pro-insight-evidence pro-insight-section" aria-label="Verified Source Evidence Stream">
+                <!-- Macro Influence Heatmap (cross-sectional screener) -->
+                <section class="pro-insight-matrix pro-insight-section" aria-label="Macro Influence Heatmap">
                     ${renderProPanel(
-                        'Verified Source Evidence Stream',
-                        evidenceHtml,
+                        'Macro Influence Heatmap',
+                        '<div id="macro-matrix-container" class="w-full"></div>',
                         undefined,
-                        '#58a6ff',
-                        renderPanelGuide('Verified Source Evidence Stream', EVIDENCE_STREAM_GUIDE_HTML),
+                        '#22d3ee',
+                        renderPanelGuide('Macro Influence Heatmap', '<p>Cross-sectional correlation of every tradeable macro indicator against every strategic sector. Color encodes correlation strength (deep red = strong inverse, cyan/emerald = strong positive). Click any cell to load that pair into the Macro Transmission chart.</p>')
                     )}
                 </section>
+
+                <!-- Hidden Accumulation Screener (Price-OSINT divergence + CFTC overlay) -->
+                <section class="pro-insight-accumulation pro-insight-section" aria-label="Hidden Accumulation Screener">
+                    ${renderProPanel(
+                        'Hidden Accumulation Screener',
+                        '<div id="hidden-accumulation-container" class="w-full"></div>',
+                        undefined,
+                        '#10b981',
+                        renderPanelGuide('Hidden Accumulation Screener', '<p>Detects 24h clusters where OSINT intensity surged ≥1.5x but the macro asset price stayed flat or rose. CFTC commercial net positioning overlays each row to confirm or refute institutional accumulation. Strict guardrails: <code>cluster_window=24h, reignite_factor=1.5x</code>.</p>')
+                    )}
+                </section>
+
+                <!-- Entity Exposure Heatmap (placeholder for upcoming feature) -->
+                <section class="pro-insight-heatmap pro-insight-section" aria-label="Entity Exposure Heatmap" id="entity-heatmap-section">
+                </section>
+
             </div>
         </div>`;
+            shellRendered = true;
 
-        // Store live evidenceItems on container for click delegate access
-        (container as any).__mpEvidenceItems = evidenceItems;
+            // Render every embedded analytical surface once. Each module
+            // owns its own selector / drill-down state and survives the
+            // 60s Market Pulse refresh.
+            import('./macro_chart').then(m => m.renderMacroTransmissionChart('macro-transmission-chart'));
+            import('./macro_matrix').then(m => m.renderMacroInfluenceMatrix('macro-matrix-container'));
+            import('./market_entropy_gauge').then(m => m.renderMarketEntropyGauge('market-entropy-container'));
+            import('./choke_point_map').then(m => m.renderChokePointMap('choke-point-container'));
+            import('./hidden_accumulation').then(m => m.renderHiddenAccumulation('hidden-accumulation-container'));
+            void refreshRegimeBanner(container);
+        }
+
+        // Store live riskSummary for poll cycle
+        (container as any).__mpRiskSummary = riskSummary;
+
+        // Render Radial Network Grid
+        const radialContainer = container.querySelector('#radial-network-container') as HTMLElement;
+        if (radialContainer) {
+            new RadialNetworkEngine(radialContainer, data?.lead_lag_matrix || [], riskSummary as any);
+        }
     };
 
-    marketPulseActiveRange = activeRange;
-    marketPulseRepaint = paint;
-
-    if (container.dataset.mpTrendClickBound !== '1') {
-        container.dataset.mpTrendClickBound = '1';
-
-        // Range-selector clicks (existing)
-        container.addEventListener('click', (e) => {
-            if (container.dataset.dashboardView !== 'market-pulse') return;
-
-            // ── Guide ℹ️ toggle ─────────────────────────────────────────
-            const guideBtn = (e.target as HTMLElement).closest('.intel-section-guide') as HTMLElement | null;
-            if (guideBtn && !guideBtn.classList.contains('intel-section-guide-close')) {
-                e.stopPropagation();
-                const wrap = guideBtn.closest('.intel-section-guide-wrap');
-                const pop = wrap?.querySelector('.intel-section-guide-popover');
-                if (pop) {
-                    const wasOpen = pop.classList.contains('is-open');
-                    container.querySelectorAll('.intel-section-guide-popover.is-open').forEach((el) => {
-                        el.classList.remove('is-open');
-                        el.closest('.intel-section-guide-wrap')?.querySelector('.intel-section-guide')?.setAttribute('aria-expanded', 'false');
-                    });
-                    if (!wasOpen) {
-                        pop.classList.add('is-open');
-                        guideBtn.setAttribute('aria-expanded', 'true');
-                    }
-                }
-                return;
-            }
-
-            // ── Guide × close ───────────────────────────────────────────
-            const closeBtn = (e.target as HTMLElement).closest('.intel-section-guide-close') as HTMLElement | null;
-            if (closeBtn) {
-                e.stopPropagation();
-                const pop = closeBtn.closest('.intel-section-guide-popover');
-                if (pop) {
-                    pop.classList.remove('is-open');
-                    pop.closest('.intel-section-guide-wrap')?.querySelector('.intel-section-guide')?.setAttribute('aria-expanded', 'false');
-                }
-                return;
-            }
-
-            const btn = (e.target as HTMLElement).closest('.mp-trend-range-btn') as HTMLElement | null;
-            if (btn) {
-                const next = btn.dataset.range as TrendRange;
-                if (next && marketPulseRepaint && next !== marketPulseActiveRange) {
-                    marketPulseActiveRange = next;
-                    marketPulseRepaint(next);
-                }
-                return;
-            }
-
-            // Module C: Evidence card click → Source Evidence Modal
-            const card = (e.target as HTMLElement).closest('.evidence-card') as HTMLElement | null;
-            if (card) {
-                const items: ProInsights['evidence_stream'] =
-                    (container as any).__mpEvidenceItems ?? [];
-                const idx = parseInt(card.dataset.evIndex ?? '-1', 10);
-                // We duplicate cards for the loop — clamp idx to real item count
-                const realIdx = items && items.length > 0 ? idx % items.length : -1;
-                const item = realIdx >= 0 ? items![realIdx] : null;
-                if (item) {
-                    showEvidenceModal(
-                        item.title,
-                        item.evidence_list ?? (item.url ? [{ title: item.title, url: item.url, source: item.source_name }] : []),
-                    );
-                }
-            }
-        });
-
-        // Keyboard accessibility for evidence cards
-        container.addEventListener('keydown', (e) => {
-            if (container.dataset.dashboardView !== 'market-pulse') return;
-            if ((e as KeyboardEvent).key !== 'Enter' && (e as KeyboardEvent).key !== ' ') return;
-            const card = (e.target as HTMLElement).closest('.evidence-card') as HTMLElement | null;
-            if (card) card.click();
-        });
-    }
-
-    paint(activeRange);
+    paint();
 
     marketPulsePollTimer = setInterval(async () => {
         if (sessionId !== marketPulseSession) return;
         if (container.dataset.dashboardView !== 'market-pulse') return;
         await loadInsights();
-        paint(activeRange);
+        paint();
+        void import('./macro_chart').then(m => (m as any).refreshMacroTransmissionChart?.());
+        void import('./macro_matrix').then(m => (m as any).refreshMacroInfluenceMatrix?.());
+        void import('./market_entropy_gauge').then(m => (m as any).refreshMarketEntropyGauge?.());
+        void import('./choke_point_map').then(m => (m as any).refreshChokePointMap?.());
+        void import('./hidden_accumulation').then(m => (m as any).refreshHiddenAccumulation?.());
+        void refreshRegimeBanner(container);
     }, MARKET_PULSE_REFRESH_MS);
 }

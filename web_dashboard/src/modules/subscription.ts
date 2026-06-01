@@ -39,7 +39,7 @@ const PLAN_NAME_MAP: Record<string, string> = {
 
 /** "Best For" labels for conversion guidance */
 const TIER_BEST_FOR: Record<string, string> = {
-    free: 'Public Monitoring & Context Briefs',
+    free: 'Public Monitoring & Alert Stream',
     pro: 'Strategic Market Intelligence',
     experts: 'Strategic Foresight & Forecasting',
     enterprise: 'Organization-wide Strategy',
@@ -76,7 +76,6 @@ const PLANS: PlanConfig[] = [
         contactUrl: '',
         features: [
             'Real-time Alert Stream headlines',
-            'Context Briefs (Free-tier limited)',
             'Base news evidence',
             'Community support',
         ],
@@ -495,9 +494,9 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
     }).join('');
 
     let upsellMessage: string | null = null;
-    const upsellRaw = sessionStorage.getItem('plansContextBriefUpsell');
+    const upsellRaw = sessionStorage.getItem('plansUpsellBanner');
     if (upsellRaw) {
-        sessionStorage.removeItem('plansContextBriefUpsell');
+        sessionStorage.removeItem('plansUpsellBanner');
         try {
             const j = JSON.parse(upsellRaw) as { message?: string };
             if (typeof j.message === 'string' && j.message.trim()) {
@@ -509,7 +508,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
     }
     const upsellBannerHtml = upsellMessage
         ? `
-        <div class="sub-upsell-banner" id="plans-context-brief-upsell" role="status">
+        <div class="sub-upsell-banner" id="plans-upsell-banner" role="status">
             <p class="sub-upsell-banner__text"></p>
             <button type="button" class="sub-upsell-banner__dismiss" aria-label="Dismiss notice">×</button>
         </div>`
@@ -565,7 +564,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         const p = container.querySelector('.sub-upsell-banner__text');
         if (p) p.textContent = upsellMessage;
         container.querySelector('.sub-upsell-banner__dismiss')?.addEventListener('click', () => {
-            document.getElementById('plans-context-brief-upsell')?.remove();
+            document.getElementById('plans-upsell-banner')?.remove();
         });
     }
 

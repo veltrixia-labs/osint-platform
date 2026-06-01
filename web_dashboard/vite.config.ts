@@ -18,6 +18,18 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    optimizeDeps: {
+      include: [
+        'earcut',
+        'maplibre-gl',
+        '@deck.gl/core',
+        '@deck.gl/layers',
+        '@deck.gl/mapbox',
+        '@luma.gl/core',
+        '@luma.gl/webgl',
+      ],
+      exclude: [],
+    },
     build: {
       rollupOptions: {
         input: {

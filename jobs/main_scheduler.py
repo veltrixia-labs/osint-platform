@@ -15,7 +15,10 @@ from jobs.report_orchestrator import run_all_reports
 from jobs.trigger_detector_job import run_trigger_check
 from jobs.trend_analyze_job import run_trend_analysis
 from jobs.alert_manager import run_alert_manager
-from jobs.monthly_trend_worker import run_monthly_trend_worker
+# NOTE: jobs.monthly_trend_worker is imported LAZILY inside monthly_trend_wrapper.
+# Its builder currently depends on the in-progress spatial/geo subsystem
+# (analysis.spatial_physics_engine, jobs.omni_spatial_worker), which is not yet
+# deployed. A top-level import here would crash the entire scheduler at startup.
 from jobs.threads_publisher_job import run_threads_publisher
 from jobs.learning_loop import run_learning_job
 from jobs.cleanup_job import (
@@ -133,6 +136,17 @@ async def monthly_reports_wrapper():
             await run_all_reports(session, "monthly", 30, auto_post_threads=True)
 
 async def monthly_trend_wrapper():
+    # Lazy + guarded import: the builder depends on the not-yet-deployed spatial
+    # subsystem. If unavailable, degrade to a logged no-op so the rest of the
+    # scheduler keeps running. Re-enable simply by shipping the spatial modules.
+    try:
+        from jobs.monthly_trend_worker import run_monthly_trend_worker
+    except Exception as exc:
+        logger.warning(
+            "monthly_trend: worker/spatial deps unavailable (%s); skipping snapshot refresh.",
+            exc,
+        )
+        return
     now = datetime.now(timezone.utc)
     async with AsyncSessionLocal() as session:
         # On the 1st, lock in the just-completed previous month (idempotent).

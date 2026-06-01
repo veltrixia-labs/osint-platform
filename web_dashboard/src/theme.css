@@ -130,10 +130,6 @@ kbd,
 .nav-sync-hud,
 .sync-label,
 .sync-time,
-.cb-timestamp,
-.cb-brief-ts,
-.cb-brief-kind,
-.cb-card-stats-compact,
 .health-val,
 .bluf-value,
 .metric-value,
@@ -148,7 +144,6 @@ kbd,
 .severity-badge,
 .spike-badge,
 .lp-source-ts,
-.cb-brief-stat-chip,
 [data-vx-mono='true'] {
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;

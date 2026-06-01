@@ -103,9 +103,7 @@ body {
 /* ── Inner-glow cards (no drop shadow) ── */
 .alert-card,
 .alert-card-compact,
-.cb-card,
 .pro-brief-card,
-.pro-brief-card.cb-brief-card,
 .bluf-stat-card,
 .health-stat,
 .plan-card,
@@ -117,9 +115,7 @@ body {
 
 .alert-card:hover,
 .alert-card-compact:hover,
-.cb-card:hover,
 .pro-brief-card:hover,
-.pro-brief-card.cb-brief-card:hover,
 .bluf-stat-card:hover {
   box-shadow: var(--inner-glow-hover), var(--glow-hover) !important;
   border-color: var(--border-active) !important;
@@ -166,7 +162,6 @@ body {
   border-left-width: 3px;
 }
 
-.cb-briefs-grid--context,
 .pro-briefs-grid,
 .dashboard-grid {
   gap: 1px;
@@ -177,15 +172,10 @@ body {
   padding: 0;
 }
 
-.cb-briefs-grid--context > *,
 .pro-briefs-grid > *,
 .dashboard-grid > * {
   border-radius: 0;
   margin-bottom: 0;
-}
-
-.cb-briefs-page {
-  padding: 0;
 }
 
 .pulse-bar {
@@ -388,7 +378,45 @@ body {
   .sync-dot--offline,
   .pulse-dot::after,
   .vx-scan-loading::after,
-  .alert-headline-skeleton::after {
+  .alert-headline-skeleton::after,
+  .alert-threat-level--critical {
     animation: none;
   }
+}
+
+/* Phase 8.2 — Cryo-Glass alert stream (overrides inner-glow / bento above) */
+.alert-card-compact {
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+.alert-card-compact:hover {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.09),
+    0 10px 36px rgba(0, 0, 0, 0.48) !important;
+  transform: none;
+}
+
+.alert-card-compact.severity-critical {
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+#alerts-container.main-feed #alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+#alerts-container.main-feed .alert-card-compact {
+  margin-bottom: 0;
+  border-radius: 8px !important;
+  border-left-width: 4px;
 }
