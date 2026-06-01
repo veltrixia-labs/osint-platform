@@ -113,6 +113,11 @@ async def _get_alerts_impl(
         stmt = stmt.where(AlertLog.severity == severity)
     if suppressed is not None:
         stmt = stmt.where(AlertLog.suppressed == suppressed)
+    else:
+        # Active feed EXCLUDES suppressed/merged rows by default (clustered
+        # duplicates are set suppressed=True). Without this the stream re-shows
+        # every collapsed duplicate — the dedup is invisible to the UI.
+        stmt = stmt.where(AlertLog.suppressed == False)  # noqa: E712
     if topic:
         from processor.topic_registry import (
             INTERNAL_TO_STRATEGIC,
@@ -257,7 +262,7 @@ async def _get_live_alerts_impl(
     current_user: Optional[AnalystProfile],
     db: AsyncSession,
 ) -> list:
-    stmt = select(AlertLog).where(AlertLog.is_high_fidelity == True).order_by(AlertLog.triggered_at.desc()).limit(limit)
+    stmt = select(AlertLog).where(AlertLog.is_high_fidelity == True, AlertLog.suppressed == False).order_by(AlertLog.triggered_at.desc()).limit(limit)  # noqa: E712
     result = await db.execute(stmt)
     alerts = result.scalars().all()
 
