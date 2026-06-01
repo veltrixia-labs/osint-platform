@@ -81,15 +81,17 @@ export async function resolveAuthSession(options: ResolveAuthOptions): Promise<U
             return resolvedUser;
         }
         if (result.status === 'unauthorized') {
-            redirectToLogin('Your session has expired. Please sign in again.');
-            throw new AuthRedirectError();
+            // Public-first architecture: an expired/invalid session is simply a
+            // guest. Clear the stale token and fall back to the open free view —
+            // never bounce to a login wall or freeze the boot on 401/403.
+            return downgradeToFree(applyDevOverride);
         }
         if (attempt < maxAttempts - 1) {
             await sleep(400 * (attempt + 1));
         }
     }
 
-    // Transient errors: one more pass before treating as invalid session
+    // Transient errors: one more pass before treating the session as unusable.
     const final = await fetchMeDetailed();
     if (final.status === 'ok' && final.user) {
         sessionStatus = 'ready';
@@ -97,15 +99,27 @@ export async function resolveAuthSession(options: ResolveAuthOptions): Promise<U
         return resolvedUser;
     }
     if (final.status === 'unauthorized') {
-        redirectToLogin('Your session has expired. Please sign in again.');
-        throw new AuthRedirectError();
+        return downgradeToFree(applyDevOverride);
     }
 
-    if (hasToken) {
-        redirectToLogin('Could not verify your session. Please sign in again.');
-        throw new AuthRedirectError();
-    }
+    // API unreachable after retries → still render the public view rather than
+    // freezing. Token is preserved so a later reload can re-validate.
+    sessionStatus = 'ready';
+    resolvedUser = applyDevOverride(null);
+    return resolvedUser;
+}
 
+/**
+ * Drop to the open free/guest experience: clear the stale token, scrub any
+ * problematic auth/search query params from the URL, and resolve the anonymous
+ * user. Used whenever a high-tier/authenticated probe returns 401/403.
+ */
+function downgradeToFree(applyDevOverride: (user: UserMe | null) => UserMe): UserMe {
+    clearStaleAuthTokens();
+    try {
+        const url = new URL(window.location.href);
+        if (url.search) history.replaceState(null, '', url.pathname + url.hash);
+    } catch { /* noop */ }
     sessionStatus = 'ready';
     resolvedUser = applyDevOverride(null);
     return resolvedUser;

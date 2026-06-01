@@ -12,6 +12,13 @@ from urllib.parse import urlparse
 from processor.location_resolver import LocationResolver
 from processor.lightweight_topic import infer_topic_from_text
 from processor.topic_registry import CANONICAL_TOPICS, normalize_canonical_topic
+from analysis.intensity_pressure import (
+    decayed_domain_baseline,
+    percentage_from_ratio,
+    severity_from_percentage,
+)
+from analysis.pro_domain_config import infer_domain_from_topic
+from processor.headline_composer import compose_headline, is_generic_label
 
 logging.basicConfig(level=logging.INFO)
 
@@ -26,9 +33,30 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 ALERT_ENABLED = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
 
-# Duplicate suppression: skip same headline within window unless intensity reignites.
-ALERT_DEDUP_WINDOW_HOURS = int(os.getenv("ALERT_DEDUP_WINDOW_HOURS", "24"))
-REIGNITE_INTENSITY_FACTOR = float(os.getenv("REIGNITE_INTENSITY_FACTOR", "1.5"))
+# Duplicate suppression: skip same headline within window unless intensity
+# reignites. The env vars allow operators to TIGHTEN these guardrails (longer
+# window, higher reignite factor) but never loosen them — the floors below are
+# the institutional-grade defaults required by Pro report consumers.
+_PRO_MIN_DEDUP_WINDOW_HOURS = 24      # cluster window floor
+_PRO_MIN_REIGNITE_FACTOR    = 1.5     # 1.5x prior intensity to re-trigger
+
+_raw_dedup_window = int(os.getenv("ALERT_DEDUP_WINDOW_HOURS", str(_PRO_MIN_DEDUP_WINDOW_HOURS)))
+_raw_reignite_factor = float(os.getenv("REIGNITE_INTENSITY_FACTOR", str(_PRO_MIN_REIGNITE_FACTOR)))
+
+ALERT_DEDUP_WINDOW_HOURS = max(_raw_dedup_window, _PRO_MIN_DEDUP_WINDOW_HOURS)
+REIGNITE_INTENSITY_FACTOR = max(_raw_reignite_factor, _PRO_MIN_REIGNITE_FACTOR)
+
+if _raw_dedup_window < _PRO_MIN_DEDUP_WINDOW_HOURS:
+    logging.getLogger(__name__).warning(
+        "ALERT_DEDUP_WINDOW_HOURS=%s was below the Pro-grade floor (%sh); clamped.",
+        _raw_dedup_window, _PRO_MIN_DEDUP_WINDOW_HOURS,
+    )
+if _raw_reignite_factor < _PRO_MIN_REIGNITE_FACTOR:
+    logging.getLogger(__name__).warning(
+        "REIGNITE_INTENSITY_FACTOR=%s was below the Pro-grade floor (%.2fx); clamped.",
+        _raw_reignite_factor, _PRO_MIN_REIGNITE_FACTOR,
+    )
+
 RECENT_ALERTS_FETCH_LIMIT = int(os.getenv("ALERT_DEDUP_FETCH_LIMIT", "400"))
 
 ALLOWED_TREND_BASE_TYPES = frozenset({
@@ -77,18 +105,35 @@ def _looks_like_source_label(label: str) -> bool:
 
 
 def _resolve_display_label(sig: TrendSignal, evidence_list: List[Dict[str, str]]) -> str:
-    """Prefer news headlines over bare source/entity slugs for Alert Stream titles."""
+    """
+    High-context Alert Stream headline. A genuinely rich, specific label passes
+    through untouched; flat generic cluster labels ("Iran oil attack") and source
+    slugs are upgraded by the headline composer, which blends mechanism +
+    micro-geography + strategic trajectory (with a rich-source-headline fallback).
+    """
     label = (sig.target_label or "").strip()
-    if label and not _looks_like_source_label(label):
+    if label and not _looks_like_source_label(label) and not is_generic_label(label):
         return label
-    for ev in evidence_list:
-        title = (ev.get("title") or "").strip()
-        if title and not _looks_like_source_label(title):
-            return title
-    desc = (sig.description or "").strip()
-    if desc and len(desc) >= 12:
-        return desc[:240]
-    return label or "Untitled signal"
+    domain = infer_domain_from_topic(sig.topic or "", text=label)
+    composed = compose_headline(
+        target_label=label,
+        description=(sig.description or ""),
+        evidence_list=evidence_list or [],
+        domain=domain,
+    )
+    return composed or label or "Untitled signal"
+
+
+def _distinctify_title(title: str, evidence_list: List[Dict[str, str]]) -> str:
+    """Append a source-driven micro-distinctifier so a re-fired (reignited) alert
+    never carries a byte-identical headline to its predecessor on the timeline."""
+    dom = ""
+    for ev in (evidence_list or []):
+        d = (ev.get("domain") or "").strip()
+        if d:
+            dom = d.replace("www.", "")
+            break
+    return f"{title} (via {dom})" if dom else f"{title} (re-escalation)"
 
 
 def _normalize_alert_title(raw: str | None) -> str:
@@ -204,10 +249,11 @@ class AlertManager:
                 continue
 
             spike_delta = await cls._get_spike_delta(db, sig)
-            
-            # 2. Determine Severity (Priority: Critical > Elevated > Watch)
-            severity = cls._determine_severity(intensity, spike_delta, domain_count)
-            if not severity:
+
+            # 2. Creation floor (unchanged): keep alert volume stable — only
+            #    signals that clear the platform minimums get logged at all.
+            legacy_severity = cls._determine_severity(intensity, spike_delta, domain_count)
+            if not legacy_severity:
                 logger.info(
                     "Alert suppressed: no severity (intensity=%.2f, spike=%.2f, domains=%s) "
                     "target=%r topic=%r",
@@ -219,6 +265,14 @@ class AlertManager:
                 )
                 continue
 
+            # 2b. Calibrated label: distributed ratio-% vs the alert's OWN strategic
+            #     domain baseline → 3-tier gate (1.5x=50% ELEVATED, >=80% CRITICAL).
+            #     Falls back to the legacy tier on cold-start (no per-domain history).
+            now_utc = datetime.now(timezone.utc)
+            alert_domain = infer_domain_from_topic(topic, text=display_label or sig.target_label or "")
+            intensity_pct = await cls._domain_intensity_pct(db, alert_domain, intensity, now_utc)
+            severity = severity_from_percentage(intensity_pct) if intensity_pct is not None else legacy_severity
+
             # 3. 24h dedupe by headline (target_label / display_title); allow reignite if intensity ≥ factor × prior.
             suppressed, last_dup_intensity, reignited = await cls._check_recent_duplicate(
                 db, display_label, sig.target_label, intensity
@@ -227,6 +281,9 @@ class AlertManager:
                 continue
             if reignited and last_dup_intensity > 0:
                 display_trigger_type = f"{display_trigger_type} (🚨 INTENSITY SPIKE)"
+                # Re-fired within the dedupe window → guarantee a distinct headline
+                # so the timeline stays scannable (no byte-identical neighbours).
+                display_label = _distinctify_title(display_label, evidence_list)
                 logger.info(
                     "Duplicate window bypass (reignite): %.2f -> %.2f (prior=%.2f, factor=%.2f)",
                     last_dup_intensity,
@@ -256,7 +313,7 @@ class AlertManager:
             is_system_wide = len(targets) == 0
             status = "confirmed"
             
-            # Geotagging (Heuristic First) + location entity for Context Briefs enrichment
+            # Geotagging (Heuristic First) + location entity enrichment
             loc_text = f"{sig.target_label} {sig.description or ''}"
             loc_detail = resolver.resolve_heuristically_detailed(loc_text.strip())
             if loc_detail:
@@ -275,6 +332,7 @@ class AlertManager:
                     "display_title": display_label,
                     "internal_topic": internal_topic,
                     "raw_intensity": round(float(intensity), 3),
+                    "intensity_pct": round(float(intensity_pct), 1) if intensity_pct is not None else None,
             }
             if loc_detail:
                 meta_base["location_entity_id"] = loc_detail.entity_id
@@ -289,7 +347,6 @@ class AlertManager:
             try:
                 from sqlalchemy.orm.attributes import flag_modified
                 from processor.impact_discovery import ImpactDiscoveryEngine
-                from jobs.free_alert_feed_generator import persist_free_alert_feed_item
 
                 alert_log = AlertLog(
                     target_label=display_label,
@@ -317,24 +374,6 @@ class AlertManager:
                     timezone.utc
                 ).isoformat()
                 flag_modified(alert_log, "metadata_json")
-
-                try:
-                    await persist_free_alert_feed_item(db, alert_log, commit=False)
-                except Exception as brief_err:
-                    logger.exception(
-                        "Free Alert Feed persist failed for alert %s (alert row will still commit): %s",
-                        alert_log.id,
-                        brief_err,
-                    )
-                    await db.rollback()
-                    db.add(alert_log)
-                    await db.flush()
-                    alert_log.metadata_json = dict(meta_base)
-                    alert_log.metadata_json["backbone_discovery_status"] = "processing"
-                    alert_log.metadata_json["backbone_discovery_ts"] = datetime.now(
-                        timezone.utc
-                    ).isoformat()
-                    flag_modified(alert_log, "metadata_json")
 
                 await db.commit()
                 try:
@@ -396,6 +435,33 @@ class AlertManager:
             return "watch"
             
         return None
+
+    @classmethod
+    async def _domain_intensity_pct(cls, db, domain: str, raw_current: float, now: datetime) -> Optional[float]:
+        """
+        Distributed intensity % for an incoming alert, measured against its OWN
+        strategic domain's decayed baseline (the same per-domain model Trend Flow
+        uses). Returns None on cold-start (no prior same-domain activity) so the
+        caller can fall back to the legacy tier.
+        """
+        window = now - timedelta(hours=48)
+        rows = (await db.execute(
+            select(AlertLog).where(
+                AlertLog.triggered_at >= window,
+                AlertLog.suppressed.is_(False),
+            )
+        )).scalars().all()
+        priors = [
+            r for r in rows
+            if infer_domain_from_topic(r.topic or "", r.target_label or "") == domain
+        ]
+        baseline = decayed_domain_baseline(priors, now=now)
+        # Data-Maturity Guardrail: cold-start (no reliable domain history) stays
+        # UNCOMPUTED (None) → the row persists for baseline-building but is held
+        # out of the live feed until it has a mathematically valid ratio.
+        if baseline <= 0:
+            return None
+        return percentage_from_ratio(raw_current / baseline)
 
     @classmethod
     async def _get_spike_delta(cls, db, sig: TrendSignal) -> float:
@@ -633,14 +699,6 @@ async def run_alert_manager(db):
         logger.info("Alert manager finished")
     else:
         logger.info("No TrendSignals found. Nothing to alert.")
-
-    try:
-        from jobs.free_alert_feed_generator import backfill_missing_free_alerts
-        backfill_limit = int(os.getenv("FREE_ALERT_BACKFILL_LIMIT", "30"))
-        await backfill_missing_free_alerts(db, limit=backfill_limit)
-    except Exception as e:
-        logger.exception("free_alert backfill after alert_manager failed: %s", e)
-        await db.rollback()
 
 if __name__ == "__main__":
     from db.database import AsyncSessionLocal

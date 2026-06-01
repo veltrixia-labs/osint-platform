@@ -51,33 +51,13 @@ sources:
     language: en
     enabled: true
 
-  - source_id: mining_feed
-    source_name: Mining.com
+  - source_id: oilgasjournal_articles
+    source_name: Oil & Gas Journal
     source_group: energy_resources
     source_type: rss
-    rss_url: "https://www.mining.com/feed/"
+    rss_url: "https://www.ogj.com/rss/articles"
     default_topic_candidates: ["energy_resource_risk"]
-    reliability_weight: 0.80
-    language: en
-    enabled: true
-
-  - source_id: rigzone_news
-    source_name: Rigzone
-    source_group: energy_resources
-    source_type: rss
-    rss_url: "https://www.rigzone.com/news/rss/"
-    default_topic_candidates: ["energy_resource_risk"]
-    reliability_weight: 0.78
-    language: en
-    enabled: true
-
-  - source_id: lngprime_feed
-    source_name: LNG Prime
-    source_group: energy_resources
-    source_type: rss
-    rss_url: "https://lngprime.com/feed/"
-    default_topic_candidates: ["energy_resource_risk"]
-    reliability_weight: 0.78
+    reliability_weight: 0.82
     language: en
     enabled: true
 
@@ -89,16 +69,6 @@ sources:
     rss_url: "https://feeds.marketwatch.com/marketwatch/topstories/"
     default_topic_candidates: ["global_market_intelligence", "ai_semiconductor_intelligence"]
     reliability_weight: 0.85
-    language: en
-    enabled: true
-
-  - source_id: yahoo_finance_news
-    source_name: Yahoo Finance News
-    source_group: market_macro
-    source_type: rss
-    rss_url: "https://finance.yahoo.com/news/rssindex"
-    default_topic_candidates: ["global_market_intelligence", "crypto_geopolitics"]
-    reliability_weight: 0.75
     language: en
     enabled: true
 
@@ -140,6 +110,26 @@ sources:
     rss_url: "https://cryptoslate.com/feed/"
     default_topic_candidates: ["crypto_geopolitics"]
     reliability_weight: 0.72
+    language: en
+    enabled: true
+
+  - source_id: theblock_rss
+    source_name: The Block
+    source_group: crypto
+    source_type: rss
+    rss_url: "https://www.theblock.co/rss.xml"
+    default_topic_candidates: ["crypto_geopolitics"]
+    reliability_weight: 0.84
+    language: en
+    enabled: true
+
+  - source_id: decrypt_feed
+    source_name: Decrypt
+    source_group: crypto
+    source_type: rss
+    rss_url: "https://decrypt.co/feed"
+    default_topic_candidates: ["crypto_geopolitics"]
+    reliability_weight: 0.78
     language: en
     enabled: true
 
@@ -194,6 +184,26 @@ sources:
     language: en
     enabled: true
 
+  - source_id: venturebeat_ai_feed
+    source_name: VentureBeat AI
+    source_group: ai_semiconductor
+    source_type: rss
+    rss_url: "https://venturebeat.com/category/ai/feed/"
+    default_topic_candidates: ["ai_semiconductor_intelligence"]
+    reliability_weight: 0.76
+    language: en
+    enabled: true
+
+  - source_id: tomshardware_feed
+    source_name: Tom's Hardware
+    source_group: ai_semiconductor
+    source_type: rss
+    rss_url: "https://www.tomshardware.com/feeds/all"
+    default_topic_candidates: ["ai_semiconductor_intelligence"]
+    reliability_weight: 0.76
+    language: en
+    enabled: true
+
   # F. Defense
   - source_id: defensenews_rss
     source_name: Defense News
@@ -205,23 +215,23 @@ sources:
     language: en
     enabled: true
 
-  - source_id: breakingdefense_feed
-    source_name: Breaking Defense
+  - source_id: defenseone_feed
+    source_name: Defense One
     source_group: defense
     source_type: rss
-    rss_url: "https://breakingdefense.com/feed/"
+    rss_url: "https://www.defenseone.com/rss/all/"
     default_topic_candidates: ["defense_technology", "ai_semiconductor_intelligence"]
-    reliability_weight: 0.82
+    reliability_weight: 0.83
     language: en
     enabled: true
 
-  - source_id: warontherocks_feed
-    source_name: War on the Rocks
+  - source_id: usni_news_feed
+    source_name: USNI News
     source_group: defense
     source_type: rss
-    rss_url: "https://warontherocks.com/feed/"
+    rss_url: "https://news.usni.org/feed"
     default_topic_candidates: ["defense_technology", "supply_chain_intelligence"]
-    reliability_weight: 0.78
+    reliability_weight: 0.83
     language: en
     enabled: true
 
@@ -246,56 +256,23 @@ sources:
     language: en
     enabled: true
 
-  # H. Policy Institutions
-  - source_id: imf_news_rss
-    source_name: IMF News
-    source_group: policy_institutions
+  - source_id: supplychaindive_news
+    source_name: Supply Chain Dive
+    source_group: supply_chain
     source_type: rss
-    rss_url: "https://www.imf.org/en/News/RSS"
-    default_topic_candidates: ["global_market_intelligence", "crypto_geopolitics"]
-    reliability_weight: 1.00
+    rss_url: "https://www.supplychaindive.com/feeds/news/"
+    default_topic_candidates: ["supply_chain_intelligence"]
+    reliability_weight: 0.80
     language: en
     enabled: true
 
-  # I. Central Banks
+  # H. Central Banks
   - source_id: fed_press_all
     source_name: Federal Reserve Press Releases
     source_group: central_banks
     source_type: rss
     rss_url: "https://www.federalreserve.gov/feeds/press_all.xml"
     default_topic_candidates: ["global_market_intelligence", "crypto_geopolitics"]
-    reliability_weight: 1.00
-    language: en
-    enabled: true
-
-  - source_id: ecb_press
-    source_name: ECB Press
-    source_group: central_banks
-    source_type: rss
-    rss_url: "https://www.ecb.europa.eu/press/rss/press.xml"
-    default_topic_candidates: ["global_market_intelligence"]
-    reliability_weight: 1.00
-    language: en
-    enabled: true
-
-  # J. Regulators
-  - source_id: sec_press
-    source_name: SEC Press Releases
-    source_group: regulators
-    source_type: rss
-    rss_url: "https://www.sec.gov/rss/news/press.xml"
-    default_topic_candidates: ["crypto_geopolitics", "global_market_intelligence", "ai_semiconductor_intelligence"]
-    reliability_weight: 1.00
-    language: en
-    enabled: true
-
-  # K. Monetary / International Institutions
-  - source_id: bis_press_releases
-    source_name: BIS Press Releases
-    source_group: policy_institutions
-    source_type: rss
-    rss_url: "https://www.bis.org/list/press_releases/index.rss"
-    default_topic_candidates: ["global_market_intelligence"]
     reliability_weight: 1.00
     language: en
     enabled: true

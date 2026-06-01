@@ -900,9 +900,68 @@ _STRATEGIC_TOPIC_TO_DOMAIN: Dict[str, str] = {
     "SUPPLY_CHAIN": "supply_chain_intelligence",
 }
 
+# Canonical ordered list of the 6 strategic domain IDs.
+# All consumers that bucket alerts by domain MUST iterate over this list and
+# use `infer_domain_from_topic` to derive the bucket key — guaranteeing that
+# the same AlertLog row is placed in the same bucket across all callers
+# (Lead-Lag matrix, Risk Summary, sector distribution, etc.).
+STRATEGIC_DOMAINS: List[str] = [
+    "energy_resource_risk",
+    "global_market_intelligence",
+    "crypto_geopolitics",
+    "ai_semiconductor_intelligence",
+    "defense_technology",
+    "supply_chain_intelligence",
+]
 
-def infer_domain_from_topic(topic: str) -> str:
-    """Map a topic (e.g. from an alert) to a Pro domain ID."""
+
+# Non-strategic bucket for sports / entertainment noise. NOT a member of
+# STRATEGIC_DOMAINS, so anything routed here is excluded from every 6-domain
+# aggregation (Trend Flow, Risk Summary, Lead-Lag) and never pollutes a real
+# domain's baseline.
+SPORTS_ENTERTAINMENT_DOMAIN = "sports_entertainment"
+
+# High-confidence sporting context. A single STRONG token, or any two WEAK
+# tokens, intercepts the item before macro keyword collisions ("Argentina",
+# "fears") can drag it into Market Intel / Defense.
+_SPORTS_STRONG = (
+    "world cup", "fifa", "uefa", "premier league", "la liga", "champions league",
+    "ballon d'or", "wimbledon", "grand slam", "olympic", "messi", "ronaldo",
+    "midfielder", "goalkeeper", "test match", "super bowl",
+)
+_SPORTS_WEAK = (
+    "captain", "football", "soccer", "injury fears", "tournament", "league",
+    "striker", "coach", "match", "goal", "transfer fee", "squad",
+)
+
+
+def is_sports_entertainment(text: str) -> bool:
+    """Detect sports/entertainment context with high confidence (low false-positive)."""
+    if not text:
+        return False
+    low = text.casefold()
+    if any(tok in low for tok in _SPORTS_STRONG):
+        return True
+    return sum(1 for tok in _SPORTS_WEAK if tok in low) >= 2
+
+
+def infer_domain_from_topic(topic: str, text: str = "") -> str:
+    """
+    Canonical domain inference for AlertLog bucketing.
+
+    Maps any topic string (strategic UPPER code, snake_case domain ID, legacy
+    alias, or short form) to exactly one of the 6 `STRATEGIC_DOMAINS`.
+    Unknown / empty input falls back to `global_market_intelligence`.
+
+    When `text` (headline / target_label) is supplied, a sports/entertainment
+    guardrail runs FIRST: sporting items are routed to the non-strategic
+    `SPORTS_ENTERTAINMENT_DOMAIN` so they never contaminate premium macro domains.
+
+    This is the SINGLE source of truth for "which strategic domain does this
+    alert belong to" — used by Lead-Lag engine, Risk Summary, Pro briefs, etc.
+    """
+    if text and is_sports_entertainment(text):
+        return SPORTS_ENTERTAINMENT_DOMAIN
     if not topic:
         return "global_market_intelligence"
     if topic in PRO_DOMAIN_CONFIG:

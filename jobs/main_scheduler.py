@@ -15,6 +15,7 @@ from jobs.report_orchestrator import run_all_reports
 from jobs.trigger_detector_job import run_trigger_check
 from jobs.trend_analyze_job import run_trend_analysis
 from jobs.alert_manager import run_alert_manager
+from jobs.monthly_trend_worker import run_monthly_trend_worker
 from jobs.threads_publisher_job import run_threads_publisher
 from jobs.learning_loop import run_learning_job
 from jobs.cleanup_job import (
@@ -96,10 +97,6 @@ async def _pipeline_full_processing_locked():
             
             logger.info("[ALERT CHECK]")
             await run_alert_manager(session)
-            logger.info(
-                "[CONTEXT BRIEFS] persist_free_alert_feed_item runs inside alert_manager for new alerts; "
-                "existing rows without free_alert need scripts/check_dashboard_data.py --backfill-free"
-            )
 
             logger.info("[TRIGGER CHECK]")
             await run_trigger_check(session)
@@ -134,6 +131,17 @@ async def monthly_reports_wrapper():
     if datetime.now(timezone.utc).day == 1:
         async with AsyncSessionLocal() as session:
             await run_all_reports(session, "monthly", 30, auto_post_threads=True)
+
+async def monthly_trend_wrapper():
+    now = datetime.now(timezone.utc)
+    async with AsyncSessionLocal() as session:
+        # On the 1st, lock in the just-completed previous month (idempotent).
+        if now.day == 1:
+            await run_monthly_trend_worker(session)
+        # ALWAYS refresh the IN-PROGRESS current month so the dashboard streams
+        # live data instead of stalling on the last completed month (the cause of
+        # the "stuck on May / no June" gap). Force-rebuild to absorb new spikes.
+        await run_monthly_trend_worker(session, year=now.year, month=now.month, force=True)
 
 async def run_threads_publisher_wrapper():
     async with AsyncSessionLocal() as session:
@@ -185,6 +193,39 @@ async def pro_automation_wrapper():
     await run_continuous_pro_intelligence_stream()
 
 
+async def run_cftc_sync_wrapper():
+    """Weekly Commitments of Traders ingestion (Socrata, no API key)."""
+    if os.getenv("SCHEDULER_PAUSED") == "true":
+        logger.warning("SCHEDULER_PAUSED — skipping CFTC sync.")
+        return
+    from jobs.cftc_sync_job import run_cftc_sync
+
+    summary = await run_cftc_sync(weeks=int(os.getenv("CFTC_SYNC_WEEKS", "52")))
+    logger.info("CFTC sync summary: %s", summary)
+
+
+async def run_omni_spatial_worker_wrapper():
+    """Phase 7.2: Translate recent AlertLog rows into spatial contagion graphs."""
+    if os.getenv("SCHEDULER_PAUSED") == "true":
+        logger.warning("SCHEDULER_PAUSED — skipping omni spatial worker.")
+        return
+    from jobs.omni_spatial_worker import run_omni_spatial_worker
+
+    summary = await run_omni_spatial_worker()
+    logger.info("Omni spatial worker summary: %s", summary)
+
+
+async def run_sanctions_sync_wrapper():
+    """Daily OpenSanctions bulk dump + PageRank recompute."""
+    if os.getenv("SCHEDULER_PAUSED") == "true":
+        logger.warning("SCHEDULER_PAUSED — skipping sanctions sync.")
+        return
+    from jobs.sanctions_sync_job import run_sanctions_sync
+
+    summary = await run_sanctions_sync()
+    logger.info("Sanctions sync summary: %s", summary)
+
+
 async def run_external_data_sync_wrapper():
     """
     Phase 0: Daily macro sync (FRED, BLS, World Bank, Comtrade, BEA, Census).
@@ -204,6 +245,14 @@ def register_jobs():
     # Core Pipeline
     schedule.every(5).minutes.do(schedule_async, "pipeline", pipeline_full_processing)
 
+    # Phase 7.2: RSS → physics-based spatial contagion (Omni monitor tables)
+    schedule.every(5).minutes.do(
+        schedule_async,
+        "omni_spatial",
+        run_omni_spatial_worker_wrapper,
+    )
+    logger.info("Registered omni_spatial every 5 minutes (spatial_nodes / spatial_edges / contagion_history).")
+
     # [v12.0] Autonomous Discovery Scout (High Frequency)
     schedule.every(1).minutes.do(schedule_async, "discovery_scout", run_discovery_scout_wrapper)
 
@@ -217,6 +266,7 @@ def register_jobs():
     schedule.every().day.at("07:00").do(schedule_async, "daily_report", daily_reports_wrapper)
     schedule.every().monday.at("08:00").do(schedule_async, "weekly_report", weekly_reports_wrapper)
     schedule.every().day.at("09:00").do(schedule_async, "monthly_report", monthly_reports_wrapper)
+    schedule.every().day.at("09:30").do(schedule_async, "monthly_trend", monthly_trend_wrapper)
 
     # Cleanup & Retention (Concurrency guarded by "cleanup")
     schedule.every().hour.do(schedule_async, "cleanup", run_cleanup_bundle)
@@ -269,26 +319,37 @@ def register_jobs():
     )
     logger.info("Registered pro_structural_retention daily at %s.", pro_retention_time)
 
+    # CFTC Commitments of Traders — weekly Tuesday afternoon (CFTC publishes Fri,
+    # but Tuesday gives us the prior week's confirmed report).
+    cftc_sync_day = os.getenv("CFTC_SYNC_DAY", "tuesday").lower()
+    cftc_sync_time = os.getenv("CFTC_SYNC_UTC_TIME", "21:30")  # 17:30 ET = 21:30 UTC
+    cftc_dispatcher = {
+        "monday": schedule.every().monday,
+        "tuesday": schedule.every().tuesday,
+        "wednesday": schedule.every().wednesday,
+        "thursday": schedule.every().thursday,
+        "friday": schedule.every().friday,
+        "saturday": schedule.every().saturday,
+        "sunday": schedule.every().sunday,
+    }.get(cftc_sync_day, schedule.every().tuesday)
+    cftc_dispatcher.at(cftc_sync_time).do(
+        schedule_async,
+        "cftc_sync",
+        run_cftc_sync_wrapper,
+    )
+    logger.info("Registered cftc_sync every %s at %s UTC.", cftc_sync_day, cftc_sync_time)
+
+    # OpenSanctions bulk dump — daily ingestion + PageRank recompute.
+    sanctions_sync_time = os.getenv("SANCTIONS_SYNC_UTC_TIME", "05:30")
+    schedule.every().day.at(sanctions_sync_time).do(
+        schedule_async,
+        "sanctions_sync",
+        run_sanctions_sync_wrapper,
+    )
+    logger.info("Registered sanctions_sync daily at %s UTC.", sanctions_sync_time)
+
 async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""
-    force_backfill = os.getenv("SCHEDULER_FORCE_BACKFILL", "").lower() in (
-        "true",
-        "1",
-        "yes",
-    )
-    if force_backfill:
-        from jobs.free_alert_feed_generator import backfill_missing_free_alerts
-
-        logger.info(
-            "SCHEDULER_FORCE_BACKFILL=true — running backfill_missing_free_alerts(limit=20)"
-        )
-        try:
-            async with AsyncSessionLocal() as session:
-                count = await backfill_missing_free_alerts(session, limit=20)
-            logger.info("Force backfill completed: %s free_alert payload(s) written", count)
-        except Exception as e:
-            logger.error("Force backfill failed: %s", e)
-
     skip_pipeline = os.getenv("SCHEDULER_SKIP_STARTUP_PIPELINE", "").lower() in (
         "true",
         "1",

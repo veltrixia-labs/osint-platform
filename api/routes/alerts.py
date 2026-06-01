@@ -11,7 +11,7 @@ from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Query, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.future import select
-from sqlalchemy import desc
+from sqlalchemy import desc, case, Float
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import AlertLog, AlertDelivery, AnalystProfile
@@ -20,11 +20,27 @@ from processor.impact_discovery import ImpactDiscoveryEngine
 from api.gating import get_effective_tier, is_topic_allowed, _gate_cascading_impacts, is_tier_sufficient, PlanTier
 from api.auth import blacklist_manager
 from api.rate_limit import rate_limit
+from analysis.intensity_pressure import PERCENT_STREAM_FLOOR
+
+
+def _above_stream_floor(a: dict) -> bool:
+    """Data-Maturity Guardrail: the live Alert Stream features ONLY matured,
+    computed telemetry. An alert is shown strictly when its intensity_pct is a
+    real number >= PERCENT_STREAM_FLOOR (15%). Anything null / 0 / uncomputed
+    (cold-start with no reliable baseline) is dropped from the feed view — the
+    raw row still persists for the worker to build baselines from over time."""
+    pct = a.get("intensity_pct")
+    return isinstance(pct, (int, float)) and pct >= PERCENT_STREAM_FLOOR
 
 router = APIRouter(tags=["alerts"])
 logger = logging.getLogger(__name__)
 
 
+# PUBLIC ENDPOINT — the Alert Stream is open to everyone. Auth is OPTIONAL via
+# `get_optional_current_user` (resolved through rate_limit): a missing OR invalid
+# token yields current_user=None (guest/free tier) and a normal 200 with the
+# calibrated, PERCENT_STREAM_FLOOR-filtered public rows — never a 401/403. Do not
+# add a mandatory-auth dependency here.
 @router.get("/alerts")
 async def get_alerts(
     severity: Optional[str] = None,
@@ -117,7 +133,23 @@ async def _get_alerts_impl(
     if since:
         stmt = stmt.where(AlertLog.triggered_at >= since)
 
-    stmt = stmt.order_by(AlertLog.triggered_at.desc()).limit(limit)
+    # Data-Maturity floor in SQL so `limit` returns only COMPUTED, >=15% rows
+    # (cold-start/null are excluded here too) — keeps the window dense instead of
+    # spending slots on noise that the post-serialization filter would drop.
+    stmt = stmt.where(
+        AlertLog.metadata_json["intensity_pct"].astext.cast(Float) >= PERCENT_STREAM_FLOOR
+    )
+
+    # Order by THREAT PRIORITY then recency so the rare CRITICAL/ELEVATED signals
+    # always make the limited window (they'd otherwise be squeezed out by the
+    # high volume of recent WATCH-tier telemetry). The client re-sorts identically.
+    _sev_rank = case(
+        (AlertLog.severity == "critical", 3),
+        (AlertLog.severity == "elevated", 2),
+        (AlertLog.severity == "watch", 1),
+        else_=0,
+    )
+    stmt = stmt.order_by(_sev_rank.desc(), AlertLog.triggered_at.desc()).limit(limit)
     result = await db.execute(stmt)
     alerts = result.scalars().all()
 
@@ -152,6 +184,7 @@ async def _get_alerts_impl(
             "is_partial": False,
             "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
             "intensity_display": f"{a.intensity:.1f}",
+            "intensity_pct": a.metadata_json.get("intensity_pct") if isinstance(a.metadata_json, dict) else None,
             "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle"
         }
         for a in alerts
@@ -188,6 +221,9 @@ async def _get_alerts_impl(
             
         final_alerts.append(a)
 
+    # Ground-floor: drop sub-baseline (<25%) noise from the active stream view.
+    final_alerts = [a for a in final_alerts if _above_stream_floor(a)]
+
     # Store in Cache (60s TTL)
     if await blacklist_manager._is_redis_available():
         try:
@@ -198,6 +234,8 @@ async def _get_alerts_impl(
     return final_alerts
 
 
+# PUBLIC ENDPOINT — same open contract as GET /alerts: optional auth, guests
+# (no/invalid token) get a normal 200 of public pulse rows, never a 401/403.
 @router.get("/alerts/live")
 async def get_live_alerts(
     limit: int = 30,
@@ -248,6 +286,7 @@ async def _get_live_alerts_impl(
             "is_partial": False,
             "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
             "intensity_display": f"{a.intensity:.1f}",
+            "intensity_pct": a.metadata_json.get("intensity_pct") if isinstance(a.metadata_json, dict) else None,
             "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle",
             "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else [],
         }
@@ -273,6 +312,9 @@ async def _get_live_alerts_impl(
             a["cascading_impacts"] = []
             
         final_live.append(a)
+
+    # Ground-floor: drop sub-baseline (<25%) noise from the active stream view.
+    final_live = [a for a in final_live if _above_stream_floor(a)]
 
     return final_live
 
@@ -318,6 +360,7 @@ async def get_alert(
         "is_partial": False,
         "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
         "intensity_display": f"{a.intensity:.1f}",
+        "intensity_pct": a.metadata_json.get("intensity_pct") if isinstance(a.metadata_json, dict) else None,
         "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle",
         "source_url": next((e.get("url") or e.get("link") for e in a.metadata_json.get("evidence_list", []) if e.get("url") or e.get("link")), None) if a.metadata_json else None,
         "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else [],

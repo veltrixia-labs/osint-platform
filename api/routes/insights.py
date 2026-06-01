@@ -12,29 +12,24 @@ from db.database import get_db
 from db.models import AlertLog
 from db.enums import PlanTier
 from api.gating import requires_tier, get_effective_tier, _gate_cascading_impacts
-from processor.topic_registry import internal_topic_for_fallback
+from processor.topic_registry import STRATEGIC_TO_INTERNAL, INTERNAL_TO_STRATEGIC
 from analysis.intensity_pressure import (
     build_domain_pressure_metrics,
     raw_intensity_from_alert,
 )
-from analysis.pressure_derivatives import enrich_risk_summary_with_derivatives
 from analysis.lead_lag_engine import compute_lead_lag_matrix
+from analysis.pro_domain_config import STRATEGIC_DOMAINS, infer_domain_from_topic
 
 router = APIRouter(tags=["insights"])
 logger = logging.getLogger(__name__)
 
-STRATEGIC_TOPICS = [
-    "energy_resource_risk",
-    "global_market_intelligence",
-    "crypto_geopolitics",
-    "ai_semiconductor_intelligence",
-    "defense_technology",
-    "supply_chain_intelligence",
-]
+# Canonical 6-domain list — single source of truth lives in
+# `analysis.pro_domain_config.STRATEGIC_DOMAINS`. Bucketing here MUST use
+# `infer_domain_from_topic` to stay aligned with the Lead-Lag engine.
+STRATEGIC_TOPICS = STRATEGIC_DOMAINS
 
 EMPTY_PRO_INSIGHTS: dict[str, Any] = {
     "risk_summary": {},
-    "momentum_alerts": [],
     "early_warnings": [],
     "sector_distribution": {},
     "top_entities": [],
@@ -43,8 +38,6 @@ EMPTY_PRO_INSIGHTS: dict[str, Any] = {
     "focus_alert_id": None,
     # Module A — Risk Contagion Lead-Lag Tracker
     "lead_lag_matrix": [],
-    # Module C — Verified Source Evidence Stream
-    "evidence_stream": [],
 }
 
 EMPTY_EXPERT_INTEL: dict[str, Any] = {
@@ -106,9 +99,16 @@ async def _fetch_top_entities(
     return top_entities
 
 
-def _domain_id_for_alert_topic(topic: str | None) -> str:
-    """Map AlertLog.topic (strategic UPPER codes or legacy snake_case) to API domain keys."""
-    return internal_topic_for_fallback(topic or "")
+def _domain_id_for_alert_topic(topic: str | None, text: str = "") -> str:
+    """
+    Map AlertLog.topic to a canonical strategic domain ID.
+
+    Delegates to `infer_domain_from_topic` (passing the headline so the sports/
+    entertainment guardrail can intercept noise) — keeping this module's bucketing
+    aligned with the Lead-Lag engine + Trend Flow. Sports items land in the
+    non-strategic bucket and are dropped from the 6-domain risk summary.
+    """
+    return infer_domain_from_topic(topic or "", text=text)
 
 
 async def _build_risk_summary(
@@ -141,7 +141,7 @@ async def _build_risk_summary(
     def _bucket(alerts: list[AlertLog]) -> dict[str, list[AlertLog]]:
         buckets: dict[str, list[AlertLog]] = {t: [] for t in STRATEGIC_TOPICS}
         for alert in alerts:
-            domain = _domain_id_for_alert_topic(alert.topic)
+            domain = _domain_id_for_alert_topic(alert.topic, alert.target_label or "")
             if domain in buckets:
                 buckets[domain].append(alert)
         return buckets
@@ -206,18 +206,6 @@ async def build_pro_insights_payload(
     lookback = now - timedelta(hours=24)
     effective_topic = topic or (focus_alert.topic if focus_alert else None)
 
-    stmt_momentum = select(AlertLog).where(
-        AlertLog.triggered_at >= lookback,
-        AlertLog.suppressed == False,  # noqa: E712
-    )
-    if effective_topic:
-        stmt_momentum = stmt_momentum.where(AlertLog.topic == effective_topic)
-    stmt_momentum = stmt_momentum.order_by(AlertLog.intensity.desc()).limit(3)
-    momentum_alerts = list((await db.execute(stmt_momentum)).scalars().all())
-
-    if focus_alert and all(a.id != focus_alert.id for a in momentum_alerts):
-        momentum_alerts = [focus_alert] + momentum_alerts[:2]
-
     stmt_warnings = select(AlertLog).where(
         AlertLog.triggered_at >= lookback,
         AlertLog.severity == "elevated",
@@ -247,11 +235,8 @@ async def build_pro_insights_payload(
     )
     risk_summary = await _build_risk_summary(db, now, lookback)
 
-    # ── Module B: Momentum & Acceleration — enrich risk_summary in-place ──────
-    enrich_risk_summary_with_derivatives(risk_summary)
-
     # ── Module A: Risk Contagion Lead-Lag Matrix ───────────────────────────────
-    lead_lag_matrix = compute_lead_lag_matrix(risk_summary)
+    lead_lag_matrix = await compute_lead_lag_matrix(db)
 
     active_domains = sum(
         1
@@ -259,65 +244,8 @@ async def build_pro_insights_payload(
         if (risk_summary.get(t) or {}).get("intensity", 0) > 0
     )
 
-    # ── Module C: Verified Source Evidence Stream ──────────────────────────────
-    # Flatten the top-5 highest-intensity alerts' evidence metadata into
-    # a compact stream array for the horizontal ticker.
-    stmt_evidence = (
-        select(AlertLog)
-        .where(
-            AlertLog.triggered_at >= lookback,
-            AlertLog.suppressed == False,  # noqa: E712
-            AlertLog.intensity.isnot(None),
-        )
-        .order_by(AlertLog.intensity.desc())
-        .limit(20)  # fetch extra; we filter to top 5 with evidence below
-    )
-    evidence_alerts_raw = list((await db.execute(stmt_evidence)).scalars().all())
-
-    evidence_stream: list[dict[str, Any]] = []
-    for a in evidence_alerts_raw:
-        if len(evidence_stream) >= 5:
-            break
-        meta = a.metadata_json or {}
-        ev_list = meta.get("evidence_list", [])
-        if not ev_list:
-            continue
-        top_ev = ev_list[0] if ev_list else {}
-        source_name = (
-            top_ev.get("source")
-            or top_ev.get("domain")
-            or top_ev.get("type")
-            or "OSINT"
-        )
-        display_title = (
-            meta.get("display_title")
-            or a.target_label
-            or "Intelligence Signal"
-        )
-        url = top_ev.get("url") or top_ev.get("link") or None
-        evidence_stream.append({
-            "alert_id": str(a.id),
-            "topic": a.topic or "",
-            "source_name": str(source_name)[:60],
-            "title": str(display_title)[:120],
-            "confidence_score": round(float(a.fidelity_score or 0.0), 2),
-            "url": url,
-            "triggered_at": a.triggered_at.isoformat() if a.triggered_at else None,
-            # Full evidence list for the modal
-            "evidence_list": ev_list,
-        })
-
     return {
         "risk_summary": risk_summary,
-        "momentum_alerts": [
-            {
-                "id": str(a.id),
-                "title": a.target_label,
-                "intensity": a.intensity,
-                "topic": a.topic,
-            }
-            for a in momentum_alerts
-        ],
         "early_warnings": [
             {
                 "id": str(a.id),
@@ -332,9 +260,143 @@ async def build_pro_insights_payload(
         "coverage_domains": len(STRATEGIC_TOPICS),
         "active_domains": active_domains,
         "focus_alert_id": str(focus_alert.id) if focus_alert else None,
-        # ── New quantitative modules ────────────────────────────────────────
         "lead_lag_matrix": lead_lag_matrix,
-        "evidence_stream": evidence_stream,
+    }
+
+
+async def build_drilldown_payload(db: AsyncSession, topic: str) -> dict[str, Any]:
+    """Fetches rich entity and trigger news data for a specific sector over a 72h window.
+    
+    `topic` may be either snake_case (energy_resource_risk) or DB UPPER code (ENERGY).
+    We normalise to DB UPPER codes for the query.
+    """
+    # Resolve to DB canonical UPPER code (e.g. 'energy_resource_risk' → 'ENERGY')
+    upper = topic.strip().upper().replace('-', '_')
+    if upper in STRATEGIC_TO_INTERNAL:         # already a canonical code
+        db_topic = upper
+    elif topic.lower() in INTERNAL_TO_STRATEGIC:  # snake_case internal code
+        db_topic = INTERNAL_TO_STRATEGIC[topic.lower()]
+    else:
+        db_topic = upper  # fallback
+    
+    now = datetime.now(timezone.utc)
+    lookback = now - timedelta(hours=72)
+
+    # 1. Top Entities — deduplicate and count by target_label
+    stmt_ent = (
+        select(
+            AlertLog.target_label,
+            func.count(AlertLog.id).label("alert_count"),
+            func.max(AlertLog.intensity).label("max_intensity"),
+            func.max(AlertLog.severity).label("top_severity"),
+        )
+        .where(
+            AlertLog.topic == db_topic,
+            AlertLog.triggered_at >= lookback,
+            AlertLog.suppressed == False,
+            AlertLog.target_label.isnot(None),
+            AlertLog.target_label != "",
+        )
+        .group_by(AlertLog.target_label)
+        .order_by(desc(func.count(AlertLog.id)), desc(func.max(AlertLog.intensity)))
+        .limit(10)
+    )
+    ent_res = await db.execute(stmt_ent)
+    top_entities = [
+        {
+            "name": row[0],
+            "count": int(row[1] or 0),
+            "max_intensity": round(float(row[2] or 0.0), 1),
+            "severity": row[3] or "watch",
+        }
+        for row in ent_res.all()
+    ]
+
+    # 2. Trigger News — get highest intensity alerts with full evidence
+    stmt_news = (
+        select(AlertLog)
+        .where(
+            AlertLog.topic == db_topic,
+            AlertLog.triggered_at >= lookback,
+            AlertLog.suppressed == False,
+        )
+        .order_by(desc(AlertLog.intensity))
+        .limit(15)  # fetch extra to find those with good evidence
+    )
+    news_res = await db.execute(stmt_news)
+    news_alerts = list(news_res.scalars().all())
+
+    trigger_news = []
+    seen_titles: set[str] = set()
+    for a in news_alerts:
+        if len(trigger_news) >= 8:
+            break
+        meta = a.metadata_json or {}
+        ev_list = meta.get("evidence_list", [])
+
+        # Prefer first piece of evidence that has a URL
+        top_ev = next((e for e in ev_list if e.get("url") or e.get("link")), ev_list[0] if ev_list else {})
+
+        display_title = (
+            meta.get("display_title")
+            or a.target_label
+            or "Intelligence Signal"
+        )
+        # Deduplicate by title
+        title_key = display_title[:80].lower()
+        if title_key in seen_titles:
+            continue
+        seen_titles.add(title_key)
+
+        source_name = (
+            top_ev.get("source")
+            or top_ev.get("domain")
+            or meta.get("source_name", "OSINT Stream")
+        )
+        url = top_ev.get("url") or top_ev.get("link") or None
+        article_title = top_ev.get("title") or display_title
+
+        trigger_news.append({
+            "id": str(a.id),
+            "headline": str(article_title)[:160],
+            "display_title": str(display_title)[:120],
+            "intensity": round(float(a.intensity or 0), 1),
+            "severity": a.severity or "watch",
+            "fidelity_score": round(float(a.fidelity_score or 0.0), 2),
+            "timestamp": a.triggered_at.isoformat() if a.triggered_at else None,
+            "source": str(source_name)[:60],
+            "url": url,
+            "trigger_type": a.trigger_type or "signal",
+            "supporting_sources_count": len(ev_list),
+        })
+
+    # 3. Sector stats summary
+    stmt_stats = (
+        select(
+            func.count(AlertLog.id).label("total_alerts"),
+            func.avg(AlertLog.intensity).label("avg_intensity"),
+            func.max(AlertLog.intensity).label("peak_intensity"),
+        )
+        .where(
+            AlertLog.topic == db_topic,
+            AlertLog.triggered_at >= lookback,
+            AlertLog.suppressed == False,
+        )
+    )
+    stats_res = await db.execute(stmt_stats)
+    stats_row = stats_res.one()
+    sector_stats = {
+        "total_alerts": int(stats_row[0] or 0),
+        "avg_intensity": round(float(stats_row[1] or 0.0), 1),
+        "peak_intensity": round(float(stats_row[2] or 0.0), 1),
+        "window_hours": 72,
+    }
+
+    return {
+        "topic": topic,
+        "top_entities": top_entities,
+        "trigger_news": trigger_news,
+        "sector_stats": sector_stats,
     }
 
 
@@ -463,6 +525,25 @@ async def get_pro_insights(
         return dict(EMPTY_PRO_INSIGHTS)
 
 
+@router.get("/insights/pro/drilldown")
+async def get_pro_drilldown(
+    topic: str,
+    db: AsyncSession = Depends(get_db),
+    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
+):
+    """Tier: Pro+ — specific deep-dive data for the radial network."""
+    _ = user_data
+    try:
+        if not topic:
+            raise HTTPException(status_code=400, detail="Topic required")
+        return await build_drilldown_payload(db, topic=topic)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Drilldown fetch failed: %s", e, exc_info=True)
+        return {"topic": topic, "top_entities": [], "trigger_news": []}
+
+
 @router.get("/alerts/{alert_id}/insights/pro")
 async def get_pro_insights_for_alert(
     alert_id: uuid.UUID,
@@ -515,3 +596,238 @@ async def get_expert_intelligence_for_alert(
     except Exception as e:
         logger.error("Alert fetch failed (get_expert_intelligence_for_alert): %s", e, exc_info=True)
         return dict(EMPTY_EXPERT_INTEL)
+
+@router.get("/insights/macro-transmission")
+async def get_macro_transmission(
+    source: str = "DCOILWTICO",
+    macro_ticker: Optional[str] = None,
+    target_topic: str = "supply_chain_intelligence",
+    include_inverse: bool = False,
+    db: AsyncSession = Depends(get_db),
+    # Use pro tier gating since this is an advanced insight
+    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
+):
+    """Tier: Pro+ — quantitative macro transmission lag and correlation.
+
+    The macro series can be specified as either ``macro_ticker`` (preferred,
+    matches the Dynamic Macro Selector wording) or ``source`` (backward-compat
+    alias kept for the original WTI-only callers). When both are supplied,
+    ``macro_ticker`` wins.
+
+    Set ``include_inverse=true`` to also scan negative lags, where the alert
+    intensity leads the macro asset (markets repricing after a shock).
+    """
+    _ = user_data
+    from analysis.macro_transmission import MacroTransmissionEngine, UnknownMacroSeriesError
+    chosen_ticker = (macro_ticker or source or "").strip()
+    if not chosen_ticker:
+        raise HTTPException(status_code=400, detail="macro_ticker (or source) is required")
+    try:
+        engine = MacroTransmissionEngine(db)
+        return await engine.compute_transmission_metrics(
+            macro_series_id=chosen_ticker,
+            target_topic=target_topic,
+            days_lookback=90,
+            roc_window=7,
+            include_inverse=include_inverse,
+        )
+    except UnknownMacroSeriesError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Macro transmission engine failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Error computing transmission metrics")
+
+
+@router.get("/insights/market-entropy")
+async def get_market_entropy(
+    db: AsyncSession = Depends(get_db),
+    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
+):
+    """
+    Tier: Pro+ — Statistical-mechanics market entropy gauge.
+
+    Returns a normalised entropy in [0, 1] combining topic dispersion (60%)
+    and intensity dispersion (40%) over the last 24h cluster window.
+    A value above the engine's BREAKOUT_THRESHOLD triggers a warning state.
+    """
+    _ = user_data
+    from analysis.market_entropy import compute_market_entropy
+    try:
+        return await compute_market_entropy(db)
+    except Exception as e:
+        logger.error("Market entropy engine failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Error computing market entropy")
+
+
+@router.get("/insights/choke-points")
+async def get_choke_points(
+    db: AsyncSession = Depends(get_db),
+    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
+):
+    """
+    Tier: Pro+ — Fluid Dynamics choke-point analysis.
+
+    Returns six maritime nodes (Hormuz, Malacca, Suez, Bab-el-Mandeb, Panama,
+    Bosphorus) with current OSINT viscosity, restriction factor, and
+    downstream sector drag projections.
+    """
+    _ = user_data
+    from analysis.choke_point_flow import compute_choke_point_flow
+    try:
+        return await compute_choke_point_flow(db)
+    except Exception as e:
+        logger.error("Choke-point engine failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Error computing choke-point flow")
+
+
+@router.get("/insights/hidden-accumulation")
+async def get_hidden_accumulation(
+    db: AsyncSession = Depends(get_db),
+    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
+):
+    """
+    Tier: Pro+ — Price-OSINT divergence with CFTC overlay.
+
+    Strict guardrails (un-loosenable):
+      • cluster window = 24h
+      • intensity reignite ≥ 1.5x prior peak
+      • baseline intensity ≥ 1.0 (noise floor)
+      • 24h macro price change ≥ 0% (flat or up)
+    """
+    _ = user_data
+    from analysis.price_osint_divergence import detect_hidden_accumulation
+    try:
+        return await detect_hidden_accumulation(db)
+    except Exception as e:
+        logger.error("Hidden accumulation engine failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Error computing hidden accumulation")
+
+
+@router.get("/insights/sanctions-network")
+async def get_sanctions_network(
+    root_entity_id: Optional[str] = None,
+    max_nodes: int = 60,
+    db: AsyncSession = Depends(get_db),
+    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
+):
+    """
+    Tier: Pro+ — Collateral Damage Network drill-down.
+
+    Without ``root_entity_id`` returns the global ego-subgraph anchored on the
+    set of sanctioned entities. With one, returns the 2-hop neighbourhood of
+    that specific Stakeholder.
+
+    Tier classification per node:
+      primary | direct_collateral | indirect_collateral | background
+    """
+    _ = user_data
+    from analysis.sanctions_network import expand_collateral_subgraph
+    try:
+        return await expand_collateral_subgraph(
+            db, root_entity_id=root_entity_id, max_nodes=max(1, min(max_nodes, 200))
+        )
+    except Exception as e:
+        logger.error("Sanctions network engine failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Error computing sanctions network")
+
+
+@router.get("/insights/macro-regime")
+async def get_macro_regime(
+    db: AsyncSession = Depends(get_db),
+    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
+):
+    """
+    Tier: Pro+ — current Market Regime classification.
+
+    Rule-based decision tree over 30-day RoC of DGS10, DCOILWTICO, VIXCLS.
+    See `analysis.market_regime` for the math.
+    """
+    _ = user_data
+    from analysis.market_regime import compute_market_regime
+    try:
+        return await compute_market_regime(db)
+    except Exception as e:
+        logger.error("Market regime engine failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Error computing market regime")
+
+
+@router.get("/insights/macro-matrix")
+async def get_macro_matrix(
+    db: AsyncSession = Depends(get_db),
+    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
+):
+    """
+    Tier: Pro+ — full cross-sectional correlation matrix.
+
+    Returns the Pearson correlation (peak over 0-7 day lag) for every
+    (tradeable macro × strategic topic) pair. Computed in two batched DB
+    queries regardless of matrix size — safe for interactive use.
+    """
+    _ = user_data
+    from analysis.macro_transmission import MacroTransmissionEngine
+    try:
+        engine = MacroTransmissionEngine(db)
+        return await engine.compute_correlation_matrix()
+    except Exception as e:
+        logger.error("Macro matrix engine failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Error computing macro matrix")
+
+
+@router.get("/insights/macro-transmission/options")
+async def get_macro_transmission_options(
+    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
+):
+    """
+    Returns the catalog of tradeable macro series + selectable target topics
+    used to populate the Dynamic Macro Selector dropdowns. The frontend treats
+    this as the single source of truth — no hardcoded option lists.
+    """
+    _ = user_data
+    from data_sources.fred_series_catalog import get_tradeable_macro_series
+
+    # Domain → display metadata mirrors the SOURCE_META structure on the
+    # frontend; centralising it here means future catalog edits never need a
+    # parallel UI deploy.
+    target_topics = [
+        {"id": "energy_resource_risk",          "label": "Energy & Resource Risk",
+         "description": "Energy supply disruption, refinery utilisation, OPEC dynamics.",
+         "accent_color": "#eab308", "glow_color": "rgba(234,179,8,0.45)"},
+        {"id": "global_market_intelligence",    "label": "Global Market Intelligence",
+         "description": "Macro policy, rate cycles, cross-asset risk repricing.",
+         "accent_color": "#58a6ff", "glow_color": "rgba(88,166,255,0.45)"},
+        {"id": "ai_semiconductor_intelligence", "label": "AI & Semiconductor",
+         "description": "Foundry concentration, export controls, AI capex.",
+         "accent_color": "#bc8cff", "glow_color": "rgba(188,140,255,0.45)"},
+        {"id": "supply_chain_intelligence",     "label": "Supply Chain Intelligence",
+         "description": "Logistics bottlenecks, freight rates, critical-material flows.",
+         "accent_color": "#10b981", "glow_color": "rgba(16,185,129,0.45)"},
+        {"id": "defense_technology",            "label": "Defense Technology",
+         "description": "Procurement cycles, FMS approvals, critical materials.",
+         "accent_color": "#f87171", "glow_color": "rgba(248,113,113,0.40)"},
+        {"id": "crypto_geopolitics",            "label": "Crypto Geopolitics",
+         "description": "Digital asset adoption, monetary sovereignty, sanctions vectors.",
+         "accent_color": "#f59e0b", "glow_color": "rgba(245,158,11,0.45)"},
+    ]
+
+    macro_series = []
+    for s in get_tradeable_macro_series():
+        macro_series.append({
+            "id": s["series_id"],
+            "label": s.get("display_label") or s["series_id"],
+            "name": s.get("name"),
+            "category": s.get("category"),
+            "frequency": s.get("frequency_hint"),
+            "unit_label": s.get("transmission_unit_label") or s.get("unit"),
+            "accent_color": s.get("accent_color") or "#94a3b8",
+            "provider": "FRED",
+        })
+
+    return {
+        "macro_series": macro_series,
+        "target_topics": target_topics,
+        "defaults": {
+            "macro_ticker": "DCOILWTICO",
+            "target_topic": "supply_chain_intelligence",
+        },
+    }
+

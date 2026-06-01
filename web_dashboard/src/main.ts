@@ -5,16 +5,15 @@ import './mobile-responsive.css'
 declare const __APP_BUILD_INFO__: string;
 console.log(`[Antigravity] Resolved API base: ${getResolvedApiBase()} (VITE_API_BASE_URL=${String(import.meta.env.VITE_API_BASE_URL ?? '')})`);
 console.log(`[Antigravity] Mode: ${import.meta.env.MODE}`);
-console.log(`[Antigravity] VITE_DEV_TIER: ${String(import.meta.env.VITE_DEV_TIER ?? '(unset)')}`);
 console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderFreeAlertFeed, renderProMap, renderTopicFilterBar } from './modules/render/index'
+import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderTopicFilterBar, renderTrendFlow, disposeTrendFlow } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 import { formatIntelTime } from './modules/render/utils'
 // (Pro reports now handled within Pro Insights hub)
-import { login, signup, fetchMe, logout, fetchReports, fetchReport, fetchFreeAlerts, confirmCheckoutSession, completeStripeSignup, CONTEXT_BRIEFS_DISPLAY_LIMIT, getResolvedApiBase, initApiBase } from './modules/api'
+import { login, signup, fetchMe, logout, fetchReports, fetchReport, confirmCheckoutSession, completeStripeSignup, getResolvedApiBase, initApiBase } from './modules/api'
 import type { UserMe } from './modules/api'
 import {
     AuthRedirectError,
@@ -30,6 +29,10 @@ import {
     renderSubscriptionTab,
 } from './modules/subscription'
 import { bindMobileSidebarControls, closeMobileSidebar } from './modules/mobile_nav'
+import { initDevModeAudit } from './modules/dev_mode'
+
+// Neutralise locked overlays for the audit build (badge retired for clean UI).
+initDevModeAudit()
 
 
 
@@ -244,13 +247,13 @@ export async function renderSignup() {
     });
 }
 
-type TabId = 'feed' | 'briefs' | 'plans' | 'reports' | 'map' | 'legal' | 'market-pulse' | 'pro-insights' | 'pro-map' | 'expert-intel'
+type TabId = 'feed' | 'trend-flow' | 'plans' | 'reports' | 'map' | 'legal' | 'market-pulse' | 'pro-insights' | 'pro-map' | 'expert-intel'
 
-const BOOT_TABS: TabId[] = ['feed', 'briefs', 'map', 'plans', 'legal', 'market-pulse', 'pro-insights', 'pro-map', 'expert-intel']
+const BOOT_TABS: TabId[] = ['feed', 'trend-flow', 'map', 'plans', 'legal', 'market-pulse', 'pro-insights', 'pro-map', 'expert-intel']
 
 /** Legacy hash aliases (e.g. bookmarks, old LP links). */
 const HASH_TAB_ALIASES: Record<string, TabId> = {
-    'free-feed': 'briefs',
+    'free-feed': 'feed',
 }
 
 type HashRoute = { tab: TabId; alertId?: string }
@@ -262,7 +265,7 @@ function normalizeHashTab(raw: string, tier?: string): TabId | null {
     let tab = resolved
     if (tab === 'reports') {
         if (tier && ['pro', 'experts', 'enterprise'].includes(tier)) return 'market-pulse'
-        return 'briefs'
+        return 'feed'
     }
     return BOOT_TABS.includes(tab) ? tab : null
 }
@@ -346,14 +349,10 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
         title: 'Alert Stream',
         subtitle: 'Real-time intelligence signals — high-frequency monitoring of global volatility.',
     },
-    briefs: {
-        icon: '🛰',
-        title: 'Context Briefs',
-        subtitle: 'Strategic intelligence synthesis — bridging global news signals with high-fidelity structural analysis.',
-        proCta: {
-            label: 'Unlock Pro / Expert for institutional-grade analytics & deep-sector intelligence',
-            href: '/subscription',
-        },
+    'trend-flow': {
+        icon: '🌊',
+        title: 'Monthly Trend Flow',
+        subtitle: 'Aggregated cross-sector ripple of each month’s pressure spikes — browsable historical archives.',
     },
     map: {
         icon: '🌐',
@@ -391,11 +390,15 @@ function isLocalDevHost(): boolean {
 
 const DEV_TIER_SESSION_KEY = 'vel_dev_tier_override';
 
-/** Pro/Expert tier from VITE_DEV_TIER and optional session override (localhost only). */
+/**
+ * Dev tier override — driven EXCLUSIVELY by the triple-tier toggle's
+ * sessionStorage key. The legacy `VITE_DEV_TIER` env fallback is intentionally
+ * NOT consulted: it was the "zombie" that stomped the toggle (clicking FREE
+ * clears the key, but the env value used to drag it back to pro). With the env
+ * fallback gone, an empty/`free` key strictly resolves to public guest tier.
+ */
 function getConfiguredDevTier(): string | undefined {
-    const fromEnv = (import.meta.env.VITE_DEV_TIER as string | undefined)?.toLowerCase()?.trim();
-    const fromSession = sessionStorage.getItem(DEV_TIER_SESSION_KEY)?.toLowerCase()?.trim();
-    const tier = fromSession || fromEnv;
+    const tier = sessionStorage.getItem(DEV_TIER_SESSION_KEY)?.toLowerCase()?.trim();
     if (!tier || tier === 'free') return undefined;
     return tier;
 }
@@ -517,15 +520,67 @@ async function initDashboard() {
     await initApiBase();
     console.log(`[Antigravity] Resolved API base (after probe): ${getResolvedApiBase()}`);
 
+    // ── Non-blocking auth boot ───────────────────────────────────────────────
+    // A slow/pending /api/token (or /auth/me) handshake must NEVER brick the open
+    // public stream. We kick off session resolution but, for any token-bearing
+    // boot, race it against a fast 800ms timeout: if auth doesn't return in time,
+    // render the public free view immediately and let the session re-sync silently
+    // in the background. A guest (no token) resolves instantly with no wait at all.
+    const AUTH_RACE_MS = 800;
+    const AUTH_TIMEOUT = Symbol('auth-timeout');
+    const authPromise: Promise<UserMe> = resolveAuthSession({
+        hasToken,
+        applyDevOverride: (me) => applyDevOverrideToUser(hasToken, me),
+    }).catch((e) => {
+        if (e instanceof AuthRedirectError) throw e;
+        console.warn('[Antigravity] Auth init failed; falling back to public free view.', e);
+        clearStaleAuthTokens();
+        return buildAnonymousUser();
+    });
+
+    const scrubAuthQuery = () => {
+        try {
+            const url = new URL(window.location.href);
+            if (url.search) history.replaceState(null, '', url.pathname + url.hash);
+        } catch { /* noop */ }
+    };
+
     let user: UserMe;
     try {
-        user = await resolveAuthSession({
-            hasToken,
-            applyDevOverride: (me) => applyDevOverrideToUser(hasToken, me),
-        });
+        if (!hasToken) {
+            // No session → pure public guest. Resolves instantly; never blocks.
+            user = await authPromise;
+        } else {
+            const raced = await Promise.race([
+                authPromise,
+                new Promise<typeof AUTH_TIMEOUT>((resolve) => setTimeout(() => resolve(AUTH_TIMEOUT), AUTH_RACE_MS)),
+            ]);
+            if (raced === AUTH_TIMEOUT) {
+                console.warn(`[Antigravity] Auth handshake slow (>${AUTH_RACE_MS}ms) — advancing to public stream; session re-syncs in background.`);
+                scrubAuthQuery();
+                user = buildAnonymousUser();
+                // Background re-sync (non-blocking): if the real session eventually
+                // resolves to a paid tier, re-init to upgrade the live view.
+                void authPromise.then((resolved) => {
+                    if (
+                        generation === dashboardInitGeneration
+                        && resolved && isAuthenticatedUser(resolved)
+                        && (resolved.tier === 'pro' || resolved.tier === 'experts' || resolved.tier === 'enterprise')
+                    ) {
+                        console.log('[Antigravity] Background session re-sync → upgrading to', resolved.tier);
+                        void initDashboard();
+                    }
+                }).catch(() => { /* handled above */ });
+            } else {
+                user = raced as UserMe;
+            }
+        }
     } catch (e) {
         if (e instanceof AuthRedirectError) return;
-        throw e;
+        // Defensive: never freeze the boot on an unexpected auth error.
+        clearStaleAuthTokens();
+        scrubAuthQuery();
+        user = buildAnonymousUser();
     }
 
     if (generation !== dashboardInitGeneration) return
@@ -631,7 +686,7 @@ async function initDashboard() {
         const showSubtitle = Boolean(meta?.subtitle)
         const showProCta = Boolean(
             meta?.proCta
-            && (tab === 'map' || tab === 'briefs')
+            && tab === 'map'
             && !isProOrAbove(user?.tier)
         )
         const showExpertUpsell = Boolean(meta?.showExpertUpsell && tab === 'pro-insights')
@@ -687,7 +742,7 @@ async function initDashboard() {
     const routeToExpertPricing = () => {
         sessionStorage.setItem('plansFocusTier', 'experts');
         sessionStorage.setItem(
-            'plansContextBriefUpsell',
+            'plansUpsellBanner',
             JSON.stringify({
                 message:
                     'Expert tier unlocks LLM predictive vectoring, cross-border scenario modeling, and elevated alert intensity protocols.',
@@ -707,6 +762,9 @@ async function initDashboard() {
         }
         if (tab !== 'pro-insights') {
             disposeProInsightsView();
+        }
+        if (tab !== 'trend-flow') {
+            disposeTrendFlow();
         }
         currentTab = tab;
         updateNavActiveState('sidebar-nav-container', tab);
@@ -732,7 +790,7 @@ async function initDashboard() {
             }
         }
         if (topicFilterBar) {
-            topicFilterBar.style.display = tab === 'feed' || tab === 'briefs' ? 'flex' : 'none';
+            topicFilterBar.style.display = tab === 'feed' ? 'flex' : 'none';
         }
 
         // Stop any active DashboardState polling to prevent background /api/alerts requests
@@ -740,13 +798,13 @@ async function initDashboard() {
 
         if (mainContent) mainContent.style.opacity = '0';
         setTimeout(() => {
-            const isFeedLike = ['feed', 'briefs', 'plans', 'reports', 'legal', 'market-pulse', 'pro-insights', 'expert-intel'].includes(tab);
+            const isFeedLike = ['feed', 'trend-flow', 'plans', 'reports', 'legal', 'market-pulse', 'pro-insights', 'expert-intel'].includes(tab);
             if (feedContainer) feedContainer.style.display = isFeedLike ? 'block' : 'none';
             if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
             if (proMapContainer) proMapContainer.style.display = (tab === 'pro-map') ? 'flex' : 'none';
 
             if (tab === 'feed') renderIntelligenceFeed();
-            else if (tab === 'briefs') renderFreeFeed();
+            else if (tab === 'trend-flow') void renderTrendFlow(alertsContainer, user!.tier);
             else if (tab === 'plans') renderSubscriptionTab(user!, alertsContainer, () => handleTabSwitch('plans'));
             else if (tab === 'reports') renderReports();
             else if (tab === 'map') {
@@ -814,23 +872,27 @@ async function initDashboard() {
         state.subscribe((data) => {
             if (currentTab !== 'feed') return;
 
-            // [v12.0] Feed Error Separation Logic — keep last good data during retries / rate limits
+            // [v12.1] Public-first feed gating. The Alert Stream is 100% PUBLIC,
+            // so a free/guest session can NEVER be "access restricted" — that
+            // clearance wall is reserved strictly for PAID tiers. A free guest
+            // shows, at most, a neutral offline notice during a sustained outage,
+            // and otherwise always falls through to render the open public feed.
+            const isFreeTier = (user?.tier ?? 'free') === 'free';
+            const accessRestricted =
+                !isFreeTier && (data.lastStatus === 401 || data.lastStatus === 403);
+            const pipelineOffline = data.consecutiveFailures >= 3 && data.lastStatus >= 500;
             const showFeedOffline =
-                data.error &&
-                data.lastStatus !== 429 &&
-                (data.lastStatus === 401 ||
-                    data.lastStatus === 403 ||
-                    (data.consecutiveFailures >= 3 && data.lastStatus >= 500));
+                Boolean(data.error) && data.lastStatus !== 429 && (accessRestricted || pipelineOffline);
 
             if (showFeedOffline && data.alerts.length === 0) {
                 alertsContainer.innerHTML = `
                     <div class="u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 8px; background: rgba(255,123,114,0.05); margin-top: 2rem;">
                         <div style="font-size: 1.5rem; margin-bottom: 0.5rem;" aria-hidden="true">&#9888;</div>
-                        <div style="color: #ff7b72; font-weight: 600;">${data.lastStatus === 401 || data.lastStatus === 403 ? 'Intelligence Access Restricted' : 'Strategic Pipeline Offline'}</div>
+                        <div style="color: #ff7b72; font-weight: 600;">${accessRestricted ? 'Intelligence Access Restricted' : 'Strategic Pipeline Offline'}</div>
                         <div style="font-size: var(--font-xs); color: #8b949e; margin-top: 0.5rem;">
-                            ${data.lastStatus === 401 || data.lastStatus === 403 ? 'Your current tier does not have clearance for this signal stream.' : 'The analysis engine is currently unreachable. Reconnecting...'}
+                            ${accessRestricted ? 'This stream requires Pro / Expert clearance.' : 'The analysis engine is currently unreachable. Reconnecting...'}
                         </div>
-                        ${data.lastStatus === 401 || data.lastStatus === 403 ? `<button class="btn-fb u-m-top-1" onclick="window.dispatchEvent(new CustomEvent('trigger-tab', {detail:{tab:'plans'}}))">Upgrade Clearance</button>` : ''}
+                        ${accessRestricted ? `<button class="btn-fb u-m-top-1" onclick="window.dispatchEvent(new CustomEvent('trigger-tab', {detail:{tab:'plans'}}))">Upgrade Clearance</button>` : ''}
                     </div>
                 `;
                 return;
@@ -848,53 +910,6 @@ async function initDashboard() {
         });
         (window as any).stopPolling = () => state.stopPolling();
         state.startPolling();
-    };
-
-    let contextBriefsItems: Awaited<ReturnType<typeof fetchFreeAlerts>> = [];
-    let contextBriefsTopicFilter: StrategicTopicCode | null = null;
-
-    const renderContextBriefsView = () => {
-        renderFreeAlertFeed(
-            contextBriefsItems,
-            alertsContainer,
-            user?.tier ?? 'free',
-            contextBriefsTopicFilter,
-            contextBriefsItems.length,
-        );
-    };
-
-    const bindContextBriefsFilterBar = () => {
-        renderTopicFilterBar(topicFilterBar, contextBriefsTopicFilter, (topic) => {
-            contextBriefsTopicFilter = topic;
-            bindContextBriefsFilterBar();
-            renderContextBriefsView();
-        });
-    };
-
-    const renderFreeFeed = async () => {
-        topicFilterBar.style.display = 'flex';
-        alertsContainer.innerHTML = '<div class="u-p-2 u-text-center" style="opacity:0.5;">Loading Context Briefs...</div>';
-        try {
-            const items = await fetchFreeAlerts({ limit: CONTEXT_BRIEFS_DISPLAY_LIMIT });
-            if (!Array.isArray(items)) {
-                throw new Error('Unexpected server response (not a list).');
-            }
-            contextBriefsItems = items;
-            bindContextBriefsFilterBar();
-            renderContextBriefsView();
-        } catch (err: any) {
-            const msg = err?.message || 'Connection error';
-            alertsContainer.innerHTML = `
-                <div class="empty-state u-p-2 u-text-center" style="border: 1px solid rgba(255,123,114,0.2); border-radius: 12px; margin-top: 2rem; max-width: 520px; margin-left: auto; margin-right: auto;">
-                    <div class="empty-icon" aria-hidden="true">&#9888;</div>
-                    <div class="empty-title" style="color: #ff7b72;">Could not load Context Briefs</div>
-                    <div class="empty-subtitle" style="margin-top: 0.5rem;">${msg}</div>
-                    <div class="empty-subtitle" style="margin-top: 0.75rem; font-size: 0.8rem; color: #8b949e;">
-                        If this persists, confirm the API is reachable at <code style="color:#58a6ff;">${getResolvedApiBase()}</code>
-                        and that the database has AlertLog rows with <code>free_alert</code> payloads (see <code>scripts/check_dashboard_data.py</code>).
-                    </div>
-                </div>`;
-        }
     };
 
     const renderReports = async () => {

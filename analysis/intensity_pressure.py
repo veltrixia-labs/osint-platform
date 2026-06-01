@@ -132,6 +132,56 @@ def spike_vs_baseline(
     return ui_delta > 2.0
 
 
+# ── Distributed intensity % (ratio → percentage) ─────────────────────────────
+# Replaces the old saturating 100·tanh(raw/8) gauge. The percentage is a smooth
+# function of the RATIO (raw_current / baseline). The upper segment is an
+# ASYMPTOTIC POWER curve — 100 − 50·(1.5/ratio)^P — whose slope keeps decaying,
+# so even huge ratios stay distinct integers instead of pinning at a flat 100%:
+#     ratio  = 0.0x..1.0x   ->  0%..25%   (at/below baseline — gentle floor)
+#     ratio  = 1.0x..1.5x   -> 25%..50%   (sub-spike build-up)
+#     ratio  = 1.5x (gate)  -> 50%        (ELEVATED threshold, exact)
+#     ratio  = 2.0x -> ~60%  ·  3.0x -> ~70%  ·  4.0x -> ~76%   (wide ELEVATED window)
+#     ratio  = 5.0x -> 80%        (CRITICAL entry — deliberately delayed)
+#     ratio  = 10x -> ~88%   ·  15x -> ~91%   ·  20x -> ~93%    (90%+ = black-swan)
+# The 15% floor doubles as the live Alert Stream ground-floor: anything below
+# (ratio < ~0.6x, i.e. well under baseline) is filtered out of the active feed.
+PERCENT_BASELINE_PCT = 25.0               # ratio 1.0x → 25% (baseline volatility)
+PERCENT_GATE_RATIO = REIGNITE_RAW_FACTOR  # 1.5x → 50%
+PERCENT_STREAM_FLOOR = 15.0               # live-feed cutoff: drop pct < 15%
+# Upper-tail stretch exponent. Soft slope tuned so the ELEVATED band (50-79%)
+# spans a WIDE ratio window (1.5x-5x) — 2x→60, 3x→70, 4x→76 — only crossing into
+# CRITICAL (>=80%) at 5.0x, and reaching 90%+ solely for 15x-20x black-swans.
+_PERCENT_TAIL_EXP = 0.76
+
+
+def percentage_from_ratio(ratio: float) -> float:
+    """Map a raw/baseline ratio to a smoothly-distributed 0–100% intensity score."""
+    if ratio <= 0.0:
+        return 0.0
+    if ratio <= 1.0:
+        # 0x..1.0x → 0%..25% (gentle floor so at-baseline reads ~25%, not flat 0)
+        return round(PERCENT_BASELINE_PCT * ratio, 1)
+    if ratio <= PERCENT_GATE_RATIO:
+        # 1.0x..1.5x → 25%..50% (linear ramp into the spike gate)
+        return round(PERCENT_BASELINE_PCT + (ratio - 1.0) / (PERCENT_GATE_RATIO - 1.0) * (50.0 - PERCENT_BASELINE_PCT), 1)
+    # 1.5x.. → asymptotic power curve 50%→100% (stretched tail; 100% only past ~100x)
+    pct = 100.0 - (100.0 - 50.0) * (PERCENT_GATE_RATIO / ratio) ** _PERCENT_TAIL_EXP
+    return round(min(100.0, pct), 1)
+
+
+def severity_from_percentage(pct: float) -> str:
+    """Re-aligned 3-tier threat gate on the distributed percentage.
+
+    0–49% → watch (sub-spike noise) · 50–79% → elevated (crossed the 1.5x gate)
+    · 80–100% → critical (severe cross-sector ripple).
+    """
+    if pct >= 80.0:
+        return "critical"
+    if pct >= 50.0:
+        return "elevated"
+    return "watch"
+
+
 def build_domain_pressure_metrics(
     domain_alerts: list[Any],
     prev_alerts: list[Any],

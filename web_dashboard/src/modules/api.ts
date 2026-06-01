@@ -1,4 +1,4 @@
-/**
+﻿/**
  * api.ts
  * OSINT Risk Intelligence API Client
  */
@@ -7,9 +7,6 @@ import { parseApiJson } from './text_encoding';
 
 /** Default page size for Alert Stream list endpoints. */
 export const ALERT_STREAM_DISPLAY_LIMIT = 30;
-
-/** Default page size for Context Briefs list endpoints. */
-export const CONTEXT_BRIEFS_DISPLAY_LIMIT = 40;
 
 /** Dashboard hosts that serve static files only (API is on Render). */
 const STATIC_DASHBOARD_HOSTS = new Set(['veltrixia.net', 'www.veltrixia.net']);
@@ -158,6 +155,24 @@ export async function initApiBase(): Promise<string> {
     if (apiBaseInitPromise) return apiBaseInitPromise;
 
     apiBaseInitPromise = (async () => {
+        // ── DEV DIRECT PASSTHROUGH ───────────────────────────────────────────
+        // Under `vite` dev (`npm run dev`), bypass ALL probe/cache magic and pin
+        // the base straight at the local backend port — CORS already allows
+        // localhost:5173 → :8000, so the alerts fetch fires cleanly with zero
+        // ambient configuration. Any stale/mismatched cached base is purged first.
+        // (A production `vite build` sets DEV=false and uses the probe path below.)
+        if (
+            import.meta.env.DEV
+            && typeof window !== 'undefined'
+            && ['localhost', '127.0.0.1'].includes(window.location.hostname)
+        ) {
+            try { sessionStorage.removeItem(API_PROBE_CACHE_KEY); } catch { /* noop */ }
+            const devBase = `${window.location.protocol}//${window.location.hostname}:8000/api`;
+            cachedApiBase = devBase;
+            console.log(`[API] DEV direct passthrough base (forced): ${devBase}`);
+            return devBase;
+        }
+
         const cached = sessionStorage.getItem(API_PROBE_CACHE_KEY);
         if (cached) {
             cachedApiBase = cached;
@@ -222,7 +237,7 @@ export async function isSyntheticNetworkResponse(resp: Response): Promise<boolea
 }
 
 /**
- * Route paths are `/alerts`, `/free/alerts`, … (no `/api` prefix).
+ * Route paths are `/alerts`, `/reports`, … (no `/api` prefix).
  * Base already ends with `/api` — strip duplicate `/api` to avoid `/api/api/...`.
  */
 function normalizeApiPath(path: string): string {
@@ -233,7 +248,7 @@ function normalizeApiPath(path: string): string {
     return p;
 }
 
-/** Build absolute URL for an API path (`/alerts`, `/free/alerts`, …). */
+/** Build absolute URL for an API path (`/alerts`, `/reports`, …). */
 export function buildApiUrl(path: string): string {
     const base = getResolvedApiBase().replace(/\/$/, '');
     return `${base}${normalizeApiPath(path)}`;
@@ -294,6 +309,7 @@ export interface Alert {
     intensity: number;
     intensity_label: string;
     intensity_display: string;
+    intensity_pct?: number | null;
     status: string;
     country?: string;
     description?: string;
@@ -381,51 +397,6 @@ export interface ExpertIntelligence {
     cross_domain_risks?: any[];
 }
 
-export interface FreeAlertFeedItem {
-    alert_id: string;
-    title: string;
-    topic: string;
-    target_label: string;
-    triggered_at: string;
-    related_news_count: number;
-    related_news_source: string;
-    related_entities_count: number;
-    related_news?: {
-        title: string;
-        source: string;
-        category: string;
-        published: string;
-        url: string | null;
-    }[];
-    content_markdown: string;
-    generated_at?: string;
-    /** Registry / fallback context for location-linked rows (Context Briefs). */
-    location_context?: Record<string, unknown>;
-    /** Structured rows for Related Companies (preferred over markdown table parse). */
-    company_impacts?: {
-        company_name?: string | null;
-        ticker?: string | null;
-        entity_id?: string | null;
-        entity_type?: string | null;
-        sector?: string | null;
-        country?: string | null;
-        match_basis?: string[];
-        /** Location registry entity type: `country` → geopolitical bucket in UI */
-        registry_entity_type?: string | null;
-    }[];
-    /** Sector aggregates for Structural Exposure badges (sorted server-side). */
-    sector_impacts?: {
-        sector?: string | null;
-        matched_entities: number;
-        entity_id?: string | null;
-        entity_type?: string | null;
-        label?: string | null;
-        name?: string | null;
-    }[];
-    /** Entity rows not included in `company_impacts` on Free (Pro gate); 0 when paid tier. */
-    additional_pro_count?: number;
-}
-
 export interface ProStructuralReportItem {
     id: string;
     title: string;
@@ -438,9 +409,6 @@ export interface ProStructuralReportItem {
     teaser_md?: string;
     structured_payload?: any;
 }
-
-/** Alias for Context Briefs feed responses (`fetchFreeAlerts`). */
-export type FreeAlertFeedList = FreeAlertFeedItem[];
 
 /** Alias for Pro structural brief collections (`fetchProStructuralReports`). */
 export type ProStructuralReportList = ProStructuralReportItem[];
@@ -633,6 +601,79 @@ export async function fetchAlert(id: string): Promise<Alert> {
     return await resp.json();
 }
 
+// ── Monthly Trend Flow ──────────────────────────────────────────────────────
+
+export interface MonthlyTrendIndexItem {
+    year: number;
+    month: number;
+    label: string;
+    generated_at: string | null;
+    alerts_total: number;
+    alerts_spiked: number;
+}
+
+export interface MonthlyTrendNode {
+    id: string;
+    domain_id: string;
+    site_key: string;
+    name: string;
+    lat: number;
+    lon: number;
+    impact_score: number;
+    entropy_index: number;
+    viscosity_coefficient: number;
+    type: 'epicenter' | 'affected';
+    event_count: number;
+    source_alert_ids: string[];
+}
+
+export interface MonthlyTrendEdge {
+    domain_id: string;
+    source_id: string | null;
+    target_id: string | null;
+    source_lon: number;
+    source_lat: number;
+    target_lon: number;
+    target_lat: number;
+    intensity: number;
+    edge_intensity: number;
+    viscosity_coefficient: number;
+    order_level: number;
+    target_order: number;
+    source_alert_ids: string[];
+}
+
+export interface MonthlyTrendSnapshot {
+    period: { year: number; month: number; label: string; start: string; end: string };
+    generated_at: string | null;
+    schema_version: string;
+    summary: Record<string, any>;
+    nodes: MonthlyTrendNode[];
+    edges: MonthlyTrendEdge[];
+}
+
+export async function fetchMonthlyTrendIndex(): Promise<MonthlyTrendIndexItem[]> {
+    const resp = await apiClient.get('/monthly-trends');
+    if (!resp.ok) throw new Error(`Could not load trend archive (HTTP ${resp.status}).`);
+    const data = await parseApiJson<MonthlyTrendIndexItem[]>(resp);
+    return Array.isArray(data) ? data : [];
+}
+
+/** Newest archived month, or null when none have been generated yet (404). */
+export async function fetchLatestMonthlyTrend(): Promise<MonthlyTrendSnapshot | null> {
+    const resp = await apiClient.get('/monthly-trends/latest');
+    if (resp.status === 404) return null;
+    if (!resp.ok) throw new Error(`Could not load latest trend (HTTP ${resp.status}).`);
+    return await parseApiJson<MonthlyTrendSnapshot>(resp);
+}
+
+export async function fetchMonthlyTrend(year: number, month: number): Promise<MonthlyTrendSnapshot | null> {
+    const resp = await apiClient.get(`/monthly-trends/${year}/${month}`);
+    if (resp.status === 404) return null;
+    if (!resp.ok) throw new Error(`Could not load ${year}-${month} trend (HTTP ${resp.status}).`);
+    return await parseApiJson<MonthlyTrendSnapshot>(resp);
+}
+
 export async function fetchLiveAlerts(limit: number = ALERT_STREAM_DISPLAY_LIMIT): Promise<Alert[]> {
     const resp = await apiClient.get(`/alerts/live?limit=${limit}`);
     return resp.ok ? await resp.json() : [];
@@ -647,43 +688,6 @@ export async function fetchReport(id: string): Promise<Report> {
     const resp = await apiClient.get(`/reports/${id}`);
     if (!resp.ok) throw new Error("Report not found");
     return await resp.json();
-}
-
-export async function fetchFreeAlerts(
-    params: { topic?: string; limit?: number } = {}
-): Promise<FreeAlertFeedList> {
-    const query = new URLSearchParams();
-    if (params.topic) query.set('topic', params.topic);
-    query.set('limit', String(params.limit ?? CONTEXT_BRIEFS_DISPLAY_LIMIT));
-    const qs = query.toString();
-    const resp = await apiClient.get(`/free/alerts${qs ? `?${qs}` : ''}`);
-    if (!resp.ok) {
-        const detail = await resp.text().catch(() => '');
-        console.error('[API] fetchFreeAlerts HTTP', resp.status, detail?.slice(0, 200));
-        if (await isSyntheticNetworkResponse(resp)) {
-            throw new Error(
-                `API host unreachable (${getResolvedApiBase()}). ` +
-                    'The Render API service may be stopped (check osint-platform deploy / uvicorn).',
-            );
-        }
-        throw new Error(
-            resp.status === 429
-                ? 'Rate limited. Try again in a minute.'
-                : `Could not load alerts (HTTP ${resp.status}).`
-        );
-    }
-    const data = await parseApiJson<FreeAlertFeedItem[]>(resp);
-    if (!Array.isArray(data)) {
-        console.error('[API] fetchFreeAlerts: expected JSON array, got', typeof data);
-        throw new Error('Invalid response from server.');
-    }
-    return data;
-}
-
-export async function fetchFreeAlert(id: string): Promise<FreeAlertFeedItem> {
-    const resp = await apiClient.get(`/free/alerts/${id}`);
-    if (!resp.ok) throw new Error('Free alert not found');
-    return await parseApiJson<FreeAlertFeedItem>(resp);
 }
 
 export async function fetchAnalysts(): Promise<AnalystProfile[]> {
@@ -797,6 +801,32 @@ export async function fetchProStructuralReports(): Promise<ProStructuralReportLi
     return resp.ok ? await parseApiJson<ProStructuralReportList>(resp) : [];
 }
 
+export type FragilityHistoryPoint = {
+    timestamp: string;
+    entropy_index: number;
+    viscosity_coefficient: number;
+    label?: string;
+    phase_transition_warning?: boolean;
+};
+
+export type FragilityHistory = {
+    domain_id: string;
+    days: number;
+    series: FragilityHistoryPoint[];
+};
+
+export async function fetchFragilityHistory(domainId: string, days = 7): Promise<FragilityHistory | null> {
+    try {
+        const resp = await apiClient.get(
+            `/pro/domains/${encodeURIComponent(domainId)}/fragility-history?days=${days}`,
+            { cache: 'no-store' },
+        );
+        if (!resp.ok) return null;
+        return await resp.json() as FragilityHistory;
+    } catch {
+        return null;
+    }
+}
 export async function fetchProStructuralReport(id: string): Promise<ProStructuralReportItem> {
     const resp = await apiClient.get(`/pro/reports/${id}`, {
         cache: 'no-store',
@@ -804,4 +834,380 @@ export async function fetchProStructuralReport(id: string): Promise<ProStructura
     });
     if (!resp.ok) throw new Error("Pro report not found");
     return await parseApiJson<ProStructuralReportItem>(resp);
+}
+
+export type MacroTransmissionData = {
+    source: string;
+    target: string;
+    lag_days: number;
+    correlation: number;
+    beta: number;
+    series: Array<{
+        date: string;
+        macro_value: number;
+        intensity: number;
+    }>;
+    /** "daily" or "monthly" — engine-reported sampling resolution */
+    resolution?: 'daily' | 'monthly';
+    roc_window_days?: number;
+    days_lookback?: number;
+};
+
+export type MacroTransmissionMacroOption = {
+    id: string;
+    label: string;
+    name?: string;
+    category?: string;
+    frequency?: string;
+    unit_label?: string;
+    accent_color?: string;
+    provider?: string;
+};
+
+export type MacroTransmissionTopicOption = {
+    id: string;
+    label: string;
+    description?: string;
+    accent_color?: string;
+    glow_color?: string;
+};
+
+export type MacroTransmissionOptions = {
+    macro_series: MacroTransmissionMacroOption[];
+    target_topics: MacroTransmissionTopicOption[];
+    defaults: { macro_ticker: string; target_topic: string };
+};
+
+/** Hardcoded fallback used when the /options endpoint is unreachable. */
+const MACRO_OPTIONS_FALLBACK: MacroTransmissionOptions = {
+    macro_series: [
+        { id: 'DCOILWTICO', label: 'WTI Crude Oil (Spot)',     category: 'energy',           frequency: 'daily',   unit_label: 'USD / barrel',         accent_color: '#eab308', provider: 'FRED' },
+        { id: 'DGS10',      label: 'US 10-Year Treasury Yield', category: 'monetary_policy', frequency: 'daily',   unit_label: '% (annualised)',       accent_color: '#58a6ff', provider: 'FRED' },
+        { id: 'VIXCLS',     label: 'VIX (Volatility Index)',    category: 'volatility',      frequency: 'daily',   unit_label: 'Index (annualised %)', accent_color: '#f87171', provider: 'FRED' },
+        { id: 'PCOPPUSDM',  label: 'Global Copper Price',       category: 'commodities',     frequency: 'monthly', unit_label: 'USD / metric ton',     accent_color: '#f97316', provider: 'FRED' },
+        { id: 'DTWEXBGS',   label: 'Broad USD Index',           category: 'currency',        frequency: 'daily',   unit_label: 'Index (Jan-2006 = 100)', accent_color: '#22d3ee', provider: 'FRED' },
+    ],
+    target_topics: [
+        { id: 'energy_resource_risk',          label: 'Energy & Resource Risk',     accent_color: '#eab308', glow_color: 'rgba(234,179,8,0.45)' },
+        { id: 'global_market_intelligence',    label: 'Global Market Intelligence', accent_color: '#58a6ff', glow_color: 'rgba(88,166,255,0.45)' },
+        { id: 'ai_semiconductor_intelligence', label: 'AI & Semiconductor',         accent_color: '#bc8cff', glow_color: 'rgba(188,140,255,0.45)' },
+        { id: 'supply_chain_intelligence',     label: 'Supply Chain Intelligence',  accent_color: '#10b981', glow_color: 'rgba(16,185,129,0.45)' },
+        { id: 'defense_technology',            label: 'Defense Technology',         accent_color: '#f87171', glow_color: 'rgba(248,113,113,0.40)' },
+        { id: 'crypto_geopolitics',            label: 'Crypto Geopolitics',         accent_color: '#f59e0b', glow_color: 'rgba(245,158,11,0.45)' },
+    ],
+    defaults: { macro_ticker: 'DCOILWTICO', target_topic: 'supply_chain_intelligence' },
+};
+
+let macroOptionsCache: MacroTransmissionOptions | null = null;
+
+/**
+ * Fetch the Dynamic Macro Selector option catalog from the API.
+ * Cached for the lifetime of the session. Falls back to a hardcoded list when
+ * the endpoint is unreachable so the selector UI is never empty.
+ */
+export async function fetchMacroTransmissionOptions(): Promise<MacroTransmissionOptions> {
+    if (macroOptionsCache) return macroOptionsCache;
+    try {
+        const resp = await apiClient.get('/insights/macro-transmission/options');
+        if (resp.ok) {
+            const data = (await resp.json()) as MacroTransmissionOptions;
+            if (data?.macro_series?.length && data?.target_topics?.length) {
+                macroOptionsCache = data;
+                return data;
+            }
+        }
+    } catch (e) {
+        console.warn('[Macro Selector] /options endpoint unreachable, using fallback', e);
+    }
+    macroOptionsCache = MACRO_OPTIONS_FALLBACK;
+    return MACRO_OPTIONS_FALLBACK;
+}
+
+export type MacroRegime = {
+    regime: string;
+    label: string;
+    emoji: string;
+    accent_color: string;
+    glow_color: string;
+    rationale: string;
+    components: {
+        rates_roc_pct: number | null;
+        oil_roc_pct: number | null;
+        vix_roc_pct: number | null;
+        series_ids: { rates: string; oil: string; vix: string };
+        trigger_thresholds_pct: { rates: number; oil: number; vix: number };
+    };
+    observation_window_days: number;
+    generated_at: string;
+};
+
+export async function fetchMacroRegime(): Promise<MacroRegime | null> {
+    try {
+        const resp = await apiClient.get('/insights/macro-regime');
+        return resp.ok ? ((await resp.json()) as MacroRegime) : null;
+    } catch (e) {
+        console.warn('[Macro Regime] fetch failed', e);
+        return null;
+    }
+}
+
+// ── Market Entropy ───────────────────────────────────────────────────────
+export type MarketEntropy = {
+    entropy_normalised: number;
+    topic_entropy_normalised: number;
+    intensity_entropy_normalised: number;
+    topic_entropy_nats: number;
+    intensity_entropy_nats: number;
+    n_alerts: number;
+    topic_distribution: Record<string, number>;
+    intensity_distribution: { low: number; medium: number; high: number };
+    window_hours: number;
+    breakout_threshold: number;
+    breakout_warning: boolean;
+    regime_label: string;
+    regime_emoji: string;
+    accent_color: string;
+    glow_color: string;
+    interpretation: string;
+    generated_at: string;
+};
+
+export async function fetchMarketEntropy(): Promise<MarketEntropy | null> {
+    try {
+        const resp = await apiClient.get('/insights/market-entropy');
+        return resp.ok ? ((await resp.json()) as MarketEntropy) : null;
+    } catch (e) {
+        console.warn('[Market Entropy] fetch failed', e);
+        return null;
+    }
+}
+
+// ── Choke-Point Flow ─────────────────────────────────────────────────────
+export type ChokePointNode = {
+    id: string;
+    label: string;
+    lat: number;
+    lng: number;
+    daily_volume_mbpd: number;
+    primary_commodity?: string | null;
+    description?: string | null;
+    viscosity: number;
+    peak_intensity: number;
+    matched_alert_count: number;
+    matched_alerts: Array<{
+        alert_id: string;
+        topic?: string | null;
+        domain?: string | null;
+        intensity: number;
+        target_label?: string | null;
+        triggered_at?: string | null;
+    }>;
+    restriction: number;
+    restriction_label: string;
+    downstream_sectors: string[];
+};
+export type ChokePointEdge = {
+    from_node: string;
+    from_label: string;
+    sector: string;
+    drag: number;
+    explanation: string;
+};
+export type ChokePointFlow = {
+    nodes: ChokePointNode[];
+    edges: ChokePointEdge[];
+    global_restriction: number;
+    global_restriction_label: string;
+    window_hours: number;
+    baseline_viscosity: number;
+    generated_at: string;
+};
+
+export async function fetchChokePointFlow(): Promise<ChokePointFlow | null> {
+    try {
+        const resp = await apiClient.get('/insights/choke-points');
+        return resp.ok ? ((await resp.json()) as ChokePointFlow) : null;
+    } catch (e) {
+        console.warn('[Choke-Point Flow] fetch failed', e);
+        return null;
+    }
+}
+
+// ── Hidden Accumulation ──────────────────────────────────────────────────
+export type COTOverlay = {
+    market: string;
+    latest_report_date: string | null;
+    comm_net_position_latest: number;
+    comm_net_position_prior: number;
+    comm_net_delta_contracts: number;
+    accumulation_direction: 'buying' | 'selling' | 'flat';
+};
+export type HiddenAccumulationFinding = {
+    macro_ticker: string;
+    topic: string;
+    intensity_ratio: number;
+    current_peak_intensity: number;
+    baseline_peak_intensity: number;
+    price_change_pct_24h: number;
+    cot_overlay: COTOverlay | null;
+    verdict: {
+        label: string;
+        emoji: string;
+        accent_color: string;
+        rationale: string;
+    };
+    window_start: string;
+    window_end: string;
+};
+export type HiddenAccumulation = {
+    findings: HiddenAccumulationFinding[];
+    inspected_pairs: Array<{
+        macro_ticker: string;
+        topic: string;
+        current_peak_intensity: number;
+        baseline_peak_intensity: number;
+        price_change_pct_24h: number | null;
+    }>;
+    cluster_window_hours: number;
+    reignite_factor: number;
+    min_baseline_intensity: number;
+    generated_at: string;
+};
+
+export async function fetchHiddenAccumulation(): Promise<HiddenAccumulation | null> {
+    try {
+        const resp = await apiClient.get('/insights/hidden-accumulation');
+        return resp.ok ? ((await resp.json()) as HiddenAccumulation) : null;
+    } catch (e) {
+        console.warn('[Hidden Accumulation] fetch failed', e);
+        return null;
+    }
+}
+
+// ── Sanctions Network ────────────────────────────────────────────────────
+export type SanctionsNode = {
+    id: string;
+    name: string;
+    country: string | null;
+    sector: string | null;
+    domain: string | null;
+    ticker: string | null;
+    sanctioned_status: boolean;
+    sanction_program: string | null;
+    pep_score: number | null;
+    network_score: number;
+    tier: 'primary' | 'direct_collateral' | 'indirect_collateral' | 'background';
+    accent_color: string;
+};
+export type SanctionsEdge = {
+    source_id: string;
+    target_id: string;
+    type: string | null;
+    exposure_weight: number;
+    beta_correlation: number;
+};
+export type SanctionsNetwork = {
+    nodes: SanctionsNode[];
+    edges: SanctionsEdge[];
+    root_entity_id: string | null;
+    stats: {
+        primary_count: number;
+        direct_collateral_count: number;
+        indirect_collateral_count: number;
+        total_nodes: number;
+        total_edges: number;
+        reason?: string;
+    };
+};
+
+export async function fetchSanctionsNetwork(rootEntityId?: string, maxNodes = 60): Promise<SanctionsNetwork | null> {
+    try {
+        const qs = new URLSearchParams({ max_nodes: String(maxNodes) });
+        if (rootEntityId) qs.set('root_entity_id', rootEntityId);
+        const resp = await apiClient.get(`/insights/sanctions-network?${qs.toString()}`);
+        return resp.ok ? ((await resp.json()) as SanctionsNetwork) : null;
+    } catch (e) {
+        console.warn('[Sanctions Network] fetch failed', e);
+        return null;
+    }
+}
+
+export type MacroMatrixCell = {
+    macro_id: string;
+    topic_id: string;
+    correlation: number | null;
+    lag_days: number | null;
+    sample_size: number;
+    status: string;
+};
+
+export type MacroMatrix = {
+    macros: string[];
+    topics: string[];
+    cells: MacroMatrixCell[][];
+    generated_at: string;
+    lookback_days: number;
+    roc_window_days: number;
+};
+
+export async function fetchMacroMatrix(): Promise<MacroMatrix | null> {
+    try {
+        const resp = await apiClient.get('/insights/macro-matrix');
+        return resp.ok ? ((await resp.json()) as MacroMatrix) : null;
+    } catch (e) {
+        console.warn('[Macro Matrix] fetch failed', e);
+        return null;
+    }
+}
+
+export async function fetchMacroTransmission(
+    macroTicker: string = 'DCOILWTICO',
+    targetTopic: string = 'supply_chain_intelligence',
+    includeInverse: boolean = false,
+): Promise<MacroTransmissionData | null> {
+    const params = new URLSearchParams({
+        macro_ticker: macroTicker,
+        // include the legacy `source` alias too so older API deployments
+        // that haven't picked up the macro_ticker rename still work.
+        source: macroTicker,
+        target_topic: targetTopic,
+        include_inverse: includeInverse ? 'true' : 'false',
+    });
+    const resp = await apiClient.get(`/insights/macro-transmission?${params.toString()}`);
+    return resp.ok ? await resp.json() : null;
+}
+
+export type DrilldownData = {
+    topic: string;
+    top_entities: Array<{
+        name: string;
+        count: number;
+        max_intensity: number;
+        severity: string;
+    }>;
+    trigger_news: Array<{
+        id: string;
+        headline: string;
+        display_title: string;
+        intensity: number;
+        severity: string;
+        fidelity_score: number;
+        timestamp: string | null;
+        source: string;
+        url: string | null;
+        trigger_type: string;
+        supporting_sources_count: number;
+    }>;
+    sector_stats: {
+        total_alerts: number;
+        avg_intensity: number;
+        peak_intensity: number;
+        window_hours: number;
+    };
+};
+
+export async function fetchSectorDrilldown(topic: string): Promise<DrilldownData | null> {
+    const params = new URLSearchParams({ topic });
+    const resp = await apiClient.get(`/insights/pro/drilldown?${params.toString()}`);
+    return resp.ok ? await resp.json() : null;
 }

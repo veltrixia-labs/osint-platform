@@ -2,6 +2,7 @@ import type { UserMe } from '../api';
 import { toggleAdminTier } from '../api';
 import { isAuthSessionPending } from '../auth_session';
 import { closeMobileSidebar } from '../mobile_nav';
+import { DEV_MODE_AUDIT } from '../dev_mode';
 
 /**
  * [Phase 3] Role-aware Navigation Renderer
@@ -23,7 +24,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
     // Core – available to all
     { id: 'feed',         label: 'Alert Stream',        icon: '📡', minTier: 'free',    group: 'core' },
-    { id: 'briefs',       label: 'Context Briefs',       icon: '🛰',  minTier: 'free',    group: 'core' },
+    { id: 'trend-flow',   label: 'Monthly Trend Flow',   icon: '🌊', minTier: 'free',    group: 'core' },
     { id: 'map',          label: 'Global Map',           icon: '🌐', minTier: 'free',    group: 'core' },
     // Premium – gated (quantitative pulse → qualitative briefs → spatial map)
     { id: 'market-pulse', label: 'Market Pulse',         icon: 'trending_up', minTier: 'pro', group: 'premium' },
@@ -126,10 +127,16 @@ export function renderNavigation(
                 <div class="nav-group-label">${title}</div>
                 ${visibleItems.map(item => {
                     const isActive = item.id === activeTab;
+                    // Dev Mode / Audit Build: never mark items as locked so all tabs
+                    // are fully navigable for review.
                     const isLockedForFree =
-                        !sessionPending && tier === 'free' && FREE_LOCKED_TABS.has(item.id);
+                        !DEV_MODE_AUDIT
+                        && !sessionPending
+                        && tier === 'free'
+                        && FREE_LOCKED_TABS.has(item.id);
                     const accessible =
                         sessionPending
+                        || DEV_MODE_AUDIT
                         || (!isLockedForFree && canAccess(tier, item.minTier));
                     return `
                         <div
@@ -179,18 +186,31 @@ export function renderNavigation(
               `;
 
     const isAdmin = user.is_admin === true || user.role === 'admin';
-    const localDevConsoleHtml = isDevOverride
+    const isLocalDev = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    // Effective dev tier for the toggle's active state.
+    const activeDevTier = (tier === 'experts' || tier === 'enterprise') ? 'experts'
+        : (tier === 'pro' ? 'pro' : 'free');
+    const devTierTab = (val: string, label: string): string => {
+        const active = (val === '' ? activeDevTier === 'free' : activeDevTier === val);
+        return `<button type="button" class="nav-dev-tab${active ? ' nav-dev-tab--active' : ''}" `
+            + `data-local-dev-tier="${val}" aria-pressed="${active}">${label}</button>`;
+    };
+    // Triple-tier playground — always available on localhost so a guest can jump
+    // up to Pro/Expert (and back) with one click. Override applies in dev mode.
+    const localDevConsoleHtml = isLocalDev
         ? `
             <div class="nav-dev-console">
-                <div class="nav-dev-console-label">Local Dev Tier</div>
-                <div class="nav-dev-console-actions">
-                    <button type="button" class="nav-dev-btn" data-local-dev-tier="experts">Expert UI</button>
-                    <button type="button" class="nav-dev-btn" data-local-dev-tier="pro">Pro UI</button>
-                    <button type="button" class="nav-dev-btn nav-dev-btn--reset" data-local-dev-tier="">Reset tier</button>
+                <div class="nav-dev-console-label">LOCAL DEV TIER</div>
+                <div class="nav-dev-tier-tabs" role="group" aria-label="Local dev tier override">
+                    ${devTierTab('', 'FREE')}
+                    ${devTierTab('pro', 'PRO')}
+                    ${devTierTab('experts', 'EXPERT')}
                 </div>
-                <div class="nav-dev-console-hint">Set LOCAL_DEV_TIER=${tier} in API .env for matching API access.</div>
             </div>
         `
+        : '';
+    const expertBadgeHtml = activeDevTier === 'experts'
+        ? `<div class="nav-expert-badge" title="Expert tier active — audit surface for expert-only quantitative features">[ EXPERT DEV MODE ]</div>`
         : '';
     const adminDevConsoleHtml = isAdmin
         ? `
@@ -218,6 +238,7 @@ export function renderNavigation(
                 <div class="nav-role-tier-label" style="color: ${tierColor};">${displayTierLabel.toUpperCase()}</div>
                 <div class="nav-role-email" title="${displayEmail}">${displayEmail}</div>
             </div>
+            ${expertBadgeHtml}
             ${devConsoleHtml}
             ${authFooterHtml}
             ${footerCtaHtml}

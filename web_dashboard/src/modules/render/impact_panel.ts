@@ -38,9 +38,9 @@ export function renderImpactSidebar(containerId: string, alert: Alert, mapInstan
             <h3 style="margin: 0; font-size: 1rem; color: #c9d1d9;">${alert.target_label || 'Active Event'}</h3>
             
             <div style="display: flex; justify-content: space-between; margin-top: 1rem; font-size: 0.75rem;">
-                <div style="padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: ${currentStatus === 'complete' ? '#3fb950' : (currentStatus === 'failed' ? '#f85149' : '#58a6ff')}">
-                    ${currentStatus === 'complete' ? 'ANALYSIS COMPLETE' : (currentStatus === 'failed' ? 'ANALYSIS FAILED' : 'ANALYZING...')}
-                </div>
+                ${(currentStatus === 'complete' || currentStatus === 'failed')
+                    ? `<div style="padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: ${currentStatus === 'complete' ? '#3fb950' : '#f85149'}">${currentStatus === 'complete' ? 'ANALYSIS COMPLETE' : 'ANALYSIS FAILED'}</div>`
+                    : `<div></div>`}
                 <div style="color: #8b949e;">${impacts.length} NODES</div>
             </div>
 
