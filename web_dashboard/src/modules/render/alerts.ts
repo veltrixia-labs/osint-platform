@@ -328,6 +328,13 @@ function chudRowHtml(alert: Alert): string {
         ? '<span class="alert-headline-skeleton alert-headline-skeleton--inline" aria-hidden="true"></span>'
         : chudEscape(headline.text);
 
+    // Cluster density: number of corroborating sources merged into this signal.
+    // A multi-source signal (a clustered master) gets a glassmorphism count badge.
+    const sourceCount = Array.isArray(alert.evidence_list) ? alert.evidence_list.length : 0;
+    const sourceBadge = sourceCount > 1
+        ? `<span class="chud-source-badge" title="${sourceCount} corroborating sources clustered into this signal">${sourceCount} SRC</span>`
+        : '';
+
     return `
         <button type="button" class="chud-row severity-${sev}${active}${locked ? ' chud-row--locked' : ''}"
             data-id="${chudEscape(alert.id)}" style="${getTopicCssVars(canonicalTopic)}"
@@ -337,7 +344,10 @@ function chudRowHtml(alert: Alert): string {
             <span class="chud-row-token">${token}</span>
             <span class="chud-row-sev chud-sev--${sev}">${sev.toUpperCase().slice(0, 4)}</span>
             <span class="chud-row-topic" style="color:${topicColor}">${topicLabel}</span>
-            <span class="chud-row-headline">${locked ? '🔒 ' : ''}${headlineHtml}</span>
+            <span class="chud-row-headline">
+                <span class="chud-row-headline-text">${locked ? '🔒 ' : ''}${headlineHtml}</span>
+                ${sourceBadge}
+            </span>
             <span class="chud-row-caret" aria-hidden="true">▸</span>
         </button>`;
 }
@@ -369,7 +379,10 @@ function chudTagChip(label: string, kind: string): string {
 function chudTopologyHtml(satellites: string[], sev: ThreatLevelTier): string {
     // Wide viewBox + centered graph leaves generous horizontal room so full
     // sector labels (e.g. "Energy & Resources") render without ellipsis truncation.
-    const cx = 160, cy = 80, R = 52;
+    // R bumped (52 → 68) so the outer triad sits well clear of the central
+    // epicenter node — long sector strings ("Global Market Intel") no longer
+    // crash into the core. The wider viewBox below absorbs the larger radius.
+    const cx = 160, cy = 80, R = 68;
     const sats = satellites.filter(Boolean).slice(0, 4);
     const n = Math.max(2, sats.length);
     // Phase 8.48 — snap every coordinate to whole pixels (integers). Decimal
@@ -394,9 +407,11 @@ function chudTopologyHtml(satellites: string[], sev: ThreatLevelTier): string {
     // never re-rasterises the glyphs.
     const satLabels = pts.map(p => {
         // No mid-word ellipsis for real labels; only guard against pathological length.
-        const short = p.label.length > 24 ? p.label.slice(0, 23) + '…' : p.label;
+        const short = p.label.length > 28 ? p.label.slice(0, 27) + '…' : p.label;
         const anchor = Math.abs(p.x - cx) < 6 ? 'middle' : (p.x < cx ? 'end' : 'start');
-        const lx = Math.round(anchor === 'middle' ? p.x : (p.x < cx ? p.x - 8 : p.x + 8));
+        // Push the label further off the node (8 → 12) so outward text clears both
+        // the satellite dot and the central core across every filter/node count.
+        const lx = Math.round(anchor === 'middle' ? p.x : (p.x < cx ? p.x - 12 : p.x + 12));
         const ly = Math.round(p.y < cy ? p.y - 9 : p.y + 15);
         return `<text class="chud-topo-label" x="${lx}" y="${ly}" text-anchor="${anchor}" shape-rendering="crispEdges" alignment-baseline="mathematical">${chudEscape(short)}</text>`;
     }).join('');
@@ -404,7 +419,7 @@ function chudTopologyHtml(satellites: string[], sev: ThreatLevelTier): string {
         <section class="chud-block chud-topo">
             <div class="chud-block-label">CONTEXTUAL TOPOLOGY <span class="chud-block-count">${pts.length}</span></div>
             <div class="chud-topo-wrap">
-                <svg class="chud-topo-svg" viewBox="0 -12 320 174" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <svg class="chud-topo-svg" viewBox="-30 -16 380 188" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
                     <g class="topo-dynamic-layer">
                         ${edges}
                         ${satDots}

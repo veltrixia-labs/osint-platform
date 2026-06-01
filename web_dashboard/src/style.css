@@ -9964,9 +9964,36 @@ body.checkout-email-modal-scroll-lock {
   color: #eaf6ff;
   font-family: var(--font-sans, system-ui), sans-serif;
   font-size: 0.78rem;
+  /* flex so the cluster badge can dock at the cell's right edge while the
+     headline text still ellipsizes — keeps the 7-column row grid intact. */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+.chud-row-headline-text {
+  flex: 1 1 auto;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* Cluster density badge — glassmorphism count of corroborating sources. */
+.chud-source-badge {
+  flex: none;
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: var(--chud-cyan, #58e6ff);
+  background: rgba(0, 240, 255, 0.10);
+  border: 1px solid rgba(0, 240, 255, 0.30);
+  -webkit-backdrop-filter: blur(6px) saturate(150%);
+  backdrop-filter: blur(6px) saturate(150%);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.12), inset 0 0 6px rgba(0, 240, 255, 0.06);
 }
 .chud-row-caret { color: var(--chud-dim); justify-self: end; transition: transform 0.18s ease, color 0.18s ease; }
 
