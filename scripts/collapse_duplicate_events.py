@@ -43,8 +43,10 @@ logger = logging.getLogger("collapse_duplicate_events")
 
 
 def _alert_text(a: AlertLog) -> str:
+    # Headline only — descriptions share boilerplate vocabulary that falsely
+    # inflates similarity and chains distinct events together.
     meta = a.metadata_json if isinstance(a.metadata_json, dict) else {}
-    return f"{a.target_label or ''} {meta.get('display_title', '')} {meta.get('description', '')}"
+    return f"{a.target_label or ''} {meta.get('display_title', '')}"
 
 
 def _evidence(a: AlertLog) -> list:

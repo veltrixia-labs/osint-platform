@@ -184,6 +184,8 @@ def _diversify_headline(
 # of spamming the stream with near-duplicate rows.
 CLUSTER_WINDOW_HOURS = 24
 CLUSTER_SIM_THRESHOLD = 0.6                         # Jaccard on significant tokens → same event (high = precision over recall: only near-identical events cluster, never loosely-related geopolitics)
+CLUSTER_OVERLAP_THRESHOLD = 0.75                    # containment (overlap-coef): one headline's core is >=75% inside the other → force-cluster despite trailing text
+CLUSTER_MIN_SHARED = 4                              # min shared CORE tokens before the overlap path may fire (blocks short coincidental merges)
 CLUSTER_ESCALATION_FACTOR = REIGNITE_INTENSITY_FACTOR  # ≥1.5× master intensity breaks through as new alert
 CLUSTER_MAX_EVIDENCE = 40                           # cap merged corroborating sources on a master
 
@@ -209,21 +211,61 @@ def _stem(token: str) -> str:
     return token
 
 
+# Trailing distinctifiers appended by _distinctify_title / _diversify_headline
+# ("(via decrypt.co)", "[via nyt]", "(re-escalation)", " #2"). These MUST be
+# stripped before tokenizing — otherwise their unique tokens dilute the
+# containment/Jaccard score and let near-identical headlines slip the cluster
+# guard (the "Bessent … (via nytimes.com)" vs "… (via decrypt.co)" leak).
+_DISTINCTIFIER_RE = re.compile(
+    r"(?:\s*[\(\[]\s*via\b[^\)\]]*[\)\]]"      # (via x) / [via x]
+    r"|\s*\(\s*re-?escalation\s*\)"            # (re-escalation)
+    r"|\s*#\d+)\s*$",                          # trailing #N
+    re.IGNORECASE,
+)
+
+
+def _strip_distinctifiers(text: str) -> str:
+    """Remove trailing source-anchor / re-escalation / #N suffixes (possibly
+    stacked) so two variants of the same headline tokenize identically."""
+    s = text or ""
+    prev = None
+    while s != prev:
+        prev = s
+        s = _DISTINCTIFIER_RE.sub("", s)
+    return s.strip()
+
+
 def _event_tokens(text: str) -> set[str]:
-    """Significant, stemmed lowercase tokens (>=4 chars, non-stopword) for event
-    matching — so paraphrases of the SAME event share most of their token set."""
+    """Significant, stemmed lowercase tokens (>=3 chars, non-stopword) for event
+    matching — so paraphrases of the SAME event share most of their token set.
+    Trailing (via …)/(re-escalation)/#N distinctifiers are stripped first."""
+    cleaned = _strip_distinctifiers(text)
     return {
-        _stem(t) for t in re.findall(r"[a-z0-9]+", (text or "").lower())
+        _stem(t) for t in re.findall(r"[a-z0-9]+", cleaned.lower())
         if len(t) >= 3 and t not in _EVENT_STOPWORDS
     }
 
 
 def _event_similarity(a: set[str], b: set[str]) -> float:
-    """Jaccard overlap of two significant-token sets (0..1)."""
+    """Combined event-match score in [0,1].
+
+    Jaccard by default — but when two headlines share a strong CORE
+    (>= CLUSTER_MIN_SHARED tokens) and one is highly contained in the other
+    (overlap coefficient >= CLUSTER_OVERLAP_THRESHOLD), the higher score wins.
+    That fuzzy/containment path is what catches close variants whose only
+    difference is trailing text ("…Lebanon invasion" vs "…Lebanon invasion
+    (via bbc.com)"), which a strict Jaccard would let slip through.
+    """
     if not a or not b:
         return 0.0
-    union = len(a | b)
-    return (len(a & b) / union) if union else 0.0
+    inter = len(a & b)
+    if inter == 0:
+        return 0.0
+    jaccard = inter / len(a | b)
+    overlap = inter / min(len(a), len(b))      # containment of the smaller set
+    if inter >= CLUSTER_MIN_SHARED and overlap >= CLUSTER_OVERLAP_THRESHOLD:
+        return max(jaccard, overlap)
+    return jaccard
 
 
 def _raw_intensity_for_alert(alert_log: AlertLog) -> float:
@@ -721,7 +763,10 @@ class AlertManager:
         the master — in which case the caller emits a fresh escalated alert instead
         of absorbing it.
         """
-        incoming = _event_tokens(f"{display_label} {sig.target_label or ''} {sig.description or ''}")
+        # Cluster on the HEADLINE only — descriptions share heavy boilerplate
+        # vocabulary (e.g. Middle-East geopolitics) that falsely inflates overlap
+        # and chains distinct events together.
+        incoming = _event_tokens(f"{display_label} {sig.target_label or ''}")
         if not incoming:
             return None, False
 
@@ -741,7 +786,7 @@ class AlertManager:
         best, best_sim = None, 0.0
         for prev in rows:
             meta = prev.metadata_json if isinstance(prev.metadata_json, dict) else {}
-            prev_text = f"{prev.target_label or ''} {meta.get('display_title', '')} {meta.get('description', '')}"
+            prev_text = f"{prev.target_label or ''} {meta.get('display_title', '')}"
             sim = _event_similarity(incoming, _event_tokens(prev_text))
             if sim > best_sim:
                 best, best_sim = prev, sim
