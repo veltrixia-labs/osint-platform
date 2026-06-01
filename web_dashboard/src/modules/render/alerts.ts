@@ -404,7 +404,7 @@ function chudTopologyHtml(satellites: string[], sev: ThreatLevelTier): string {
         <section class="chud-block chud-topo">
             <div class="chud-block-label">CONTEXTUAL TOPOLOGY <span class="chud-block-count">${pts.length}</span></div>
             <div class="chud-topo-wrap">
-                <svg class="chud-topo-svg" viewBox="0 0 320 162" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <svg class="chud-topo-svg" viewBox="0 -12 320 174" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
                     <g class="topo-dynamic-layer">
                         ${edges}
                         ${satDots}
@@ -417,7 +417,6 @@ function chudTopologyHtml(satellites: string[], sev: ThreatLevelTier): string {
                         ${satLabels}
                     </g>
                 </svg>
-                <div class="chud-topo-cap">Localized dependency preview · full cascade on Pro Map ↓</div>
             </div>
         </section>`;
 }

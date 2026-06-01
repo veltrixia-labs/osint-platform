@@ -269,17 +269,15 @@ export function renderNavigation(
             const accessible = (el as HTMLElement).dataset.accessible === 'true';
             const tabId = (el as HTMLElement).dataset.tab!;
 
-            if (!accessible) {
-                if (tabId === 'expert-intel') {
-                    sessionStorage.setItem('plansFocusTier', 'experts');
-                    setPlansUpsellContext(
-                        'Expert tier unlocks LLM predictive vectoring, cross-border scenario modeling, and elevated alert intensity protocols.',
-                    );
-                } else {
-                    setPlansUpsellContext(
-                        'Pro / Expert access is required for this module. Please review the full scope of Pro / Expert capabilities.',
-                    );
-                }
+            // The three premium modules (FREE_LOCKED_TABS) are navigable even when
+            // locked: main.ts renders an in-place glassmorphism gate (premium
+            // shroud) with its own pricing/sign-in CTA. Other gated tabs (e.g.
+            // expert-intel) still route straight to the pricing layout.
+            if (!accessible && !FREE_LOCKED_TABS.has(tabId)) {
+                sessionStorage.setItem('plansFocusTier', 'experts');
+                setPlansUpsellContext(
+                    'Expert tier unlocks LLM predictive vectoring, cross-border scenario modeling, and elevated alert intensity protocols.',
+                );
                 onTabSwitch('plans');
             } else {
                 onTabSwitch(tabId);

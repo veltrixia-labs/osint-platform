@@ -9612,7 +9612,11 @@ body.checkout-email-modal-scroll-lock {
 
 /* ── Raw ingestion console ──────────────────────────────────────────── */
 .chud-console {
-  min-height: 132px;
+  /* Frozen height: the box is sized by the filter pad (left column) and HARD-
+     capped at 132px. It is never inflated by the live log — `.chud-monitor`
+     sets min-height:0 so appended log lines scroll internally instead of
+     growing the grid row and shoving SIGNAL STREAM off-screen. */
+  max-height: 132px;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--chud-edge);
@@ -9667,7 +9671,13 @@ body.checkout-email-modal-scroll-lock {
 .chud-log-track {
   flex: 2 1 0;
   min-width: 0;
-  overflow: hidden;
+  /* Internal scroll: lines append top-to-bottom and, once they exceed the
+     frozen box, scroll inside it (scrollbar hidden below). JS pins scrollTop to
+     the bottom so the freshest line stays visible without resizing the layout. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  max-height: 100%;
   padding: 6px 12px 8px;
   display: flex;
   flex-direction: column;
@@ -9729,8 +9739,12 @@ body.checkout-email-modal-scroll-lock {
 .chud-console-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1.5fr;
-  gap: 24px;
+  /* Compact-laptop fix: give the filter pad a real width floor (so long labels
+     like "Supply Chain Intelligence" stay within ~2 rows instead of wrapping to
+     an ugly 3rd), and let the monitor column take the remainder — which shifts
+     RAW INGESTION STREAM rightward into the previously dead right-hand space. */
+  grid-template-columns: minmax(330px, 1.45fr) minmax(0, 1fr);
+  gap: 20px;
   align-items: stretch;
   min-height: 0;
   padding: 10px 12px;
@@ -9758,6 +9772,11 @@ body.checkout-email-modal-scroll-lock {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* min-height:0 + overflow:hidden = the monitor (with its ever-appending log)
+     contributes 0 to the grid row's intrinsic height, so the row is sized by the
+     filter pad alone and the log is forced to scroll internally, never grow. */
+  min-height: 0;
+  overflow: hidden;
   border-left: 1px solid var(--chud-edge-soft);
   padding-left: 20px;
 }
@@ -9775,8 +9794,11 @@ body.checkout-email-modal-scroll-lock {
   padding-top: 6px;
 }
 .chud-monitor .chud-log-track {
-  flex: 1 1 auto;
-  height: 78px;
+  /* No auto-grow basis: the track fills the monitor's frozen height and scrolls
+     within it — it can never dictate the grid's vertical dimension. */
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 100%;
   padding: 0;
 }
 
@@ -10220,13 +10242,6 @@ body.checkout-email-modal-scroll-lock {
 .chud-topo-core--elevated { stroke: var(--chud-elev); filter: drop-shadow(0 0 10px var(--chud-elev)); }
 .chud-topo-core--watch { stroke: var(--chud-watch); filter: drop-shadow(0 0 10px var(--chud-watch)); }
 .chud-topo-core-dot { fill: #eaffff; filter: drop-shadow(0 0 6px var(--chud-cyan)); }
-.chud-topo-cap {
-  margin-top: 4px;
-  text-align: center;
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  color: var(--chud-dim);
-}
 
 .chud-detail-foot { margin-top: 2px; }
 .chud-bridge {

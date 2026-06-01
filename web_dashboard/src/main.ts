@@ -9,7 +9,7 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderTopicFilterBar, renderTrendFlow, disposeTrendFlow } from './modules/render/index'
+import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderTopicFilterBar, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
 import { normalizeTopicCode, type StrategicTopicCode } from './modules/topics'
 import { formatIntelTime } from './modules/render/utils'
 // (Pro reports now handled within Pro Insights hub)
@@ -753,25 +753,6 @@ async function initDashboard() {
         handleTabSwitch('plans');
     };
 
-    // Commercial guardrail: a FREE/guest session attempting any of the three
-    // premium modules (Market Pulse, Pro Insight, Pro Interactive Map) is cleanly
-    // blocked here and routed to the pricing layout. The effective tier is what
-    // gates — so the local dev tier tabs (FREE / PRO / EXPERT) audit both the
-    // locked and unlocked states instantly with no code change.
-    const routeToProPricing = () => {
-        sessionStorage.setItem('plansFocusTier', 'pro');
-        sessionStorage.setItem(
-            'plansUpsellBanner',
-            JSON.stringify({
-                message:
-                    'This module requires Pro access. Explore the full scope of Pro / Expert intelligence capabilities.',
-                ts: Date.now(),
-            }),
-        );
-        document.querySelector<HTMLElement>('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
-        handleTabSwitch('plans');
-    };
-
     const handleTabSwitch = (tab: TabId, focusAlertId?: string, skipPushState = false) => {
         closeMobileSidebar();
         if (tab !== 'market-pulse') {
@@ -835,17 +816,17 @@ async function initDashboard() {
             }
             else if (tab === 'market-pulse') {
                 if (isAuthSessionPending()) return;
-                if (!isProOrAbove(user!.tier)) { routeToProPricing(); return; }
+                if (!isProOrAbove(user!.tier)) { renderPremiumShroud(alertsContainer, 'market-pulse', user!, () => handleTabSwitch('plans')); return; }
                 renderMarketPulse(alertsContainer, user!, () => handleTabSwitch('plans'));
             }
             else if (tab === 'pro-insights') {
                 if (isAuthSessionPending()) return;
-                if (!isProOrAbove(user!.tier)) { routeToProPricing(); return; }
+                if (!isProOrAbove(user!.tier)) { renderPremiumShroud(alertsContainer, 'pro-insights', user!, () => handleTabSwitch('plans')); return; }
                 renderPro(alertsContainer, user!, () => handleTabSwitch('plans'));
             }
             else if (tab === 'pro-map') {
                 if (isAuthSessionPending()) return;
-                if (!isProOrAbove(user!.tier)) { routeToProPricing(); return; }
+                if (!isProOrAbove(user!.tier)) { renderPremiumShroud(proMapContainer!, 'pro-map', user!, () => handleTabSwitch('plans')); return; }
                 renderProMap();
             }
             else if (tab === 'expert-intel') {

@@ -14,3 +14,5 @@ export { renderProInsights, renderExpertIntel, disposeProInsightsView } from './
 export { renderMarketPulse, disposeMarketPulseView } from './market_pulse';
 export { renderProMap } from './pro_map';
 export { renderTrendFlow, disposeTrendFlow } from './trend_flow';
+export { renderPremiumShroud } from './premium_shroud';
+export type { ShroudFeature } from './premium_shroud';
