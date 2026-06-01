@@ -8,7 +8,7 @@ to provide analytical context for Pro Structural Briefs.
 import re
 import uuid
 import logging
-from typing import Optional, List, Dict, Any, Set
+from typing import Optional, List, Dict, Any, Set, Tuple
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +21,14 @@ from db.models import (
     MarketDataInstrument,
     MarketDataPrice,
     AlertLog,
-    Item
+    Item,
+    SystemicFragilityLog,
+    SpatialNode,
+    SpatialEdge,
+)
+from analysis.spatial_composite_risk import (
+    compute_composite_multiplier,
+    topic_to_spatial_domain,
 )
 from analysis.pro_domain_config import (
     PRO_DOMAIN_CONFIG,
@@ -35,18 +42,678 @@ from analysis.pro_global_series import (
 from analysis.pro_structural_compiler import (
     MIN_ALERT_CORRELATION,
     MIN_NEWS_CORRELATION,
+    PRO_REPORT_CLUSTER_WINDOW_HOURS,
+    PRO_REPORT_REIGNITE_FACTOR,
     _tokenize,
+    build_cascading_impacts,
+    build_quantitative_evidence_matrix,
     build_sector_vocabulary,
+    build_tail_risk_scenarios,
+    enforce_institutional_tone,
     filter_correlated_news_items,
     filter_correlated_timeline_events,
     structural_correlation_score,
 )
+from analysis.pro_systemic_physics import SystemicFragilityEngine
+from analysis.pro_geo_locator import GeoLocator
 from reports.text_encoding import sanitize_unicode_text, sanitize_unicode_tree
 
 logger = logging.getLogger(__name__)
 
-# Live alert clustering window (aligned with jobs.pro_generation_policy)
-ALERT_CLUSTER_WINDOW_HOURS = 24
+# Live alert clustering window — pinned to the institutional-grade Pro
+# threshold. Re-exported as a module-level constant so other modules don't
+# silently override it.
+ALERT_CLUSTER_WINDOW_HOURS: int = PRO_REPORT_CLUSTER_WINDOW_HOURS
+ALERT_REIGNITE_INTENSITY_FACTOR: float = PRO_REPORT_REIGNITE_FACTOR
+
+# Domain → primary macro series for the macro_transmission engine. Picked as
+# the canonical leading indicator per sector (see pro_domain_config relevance maps).
+_DOMAIN_PRIMARY_MACRO: Dict[str, str] = {
+    "energy_resource_risk":            "DCOILWTICO",
+    "global_market_intelligence":      "DGS10",
+    "ai_semiconductor_intelligence":   "PCU334413334413",
+    "supply_chain_intelligence":       "WPU101",
+    "defense_technology":              "FDEFX",
+    "crypto_geopolitics":              "DTWEXBGS",
+}
+
+# Domain → canonical UPPER topic used by AlertLog.topic.
+_DOMAIN_TO_UPPER_TOPIC: Dict[str, str] = {
+    "energy_resource_risk":            "ENERGY",
+    "global_market_intelligence":      "MARKET",
+    "ai_semiconductor_intelligence":   "AI_TECH",
+    "supply_chain_intelligence":       "SUPPLY_CHAIN",
+    "defense_technology":              "DEFENSE",
+    "crypto_geopolitics":              "CRYPTO",
+}
+
+
+async def _compute_quantitative_evidence(
+    db: AsyncSession,
+    domain_id: str,
+) -> Optional[Dict[str, Any]]:
+    """
+    Run the MacroTransmissionEngine for the domain's primary macro/topic pair.
+
+    Returns the engine's payload (lag_days, correlation, beta, series) augmented
+    with sample_size / include_inverse, or None if no mapping exists. Failures
+    are swallowed (with a warning) so a single engine miss can never block a
+    report from being produced.
+    """
+    macro_series = _DOMAIN_PRIMARY_MACRO.get(domain_id)
+    upper_topic = _DOMAIN_TO_UPPER_TOPIC.get(domain_id)
+    if not macro_series or not upper_topic:
+        return None
+    try:
+        # Local import to avoid pulling pandas/numpy when this module is loaded
+        # by lightweight code paths (e.g. dashboard polling).
+        from analysis.macro_transmission import MacroTransmissionEngine
+
+        engine = MacroTransmissionEngine(db)
+        result = await engine.compute_transmission_metrics(
+            macro_series_id=macro_series,
+            target_topic=upper_topic,
+            days_lookback=90,
+            roc_window=7,
+            include_inverse=False,
+        )
+        if not isinstance(result, dict):
+            return None
+        result = dict(result)
+        result["sample_size"] = len(result.get("series") or [])
+        result["include_inverse"] = False
+        # Strip the bulky raw series before storing in payload — the matrix
+        # builder only needs the scalar metrics.
+        result.pop("series", None)
+        return result
+    except Exception as exc:
+        logger.warning(
+            "Macro transmission engine skipped for %s/%s: %s",
+            domain_id, macro_series, exc,
+        )
+        return None
+
+
+# ─── Spatial Contagion (offline GeoLocator) ────────────────────────────
+
+# Curated geo keyword list — **ordered by geopolitical specificity** so the
+# first match becomes the spatial epicenter when a context mentions multiple
+# entities (e.g. "Strait of Hormuz" beats "Iran" as the focal point of an
+# OSINT contagion).
+#
+# Tier 1: chokepoints / straits / maritime corridors (most specific)
+# Tier 2: major capital cities (single-point references)
+# Tier 3: countries / broad regional names (last-resort)
+_GEO_KEYWORDS: tuple = (
+    # Tier 1 — chokepoints (most geopolitically focused)
+    "Strait of Hormuz", "Hormuz",
+    "Taiwan Strait", "Strait of Malacca",
+    "Suez Canal", "Panama Canal",
+    "Bab-el-Mandeb", "Bosphorus",
+    "Gulf of Oman", "Persian Gulf", "South China Sea", "Red Sea",
+    # Tier 2 — capital + financial-hub cities
+    "Beijing", "Moscow", "Tokyo", "Tehran", "Riyadh", "Tel Aviv",
+    "London", "Paris", "Berlin", "Washington", "New York", "Singapore",
+    # Tier 3 — countries / broad regions
+    "United States", "China", "Russia", "Japan", "South Korea", "Taiwan",
+    "Iran", "Saudi Arabia", "UAE", "Iraq", "Israel", "Turkey",
+    "Ukraine", "Germany", "France", "United Kingdom",
+    "India", "Brazil", "Mexico", "Canada", "Australia", "Indonesia",
+    "North Korea", "Pakistan", "Nigeria", "Venezuela", "Norway",
+)
+
+# Don't let a single brief explode into hundreds of geocoded points.
+_SPATIAL_MAX_NODES = 10
+_SPATIAL_MAX_CANDIDATES = 24    # candidates fed into the geocoder; deduped to MAX_NODES
+
+# 2-hop expansion: when a 1st-hop "affected" node lives in country XX, we
+# pick this country's flagship city as the order-3 ripple. The map is small
+# and curated — we don't want random geocoder noise muddying the visual.
+# Falls back silently when the country isn't here.
+_ISO_TO_MAJOR_CITY: Dict[str, str] = {
+    "US": "New York",       "CN": "Shanghai",       "JP": "Tokyo",
+    "KR": "Seoul",          "DE": "Berlin",         "FR": "Paris",
+    "GB": "London",         "IT": "Rome",           "RU": "Moscow",
+    "IR": "Tehran",         "SA": "Riyadh",         "AE": "Dubai",
+    "IL": "Tel Aviv",       "TR": "Istanbul",       "EG": "Cairo",
+    "PA": "Panama City",    "BR": "Sao Paulo",      "MX": "Mexico City",
+    "IN": "Mumbai",         "CA": "Toronto",        "AU": "Sydney",
+    "SG": "Singapore",      "MY": "Kuala Lumpur",   "ID": "Jakarta",
+    "TH": "Bangkok",        "VN": "Ho Chi Minh City","TW": "Taipei",
+    "PH": "Manila",         "NG": "Lagos",          "ZA": "Johannesburg",
+    "UA": "Kyiv",           "PL": "Warsaw",         "NL": "Amsterdam",
+    "BE": "Brussels",       "ES": "Madrid",         "PT": "Lisbon",
+    "NO": "Oslo",           "SE": "Stockholm",      "FI": "Helsinki",
+    "DK": "Copenhagen",     "GR": "Athens",
+}
+
+# Slot allocation per order so a deeply-cascaded scenario doesn't crowd out
+# the primary signal. Conservative defaults; the engine will only fill what
+# the geocoder can actually resolve (no placeholders).
+_SPATIAL_BUDGET_ORDER1 = 1        # exactly one epicenter
+_SPATIAL_BUDGET_ORDER2 = 6        # up to 6 direct-impact affected nodes
+_SPATIAL_BUDGET_ORDER3 = 3        # up to 3 2-hop downstream nodes
+
+
+def _get_field(item: Any, key: str, default: Any = None) -> Any:
+    """Safe attr-or-key accessor — context lists mix ORM rows and dicts."""
+    if item is None:
+        return default
+    if hasattr(item, key):
+        return getattr(item, key, default)
+    if isinstance(item, dict):
+        return item.get(key, default)
+    return default
+
+
+def _harvest_entity_candidates(context: Dict[str, Any]) -> List[str]:
+    """
+    Pull plausible location strings out of a Pro context. Returns a
+    PRIORITY-ORDERED, deduplicated list — the first resolved candidate
+    becomes the epicenter, so ordering matters.
+
+    Strategy: two passes.
+
+      Pass 1 — **Canonical geo keywords** found in any text source. These
+                are the cleanest matches for the offline geocoder (single
+                place name, no noise words), so they get the top slots.
+                The order inside the keyword list itself is preserved so a
+                signal mentioning "Strait of Hormuz" beats one only
+                mentioning "Iran".
+      Pass 2 — Raw `target_label` / `location_label` strings as a fallback.
+                These can be noisy (e.g. "Strait of Hormuz pipeline rupture")
+                so FTS5 may reject them — but on the rare row where the
+                full string IS the canonical entry, this pass still wins.
+    """
+    out: List[str] = []
+    seen: Set[str] = set()
+
+    def _push(text: Any) -> None:
+        if not isinstance(text, str):
+            return
+        s = text.strip()
+        if not s:
+            return
+        key = s.casefold()
+        if key in seen:
+            return
+        seen.add(key)
+        out.append(s)
+
+    sig = context.get("signal") or {}
+
+    # ── Collect every text source we might mine geo keywords from. ────────
+    text_sources: List[str] = []
+    for k in ("target_label", "title"):
+        v = sig.get(k)
+        if isinstance(v, str):
+            text_sources.append(v)
+    for ev in context.get("related_events") or []:
+        v = _get_field(ev, "target_label")
+        if isinstance(v, str):
+            text_sources.append(v)
+    for ev in context.get("event_timeline") or []:
+        for k in ("location_label", "title"):
+            v = _get_field(ev, k)
+            if isinstance(v, str):
+                text_sources.append(v)
+    for n in (sig.get("related_news") or [])[:8]:
+        for k in ("title", "headline", "text"):
+            v = _get_field(n, k)
+            if isinstance(v, str):
+                text_sources.append(v)
+                break
+
+    combined_lower = " | ".join(text_sources).lower()
+
+    # Pass 1: canonical geo keywords (high-quality, single-name matches)
+    for kw in _GEO_KEYWORDS:
+        if kw.lower() in combined_lower:
+            _push(kw)
+
+    # Pass 2: raw priority strings (last-resort fallback)
+    _push(sig.get("target_label"))
+    for ev in context.get("related_events") or []:
+        _push(_get_field(ev, "target_label"))
+    for ev in context.get("event_timeline") or []:
+        _push(_get_field(ev, "location_label"))
+
+    return out[:_SPATIAL_MAX_CANDIDATES]
+
+
+def _scale_viscosity_to_impact(viscosity: Optional[float]) -> float:
+    """
+    Map kinematic viscosity → [0, 100] impact score.
+
+    SystemicFragilityEngine.VISCOSITY_CRITICAL = 0.10. We center the scale
+    so that critical viscosity (the conjunction trigger) lands at 50, and
+    2× critical fully saturates at 100. Below zero or non-finite inputs
+    collapse to 0 — never NaN in the payload.
+    """
+    if viscosity is None:
+        return 0.0
+    try:
+        v = float(viscosity)
+    except (TypeError, ValueError):
+        return 0.0
+    if not (v == v) or v <= 0:  # NaN-safe
+        return 0.0
+    # 0.10 → 50, 0.20 → 100, > 0.20 clipped to 100
+    return round(min(100.0, v * 500.0), 2)
+
+
+def _scale_entropy_to_intensity(entropy: Optional[float]) -> float:
+    """Edge intensity = normalised entropy, clipped to [0, 1]."""
+    if entropy is None:
+        return 0.0
+    try:
+        e = float(entropy)
+    except (TypeError, ValueError):
+        return 0.0
+    if not (e == e):
+        return 0.0
+    return round(min(1.0, max(0.0, e)), 4)
+
+
+async def _fetch_live_spatial_graph(
+    db: AsyncSession,
+    *,
+    topic_code: str,
+) -> Dict[str, Any]:
+    """
+    Phase 7.4 — pull the spatial contagion graph from the dedicated
+    Spatial Engine tables for ``topic_code``. Falls back to the 'global'
+    aggregate if the per-domain rows are unseeded so the brief always
+    surfaces *something*.
+
+    Returns the same `spatial_contagion` shape the frontend Pro Brief
+    already understands.
+    """
+    short_id = topic_to_spatial_domain(topic_code)
+
+    async def _load(domain_id: str) -> Tuple[List[SpatialNode], List[SpatialEdge]]:
+        nodes = (
+            await db.execute(
+                select(SpatialNode).where(SpatialNode.domain_id == domain_id)
+            )
+        ).scalars().all()
+        edges = (
+            await db.execute(
+                select(SpatialEdge).where(SpatialEdge.domain_id == domain_id)
+            )
+        ).scalars().all()
+        return list(nodes), list(edges)
+
+    nodes, edges = await _load(short_id)
+    used_domain = short_id
+    if not nodes:
+        # Cold-state fallback: surface the global aggregate so the Pro Brief
+        # never renders an empty spatial section.
+        nodes, edges = await _load("global")
+        used_domain = "global" if nodes else short_id
+
+    serialised_nodes: List[Dict[str, Any]] = [
+        {
+            "id": str(n.id),
+            "name": n.name,
+            "lat": float(n.lat),
+            "lon": float(n.lon),
+            "impact_score": float(n.impact_score),
+            "entropy_index": float(n.entropy_index),
+            "type": "epicenter" if n.is_epicenter else "affected",
+        } for n in nodes
+    ]
+    serialised_edges: List[Dict[str, Any]] = [
+        {
+            "source_lat": float(e.source_lat),
+            "source_lon": float(e.source_lon),
+            "target_lat": float(e.target_lat),
+            "target_lon": float(e.target_lon),
+            "intensity": float(e.edge_intensity),
+            "edge_intensity": float(e.edge_intensity),
+            "viscosity_coefficient": float(e.viscosity_coefficient),
+            "order_level": int(e.order_level),
+            "target_order": int(e.order_level),
+        } for e in edges
+    ]
+
+    epicenter_impact = max(
+        (float(n.impact_score) for n in nodes), default=0.0,
+    )
+    mean_intensity = (
+        sum(float(e.edge_intensity) for e in edges) / len(edges)
+        if edges else 0.0
+    )
+    order_counts = {1: 0, 2: 0, 3: 0}
+    for e in edges:
+        if e.order_level in order_counts:
+            order_counts[e.order_level] += 1
+
+    return {
+        "domain_id": used_domain,
+        "topic_code": topic_code,
+        "nodes": serialised_nodes,
+        "edges": serialised_edges,
+        "epicenter_impact_score": epicenter_impact,
+        "edge_intensity": mean_intensity,
+        "node_count": len(serialised_nodes),
+        "edge_count": len(serialised_edges),
+        "order_counts": {
+            "order_1": order_counts[1],
+            "order_2": order_counts[2],
+            "order_3": order_counts[3],
+        },
+        "schema_version": "spatial_engine_v1",
+    }
+
+
+def _compute_spatial_contagion(
+    context: Dict[str, Any],
+    systemic_fragility: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Build the `spatial_contagion` object from a Pro context.
+
+    Strategy (Phase 2 — N-th Order Impact Graph):
+      1. Harvest entity candidates (signal target_label, related_events,
+         timeline labels, scanned geo keywords).
+      2. Resolve each via the offline ``GeoLocator``; dedupe by rounded
+         (lat, lon).
+      3. **Order 1**: the first resolved entity → epicenter (impact_score
+         derived from kinematic viscosity).
+      4. **Order 2**: remaining direct candidates → affected nodes
+         (impact_score decays 10% per rank, floored 30% of epicenter).
+      5. **Order 3** (NEW): for each order-2 node, look up its country's
+         flagship city via ``_ISO_TO_MAJOR_CITY`` and geocode it. These
+         2-hop downstream ripples are added only if the geocoder resolves
+         AND the city isn't already in the graph (no duplicate coords).
+      6. Edges: one per affected/downstream node, source = epicenter,
+         intensity scaled by network entropy. Edge.target_order mirrors
+         the target node's order so the frontend can per-tier style arcs.
+
+    Returns ``{"nodes": [], "edges": []}`` (with a `warning` field) when no
+    entity can be resolved or the geo DB is missing. Never raises.
+    """
+    sf = systemic_fragility or {}
+    viscosity = sf.get("viscosity_coefficient")
+    entropy = sf.get("entropy_index")
+    epi_score = _scale_viscosity_to_impact(viscosity)
+    edge_intensity = _scale_entropy_to_intensity(entropy)
+
+    payload: Dict[str, Any] = {
+        "nodes": [],
+        "edges": [],
+        "epicenter_impact_score": epi_score,
+        "edge_intensity": edge_intensity,
+        "viscosity_coefficient": float(viscosity) if isinstance(viscosity, (int, float)) else None,
+        "entropy_index": float(entropy) if isinstance(entropy, (int, float)) else None,
+        # Bumped to v2 — adds node.order and edge.target_order
+        "schema_version": "spatial_contagion_v2",
+    }
+
+    candidates = _harvest_entity_candidates(context)
+    if not candidates:
+        payload["warning"] = "no_entity_candidates"
+        return payload
+
+    try:
+        geo = GeoLocator()
+    except FileNotFoundError as exc:
+        logger.warning("Spatial contagion: geo DB missing (%s) — emitting empty payload.", exc)
+        payload["warning"] = "geo_db_unavailable"
+        return payload
+
+    resolved: List[Dict[str, Any]] = []
+    coord_keys: Set[Tuple[float, float]] = set()
+
+    def _resolve(raw: str) -> Optional[Dict[str, Any]]:
+        """Geocode + dedupe-by-coordinate helper used for both 1-hop and 2-hop passes."""
+        hit = geo.get_coordinates(raw)
+        if not hit:
+            return None
+        key = (round(float(hit["lat"]), 3), round(float(hit["lon"]), 3))
+        if key in coord_keys:
+            return None
+        coord_keys.add(key)
+        return {
+            "raw_input": raw,
+            "name": hit.get("name"),
+            "lat": float(hit["lat"]),
+            "lon": float(hit["lon"]),
+            "country": hit.get("country"),
+            "confidence": hit.get("confidence"),
+            "geonameid": hit.get("geonameid"),
+        }
+
+    try:
+        # ── 1st pass: direct entity resolution (epicenter + order-2 affected) ──
+        order2_budget = _SPATIAL_BUDGET_ORDER1 + _SPATIAL_BUDGET_ORDER2
+        for raw in candidates:
+            if len(resolved) >= order2_budget:
+                break
+            row = _resolve(raw)
+            if row is not None:
+                resolved.append(row)
+
+        # ── 2nd pass: 2-hop expansion via country's flagship city. ──
+        # We only run this when at least one order-2 affected node exists;
+        # without one, "deeper" downstream has no anchor.
+        order3_rows: List[Dict[str, Any]] = []
+        affected_resolved = resolved[1:]  # skip the epicenter
+        if affected_resolved:
+            for affected in affected_resolved:
+                if len(order3_rows) >= _SPATIAL_BUDGET_ORDER3:
+                    break
+                iso = (affected.get("country") or "").upper().strip()
+                if not iso:
+                    continue
+                city = _ISO_TO_MAJOR_CITY.get(iso)
+                if not city:
+                    continue
+                # Skip when the country's flagship city IS the affected node
+                # itself (e.g. epicenter "Tokyo" + affected_1 "JP" would otherwise
+                # try to resolve "Tokyo" → already in coord_keys → skipped, but
+                # an explicit short-circuit keeps the log noise down).
+                aff_name = (affected.get("name") or "").casefold().strip()
+                if aff_name == city.casefold().strip():
+                    continue
+                row = _resolve(city)
+                if row is not None:
+                    order3_rows.append(row)
+    finally:
+        geo.close()
+
+    if not resolved:
+        payload["warning"] = "no_resolved_locations"
+        return payload
+
+    nodes: List[Dict[str, Any]] = []
+    edges: List[Dict[str, Any]] = []
+
+    # ── Order 1: Epicenter ─────────────────────────────────────────────
+    epi = resolved[0]
+    epi_id = "epicenter"
+    nodes.append({
+        "id": epi_id,
+        "name": epi["name"],
+        "raw_input": epi["raw_input"],
+        "lat": epi["lat"],
+        "lon": epi["lon"],
+        "country": epi["country"],
+        "impact_score": epi_score,
+        "type": "epicenter",
+        "order": 1,
+        "confidence": epi["confidence"],
+        "geonameid": epi["geonameid"],
+    })
+
+    # ── Order 2: Direct affected nodes ─────────────────────────────────
+    for idx, n in enumerate(affected_resolved, start=1):
+        node_id = f"affected_{idx}"
+        decay = max(0.30, 1.0 - 0.10 * idx)
+        affected_score = round(epi_score * decay, 2)
+        nodes.append({
+            "id": node_id,
+            "name": n["name"],
+            "raw_input": n["raw_input"],
+            "lat": n["lat"],
+            "lon": n["lon"],
+            "country": n["country"],
+            "impact_score": affected_score,
+            "type": "affected",
+            "order": 2,
+            "confidence": n["confidence"],
+            "geonameid": n["geonameid"],
+        })
+        edges.append({
+            "source_id": epi_id,
+            "target_id": node_id,
+            "intensity": edge_intensity,
+            "target_order": 2,
+        })
+
+    # ── Order 3: 2-hop downstream (country flagship cities) ────────────
+    # Edges fan out from the epicenter (not from order-2) so the visual
+    # remains a star-graph; the order signal alone communicates the depth.
+    base_affected_count = len(affected_resolved)
+    for offset, n in enumerate(order3_rows):
+        node_idx = base_affected_count + offset + 1
+        node_id = f"downstream_{offset + 1}"
+        # Deeper ripples — start at 35% of epicenter and drop slowly.
+        downstream_score = round(epi_score * max(0.20, 0.35 - 0.05 * offset), 2)
+        nodes.append({
+            "id": node_id,
+            "name": n["name"],
+            "raw_input": n["raw_input"],
+            "lat": n["lat"],
+            "lon": n["lon"],
+            "country": n["country"],
+            "impact_score": downstream_score,
+            "type": "affected",
+            "order": 3,
+            "confidence": n["confidence"],
+            "geonameid": n["geonameid"],
+        })
+        # Edge intensity slightly attenuated for deeper nodes — multiply by
+        # 0.6 so the per-order styling story is reinforced in the data too.
+        edges.append({
+            "source_id": epi_id,
+            "target_id": node_id,
+            "intensity": round(edge_intensity * 0.6, 4),
+            "target_order": 3,
+        })
+        # Suppress unused var lint when budget tier sizes change later.
+        _ = node_idx
+
+    payload["nodes"] = nodes
+    payload["edges"] = edges
+    payload["node_count"] = len(nodes)
+    payload["edge_count"] = len(edges)
+    payload["order_counts"] = {
+        "order_1": sum(1 for n in nodes if n.get("order") == 1),
+        "order_2": sum(1 for n in nodes if n.get("order") == 2),
+        "order_3": sum(1 for n in nodes if n.get("order") == 3),
+    }
+    payload["candidates_inspected"] = len(candidates)
+    return payload
+
+
+async def _persist_systemic_fragility(
+    db: AsyncSession,
+    domain_id: str,
+    payload: Optional[Dict[str, Any]],
+) -> None:
+    """
+    Append one row to ``systemic_fragility_log`` capturing the engine output
+    for this domain at this pipeline cycle.
+
+    The persistence is "best effort" — a single insert failure must never
+    block report generation, so we catch broadly and log.  We also skip
+    rows where the engine self-reported INSUFFICIENT DATA: those are not
+    interesting trajectory points and would only pollute the time series.
+    """
+    if not payload or not domain_id:
+        return
+    if payload.get("label") == "INSUFFICIENT DATA":
+        return
+    try:
+        row = SystemicFragilityLog(
+            domain_id=domain_id,
+            entropy_index=float(payload.get("entropy_index") or 0.0),
+            viscosity_coefficient=float(payload.get("viscosity_coefficient") or 0.0),
+            label=str(payload.get("label") or "UNKNOWN")[:64],
+            phase_transition_warning=bool(payload.get("phase_transition_warning")),
+            sample_size=int(payload.get("sample_size") or 0) if payload.get("sample_size") is not None else None,
+            raw_payload=payload,
+        )
+        db.add(row)
+        await db.commit()
+    except Exception as exc:
+        # Roll back the failed insert so the outer session stays usable.
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+        logger.warning(
+            "Persisting systemic_fragility row failed for %s: %s",
+            domain_id, exc, exc_info=True,
+        )
+
+
+def _compute_systemic_fragility(
+    *,
+    market_ctx: Optional[Dict[str, Any]] = None,
+    structural_ctx: Optional[Dict[str, Any]] = None,
+    related_events: Optional[List[Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Build the volatility series + flow proxy for `SystemicFragilityEngine` and
+    return its full analyse() payload.
+
+    Volatility series  = concatenated percent moves from the latest market
+                         instruments AND macro observations. Combining both
+                         gives the engine a wide cross-asset view of disorder.
+    Volume flow        = count of related alerts in the cluster window
+                         (institutional "demand" proxy). When alert flow is
+                         absorbing the variance, viscosity stays low.
+
+    Failures never propagate — we return a STABLE / INSUFFICIENT-DATA payload
+    rather than letting one bad metric block report generation.
+    """
+    try:
+        volatility_series: List[float] = []
+        for price in (market_ctx or {}).get("latest_prices") or []:
+            pct = price.get("percent_change")
+            if isinstance(pct, (int, float)) and pct == pct:  # NaN-safe
+                volatility_series.append(float(pct))
+        for obs in (structural_ctx or {}).get("macro_observations") or []:
+            chg = obs.get("change_pct")
+            if isinstance(chg, (int, float)) and chg == chg:
+                volatility_series.append(float(chg))
+
+        # Volume flow = institutional alert throughput across the cluster
+        # window. We deliberately use the count (not intensity sum) so a
+        # single very-high-intensity alert doesn't dominate.
+        volume_flow = float(len(related_events or []))
+
+        engine = SystemicFragilityEngine()
+        payload = engine.analyse(volatility_series, volume_flow=volume_flow)
+        payload["engine"] = "SystemicFragilityEngine"
+        payload["schema_version"] = "systemic_fragility_v1"
+        return payload
+    except Exception as exc:
+        logger.warning("Systemic fragility engine skipped: %s", exc, exc_info=True)
+        return {
+            "entropy_index": 0.0,
+            "viscosity_coefficient": 0.0,
+            "entropy_critical": False,
+            "viscosity_critical": False,
+            "phase_transition_warning": False,
+            "label": "INSUFFICIENT DATA",
+            "rationale": f"Systemic fragility engine error: {exc!s}",
+            "engine": "SystemicFragilityEngine",
+            "schema_version": "systemic_fragility_v1",
+        }
 
 
 async def resolve_latest_domain_alert(
@@ -183,16 +850,22 @@ async def build_pro_structural_context(
     related_news = []
     if alert_log:
         meta = alert_log.metadata_json or {}
-        if "free_alert" in meta and "related_news" in meta["free_alert"]:
-            related_news = meta["free_alert"]["related_news"]
-        elif "evidence_list" in meta:
-            # Fallback to evidence list if no structured related_news
-            related_news = meta["evidence_list"]
+        # Pro-owned related-news (sourced from the alert's evidence_list). The
+        # former dependency on the deprecated free_alert payload was removed.
+        related_news = _related_news_from_evidence(meta)
 
         signal_ctx = {
             "alert_id": str(alert_log.id),
             "title": sanitize_unicode_text(alert_log.target_label or ""),
             "topic": alert_log.topic,
+            "severity": alert_log.severity,
+            "trigger_type": alert_log.trigger_type,
+            "target_label": sanitize_unicode_text(alert_log.target_label or ""),
+            "intensity": alert_log.intensity,
+            "intelligence_score": alert_log.intelligence_score,
+            "fidelity_score": alert_log.fidelity_score,
+            "location_lat": alert_log.location_lat,
+            "location_lng": alert_log.location_lng,
             "triggered_at": alert_log.triggered_at.isoformat() if alert_log.triggered_at else None,
             "source_url": _first_evidence_url(meta),
             "related_news": related_news[:5]  # Limit to top 5
@@ -256,6 +929,51 @@ async def build_pro_structural_context(
         alert_depleted=alert_depleted,
     )
 
+    # 6.5 Quantitative evidence: cross-correlation + beta from MacroTransmissionEngine.
+    quantitative_evidence = await _compute_quantitative_evidence(db, resolved_domain_id)
+
+    # 6.55 Systemic Fragility: Shannon entropy + kinematic viscosity over the
+    # cross-asset volatility distribution. Drives the phase-transition warning.
+    systemic_fragility = _compute_systemic_fragility(
+        market_ctx=market_ctx,
+        structural_ctx=structural_ctx,
+        related_events=related_events,
+    )
+    # Append a trajectory point to systemic_fragility_log so the dashboard
+    # can plot the 2D phase-space history. Failures are swallowed (the
+    # helper rolls back its own session usage) — never block the brief.
+    await _persist_systemic_fragility(db, resolved_domain_id, systemic_fragility)
+
+    # 6.575 Spatial Contagion — Phase 7.4 unification.
+    # Single source of truth: the live Spatial Engine tables. The inline
+    # _compute_spatial_contagion() path is no longer invoked for new briefs;
+    # we fetch the graph the 5-minute worker has already persisted.
+    spatial_contagion_payload = await _fetch_live_spatial_graph(
+        db, topic_code=resolved_domain_id,
+    )
+    # Synthesise the cross-domain composite multiplier directly off the
+    # same Spatial Engine rows.
+    composite_risk_profile = await compute_composite_multiplier(
+        db, current_context=None,
+    )
+
+    # 6.6 Structured analytical sections grounded in quantitative data.
+    cascading_impacts = build_cascading_impacts(
+        config,
+        macro_observations=structural_ctx.get("macro_observations") or [],
+    )
+    tail_risk_scenarios = build_tail_risk_scenarios(
+        config,
+        macro_observations=structural_ctx.get("macro_observations") or [],
+        quantitative_evidence=quantitative_evidence,
+    )
+    quantitative_evidence_matrix = build_quantitative_evidence_matrix(
+        macro_observations=structural_ctx.get("macro_observations") or [],
+        market_prices=market_ctx.get("latest_prices") or [],
+        quantitative_evidence=quantitative_evidence,
+        related_events=related_events,
+    )
+
     # 7. Build Final Context
     context = {
         "domain": {
@@ -287,7 +1005,17 @@ async def build_pro_structural_context(
         "analysis_generated_at": analysis_ts.isoformat(),
         "force_rebuild": force_rebuild,
         "alert_cluster_window_hours": ALERT_CLUSTER_WINDOW_HOURS,
+        "alert_reignite_factor": ALERT_REIGNITE_INTENSITY_FACTOR,
         "realtime_mode": True,
+        # Pro-grade analytical sections (rule-based, no LLM).
+        "quantitative_evidence": quantitative_evidence,
+        "systemic_fragility": systemic_fragility,
+        "cascading_impacts": cascading_impacts,
+        "tail_risk_scenarios": tail_risk_scenarios,
+        "quantitative_evidence_matrix": quantitative_evidence_matrix,
+        "spatial_contagion": spatial_contagion_payload,
+        # Phase 7.4 — cross-domain amplification + propagation path.
+        "composite_risk_profile": composite_risk_profile,
     }
 
     context = sanitize_unicode_tree(context)
@@ -583,6 +1311,30 @@ def _first_evidence_url(meta: Optional[dict]) -> Optional[str]:
     return None
 
 
+def _related_news_from_evidence(meta: Optional[dict]) -> list:
+    """
+    Pro-owned related-news extraction sourced from the alert's own
+    ``evidence_list`` (core alert metadata). Replaces the former dependency on
+    the deprecated ``free_alert`` payload; normalises each evidence item to the
+    {title, source, category, published, url} shape the downstream relevance
+    filter and LLM shaper expect.
+    """
+    if not meta:
+        return []
+    out = []
+    for ev in meta.get("evidence_list") or []:
+        if not isinstance(ev, dict):
+            continue
+        out.append({
+            "title": ev.get("title") or ev.get("headline") or "",
+            "source": ev.get("source") or ev.get("domain") or ev.get("type") or "OSINT",
+            "category": ev.get("category") or ev.get("rough_category") or "general",
+            "published": ev.get("published") or ev.get("published_at") or "",
+            "url": ev.get("url") or ev.get("link") or ev.get("source_url"),
+        })
+    return out
+
+
 async def _fetch_related_alert_events(
     db: AsyncSession,
     alert_log: Optional[AlertLog],
@@ -664,6 +1416,9 @@ async def _fetch_related_alert_events(
                 "topic": row.topic,
                 "severity": row.severity,
                 "trigger_type": row.trigger_type,
+                "intensity": row.intensity,
+                "intelligence_score": row.intelligence_score,
+                "fidelity_score": row.fidelity_score,
                 "timestamp": row.triggered_at.isoformat() if row.triggered_at else None,
                 "source": "alert_log",
                 "location_label": None,
@@ -714,6 +1469,9 @@ def _build_event_timeline(
                 "alert_id": ev.get("alert_id"),
                 "severity": ev.get("severity"),
                 "trigger_type": ev.get("trigger_type"),
+                "intensity": ev.get("intensity"),
+                "intelligence_score": ev.get("intelligence_score"),
+                "fidelity_score": ev.get("fidelity_score"),
                 "source": ev.get("source", "alert_log"),
                 "structural_correlation": round(coeff, 3),
             }

@@ -319,6 +319,67 @@ class SystemMetric(Base):
     metric_value = Column(String)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+
+class SystemicFragilityLog(Base):
+    """
+    Time-series log of Systemic Fragility Engine output — one row per
+    (domain, computation cycle). Backs the "phase-space trajectory" view in
+    the Pro dashboard and the historical API at
+    ``GET /api/pro/domains/{domain_id}/fragility-history``.
+
+    Append-only: rows are inserted by the pipeline whenever the context
+    builder re-runs the engine; no UPDATE / DELETE in normal operation.
+    """
+    __tablename__ = "systemic_fragility_log"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    domain_id = Column(String(64), nullable=False, index=True)
+    timestamp = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True,
+        server_default=func.now(),
+    )
+    entropy_index = Column(Float, nullable=False)
+    viscosity_coefficient = Column(Float, nullable=False)
+    label = Column(String(64), nullable=False)
+    phase_transition_warning = Column(Boolean, nullable=False, default=False)
+    sample_size = Column(Integer, nullable=True)
+    raw_payload = Column(JSON, nullable=True)
+
+    __table_args__ = (
+        Index("ix_sfl_domain_timestamp", "domain_id", "timestamp"),
+    )
+
+
+class COTReport(Base):
+    """
+    CFTC Commitments of Traders — one row per (market, report_date).
+    Snapshot of futures positioning by trader category (large speculators,
+    commercial hedgers, small traders). Source: CFTC Socrata API (no key).
+    """
+    __tablename__ = "cot_reports"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    market_and_exchange = Column(String, nullable=False, index=True)
+    report_date = Column(DateTime(timezone=False), nullable=False, index=True)
+    yyyy_report_week_ww = Column(String, nullable=True)
+    open_interest_all = Column(Integer, nullable=True)
+    # Large speculators (non-commercial)
+    noncomm_long = Column(Integer, nullable=True)
+    noncomm_short = Column(Integer, nullable=True)
+    noncomm_spread = Column(Integer, nullable=True)
+    # Commercial hedgers
+    comm_long = Column(Integer, nullable=True)
+    comm_short = Column(Integer, nullable=True)
+    # Non-reportable (small traders)
+    nonrept_long = Column(Integer, nullable=True)
+    nonrept_short = Column(Integer, nullable=True)
+    raw_json = Column(JSON, nullable=True)
+    fetched_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("market_and_exchange", "report_date", name="uq_cot_market_date"),
+    )
+
 # --- Phase 4: Cascading Impact & Self-Learning Engine ---
 
 class Stakeholder(Base):
@@ -338,6 +399,12 @@ class Stakeholder(Base):
     strategic_score = Column(Float, default=0.0)          # 多次元優先スコア (0.0〜1.0)
     hit_count = Column(Integer, default=0)                 # 波及予測で参照された累計回数
     last_hit_at = Column(DateTime(timezone=True), nullable=True)  # 最終参照日時
+    # [v12] Sanctions & PageRank Network Mapping
+    opensanctions_id = Column(String, index=True, nullable=True)  # FtM identifier for cross-source linkage
+    sanctioned_status = Column(Boolean, default=False, nullable=False)  # True = listed on a sanctions / PEP authority
+    sanction_program = Column(String, nullable=True)       # OFAC, EU, UN, etc.
+    pep_score = Column(Float, nullable=True)               # 0.0-1.0; politically-exposed-person heuristic
+    network_score = Column(Float, default=0.0, nullable=False)  # Pre-computed PageRank centrality (cached)
 
 class Dependency(Base):
     __tablename__ = "dependencies"
@@ -643,3 +710,120 @@ class MarketDataFetchLog(Base):
     error_message = Column(Text)
     metadata_json = Column(JSONB)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Phase 7.1 — Dedicated Spatial Engine
+#
+# Decoupled from Report.structured_payload so the Omni-Domain monitor on
+# the dashboard can poll its own dedicated tables, independent of the
+# slow ~30-minute Pro report regeneration cycle.
+# ──────────────────────────────────────────────────────────────────────────
+
+class SpatialNode(Base):
+    """
+    One geo node in a domain's contagion graph. The frontend reads
+    impact_score >= 75 as the "critical alert" trigger (red pulse + label).
+    """
+    __tablename__ = "spatial_nodes"
+    __table_args__ = (
+        Index("ix_spatial_nodes_domain_id", "domain_id"),
+        Index("ix_spatial_nodes_domain_updated", "domain_id", "updated_at"),
+    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    domain_id = Column(String, nullable=False)        # 'energy', 'shipping', 'global', ...
+    name = Column(String, nullable=False)
+    lat = Column(Float, nullable=False)
+    lon = Column(Float, nullable=False)
+    impact_score = Column(Float, nullable=False, default=0.0)        # >= 75 → frontend Critical pulse
+    entropy_index = Column(Float, nullable=False, default=0.0)        # used for 1.5x spike detection
+    is_epicenter = Column(Boolean, nullable=False, default=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class SpatialEdge(Base):
+    """
+    Directed N-th order ripple between two geo points. `order_level` drives
+    the UI's dashed-line / solid-line / thick-arc hierarchy:
+      1 = epicenter→direct (thick, bright)
+      2 = direct→2nd-hop   (medium)
+      3 = 2nd-hop→fringe   (thin, dashed)
+    """
+    __tablename__ = "spatial_edges"
+    __table_args__ = (
+        Index("ix_spatial_edges_domain_id", "domain_id"),
+        Index("ix_spatial_edges_domain_order", "domain_id", "order_level"),
+    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    domain_id = Column(String, nullable=False)
+    source_lon = Column(Float, nullable=False)
+    source_lat = Column(Float, nullable=False)
+    target_lon = Column(Float, nullable=False)
+    target_lat = Column(Float, nullable=False)
+    edge_intensity = Column(Float, nullable=False, default=0.0)
+    viscosity_coefficient = Column(Float, nullable=False, default=0.0)
+    order_level = Column(Integer, nullable=False, default=2)  # 1 | 2 | 3
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+
+class ContagionHistory(Base):
+    """
+    Append-only snapshots of (nodes, edges) per domain, taken every few
+    minutes by the spatial engine. The frontend's Time Machine slider
+    scrubs through the most recent 24h of these rows.
+    """
+    __tablename__ = "contagion_history"
+    __table_args__ = (
+        Index("ix_contagion_history_domain_ts", "domain_id", "snapshot_timestamp"),
+    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    domain_id = Column(String, nullable=False)
+    snapshot_timestamp = Column(DateTime(timezone=True), nullable=False)
+    nodes_payload = Column(JSONB, nullable=False)   # serialised SpatialNode dicts
+    edges_payload = Column(JSONB, nullable=False)   # serialised SpatialEdge dicts
+    entropy_index = Column(Float, nullable=False, default=0.0)
+    viscosity_coefficient = Column(Float, nullable=False, default=0.0)
+    phase_transition_warning = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class MonthlyTrendReport(Base):
+    """
+    Archival monthly snapshot for the "Monthly Trend Flow" feature.
+
+    One row per calendar month holding a precomputed flow/network snapshot
+    (nodes + edges + summary) built from that month's *spiked* Alert Stream
+    events (strict 1.5x raw-intensity ratio vs decayed domain baseline) routed
+    through the SpatialPhysicsEngine. Stored as JSONB so historical reports load
+    in O(1) with zero recalculation. These rows are ARCHIVAL and must NEVER be
+    purged by the 24h alert/contagion retention policies.
+    """
+    __tablename__ = "monthly_trend_reports"
+    __table_args__ = (
+        UniqueConstraint("period_year", "period_month", name="uq_monthly_trend_period"),
+        Index("ix_monthly_trend_period", "period_year", "period_month"),
+    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    period_year = Column(Integer, nullable=False)    # e.g. 2026
+    period_month = Column(Integer, nullable=False)   # 1-12 (4 = April)
+    period_start = Column(DateTime(timezone=True), nullable=False)
+    period_end = Column(DateTime(timezone=True), nullable=False)
+    label = Column(String, nullable=False)           # "April 2026"
+    generated_at = Column(DateTime(timezone=True), server_default=func.now())
+    schema_version = Column(String, default="monthly_trend_v1")
+    # Precomputed snapshot — read directly, never recomputed.
+    nodes_payload = Column(JSONB, nullable=False)
+    edges_payload = Column(JSONB, nullable=False)
+    summary_json = Column(JSONB, nullable=False)     # counts, entropy, top sectors
+    alerts_total = Column(Integer, default=0)
+    alerts_spiked = Column(Integer, default=0)

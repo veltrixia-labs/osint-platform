@@ -101,7 +101,11 @@ async def _run_pro_structural_report_generation_locked(
             force_rebuild=force_rebuild,
             analysis_generated_at=analysis_ts,
         )
-        context = await shape_pro_structural_context(context)
+        provisional_payload = build_pro_structural_report_payload(context)
+        context = await shape_pro_structural_context(
+            context,
+            structured_payload=provisional_payload,
+        )
 
         # 3. Build Report Markdown & Payload
         report_md = sanitize_unicode_tree(build_pro_structural_report(context))

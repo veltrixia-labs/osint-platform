@@ -4,29 +4,32 @@ analysis/lead_lag_engine.py
 Risk Contagion & Lead-Lag Tracker
 ----------------------------------
 Computes pairwise Cross-Correlation Functions (CCF) between the 6 strategic
-sector time-series using intensity snapshots already available in `risk_summary`.
+sector time-series using true historical AlertLog data.
 
 Design principles:
   - Pure-Python: no numpy required (arrays of 24 points, math is trivial).
-  - Stateless: called once per `/api/insights/pro` polling cycle.
+  - Authentic data: Queries real database records to build the time-series.
   - Returns only non-trivial pairs (|R| >= MIN_CORRELATION, lag != 0).
 """
 
 from __future__ import annotations
 
 import math
+from datetime import datetime, timedelta, timezone
 from typing import Any
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from db.models import AlertLog
+from analysis.pro_domain_config import STRATEGIC_DOMAINS, infer_domain_from_topic
+from analysis.intensity_pressure import raw_intensity_from_alert, ui_display_intensity
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
-STRATEGIC_TOPICS = [
-    "energy_resource_risk",
-    "global_market_intelligence",
-    "crypto_geopolitics",
-    "ai_semiconductor_intelligence",
-    "defense_technology",
-    "supply_chain_intelligence",
-]
+# Re-exported for backward compatibility; canonical definition lives in
+# `analysis.pro_domain_config.STRATEGIC_DOMAINS`.
+STRATEGIC_TOPICS = STRATEGIC_DOMAINS
 
 # Only emit pairs with meaningful cross-correlation
 MIN_CORRELATION: float = 0.38
@@ -84,38 +87,14 @@ def _cross_correlation(x: list[float], y: list[float], lag: int) -> float:
     return cov / (sx * sy)
 
 
-def _reconstruct_series(stat: dict[str, Any], n_points: int = 24) -> list[float]:
-    """
-    Reconstruct an approximate time-series for a domain from its
-    scalar pressure metrics (intensity + delta as linear slope + wave).
-    This is the same seeded-wave logic used in market_pulse.ts but in Python,
-    ensuring the backend CCF is computed on the same modelled surface.
-    """
-    intensity: float = float(stat.get("intensity") or 0.0)
-    delta: float = float(stat.get("intensity_delta") or 0.0)
-
-    base = min(1.0, max(0.08, intensity / 10.0))
-    d = delta * 0.04
-    points: list[float] = []
-    for i in range(n_points):
-        t = i / max(1, n_points - 1)
-        drift = d * (t - 0.5)
-        # Lightweight deterministic wave (no external seed needed here —
-        # we use index alone so the pattern is stable per-call)
-        wave = math.sin(i * 1.35 + intensity * 0.3) * 0.08
-        val = min(1.0, max(0.04, base + drift + wave))
-        points.append(val)
-    return points
-
-
 # ── Public API ─────────────────────────────────────────────────────────────────
 
-def compute_lead_lag_matrix(
-    risk_summary: dict[str, Any],
+async def compute_lead_lag_matrix(
+    db: AsyncSession,
     n_points: int = 24,
 ) -> list[dict[str, Any]]:
     """
-    Compute pairwise CCF between all 6 strategic domains.
+    Compute pairwise CCF between all 6 strategic domains using historical data.
 
     Returns a list of dicts:
         {
@@ -127,18 +106,49 @@ def compute_lead_lag_matrix(
 
     Sorted by |correlation| descending, trimmed to MAX_PAIRS.
     """
-    # Build series for every domain that has active signals
-    series_map: dict[str, list[float]] = {}
-    for topic in STRATEGIC_TOPICS:
-        stat = risk_summary.get(topic)
-        if not stat:
-            continue
-        intensity = float(stat.get("intensity") or 0.0)
-        if intensity <= 0.0:
-            continue
-        series_map[topic] = _reconstruct_series(stat, n_points)
+    now = datetime.now(timezone.utc)
+    lookback = now - timedelta(hours=n_points)
+    
+    stmt = select(AlertLog).where(
+        AlertLog.triggered_at >= lookback,
+        AlertLog.suppressed == False  # noqa: E712
+    ).order_by(AlertLog.triggered_at.asc())
+    
+    alerts = list((await db.execute(stmt)).scalars().all())
+    
+    # Initialize series map
+    series_map: dict[str, list[float]] = {topic: [0.0] * n_points for topic in STRATEGIC_DOMAINS}
 
-    active_topics = list(series_map.keys())
+    for alert in alerts:
+        topic = infer_domain_from_topic(alert.topic or "")
+        if topic not in series_map:
+            continue
+        
+        # Determine which bucket this alert falls into (0 to n_points - 1)
+        alert_ts = alert.triggered_at
+        if alert_ts.tzinfo is None:
+            alert_ts = alert_ts.replace(tzinfo=timezone.utc)
+            
+        hours_since_lookback = (alert_ts - lookback).total_seconds() / 3600.0
+        bucket_idx = int(math.floor(hours_since_lookback))
+        bucket_idx = max(0, min(n_points - 1, bucket_idx))
+        
+        raw_int = raw_intensity_from_alert(alert)
+        ui_int = ui_display_intensity(raw_int)
+        
+        # Max pooling per hour
+        if ui_int > series_map[topic][bucket_idx]:
+            series_map[topic][bucket_idx] = ui_int
+            
+    # Forward-fill to avoid artificial zero variance dropping R to 0
+    # If there was an alert at hour 2, but nothing at hour 3, carry hour 2's intensity forward with slight decay.
+    for topic in STRATEGIC_DOMAINS:
+        series = series_map[topic]
+        for i in range(1, n_points):
+            if series[i] == 0.0 and series[i-1] > 0.0:
+                series[i] = series[i-1] * 0.95  # 5% hourly decay
+
+    active_topics = [t for t in STRATEGIC_DOMAINS if any(v > 0 for v in series_map[t])]
     if len(active_topics) < 2:
         return []
 

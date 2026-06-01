@@ -41,11 +41,15 @@ def build_pro_structural_report(context: dict) -> str:
         _build_asset_sector_exposure(context),
         _build_watch_indicators(context),
         _build_balanced_interpretations(context),
+        _build_cascading_impacts_section(context),
+        _build_tail_risk_section(context),
+        _build_quantitative_evidence_matrix_section(context),
         _build_data_notes(context)
     ]
-    
+
     report = "\n\n".join(sections)
-    return _apply_compliance_guardrails(report)
+    report = _apply_compliance_guardrails(report)
+    return _apply_institutional_tone_to_report(report)
 
 def _build_executive_snapshot(ctx: dict) -> str:
     domain = ctx.get("domain", {})
@@ -390,6 +394,180 @@ def _apply_compliance_guardrails(text: str) -> str:
         text = text.replace(old, new)
         text = text.replace(old.capitalize(), new.capitalize())
     return text
+
+
+def _apply_institutional_tone_to_report(text: str) -> str:
+    """Strip dramatic adjectives across the whole rendered markdown."""
+    from analysis.pro_structural_compiler import enforce_institutional_tone
+    return enforce_institutional_tone(text)
+
+
+def _build_cascading_impacts_section(ctx: dict) -> str:
+    """
+    Section 8 — three-tier cascading impact analysis.
+    1st-order: direct exposure (sensitivity == high)
+    2nd-order: downstream channels + medium-sensitivity targets
+    3rd-order: systemic spillover to adjacent domains
+    """
+    ci = ctx.get("cascading_impacts") or {}
+    lines = ["## 8. Cascading Impacts"]
+
+    tier1 = ci.get("tier_1_direct") or []
+    tier2 = ci.get("tier_2_downstream") or []
+    tier2_ch = ci.get("tier_2_channels") or []
+    tier3 = ci.get("tier_3_systemic") or []
+    macro_pressure = ci.get("active_macro_pressure") or []
+
+    if not (tier1 or tier2 or tier3):
+        lines.append("<p class=\"intel-body-text\">No cascading impacts derivable from current domain configuration.</p>")
+        return "\n".join(lines)
+
+    lines.append("<p class=\"intel-body-text\">Second- and third-order systemic effects mapped from domain exposure data and active macro pressure. Each tier is grounded in `exposure_matrix_details` and observed structural moves; no narrative speculation is included.</p>")
+
+    # Tier 1
+    lines.append("\n### 1st-Order — Direct Exposure")
+    if tier1:
+        lines.append("| Target | Transmission Mechanism | Rationale |")
+        lines.append("| :--- | :--- | :--- |")
+        for row in tier1:
+            target = row.get("target") or "—"
+            mech = row.get("transmission") or "—"
+            rationale = row.get("rationale") or "—"
+            lines.append(f"| {target} | {mech} | {rationale} |")
+    else:
+        lines.append("_No high-sensitivity direct targets recorded for this domain._")
+
+    # Tier 2
+    lines.append("\n### 2nd-Order — Downstream Propagation")
+    if tier2:
+        lines.append("| Target | Transmission Mechanism | Sensitivity |")
+        lines.append("| :--- | :--- | :--- |")
+        for row in tier2:
+            lines.append(
+                f"| {row.get('target') or '—'} | {row.get('transmission') or '—'} "
+                f"| {row.get('sensitivity') or '—'} |"
+            )
+    if tier2_ch:
+        lines.append("\n**Indirect channels:**")
+        for ch in tier2_ch:
+            lines.append(f"- {ch.get('channel')} — {ch.get('note')}")
+
+    # Tier 3
+    lines.append("\n### 3rd-Order — Systemic Spillover")
+    if tier3:
+        for row in tier3:
+            spillover = row.get("spillover_domain") or "—"
+            mech = row.get("mechanism") or "—"
+            lines.append(f"- **{spillover}** — {mech}")
+    else:
+        lines.append("_No cross-domain spillover map registered._")
+
+    # Active macro pressure reinforcing the cascade
+    if macro_pressure:
+        lines.append("\n### Active Macro Pressure (≥3% lookback)")
+        lines.append("| Series | Label | Change |")
+        lines.append("| :--- | :--- | :--- |")
+        for m in macro_pressure:
+            chg = m.get("change_pct")
+            chg_s = f"{chg:+.2f}%" if isinstance(chg, (int, float)) else "—"
+            lines.append(f"| {m.get('series_id') or '—'} | {m.get('display_name') or '—'} | {chg_s} |")
+
+    return "\n".join(lines)
+
+
+def _build_tail_risk_section(ctx: dict) -> str:
+    """Section 9 — Tail-Risk & Contrarian Scenarios."""
+    scenarios = ctx.get("tail_risk_scenarios") or []
+    lines = ["## 9. Tail-Risk & Contrarian Scenarios"]
+    if not scenarios:
+        lines.append("<p class=\"intel-body-text\">No contrarian scenarios derivable from current configuration and observed data.</p>")
+        return "\n".join(lines)
+
+    lines.append("<p class=\"intel-body-text\">Low-probability, high-impact paths that would invalidate or accelerate the base case. Each entry is sourced either from domain `balanced_interpretations.invalidating_conditions`, extreme macro moves (≥5% lookback), or short-lag high-correlation transmission detected by the quantitative engine.</p>")
+
+    lines.append("\n| Scenario | Probability | Impact | Type | Source |")
+    lines.append("| :--- | :--- | :--- | :--- | :--- |")
+    for sc in scenarios:
+        scenario_txt = sc.get("scenario") or "—"
+        prob = sc.get("probability") or "—"
+        impact = sc.get("impact") or "—"
+        s_type = (sc.get("type") or "—").replace("_", " ")
+        source = sc.get("source") or "—"
+        lines.append(f"| {scenario_txt} | {prob} | {impact} | {s_type} | `{source}` |")
+
+    return "\n".join(lines)
+
+
+def _build_quantitative_evidence_matrix_section(ctx: dict) -> str:
+    """Section 10 — Quantitative Evidence Matrix (the exact numbers behind the brief)."""
+    matrix = ctx.get("quantitative_evidence_matrix") or {}
+    lines = ["## 10. Quantitative Evidence Matrix"]
+    if not matrix:
+        lines.append("<p class=\"intel-body-text\">No quantitative evidence available for this period.</p>")
+        return "\n".join(lines)
+
+    lines.append("<p class=\"intel-body-text\">Exact numeric inputs supporting the narrative. All correlations are clipped to [-1, 1]; betas are computed on log-return residuals at the aligned peak lag.</p>")
+
+    # Transmission block
+    tx = matrix.get("transmission")
+    if tx:
+        lag = tx.get("lag_days")
+        lag_s = f"{lag:+d}" if isinstance(lag, int) else "—"
+        corr = tx.get("correlation")
+        corr_s = f"{corr:+.3f}" if isinstance(corr, (int, float)) else "—"
+        beta = tx.get("beta_log_return")
+        beta_s = f"{beta:+.4f}" if isinstance(beta, (int, float)) else "—"
+        lines.append("\n### Macro → Topic Transmission")
+        lines.append("| Metric | Value |")
+        lines.append("| :--- | :--- |")
+        lines.append(f"| Source series | `{tx.get('source_series') or '—'}` |")
+        lines.append(f"| Target topic | `{tx.get('target_topic') or '—'}` |")
+        lines.append(f"| Lag (days) | **{lag_s}** |")
+        lines.append(f"| Correlation (clipped) | **{corr_s}** ({tx.get('correlation_strength')}) |")
+        lines.append(f"| β (log-return) | **{beta_s}** |")
+        lines.append(f"| Sample size | {tx.get('sample_size') or '—'} daily points |")
+        lines.append(f"| Inverse scan | {'enabled (±lag)' if tx.get('include_inverse') else 'forward only (+lag)'} |")
+        lines.append(f"| Methodology | {tx.get('methodology') or '—'} |")
+
+    # Top macro moves
+    macro_rows = matrix.get("top_macro_moves") or []
+    if macro_rows:
+        lines.append("\n### Top Structural Moves (by |Δ%|)")
+        lines.append("| Series | Label | Latest | Lookback Δ |")
+        lines.append("| :--- | :--- | :--- | :--- |")
+        for m in macro_rows:
+            chg = m.get("change_pct")
+            chg_s = f"{chg:+.2f}%" if isinstance(chg, (int, float)) else "—"
+            lines.append(
+                f"| `{m.get('series_id') or '—'}` | {m.get('display_name') or '—'} "
+                f"| {format_value(m.get('latest_value'))} | **{chg_s}** |"
+            )
+
+    # Top market moves
+    market_rows = matrix.get("top_market_moves") or []
+    if market_rows:
+        lines.append("\n### Top Market Moves (by |Δ%|)")
+        lines.append("| Symbol | Class | Latest Close | Δ |")
+        lines.append("| :--- | :--- | :--- | :--- |")
+        for p in market_rows:
+            chg = p.get("percent_change")
+            chg_s = f"{chg:+.2f}%" if isinstance(chg, (int, float)) else "—"
+            lines.append(
+                f"| `{p.get('symbol') or '—'}` | {p.get('asset_class') or '—'} "
+                f"| {format_value(p.get('latest_close'))} | **{chg_s}** |"
+            )
+
+    # Alert intensity stats
+    stats = matrix.get("alert_intensity_stats")
+    if stats:
+        lines.append("\n### Alert Intensity (Related Events)")
+        lines.append("| Metric | Value |")
+        lines.append("| :--- | :--- |")
+        lines.append(f"| Sample count | {stats.get('count')} |")
+        lines.append(f"| Peak intensity | {stats.get('max')} |")
+        lines.append(f"| Mean intensity | {stats.get('mean')} |")
+
+    return "\n".join(lines)
 
 # --- Format Helpers ---
 
@@ -787,6 +965,23 @@ def build_pro_structural_report_payload(context: dict) -> dict:
             *key_findings,
         ]
 
+    # Systemic Fragility: surface a phase-transition warning at the top of
+    # key findings when both criticality components fire.
+    sf = context.get("systemic_fragility") or {}
+    if sf.get("phase_transition_warning"):
+        e_idx = sf.get("entropy_index", 0)
+        v_coef = sf.get("viscosity_coefficient", 0)
+        key_findings = [
+            (f"PHASE TRANSITION WARNING: entropy={e_idx:.3f} & "
+             f"viscosity={v_coef:.3f} both critical — regime break risk elevated."),
+            *key_findings,
+        ]
+
+    # Strip dramatic adjectives from the institutional-grade narrative outputs.
+    from analysis.pro_structural_compiler import enforce_institutional_tone as _tone
+    exec_summary = _tone(exec_summary)
+    key_findings = [_tone(f) for f in key_findings]
+
     enriched_macro = s_ctx.get("macro_observations", [])
     macro_display_cards = s_ctx.get("macro_display_cards", enriched_macro[:6])
     relevance_map_payload = {
@@ -799,14 +994,34 @@ def build_pro_structural_report_payload(context: dict) -> dict:
     )
 
     payload = {
-        "payload_schema_version": "pro_structural_v2",
+        "payload_schema_version": "pro_structural_v3",
         "generator": "reports.pro_structural_report_builder",
         "brief_title": sanitize_unicode_tree(context.get("brief_title") or ""),
         "analysis_generated_at": analysis_generated_at,
         "force_rebuild": context.get("force_rebuild", True),
         "realtime_mode": context.get("realtime_mode", True),
         "alert_cluster_window_hours": context.get("alert_cluster_window_hours", 24),
+        "alert_reignite_factor": context.get("alert_reignite_factor", 1.5),
         "predictive_forecast": context.get("predictive_forecast"),
+        # Pro-grade institutional sections.
+        "cascading_impacts": context.get("cascading_impacts"),
+        "tail_risk_scenarios": context.get("tail_risk_scenarios"),
+        "quantitative_evidence_matrix": context.get("quantitative_evidence_matrix"),
+        "quantitative_evidence": context.get("quantitative_evidence"),
+        # Systemic Fragility Engine (Shannon entropy + kinematic viscosity).
+        # Surfaces entropy_index / viscosity_coefficient / phase_transition_warning
+        # for both the LLM shaper and the frontend gauge.
+        "systemic_fragility": context.get("systemic_fragility"),
+        # Spatial Contagion (Sovereign Geo-Engine).
+        # nodes[] (epicenter + affected) with lat/lon/impact_score, edges[]
+        # linking the epicenter to each affected location with entropy-derived
+        # intensity. Powers the Interactive Map in the Pro dashboard.
+        "spatial_contagion": context.get("spatial_contagion"),
+        # Phase 7.4 — cross-domain composite multiplier + propagation path.
+        # Pulled live from the Spatial Engine in pro_structural_context, then
+        # passed straight through here so the frontend Composite Risk HUD
+        # renders without any extra mapping.
+        "composite_risk_profile": context.get("composite_risk_profile"),
         "domain": {
             "domain_id": domain.get("domain_id"),
             "display_name": domain.get("display_name"),
@@ -816,13 +1031,18 @@ def build_pro_structural_report_payload(context: dict) -> dict:
             "title": sig.get("title"),
             "triggered_at": sig.get("triggered_at"),
             "severity": sig.get("severity"),
+            "trigger_type": sig.get("trigger_type"),
             "target_label": sig.get("target_label"),
+            "intensity": sig.get("intensity"),
+            "intelligence_score": sig.get("intelligence_score"),
+            "fidelity_score": sig.get("fidelity_score"),
             "location_lat": sig.get("location_lat"),
             "location_lng": sig.get("location_lng"),
             "related_news": sig.get("related_news", [])
         },
         "executive_summary": exec_summary,
         "key_findings": key_findings,
+        "llm_narrative": context.get("llm_narrative"),
         "signal_classification": sig_class,
         "event_timeline": event_timeline,
         "structural_context": {

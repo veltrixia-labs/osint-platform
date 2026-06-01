@@ -5,15 +5,18 @@ Provides endpoints for Pro and Expert users to access advanced
 structural impact reports.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+import time
+from datetime import datetime, timedelta, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import desc
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Tuple
 import uuid
 
 from db.database import AsyncSessionLocal
-from db.models import Report, AnalystProfile, AlertLog
+from db.models import Report, AnalystProfile, AlertLog, SystemicFragilityLog
 from api.gating import get_effective_tier, TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE, TIER_GUEST
 from api.auth import get_optional_current_user
 from reports.text_encoding import sanitize_unicode_tree
@@ -43,12 +46,19 @@ async def get_current_tier(
 async def require_authenticated_pro_tier(
     current_user: Optional[Any] = Depends(get_optional_current_user),
 ) -> str:
-    """Pro Brief detail requires a logged-in user with Pro tier or above."""
-    if current_user is None:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    user = current_user[0] if isinstance(current_user, tuple) else current_user
+    """Pro Brief detail requires a logged-in user with Pro tier or above, or an active dev override."""
+    user = current_user[0] if isinstance(current_user, tuple) and current_user else current_user
     tier = await get_effective_tier(user)
+    
     allowed = [TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE]
+    
+    if user is None:
+        import os
+        env_name = os.environ.get("ENV", "development").lower()
+        allow_dev = os.environ.get("ALLOW_DEV_TIER_OVERRIDE", "false").lower() == "true"
+        if not (env_name != "production" and allow_dev and tier in allowed):
+            raise HTTPException(status_code=401, detail="Authentication required")
+
     if tier in (TIER_GUEST, "free") or tier not in allowed:
         raise HTTPException(
             status_code=403,
@@ -178,4 +188,130 @@ async def get_pro_report_detail(
         "created_at": report.created_at.isoformat() if report.created_at else None,
         "content_markdown": sanitize_unicode_tree(report.content_markdown),
         "structured_payload": sanitize_unicode_tree(report.structured_payload),
+    }
+
+
+# ── Systemic Fragility history (phase-space trajectory) ──────────────────
+
+_MAX_FRAGILITY_HISTORY_DAYS = 90  # hard cap so a 9999-day request can't sweep the table
+
+# Process-local cache for latest_spatial_contagion. Keyed by domain_id; TTL
+# 300s (5 minutes). The frontend polls fragility-history every 3s — without
+# this cache, every poll would JOIN with Reports table just to ship the same
+# unchanged spatial graph. Reports flip slowly (~30min cycle), so 5min TTL
+# is comfortably tighter than the real refresh rate.
+_SPATIAL_CACHE_TTL_SECONDS = 300
+_SPATIAL_CACHE: Dict[str, Tuple[float, Optional[Dict[str, Any]]]] = {}
+
+
+async def _get_cached_latest_spatial(
+    db: AsyncSession, domain_id: str,
+) -> Optional[Dict[str, Any]]:
+    """
+    Return the latest `spatial_contagion` JSON block for ``domain_id``,
+    backed by a 5-minute in-process cache.
+
+    Lookup strategy:
+      1. Cache hit & fresh → return cached value (may be None if last DB
+         lookup found nothing — we cache misses too, so the JOIN doesn't
+         keep firing for domains that have no reports yet).
+      2. Cache miss / expired → SELECT the newest pro_structural Report
+         for the domain, extract structured_payload.spatial_contagion,
+         memoise, return.
+    """
+    now = time.time()
+    cached = _SPATIAL_CACHE.get(domain_id)
+    if cached is not None and (now - cached[0]) < _SPATIAL_CACHE_TTL_SECONDS:
+        return cached[1]
+
+    stmt = (
+        select(Report.structured_payload)
+        .where(
+            Report.report_type == "pro_structural",
+            Report.topic_code == domain_id,
+        )
+        .order_by(desc(Report.created_at))
+        .limit(1)
+    )
+    raw_payload = (await db.execute(stmt)).scalar_one_or_none()
+    spatial: Optional[Dict[str, Any]] = None
+    if isinstance(raw_payload, dict):
+        candidate = raw_payload.get("spatial_contagion")
+        if isinstance(candidate, dict) and isinstance(candidate.get("nodes"), list):
+            spatial = candidate
+    _SPATIAL_CACHE[domain_id] = (now, spatial)
+    return spatial
+
+
+@router.get("/domains/{domain_id}/fragility-history")
+async def get_fragility_history(
+    domain_id: str,
+    days: int = Query(7, ge=1, le=_MAX_FRAGILITY_HISTORY_DAYS),
+    db: AsyncSession = Depends(get_db),
+    tier: str = Depends(get_current_tier),
+):
+    """
+    Return the Systemic Fragility trajectory for a domain over the last
+    ``days`` days (default 7, hard-capped at 90).
+
+    Each point is one pipeline computation cycle:
+        { timestamp, entropy_index, viscosity_coefficient, label,
+          phase_transition_warning, sample_size }
+
+    Ordered by timestamp ASCENDING so frontends can plot the path through
+    2D phase space without re-sorting.
+    """
+    allowed_tiers = [TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE]
+    if tier not in allowed_tiers:
+        raise HTTPException(
+            status_code=403,
+            detail="Pro subscription required for fragility history.",
+        )
+
+    domain = (domain_id or "").strip()
+    if not domain:
+        raise HTTPException(status_code=400, detail="domain_id is required")
+
+    since = datetime.now(timezone.utc) - timedelta(days=int(days))
+    stmt = (
+        select(SystemicFragilityLog)
+        .where(
+            SystemicFragilityLog.domain_id == domain,
+            SystemicFragilityLog.timestamp >= since,
+        )
+        .order_by(SystemicFragilityLog.timestamp.asc())
+    )
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+
+    series = [
+        {
+            "timestamp": r.timestamp.isoformat() if r.timestamp else None,
+            "entropy_index": round(float(r.entropy_index), 4),
+            "viscosity_coefficient": round(float(r.viscosity_coefficient), 4),
+            "label": r.label,
+            "phase_transition_warning": bool(r.phase_transition_warning),
+            "sample_size": r.sample_size,
+        }
+        for r in rows
+    ]
+
+    # Lightweight aggregate stats so the frontend doesn't recompute.
+    warning_count = sum(1 for p in series if p["phase_transition_warning"])
+    last = series[-1] if series else None
+
+    # Latest spatial graph (N-th Order Impact) for the domain. Cached for
+    # 300s — see _get_cached_latest_spatial doc. None when no Pro report
+    # for this domain has been generated yet; the frontend gracefully
+    # falls back to whatever payload it was constructed with.
+    latest_spatial = await _get_cached_latest_spatial(db, domain)
+
+    return {
+        "domain_id": domain,
+        "days": int(days),
+        "count": len(series),
+        "warning_count": warning_count,
+        "last_point": last,
+        "series": series,
+        "latest_spatial_contagion": latest_spatial,
     }

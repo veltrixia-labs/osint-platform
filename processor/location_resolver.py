@@ -19,7 +19,7 @@ MatchType = Literal["name", "alias", "keyword"]
 @dataclass(frozen=True)
 class RelatedCompanyRow:
     """
-    Optional registry row attached to a static location (Context Briefs).
+    Optional registry row attached to a static location.
 
     JSON ``type`` of ``company`` marks a concrete issuer; otherwise treated as
     an illustrative industry / cluster label.

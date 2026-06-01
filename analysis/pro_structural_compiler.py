@@ -1,5 +1,7 @@
 """
-Rule-based Pro Structural Brief compiler helpers: dynamic titles and timeline correlation.
+Rule-based Pro Structural Brief compiler helpers: dynamic titles, timeline
+correlation, institutional-grade noise filters, and structured section
+builders for Cascading Impacts / Tail Risks / Quantitative Evidence.
 """
 
 from __future__ import annotations
@@ -9,9 +11,25 @@ from typing import Any, Dict, List, Optional, Set
 
 from reports.text_encoding import sanitize_unicode_text
 
-MIN_ALERT_CORRELATION = 0.22
-MIN_NEWS_CORRELATION = 0.28
-MIN_MACRO_TIMELINE_CORRELATION = 0.18
+# === Strict signal/noise thresholds ==========================================
+# Bumped to institutional grade: any item below these scores is dropped before
+# it can reach the Pro brief. Values are intentionally NOT environment-driven
+# so production reports cannot silently degrade.
+MIN_ALERT_CORRELATION: float = 0.30           # was 0.22
+MIN_NEWS_CORRELATION: float = 0.35            # was 0.28
+MIN_MACRO_TIMELINE_CORRELATION: float = 0.22  # was 0.18
+
+# Lower bound on the structural correlation a news item must have BEFORE the
+# sensationalism filter is even applied. Below this, the item is rejected
+# regardless of phrasing.
+MIN_PUBLISHABLE_CORRELATION: float = 0.25
+
+# Re-trigger gate: a previously-suppressed alert may only re-enter the report
+# pipeline if its new intensity is at least 1.5x the prior peak.
+PRO_REPORT_REIGNITE_FACTOR: float = 1.5
+# Cluster window for "related alert" lookups in the Pro pipeline. Anything
+# outside this window is treated as a separate event regime.
+PRO_REPORT_CLUSTER_WINDOW_HOURS: int = 24
 
 _STOPWORDS = frozenset(
     {
@@ -355,13 +373,404 @@ def filter_correlated_news_items(
     *,
     trigger_tokens: Set[str],
 ) -> List[dict]:
+    """Keep only news rows that are both structurally relevant AND not sensationalist."""
     out: List[dict] = []
     for item in items or []:
         title = item.get("title") or item.get("headline") or item.get("text") or ""
         score = structural_correlation_score(str(title), vocabulary, trigger_tokens=trigger_tokens)
-        if score >= MIN_NEWS_CORRELATION:
-            out.append(item)
+        if score < MIN_NEWS_CORRELATION:
+            continue
+        if is_sensationalist(str(title)) and score < 0.55:
+            # Only retain sensationalist phrasing when correlation is strong
+            # enough to overcome the credibility penalty.
+            continue
+        if not is_credible_source(item):
+            continue
+        out.append(item)
     return out
+
+
+# === Institutional tone & credibility filters ================================
+
+# Dramatic / clickbait adjectives and verbs that flag low-credibility framing.
+_SENSATIONAL_TOKENS: Set[str] = frozenset({
+    "shocking", "shock", "shocked",
+    "explosive", "explode", "explodes",
+    "stunning", "stunned",
+    "unprecedented",
+    "panic", "panicking",
+    "meltdown", "crashing", "plunging",
+    "skyrocketing", "soaring", "rocketing",
+    "doomed", "doomsday",
+    "catastrophic", "catastrophe",
+    "bombshell",
+    "outrage", "outraged",
+    "insane", "crazy",
+    "viral",
+    "you won't believe", "you wont believe",
+    "must see", "must-see",
+    "jaw-dropping", "jaw dropping",
+    "mind-blowing", "mind blowing",
+    "shake up the world",
+})
+
+# Sources we will not accept as supporting evidence regardless of score.
+_LOW_CREDIBILITY_DOMAINS: Set[str] = frozenset({
+    "facebook.com", "twitter.com", "x.com", "tiktok.com",
+    "reddit.com",  # raw social aggregator (Pro reports require reporting outlets)
+    "rumormillnews.com", "infowars.com", "naturalnews.com",
+    "beforeitsnews.com",
+})
+
+
+def is_sensationalist(text: str) -> bool:
+    """True if the text contains clickbait/dramatic phrasing typical of low-signal feeds."""
+    if not text:
+        return False
+    lower = text.lower()
+    for phrase in _SENSATIONAL_TOKENS:
+        # multi-word phrases checked as substring, single tokens as word match
+        if " " in phrase or "-" in phrase:
+            if phrase in lower:
+                return True
+        else:
+            if re.search(rf"\b{re.escape(phrase)}\b", lower):
+                return True
+    # Excess punctuation is another sensationalism marker.
+    if text.count("!") >= 2 or text.count("?!") >= 1:
+        return True
+    if re.search(r"[A-Z]{6,}", text):  # SHOUTING tokens of 6+ chars
+        return True
+    return False
+
+
+def is_credible_source(item: dict) -> bool:
+    """Reject items pointing exclusively to known-low-credibility domains."""
+    url = (item.get("url") or item.get("link") or item.get("source_url") or "").lower()
+    if not url:
+        return True  # missing url is not itself a credibility failure
+    for bad in _LOW_CREDIBILITY_DOMAINS:
+        if bad in url:
+            return False
+    return True
+
+
+# Adjective downgrades used by `enforce_institutional_tone`. Mapping is
+# deliberately conservative — we lower the temperature, not the meaning.
+_TONE_SUBSTITUTIONS: List[tuple] = [
+    (r"\bshocking(ly)?\b",                "notable"),
+    (r"\bexplosi(ve|vely|on|ons)\b",      "sharp move"),
+    (r"\bexplod(e|es|ed|ing)\b",          "moved sharply"),
+    (r"\bstunning(ly)?\b",                "marked"),
+    (r"\bunprecedented(ly)?\b",   "elevated"),
+    (r"\bcatastrophic(ally)?\b",  "severe"),
+    (r"\bskyrocket(ing|ed|s)?\b", "rising sharply"),
+    (r"\bsoar(ing|ed|s)?\b",      "rising"),
+    (r"\bplung(e|ed|ing|es)\b",   "decline"),
+    (r"\bcrash(ing|ed|es)?\b",    "decline"),
+    (r"\bmeltdown\b",             "dislocation"),
+    (r"\bpanic(king|ked)?\b",     "stress"),
+    (r"\bbombshell\b",            "material development"),
+    (r"\boutrage(ous|d)?\b",      "contested"),
+    (r"\binsane(ly)?\b",          "extreme"),
+    (r"\bcrazy\b",                "anomalous"),
+    (r"\bdoom(ed|sday)?\b",       "downside scenario"),
+    # punctuation
+    (r"!!+", "."),
+    (r"\?!", "?"),
+]
+
+
+def enforce_institutional_tone(text: str) -> str:
+    """Rewrite sensational adjectives to neutral, institutional-grade phrasing."""
+    if not text:
+        return text
+    out = text
+    for pattern, replacement in _TONE_SUBSTITUTIONS:
+        out = re.sub(pattern, replacement, out, flags=re.I)
+    # Collapse double spaces caused by punctuation downgrades.
+    out = re.sub(r"\s{2,}", " ", out).strip()
+    return out
+
+
+# === Structured section builders =============================================
+
+def _quantitative_strength_label(corr: Optional[float]) -> str:
+    """Map a clipped Pearson correlation to a qualitative strength label."""
+    if corr is None:
+        return "—"
+    a = abs(corr)
+    if a >= 0.7:
+        return "Strong"
+    if a >= 0.4:
+        return "Moderate"
+    if a >= 0.2:
+        return "Weak"
+    return "Negligible"
+
+
+def build_cascading_impacts(
+    domain_config: Dict[str, Any],
+    macro_observations: Optional[List[dict]] = None,
+    cross_domain_spillover: Optional[Dict[str, List[str]]] = None,
+) -> Dict[str, Any]:
+    """
+    Compose a 3-tier cascading impact map purely from existing domain config
+    plus observed macro moves — no LLM, no speculation.
+
+    Tier 1 (direct): exposure_matrix_details with sensitivity == "high".
+    Tier 2 (downstream): exposure_matrix_details medium + transmission_channels.
+    Tier 3 (systemic spillover): cross-domain hand-offs derived from
+        `cross_domain_spillover` (defaults to a curated map).
+    """
+    exposure = domain_config.get("exposure_matrix_details") or []
+    channels = domain_config.get("transmission_channels") or []
+    domain_id = (domain_config.get("domain_id") or "").strip()
+
+    spillover_map = cross_domain_spillover or _DEFAULT_CROSS_DOMAIN_SPILLOVER
+
+    tier1: List[dict] = []
+    tier2: List[dict] = []
+    for row in exposure:
+        if not isinstance(row, dict):
+            continue
+        sensitivity = (row.get("sensitivity") or "").lower()
+        entry = {
+            "target": sanitize_unicode_text(row.get("target") or ""),
+            "transmission": sanitize_unicode_text(row.get("transmission") or ""),
+            "rationale": enforce_institutional_tone(
+                sanitize_unicode_text(row.get("reason") or "")
+            ),
+            "sensitivity": sensitivity or "unspecified",
+        }
+        if sensitivity == "high":
+            tier1.append(entry)
+        else:
+            tier2.append(entry)
+
+    tier2_channels = [
+        {"channel": sanitize_unicode_text(c), "note": "Indirect mechanism"}
+        for c in channels
+        if isinstance(c, str) and c.strip()
+    ]
+
+    tier3 = [
+        {
+            "spillover_domain": sd,
+            "mechanism": enforce_institutional_tone(
+                f"Output volatility in {domain_id} transmits to {sd} "
+                f"through shared input pricing and risk-on/risk-off rotation."
+            ),
+        }
+        for sd in spillover_map.get(domain_id, [])
+    ]
+
+    # Highlight any macro series that has moved >= 3% in lookback — flag as
+    # active reinforcement of the cascade.
+    macro_pressure: List[dict] = []
+    for obs in macro_observations or []:
+        chg = obs.get("change_pct")
+        if chg is None:
+            continue
+        if abs(float(chg)) >= 3.0:
+            macro_pressure.append({
+                "series_id": obs.get("series_id"),
+                "display_name": obs.get("display_name") or obs.get("series_id"),
+                "change_pct": float(chg),
+            })
+
+    return {
+        "tier_1_direct": tier1,
+        "tier_2_downstream": tier2,
+        "tier_2_channels": tier2_channels,
+        "tier_3_systemic": tier3,
+        "active_macro_pressure": macro_pressure,
+    }
+
+
+_DEFAULT_CROSS_DOMAIN_SPILLOVER: Dict[str, List[str]] = {
+    "energy_resource_risk": [
+        "supply_chain_intelligence", "global_market_intelligence",
+    ],
+    "supply_chain_intelligence": [
+        "ai_semiconductor_intelligence", "defense_technology",
+    ],
+    "ai_semiconductor_intelligence": [
+        "supply_chain_intelligence", "defense_technology",
+    ],
+    "defense_technology": [
+        "energy_resource_risk", "ai_semiconductor_intelligence",
+    ],
+    "global_market_intelligence": [
+        "crypto_geopolitics", "supply_chain_intelligence",
+    ],
+    "crypto_geopolitics": [
+        "global_market_intelligence",
+    ],
+}
+
+
+def build_tail_risk_scenarios(
+    domain_config: Dict[str, Any],
+    macro_observations: Optional[List[dict]] = None,
+    quantitative_evidence: Optional[Dict[str, Any]] = None,
+) -> List[dict]:
+    """
+    Surface low-probability / high-impact contrarian scenarios.
+    Sources:
+      1. balanced_interpretations.invalidating_conditions (from config)
+      2. macro extreme moves (>= 5% lookback) — flagged as regime-break candidates
+      3. quantitative_evidence: a strong (|corr| >= 0.5) but short-lag transmission
+         is flagged as a contrarian acceleration risk.
+    """
+    out: List[dict] = []
+
+    bi = domain_config.get("balanced_interpretations") or {}
+    for cond in bi.get("invalidating_conditions") or []:
+        if not isinstance(cond, str):
+            continue
+        out.append({
+            "type": "thesis_invalidator",
+            "scenario": enforce_institutional_tone(sanitize_unicode_text(cond)),
+            "probability": "low",
+            "impact": "high",
+            "source": "domain_config.invalidating_conditions",
+        })
+
+    volatility_view = bi.get("volatility_view")
+    if isinstance(volatility_view, str) and volatility_view.strip():
+        out.append({
+            "type": "stress_case",
+            "scenario": enforce_institutional_tone(sanitize_unicode_text(volatility_view)),
+            "probability": "moderate",
+            "impact": "high",
+            "source": "domain_config.balanced_interpretations.volatility_view",
+        })
+
+    for obs in macro_observations or []:
+        chg = obs.get("change_pct")
+        if chg is None:
+            continue
+        try:
+            c = float(chg)
+        except (TypeError, ValueError):
+            continue
+        if abs(c) >= 5.0:
+            label = obs.get("display_name") or obs.get("series_id") or "Macro series"
+            out.append({
+                "type": "regime_break",
+                "scenario": (
+                    f"{label} moved {c:+.2f}% in the lookback window — a "
+                    "magnitude consistent with regime-break risk if persistent."
+                ),
+                "probability": "moderate",
+                "impact": "high",
+                "source": f"macro:{obs.get('series_id')}",
+            })
+
+    qe = quantitative_evidence or {}
+    corr = qe.get("correlation")
+    lag = qe.get("lag_days")
+    if isinstance(corr, (int, float)) and abs(corr) >= 0.5 and isinstance(lag, int) and 0 < lag <= 3:
+        out.append({
+            "type": "transmission_acceleration",
+            "scenario": (
+                f"Cross-correlation of {corr:+.2f} at a {lag}-day lag is short "
+                "enough to compress decision windows; downside surprises in the "
+                "macro signal would propagate to the sector within the trading week."
+            ),
+            "probability": "low",
+            "impact": "high",
+            "source": "macro_transmission_engine",
+        })
+
+    return out
+
+
+def build_quantitative_evidence_matrix(
+    macro_observations: Optional[List[dict]] = None,
+    market_prices: Optional[List[dict]] = None,
+    quantitative_evidence: Optional[Dict[str, Any]] = None,
+    related_events: Optional[List[Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Structured numeric block summarising the mathematics behind the brief.
+    Values are clipped / sanitised so the matrix is safe to render verbatim.
+    """
+    qe = quantitative_evidence or {}
+
+    # Top macro moves (largest |change_pct|, up to 5).
+    macro_rows = []
+    for obs in sorted(
+        (m for m in macro_observations or [] if m.get("change_pct") is not None),
+        key=lambda m: abs(float(m.get("change_pct") or 0.0)),
+        reverse=True,
+    )[:5]:
+        macro_rows.append({
+            "series_id": obs.get("series_id"),
+            "display_name": obs.get("display_name") or obs.get("series_id"),
+            "latest_value": obs.get("latest_value"),
+            "change_pct": round(float(obs.get("change_pct")), 3),
+        })
+
+    # Top market moves (largest |percent_change|, up to 5).
+    market_rows = []
+    for p in sorted(
+        (x for x in market_prices or [] if x.get("percent_change") is not None),
+        key=lambda x: abs(float(x.get("percent_change") or 0.0)),
+        reverse=True,
+    )[:5]:
+        market_rows.append({
+            "symbol": p.get("symbol"),
+            "asset_class": p.get("asset_class"),
+            "latest_close": p.get("latest_close"),
+            "percent_change": round(float(p.get("percent_change")), 3),
+        })
+
+    # Alert intensity stats from related events.
+    intensities = []
+    for ev in related_events or []:
+        val = getattr(ev, "intensity", None)
+        if val is None and isinstance(ev, dict):
+            val = ev.get("intensity")
+        if isinstance(val, (int, float)):
+            intensities.append(float(val))
+    intensity_stats = None
+    if intensities:
+        intensity_stats = {
+            "count": len(intensities),
+            "max": round(max(intensities), 2),
+            "mean": round(sum(intensities) / len(intensities), 2),
+        }
+
+    # Transmission block (from macro_transmission engine).
+    transmission_block = None
+    if qe:
+        # Defensive clip — the engine already clips, but never trust upstream.
+        corr = qe.get("correlation")
+        if isinstance(corr, (int, float)):
+            corr = max(-1.0, min(1.0, float(corr)))
+        beta = qe.get("beta")
+        beta_val = float(beta) if isinstance(beta, (int, float)) else None
+        transmission_block = {
+            "source_series": qe.get("source"),
+            "target_topic": qe.get("target"),
+            "lag_days": qe.get("lag_days"),
+            "correlation": round(corr, 3) if isinstance(corr, float) else corr,
+            "correlation_strength": _quantitative_strength_label(corr if isinstance(corr, float) else None),
+            "beta_log_return": round(beta_val, 4) if beta_val is not None else None,
+            "sample_size": qe.get("sample_size"),
+            "include_inverse": qe.get("include_inverse"),
+            "methodology": "Log-return CCF on z-scored signals; correlation clipped to [-1, 1].",
+        }
+
+    return {
+        "transmission": transmission_block,
+        "top_macro_moves": macro_rows,
+        "top_market_moves": market_rows,
+        "alert_intensity_stats": intensity_stats,
+        "schema_version": "quant_evidence_v1",
+    }
 
 
 def filter_correlated_timeline_events(events: List[dict]) -> List[dict]:
