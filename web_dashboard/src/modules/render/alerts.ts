@@ -328,12 +328,13 @@ function chudRowHtml(alert: Alert): string {
         ? '<span class="alert-headline-skeleton alert-headline-skeleton--inline" aria-hidden="true"></span>'
         : chudEscape(headline.text);
 
-    // Cluster density: number of corroborating sources merged into this signal.
-    // A multi-source signal (a clustered master) gets a glassmorphism count badge.
-    const sourceCount = Array.isArray(alert.evidence_list) ? alert.evidence_list.length : 0;
-    const sourceBadge = sourceCount > 1
-        ? `<span class="chud-source-badge" title="${sourceCount} corroborating sources clustered into this signal">${sourceCount} SRC</span>`
-        : '';
+    // Source density: EVERY row carries the SAME bright-cyan glassmorphism badge
+    // (uniform high-tech layout). Floor at 1 (every signal has its trigger source).
+    const sourceCount = Math.max(1, Array.isArray(alert.evidence_list) ? alert.evidence_list.length : 0);
+    const sourceBadge =
+        `<span class="chud-source-badge"`
+        + ` title="${sourceCount} corroborating source${sourceCount > 1 ? 's clustered into this signal' : ''}">`
+        + `${sourceCount} SRC</span>`;
 
     return `
         <button type="button" class="chud-row severity-${sev}${active}${locked ? ' chud-row--locked' : ''}"
