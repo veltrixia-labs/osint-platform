@@ -2,7 +2,6 @@ import type { UserMe } from '../api';
 import { toggleAdminTier } from '../api';
 import { isAuthSessionPending } from '../auth_session';
 import { closeMobileSidebar } from '../mobile_nav';
-import { DEV_MODE_AUDIT } from '../dev_mode';
 
 /**
  * [Phase 3] Role-aware Navigation Renderer
@@ -127,16 +126,19 @@ export function renderNavigation(
                 <div class="nav-group-label">${title}</div>
                 ${visibleItems.map(item => {
                     const isActive = item.id === activeTab;
-                    // Dev Mode / Audit Build: never mark items as locked so all tabs
-                    // are fully navigable for review.
+                    // Commercial gating: the three premium modules (Market Pulse,
+                    // Pro Insight, Pro Interactive Map) are locked for a FREE/guest
+                    // tier and route to Plans on click. Gating is driven by the
+                    // EFFECTIVE tier, so the local dev tier tabs (FREE/PRO/EXPERT)
+                    // audit both states. While the session is still resolving we
+                    // optimistically treat items as accessible to avoid paywall
+                    // flicker; the authoritative gate also re-checks in main.ts.
                     const isLockedForFree =
-                        !DEV_MODE_AUDIT
-                        && !sessionPending
+                        !sessionPending
                         && tier === 'free'
                         && FREE_LOCKED_TABS.has(item.id);
                     const accessible =
                         sessionPending
-                        || DEV_MODE_AUDIT
                         || (!isLockedForFree && canAccess(tier, item.minTier));
                     return `
                         <div

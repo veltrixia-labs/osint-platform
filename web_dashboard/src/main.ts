@@ -753,6 +753,25 @@ async function initDashboard() {
         handleTabSwitch('plans');
     };
 
+    // Commercial guardrail: a FREE/guest session attempting any of the three
+    // premium modules (Market Pulse, Pro Insight, Pro Interactive Map) is cleanly
+    // blocked here and routed to the pricing layout. The effective tier is what
+    // gates — so the local dev tier tabs (FREE / PRO / EXPERT) audit both the
+    // locked and unlocked states instantly with no code change.
+    const routeToProPricing = () => {
+        sessionStorage.setItem('plansFocusTier', 'pro');
+        sessionStorage.setItem(
+            'plansUpsellBanner',
+            JSON.stringify({
+                message:
+                    'This module requires Pro access. Explore the full scope of Pro / Expert intelligence capabilities.',
+                ts: Date.now(),
+            }),
+        );
+        document.querySelector<HTMLElement>('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+        handleTabSwitch('plans');
+    };
+
     const handleTabSwitch = (tab: TabId, focusAlertId?: string, skipPushState = false) => {
         closeMobileSidebar();
         if (tab !== 'market-pulse') {
@@ -816,13 +835,19 @@ async function initDashboard() {
             }
             else if (tab === 'market-pulse') {
                 if (isAuthSessionPending()) return;
+                if (!isProOrAbove(user!.tier)) { routeToProPricing(); return; }
                 renderMarketPulse(alertsContainer, user!, () => handleTabSwitch('plans'));
             }
             else if (tab === 'pro-insights') {
                 if (isAuthSessionPending()) return;
+                if (!isProOrAbove(user!.tier)) { routeToProPricing(); return; }
                 renderPro(alertsContainer, user!, () => handleTabSwitch('plans'));
             }
-            else if (tab === 'pro-map') renderProMap();
+            else if (tab === 'pro-map') {
+                if (isAuthSessionPending()) return;
+                if (!isProOrAbove(user!.tier)) { routeToProPricing(); return; }
+                renderProMap();
+            }
             else if (tab === 'expert-intel') {
                 const isExpertPlus =
                     user!.tier === 'experts' || user!.tier === 'enterprise'
