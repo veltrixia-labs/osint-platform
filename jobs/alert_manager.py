@@ -1,4 +1,5 @@
 import asyncio
+import re
 import uuid
 import logging
 import os
@@ -149,6 +150,82 @@ def _alert_title_keys(display_label: str, sig_target_label: str | None) -> set[s
     return keys
 
 
+# Window over which two feeds composing to the SAME elite headline must be
+# differentiated rather than emitted as byte-identical rows.
+HEADLINE_DIVERSIFY_WINDOW_HOURS = 6
+
+
+def _diversify_headline(
+    title: str,
+    evidence_list: List[Dict[str, str]],
+    used_keys: set[str],
+) -> str:
+    """Return a headline whose normalized key is NOT already in *used_keys*.
+
+    Different premium feeds (nytimes.com, decrypt.co) can have the composer
+    synthesize an identical string. To guarantee 100% individual row clarity we
+    first append a source anchor ("… (via decrypt.co)"), then — only if that
+    still collides (same source, same window) — a bounded numeric variant.
+    """
+    if _normalize_alert_title(title) not in used_keys:
+        return title
+    anchored = _distinctify_title(title, evidence_list)
+    if _normalize_alert_title(anchored) not in used_keys:
+        return anchored
+    for n in range(2, 50):
+        candidate = f"{anchored} #{n}"
+        if _normalize_alert_title(candidate) not in used_keys:
+            return candidate
+    return anchored
+
+
+# ── Event clustering ─────────────────────────────────────────────────────────
+# Group articles about the SAME underlying event into one master alert instead
+# of spamming the stream with near-duplicate rows.
+CLUSTER_WINDOW_HOURS = 24
+CLUSTER_SIM_THRESHOLD = 0.6                         # Jaccard on significant tokens → same event (high = precision over recall: only near-identical events cluster, never loosely-related geopolitics)
+CLUSTER_ESCALATION_FACTOR = REIGNITE_INTENSITY_FACTOR  # ≥1.5× master intensity breaks through as new alert
+CLUSTER_MAX_EVIDENCE = 40                           # cap merged corroborating sources on a master
+
+_EVENT_STOPWORDS = frozenset({
+    # >=4-char fillers
+    "the", "and", "for", "with", "from", "into", "over", "under", "after", "before",
+    "says", "said", "amid", "this", "that", "these", "those", "its", "their", "new",
+    "more", "than", "out", "off", "via", "not", "will", "would", "could", "should",
+    "may", "might", "report", "reports", "about", "have", "has", "had", "are", "was",
+    "were", "been", "being", "they", "them", "what", "when", "where", "which", "while",
+    # 3-char fillers (now that 3-char tokens are kept for short key terms like oil/gas)
+    "you", "but", "all", "can", "her", "his", "him", "she", "who", "why", "how", "now",
+    "one", "two", "get", "got", "let", "saw", "per", "see", "use", "due", "set", "amid",
+})
+
+
+def _stem(token: str) -> str:
+    """Crude suffix stemmer so morphological variants match (seizes/seized→seiz,
+    iran/iranian→iran). Conservative: only strips when a >=3-char root remains."""
+    for suf in ("ians", "ian", "ing", "ied", "ies", "ed", "es", "s"):
+        if token.endswith(suf) and len(token) - len(suf) >= 3:
+            return token[: -len(suf)]
+    return token
+
+
+def _event_tokens(text: str) -> set[str]:
+    """Significant, stemmed lowercase tokens (>=4 chars, non-stopword) for event
+    matching — so paraphrases of the SAME event share most of their token set."""
+    return {
+        _stem(t) for t in re.findall(r"[a-z0-9]+", (text or "").lower())
+        if len(t) >= 3 and t not in _EVENT_STOPWORDS
+    }
+
+
+def _event_similarity(a: set[str], b: set[str]) -> float:
+    """Jaccard overlap of two significant-token sets (0..1)."""
+    if not a or not b:
+        return 0.0
+    union = len(a | b)
+    return (len(a & b) / union) if union else 0.0
+
+
 def _raw_intensity_for_alert(alert_log: AlertLog) -> float:
     """Uncapped intensity for dedupe / reignite (never the asymptotic UI index)."""
     meta = alert_log.metadata_json if isinstance(alert_log.metadata_json, dict) else {}
@@ -192,6 +269,11 @@ class AlertManager:
         """Evaluates new signals for alerts with tiered severity and escalation logic."""
         # Phase 24: We now proceed with scoring and logging even if Telegram is disabled
         # Original: if not ALERT_ENABLED: return
+
+        # Diversification guard: seed the keys of active (unsuppressed) headlines in
+        # the last HEADLINE_DIVERSIFY_WINDOW_HOURS so two feeds that compose to an
+        # identical elite headline get a source anchor instead of a duplicate row.
+        batch_headline_keys = await cls._recent_headline_keys(db)
 
         for sig in new_signals:
             if not _is_allowed_trend_type(sig.trend_type):
@@ -273,24 +355,31 @@ class AlertManager:
             intensity_pct = await cls._domain_intensity_pct(db, alert_domain, intensity, now_utc)
             severity = severity_from_percentage(intensity_pct) if intensity_pct is not None else legacy_severity
 
-            # 3. 24h dedupe by headline (target_label / display_title); allow reignite if intensity ≥ factor × prior.
-            suppressed, last_dup_intensity, reignited = await cls._check_recent_duplicate(
-                db, display_label, sig.target_label, intensity
+            # 3. Event clustering (24h): if this signal is the SAME underlying event
+            #    as an active master alert, absorb it as a corroborating source
+            #    instead of creating a near-duplicate row. A >=1.5x intensity surge
+            #    vs the master breaks through and emits a fresh escalated alert.
+            master, escalated = await cls._find_event_cluster(
+                db, sig, display_label, topic, intensity
             )
-            if suppressed:
+            if master is not None and not escalated:
+                await cls._absorb_into_master(db, master, sig, evidence_list, display_label)
                 continue
-            if reignited and last_dup_intensity > 0:
+            if master is not None and escalated:
                 display_trigger_type = f"{display_trigger_type} (🚨 INTENSITY SPIKE)"
-                # Re-fired within the dedupe window → guarantee a distinct headline
-                # so the timeline stays scannable (no byte-identical neighbours).
+                # Escalation breaks the cluster → distinct headline so the surge is
+                # scannable next to the master on the timeline.
                 display_label = _distinctify_title(display_label, evidence_list)
                 logger.info(
-                    "Duplicate window bypass (reignite): %.2f -> %.2f (prior=%.2f, factor=%.2f)",
-                    last_dup_intensity,
+                    "Cluster escalation override: intensity %.2f >= %.2fx master — emitting fresh alert.",
                     intensity,
-                    last_dup_intensity,
-                    REIGNITE_INTENSITY_FACTOR,
+                    CLUSTER_ESCALATION_FACTOR,
                 )
+
+            # 3b. Cross-source diversification — never emit two byte-identical
+            # active headlines (different feeds can compose to the same string).
+            display_label = _diversify_headline(display_label, evidence_list, batch_headline_keys)
+            batch_headline_keys |= _alert_title_keys(display_label, sig.target_label)
 
             # 4. Intelligence Scoring (Phase 24)
             from jobs.alert_scoring import calculate_alert_score
@@ -604,6 +693,102 @@ class AlertManager:
             return True, last_intensity, False
 
         return False, 0.0, False
+
+    @classmethod
+    async def _recent_headline_keys(cls, db) -> set[str]:
+        """Normalized headline keys of active (unsuppressed) alerts within the
+        diversification window — seeds the per-run cross-source uniqueness guard."""
+        window_start = datetime.now(timezone.utc) - timedelta(hours=HEADLINE_DIVERSIFY_WINDOW_HOURS)
+        stmt = (
+            select(AlertLog)
+            .where(AlertLog.triggered_at >= window_start, AlertLog.suppressed == False)  # noqa: E712
+            .order_by(desc(AlertLog.triggered_at))
+            .limit(RECENT_ALERTS_FETCH_LIMIT)
+        )
+        rows = (await db.execute(stmt)).scalars().all()
+        keys: set[str] = set()
+        for r in rows:
+            keys |= _prior_alert_title_keys(r)
+        return keys
+
+    @classmethod
+    async def _find_event_cluster(cls, db, sig, display_label, topic, new_intensity):
+        """Find an active master alert (same topic, last CLUSTER_WINDOW_HOURS) that
+        represents the SAME underlying event as the incoming signal.
+
+        Returns (master_alert | None, is_escalation). `is_escalation` is True when
+        the new signal is a >= CLUSTER_ESCALATION_FACTOR (1.5x) intensity surge vs
+        the master — in which case the caller emits a fresh escalated alert instead
+        of absorbing it.
+        """
+        incoming = _event_tokens(f"{display_label} {sig.target_label or ''} {sig.description or ''}")
+        if not incoming:
+            return None, False
+
+        window_start = datetime.now(timezone.utc) - timedelta(hours=CLUSTER_WINDOW_HOURS)
+        stmt = (
+            select(AlertLog)
+            .where(
+                AlertLog.triggered_at >= window_start,
+                AlertLog.suppressed == False,  # noqa: E712
+                AlertLog.topic == topic,
+            )
+            .order_by(desc(AlertLog.triggered_at))
+            .limit(RECENT_ALERTS_FETCH_LIMIT)
+        )
+        rows = (await db.execute(stmt)).scalars().all()
+
+        best, best_sim = None, 0.0
+        for prev in rows:
+            meta = prev.metadata_json if isinstance(prev.metadata_json, dict) else {}
+            prev_text = f"{prev.target_label or ''} {meta.get('display_title', '')} {meta.get('description', '')}"
+            sim = _event_similarity(incoming, _event_tokens(prev_text))
+            if sim > best_sim:
+                best, best_sim = prev, sim
+
+        if best is None or best_sim < CLUSTER_SIM_THRESHOLD:
+            return None, False
+
+        master_intensity = _raw_intensity_for_alert(best)
+        escalated = master_intensity > 0 and new_intensity >= master_intensity * CLUSTER_ESCALATION_FACTOR
+        return best, escalated
+
+    @classmethod
+    async def _absorb_into_master(cls, db, master, sig, evidence_list, incoming_label):
+        """Merge the incoming signal's sources into an existing master alert as
+        corroboration — no new row. Dedupes evidence by URL/title and only ever
+        RAISES the master's confidence (intensity is never lowered)."""
+        from sqlalchemy.orm.attributes import flag_modified
+
+        meta = dict(master.metadata_json) if isinstance(master.metadata_json, dict) else {}
+        existing = list(meta.get("evidence_list") or [])
+        seen = {
+            (e.get("url") or e.get("link") or e.get("title") or "").strip()
+            for e in existing if isinstance(e, dict)
+        }
+        added = 0
+        for ev in (evidence_list or []):
+            if not isinstance(ev, dict):
+                continue
+            key = (ev.get("url") or ev.get("link") or ev.get("title") or "").strip()
+            if key and key in seen:
+                continue
+            existing.append(ev)
+            if key:
+                seen.add(key)
+            added += 1
+
+        meta["evidence_list"] = existing[:CLUSTER_MAX_EVIDENCE]
+        meta["corroboration_count"] = int(meta.get("corroboration_count", 0) or 0) + 1
+        meta["last_corroborated_at"] = datetime.now(timezone.utc).isoformat()
+        master.metadata_json = meta
+        master.supporting_events_count = len(meta["evidence_list"])
+        flag_modified(master, "metadata_json")
+        await db.flush()
+        logger.info(
+            "Event clustered: absorbed %r into master %s (+%d new source(s), %d total)",
+            (incoming_label or "")[:60], str(master.id), added, len(meta["evidence_list"]),
+        )
 
     @classmethod
     async def _get_latest_report_link(cls, db, sig: TrendSignal) -> Tuple[Optional[uuid.UUID], Optional[str]]:
