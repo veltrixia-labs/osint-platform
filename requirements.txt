@@ -45,5 +45,12 @@ argon2-cffi
 redis
 PyYAML
 aiohttp
+
+# Data science / spatial physics subsystem
 matplotlib
 numpy
+pandas
+
+# Used at boot / by clients but previously only satisfied transitively
+python-dotenv
+requests
