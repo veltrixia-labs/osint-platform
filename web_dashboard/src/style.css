@@ -10258,7 +10258,9 @@ body.checkout-email-modal-scroll-lock {
   overflow: hidden; max-height: 0; opacity: 0;
   transition: max-height 0.3s ease, opacity 0.25s ease;
 }
-.chud-src-secondary.expanded { max-height: 480px; opacity: 1; }
+/* Uncapped: ALL secondary sources (26+) grow naturally and scroll with the
+   panel — no vertical clipping on desktop or mobile. */
+.chud-src-secondary.expanded { max-height: none; opacity: 1; }
 
 /* Phase 8.15 — Contextual Topology mini-graph (Pro spatial-engine teaser). */
 .chud-topo-wrap {
@@ -10385,9 +10387,15 @@ body.checkout-email-modal-scroll-lock {
    in 2-tier rows, and an absolute scrollable category dropdown. ─────────── */
 @media (max-width: 768px) {
   /* .chud-root's `perspective` would otherwise act as the containing block for
-     our position:fixed bottom-sheet + backdrop (anchoring them to the root box,
+     the position:fixed full-screen detail modal (anchoring it to the root box,
      not the viewport). The 3D depth cue is hover-only, so drop it on touch. */
   .chud-root { perspective: none; }
+
+  /* The category dropdown is absolutely positioned, but its ancestors clip it
+     (control pad: overflow hidden; console: max-height 132px) — so toggling it
+     appeared to "do nothing". Let it escape so the menu is actually visible. */
+  .chud-console { overflow: visible; }
+  .chud-control-pad { overflow: visible; }
 
   /* The stream is ALWAYS the underlying view; the detail floats on top as a
      bottom-sheet modal when .chud-split--detail-open is set. */
@@ -10399,32 +10407,21 @@ body.checkout-email-modal-scroll-lock {
   .chud-stream-list { max-height: none; }
   .chud-detail { display: none; }
 
-  /* Dimmed glass backdrop behind the floating card. */
-  .chud-split--detail-open::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 1400;
-    background: rgba(2, 6, 12, 0.62);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
-  }
-  /* Detail panel → floating bottom-sheet card (modal). */
+  /* Detail panel → FULL-SCREEN modal overlay that perfectly fills the viewport. */
   .chud-split--detail-open .chud-detail {
     display: block;
     position: fixed;
-    left: 0; right: 0; bottom: 0; top: auto;
-    z-index: 1401;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
     margin: 0;
-    max-height: 88vh;
+    border: none;
+    border-radius: 0;
+    z-index: 9999;
     overflow-y: auto;
-    border: 1px solid var(--chud-edge, rgba(0, 240, 255, 0.3));
-    border-bottom: none;
-    border-radius: 18px 18px 0 0;
-    background: linear-gradient(180deg, rgba(9, 16, 30, 0.92), rgba(5, 8, 15, 0.96));
+    background: linear-gradient(180deg, rgba(9, 16, 30, 0.97), rgba(5, 8, 15, 0.99));
     -webkit-backdrop-filter: blur(20px) saturate(170%);
     backdrop-filter: blur(20px) saturate(170%);
-    box-shadow: 0 -24px 60px -20px rgba(0, 240, 255, 0.45);
     animation: chud-sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -10519,7 +10516,7 @@ body.checkout-email-modal-scroll-lock {
   .topic-filter-bar .topic-btn {
     width: 100%;
     text-align: left;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
   /* Exclude the currently-active category from the open dropdown list (it is
      already shown on the toggle button). */

@@ -219,10 +219,18 @@ const CHUD_TOPIC_PREFIX: Record<string, string> = {
     ENERGY: 'ENR',
     MARKET: 'MKT',
     AI_TECH: 'SEM',
-    CRYPTO: 'DGA',
+    CRYPTO: 'CRY',
     DEFENSE: 'DEF',
     SUPPLY_CHAIN: 'SHP',
 };
+
+/** Strict 3-letter category abbreviation for the compact mobile row tag.
+ *  Crypto / Digital-Assets must read as CRY (never the legacy "DGA"). */
+function chudTopicAbbr(canonicalTopic: string): string {
+    const t = (canonicalTopic || '').toUpperCase();
+    if (t.includes('CRYPTO') || t.includes('DIGITAL')) return 'CRY';
+    return CHUD_TOPIC_PREFIX[canonicalTopic] || 'SIG';
+}
 
 const CHUD_SEV_RANK: Record<string, number> = { critical: 3, elevated: 2, watch: 1 };
 /** Threat-ring SVG circumference = 2π·r with r=45 in the 100×100 viewBox. */
@@ -394,7 +402,7 @@ function chudRowHtml(alert: Alert): string {
             <span class="chud-row-rail" aria-hidden="true"></span>
             <span class="chud-row-ts">${chudEscape(time)}</span>
             <span class="chud-row-token">${token}</span>
-            <span class="chud-row-abbr" style="color:${topicColor}">${CHUD_TOPIC_PREFIX[canonicalTopic] || 'SIG'}</span>
+            <span class="chud-row-abbr" style="color:${topicColor}">${chudTopicAbbr(canonicalTopic)}</span>
             <span class="chud-row-sev chud-sev--${sev}">${TIER_LABEL[sev].slice(0, 4)}</span>
             <span class="chud-row-topic" style="color:${topicColor}">${topicLabel}</span>
             <span class="chud-row-headline">
@@ -421,74 +429,6 @@ function chudStreamRowsHtml(alerts: Alert[]): string {
 
 function chudTagChip(label: string, kind: string): string {
     return `<span class="chud-chip chud-chip--${kind}">${chudEscape(label)}</span>`;
-}
-
-/**
- * Phase 8.15 — a lightweight CSS/SVG "mini force-graph" preview of the
- * selected signal's context. Pure geometry (no D3): a pulsing severity-colored
- * central node ringed by 2–4 satellites derived from existing metadata, wired
- * with faint cyan edges. Acts as a teaser for the full Pro spatial engine.
- */
-function chudTopologyHtml(satellites: string[], sev: ThreatLevelTier): string {
-    // Wide viewBox + centered graph leaves generous horizontal room so full
-    // sector labels (e.g. "Energy & Resources") render without ellipsis truncation.
-    // R bumped (52 → 68) so the outer triad sits well clear of the central
-    // epicenter node — long sector strings ("Global Market Intel") no longer
-    // crash into the core. The wider viewBox below absorbs the larger radius.
-    // cy shifted 80 → 92 to drop the whole structure into the lower dead-space
-    // (was top-heavy). viewBox bottom is extended below to keep the +90° node clear.
-    const cx = 160, cy = 92, R = 68;
-    const sats = satellites.filter(Boolean).slice(0, 4);
-    const n = Math.max(2, sats.length);
-    // Phase 8.48 — snap every coordinate to whole pixels (integers). Decimal
-    // subpixel values force the AA engine into a redraw loop → periodic blur.
-    const pts = sats.map((label, i) => {
-        const ang = (-90 + (360 / n) * i) * Math.PI / 180;
-        return {
-            label,
-            x: Math.round(cx + R * Math.cos(ang)),
-            y: Math.round(cy + R * Math.sin(ang)),
-        };
-    });
-    const edges = pts.map(p =>
-        `<line class="chud-topo-edge" x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}"/>`
-    ).join('');
-    const satDots = pts.map(p =>
-        `<circle class="chud-topo-sat" cx="${p.x}" cy="${p.y}" r="5"/>`
-    ).join('');
-    // Phase 8.49 — text labels are built separately and parked in their OWN
-    // static <g> at the end of the SVG (no animation ancestors), with native
-    // crispEdges/baseline hints, so the animated core's per-frame SMIL repaint
-    // never re-rasterises the glyphs.
-    const satLabels = pts.map(p => {
-        // No mid-word ellipsis for real labels; only guard against pathological length.
-        const short = p.label.length > 28 ? p.label.slice(0, 27) + '…' : p.label;
-        const anchor = Math.abs(p.x - cx) < 6 ? 'middle' : (p.x < cx ? 'end' : 'start');
-        // Push the label further off the node (8 → 12) so outward text clears both
-        // the satellite dot and the central core across every filter/node count.
-        const lx = Math.round(anchor === 'middle' ? p.x : (p.x < cx ? p.x - 12 : p.x + 12));
-        const ly = Math.round(p.y < cy ? p.y - 13 : p.y + 15);
-        return `<text class="chud-topo-label" x="${lx}" y="${ly}" text-anchor="${anchor}" shape-rendering="crispEdges" alignment-baseline="mathematical">${chudEscape(short)}</text>`;
-    }).join('');
-    return `
-        <section class="chud-block chud-topo">
-            <div class="chud-block-label">CONTEXTUAL TOPOLOGY <span class="chud-block-count">${pts.length}</span></div>
-            <div class="chud-topo-wrap">
-                <svg class="chud-topo-svg" viewBox="-30 -16 380 198" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-                    <g class="topo-dynamic-layer">
-                        ${edges}
-                        ${satDots}
-                        <circle class="chud-topo-core chud-topo-core--${sev}" cx="${cx}" cy="${cy}" r="11">
-                            <animate attributeName="r" values="10;13;10" dur="2.2s" repeatCount="indefinite"/>
-                        </circle>
-                        <circle class="chud-topo-core-dot" cx="${cx}" cy="${cy}" r="4"/>
-                    </g>
-                    <g class="static-labels-layer">
-                        ${satLabels}
-                    </g>
-                </svg>
-            </div>
-        </section>`;
 }
 
 function chudDetailHtml(alert: Alert | null): string {
@@ -556,18 +496,6 @@ function chudDetailHtml(alert: Alert | null): string {
         ? `<p class="chud-detail-desc">${chudEscape(alert.description)}</p>`
         : '';
 
-    // Topology satellites — real intelligence ENTITIES only (primary sector,
-    // geopolitical location, alert subject). Source domains (e.g. *.com) are
-    // deliberately excluded: this is an intelligence map, not a link graph.
-    const subjectEntity = (alert.target_label || '').trim();
-    const topoSatellites = [
-        topicLabel,                                     // impact sector (real domain label)
-        (alert.country || '').trim(),                   // epicenter region / inferred location
-        subjectEntity && subjectEntity !== headline.text ? subjectEntity : '',
-    ].filter(Boolean);
-    // Professional OSINT fallbacks (never a web address) to guarantee a 2+ node preview.
-    if (topoSatellites.length < 2) topoSatellites.push('Impact Sector', 'Epicenter Region');
-
     return `
         <div class="chud-detail-inner${locked ? ' chud-detail-inner--locked' : ''}" style="${getTopicCssVars(canonicalTopic)}">
             <div class="chud-detail-scan" aria-hidden="true"></div>
@@ -620,8 +548,6 @@ function chudDetailHtml(alert: Alert | null): string {
                           : ''}`
                     : '<div class="chud-muted">No supporting sources resolved.</div>'}
             </section>
-
-            ${chudTopologyHtml(topoSatellites, sev)}
         </div>`;
 }
 
