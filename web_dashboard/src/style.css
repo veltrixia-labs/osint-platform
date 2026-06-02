@@ -9859,6 +9859,46 @@ body.checkout-email-modal-scroll-lock {
   align-items: stretch;   /* equal-height columns → flush bottom edges */
 }
 
+/* ── Desktop (>900px): independent master-detail scrolling ──────────────────
+   Decouple the two columns' heights so expanding dozens of secondary sources in
+   the RIGHT panel scrolls INSIDE it instead of stretching the whole page.
+   .chud-root is a flex column (console + split): cap it to the viewport, let the
+   split fill the remainder, and give each column its own scroll context. Offset
+   matches the app's full-height convention (#map-page-container: 100vh - 120px),
+   so the console height is absorbed by flex rather than hardcoded. */
+@media (min-width: 901px) {
+  .chud-root {
+    height: calc(100vh - 120px);
+    overflow: hidden;
+  }
+  .chud-split {
+    flex: 1 1 auto;
+    min-height: 0;        /* allow the grid to shrink below content height */
+    overflow: hidden;     /* the split never grows the page; columns scroll */
+  }
+  /* Left: the stream fills its column; its inner .chud-stream-list keeps the
+     existing scroll so the SIGNAL STREAM header stays pinned. */
+  .chud-stream {
+    height: 100%;
+    min-height: 0;
+  }
+  /* Right: the detail panel IS the scroll box now (drop sticky/min-height). */
+  .chud-detail {
+    position: static;
+    align-self: stretch;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 240, 255, 0.3) transparent;
+  }
+  .chud-detail::-webkit-scrollbar { width: 7px; }
+  .chud-detail::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.25);
+    border-radius: 4px;
+  }
+}
+
 /* ── Stream (left) ──────────────────────────────────────────────────── */
 .chud-stream {
   display: flex;
