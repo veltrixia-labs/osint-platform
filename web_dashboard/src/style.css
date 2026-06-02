@@ -9947,6 +9947,7 @@ body.checkout-email-modal-scroll-lock {
   flex: 1 1 0;                  /* basis 0 → detail panel sets block height; list fills + aligns */
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior-y: contain;  /* no rubber-band bleed past the list edges */
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 240, 255, 0.3) transparent;
 }
@@ -10135,6 +10136,12 @@ body.checkout-email-modal-scroll-lock {
      computed once, not per frame) WITHOUT any Y-axis movement that would
      re-rasterise the inner text/SVG every tick. */
   transform: translateZ(0);
+  /* Lock the scroll: no macOS rubber-band past the bottom edge, and never let the
+     browser re-anchor (yank) the scroll position when the 10s poll re-renders the
+     inner DOM or when the sources accordion toggles. Applies to this same element
+     whether it's the desktop scroll column or the mobile full-screen modal. */
+  overscroll-behavior-y: contain;
+  overflow-anchor: none;
 }
 .chud-detail-inner {
   position: relative;
@@ -10314,13 +10321,13 @@ body.checkout-email-modal-scroll-lock {
 }
 .chud-src-list--secondary > .chud-src-domain-header:first-child { margin-top: 0; }
 .chud-src-domain-count { color: var(--chud-dim); font-weight: 600; }
-.chud-src-secondary {
-  overflow: hidden; max-height: 0; opacity: 0;
-  transition: max-height 0.3s ease, opacity 0.25s ease;
-}
-/* Uncapped: ALL secondary sources (26+) grow naturally and scroll with the
-   panel — no vertical clipping on desktop or mobile. */
-.chud-src-secondary.expanded { max-height: none; opacity: 1; }
+/* Instant display toggle — NO max-height transition. A `max-height:0 -> none`
+   animation produces a PHANTOM scroll height mid-transition: on macOS the elastic
+   overscroll grabs that transient height, shoots to the bottom exposing whitespace,
+   then snaps back (rubber-banding). display none/block has no phantom height and no
+   animatable scrollHeight, so the scroll stays rock-solid for lists of any length. */
+.chud-src-secondary { display: none; }
+.chud-src-secondary.expanded { display: block; }
 
 /* Phase 8.15 — Contextual Topology mini-graph (Pro spatial-engine teaser). */
 .chud-topo-wrap {
