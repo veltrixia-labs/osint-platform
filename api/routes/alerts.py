@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import AlertLog, AlertDelivery, AnalystProfile
 from db.database import get_db, AsyncSessionLocal
 from processor.impact_discovery import ImpactDiscoveryEngine
-from api.gating import get_effective_tier, is_topic_allowed, _gate_cascading_impacts, is_tier_sufficient, PlanTier
+from api.gating import get_effective_tier, is_topic_allowed, _gate_cascading_impacts, is_tier_sufficient, PlanTier, gate_alert_payload
 from api.auth import blacklist_manager
 from api.rate_limit import rate_limit
 from analysis.intensity_pressure import PERCENT_STREAM_FLOOR
@@ -91,7 +91,7 @@ async def _get_alerts_impl(
     is_requested_topic_allowed = is_topic_allowed(tier, topic) if topic else True
 
     # Caching Logic
-    cache_key = f"alerts:{severity}:{suppressed}:{analyst_id}:{topic}:{limit}:{since}"
+    cache_key = f"alerts:{tier}:{severity}:{suppressed}:{analyst_id}:{topic}:{limit}:{since}"
     if await blacklist_manager._is_redis_available():
         try:
             cached = await blacklist_manager.redis_client.get(cache_key)
@@ -195,16 +195,14 @@ async def _get_alerts_impl(
         for a in alerts
     ]
 
-    # Fully-unlocked mode (platform dev standard): every alert renders its
-    # COMPLETE AI analytical brief and forensic intelligence for ALL tiers.
-    # No description/label masking, no intensity simplification, no upsell
-    # strings. `is_locked`/`is_partial` are pinned False so the UI never gates
-    # content on them.
+    # Payload tiering: $19 Basic gets evidence truncated to 3 + AI brief stripped;
+    # $99 Institutional ( >= EXPERTS) gets the full payload. DEV_MODE (default ON)
+    # elevates EVERY caller to full, so this is a transparent no-op while auditing.
+    # No mosaic / locked UI: is_locked stays False regardless of tier.
     final_alerts = []
     for a in formatted:
         a["is_locked"] = False
-        a["is_partial"] = False
-        final_alerts.append(a)
+        final_alerts.append(gate_alert_payload(a, tier))
 
     # Ground-floor: drop sub-baseline (<25%) noise from the active stream view.
     final_alerts = [a for a in final_alerts if _above_stream_floor(a)]
@@ -338,9 +336,10 @@ async def get_alert(
         "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else [],
     }
 
-    # Fully-unlocked mode: no per-tier masking; full forensic detail always.
+    # Payload tiering ($19 Basic vs $99 Institutional). DEV_MODE elevates to full;
+    # no mosaic / locked UI (is_locked stays False).
     data["is_locked"] = False
-    data["is_partial"] = False
+    data = gate_alert_payload(data, tier)
 
     return data
 

@@ -243,6 +243,42 @@ async def get_watchlist_limit_for_user(user: AnalystProfile) -> int:
     return get_watchlist_limit(tier)
 
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Dev Mode + Payload Tiering ($19 Basic vs $99 Institutional)
+# ──────────────────────────────────────────────────────────────────────────────
+
+# When DEV_MODE is true, EVERY request is elevated to the full ("institutional")
+# payload regardless of the caller's tier — restrictions are bypassed for auditing.
+# Default ON per current product directive; flip with env DEV_MODE=false.
+DEV_MODE = os.environ.get("DEV_MODE", "true").lower() == "true"
+
+# Tier (and above) that receives the full, unrestricted payload = $99 Institutional.
+INSTITUTIONAL_MIN_TIER = PlanTier.EXPERTS.value
+
+# Secondary sources a Basic ($19) caller may see before truncation.
+BASIC_MAX_EVIDENCE = 3
+
+
+def gate_alert_payload(alert: Dict[str, Any], tier: str) -> Dict[str, Any]:
+    """Shape a serialized alert for the caller's tier.
+
+    Returns the FULL payload untouched when DEV_MODE is on OR the caller is
+    institutional-grade ($99 / >= EXPERTS). Otherwise — Basic ($19 / pro and
+    below) — truncates evidence_list to BASIC_MAX_EVIDENCE and strips the AI
+    analytical brief (description). No mosaic / locked flags are set; this is a
+    pure payload-shape decision, not a visible lock.
+    """
+    if DEV_MODE or is_tier_sufficient(tier, INSTITUTIONAL_MIN_TIER):
+        return alert
+    gated = dict(alert)
+    ev = gated.get("evidence_list")
+    if isinstance(ev, list) and len(ev) > BASIC_MAX_EVIDENCE:
+        gated["evidence_list"] = ev[:BASIC_MAX_EVIDENCE]
+    gated["description"] = None      # AI analytical brief withheld on Basic
+    gated["is_partial"] = True
+    return gated
+
+
 def _gate_cascading_impacts(tier: str, impacts: list) -> list:
     """
     Control the depth of cascading impact chains:

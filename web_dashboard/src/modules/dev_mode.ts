@@ -9,10 +9,10 @@
  *   - `<body>` gets the `dev-mode-audit` class so CSS can neutralise legacy
  *     locked styles globally.
  *
- * NOTE: the on-screen "DEV MODE" badge has been retired for a clean,
- * production-like UI. The lock-neutralisation behaviour below is retained so
- * the platform stays fully open (no paywalls / masks). Any stale badge left in
- * the DOM by an earlier build is purged on init.
+ * NOTE: a sleek on-screen "UNLOCKED" badge is mounted so reviewers can see at a
+ * glance that tier restrictions are bypassed (DEV / audit build). The lock-
+ * neutralisation behaviour below is retained so the platform stays fully open
+ * (no paywalls / masks).
  *
  * Flip the flag to `false` to restore standard tier-gated rendering without
  * touching any call sites.
@@ -35,18 +35,25 @@ export function initDevModeAudit(): void {
         document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.add(BODY_CLASS);
             injectStyles();
-            purgeBadge();
+            mountDevModeBadge();
         }, { once: true });
         return;
     }
 
     injectStyles();
-    purgeBadge();
+    mountDevModeBadge();
 }
 
-/** Remove any DEV MODE badge left in the DOM by a previous build / HMR load. */
-function purgeBadge(): void {
-    document.getElementById(BADGE_ID)?.remove();
+/** Mount the sleek "UNLOCKED" badge (idempotent). Signals that tier restrictions
+ *  are bypassed for this DEV / audit build — all payloads served in full. */
+function mountDevModeBadge(): void {
+    if (typeof document === 'undefined' || document.getElementById(BADGE_ID)) return;
+    const badge = document.createElement('div');
+    badge.id = BADGE_ID;
+    badge.className = 'dev-mode-badge';
+    badge.title = 'DEV / audit build — tier restrictions bypassed; all payloads unlocked';
+    badge.innerHTML = '<span class="dev-mode-badge-dot" aria-hidden="true"></span>UNLOCKED';
+    document.body.appendChild(badge);
 }
 
 function injectStyles(): void {
@@ -77,6 +84,26 @@ function injectStyles(): void {
         body.${BODY_CLASS} .locked-topic-container {
             display: none !important;
         }
+        /* === Dev Mode "UNLOCKED" badge ============================== */
+        #${BADGE_ID}.dev-mode-badge {
+            position: fixed; top: 10px; right: 14px; z-index: 9000;
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 5px 12px; border-radius: 999px;
+            font: 700 0.62rem/1 ui-monospace, "Cascadia Code", Consolas, monospace;
+            letter-spacing: 0.16em; text-transform: uppercase;
+            color: #5df2a8;
+            background: rgba(8, 20, 16, 0.78);
+            border: 1px solid rgba(87, 245, 163, 0.5);
+            box-shadow: 0 0 14px rgba(87, 245, 163, 0.28), inset 0 0 10px rgba(87, 245, 163, 0.08);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            pointer-events: none; user-select: none;
+        }
+        #${BADGE_ID} .dev-mode-badge-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #5df2a8; box-shadow: 0 0 8px #5df2a8;
+            animation: dev-mode-pulse 2s ease-in-out infinite;
+        }
+        @keyframes dev-mode-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     `;
     document.head.appendChild(style);
 }
