@@ -109,19 +109,21 @@ export function renderTopicFilterBar(
             <span class="topic-mobile-current">${activeLabel}</span>
             <span class="topic-mobile-caret" aria-hidden="true">▾</span>
         </button>
-        <button type="button" class="topic-btn ${allActive ? 'topic-btn--active' : ''}" data-topic="">
-            All
-        </button>
-        ${STRATEGIC_TOPIC_FILTERS.map(({ code, label, color }) => `
-            <button
-                type="button"
-                class="topic-btn ${activeTopic === code ? 'topic-btn--active' : ''}"
-                data-topic="${code}"
-                style="--topic-color:${color}; border-color: color-mix(in srgb, ${color} 45%, var(--border));"
-            >
-                ${label}
+        <div class="topic-pills">
+            <button type="button" class="topic-btn ${allActive ? 'topic-btn--active' : ''}" data-topic="">
+                All
             </button>
-        `).join('')}
+            ${STRATEGIC_TOPIC_FILTERS.map(({ code, label, color }) => `
+                <button
+                    type="button"
+                    class="topic-btn ${activeTopic === code ? 'topic-btn--active' : ''}"
+                    data-topic="${code}"
+                    style="--topic-color:${color}; border-color: color-mix(in srgb, ${color} 45%, var(--border));"
+                >
+                    ${label}
+                </button>
+            `).join('')}
+        </div>
     `;
 
     // Mobile: the toggle expands/collapses the category dropdown. On desktop the
@@ -392,6 +394,7 @@ function chudRowHtml(alert: Alert): string {
             <span class="chud-row-rail" aria-hidden="true"></span>
             <span class="chud-row-ts">${chudEscape(time)}</span>
             <span class="chud-row-token">${token}</span>
+            <span class="chud-row-abbr" style="color:${topicColor}">${CHUD_TOPIC_PREFIX[canonicalTopic] || 'SIG'}</span>
             <span class="chud-row-sev chud-sev--${sev}">${TIER_LABEL[sev].slice(0, 4)}</span>
             <span class="chud-row-topic" style="color:${topicColor}">${topicLabel}</span>
             <span class="chud-row-headline">
@@ -568,7 +571,7 @@ function chudDetailHtml(alert: Alert | null): string {
     return `
         <div class="chud-detail-inner${locked ? ' chud-detail-inner--locked' : ''}" style="${getTopicCssVars(canonicalTopic)}">
             <div class="chud-detail-scan" aria-hidden="true"></div>
-            <button type="button" class="chud-detail-back" data-chud-back>← Back to Stream</button>
+            <button type="button" class="chud-detail-back" data-chud-back aria-label="Close detail">✕ Close</button>
             <header class="chud-detail-head">
                 <div class="chud-detail-head-row">
                     <span class="chud-detail-token">${token}</span>
@@ -762,7 +765,9 @@ export function renderAlerts(
     chudAlerts = sortedAlerts;
     chudLatestAlerts = sortedAlerts;
 
-    const critical = sortedAlerts.filter(a => a.severity?.toLowerCase() === 'critical').length;
+    // CRIT counter mirrors the displayed CRITICAL tier (calibrated intensity_pct
+    // >= 92), NOT the raw stored severity string — so the header matches the rows.
+    const critical = sortedAlerts.filter(a => typeof a.intensity_pct === 'number' && a.intensity_pct >= CRITICAL_PCT).length;
     const existing = container.querySelector<HTMLElement>('.chud-root');
 
     // ── Incremental path (≈ every 10s poll) — swap rows only, keep log + detail.

@@ -9936,6 +9936,18 @@ body.checkout-email-modal-scroll-lock {
 .chud-row-headline { grid-area: headline; }
 .chud-source-badge { grid-area: badge; }
 .chud-row-caret { grid-area: caret; }
+/* Abbreviated category tag — mobile-only (the desktop row shows the full topic). */
+.chud-row-abbr {
+  grid-area: abbr;
+  display: none;
+  font-weight: 800;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+}
+/* Pills wrapper: transparent on desktop (inline-wrapping tabs); becomes an
+   absolute scrollable dropdown panel on mobile. */
+.topic-pills { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+@keyframes chud-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
 .chud-row-rail {
   width: 4px;
   height: 100%;
@@ -10369,38 +10381,66 @@ body.checkout-email-modal-scroll-lock {
 .chud-detail-back { display: none; }
 .topic-mobile-toggle { display: none; }
 
-/* ── Mobile (<=768px): true master-detail navigation, 2-tier rows, and a
-   collapsible category dropdown. ───────────────────────────────────────── */
+/* ── Mobile (<=768px): floating detail CARD (modal), abbreviated category tag
+   in 2-tier rows, and an absolute scrollable category dropdown. ─────────── */
 @media (max-width: 768px) {
-  /* Master-detail: only ONE pane is visible at a time. The stream is the
-     default ("master") view; tapping a row sets .chud-split--detail-open which
-     swaps in the detail ("detail") view. */
+  /* .chud-root's `perspective` would otherwise act as the containing block for
+     our position:fixed bottom-sheet + backdrop (anchoring them to the root box,
+     not the viewport). The 3D depth cue is hover-only, so drop it on touch. */
+  .chud-root { perspective: none; }
+
+  /* The stream is ALWAYS the underlying view; the detail floats on top as a
+     bottom-sheet modal when .chud-split--detail-open is set. */
   .chud-split { display: block; }
   .chud-stream {
     display: flex;
-    min-height: 70vh;   /* the stream owns the full screen as the master view */
+    min-height: 70vh;
   }
   .chud-stream-list { max-height: none; }
   .chud-detail { display: none; }
 
-  .chud-split--detail-open .chud-stream { display: none; }
+  /* Dimmed glass backdrop behind the floating card. */
+  .chud-split--detail-open::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    background: rgba(2, 6, 12, 0.62);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+  /* Detail panel → floating bottom-sheet card (modal). */
   .chud-split--detail-open .chud-detail {
     display: block;
-    position: relative;
-    top: 0;
-    min-height: 0;
+    position: fixed;
+    left: 0; right: 0; bottom: 0; top: auto;
+    z-index: 1401;
+    margin: 0;
+    max-height: 88vh;
+    overflow-y: auto;
+    border: 1px solid var(--chud-edge, rgba(0, 240, 255, 0.3));
+    border-bottom: none;
+    border-radius: 18px 18px 0 0;
+    background: linear-gradient(180deg, rgba(9, 16, 30, 0.92), rgba(5, 8, 15, 0.96));
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    backdrop-filter: blur(20px) saturate(170%);
+    box-shadow: 0 -24px 60px -20px rgba(0, 240, 255, 0.45);
+    animation: chud-sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* Prominent "← Back to Stream" control (mobile only). */
+  /* Prominent "✕ Close" control, pinned to the top-right of the card and kept
+     visible while the card scrolls. */
   .chud-detail-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin: 0 0 12px;
-    padding: 10px 16px;
+    display: block;
+    width: fit-content;
+    position: sticky;
+    top: 8px;
+    z-index: 2;
+    margin: 0 0 8px auto;   /* right-align within the block card */
+    padding: 9px 16px;
     border-radius: 10px;
-    background: rgba(0, 240, 255, 0.08);
-    border: 1px solid var(--chud-edge, rgba(0, 240, 255, 0.3));
+    background: rgba(0, 240, 255, 0.1);
+    border: 1px solid var(--chud-edge, rgba(0, 240, 255, 0.35));
     color: var(--chud-cyan, #58e6ff);
     font: inherit;
     font-weight: 800;
@@ -10408,18 +10448,19 @@ body.checkout-email-modal-scroll-lock {
     cursor: pointer;
   }
 
-  /* 2-tier alert rows: top row = [time][id][severity][SRC], bottom = title. */
+  /* 2-tier rows: top = [time][id][ABBR][severity][SRC], bottom = title. */
   .chud-row {
-    grid-template-columns: 4px auto auto auto 1fr;
+    grid-template-columns: 4px auto auto auto auto 1fr;
     grid-template-areas:
-      "rail ts       token    sev      badge"
-      "rail headline headline headline headline";
+      "rail ts       token    abbr     sev      badge"
+      "rail headline headline headline headline headline";
     row-gap: 6px;
     column-gap: 8px;
     align-items: center;
   }
   .chud-row-topic,
   .chud-row-caret { display: none; }
+  .chud-row-abbr { display: block; }      /* show the abbreviated category tag */
   .chud-source-badge { justify-self: end; }
   .chud-row-headline { overflow: visible; }
   .chud-row-headline-text {
@@ -10429,7 +10470,7 @@ body.checkout-email-modal-scroll-lock {
     line-height: 1.3;
   }
 
-  /* Category filter → single-button dropdown (no multi-line tab wrap). */
+  /* Category filter → single-button toggle + absolute dropdown panel. */
   .topic-filter-bar {
     position: relative;
     flex-direction: column !important;
@@ -10447,20 +10488,42 @@ body.checkout-email-modal-scroll-lock {
     background: rgba(0, 240, 255, 0.06);
     border: 1px solid var(--chud-edge, rgba(0, 240, 255, 0.25));
     color: var(--chud-cyan, #58e6ff);
-    font: inherit;
+    font-size: 0.9rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     cursor: pointer;
   }
   .topic-mobile-caret { transition: transform 0.2s ease; }
   .topic-filter-bar.is-open .topic-mobile-caret { transform: rotate(180deg); }
-  /* Pills hidden until the dropdown is opened. */
-  .topic-filter-bar .topic-btn { display: none; }
-  .topic-filter-bar.is-open .topic-btn {
-    display: block;
+
+  /* Closed: dropdown hidden. Open: an absolute, high-z, scrollable panel. */
+  .topic-filter-bar .topic-pills { display: none; }
+  .topic-filter-bar.is-open .topic-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0; right: 0;
+    z-index: 1500;
+    max-height: 40vh;
+    overflow-y: auto;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid var(--chud-edge, rgba(0, 240, 255, 0.28));
+    background: linear-gradient(180deg, rgba(9, 16, 30, 0.96), rgba(5, 8, 15, 0.98));
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
+    box-shadow: 0 22px 50px -18px rgba(0, 240, 255, 0.45);
+  }
+  .topic-filter-bar .topic-btn {
     width: 100%;
     text-align: left;
+    font-size: 0.9rem;
   }
+  /* Exclude the currently-active category from the open dropdown list (it is
+     already shown on the toggle button). */
+  .topic-filter-bar.is-open .topic-btn--active { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -10862,9 +10925,23 @@ body.syslogic-open { overflow: hidden; }
 
 /* ── Responsive collapse ────────────────────────────────────────────── */
 @media (max-width: 860px) {
-  .sl-stages { flex-direction: column; }
+  .sl-stages { flex-direction: column; flex-wrap: wrap; }
   .sl-arrow { transform: rotate(90deg); }
   .sl-math { grid-template-columns: 1fr; }
+  /* In a column stack, flex:1 1 0 collapses each card to an equal sliver and
+     overflow:hidden then clips the descriptions (only the number/icon showed).
+     Size cards to their CONTENT and never clip — every step's text is readable. */
+  .sl-card {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+  .sl-card-title,
+  .sl-card-desc,
+  .sl-card-tag,
+  .sl-card-tick {
+    white-space: normal;
+    overflow: visible;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .syslogic-grid, .syslogic-gear, .syslogic-toggle-gear,
