@@ -9865,25 +9865,32 @@ body.checkout-email-modal-scroll-lock {
    .chud-root is a flex column (console + split): cap it to the viewport, let the
    split fill the remainder, and give each column its own scroll context. Offset
    matches the app's full-height convention (#map-page-container: 100vh - 120px),
-   so the console height is absorbed by flex rather than hardcoded. */
+   so the console height is absorbed by flex rather than hardcoded.
+
+   IMPORTANT: selectors are scoped under .chud-root (specificity 0,2,0) ON PURPOSE.
+   The base `.chud-detail { overflow:hidden; position:sticky; min-height:420px }`
+   rule lives LATER in this file, so an equal-specificity `.chud-detail` here would
+   LOSE the cascade (later wins) and `overflow:hidden` would suppress scrolling.
+   The ancestor qualifier guarantees these win regardless of source order. */
 @media (min-width: 901px) {
   .chud-root {
     height: calc(100vh - 120px);
     overflow: hidden;
   }
-  .chud-split {
+  .chud-root .chud-split {
     flex: 1 1 auto;
     min-height: 0;        /* allow the grid to shrink below content height */
     overflow: hidden;     /* the split never grows the page; columns scroll */
   }
   /* Left: the stream fills its column; its inner .chud-stream-list keeps the
      existing scroll so the SIGNAL STREAM header stays pinned. */
-  .chud-stream {
+  .chud-root .chud-stream {
     height: 100%;
     min-height: 0;
   }
-  /* Right: the detail panel IS the scroll box now (drop sticky/min-height). */
-  .chud-detail {
+  /* Right: the detail panel IS the scroll box now (drop sticky/min-height so
+     overflow-y:auto actually engages). */
+  .chud-root .chud-detail {
     position: static;
     align-self: stretch;
     height: 100%;
@@ -9892,8 +9899,8 @@ body.checkout-email-modal-scroll-lock {
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 240, 255, 0.3) transparent;
   }
-  .chud-detail::-webkit-scrollbar { width: 7px; }
-  .chud-detail::-webkit-scrollbar-thumb {
+  .chud-root .chud-detail::-webkit-scrollbar { width: 7px; }
+  .chud-root .chud-detail::-webkit-scrollbar-thumb {
     background: rgba(0, 240, 255, 0.25);
     border-radius: 4px;
   }
