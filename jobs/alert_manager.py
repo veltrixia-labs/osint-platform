@@ -216,22 +216,21 @@ def _stem(token: str) -> str:
 # stripped before tokenizing — otherwise their unique tokens dilute the
 # containment/Jaccard score and let near-identical headlines slip the cluster
 # guard (the "Bessent … (via nytimes.com)" vs "… (via decrypt.co)" leak).
-_DISTINCTIFIER_RE = re.compile(
-    r"(?:\s*[\(\[]\s*via\b[^\)\]]*[\)\]]"      # (via x) / [via x]
-    r"|\s*\(\s*re-?escalation\s*\)"            # (re-escalation)
-    r"|\s*#\d+)\s*$",                          # trailing #N
-    re.IGNORECASE,
-)
+# "(via domain)" / "[via domain]" can appear ANYWHERE (e.g. target_label and
+# display_title are concatenated for matching, so the tag occurs mid-string) —
+# strip every occurrence. re-escalation / #N are only ever trailing.
+_VIA_RE = re.compile(r"\s*[\(\[]\s*via\b[^\)\]]*[\)\]]", re.IGNORECASE)
+_TRAIL_RE = re.compile(r"(?:\s*\(\s*re-?escalation\s*\)|\s*#\d+)\s*$", re.IGNORECASE)
 
 
 def _strip_distinctifiers(text: str) -> str:
-    """Remove trailing source-anchor / re-escalation / #N suffixes (possibly
-    stacked) so two variants of the same headline tokenize identically."""
-    s = text or ""
+    """Remove source-anchor "(via …)" tags (anywhere) + trailing re-escalation/#N
+    suffixes so two variants of the same headline tokenize identically."""
+    s = _VIA_RE.sub("", text or "")
     prev = None
     while s != prev:
         prev = s
-        s = _DISTINCTIFIER_RE.sub("", s)
+        s = _TRAIL_RE.sub("", s)
     return s.strip()
 
 
@@ -404,19 +403,17 @@ class AlertManager:
             master, escalated = await cls._find_event_cluster(
                 db, sig, display_label, topic, intensity
             )
-            if master is not None and not escalated:
-                await cls._absorb_into_master(db, master, sig, evidence_list, display_label)
+            if master is not None:
+                if escalated:
+                    # In-place BUMP: a >=1.5x surge refreshes the master's intensity/
+                    # severity/pct and re-surfaces it (triggered_at = now) — it does
+                    # NOT mint a new row (that was the "CRITICAL flood" cause).
+                    await cls._bump_master(
+                        db, master, sig, evidence_list, intensity, intensity_pct, severity, now_utc
+                    )
+                else:
+                    await cls._absorb_into_master(db, master, sig, evidence_list, display_label)
                 continue
-            if master is not None and escalated:
-                display_trigger_type = f"{display_trigger_type} (🚨 INTENSITY SPIKE)"
-                # Escalation breaks the cluster → distinct headline so the surge is
-                # scannable next to the master on the timeline.
-                display_label = _distinctify_title(display_label, evidence_list)
-                logger.info(
-                    "Cluster escalation override: intensity %.2f >= %.2fx master — emitting fresh alert.",
-                    intensity,
-                    CLUSTER_ESCALATION_FACTOR,
-                )
 
             # 3b. Cross-source diversification — never emit two byte-identical
             # active headlines (different feeds can compose to the same string).
@@ -770,13 +767,18 @@ class AlertManager:
         if not incoming:
             return None, False
 
+        # No topic silo: the SAME event is often classified into different topics
+        # across runs (e.g. an Iran headline → DEFENSE one tick, MARKET the next),
+        # which left cross-topic duplicates. Title-only matching makes cross-topic
+        # clustering safe — near-identical headlines are the same event regardless
+        # of categorization. (`topic` kept in the signature for call-site compat.)
+        _ = topic
         window_start = datetime.now(timezone.utc) - timedelta(hours=CLUSTER_WINDOW_HOURS)
         stmt = (
             select(AlertLog)
             .where(
                 AlertLog.triggered_at >= window_start,
                 AlertLog.suppressed == False,  # noqa: E712
-                AlertLog.topic == topic,
             )
             .order_by(desc(AlertLog.triggered_at))
             .limit(RECENT_ALERTS_FETCH_LIMIT)
@@ -833,6 +835,31 @@ class AlertManager:
         logger.info(
             "Event clustered: absorbed %r into master %s (+%d new source(s), %d total)",
             (incoming_label or "")[:60], str(master.id), added, len(meta["evidence_list"]),
+        )
+
+    @classmethod
+    async def _bump_master(cls, db, master, sig, evidence_list, intensity, intensity_pct, severity, now):
+        """Escalation in-place bump: absorb the new sources, then refresh the
+        master's intensity / severity / intensity_pct and set triggered_at = now so
+        it re-surfaces at the top of the stream — WITHOUT minting a duplicate row."""
+        from sqlalchemy.orm.attributes import flag_modified
+
+        await cls._absorb_into_master(db, master, sig, evidence_list, master.target_label)
+
+        meta = dict(master.metadata_json) if isinstance(master.metadata_json, dict) else {}
+        meta["raw_intensity"] = round(float(intensity), 3)
+        if intensity_pct is not None:
+            meta["intensity_pct"] = round(float(intensity_pct), 1)
+        master.metadata_json = meta
+        master.intensity = intensity
+        if severity:
+            master.severity = severity
+        master.triggered_at = now
+        flag_modified(master, "metadata_json")
+        await db.flush()
+        logger.info(
+            "Cluster escalation BUMP (in place): master %s → intensity %.2f pct=%s, re-surfaced @ %s",
+            str(master.id), intensity, intensity_pct, now.isoformat(),
         )
 
     @classmethod

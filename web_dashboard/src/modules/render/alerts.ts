@@ -20,6 +20,33 @@ function normalizeThreatLevel(severity: string | undefined): ThreatLevelTier {
     return 'watch';
 }
 
+// Anti-alert-fatigue: the displayed tier is derived from the calibrated
+// intensity_pct, NOT the stored severity string. CRITICAL (red) is reserved for
+// true global anomalies (>= 92%); ELEVATED is held to a strict >= 82% band so it
+// stays a ~top-15% signal instead of flooding the feed. Everything below 82%
+// gracefully degrades to STANDARD (the 'watch' tier, relabeled for the UI).
+// (Falls back to the stored severity only when pct is absent.)
+const CRITICAL_PCT = 92;
+const ELEVATED_PCT = 82;
+function alertThreatTier(alert: { intensity_pct?: number | null; severity?: string }): ThreatLevelTier {
+    const pct = typeof alert.intensity_pct === 'number' ? alert.intensity_pct : null;
+    if (pct !== null) {
+        if (pct >= CRITICAL_PCT) return 'critical';
+        if (pct >= ELEVATED_PCT) return 'elevated';
+        return 'watch';
+    }
+    return normalizeThreatLevel(alert.severity);
+}
+
+// Human-facing tier label. The internal tier key stays 'watch' (so every
+// `severity-watch` / `chud-sev--watch` CSS rule keeps working) but the bottom
+// tier now READS as "STANDARD" in the feed per the recalibration.
+const TIER_LABEL: Record<ThreatLevelTier, string> = {
+    critical: 'CRITICAL',
+    elevated: 'ELEVATED',
+    watch: 'STANDARD',
+};
+
 /**
  * [v34] Simplified Evidence Modal for Live Alerts (Non-global)
  */
@@ -157,6 +184,11 @@ const CHUD_LOG_TICK_MS = 820;     // base cadence of the synthetic process log
 let chudLogBuffer: string[] = []; // persists across re-renders → seamless stream
 let chudLogTimer: number | null = null;
 let chudSelectedId: string | null = null;
+// Secondary-sources accordion open-state. Lives at module scope so the ~10s poll
+// (which rebuilds the detail panel's innerHTML) can RE-EMIT the expanded markup
+// instead of silently collapsing it. Reset to false whenever the selection
+// changes (a freshly-opened signal always starts collapsed).
+let chudSrcExpanded = false;
 let chudAlerts: Alert[] = [];       // current (filtered+sorted) set, by render
 let chudLatestAlerts: Alert[] = []; // pool the log generator samples from
 let chudUserTier = 'free';
@@ -318,7 +350,7 @@ function chudRowHtml(alert: Alert): string {
     const topicLabel = getTopicDisplayLabel(canonicalTopic);
     const topicColor = getTopicColor(canonicalTopic);
     const headline = resolveAlertHeadline(alert);
-    const sev = normalizeThreatLevel(alert.severity);
+    const sev = alertThreatTier(alert);
     const time = alert.triggered_at ? formatIntelTime(alert.triggered_at) : 'LIVE';
     const token = chudToken(alert);
     const locked = alert.is_locked && !DEV_MODE_AUDIT;
@@ -343,7 +375,7 @@ function chudRowHtml(alert: Alert): string {
             <span class="chud-row-rail" aria-hidden="true"></span>
             <span class="chud-row-ts">${chudEscape(time)}</span>
             <span class="chud-row-token">${token}</span>
-            <span class="chud-row-sev chud-sev--${sev}">${sev.toUpperCase().slice(0, 4)}</span>
+            <span class="chud-row-sev chud-sev--${sev}">${TIER_LABEL[sev].slice(0, 4)}</span>
             <span class="chud-row-topic" style="color:${topicColor}">${topicLabel}</span>
             <span class="chud-row-headline">
                 <span class="chud-row-headline-text">${locked ? '🔒 ' : ''}${headlineHtml}</span>
@@ -383,7 +415,9 @@ function chudTopologyHtml(satellites: string[], sev: ThreatLevelTier): string {
     // R bumped (52 → 68) so the outer triad sits well clear of the central
     // epicenter node — long sector strings ("Global Market Intel") no longer
     // crash into the core. The wider viewBox below absorbs the larger radius.
-    const cx = 160, cy = 80, R = 68;
+    // cy shifted 80 → 92 to drop the whole structure into the lower dead-space
+    // (was top-heavy). viewBox bottom is extended below to keep the +90° node clear.
+    const cx = 160, cy = 92, R = 68;
     const sats = satellites.filter(Boolean).slice(0, 4);
     const n = Math.max(2, sats.length);
     // Phase 8.48 — snap every coordinate to whole pixels (integers). Decimal
@@ -413,14 +447,14 @@ function chudTopologyHtml(satellites: string[], sev: ThreatLevelTier): string {
         // Push the label further off the node (8 → 12) so outward text clears both
         // the satellite dot and the central core across every filter/node count.
         const lx = Math.round(anchor === 'middle' ? p.x : (p.x < cx ? p.x - 12 : p.x + 12));
-        const ly = Math.round(p.y < cy ? p.y - 9 : p.y + 15);
+        const ly = Math.round(p.y < cy ? p.y - 13 : p.y + 15);
         return `<text class="chud-topo-label" x="${lx}" y="${ly}" text-anchor="${anchor}" shape-rendering="crispEdges" alignment-baseline="mathematical">${chudEscape(short)}</text>`;
     }).join('');
     return `
         <section class="chud-block chud-topo">
             <div class="chud-block-label">CONTEXTUAL TOPOLOGY <span class="chud-block-count">${pts.length}</span></div>
             <div class="chud-topo-wrap">
-                <svg class="chud-topo-svg" viewBox="-30 -16 380 188" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <svg class="chud-topo-svg" viewBox="-30 -16 380 198" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
                     <g class="topo-dynamic-layer">
                         ${edges}
                         ${satDots}
@@ -450,7 +484,7 @@ function chudDetailHtml(alert: Alert | null): string {
     const canonicalTopic = normalizeTopicCode(alert.topic);
     const topicLabel = getTopicDisplayLabel(canonicalTopic);
     const topicColor = getTopicColor(canonicalTopic);
-    const sev = normalizeThreatLevel(alert.severity);
+    const sev = alertThreatTier(alert);
     // The ring is driven STRICTLY by the backend's calibrated intensity_pct
     // (distributed ratio-%: 1.5x gate = 50%, >=3.0x = 100%). No client-side tanh
     // math — text and arc both read the same server-supplied value. When the
@@ -474,13 +508,14 @@ function chudDetailHtml(alert: Alert | null): string {
     // Signal tags — all from real alert fields (no fabricated entities).
     const tags: string[] = [chudTagChip(topicLabel, 'topic')];
     if (alert.country) tags.push(chudTagChip(alert.country, 'geo'));
-    tags.push(chudTagChip(sev.toUpperCase(), `sev-${sev}`));
+    tags.push(chudTagChip(TIER_LABEL[sev], `sev-${sev}`));
     if (statusLabel) tags.push(chudTagChip(statusLabel, 'status'));
     // Raw float coordinates intentionally omitted — they are debug noise, not a signal tag.
 
     const sources = Array.isArray(alert.evidence_list) ? alert.evidence_list : [];
     const sourceCount = sources.length;
-    const sourceRows = sources.slice(0, 4).map((s: any, i: number) => {
+    const PRIMARY_SOURCE_N = 3;
+    const renderSrcRow = (s: any, primary: boolean): string => {
         const title = chudEscape(String(s.title || s.source || 'Source signal'));
         const dom = chudEscape(String(s.domain || s.type || 'OSINT'));
         const url = s.url || s.link || '';
@@ -488,11 +523,14 @@ function chudDetailHtml(alert: Alert | null): string {
             ? `<a href="${chudEscape(String(url))}" target="_blank" rel="noopener noreferrer" class="chud-src-link">${title} ↗</a>`
             : title;
         return `
-            <div class="chud-src-row${i === 0 ? ' chud-src-row--primary' : ''}">
+            <div class="chud-src-row${primary ? ' chud-src-row--primary' : ''}">
                 <span class="chud-src-dom">${dom}</span>
                 <span class="chud-src-title">${titleHtml}</span>
             </div>`;
-    }).join('');
+    };
+    const primaryRows = sources.slice(0, PRIMARY_SOURCE_N).map((s: any) => renderSrcRow(s, true)).join('');
+    const secondarySources = sources.slice(PRIMARY_SOURCE_N);
+    const secondaryRows = secondarySources.map((s: any) => renderSrcRow(s, false)).join('');
 
     const description = alert.description
         ? `<p class="chud-detail-desc">${chudEscape(alert.description)}</p>`
@@ -548,7 +586,7 @@ function chudDetailHtml(alert: Alert | null): string {
                     </div>
                 </div>
                 <div class="chud-threat-meta">
-                    <div class="chud-threat-sev chud-sev--${sev}">${sev.toUpperCase()}</div>
+                    <div class="chud-threat-sev chud-sev--${sev}">${TIER_LABEL[sev]}</div>
                     ${statusLabel ? `<div class="chud-threat-status chud-status--${status}">${statusLabel}</div>` : ''}
                 </div>
             </div>
@@ -562,10 +600,17 @@ function chudDetailHtml(alert: Alert | null): string {
             </section>
 
             <section class="chud-block">
-                <div class="chud-block-label">SOURCES <span class="chud-block-count">${sourceCount}</span></div>
+                <div class="chud-block-label">PRIMARY SOURCES <span class="chud-block-count">${sourceCount}</span></div>
                 ${sourceCount
-                    ? `<div class="chud-src-list">${sourceRows}</div>
-                       ${sourceCount > 4 ? `<button type="button" class="chud-src-more" data-chud-sources="1">VIEW ALL ${sourceCount} SOURCES →</button>` : ''}`
+                    ? `<div class="chud-src-list">${primaryRows}</div>
+                       ${secondarySources.length
+                          ? `<div class="chud-src-secondary"${chudSrcExpanded ? '' : ' data-collapsed="1"'}>
+                                 <div class="chud-src-list chud-src-list--secondary">${secondaryRows}</div>
+                             </div>
+                             <button type="button" class="chud-src-more" data-chud-src-toggle="1" aria-expanded="${chudSrcExpanded}">
+                                 ${chudSrcExpanded ? 'Hide' : `View all ${secondarySources.length}`} secondary sources <span class="chud-src-more-caret">${chudSrcExpanded ? '▴' : '▾'}</span>
+                             </button>`
+                          : ''}`
                     : '<div class="chud-muted">No supporting sources resolved.</div>'}
             </section>
 
@@ -577,6 +622,9 @@ function chudDetailHtml(alert: Alert | null): string {
 
 /** Project an alert into the sticky detail panel + sync row highlight. */
 function chudSelect(container: HTMLElement, id: string | null): void {
+    // A genuine selection change starts collapsed; a poll re-selecting the SAME
+    // signal preserves whatever the user expanded.
+    if (id !== chudSelectedId) chudSrcExpanded = false;
     chudSelectedId = id;
     const detail = container.querySelector<HTMLElement>('.chud-detail');
     const alert = id ? chudAlerts.find(a => a.id === id) ?? null : null;
@@ -702,8 +750,8 @@ export function renderAlerts(
     const sortedAlerts = [...alerts]
         .filter(a => !topicFilter || normalizeTopicCode(a.topic) === topicFilter)
         .sort((a, b) => {
-            const sevA = CHUD_SEV_RANK[a.severity?.toLowerCase() || ''] || 0;
-            const sevB = CHUD_SEV_RANK[b.severity?.toLowerCase() || ''] || 0;
+            const sevA = CHUD_SEV_RANK[alertThreatTier(a)] || 0;
+            const sevB = CHUD_SEV_RANK[alertThreatTier(b)] || 0;
             if (sevA !== sevB) return sevB - sevA;
             return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
         });
@@ -810,6 +858,26 @@ export function renderAlerts(
         if (t.closest('[data-chud-sources]')) {
             const a = chudCurrentAlert();
             if (a) showEvidenceModal(resolveAlertHeadline(a).text || a.target_label, a.evidence_list || []);
+            return;
+        }
+        // Secondary-sources accordion toggle (inline, no modal).
+        const srcToggle = t.closest<HTMLElement>('[data-chud-src-toggle]');
+        if (srcToggle) {
+            const sec = srcToggle.previousElementSibling as HTMLElement | null;
+            if (sec && sec.classList.contains('chud-src-secondary')) {
+                const collapsed = sec.getAttribute('data-collapsed') === '1';
+                // Persist to module state FIRST so the next poll's re-render re-emits
+                // this state instead of snapping back to collapsed.
+                chudSrcExpanded = collapsed; // was collapsed → now expanding
+                if (collapsed) sec.removeAttribute('data-collapsed');
+                else sec.setAttribute('data-collapsed', '1');
+                srcToggle.setAttribute('aria-expanded', String(chudSrcExpanded));
+                const secCount = sec.querySelectorAll('.chud-src-row').length;
+                const caret = chudSrcExpanded ? '▴' : '▾';
+                srcToggle.innerHTML =
+                    `${chudSrcExpanded ? 'Hide' : `View all ${secCount}`} secondary sources `
+                    + `<span class="chud-src-more-caret">${caret}</span>`;
+            }
             return;
         }
         const cta = t.closest<HTMLElement>('[data-chud-cta]');
