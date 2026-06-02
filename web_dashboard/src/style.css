@@ -28,6 +28,22 @@ body.no-scroll {
   min-height: 100vh;
 }
 
+/* ── macOS overscroll lockdown (Cyber-HUD detail scroll chain) ──────────────
+   ROOT CAUSE of the residual rubber-band: `overscroll-behavior: contain` only
+   stops scroll CHAINING — it does NOT suppress an element's OWN elastic bounce on
+   macOS; only `none` does. And `.main-content` (the real outer scroller,
+   overflow-y:auto) had no overscroll-behavior at all, so a hard flick chained up
+   and bounced the whole content area, exposing whitespace.
+   Confirmed DOM chain (main.ts:613-636): body > main.main-content > #alerts-container
+   > #alerts-list > .chud-root > .chud-split > .chud-detail. Lock every link with
+   `none !important` so a forceful trackpad flick hits a hard wall. */
+html, body,
+.main-content,
+#alerts-container,
+#alerts-list,
+.chud-root,
+.chud-split { overscroll-behavior: none !important; }
+
 @keyframes fadeInUI {
   0% {
     opacity: 0;
@@ -9947,7 +9963,7 @@ body.checkout-email-modal-scroll-lock {
   flex: 1 1 0;                  /* basis 0 → detail panel sets block height; list fills + aligns */
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior-y: contain;  /* no rubber-band bleed past the list edges */
+  overscroll-behavior: none !important;  /* `none` (not contain) kills the LOCAL macOS bounce too */
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 240, 255, 0.3) transparent;
 }
@@ -10140,7 +10156,8 @@ body.checkout-email-modal-scroll-lock {
      browser re-anchor (yank) the scroll position when the 10s poll re-renders the
      inner DOM or when the sources accordion toggles. Applies to this same element
      whether it's the desktop scroll column or the mobile full-screen modal. */
-  overscroll-behavior-y: contain;
+  overscroll-behavior: none !important;  /* `none` (not contain) so the panel's own
+                                            elastic rubber-band is fully suppressed */
   overflow-anchor: none;
 }
 .chud-detail-inner {
