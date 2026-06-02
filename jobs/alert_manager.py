@@ -636,23 +636,15 @@ class AlertManager:
             stmt = select(Item).where(Item.title.in_(titles))
             items = (await db.execute(stmt)).scalars().all()
         
-        # 3. Fallback: Keyword Overlap / Label Containment
-        if not items:
-            logger.info(f"No exact title matches for {sig.target_label}, attempting fallback...")
-            # Try to match items whose titles contain the target_label (useful for entity heat)
-            fallback_stmt = select(Item).where(Item.title.ilike(f"%{sig.target_label}%")).limit(5)
-            items = (await db.execute(fallback_stmt)).scalars().all()
-            
-            if not items:
-                # Further fallback: check if any supporting titles match partially
-                # This handles cases where TrendSignal target_label is fragmented
-                for title_fragment in titles[:3]:
-                    if len(title_fragment) < 5: continue
-                    f_stmt = select(Item).where(Item.title.ilike(f"%{title_fragment}%")).limit(3)
-                    f_items = (await db.execute(f_stmt)).scalars().all()
-                    if f_items:
-                        items.extend(f_items)
-                        break
+        # 3. (REMOVED — Phase 1 hardening) Naive substring fallback.
+        #    Previously, when steps 1-2 found nothing, this bound any Item whose
+        #    title merely CONTAINED the target_label or a supporting-title fragment
+        #    (Item.title.ilike("%…%")). The QE audit traced 69.2% of loosely-bound
+        #    evidence to this path — a single shared word ("china"/"iran"/"hormuz")
+        #    fused unrelated events into one cluster. A signal that yields no
+        #    cluster-ID or exact-title evidence now resolves to ZERO sources and is
+        #    correctly dropped by the no-evidence guard rather than padded with
+        #    substring matches. See docs/clustering_quality_proposal.md (RC-3).
 
         evidence_list = []
         seen_urls = set()
@@ -813,12 +805,25 @@ class AlertManager:
             (e.get("url") or e.get("link") or e.get("title") or "").strip()
             for e in existing if isinstance(e, dict)
         }
+        # Phase 1 STRICT LEXICAL GATE: a source is only bound as corroboration if
+        # its title coheres with the master headline at the same bar used to
+        # cluster events (CLUSTER_SIM_THRESHOLD = 0.6). A lone shared anchor
+        # ("china"/"iran") scores far below 0.6, so unrelated events can no longer
+        # fuse into a master's evidence_list. Rejected sources are simply NOT bound
+        # — they remain available to stand as their own signal/alert. (RC-1/RC-3,
+        # docs/clustering_quality_proposal.md.)
+        master_tokens = _event_tokens(f"{master.target_label or ''} {meta.get('display_title', '')}")
         added = 0
+        rejected = 0
         for ev in (evidence_list or []):
             if not isinstance(ev, dict):
                 continue
             key = (ev.get("url") or ev.get("link") or ev.get("title") or "").strip()
             if key and key in seen:
+                continue
+            ev_tokens = _event_tokens(str(ev.get("title") or ""))
+            if master_tokens and _event_similarity(master_tokens, ev_tokens) < CLUSTER_SIM_THRESHOLD:
+                rejected += 1
                 continue
             existing.append(ev)
             if key:
@@ -826,15 +831,18 @@ class AlertManager:
             added += 1
 
         meta["evidence_list"] = existing[:CLUSTER_MAX_EVIDENCE]
-        meta["corroboration_count"] = int(meta.get("corroboration_count", 0) or 0) + 1
-        meta["last_corroborated_at"] = datetime.now(timezone.utc).isoformat()
+        # Only record corroboration when a coherent source was actually bound — a
+        # fully-rejected (all-loose) absorption is a no-op on the master's confidence.
+        if added:
+            meta["corroboration_count"] = int(meta.get("corroboration_count", 0) or 0) + 1
+            meta["last_corroborated_at"] = datetime.now(timezone.utc).isoformat()
         master.metadata_json = meta
         master.supporting_events_count = len(meta["evidence_list"])
         flag_modified(master, "metadata_json")
         await db.flush()
         logger.info(
-            "Event clustered: absorbed %r into master %s (+%d new source(s), %d total)",
-            (incoming_label or "")[:60], str(master.id), added, len(meta["evidence_list"]),
+            "Event clustered: absorbed %r into master %s (+%d new source(s), %d rejected as loose, %d total)",
+            (incoming_label or "")[:60], str(master.id), added, rejected, len(meta["evidence_list"]),
         )
 
     @classmethod
