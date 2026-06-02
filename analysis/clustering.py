@@ -154,16 +154,23 @@ def calculate_similarity(tokens1: Set[str], tokens2: Set[str]) -> float:
     return len(intersection) / len(union)
 
 # Category Threshold Mapping
+# Phase 3 hardening (docs/clustering_quality_proposal.md, RC-1/RC-5): raised from
+# the old 0.12-0.18 band. At those levels a single shared geo/word anchor
+# (~0.26 blended) could trip a merge. A 0.40 floor means a merge now needs genuine
+# MULTI-signal agreement (shared anchor AND lexical/sector overlap — the agreement
+# bonus only lifts a true match to ~0.55+), so a lone buzzword can no longer fuse
+# unrelated events. We prefer false negatives (separate clusters) over false
+# positives (fused events) to guarantee evidence-list trust.
 CATEGORY_THRESHOLDS = {
-    "geopolitics": 0.12,
-    "economy": 0.14,
-    "cyber": 0.18,
-    "supply_chain": 0.12,
-    "defense": 0.12,
-    "default": 0.15
+    "geopolitics": 0.40,
+    "economy": 0.40,
+    "cyber": 0.42,
+    "supply_chain": 0.40,
+    "defense": 0.40,
+    "default": 0.40
 }
 
-async def cluster_items(db: Session, items: List[Item], base_threshold: float = 0.18) -> Dict:
+async def cluster_items(db: Session, items: List[Item], base_threshold: float = 0.40) -> Dict:
     """
     Groups items with Phase 16 Intelligence Evolution logic.
     - Agreement Bonus logic
@@ -187,18 +194,34 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
         for idx, cluster in enumerate(clusters):
             conf_data = calculate_merge_confidence([item], cluster)
             
-            # Safeguard: Hard Location Conflict
+            # Safeguard: Hard Location Conflict — ABSOLUTE VETO (Phase 3).
+            # If both texts name geographies and they are DISJOINT (e.g. China vs
+            # Iran), they are different theaters: never cluster them, regardless of
+            # any shared buzzword. Skip this candidate entirely (previously this
+            # only applied a x0.1 penalty, which the agreement bonus could survive).
             e_item = extract_entities(item.title)
             e_cluster = extract_entities(" ".join([it.title for it in cluster]))
             if e_item["geo"] and e_cluster["geo"] and not (e_item["geo"] & e_cluster["geo"]):
-                conf_data["score"] *= 0.1 # Severe penalty for location mismatch
-                
+                continue
+
             if conf_data["score"] > max_conf:
                 max_conf = conf_data["score"]
                 best_match_idx = idx
         
-        if max_conf >= threshold:
-            clusters[best_match_idx].append(item)
+        # Multi-geo over-merge VETO (Phase 3): OSINT events are geographically
+        # localized. If absorbing this item would make the cluster span MORE THAN
+        # 2 distinct geo theaters, treat it as a separate macro-event and start a
+        # new cluster instead of fusing global threads. (Previously this condition
+        # was only counted as a metric at the end, never enforced.)
+        if max_conf >= threshold and best_match_idx >= 0:
+            merged_geos: Set[str] = set()
+            for it in clusters[best_match_idx]:
+                merged_geos |= extract_entities(it.title)["geo"]
+            merged_geos |= extract_entities(item.title)["geo"]
+            if len(merged_geos) > 2:
+                clusters.append([item])
+            else:
+                clusters[best_match_idx].append(item)
         else:
             clusters.append([item])
             
