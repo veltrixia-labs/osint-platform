@@ -9995,7 +9995,17 @@ body.checkout-email-modal-scroll-lock {
   backdrop-filter: blur(6px) saturate(150%);
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.12), inset 0 0 6px rgba(0, 240, 255, 0.06);
 }
-.chud-row-caret { color: var(--chud-dim); justify-self: end; transition: transform 0.18s ease, color 0.18s ease; }
+/* No indicator on unselected rows. The caret still occupies the fixed 14px grid
+   column (so toggling it never shifts the headline text or the N SRC badge); it's
+   simply invisible until the row is selected. */
+.chud-row-caret {
+  color: var(--chud-cyan);
+  justify-self: end;
+  font-size: 1.25rem;       /* larger, clearer cue — fits within the 22px rail row height (no jitter) */
+  line-height: 1;
+  opacity: 0;               /* hidden until the row is selected */
+  transition: opacity 0.2s ease;
+}
 
 /* Flat, rigid neon highlight — no 3D tilt/skew (professional OSINT console). */
 .chud-row:hover {
@@ -10016,7 +10026,14 @@ body.checkout-email-modal-scroll-lock {
     inset 0 0 26px rgba(0, 240, 255, 0.12),
     0 14px 30px -14px rgba(0, 240, 255, 0.6);
 }
-.chud-row.is-active .chud-row-caret { color: var(--chud-cyan); transform: rotate(90deg); }
+/* Selected row: a continuous, gentle "flowing right" pulse (opacity + a 4px
+   rightward drift, looping) that pulls the eye toward the Context Topology panel.
+   NOT a 90deg rotation — that pointed the caret DOWN and implied an accordion. */
+.chud-row.is-active .chud-row-caret { animation: slideRightLoop 1.5s ease-in-out infinite; }
+@keyframes slideRightLoop {
+  0%, 100% { transform: translateX(0);   opacity: 0.6; }
+  50%      { transform: translateX(2px); opacity: 1; }
+}
 
 .chud-row--locked { opacity: 0.72; }
 .chud-row--locked .chud-row-headline { filter: blur(0.4px); color: var(--chud-dim); }
@@ -10201,12 +10218,26 @@ body.checkout-email-modal-scroll-lock {
 .chud-src-link { color: var(--chud-cyan); text-decoration: none; }
 .chud-src-link:hover { text-decoration: underline; }
 .chud-src-more {
-  margin-top: 2px; align-self: flex-start;
-  background: none; border: none; cursor: pointer;
-  color: var(--chud-cyan); font-family: inherit; font-size: 0.62rem; letter-spacing: 0.1em; padding: 2px 0;
+  margin-top: 8px; align-self: flex-start; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--chud-cyan); font-family: inherit; font-size: 0.62rem; letter-spacing: 0.1em;
+  padding: 5px 12px; border-radius: 999px;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  background: rgba(0, 240, 255, 0.06);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  transition: background 0.18s ease, border-color 0.18s ease;
 }
-.chud-src-more:hover { text-decoration: underline; }
+.chud-src-more:hover { background: rgba(0, 240, 255, 0.12); border-color: rgba(0, 240, 255, 0.45); }
+.chud-src-more-caret { font-size: 0.7rem; line-height: 1; }
 .chud-muted { color: var(--chud-dim); font-size: 0.74rem; }
+
+/* Secondary-sources collapsible accordion. */
+.chud-src-list--secondary { margin-top: 6px; }
+.chud-src-secondary {
+  overflow: hidden; max-height: 0; opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.25s ease;
+}
+.chud-src-secondary.expanded { max-height: 480px; opacity: 1; }
 
 /* Phase 8.15 — Contextual Topology mini-graph (Pro spatial-engine teaser). */
 .chud-topo-wrap {
@@ -10322,6 +10353,28 @@ body.checkout-email-modal-scroll-lock {
   .chud-row-topic { display: none; }
 }
 
+/* ── Mobile (<=768px): force a vertical stack and keep the Signal Stream tall
+   enough to read & scroll instead of being crushed into a sliver. ───────── */
+@media (max-width: 768px) {
+  .chud-split {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .chud-stream {
+    min-height: 40vh;   /* never collapses to an unusable sliver */
+  }
+  .chud-stream-list {
+    max-height: 55vh;   /* bounded so the list scrolls rather than pushing the detail far down */
+  }
+  .chud-detail {
+    position: relative;
+    top: 0;
+    min-height: 0;
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chud-root::before,
   .chud-detail,
@@ -10331,6 +10384,8 @@ body.checkout-email-modal-scroll-lock {
   .chud-threat-ring,
   .chud-topo-edge,
   .chud-console-dot { animation: none; }
+  /* Keep the active-row arrow clearly visible (static) when motion is reduced. */
+  .chud-row.is-active .chud-row-caret { animation: none; opacity: 1; transform: translateX(2px); }
 }
 
 /* ════════════════════════════════════════════════════════════════════════

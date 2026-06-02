@@ -191,7 +191,6 @@ let chudSelectedId: string | null = null;
 let chudSrcExpanded = false;
 let chudAlerts: Alert[] = [];       // current (filtered+sorted) set, by render
 let chudLatestAlerts: Alert[] = []; // pool the log generator samples from
-let chudUserTier = 'free';
 let chudFilterGuardian: MutationObserver | null = null; // re-homes the shared filter bar on tab exit
 let chudFilterBarEl: HTMLElement | null = null;          // direct ref so a DETACHED bar can still be re-homed
 
@@ -548,20 +547,6 @@ function chudDetailHtml(alert: Alert | null): string {
     // Professional OSINT fallbacks (never a web address) to guarantee a 2+ node preview.
     if (topoSatellites.length < 2) topoSatellites.push('Impact Sector', 'Epicenter Region');
 
-    // Contextual CTA — the action matches the threat tier. High-impact signals
-    // project a blast radius on the Pro Map; low-level WATCH signals get a
-    // tracking/precedent action (blast-radius maps add no value there).
-    const isHighImpact = sev === 'critical' || sev === 'elevated';
-    const ctaLabel = isHighImpact
-        ? '↗ PROJECT BLAST RADIUS ON PRO MAP'
-        : '🔍 ANALYZE HISTORICAL PRECEDENTS (PRO)';
-    const ctaLat = typeof alert.location_lat === 'number' ? ` data-lat="${alert.location_lat}"` : '';
-    const ctaLng = typeof alert.location_lng === 'number' ? ` data-lng="${alert.location_lng}"` : '';
-    const bridge =
-        `<button type="button" class="chud-bridge chud-bridge--pro" ` +
-        `data-chud-cta="${isHighImpact ? 'blast' : 'track'}"${ctaLat}${ctaLng} ` +
-        `data-alert-id="${chudEscape(alert.id)}">${ctaLabel}</button>`;
-
     return `
         <div class="chud-detail-inner${locked ? ' chud-detail-inner--locked' : ''}" style="${getTopicCssVars(canonicalTopic)}">
             <div class="chud-detail-scan" aria-hidden="true"></div>
@@ -604,7 +589,7 @@ function chudDetailHtml(alert: Alert | null): string {
                 ${sourceCount
                     ? `<div class="chud-src-list">${primaryRows}</div>
                        ${secondarySources.length
-                          ? `<div class="chud-src-secondary"${chudSrcExpanded ? '' : ' data-collapsed="1"'}>
+                          ? `<div class="chud-src-secondary${chudSrcExpanded ? ' expanded' : ''}">
                                  <div class="chud-src-list chud-src-list--secondary">${secondaryRows}</div>
                              </div>
                              <button type="button" class="chud-src-more" data-chud-src-toggle="1" aria-expanded="${chudSrcExpanded}">
@@ -615,8 +600,6 @@ function chudDetailHtml(alert: Alert | null): string {
             </section>
 
             ${chudTopologyHtml(topoSatellites, sev)}
-
-            <footer class="chud-detail-foot">${bridge}</footer>
         </div>`;
 }
 
@@ -759,7 +742,6 @@ export function renderAlerts(
     // Refresh module state consumed by the row/detail/log helpers.
     chudAlerts = sortedAlerts;
     chudLatestAlerts = sortedAlerts;
-    chudUserTier = userTier;
 
     const critical = sortedAlerts.filter(a => a.severity?.toLowerCase() === 'critical').length;
     const existing = container.querySelector<HTMLElement>('.chud-root');
@@ -849,7 +831,13 @@ export function renderAlerts(
         const row = (e.target as HTMLElement).closest<HTMLElement>('.chud-row');
         if (!row || !list.contains(row)) return;
         const id = row.dataset.id;
-        if (id) chudSelect(root, id);
+        if (!id) return;
+        chudSelect(root, id);
+        // On mobile the detail panel is stacked BELOW the stream — scroll it into
+        // view so the tactical breakdown is immediately visible after a tap.
+        if (window.matchMedia('(max-width: 768px)').matches) {
+            root.querySelector<HTMLElement>('.chud-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     });
 
     const detail = root.querySelector<HTMLElement>('.chud-detail');
@@ -865,12 +853,10 @@ export function renderAlerts(
         if (srcToggle) {
             const sec = srcToggle.previousElementSibling as HTMLElement | null;
             if (sec && sec.classList.contains('chud-src-secondary')) {
-                const collapsed = sec.getAttribute('data-collapsed') === '1';
-                // Persist to module state FIRST so the next poll's re-render re-emits
-                // this state instead of snapping back to collapsed.
-                chudSrcExpanded = collapsed; // was collapsed → now expanding
-                if (collapsed) sec.removeAttribute('data-collapsed');
-                else sec.setAttribute('data-collapsed', '1');
+                // Toggle the .expanded class (CSS hides the container by default).
+                // Persist to module state so the next poll's re-render re-emits it.
+                chudSrcExpanded = !sec.classList.contains('expanded');
+                sec.classList.toggle('expanded', chudSrcExpanded);
                 srcToggle.setAttribute('aria-expanded', String(chudSrcExpanded));
                 const secCount = sec.querySelectorAll('.chud-src-row').length;
                 const caret = chudSrcExpanded ? '▴' : '▾';
@@ -878,34 +864,6 @@ export function renderAlerts(
                     `${chudSrcExpanded ? 'Hide' : `View all ${secCount}`} secondary sources `
                     + `<span class="chud-src-more-caret">${caret}</span>`;
             }
-            return;
-        }
-        const cta = t.closest<HTMLElement>('[data-chud-cta]');
-        if (cta) {
-            const isPaid = chudUserTier === 'pro' || chudUserTier === 'experts' || chudUserTier === 'enterprise';
-            const action = cta.getAttribute('data-chud-cta');
-            // Signed-out / Free: the dashboards stay fully open — only the Pro
-            // action is caught, routing to the clean "Intro to Pro" plans summary.
-            if (!isPaid) {
-                window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'plans' } }));
-                return;
-            }
-            if (action === 'blast') {
-                // Route to the Pro Map with the alert's geo + id as URL params.
-                const params = new URLSearchParams();
-                const lat = cta.getAttribute('data-lat');
-                const lng = cta.getAttribute('data-lng');
-                const id = cta.getAttribute('data-alert-id');
-                if (lat) params.set('lat', lat);
-                if (lng) params.set('lng', lng);
-                if (id) params.set('alert_id', id);
-                window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'pro-map', params: Object.fromEntries(params) } }));
-                try { history.replaceState(null, '', `/pro-interactive-map?${params.toString()}`); } catch { /* noop */ }
-                return;
-            }
-            // WATCH 'track' action — risk-trajectory tracking is a future Pro
-            // surface; route to the Pro intro for now rather than a blast-radius map.
-            window.dispatchEvent(new CustomEvent('trigger-tab', { detail: { tab: 'plans' } }));
             return;
         }
     });
