@@ -524,7 +524,6 @@ function chudDetailHtml(alert: Alert | null): string {
 
     return `
         <div class="chud-detail-inner${locked ? ' chud-detail-inner--locked' : ''}" style="${getTopicCssVars(canonicalTopic)}">
-            <div class="chud-detail-scan" aria-hidden="true"></div>
             <button type="button" class="chud-detail-back" data-chud-back aria-label="Close detail">✕ Close</button>
             <header class="chud-detail-head">
                 <div class="chud-detail-head-row">

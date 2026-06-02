@@ -10162,25 +10162,20 @@ body.checkout-email-modal-scroll-lock {
 }
 .chud-detail-inner {
   position: relative;
-  padding: 16px 16px 18px;
+  padding: 16px 16px 28px;   /* extra bottom padding → the scroll area ends cleanly
+                                below the last clustered source (no flex/margin ambiguity) */
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
-/* Holographic scanline sweep over the detail panel. */
-.chud-detail-scan {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, transparent, rgba(0, 240, 255, 0.12), transparent);
-  height: 42%;
-  opacity: 0.5;
-  animation: chud-scan 4.6s linear infinite;
-}
-@keyframes chud-scan {
-  0% { transform: translateY(-120%); }
-  100% { transform: translateY(280%); }
-}
+/* REMOVED: .chud-detail-scan holographic sweep. It was position:absolute inside
+   the scrolling .chud-detail-inner with a transform: translateY(280%) animation.
+   Transformed descendants count toward a scroll container's SCROLLABLE overflow
+   (Chrome/Firefox/Edge — cross-platform), so the scan created a large PHANTOM
+   scroll area below the real content that oscillated with the 4.6s loop: a hard
+   flick landed in the phantom whitespace, then snapped back as the loop shrank
+   scrollHeight. The left panel (.chud-stream) had no such overlay and never bounced.
+   Do NOT reintroduce a transform-animated overlay inside a scroll container. */
 
 .chud-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .chud-detail-head-row { display: flex; align-items: baseline; gap: 10px; }
