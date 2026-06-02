@@ -195,35 +195,15 @@ async def _get_alerts_impl(
         for a in alerts
     ]
 
-    # Post-process for Mosaic/Masking/Simplification
-    is_at_least_pro = is_tier_sufficient(tier, PlanTier.PRO.value)
-    
+    # Fully-unlocked mode (platform dev standard): every alert renders its
+    # COMPLETE AI analytical brief and forensic intelligence for ALL tiers.
+    # No description/label masking, no intensity simplification, no upsell
+    # strings. `is_locked`/`is_partial` are pinned False so the UI never gates
+    # content on them.
     final_alerts = []
     for a in formatted:
-        is_topic_locked = not is_topic_allowed(tier, a["topic"])
-        a["is_locked"] = is_topic_locked
-
-        if not is_at_least_pro:
-            # --- Guest "Fast News" Restriction ---
-            # Mask AI forensic details, add labels, and simplify numbers
-            a["description"] = "Upgrade to Pro / Expert to unlock the full AI analytical brief and forensic intelligence."
-            a["cascading_impacts"] = []
-            a["is_partial"] = True
-            
-            # Label-centric masking
-            raw_val = a["intensity"]
-            a["intensity_display"] = f"~{int(raw_val)}" if raw_val < 9 else "10+"
-            
-            if is_topic_locked:
-                a["intensity_display"] = "~~"
-        
-        elif is_topic_locked:
-            # Fallback for any future tiers that might be above PRO but still topic-locked (if any)
-            a["target_label"] = "🔒 [RESTRICTED]"
-            a["description"] = "Forensic intelligence for this event is restricted. Upgrade to unlock."
-            a["intensity"] = 0.0
-            a["cascading_impacts"] = []
-            
+        a["is_locked"] = False
+        a["is_partial"] = False
         final_alerts.append(a)
 
     # Ground-floor: drop sub-baseline (<25%) noise from the active stream view.
@@ -298,24 +278,11 @@ async def _get_live_alerts_impl(
         for a in alerts
     ]
     
-    # Applied Mosaic to live stream too
-    is_at_least_pro = is_tier_sufficient(tier, PlanTier.PRO.value)
-    
+    # Fully-unlocked mode: no masking on the live stream either.
     final_live = []
     for a in live_data:
-        is_topic_locked = not is_topic_allowed(tier, a["topic"])
-        a["is_locked"] = is_topic_locked
-        
-        if not is_at_least_pro:
-            a["description"] = "Detailed tactical signal restricted to Pro."
-            a["cascading_impacts"] = []
-            a["is_partial"] = True
-            a["intensity_display"] = f"~{int(a['intensity'])}" if a['intensity'] < 9 else "10+"
-        elif is_topic_locked:
-            a["target_label"] = "🔒 [RESTRICTED]"
-            a["description"] = "Detailed tactical signal is restricted."
-            a["cascading_impacts"] = []
-            
+        a["is_locked"] = False
+        a["is_partial"] = False
         final_live.append(a)
 
     # Ground-floor: drop sub-baseline (<25%) noise from the active stream view.
@@ -371,19 +338,9 @@ async def get_alert(
         "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else [],
     }
 
-    # Apply restrictions for non-Pro or locked topics
-    if not is_at_least_pro:
-        data["description"] = "Forensic intelligence restricted to Pro/Expert tiers."
-        data["cascading_impacts"] = []
-        data["is_partial"] = True
-        data["intensity_display"] = f"~{int(data['intensity'])}" if data['intensity'] < 9 else "10+"
-        if is_topic_locked:
-            data["intensity_display"] = "~~"
-    elif is_topic_locked:
-        data["target_label"] = "🔒 [RESTRICTED]"
-        data["description"] = "Forensic intelligence restricted."
-        data["cascading_impacts"] = []
-        data["intensity"] = 0.0
+    # Fully-unlocked mode: no per-tier masking; full forensic detail always.
+    data["is_locked"] = False
+    data["is_partial"] = False
 
     return data
 

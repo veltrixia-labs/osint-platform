@@ -99,7 +99,16 @@ export function renderTopicFilterBar(
     onSelect: (topic: StrategicTopicCode | null) => void,
 ): void {
     const allActive = activeTopic === null;
+    const activeLabel = allActive
+        ? 'All'
+        : (STRATEGIC_TOPIC_FILTERS.find(f => f.code === activeTopic)?.label ?? 'All');
+    // Re-render always starts the (mobile) dropdown collapsed.
+    container.classList.remove('is-open');
     container.innerHTML = `
+        <button type="button" class="topic-mobile-toggle" data-topic-mobile-toggle aria-expanded="false">
+            <span class="topic-mobile-current">${activeLabel}</span>
+            <span class="topic-mobile-caret" aria-hidden="true">▾</span>
+        </button>
         <button type="button" class="topic-btn ${allActive ? 'topic-btn--active' : ''}" data-topic="">
             All
         </button>
@@ -115,8 +124,17 @@ export function renderTopicFilterBar(
         `).join('')}
     `;
 
+    // Mobile: the toggle expands/collapses the category dropdown. On desktop the
+    // toggle is display:none and all pills show inline (CSS-driven).
+    const mobileToggle = container.querySelector<HTMLButtonElement>('[data-topic-mobile-toggle]');
+    mobileToggle?.addEventListener('click', () => {
+        const open = container.classList.toggle('is-open');
+        mobileToggle.setAttribute('aria-expanded', String(open));
+    });
+
     container.querySelectorAll<HTMLButtonElement>('.topic-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            container.classList.remove('is-open'); // selecting a category closes the dropdown
             const raw = btn.dataset.topic ?? '';
             onSelect(raw ? (raw as StrategicTopicCode) : null);
         });
@@ -378,8 +396,8 @@ function chudRowHtml(alert: Alert): string {
             <span class="chud-row-topic" style="color:${topicColor}">${topicLabel}</span>
             <span class="chud-row-headline">
                 <span class="chud-row-headline-text">${locked ? '🔒 ' : ''}${headlineHtml}</span>
-                ${sourceBadge}
             </span>
+            ${sourceBadge}
             <span class="chud-row-caret" aria-hidden="true">▸</span>
         </button>`;
 }
@@ -550,6 +568,7 @@ function chudDetailHtml(alert: Alert | null): string {
     return `
         <div class="chud-detail-inner${locked ? ' chud-detail-inner--locked' : ''}" style="${getTopicCssVars(canonicalTopic)}">
             <div class="chud-detail-scan" aria-hidden="true"></div>
+            <button type="button" class="chud-detail-back" data-chud-back>← Back to Stream</button>
             <header class="chud-detail-head">
                 <div class="chud-detail-head-row">
                     <span class="chud-detail-token">${token}</span>
@@ -833,16 +852,22 @@ export function renderAlerts(
         const id = row.dataset.id;
         if (!id) return;
         chudSelect(root, id);
-        // On mobile the detail panel is stacked BELOW the stream — scroll it into
-        // view so the tactical breakdown is immediately visible after a tap.
+        // Mobile master-detail: tapping a signal swaps the stream out for its
+        // detail pane (CSS hides the list when .chud-split--detail-open is set).
+        // The detail's "← Back to Stream" button reverses this.
         if (window.matchMedia('(max-width: 768px)').matches) {
-            root.querySelector<HTMLElement>('.chud-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            root.querySelector<HTMLElement>('.chud-split')?.classList.add('chud-split--detail-open');
         }
     });
 
     const detail = root.querySelector<HTMLElement>('.chud-detail');
     detail?.addEventListener('click', (e) => {
         const t = e.target as HTMLElement;
+        // Mobile "← Back to Stream": return to the master list view.
+        if (t.closest('[data-chud-back]')) {
+            root.querySelector<HTMLElement>('.chud-split')?.classList.remove('chud-split--detail-open');
+            return;
+        }
         if (t.closest('[data-chud-sources]')) {
             const a = chudCurrentAlert();
             if (a) showEvidenceModal(resolveAlertHeadline(a).text || a.target_label, a.evidence_list || []);
