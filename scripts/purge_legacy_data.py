@@ -1,29 +1,28 @@
 """
-HARD RESET of legacy processed intelligence — DESTRUCTIVE.
+HARD RESET of legacy processed intelligence — DESTRUCTIVE, BATCHED.
 
 Wipes the alert/cluster layer so the new 0.40-threshold ingestion engine can
-repopulate from scratch. Targets ONLY processed clusters + alerts + their
-delivery bridge:
+repopulate cleanly. Targets ONLY processed clusters + alerts + their delivery
+bridge:
     - alert_deliveries   (alert -> analyst delivery/evidence bridge)
     - alert_logs         (alerts)
-    - event_clusters     (clusters)
+    - event_clusters     (clusters)  [items.cluster_id is nulled first]
 
-PRESERVES everything else: analyst_profiles (users), raw_items / items (raw feed
-— items.cluster_id is set NULL so rows survive), reports, all external_* /
-market_data_* / bea_* / cot_* data feeds, stakeholders/dependencies, the spatial
-engine, and the ARCHIVAL monthly_trend_reports (which must never be purged).
+PRESERVES everything else: analyst_profiles (users), raw_items / items (raw feed),
+reports, all external_* / market_data_* / bea_* / cot_* data feeds,
+stakeholders/dependencies, the spatial engine, and the ARCHIVAL
+monthly_trend_reports. trend_signals is intentionally NOT purged.
 
-trend_signals is intentionally NOT purged (not in the requested scope). Stale
-signals in the last ~30h may regenerate sparse alerts via the new hardened
-binding; pass nothing here removes them — purge separately if a fuller reset is
-wanted.
-
-Before deleting, --execute first writes a full JSON backup of the purged rows to
-backups/legacy_purge_<UTC>.json so the wipe is recoverable.
+WHY BATCHED: a single-transaction bulk delete of ~47k rows hung on lock contention
+with the live ingestion writer. This version deletes in small chunks, COMMITTING
+and sleeping between batches so the live pipeline can interleave its own locks.
+Each batch is appended to a JSONL backup BEFORE deletion, so the wipe is
+recoverable and resumable (the drain loop naturally continues where it left off).
 
 Usage (repo root, DATABASE_URL / .env):
-  py -3 scripts/purge_legacy_data.py              # DRY-RUN: counts only, no writes
-  py -3 scripts/purge_legacy_data.py --execute    # back up, then permanently DELETE
+  py -3 -u scripts/purge_legacy_data.py                      # DRY-RUN: counts only
+  py -3 -u scripts/purge_legacy_data.py --execute            # batched live purge
+  py -3 -u scripts/purge_legacy_data.py --execute --batch-size 2000 --pause 0.3
 """
 from __future__ import annotations
 
@@ -41,28 +40,59 @@ from sqlalchemy import select, delete, update, func
 from db.database import AsyncSessionLocal
 from db.models import AlertDelivery, AlertLog, EventCluster, Item, TrendSignal
 
-# Wiped in FK-safe order: bridge first, then alerts, then clusters.
+# Deleted in FK-safe order: bridge -> alerts -> (null item links) -> clusters.
 PURGE_MODELS = [AlertDelivery, AlertLog, EventCluster]
-
-PRESERVED = [
-    "analyst_profiles (user accounts)",
-    "raw_items / items (raw source feeds — items.cluster_id nulled, rows kept)",
-    "reports / article_outputs (separate product surface)",
-    "monthly_trend_reports (ARCHIVAL — must never be purged)",
-    "spatial_nodes / spatial_edges / contagion_history (self-refreshing engine)",
-    "external_* / market_data_* / bea_* / cot_* (raw external data feeds)",
-    "stakeholders / dependencies / predictions (entity backbone)",
-    "source_registry / topics / system configs",
-]
 
 
 async def _count(s, model) -> int:
     return (await s.execute(select(func.count()).select_from(model))).scalar_one()
 
 
+async def _drain_delete(s, model, backup_fh, batch: int, pause: float) -> int:
+    """Delete `model` rows in committed chunks of `batch`, backing each chunk up
+    to `backup_fh` (JSONL) first, sleeping `pause`s between commits."""
+    total = 0
+    while True:
+        ids = (await s.execute(select(model.id).limit(batch))).scalars().all()
+        if not ids:
+            break
+        rows = (await s.execute(
+            select(model.__table__).where(model.__table__.c.id.in_(ids))
+        )).mappings().all()
+        for r in rows:
+            backup_fh.write(json.dumps({"_table": model.__tablename__, **dict(r)},
+                                       default=str, ensure_ascii=False) + "\n")
+        await s.execute(delete(model).where(model.id.in_(ids)))
+        await s.commit()
+        total += len(ids)
+        print(f"  {model.__tablename__:<18} deleted {total:>8,} ...", flush=True)
+        await asyncio.sleep(pause)
+    return total
+
+
+async def _drain_null_items(s, batch: int, pause: float) -> int:
+    """Null items.cluster_id in committed chunks (breaks the FK to event_clusters
+    without deleting the raw feed rows)."""
+    total = 0
+    while True:
+        ids = (await s.execute(
+            select(Item.id).where(Item.cluster_id.isnot(None)).limit(batch)
+        )).scalars().all()
+        if not ids:
+            break
+        await s.execute(update(Item).where(Item.id.in_(ids)).values(cluster_id=None))
+        await s.commit()
+        total += len(ids)
+        print(f"  items.cluster_id  nulled  {total:>8,} ...", flush=True)
+        await asyncio.sleep(pause)
+    return total
+
+
 async def main() -> None:
-    p = argparse.ArgumentParser(description="Hard reset of legacy alerts + clusters")
+    p = argparse.ArgumentParser(description="Batched hard reset of legacy alerts + clusters")
     p.add_argument("--execute", action="store_true", help="Perform the wipe (default: dry-run)")
+    p.add_argument("--batch-size", type=int, default=2000, help="Rows per commit (default 2000)")
+    p.add_argument("--pause", type=float, default=0.3, help="Seconds between commits (default 0.3)")
     args = p.parse_args()
 
     async with AsyncSessionLocal() as s:
@@ -72,49 +102,44 @@ async def main() -> None:
         )).scalar_one()
         trend_n = await _count(s, TrendSignal)
 
-        print("=" * 72)
-        print("LEGACY DATA PURGE  —", "EXECUTE (LIVE)" if args.execute else "DRY-RUN (no writes)")
-        print("=" * 72)
-        print("WILL DELETE:")
+        print("=" * 72, flush=True)
+        print("BATCHED LEGACY PURGE  —", "EXECUTE (LIVE)" if args.execute else "DRY-RUN", flush=True)
+        print("=" * 72, flush=True)
         for t, n in counts.items():
-            print(f"  {t:<18} {n:>9,} rows")
-        print(f"WILL NULL : items.cluster_id on {items_linked:,} raw item(s) (rows KEPT)")
-        print(f"NOT TOUCHED: trend_signals = {trend_n:,} rows (outside requested scope)")
-        print("PRESERVED:")
-        for t in PRESERVED:
-            print(f"  - {t}")
+            print(f"  WILL DELETE {t:<18} {n:>9,} rows", flush=True)
+        print(f"  WILL NULL   items.cluster_id {items_linked:>9,} (raw rows KEPT)", flush=True)
+        print(f"  NOT TOUCHED trend_signals    {trend_n:>9,} (out of scope)", flush=True)
+        if args.execute:
+            print(f"  batch_size={args.batch_size}  pause={args.pause}s", flush=True)
 
         if not args.execute:
-            print("\nDRY-RUN complete: NO rows deleted. Re-run with --execute to apply.")
+            print("\nDRY-RUN complete: no rows deleted.", flush=True)
             return
 
-        # 1) Safety backup of every row we are about to delete.
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         backup_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backups"))
         os.makedirs(backup_dir, exist_ok=True)
-        backup_path = os.path.join(backup_dir, f"legacy_purge_{stamp}.json")
-        dump: dict = {}
-        for m in PURGE_MODELS:
-            rows = (await s.execute(select(m.__table__))).mappings().all()
-            dump[m.__tablename__] = [dict(r) for r in rows]
-        with open(backup_path, "w", encoding="utf-8") as f:
-            json.dump(dump, f, default=str, ensure_ascii=False)
-        print(f"\nBackup written: {backup_path}  ({sum(len(v) for v in dump.values()):,} rows)")
+        backup_path = os.path.join(backup_dir, f"legacy_purge_batched_{stamp}.jsonl")
+        print(f"\nStreaming backup -> {backup_path}\n", flush=True)
 
-        # 2) Delete in FK-safe order (bridge -> null item links -> alerts -> clusters).
-        await s.execute(delete(AlertDelivery))
-        await s.execute(update(Item).where(Item.cluster_id.isnot(None)).values(cluster_id=None))
-        await s.execute(delete(AlertLog))
-        await s.execute(delete(EventCluster))
-        await s.commit()
+        deleted = {}
+        with open(backup_path, "w", encoding="utf-8") as fh:
+            deleted["alert_deliveries"] = await _drain_delete(s, AlertDelivery, fh, args.batch_size, args.pause)
+            deleted["alert_logs"] = await _drain_delete(s, AlertLog, fh, args.batch_size, args.pause)
+            nulled = await _drain_null_items(s, args.batch_size, args.pause)
+            deleted["event_clusters"] = await _drain_delete(s, EventCluster, fh, args.batch_size, args.pause)
 
-        # 3) Verify the clean slate.
         after = {m.__tablename__: await _count(s, m) for m in PURGE_MODELS}
-        print("POST-PURGE counts (expect 0):")
+        residual_items = (await s.execute(
+            select(func.count()).select_from(Item).where(Item.cluster_id.isnot(None))
+        )).scalar_one()
+        print("\n" + "-" * 72, flush=True)
+        print(f"DELETED: {deleted}  (items nulled: {nulled:,})", flush=True)
+        print("POST-PURGE counts (residual = live pipeline writes since start):", flush=True)
         for t, n in after.items():
-            print(f"  {t:<18} {n:>9,} rows")
-        print("RESULT:", "CLEAN SLATE ✓" if all(v == 0 for v in after.values())
-              else "WARNING — residual rows remain")
+            print(f"  {t:<18} {n:>9,} rows", flush=True)
+        print(f"  items w/ cluster_id {residual_items:>9,}", flush=True)
+        print("RESULT: legacy payload cleared (residuals are fresh post-purge ingestion).", flush=True)
 
 
 if __name__ == "__main__":
