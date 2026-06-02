@@ -488,9 +488,35 @@ function chudDetailHtml(alert: Alert | null): string {
                 <span class="chud-src-title">${titleHtml}</span>
             </div>`;
     };
-    const primaryRows = sources.slice(0, PRIMARY_SOURCE_N).map((s: any) => renderSrcRow(s, true)).join('');
+    // Strict cap: at most PRIMARY_SOURCE_N primaries; EVERYTHING else is secondary.
+    const primarySources = sources.slice(0, PRIMARY_SOURCE_N);
     const secondarySources = sources.slice(PRIMARY_SOURCE_N);
-    const secondaryRows = secondarySources.map((s: any) => renderSrcRow(s, false)).join('');
+    const primaryCount = primarySources.length;   // header badge (<=3) — NOT the total
+    const primaryRows = primarySources.map((s: any) => renderSrcRow(s, true)).join('');
+
+    // Media clustering: group secondary sources by their base publisher domain.
+    // `domain` is urlparse(...).netloc from the backend (may carry www./sub-domain);
+    // normalize (lowercase, strip leading www.) and fall back to the URL host.
+    const baseDomain = (s: any): string => {
+        let d = String(s.domain || s.type || '').trim().toLowerCase();
+        if (!d || d === 'osint') {
+            try { d = new URL(String(s.url || s.link || '')).hostname.toLowerCase(); }
+            catch { /* keep d */ }
+        }
+        return d.replace(/^www\./, '') || 'other';
+    };
+    const secondaryGroups = new Map<string, any[]>();
+    for (const s of secondarySources) {
+        const key = baseDomain(s);
+        const arr = secondaryGroups.get(key);
+        if (arr) arr.push(s);
+        else secondaryGroups.set(key, [s]);
+    }
+    const secondaryRows = [...secondaryGroups.entries()].map(([dom, items]) =>
+        `<div class="chud-src-domain-header">${chudEscape(dom.toUpperCase())}`
+        + ` <span class="chud-src-domain-count">(${items.length})</span></div>`
+        + items.map((s: any) => renderSrcRow(s, false)).join('')
+    ).join('');
 
     const description = alert.description
         ? `<p class="chud-detail-desc">${chudEscape(alert.description)}</p>`
@@ -535,7 +561,7 @@ function chudDetailHtml(alert: Alert | null): string {
             </section>
 
             <section class="chud-block">
-                <div class="chud-block-label">PRIMARY SOURCES <span class="chud-block-count">${sourceCount}</span></div>
+                <div class="chud-block-label">PRIMARY SOURCES <span class="chud-block-count">${primaryCount}</span></div>
                 ${sourceCount
                     ? `<div class="chud-src-list">${primaryRows}</div>
                        ${secondarySources.length

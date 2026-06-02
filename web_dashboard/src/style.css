@@ -10254,6 +10254,19 @@ body.checkout-email-modal-scroll-lock {
 
 /* Secondary-sources collapsible accordion. */
 .chud-src-list--secondary { margin-top: 6px; }
+/* Media-clustering sub-header: one per publisher domain ("NYTIMES.COM (3)"). */
+.chud-src-domain-header {
+  margin: 10px 0 4px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--chud-cyan, #58e6ff);
+  border-bottom: 1px solid var(--chud-edge-soft, rgba(0, 240, 255, 0.15));
+  padding-bottom: 3px;
+}
+.chud-src-list--secondary > .chud-src-domain-header:first-child { margin-top: 0; }
+.chud-src-domain-count { color: var(--chud-dim); font-weight: 600; }
 .chud-src-secondary {
   overflow: hidden; max-height: 0; opacity: 0;
   transition: max-height 0.3s ease, opacity 0.25s ease;
