@@ -147,6 +147,42 @@ async def detect_trends(db: AsyncSession):
     
     logger.info(f"Trend Detection Engine finished. Created {created_count} new, merged {merged_count} into existing.")
 
+# Trend-grouping join gate (Phase-3 parity). A shared geo anchor ALONE — or geo +
+# a single weak entity — must NOT bind a trend group: that was the "accumulating
+# set magnet" backdoor that fused unrelated events sharing only e.g. "china"
+# (LNG <-> brain-chip <-> Cambridge homes). Mirrors analysis.clustering.cluster_items:
+# geo contributes only a PRESENCE bonus (not per-token, so 2 shared geos can't
+# inflate the score), a SUBSTANTIVE non-geo overlap (risk/sector/entity) is required,
+# and disjoint-geo / >2-theater merges are vetoed outright.
+TREND_JOIN_MIN_SUBSTANTIVE = 2     # need real action/sector/entity agreement, not geo-only
+TREND_JOIN_MIN_OVERLAP = 6         # geo-presence(4) + >=2 substantive
+
+
+def _trend_join_score(item_e: dict, group: dict) -> int:
+    """Weighted join score for trend grouping, or -1 if the item must NOT join.
+
+    Vetoes (ported from cluster_items): disjoint geo theaters never merge; a group
+    may never span more than 2 distinct geo theaters. Otherwise geo counts only as
+    a presence bonus and a substantive (non-geo) overlap is required, so a lone
+    shared geo anchor can never bind unrelated events.
+    """
+    ig, gg = item_e["geo"], group["geo"]
+    # Veto 1 — disjoint geo theaters (e.g. China vs Iran) never cluster.
+    if ig and gg and not (ig & gg):
+        return -1
+    # Veto 2 — never let a group span more than 2 geo theaters.
+    if len(gg | ig) > 2:
+        return -1
+    geo_presence = 4 if (ig & gg) else 0
+    substantive = (len(item_e["risk_nouns"] & group["risk_nouns"]) * 3
+                   + len(item_e["sector"] & group["sector"]) * 2
+                   + len(item_e["entities"] & group["entities"]) * 1)
+    overlap = geo_presence + substantive
+    if substantive >= TREND_JOIN_MIN_SUBSTANTIVE and overlap >= TREND_JOIN_MIN_OVERLAP:
+        return overlap
+    return -1
+
+
 def _compress_trends(signals: List[TrendSignal], start: datetime, end: datetime, is_global: bool = True) -> List[TrendSignal]:
     """Compresses individual signals into semantic analyst-driven risk patterns."""
     if not signals:
@@ -188,29 +224,13 @@ def _compress_trends(signals: List[TrendSignal], start: datetime, end: datetime,
         max_overlap = 0
         
         for idx, group in enumerate(groups):
-            # Calculate overlap score
-            geo_overlap_set = item["geo"] & group["geo"]
-            sector_overlap_set = item["sector"] & group["sector"]
-            risk_overlap_set = item["risk_nouns"] & group["risk_nouns"]
-            entity_overlap_set = item["entities"] & group["entities"]
-            
-            geo_match = len(geo_overlap_set)
-            sector_match = len(sector_overlap_set)
-            risk_match = len(risk_overlap_set)
-            entity_match = len(entity_overlap_set)
-            
-            # Score Calculation (Phase 19.4 Weighted)
-            overlap = (geo_match * 4) + (risk_match * 3) + (sector_match * 2) + (entity_match * 1)
-            
-            if overlap >= 5: # High-Cohesion Threshold (Phase 19.4 Final - Adjusted from 6 to 5)
-                logger.debug(f"[Trend Grouping] Merging '{item['signal'].target_label}' into group '{list(group['geo'])[0] if group['geo'] else 'None'}' "
-                             f"Score: {overlap} (Geo:{geo_match}, Risk:{risk_match}, Sector:{sector_match}, Ent:{entity_match}) "
-                             f"Overlaps: {geo_overlap_set | risk_overlap_set | sector_overlap_set | entity_overlap_set}")
-                             
-            if overlap > max_overlap and overlap >= 5: 
-                max_overlap = overlap
+            # Phase-3-parity join gate: geo-anchor-only / disjoint-geo / >2-theater
+            # merges are blocked, and a substantive non-geo overlap is required.
+            sc = _trend_join_score(item, group)
+            if sc > max_overlap:   # _trend_join_score returns -1 when not joinable
+                max_overlap = sc
                 best_group_idx = idx
-                
+
         if best_group_idx >= 0:
             groups[best_group_idx]["items"].append(item)
             groups[best_group_idx]["geo"] |= item["geo"]
