@@ -595,6 +595,91 @@ function chudCurrentAlert(): Alert | null {
     return chudSelectedId ? chudAlerts.find(a => a.id === chudSelectedId) ?? null : null;
 }
 
+// ─── Mobile Alert Detail modal — body-level portal (mirrors openSystemLogic) ──
+// On phones the in-place .chud-detail is trapped by an ancestor containing block
+// (`#alerts-container.main-feed { contain: layout }`), so a position:fixed panel
+// anchors to the feed box, not the viewport. We sidestep that exactly like the
+// System Logic overlay: build a fresh overlay and append it to <body>.
+let chudDetailModalEl: HTMLElement | null = null;
+let chudDetailModalKeyHandler: ((e: KeyboardEvent) => void) | null = null;
+
+function closeChudDetailModal(): void {
+    if (chudDetailModalKeyHandler) {
+        document.removeEventListener('keydown', chudDetailModalKeyHandler);
+        chudDetailModalKeyHandler = null;
+    }
+    document.body.classList.remove('chud-detail-modal-open');
+    if (chudDetailModalEl) {
+        chudDetailModalEl.classList.remove('chud-detail-modal--in');
+        const el = chudDetailModalEl;
+        chudDetailModalEl = null;
+        // Brief exit transition, then detach.
+        window.setTimeout(() => { try { el.remove(); } catch { /* already gone */ } }, 240);
+    }
+}
+
+function openChudDetailModal(alert: Alert | null): void {
+    // Idempotent: if already open, just swap content for the freshly-tapped signal.
+    if (chudDetailModalEl) {
+        const room = chudDetailModalEl.querySelector<HTMLElement>('.chud-detail-modal-room');
+        if (room) room.innerHTML = chudDetailHtml(alert);
+        return;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'chud-detail-modal';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Signal detail');
+    overlay.innerHTML = `
+        <div class="chud-detail-modal-backdrop"></div>
+        <div class="chud-detail-modal-room" role="document">${chudDetailHtml(alert)}</div>`;
+
+    document.body.appendChild(overlay);
+    document.body.classList.add('chud-detail-modal-open');
+    chudDetailModalEl = overlay;
+
+    // Delegated interactions inside the portaled detail — mirrors the in-place
+    // .chud-detail handler: ✕ Close / backdrop, evidence-sources modal, and the
+    // secondary-sources accordion toggle.
+    overlay.addEventListener('click', (e) => {
+        const t = e.target as HTMLElement;
+        if (t.closest('.chud-detail-modal-backdrop') || t.closest('[data-chud-back]')) {
+            closeChudDetailModal();
+            return;
+        }
+        if (t.closest('[data-chud-sources]')) {
+            const a = chudCurrentAlert();
+            if (a) showEvidenceModal(resolveAlertHeadline(a).text || a.target_label, a.evidence_list || []);
+            return;
+        }
+        const srcToggle = t.closest<HTMLElement>('[data-chud-src-toggle]');
+        if (srcToggle) {
+            const sec = srcToggle.previousElementSibling as HTMLElement | null;
+            if (sec && sec.classList.contains('chud-src-secondary')) {
+                const expanded = !sec.classList.contains('expanded');
+                sec.classList.toggle('expanded', expanded);
+                srcToggle.setAttribute('aria-expanded', String(expanded));
+                const secCount = sec.querySelectorAll('.chud-src-row').length;
+                const caret = expanded ? '▴' : '▾';
+                srcToggle.innerHTML =
+                    `${expanded ? 'Hide' : `View all ${secCount}`} secondary sources `
+                    + `<span class="chud-src-more-caret">${caret}</span>`;
+            }
+            return;
+        }
+    });
+
+    // Escape closes (matches System Logic).
+    chudDetailModalKeyHandler = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') { e.preventDefault(); closeChudDetailModal(); }
+    };
+    document.addEventListener('keydown', chudDetailModalKeyHandler);
+
+    // Entrance transition.
+    requestAnimationFrame(() => overlay.classList.add('chud-detail-modal--in'));
+}
+
 /**
  * Phase 8.26 — the System Logic action is a page-level control, so it lives in
  * the primary page-title row (`.header-row`), far-right, balanced against the
@@ -808,11 +893,11 @@ export function renderAlerts(
         const id = row.dataset.id;
         if (!id) return;
         chudSelect(root, id);
-        // Mobile master-detail: tapping a signal swaps the stream out for its
-        // detail pane (CSS hides the list when .chud-split--detail-open is set).
-        // The detail's "← Back to Stream" button reverses this.
+        // Mobile: open the detail as a body-level PORTAL modal (mirrors System
+        // Logic) so it fills the viewport instead of being trapped by the feed's
+        // `contain: layout` ancestor. Desktop keeps the side-by-side split pane.
         if (window.matchMedia('(max-width: 768px)').matches) {
-            root.querySelector<HTMLElement>('.chud-split')?.classList.add('chud-split--detail-open');
+            openChudDetailModal(chudAlerts.find(a => a.id === id) ?? null);
         }
     });
 

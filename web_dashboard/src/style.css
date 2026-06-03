@@ -10484,25 +10484,12 @@ body.checkout-email-modal-scroll-lock {
     min-height: 70vh;
   }
   .chud-stream-list { max-height: none; }
+  /* The in-place detail stays hidden on phones. Tapping a signal opens the detail
+     as a body-level PORTAL modal (.chud-detail-modal / openChudDetailModal in
+     alerts.ts) — a nested position:fixed here would be trapped by the feed's
+     `#alerts-container.main-feed { contain: layout }` ancestor, so we portal to
+     <body> to behave exactly like the System Logic overlay. */
   .chud-detail { display: none; }
-
-  /* Detail panel → FULL-SCREEN modal overlay that perfectly fills the viewport. */
-  .chud-split--detail-open .chud-detail {
-    display: block;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw;
-    height: 100vh;
-    margin: 0;
-    border: none;
-    border-radius: 0;
-    z-index: 9999;
-    overflow-y: auto;
-    background: linear-gradient(180deg, rgba(9, 16, 30, 0.97), rgba(5, 8, 15, 0.99));
-    -webkit-backdrop-filter: blur(20px) saturate(170%);
-    backdrop-filter: blur(20px) saturate(170%);
-    animation: chud-sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-  }
 
   /* Prominent "✕ Close" control, pinned to the top-right of the card and kept
      visible while the card scrolls. */
@@ -10546,63 +10533,103 @@ body.checkout-email-modal-scroll-lock {
     line-height: 1.3;
   }
 
-  /* Category filter → single-button toggle + absolute dropdown panel. */
+  /* Category filter → horizontal-scrolling chip row (no dropdown / native-select
+     look). The pills ARE the scroll track; the legacy toggle button is retired.
+     Row layout is forced with !important so it never reverts to a stacked column
+     when mobile-responsive.css (loaded last) re-touches .topic-filter-bar. */
   .topic-filter-bar {
     position: relative;
-    flex-direction: column !important;
+    display: flex !important;
+    flex-direction: row !important;
     flex-wrap: nowrap !important;
-    align-items: stretch !important;
+    align-items: center !important;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0.35rem 0 0.5rem;
+    mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
   }
-  .topic-filter-bar .topic-mobile-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    min-height: 44px;
-    padding: 10px 16px;
-    border-radius: 12px;
-    background: rgba(0, 240, 255, 0.06);
-    border: 1px solid var(--chud-edge, rgba(0, 240, 255, 0.25));
-    color: var(--chud-cyan, #58e6ff);
-    font-size: 0.9rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-  }
-  .topic-mobile-caret { transition: transform 0.2s ease; }
-  .topic-filter-bar.is-open .topic-mobile-caret { transform: rotate(180deg); }
+  .topic-filter-bar::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
-  /* Closed: dropdown hidden. Open: an absolute, high-z, scrollable panel. */
-  .topic-filter-bar .topic-pills { display: none; }
+  /* Retire the single-button toggle + caret — pills scroll inline instead. */
+  .topic-filter-bar .topic-mobile-toggle { display: none !important; }
+
+  /* Pills are ALWAYS visible and lay out as a non-shrinking inline row that
+     overflows the bar (which scrolls). No absolute panel, no .is-open state. */
+  .topic-filter-bar .topic-pills,
   .topic-filter-bar.is-open .topic-pills {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0; right: 0;
-    z-index: 1500;
-    max-height: 40vh;
-    overflow-y: auto;
-    padding: 6px;
-    border-radius: 12px;
-    border: 1px solid var(--chud-edge, rgba(0, 240, 255, 0.28));
-    background: linear-gradient(180deg, rgba(9, 16, 30, 0.96), rgba(5, 8, 15, 0.98));
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
-    backdrop-filter: blur(16px) saturate(160%);
-    box-shadow: 0 22px 50px -18px rgba(0, 240, 255, 0.45);
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+    width: auto;
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    border: none;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
   }
-  .topic-filter-bar .topic-btn {
-    width: 100%;
-    text-align: left;
-    font-size: 0.85rem;
+  .topic-filter-bar .topic-btn,
+  .topic-filter-bar.is-open .topic-btn--active {
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 44px;
+    text-align: center;
+    white-space: nowrap;
+    font-size: 0.8rem;
   }
-  /* Exclude the currently-active category from the open dropdown list (it is
-     already shown on the toggle button). */
-  .topic-filter-bar.is-open .topic-btn--active { display: none; }
 }
 
+/* ── Mobile Alert Detail — body-level PORTAL modal (mirrors System Logic) ─────
+   Built by openChudDetailModal() in alerts.ts and appended directly to <body>,
+   so its position:fixed anchors to the viewport (escaping the feed's
+   `#alerts-container.main-feed { contain: layout }` containing block). Mounted
+   on phones (<=768px); harmless when never created. */
+body.chud-detail-modal-open { overflow: hidden; }
+.chud-detail-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+.chud-detail-modal--in { opacity: 1; }
+.chud-detail-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(1200px 700px at 50% 18%, rgba(0, 40, 60, 0.55), rgba(2, 4, 9, 0.93));
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  backdrop-filter: blur(8px) saturate(140%);
+}
+.chud-detail-modal-room {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+  background: linear-gradient(180deg, rgba(9, 16, 30, 0.97), rgba(5, 8, 15, 0.99));
+  transform: translateY(2.5%);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.chud-detail-modal--in .chud-detail-modal-room { transform: none; }
+
 @media (prefers-reduced-motion: reduce) {
+  .chud-detail-modal,
+  .chud-detail-modal-room { transition: none; }
+  .chud-detail-modal-room { transform: none; }
   .chud-root::before,
   .chud-detail,
   .chud-detail-scan,
