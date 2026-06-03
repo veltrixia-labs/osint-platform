@@ -116,15 +116,57 @@ def _lead_entity(label: str) -> str:
     return words[0].title() if words else ""
 
 
-def _best_real_headline(titles: List[str]) -> Optional[str]:
-    """Richest specific source headline: most words, not a generic/slug label."""
+# Per-domain salient vocabulary — used to pick the evidence headline that matches
+# THIS cluster's specific angle (oil vs shipping vs crypto vs ceasefire), so two
+# clusters sharing a "Hormuz" context surface their differential facts, not the
+# same popular article.
+_DOMAIN_KEYWORDS: Dict[str, frozenset] = {
+    "energy_resource_risk": frozenset({
+        "oil", "crude", "gas", "lng", "barrel", "barrels", "opec", "refinery",
+        "pipeline", "tanker", "tankers", "energy", "fuel", "spr", "diesel", "gasoline"}),
+    "global_market_intelligence": frozenset({
+        "price", "prices", "market", "markets", "stock", "stocks", "asset", "assets",
+        "etf", "bond", "bonds", "yield", "equity", "selloff", "slump", "rally",
+        "inflation", "recession", "futures", "index"}),
+    "supply_chain_intelligence": frozenset({
+        "ship", "ships", "shipping", "sailor", "sailors", "crew", "port", "ports",
+        "blockade", "canal", "strait", "cargo", "freight", "vessel", "vessels",
+        "logistics", "posidonia", "maritime", "container"}),
+    "crypto_geopolitics": frozenset({
+        "crypto", "bitcoin", "btc", "ether", "ethereum", "token", "tokens",
+        "stablecoin", "digital", "blockchain", "exchange"}),
+    "defense_technology": frozenset({
+        "strike", "strikes", "military", "missile", "missiles", "drone", "drones",
+        "attack", "attacks", "forces", "troops", "airstrike", "warship", "navy", "war"}),
+    "ai_semiconductor_intelligence": frozenset({
+        "chip", "chips", "semiconductor", "semiconductors", "ai", "gpu", "foundry",
+        "tsmc", "nvidia", "lithography", "wafer"}),
+}
+
+
+def _best_real_headline(
+    titles: List[str], *, context_tokens: frozenset = frozenset(), domain: Optional[str] = None
+) -> Optional[str]:
+    """Pick the specific source headline that best fits THIS cluster's angle.
+
+    Scored by overlap with the cluster's salient vocabulary (target-label tokens +
+    the domain keyword set) so distinct clusters that merely share a "Hormuz"
+    context surface DIFFERENT, angle-specific headlines instead of the same longest
+    or first shared article. Richness and source order break ties. Generic/slug
+    titles are ignored.
+    """
+    salient = set(context_tokens) | set(_DOMAIN_KEYWORDS.get(domain or "", frozenset()))
     best: Optional[str] = None
-    best_score = 0
-    for t in titles:
+    best_score = -1.0
+    for idx, t in enumerate(titles):
         t = (t or "").strip()
         if not t or is_generic_label(t):
             continue
-        score = len(_WORD_RE.findall(t))
+        words = _WORD_RE.findall(t.lower())
+        relevance = len(set(words) & salient)
+        # Angle relevance dominates; richer headline next; earlier (higher-ranked
+        # evidence) as a small tiebreak.
+        score = relevance * 100 + min(len(words), 24) - idx * 0.5
         if score > best_score:
             best, best_score = t, score
     return best
@@ -145,26 +187,23 @@ def compose_headline(
     ]
     blob = " . ".join([target_label or "", description or "", *titles])
     blob_low = blob.lower()
-
-    mechanism = _find_mechanism(blob_low)
-    place = _find_first(blob_low, _MICRO_LOCATIONS) or _find_first(blob_low, _ASSET_NOUNS)
     trajectory = _TRAJECTORY.get(domain or "", _DEFAULT_TRAJECTORY)
 
-    # ASCII-safe separators (commas, not em-dashes) so titles never trip Windows
-    # cp932 console/log encoders on this stack.
-    if mechanism and place:
-        templates = [
-            f"{mechanism} at {place}, {trajectory}",
-            f"{place} {mechanism.lower()}, {trajectory}",
-            f"{mechanism} reported at {place}, {trajectory}",
-        ]
-        return templates[_stable_index(blob, len(templates))]
-
-    # Prefer a rich, specific real source headline before any generic fallback.
-    real = _best_real_headline(titles)
+    # 1) Prefer a SPECIFIC real source headline chosen by THIS cluster's DOMAIN
+    #    angle (oil vs shipping vs crypto vs ...). Scoring on domain keywords —
+    #    NOT the shared geo anchor — reflects each cluster's differential facts, so
+    #    two clusters sharing a "Hormuz" context no longer collapse to one string.
+    real = _best_real_headline(titles, domain=domain)
     if real:
         return real if len(real) <= 160 else real[:157].rstrip() + "..."
 
+    # 2) Fallback ONLY when no usable real headline exists: synthesize an
+    #    analyst-grade line. ASCII-safe separators (commas, not em-dashes) so
+    #    titles never trip Windows cp932 console/log encoders on this stack.
+    mechanism = _find_mechanism(blob_low)
+    place = _find_first(blob_low, _MICRO_LOCATIONS) or _find_first(blob_low, _ASSET_NOUNS)
+    if mechanism and place:
+        return f"{mechanism} at {place}, {trajectory}"
     if mechanism:
         ent = _lead_entity(target_label)
         return f"{mechanism}{(' near ' + ent) if ent else ''}, {trajectory}"
