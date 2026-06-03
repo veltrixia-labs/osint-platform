@@ -1,24 +1,23 @@
 /**
  * dev_mode.ts
  *
- * Single source of truth for the "Dev Mode / Audit Build" toggle.
+ * Single source of truth for the legacy "Dev Mode / Audit Build" full-unlock.
  *
- * When DEV_MODE_AUDIT is true:
+ * PRODUCTION DEFAULT: this flag is `false`. Standard tier-gated rendering is
+ * active — Free users see the proper locked treatments (withheld content,
+ * shrouds, mosaic masks), and the LOCAL DEV TIER toggle drives the visible tier.
+ *
+ * When DEV_MODE_AUDIT is `true` (audit builds only):
  *   - Locked UI overlays (paywall cards, ghost nodes, mosaic masks) are
- *     suppressed so analysts and reviewers see the full feature set.
+ *     suppressed so reviewers see the full feature set regardless of tier.
  *   - `<body>` gets the `dev-mode-audit` class so CSS can neutralise legacy
- *     locked styles globally.
+ *     locked styles globally, and a fixed "UNLOCKED" badge is mounted.
  *
- * NOTE: a sleek on-screen "UNLOCKED" badge is mounted so reviewers can see at a
- * glance that tier restrictions are bypassed (DEV / audit build). The lock-
- * neutralisation behaviour below is retained so the platform stays fully open
- * (no paywalls / masks).
- *
- * Flip the flag to `false` to restore standard tier-gated rendering without
- * touching any call sites.
+ * Leave this `false` for the production access model. Flip to `true` only for a
+ * one-off full-unlock audit pass — no call sites need to change either way.
  */
 
-export const DEV_MODE_AUDIT = true;
+export const DEV_MODE_AUDIT = false;
 
 const BODY_CLASS = 'dev-mode-audit';
 const BADGE_ID = 'dev-mode-audit-badge';

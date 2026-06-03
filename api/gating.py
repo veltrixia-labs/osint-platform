@@ -1,5 +1,6 @@
 import uuid
 import logging
+import contextvars
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict, Any, Union
 from fastapi import HTTPException, Depends
@@ -85,14 +86,51 @@ def is_admin_profile(user: Optional[AnalystProfile]) -> bool:
     return (user.user_role or "").lower() == "admin"
 
 
+def is_production_env() -> bool:
+    """True only when ENV is explicitly 'production'. All dev overrides are gated off here."""
+    return os.environ.get("ENV", "development").lower() == "production"
+
+
+# Valid tier strings a non-prod dev override may resolve to.
+_VALID_DEV_TIERS = {t.value for t in PlanTier}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Per-request Dev Tier Override (X-Dev-Tier header)
+# ──────────────────────────────────────────────────────────────────────────────
+# Set by the DevTierHeaderMiddleware from the request's `X-Dev-Tier` header, which
+# the frontend LOCAL DEV TIER toggle injects in local dev. This lets backend
+# payloads match the toggled UI tier per-request. HONORED IN NON-PROD ONLY — the
+# middleware never sets it in production, so prod always falls through to real auth.
+_request_dev_tier: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
+    "request_dev_tier", default=None
+)
+
+
+def set_request_dev_tier(raw_tier: Optional[str]) -> None:
+    """Store the per-request X-Dev-Tier override (normalized; invalid/blank → None)."""
+    tier = (raw_tier or "").strip().lower()
+    _request_dev_tier.set(tier if tier in _VALID_DEV_TIERS else None)
+
+
+def get_request_dev_tier() -> Optional[str]:
+    """Return the per-request dev-tier override, or None."""
+    return _request_dev_tier.get()
+
+
 async def get_effective_tier(user: Optional[AnalystProfile]) -> str:
     """Determine the user's active tier, handling expiration, grace period, and Guests."""
     # Local Dev Override for UI testing (MUST be disabled in production).
-    env_name = os.environ.get("ENV", "development").lower()
-    allow_dev_override = os.environ.get("ALLOW_DEV_TIER_OVERRIDE", "false").lower() == "true"
-    dev_tier = os.environ.get("LOCAL_DEV_TIER")
-    if env_name != "production" and allow_dev_override and dev_tier:
-        return dev_tier.lower()
+    if not is_production_env():
+        # 1. Per-request X-Dev-Tier header — synced with the frontend LOCAL DEV
+        #    TIER toggle so data payloads match the UI tier exactly.
+        req_tier = get_request_dev_tier()
+        if req_tier:
+            return req_tier
+        # 2. Legacy env-based override (ALLOW_DEV_TIER_OVERRIDE + LOCAL_DEV_TIER).
+        allow_dev_override = os.environ.get("ALLOW_DEV_TIER_OVERRIDE", "false").lower() == "true"
+        dev_tier = os.environ.get("LOCAL_DEV_TIER")
+        if allow_dev_override and dev_tier:
+            return dev_tier.lower()
 
     if not user:
         return TIER_GUEST
@@ -249,8 +287,10 @@ async def get_watchlist_limit_for_user(user: AnalystProfile) -> int:
 
 # When DEV_MODE is true, EVERY request is elevated to the full ("institutional")
 # payload regardless of the caller's tier — restrictions are bypassed for auditing.
-# Default ON per current product directive; flip with env DEV_MODE=false.
-DEV_MODE = os.environ.get("DEV_MODE", "true").lower() == "true"
+# PRODUCTION DEFAULT: OFF. Real tier gating applies; the per-request X-Dev-Tier
+# override (non-prod) is the sanctioned way to preview elevated payloads locally.
+# Flip with env DEV_MODE=true only for a deliberate full-unlock audit pass.
+DEV_MODE = os.environ.get("DEV_MODE", "false").lower() == "true"
 
 # Tier (and above) that receives the full, unrestricted payload = $99 Institutional.
 INSTITUTIONAL_MIN_TIER = PlanTier.EXPERTS.value

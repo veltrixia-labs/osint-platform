@@ -453,6 +453,24 @@ function updateSyncStatusFromResponse(resp: Response, skipSyncEvent: boolean, at
     dispatchSyncEvent('stable');
 }
 
+/**
+ * Mirror the LOCAL DEV TIER toggle to the backend via the `X-Dev-Tier` header so
+ * data payloads match the toggled UI tier. Gated to MODE=development + localhost
+ * (same condition main.ts uses to apply the dev override) and honored only in
+ * non-prod by the API. Absent / FREE → no header (backend resolves real free/guest).
+ */
+function getDevTierHeader(): string | null {
+    try {
+        if (import.meta.env.MODE !== 'development' || typeof window === 'undefined') return null;
+        const host = window.location.hostname;
+        if (host !== 'localhost' && host !== '127.0.0.1') return null;
+        const tier = (sessionStorage.getItem('vel_dev_tier_override') || '').trim().toLowerCase();
+        return tier && tier !== 'free' ? tier : null;
+    } catch {
+        return null;
+    }
+}
+
 async function fetchWithAuth(
     url: string,
     options: RequestInit = {},
@@ -465,6 +483,8 @@ async function fetchWithAuth(
     if (!headers.has('Accept')) headers.set('Accept', 'application/json');
     const token = localStorage.getItem('access_token');
     if (token) headers.set('Authorization', `Bearer ${token}`);
+    const devTier = getDevTierHeader();
+    if (devTier) headers.set('X-Dev-Tier', devTier);
 
     const crossOrigin = isCrossOriginApiRequest(url);
     const fetchOptions: RequestInit = {

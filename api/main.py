@@ -40,6 +40,7 @@ from api.gating import (
     get_effective_tier, get_watchlist_limit, can_add_watchlist_keywords,
     TIER_PRO, TIER_EXPERTS, TIER_ORDER, is_tier_sufficient,
     is_topic_allowed, can_access_report_type, PlanTier, is_admin_profile,
+    set_request_dev_tier, is_production_env,
 )
 
 # ── Feature Routers ────────────────────────────────────────────────────────────
@@ -237,6 +238,36 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class DevTierHeaderMiddleware:
+    """Non-prod only: read the `X-Dev-Tier` request header (set by the frontend
+    LOCAL DEV TIER toggle) into the per-request contextvar so `get_effective_tier`
+    can resolve the toggled tier and payloads match the UI exactly.
+
+    Pure ASGI middleware (not BaseHTTPMiddleware) so the contextvar set here is
+    reliably visible to downstream route handlers in the same context. In
+    production the header is ignored entirely — the override is cleared every
+    request, so a forged X-Dev-Tier can never elevate a real caller.
+    """
+
+    def __init__(self, app):
+        self.app = app
+        self.enabled = not is_production_env()
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http":
+            raw = None
+            if self.enabled:
+                for name, value in scope.get("headers") or []:
+                    if name == b"x-dev-tier":
+                        raw = value.decode("latin-1")
+                        break
+            set_request_dev_tier(raw)
+        await self.app(scope, receive, send)
+
+
+app.add_middleware(DevTierHeaderMiddleware)
 
 from fastapi.staticfiles import StaticFiles
 
