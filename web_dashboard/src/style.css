@@ -10473,8 +10473,22 @@ body.checkout-email-modal-scroll-lock {
   /* The category dropdown is absolutely positioned, but its ancestors clip it
      (control pad: overflow hidden; console: max-height 132px) — so toggling it
      appeared to "do nothing". Let it escape so the menu is actually visible. */
-  .chud-console { overflow: visible; }
-  .chud-control-pad { overflow: visible; }
+  /* The filter bar is docked in the console's 2-column control pad. On phones,
+     collapse that desktop HUD grid: drop the raw-ingestion monitor (the empty
+     dark gap below the tabs), unfreeze the 132px height, and give the control
+     pad a single full-width row that scrolls horizontally. The control-pad-
+     scoped overflow override is REQUIRED — `.chud-control-pad .topic-filter-bar
+     { overflow: visible }` (higher specificity, no media query) otherwise wins
+     and suppresses the scroll. */
+  .chud-console { overflow: visible; max-height: none; }
+  .chud-console-grid { display: block; padding: 8px 10px; }
+  .chud-monitor { display: none; }
+  .chud-control-pad { overflow: visible; width: 100%; }
+  .chud-control-pad .topic-filter-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
 
   /* The stream is ALWAYS the underlying view; the detail floats on top as a
      bottom-sheet modal when .chud-split--detail-open is set. */
@@ -10618,6 +10632,7 @@ body.chud-detail-modal-open { overflow: hidden; }
   width: 100%;
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;   /* clip the .chud-root::before grid bleed (inset:-8px) */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: none;
   background: linear-gradient(180deg, rgba(9, 16, 30, 0.97), rgba(5, 8, 15, 0.99));

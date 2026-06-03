@@ -631,9 +631,13 @@ function openChudDetailModal(alert: Alert | null): void {
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-label', 'Signal detail');
+    // The room carries the `chud-root` context class so the portaled detail
+    // inherits the same parent scope as the desktop feed: the --chud-* CSS
+    // variables (cyan, edges) and the ::before grid wash all live on .chud-root,
+    // so without it the modal renders devoid of its theme. Identical to desktop.
     overlay.innerHTML = `
         <div class="chud-detail-modal-backdrop"></div>
-        <div class="chud-detail-modal-room" role="document">${chudDetailHtml(alert)}</div>`;
+        <div class="chud-detail-modal-room chud-root" role="document">${chudDetailHtml(alert)}</div>`;
 
     document.body.appendChild(overlay);
     document.body.classList.add('chud-detail-modal-open');
