@@ -301,7 +301,11 @@ def _physical_intensity(sig: TrendSignal) -> float:
 SEVERITY_CONFIG = {
     "critical": {"min_intensity": 8.0, "min_spike": 4.0, "min_domains": 8},
     "elevated": {"min_intensity": 4.5, "min_spike": 3.0, "min_domains": 3},
-    "watch":    {"min_intensity": 2.5, "min_spike": 0.0, "min_domains": 2} # Used as Report Source only
+    # Watch = the alert CREATION floor. Raised from 2.5/2 -> 4.0/3: most low-value
+    # "spam" sat at raw intensity ~4 with thin corroboration and cleared the old
+    # 2.5-or-2-domains bar. A feed alert now requires intensity >= 4.0 OR >= 3
+    # corroborating domains. (Tune higher toward the elevated 4.5 bar if still noisy.)
+    "watch":    {"min_intensity": 4.0, "min_spike": 0.0, "min_domains": 3}
 }
 
 class AlertManager:

@@ -99,9 +99,14 @@ def is_generic_label(label: str) -> bool:
     words = _WORD_RE.findall(s)
     if len(words) >= 7:
         return False  # long enough to be a real, specific headline
-    # A named micro-location denotes genuine specificity. A bare mechanism word
-    # ("attack"/"strike") does NOT — "Iran oil attack" must still read as generic.
-    if _find_first(s.lower(), _MICRO_LOCATIONS):
+    # A *named* micro-location denotes genuine specificity — but only when it is
+    # MULTI-WORD ("Strait of Hormuz"). A BARE single-token geo anchor ("Hormuz")
+    # does NOT: short synthetic labels like "Hormuz oil sanction" / "Hormuz security
+    # attack" must still read as generic so the composer upgrades them from real
+    # evidence (otherwise the lone gazetteer hit on "Hormuz" let them pass as-is).
+    # A bare mechanism word ("attack"/"strike") also does NOT confer specificity.
+    loc = _find_first(s.lower(), _MICRO_LOCATIONS)
+    if loc and len(loc.split()) >= 2:
         return False
     return len(words) <= 5
 
