@@ -304,8 +304,12 @@ def _compress_trends(signals: List[TrendSignal], start: datetime, end: datetime,
             if len(unique_supporting) >= 3:
                 break
         
-        description = f"Semantic risk pattern identified around {label}. "
-        description += f"Supported by {len(g['items'])} correlated developments across {len(geos) if geos else 1} geographical nodes."
+        # NO templated brief. The alert headline is composed from real evidence
+        # (processor.headline_composer) and stands as the organic summary. The old
+        # multi-node boilerplate brief is removed: it fabricated a finding and
+        # mis-represented loosely-related items as one event. Leaving this empty
+        # lets the UI render the evidence-composed headline only.
+        description = ""
         
         # 6. Store uncapped raw intensity (UI scaling applied downstream in API)
         raw_combined = max(float(g["combined_score"]), 0.1)
