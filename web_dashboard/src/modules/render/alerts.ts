@@ -431,7 +431,7 @@ function chudTagChip(label: string, kind: string): string {
     return `<span class="chud-chip chud-chip--${kind}">${chudEscape(label)}</span>`;
 }
 
-function chudDetailHtml(alert: Alert | null): string {
+export function chudDetailHtml(alert: Alert | null): string {
     if (!alert) {
         return `
             <div class="chud-detail-idle">

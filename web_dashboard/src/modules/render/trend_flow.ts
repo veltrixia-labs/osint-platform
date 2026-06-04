@@ -1,16 +1,19 @@
 /**
- * Monthly Trend Flow — pure data analytics cockpit (no map).
+ * Monthly Trend Flow — 4-quadrant master-detail cockpit (no map, no modals).
  *
- *   • Left  — wide 30-day trajectory chart (per-domain colored spike series +
- *             faint total-volatility bars; click a day → Daily Digest card) +
- *             scrollable spiked-news list
- *   • Right — interactive 6-node Cyber-Orbit sector selector + system physics
- *             (ALWAYS visible — never replaced)
+ * 2x2 grid mirroring the Alert Stream's master-detail pattern:
+ *   ┌────────────────────────────┬──────────────────────────┐
+ *   │ TL  30-Day Spike Trajectory │ TR  Sector Pressure orbit│
+ *   ├────────────────────────────┼──────────────────────────┤
+ *   │ BL  Spiked Signals list     │ BR  Signal Detail pane   │
+ *   └────────────────────────────┴──────────────────────────┘
  *
- * Selecting a signal (from the list or a Daily Digest) opens a floating
- * Glassmorphism "Trend Signal Inspector" card overlaying the dashboard, with a
- * frosted backdrop, X / backdrop / Esc close. Each domain has a fixed, distinct
- * color applied to the orbit, the chart series, and the cards. Fully open.
+ * Wiring:
+ *   • Click a chart day  → filters the Bottom-Left list to that day.
+ *   • Click an orbit sector → filters the list to that domain.
+ *   • Click a list item  → renders its detail PERMANENTLY in the Bottom-Right
+ *     pane, reusing the Alert Stream's `chudDetailHtml` so the look/feel is
+ *     identical. No overlay modal. Fully open (no tier gating).
  */
 import {
     fetchAlert,
@@ -21,6 +24,7 @@ import {
     type MonthlyTrendIndexItem,
     type MonthlyTrendSnapshot,
 } from '../api';
+import { chudDetailHtml } from './alerts';
 
 const MAX_NEWS_FETCH = 60; // cap source-alert enrichment per snapshot
 const DAY_MS = 86_400_000;
@@ -48,13 +52,10 @@ let tfAlertDomain: Map<string, string> = new Map(); // alert id → strategic do
 let tfSortedAlerts: Alert[] = [];   // current month's spiked alerts (desc by time)
 let tfNewsOverflow = 0;             // spiked sources beyond the fetch cap
 let tfActiveDomain: string | null = null; // orbit sector filter (null = all)
-let tfActiveDay: number | null = null;    // chart day highlight while a Digest is open
+let tfActiveDay: number | null = null;     // chart day filter (null = all days)
+let tfSelectedId: string | null = null;    // master-detail selection (persists across list re-renders)
 let tfPeriodStartMs = 0;            // current period start (UTC ms) for day math
 let tfRenderToken = 0;             // bumped each showFlow → guards stale hydration
-
-// Floating-card overlay (Inspector / Daily Digest) — body-level, single at a time.
-let tfFloat: HTMLElement | null = null;
-let tfFloatKey: ((e: KeyboardEvent) => void) | null = null;
 
 function _esc(s: unknown): string {
     return String(s ?? '')
@@ -75,29 +76,18 @@ function _dayLabel(day: number): string {
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-/** Remove any open floating card + its key handler. */
-function _floatClose(): void {
-    if (tfFloatKey) { document.removeEventListener('keydown', tfFloatKey); tfFloatKey = null; }
-    const ov = tfFloat || document.getElementById('tf-float');
-    if (ov) {
-        ov.classList.remove('tf-float--in');
-        window.setTimeout(() => { try { ov.remove(); } catch { /* gone */ } }, 220);
-    }
-    tfFloat = null;
-}
-
 /**
- * Clear transient state on tab exit. No map/WebGL context to tear down anymore;
+ * Clear transient state on tab exit. No map/WebGL/modal context to tear down;
  * we bump the render token so any in-flight hydration is discarded.
  */
 export function disposeTrendFlow(): void {
     tfRenderToken++;
-    _floatClose();
     tfAlertDomain = new Map();
     tfSortedAlerts = [];
     tfNewsOverflow = 0;
     tfActiveDomain = null;
     tfActiveDay = null;
+    tfSelectedId = null;
     tfPeriodStartMs = 0;
 }
 
@@ -115,7 +105,7 @@ function _renderSummary(statsEl: HTMLElement, snapshot: MonthlyTrendSnapshot): v
         (top.length ? `<span class="tf-stat tf-stat--sectors">${top.map((d: string) => _esc(_domainLabel(d))).join(' · ')}</span>` : '');
 }
 
-// ── Right column top: interactive 6-node Cyber-Orbit sector selector ─────────
+// ── Top-Right quadrant: interactive 6-node Cyber-Orbit sector selector ───────
 function _buildOrbit(snapshot: MonthlyTrendSnapshot): string {
     const domains: Record<string, any> = snapshot.summary?.domains || {};
     const R = 37;                      // node ring radius (% of orbit box)
@@ -159,34 +149,7 @@ function _buildOrbit(snapshot: MonthlyTrendSnapshot): string {
     );
 }
 
-// ── Right column bottom: system physics statistics ───────────────────────────
-function _renderAnalytics(el: HTMLElement, snapshot: MonthlyTrendSnapshot): void {
-    const s = snapshot.summary || {};
-    const entropy = typeof s.entropy_index === 'number' ? s.entropy_index.toFixed(3) : '—';
-    const visc = typeof s.viscosity_coefficient === 'number' ? s.viscosity_coefficient.toFixed(1) : '—';
-    const ratio = typeof s.spike_ratio === 'number' ? `${s.spike_ratio.toFixed(1)}×` : '—';
-
-    el.innerHTML =
-        `<div class="tf-panel tf-panel--orbit">` +
-        `<div class="tf-panel-head"><span class="tf-panel-title">SECTOR PRESSURE</span>` +
-        `<span class="tf-panel-tag">6 domains · tap to filter</span></div>` +
-        `<div class="tf-panel-body tf-orbit-body">${_buildOrbit(snapshot)}</div>` +
-        `</div>` +
-        `<div class="tf-panel tf-panel--metrics">` +
-        `<div class="tf-panel-head"><span class="tf-panel-title">SYSTEM PHYSICS</span><span class="tf-panel-tag">${_esc(snapshot.schema_version || '')}</span></div>` +
-        `<div class="tf-panel-body tf-metric-grid">` +
-        `<div class="tf-metric"><span class="tf-metric-val">${entropy}</span><span class="tf-metric-lbl">Entropy H</span></div>` +
-        `<div class="tf-metric"><span class="tf-metric-val">${visc}</span><span class="tf-metric-lbl">Viscosity</span></div>` +
-        `<div class="tf-metric"><span class="tf-metric-val tf-metric-val--ok">${ratio}</span><span class="tf-metric-lbl">Per-Domain Gate ✓</span></div>` +
-        `<div class="tf-metric"><span class="tf-metric-val">${s.alerts_spiked ?? 0}<i>/${s.alerts_total ?? 0}</i></span><span class="tf-metric-lbl">Spiked / Total</span></div>` +
-        `<div class="tf-metric"><span class="tf-metric-val">${s.node_count ?? 0}</span><span class="tf-metric-lbl">Active Nodes</span></div>` +
-        `<div class="tf-metric"><span class="tf-metric-val">${s.edge_count ?? 0}</span><span class="tf-metric-lbl">Ripple Edges</span></div>` +
-        `</div></div>`;
-}
-
-// ── Left column top: 30-day trajectory — per-domain colored spike series ─────
-// Returns the chart markup (stretched SVG for the plot + a crisp HTML axis row).
-// No cursor-following tooltip (it clipped at the panel edge) — days are clickable.
+// ── Top-Left quadrant: 30-day trajectory — per-domain colored spike series ───
 function _sparklineSvg(
     period: MonthlyTrendSnapshot['period'],
     alerts: Alert[],
@@ -249,7 +212,7 @@ function _sparklineSvg(
         return `<polyline points="${pts}" fill="none" stroke="${d.color}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round" opacity="${op}"></polyline>`;
     }).join('');
 
-    // Transparent per-day hit columns → click opens the Daily Digest card.
+    // Transparent per-day hit columns → click filters the list to that day.
     const hits = total.map((_c, i) => {
         const x = padX + i * barW;
         const sel = activeDay === i ? ' tf-spark-hit--on' : '';
@@ -267,7 +230,7 @@ function _sparklineSvg(
     );
 }
 
-// ── Left column bottom: spiked news list (whole row opens the Inspector) ─────
+// ── Bottom-Left quadrant: spiked news list (whole row selects into detail) ───
 function _newsItemHtml(a: Alert, domainId: string | undefined): string {
     // No severity badge — everything here is, by definition, a high-impact spike.
     // A slim domain-colored rail (--dom) carries the only color cue needed.
@@ -281,7 +244,7 @@ function _newsItemHtml(a: Alert, domainId: string | undefined): string {
         ? `<span class="tf-news-dom" style="--dom:${color}">${_esc(_domainLabel(domainId))}</span>`
         : '';
     return (
-        `<div class="tf-news-item" role="button" tabindex="0" data-tf-alert="${_esc(a.id)}"${domainId ? ` data-tf-domain="${_esc(domainId)}"` : ''} style="--dom:${color}" aria-label="Inspect signal: ${_esc(a.title || a.target_label || 'Signal')}">` +
+        `<div class="tf-news-item" role="button" tabindex="0" data-tf-alert="${_esc(a.id)}"${domainId ? ` data-tf-domain="${_esc(domainId)}"` : ''} style="--dom:${color}" aria-label="Show detail: ${_esc(a.title || a.target_label || 'Signal')}">` +
         `<span class="tf-news-main">` +
         `<span class="tf-news-title">${_esc(a.title || a.target_label || 'Signal')}</span>` +
         `<span class="tf-news-meta">${domChip}<span class="tf-news-time">${when}</span></span>` +
@@ -291,27 +254,38 @@ function _newsItemHtml(a: Alert, domainId: string | undefined): string {
     );
 }
 
-/** Render the news list from cached alerts, optionally filtered to one domain. */
-function _renderNewsList(newsEl: HTMLElement, countEl: HTMLElement | null, filterDomain: string | null): void {
+/** Render the news list from cached alerts, filtered by the active domain AND day. */
+function _renderNewsList(newsEl: HTMLElement, countEl: HTMLElement | null): void {
     if (!tfSortedAlerts.length) {
         newsEl.innerHTML = `<div class="tf-news-empty">No spiked signals this month.</div>`;
         if (countEl) countEl.textContent = '0';
         return;
     }
-    const items = filterDomain
-        ? tfSortedAlerts.filter((a) => tfAlertDomain.get(a.id) === filterDomain)
-        : tfSortedAlerts;
+    let items = tfSortedAlerts;
+    if (tfActiveDomain) items = items.filter((a) => tfAlertDomain.get(a.id) === tfActiveDomain);
+    if (tfActiveDay != null) items = items.filter((a) => _alertDayIndex(a) === tfActiveDay);
 
     if (!items.length) {
-        newsEl.innerHTML = `<div class="tf-news-empty">No ${_esc(_domainLabel(filterDomain || ''))} spikes this month.</div>`;
+        const scope = [
+            tfActiveDomain ? _domainLabel(tfActiveDomain) : '',
+            tfActiveDay != null ? _dayLabel(tfActiveDay) : '',
+        ].filter(Boolean).join(' · ');
+        newsEl.innerHTML = `<div class="tf-news-empty">No spikes${scope ? ` for ${_esc(scope)}` : ''} this month.</div>`;
         if (countEl) countEl.textContent = '0';
         return;
     }
-    const overflowNote = (!filterDomain && tfNewsOverflow > 0)
+    const unfiltered = !tfActiveDomain && tfActiveDay == null;
+    const overflowNote = (unfiltered && tfNewsOverflow > 0)
         ? `<div class="tf-news-more">+${tfNewsOverflow} more spiked source${tfNewsOverflow === 1 ? '' : 's'} this month</div>`
         : '';
     newsEl.innerHTML = items.map((a) => _newsItemHtml(a, tfAlertDomain.get(a.id))).join('') + overflowNote;
     if (countEl) countEl.textContent = String(items.length);
+
+    // Re-apply the persistent master-detail selection highlight after any re-render.
+    if (tfSelectedId) {
+        newsEl.querySelectorAll<HTMLElement>('.tf-news-item').forEach((el) =>
+            el.classList.toggle('tf-news-item--active', el.getAttribute('data-tf-alert') === tfSelectedId));
+    }
 
     newsEl.classList.remove('tf-news-anim');
     void newsEl.offsetWidth;
@@ -332,12 +306,18 @@ async function _pool<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R
     return out;
 }
 
-async function _hydrateLeftPanels(
+/**
+ * Resolve the month's spiked alerts (per-domain provenance), then paint the
+ * Top-Left chart and Bottom-Left list. `onReady` fires once data is in (used to
+ * auto-select the top signal into the detail pane), guarded by the render token.
+ */
+async function _hydrate(
     snapshot: MonthlyTrendSnapshot,
     chartEl: HTMLElement,
     newsEl: HTMLElement,
     countEl: HTMLElement | null,
     token: number,
+    onReady: () => void,
 ): Promise<void> {
     const domains: Record<string, any> = snapshot.summary?.domains || {};
 
@@ -358,6 +338,7 @@ async function _hydrateLeftPanels(
         chartEl.innerHTML = `<div class="tf-chart-empty">No spike trajectory</div>`;
         newsEl.innerHTML = `<div class="tf-news-empty">No spiked signals in ${_esc(snapshot.period?.label ?? 'this period')}.</div>`;
         if (countEl) countEl.textContent = '0';
+        onReady();
         return;
     }
 
@@ -377,134 +358,8 @@ async function _hydrateLeftPanels(
     tfSortedAlerts = alerts;
 
     chartEl.innerHTML = `<div class="tf-spark-wrap">${_sparklineSvg(snapshot.period, alerts, tfActiveDomain, tfActiveDay)}</div>`;
-    _renderNewsList(newsEl, countEl, tfActiveDomain);
-}
-
-// ── Floating card content builders ───────────────────────────────────────────
-function _host(url: string): string {
-    try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
-}
-
-/**
- * Trend Signal Inspector card body (full detail + all raw source links).
- * When opened from a Daily Digest, `backDay` is that digest's day index → a
- * "‹ Back" control is injected that returns to the digest (modal stacking).
- */
-function _inspectorHtml(a: Alert, backDay: number | null = null): string {
-    const domainId = tfAlertDomain.get(a.id);
-    const accent = domainId ? _domainColor(domainId) : '#00f0ff';
-    // Driven STRICTLY by the backend's calibrated intensity_pct (1.5x gate = 50%,
-    // >=3.0x = 100%) — no client-side tanh. Absent (cold-start) → 0%.
-    const pctVal = Math.max(0, Math.min(100, typeof a.intensity_pct === 'number' ? a.intensity_pct : 0));
-    const frac = Math.max(0.04, Math.min(1, pctVal / 100));
-    const pct = Math.round(pctVal) + '%'; // integer % — fits cleanly inside the ring
-    const dt = new Date(a.triggered_at);
-    const when = Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleString(undefined, {
-        weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-    });
-
-    const R = 26, CIRC = 2 * Math.PI * R, offset = CIRC * (1 - frac);
-    const gauge =
-        `<svg class="tf-insp-gauge" viewBox="0 0 64 64" aria-hidden="true">` +
-        `<circle cx="32" cy="32" r="${R}" fill="none" stroke="rgba(120,160,210,0.16)" stroke-width="5"></circle>` +
-        `<circle cx="32" cy="32" r="${R}" fill="none" stroke="${accent}" stroke-width="5" stroke-linecap="round"` +
-        ` stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}" transform="rotate(-90 32 32)"></circle>` +
-        `</svg>`;
-
-    const seen = new Set<string>();
-    const sources: { url: string; title: string; host: string }[] = [];
-    const pushSrc = (url?: string, title?: string) => {
-        if (!url || seen.has(url)) return;
-        seen.add(url);
-        sources.push({ url, title: title || url, host: _host(url) });
-    };
-    pushSrc(a.source_url, a.title || a.target_label);
-    if (Array.isArray(a.evidence_list)) {
-        for (const e of a.evidence_list) {
-            if (typeof e === 'string') pushSrc(e);
-            else if (e && typeof e === 'object') pushSrc(e.url, e.title);
-        }
-    }
-    const sourcesHtml = sources.length
-        ? sources.map((s) =>
-            `<a class="tf-insp-src" href="${_esc(s.url)}" target="_blank" rel="noopener noreferrer">` +
-            `<span class="tf-insp-src-host">${_esc(s.host || 'source')}</span>` +
-            `<span class="tf-insp-src-title">${_esc(s.title)}</span>` +
-            `<span class="tf-insp-src-go" aria-hidden="true">↗</span>` +
-            `</a>`).join('')
-        : `<p class="tf-muted">No raw source URLs recorded for this signal.</p>`;
-
-    // Single, cleanly-styled colored domain chip only — no redundant plain topic token.
-    const domTag = domainId
-        ? `<span class="tf-insp-tag tf-insp-tag--dom" style="--dom:${_domainColor(domainId)}">${_esc(_domainLabel(domainId))}</span>`
-        : '';
-
-    const backBtn = backDay != null
-        ? `<button type="button" class="tf-insp-back" data-tf-insp-back="${backDay}" aria-label="Back to daily digest">‹ Back</button>`
-        : '';
-    return (
-        `<div class="tf-card-inner" style="--insp:${accent}">` +
-        `<header class="tf-insp-head${backDay != null ? ' tf-insp-head--back' : ''}">` +
-        backBtn +
-        `<span class="tf-insp-kicker">TREND SIGNAL INSPECTOR</span>` +
-        `<button type="button" class="tf-float-close" data-tf-float-close aria-label="Close inspector">×</button>` +
-        `</header>` +
-        `<div class="tf-insp-body">` +
-        `<div class="tf-insp-severity">` +
-        `<div class="tf-insp-gauge-wrap">${gauge}<span class="tf-insp-gauge-val">${pct}</span></div>` +
-        `<div class="tf-insp-sevmeta">` +
-        `<span class="tf-insp-sev-label">SIGNAL INTENSITY</span>` +
-        `<span class="tf-insp-sev-sub">Normalized strength vs domain baseline</span>` +
-        `</div></div>` +
-        `<div class="tf-insp-title">${_esc(a.title || a.target_label || 'Signal')}</div>` +
-        `<div class="tf-insp-time">🕑 ${_esc(when)}</div>` +
-        `<div class="tf-insp-tags">${domTag}</div>` +
-        `<div class="tf-insp-srchead">RAW SOURCES <b>${sources.length}</b></div>` +
-        `<div class="tf-insp-srclist">${sourcesHtml}</div>` +
-        `</div></div>`
-    );
-}
-
-/**
- * Daily Digest card body — spiked signals on one clicked day. Respects the
- * active orbit sector filter so a "Markets"-filtered chart never leaks other
- * domains' alerts into the digest.
- */
-function _digestHtml(day: number): string {
-    const items = tfSortedAlerts.filter((a) =>
-        _alertDayIndex(a) === day && (!tfActiveDomain || tfAlertDomain.get(a.id) === tfActiveDomain));
-    const rows = items.length
-        ? items.map((a) => {
-            const dom = tfAlertDomain.get(a.id);
-            const color = dom ? _domainColor(dom) : '#6f8aa6';
-            const dt = new Date(a.triggered_at);
-            const when = Number.isNaN(dt.getTime()) ? '' : dt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-            const domChip = dom ? `<span class="tf-news-dom" style="--dom:${color}">${_esc(_domainLabel(dom))}</span>` : '';
-            return (
-                `<button type="button" class="tf-digest-item" data-tf-digest-alert="${_esc(a.id)}" style="--dom:${color}">` +
-                `<span class="tf-digest-main">` +
-                `<span class="tf-digest-title">${_esc(a.title || a.target_label || 'Signal')}</span>` +
-                `<span class="tf-digest-meta">${domChip}<span>${when}</span></span>` +
-                `</span>` +
-                `<span class="tf-digest-go" aria-hidden="true">›</span>` +
-                `</button>`
-            );
-        }).join('')
-        : `<p class="tf-muted">No spiked signals on this day.</p>`;
-
-    const accent = tfActiveDomain ? _domainColor(tfActiveDomain) : '#00f0ff';
-    const scope = tfActiveDomain ? ` · ${_domainLabel(tfActiveDomain).toUpperCase()}` : '';
-    return (
-        `<div class="tf-card-inner" style="--insp:${accent}">` +
-        `<header class="tf-insp-head">` +
-        `<span class="tf-insp-kicker">DAILY DIGEST · ${_esc(_dayLabel(day))}${_esc(scope)}</span>` +
-        `<button type="button" class="tf-float-close" data-tf-float-close aria-label="Close digest">×</button>` +
-        `</header>` +
-        `<div class="tf-insp-body">` +
-        `<div class="tf-insp-srchead">SPIKED SIGNALS <b>${items.length}</b></div>` +
-        `<div class="tf-digest-list">${rows}</div>` +
-        `</div></div>`
-    );
+    _renderNewsList(newsEl, countEl);
+    onReady();
 }
 
 // ── Entry point ──────────────────────────────────────────────────────────────
@@ -512,7 +367,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
     disposeTrendFlow();
 
     container.innerHTML =
-        `<div class="tf-root tf-root--analytics">` +
+        `<div class="tf-root tf-root--quad">` +
         `<div class="tf-head">` +
         `<div class="tf-head-left">` +
         `<span class="tf-title">MONTHLY TREND FLOW</span>` +
@@ -523,14 +378,21 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         `</div>` +
         `</div>` +
         `<div class="tf-statbar" data-tf-stats></div>` +
-        `<div class="tf-grid tf-grid--analytics">` +
-        `<div class="tf-col tf-col--main">` +
-        `<div class="tf-panel tf-panel--chart">` +
+        `<div class="tf-grid tf-grid--quad">` +
+        // ── TL: chart ──────────────────────────────────────────────────────
+        `<div class="tf-panel tf-quad tf-quad--chart">` +
         `<div class="tf-panel-head"><span class="tf-panel-title">30-DAY SPIKE TRAJECTORY</span>` +
         `<span class="tf-legend"><i class="tf-legend-bar"></i>volatility <i class="tf-legend-line"></i>per-domain · click a day</span></div>` +
         `<div class="tf-panel-body tf-chart tf-chart--wide" data-tf-chart><div class="tf-chart-load">Loading…</div></div>` +
         `</div>` +
-        `<div class="tf-panel tf-panel--news">` +
+        // ── TR: sector pressure orbit ──────────────────────────────────────
+        `<div class="tf-panel tf-quad tf-quad--orbit" data-tf-orbit-panel>` +
+        `<div class="tf-panel-head"><span class="tf-panel-title">SECTOR PRESSURE</span>` +
+        `<span class="tf-panel-tag">6 domains · tap to filter</span></div>` +
+        `<div class="tf-panel-body tf-orbit-body" data-tf-orbit-host></div>` +
+        `</div>` +
+        // ── BL: spiked signals list ────────────────────────────────────────
+        `<div class="tf-panel tf-quad tf-quad--news">` +
         `<div class="tf-panel-head"><div class="tf-panel-headcol">` +
         `<span class="tf-panel-title">SPIKED SIGNALS</span>` +
         `<span class="tf-panel-subnote">Exclusively high-impact signals — already filtered to 1.5×+ per-domain spikes</span>` +
@@ -538,8 +400,12 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         `<span class="tf-panel-tag"><b data-tf-newscount>0</b> stories<span class="tf-news-filtertag" data-tf-filtertag hidden></span></span></div>` +
         `<div class="tf-panel-body tf-newsfeed" data-tf-news><div class="tf-news-load">Loading…</div></div>` +
         `</div>` +
+        // ── BR: signal detail (reuses the Alert Stream detail pane) ─────────
+        `<div class="tf-panel tf-quad tf-quad--detail">` +
+        `<div class="tf-panel-head"><span class="tf-panel-title">SIGNAL DETAIL</span>` +
+        `<span class="tf-panel-tag" data-tf-detail-tag>select a signal</span></div>` +
+        `<div class="tf-panel-body tf-detail-body"><div class="chud-detail" data-tf-detail></div></div>` +
         `</div>` +
-        `<div class="tf-col tf-col--side" data-tf-analytics></div>` +
         `</div>` +
         `</div>`;
 
@@ -547,10 +413,13 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
     const statsEl = container.querySelector<HTMLElement>('[data-tf-stats]')!;
     const subEl = container.querySelector<HTMLElement>('[data-tf-sub]')!;
     const chartEl = container.querySelector<HTMLElement>('[data-tf-chart]')!;
+    const orbitPanel = container.querySelector<HTMLElement>('[data-tf-orbit-panel]')!;
+    const orbitHost = container.querySelector<HTMLElement>('[data-tf-orbit-host]')!;
     const newsEl = container.querySelector<HTMLElement>('[data-tf-news]')!;
     const newsCountEl = container.querySelector<HTMLElement>('[data-tf-newscount]');
     const filterTagEl = container.querySelector<HTMLElement>('[data-tf-filtertag]');
-    const analyticsEl = container.querySelector<HTMLElement>('[data-tf-analytics]')!;
+    const detailEl = container.querySelector<HTMLElement>('[data-tf-detail]')!;
+    const detailTagEl = container.querySelector<HTMLElement>('[data-tf-detail-tag]');
 
     let lastSnap: MonthlyTrendSnapshot | null = null;
 
@@ -560,73 +429,51 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         if (wrap) wrap.innerHTML = _sparklineSvg(lastSnap.period, tfSortedAlerts, tfActiveDomain, tfActiveDay);
     };
 
-    // ── Floating card (Inspector / Daily Digest) — overlays the whole HUD ────
-    const closeCard = () => {
-        _floatClose();
-        if (tfActiveDay != null) { tfActiveDay = null; renderChart(); } // clear day highlight
+    // ── Bottom-Right: render an alert's detail into the persistent pane ──────
+    const clearDetail = () => {
+        tfSelectedId = null;
+        detailEl.innerHTML = chudDetailHtml(null);
+        if (detailTagEl) detailTagEl.textContent = 'select a signal';
+        newsEl.querySelectorAll<HTMLElement>('.tf-news-item--active').forEach((el) => el.classList.remove('tf-news-item--active'));
     };
-    const openCard = (html: string) => {
-        _floatClose();
-        const ov = document.createElement('div');
-        ov.className = 'tf-float';
-        ov.id = 'tf-float';
-        ov.innerHTML = `<div class="tf-float-backdrop" data-tf-float-close></div><div class="tf-float-card" role="dialog" aria-modal="true">${html}</div>`;
-        document.body.appendChild(ov);
-        tfFloat = ov;
-        requestAnimationFrame(() => ov.classList.add('tf-float--in'));
-        ov.addEventListener('click', (e) => {
-            const t = e.target as HTMLElement;
-            if (t.closest('[data-tf-float-close]')) { closeCard(); return; }
-            if (t.closest('a.tf-insp-src')) return; // raw-source links navigate freely
-            const card = ov.querySelector<HTMLElement>('.tf-float-card');
-            // ‹ Back: return from the Inspector to the Daily Digest it came from.
-            const back = t.closest<HTMLElement>('[data-tf-insp-back]');
-            if (back) {
-                const day = parseInt(back.getAttribute('data-tf-insp-back') || '-1', 10);
-                if (day >= 0 && card) card.innerHTML = _digestHtml(day);
-                return;
-            }
-            // Unified navigation: a Daily Digest row opens the same Inspector card
-            // (carrying the digest's day so the Inspector shows a ‹ Back control).
-            const drow = t.closest<HTMLElement>('[data-tf-digest-alert]');
-            if (drow) {
-                const a = tfSortedAlerts.find((x) => x.id === drow.getAttribute('data-tf-digest-alert'));
-                if (a && card) card.innerHTML = _inspectorHtml(a, tfActiveDay);
-            }
-        });
-        tfFloatKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.preventDefault(); closeCard(); } };
-        document.addEventListener('keydown', tfFloatKey);
-    };
-    const openInspector = (alertId: string) => {
-        const a = tfSortedAlerts.find((x) => x.id === alertId);
-        if (a) openCard(_inspectorHtml(a));
-    };
-    const openDigest = (day: number) => {
-        tfActiveDay = day;
-        renderChart();              // highlight the selected day column
-        openCard(_digestHtml(day));
+    const selectAlert = (id: string) => {
+        const a = tfSortedAlerts.find((x) => x.id === id);
+        if (!a) return;
+        tfSelectedId = id;
+        detailEl.innerHTML = chudDetailHtml(a);
+        detailEl.scrollTop = 0;
+        if (detailTagEl) {
+            const dom = tfAlertDomain.get(id);
+            detailTagEl.textContent = dom ? _domainLabel(dom).toUpperCase() : 'signal';
+        }
+        newsEl.querySelectorAll<HTMLElement>('.tf-news-item').forEach((el) =>
+            el.classList.toggle('tf-news-item--active', el.getAttribute('data-tf-alert') === id));
     };
 
-    // Re-sync orbit visuals, filter tag, chart, and news to the active domain.
+    // Re-sync orbit visuals, filter tag, chart, and the filtered list.
     const refresh = () => {
-        analyticsEl.querySelectorAll<HTMLElement>('.tf-orbit-node').forEach((n) => {
+        orbitHost.querySelectorAll<HTMLElement>('.tf-orbit-node').forEach((n) => {
             const active = n.getAttribute('data-tf-domain') === tfActiveDomain;
             n.classList.toggle('tf-orbit-node--active', active);
             n.setAttribute('aria-pressed', String(active));
         });
-        analyticsEl.querySelector('.tf-orbit')?.classList.toggle('tf-orbit--filtered', !!tfActiveDomain);
-        const stateEl = analyticsEl.querySelector<HTMLElement>('[data-tf-core-state]');
+        orbitHost.querySelector('.tf-orbit')?.classList.toggle('tf-orbit--filtered', !!tfActiveDomain);
+        const stateEl = orbitHost.querySelector<HTMLElement>('[data-tf-core-state]');
         if (stateEl) stateEl.textContent = tfActiveDomain ? `${_domainLabel(tfActiveDomain).toUpperCase()} ONLY` : `ALL ${TF_DOMAINS.length} SECTORS`;
         if (filterTagEl) {
-            if (tfActiveDomain) { filterTagEl.textContent = ` · ${_domainLabel(tfActiveDomain).toUpperCase()}`; filterTagEl.hidden = false; }
+            const parts = [
+                tfActiveDomain ? _domainLabel(tfActiveDomain).toUpperCase() : '',
+                tfActiveDay != null ? _dayLabel(tfActiveDay).toUpperCase() : '',
+            ].filter(Boolean);
+            if (parts.length) { filterTagEl.textContent = ` · ${parts.join(' · ')}`; filterTagEl.hidden = false; }
             else filterTagEl.hidden = true;
         }
         renderChart();
-        _renderNewsList(newsEl, newsCountEl, tfActiveDomain);
+        _renderNewsList(newsEl, newsCountEl);
     };
 
-    // Orbit interactions (delegated; analyticsEl persists across re-renders).
-    analyticsEl.addEventListener('click', (e) => {
+    // Orbit interactions (delegated on the stable panel; the orbit body re-renders per month).
+    orbitPanel.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
         const node = target.closest<HTMLElement>('.tf-orbit-node');
         if (node) {
@@ -638,32 +485,56 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         if (target.closest('.tf-orbit-core')) { tfActiveDomain = null; refresh(); }
     });
 
-    // Chart: click a day → Daily Digest card (no clipping hover tooltip).
+    // Chart: click a day → filter the Bottom-Left list to that day (toggle off if re-clicked).
     chartEl.addEventListener('click', (e) => {
         const hit = (e.target as HTMLElement).closest('[data-tf-day]');
         if (!hit) return;
         const day = parseInt(hit.getAttribute('data-tf-day') || '-1', 10);
-        if (day >= 0) openDigest(day);
+        if (day < 0) return;
+        tfActiveDay = tfActiveDay === day ? null : day;
+        refresh();
     });
 
-    // News item → open the Trend Signal Inspector (whole row is the trigger).
+    // List item → render its detail into the Bottom-Right pane (master-detail).
     newsEl.addEventListener('click', (e) => {
         const btn = (e.target as HTMLElement).closest<HTMLElement>('.tf-news-item');
-        if (btn) openInspector(btn.getAttribute('data-tf-alert') || '');
+        if (btn) selectAlert(btn.getAttribute('data-tf-alert') || '');
     });
     newsEl.addEventListener('keydown', (e) => {
         if (e.key !== 'Enter' && e.key !== ' ') return;
         const btn = (e.target as HTMLElement).closest<HTMLElement>('.tf-news-item');
-        if (btn) { e.preventDefault(); openInspector(btn.getAttribute('data-tf-alert') || ''); }
+        if (btn) { e.preventDefault(); selectAlert(btn.getAttribute('data-tf-alert') || ''); }
+    });
+
+    // Bottom-Right pane interactions — mirrors the Alert Stream detail handler:
+    // the secondary-sources accordion (inline) and the mobile ✕ Close button.
+    detailEl.addEventListener('click', (e) => {
+        const t = e.target as HTMLElement;
+        if (t.closest('[data-chud-back]')) { clearDetail(); return; }
+        const srcToggle = t.closest<HTMLElement>('[data-chud-src-toggle]');
+        if (srcToggle) {
+            const sec = srcToggle.previousElementSibling as HTMLElement | null;
+            if (sec && sec.classList.contains('chud-src-secondary')) {
+                const expanded = !sec.classList.contains('expanded');
+                sec.classList.toggle('expanded', expanded);
+                srcToggle.setAttribute('aria-expanded', String(expanded));
+                const secCount = sec.querySelectorAll('.chud-src-row').length;
+                const caret = expanded ? '▴' : '▾';
+                srcToggle.innerHTML =
+                    `${expanded ? 'Hide' : `View all ${secCount}`} secondary sources `
+                    + `<span class="chud-src-more-caret">${caret}</span>`;
+            }
+        }
     });
 
     const showFlow = (snap: MonthlyTrendSnapshot | null) => {
         const token = ++tfRenderToken;
-        tfActiveDomain = null; // reset filters on month change
+        tfActiveDomain = null; // reset filters + selection on month change
         tfActiveDay = null;
-        _floatClose();         // close any open card
+        tfSelectedId = null;
         lastSnap = snap;
         if (filterTagEl) filterTagEl.hidden = true;
+        clearDetail();
         if (!snap) {
             statsEl.innerHTML = '';
             chartEl.innerHTML = `<div class="tf-chart-empty">No data</div>`;
@@ -672,17 +543,20 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
                 `<div class="tf-empty-title">NO ARCHIVES YET</div>` +
                 `<div class="tf-empty-sub">Monthly snapshots are generated at the start of each month.</div></div>`;
             if (newsCountEl) newsCountEl.textContent = '0';
-            analyticsEl.innerHTML =
-                `<div class="tf-panel"><div class="tf-panel-head"><span class="tf-panel-title">SECTOR PRESSURE</span></div>` +
-                `<div class="tf-panel-body"><p class="tf-muted">Awaiting first archived month.</p></div></div>`;
+            orbitHost.innerHTML = `<p class="tf-muted">Awaiting first archived month.</p>`;
             tfAlertDomain = new Map();
             tfSortedAlerts = [];
             return;
         }
         subEl.textContent = `${snap.period.label} · per-domain pressure spikes across the 6 strategic sectors`;
         _renderSummary(statsEl, snap);
-        _renderAnalytics(analyticsEl, snap);
-        void _hydrateLeftPanels(snap, chartEl, newsEl, newsCountEl, token);
+        orbitHost.innerHTML = _buildOrbit(snap);
+        void _hydrate(snap, chartEl, newsEl, newsCountEl, token, () => {
+            if (token !== tfRenderToken) return;
+            // Auto-select the top signal so the detail pane is populated by default
+            // (mirrors the Alert Stream's master-detail initial projection).
+            if (tfSortedAlerts.length) selectAlert(tfSortedAlerts[0].id);
+        });
     };
 
     archive.addEventListener('change', async () => {
