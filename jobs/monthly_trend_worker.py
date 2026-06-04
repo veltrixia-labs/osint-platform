@@ -24,7 +24,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import AsyncSessionLocal
@@ -33,6 +33,9 @@ from analysis.monthly_trend_builder import build_monthly_trend_snapshot, month_b
 
 logger = logging.getLogger(__name__)
 
+# Rolling window: retain the current month + the 2 prior months (3 total).
+RETENTION_MONTHS = 3
+
 
 def _previous_month(now: Optional[datetime] = None) -> tuple[int, int]:
     """(year, month) of the calendar month before ``now`` (UTC)."""
@@ -40,6 +43,43 @@ def _previous_month(now: Optional[datetime] = None) -> tuple[int, int]:
     if now.month == 1:
         return now.year - 1, 12
     return now.year, now.month - 1
+
+
+def _oldest_kept_month(now: datetime, keep_months: int = RETENTION_MONTHS) -> tuple[int, int]:
+    """(year, month) of the OLDEST month to RETAIN — rows strictly older are pruned.
+
+    Uses absolute 1-based month ordinals (year*12 + month) so year rollovers are
+    exact: with keep_months=3, Jan 2026 retains Nov 2025/Dec 2025/Jan 2026 (so the
+    cutoff is Nov 2025 and Oct 2025 — "3 months prior to January" — is pruned);
+    Aug 2026 retains Jun/Jul/Aug 2026.
+    """
+    ordinal = now.year * 12 + now.month - (keep_months - 1)
+    year = (ordinal - 1) // 12
+    month = ordinal - year * 12
+    return year, month
+
+
+async def prune_monthly_trends(
+    session: AsyncSession, *, now: Optional[datetime] = None, keep_months: int = RETENTION_MONTHS
+) -> int:
+    """Delete ``monthly_trend_reports`` older than the rolling window. Returns the
+    number of rows removed. Comparison is on the absolute month ordinal so it is
+    safe across year boundaries."""
+    now = now or datetime.now(timezone.utc)
+    year, month = _oldest_kept_month(now, keep_months)
+    cutoff_ordinal = year * 12 + month
+    result = await session.execute(
+        delete(MonthlyTrendReport).where(
+            MonthlyTrendReport.period_year * 12 + MonthlyTrendReport.period_month < cutoff_ordinal
+        )
+    )
+    await session.commit()
+    pruned = result.rowcount or 0
+    logger.info(
+        "Monthly trend retention: pruned %d row(s) older than %04d-%02d (keep %d months).",
+        pruned, year, month, keep_months,
+    )
+    return pruned
 
 
 async def run_monthly_trend_worker(

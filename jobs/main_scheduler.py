@@ -15,7 +15,7 @@ from jobs.report_orchestrator import run_all_reports
 from jobs.trigger_detector_job import run_trigger_check
 from jobs.trend_analyze_job import run_trend_analysis
 from jobs.alert_manager import run_alert_manager
-from jobs.monthly_trend_worker import run_monthly_trend_worker
+from jobs.monthly_trend_worker import run_monthly_trend_worker, prune_monthly_trends
 from jobs.threads_publisher_job import run_threads_publisher
 from jobs.learning_loop import run_learning_job
 from jobs.cleanup_job import (
@@ -144,6 +144,8 @@ async def monthly_trend_wrapper():
         # live data instead of stalling on the last completed month (the cause of
         # the "stuck on May / no June" gap). Force-rebuild to absorb new spikes.
         await run_monthly_trend_worker(session, year=now.year, month=now.month, force=True)
+        # Enforce the 3-month rolling window: drop archives older than current+2.
+        await prune_monthly_trends(session, now=now)
 
 async def run_threads_publisher_wrapper():
     async with AsyncSessionLocal() as session:
