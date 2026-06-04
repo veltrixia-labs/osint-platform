@@ -107,7 +107,8 @@ function _buildOrbit(snapshot: MonthlyTrendSnapshot): string {
     const R = 37;                      // node ring radius (% of orbit box)
     const SVG = 200, C = SVG / 2, RR = R * 2;
     const N = TF_DOMAINS.length;       // always 6
-    const sectorCount = String(N).padStart(2, '0');
+    // Center readout = total spiked signals this month (sum of all node counts).
+    const totalSpiked = TF_DOMAINS.reduce((sum, d) => sum + (domains[d.id]?.spiked || 0), 0);
 
     let spokes = '';
     const nodes = TF_DOMAINS.map((d, i) => {
@@ -137,8 +138,8 @@ function _buildOrbit(snapshot: MonthlyTrendSnapshot): string {
         spokes +
         `</svg>` +
         `<button type="button" class="tf-orbit-core" data-tf-core title="Show all sectors (reset filter)">` +
-        `<span class="tf-orbit-core-val">${sectorCount}</span>` +
-        `<span class="tf-orbit-core-lbl" data-tf-core-state>ALL ${N} SECTORS</span>` +
+        `<span class="tf-orbit-core-val">${String(totalSpiked).padStart(2, '0')}</span>` +
+        `<span class="tf-orbit-core-lbl" data-tf-core-state>TOTAL SPIKED</span>` +
         `</button>` +
         nodes +
         `</div>`
@@ -428,7 +429,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         });
         orbitHost.querySelector('.tf-orbit')?.classList.toggle('tf-orbit--filtered', !!tfActiveDomain);
         const stateEl = orbitHost.querySelector<HTMLElement>('[data-tf-core-state]');
-        if (stateEl) stateEl.textContent = tfActiveDomain ? `${_domainLabel(tfActiveDomain).toUpperCase()} ONLY` : `ALL ${TF_DOMAINS.length} SECTORS`;
+        if (stateEl) stateEl.textContent = tfActiveDomain ? `${_domainLabel(tfActiveDomain).toUpperCase()} ONLY` : 'TOTAL SPIKED';
         if (filterTagEl) {
             const parts = [
                 tfActiveDomain ? _domainLabel(tfActiveDomain).toUpperCase() : '',
