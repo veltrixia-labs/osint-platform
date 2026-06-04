@@ -11644,6 +11644,17 @@ body.syslogic-open { overflow: hidden; }
   aspect-ratio: 1 / 1;
   margin: 0 auto;
 }
+/* In the short/wide quadrant the orbit was sized by WIDTH only, so the square
+   grew taller than the cell and the top/bottom nodes clipped against
+   `.tf-orbit-body { overflow:hidden }`. Give the body a definite height (flex-fill
+   the panel column) and size the square by HEIGHT so it always fits the cell. */
+.tf-quad--orbit .tf-panel-body { flex: 1; min-height: 0; }
+.tf-quad--orbit .tf-orbit {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
 .tf-orbit-rings { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 /* "Live system" feel — extremely subtle: the outer dashed ring's dashes drift
    slowly around the orbit, plus a faint, slow core glow breath. */
