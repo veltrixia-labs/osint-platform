@@ -16,7 +16,6 @@
  *     identical. No overlay modal. Fully open (no tier gating).
  */
 import {
-    fetchAlert,
     fetchMonthlyTrendIndex,
     fetchLatestMonthlyTrend,
     fetchMonthlyTrend,
@@ -26,7 +25,6 @@ import {
 } from '../api';
 import { chudDetailHtml } from './alerts';
 
-const MAX_NEWS_FETCH = 60; // cap source-alert enrichment per snapshot
 const DAY_MS = 86_400_000;
 
 /**
@@ -55,7 +53,6 @@ let tfActiveDomain: string | null = null; // orbit sector filter (null = all)
 let tfActiveDay: number | null = null;     // chart day filter (null = all days)
 let tfSelectedId: string | null = null;    // master-detail selection (persists across list re-renders)
 let tfPeriodStartMs = 0;            // current period start (UTC ms) for day math
-let tfRenderToken = 0;             // bumped each showFlow → guards stale hydration
 
 function _esc(s: unknown): string {
     return String(s ?? '')
@@ -81,7 +78,6 @@ function _dayLabel(day: number): string {
  * we bump the render token so any in-flight hydration is discarded.
  */
 export function disposeTrendFlow(): void {
-    tfRenderToken++;
     tfAlertDomain = new Map();
     tfSortedAlerts = [];
     tfNewsOverflow = 0;
@@ -292,74 +288,47 @@ function _renderNewsList(newsEl: HTMLElement, countEl: HTMLElement | null): void
     newsEl.classList.add('tf-news-anim');
 }
 
-/** Bounded-concurrency map (avoid hammering the API with 60 parallel requests). */
-async function _pool<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-    const out: R[] = new Array(items.length);
-    let cursor = 0;
-    const workers = new Array(Math.min(limit, items.length)).fill(0).map(async () => {
-        while (cursor < items.length) {
-            const i = cursor++;
-            out[i] = await fn(items[i]);
-        }
-    });
-    await Promise.all(workers);
-    return out;
-}
-
 /**
- * Resolve the month's spiked alerts (per-domain provenance), then paint the
- * Top-Left chart and Bottom-Left list. `onReady` fires once data is in (used to
- * auto-select the top signal into the detail pane), guarded by the render token.
+ * Paint the Top-Left chart and Bottom-Left list from the snapshot's SELF-CONTAINED
+ * `summary.signals` payload — no live alert resolution. The snapshot is frozen at
+ * generation time and survives alert_logs retention purges. Each signal mirrors the
+ * /api/alerts/{id} shape, so it feeds the existing Alert renderers (chart, list,
+ * chudDetailHtml) directly — synchronous, zero network round-trips.
  */
-async function _hydrate(
+function _hydrate(
     snapshot: MonthlyTrendSnapshot,
     chartEl: HTMLElement,
     newsEl: HTMLElement,
     countEl: HTMLElement | null,
-    token: number,
-    onReady: () => void,
-): Promise<void> {
-    const domains: Record<string, any> = snapshot.summary?.domains || {};
+): void {
+    const signals: Alert[] = Array.isArray((snapshot.summary as any)?.signals)
+        ? ((snapshot.summary as any).signals as Alert[])
+        : [];
 
+    tfPeriodStartMs = new Date(snapshot.period.start).getTime();
+    tfNewsOverflow = 0;
     const alertDomain = new Map<string, string>();
-    const order: string[] = [];
-    for (const d of TF_DOMAINS) {
-        const ids: string[] = domains[d.id]?.source_alert_ids || [];
-        for (const id of ids) {
-            if (!alertDomain.has(id)) { alertDomain.set(id, d.id); order.push(id); }
-        }
+    for (const s of signals) {
+        const dom = (s as any).domain_id;
+        if (dom && !alertDomain.has(s.id)) alertDomain.set(s.id, dom);
     }
     tfAlertDomain = alertDomain;
-    tfPeriodStartMs = new Date(snapshot.period.start).getTime();
 
-    if (!order.length) {
+    if (!signals.length) {
         tfSortedAlerts = [];
-        tfNewsOverflow = 0;
         chartEl.innerHTML = `<div class="tf-chart-empty">No spike trajectory</div>`;
         newsEl.innerHTML = `<div class="tf-news-empty">No spiked signals in ${_esc(snapshot.period?.label ?? 'this period')}.</div>`;
         if (countEl) countEl.textContent = '0';
-        onReady();
         return;
     }
 
-    const ids = order.slice(0, MAX_NEWS_FETCH);
-    tfNewsOverflow = order.length - ids.length;
-
-    chartEl.innerHTML = `<div class="tf-chart-load">Resolving trajectory…</div>`;
-    newsEl.innerHTML = `<div class="tf-news-load">Resolving ${ids.length} spiked source${ids.length === 1 ? '' : 's'}…</div>`;
-
-    const results = await _pool(ids, 8, async (id) => {
-        try { return await fetchAlert(id); } catch { return null; }
-    });
-    if (token !== tfRenderToken) return; // a newer month took over
-
-    const alerts = results.filter((a): a is Alert => !!a);
-    alerts.sort((a, b) => new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime());
+    const alerts = signals.slice().sort(
+        (a, b) => new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime(),
+    );
     tfSortedAlerts = alerts;
 
     chartEl.innerHTML = `<div class="tf-spark-wrap">${_sparklineSvg(snapshot.period, alerts, tfActiveDomain, tfActiveDay)}</div>`;
     _renderNewsList(newsEl, countEl);
-    onReady();
 }
 
 // ── Entry point ──────────────────────────────────────────────────────────────
@@ -528,7 +497,6 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
     });
 
     const showFlow = (snap: MonthlyTrendSnapshot | null) => {
-        const token = ++tfRenderToken;
         tfActiveDomain = null; // reset filters + selection on month change
         tfActiveDay = null;
         tfSelectedId = null;
@@ -551,12 +519,10 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         subEl.textContent = `${snap.period.label} · per-domain pressure spikes across the 6 strategic sectors`;
         _renderSummary(statsEl, snap);
         orbitHost.innerHTML = _buildOrbit(snap);
-        void _hydrate(snap, chartEl, newsEl, newsCountEl, token, () => {
-            if (token !== tfRenderToken) return;
-            // Auto-select the top signal so the detail pane is populated by default
-            // (mirrors the Alert Stream's master-detail initial projection).
-            if (tfSortedAlerts.length) selectAlert(tfSortedAlerts[0].id);
-        });
+        _hydrate(snap, chartEl, newsEl, newsCountEl);
+        // Auto-select the top signal so the detail pane is populated by default
+        // (mirrors the Alert Stream's master-detail initial projection).
+        if (tfSortedAlerts.length) selectAlert(tfSortedAlerts[0].id);
     };
 
     archive.addEventListener('change', async () => {

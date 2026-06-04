@@ -46,11 +46,14 @@ from jobs.omni_spatial_worker import resolve_alert_coordinates
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = "monthly_trend_v2"  # v2: per-strategic-domain independent spikes, all 6 domains
+SCHEMA_VERSION = "monthly_trend_v3"  # v3: self-contained — embeds per-signal payloads (no live alert fetch)
 SPIKE_RATIO = 1.5  # strict raw-intensity reignite ratio (mirrors _PRO_MIN_REIGNITE_FACTOR)
 # Month window spans ~30 days; the physics engine's window_hours only scales a few
 # density proxies, so a 30-day window keeps the cluster-density math sane.
 _MONTH_WINDOW_HOURS = 24.0 * 31
+# Cap embedded sources per signal — keeps the frozen snapshot compact while still
+# covering the detail pane's 3 primary + a few secondary sources.
+_MAX_EVIDENCE_PER_SIGNAL = 6
 
 _MONTH_NAMES = (
     "January", "February", "March", "April", "May", "June",
@@ -133,6 +136,30 @@ def _edge_payload(
     }
 
 
+def _signal_payload(alert, domain_id: str, meta: Dict[str, Any]) -> Dict[str, Any]:
+    """Compact, SELF-CONTAINED snapshot of one spiked alert — everything the UI
+    chart / list / detail pane need WITHOUT re-reading the (purgeable) alert_logs
+    row. Field names mirror the GET /api/alerts/{id} contract so the frontend
+    consumes these identically to live-fetched alerts."""
+    ev = [e for e in (meta.get("evidence_list") or []) if isinstance(e, dict)][:_MAX_EVIDENCE_PER_SIGNAL]
+    src = next((e.get("url") or e.get("link") for e in ev if (e.get("url") or e.get("link"))), None)
+    return {
+        "id": str(alert.id),
+        "title": meta.get("display_title") or alert.target_label or "",
+        "target_label": alert.target_label,
+        "topic": alert.topic,
+        "domain_id": domain_id,
+        "triggered_at": alert.triggered_at.isoformat() if alert.triggered_at else None,
+        "severity": alert.severity,
+        "status": alert.status,
+        "backbone_discovery_status": meta.get("backbone_discovery_status", "idle"),
+        "intensity_pct": meta.get("intensity_pct"),
+        "is_locked": False,
+        "source_url": src,
+        "evidence_list": ev,
+    }
+
+
 async def build_monthly_trend_snapshot(
     session: AsyncSession, year: int, month: int
 ) -> Dict[str, Any]:
@@ -167,6 +194,7 @@ async def build_monthly_trend_snapshot(
     spiked_ids_by_domain: Dict[str, List[str]] = defaultdict(list)  # ALL spikes, time-ordered
     events_by_domain: Dict[str, list] = defaultdict(list)      # mappable spikes → spatial events
     total_by_domain: Dict[str, int] = defaultdict(int)
+    signals: List[Dict[str, Any]] = []                         # self-contained per-spike payloads
     # (strategic_domain, site_key) -> [alert_id]
     provenance: Dict[Tuple[str, str], List[str]] = defaultdict(list)
 
@@ -185,6 +213,7 @@ async def build_monthly_trend_snapshot(
             continue
 
         spiked_ids_by_domain[domain].append(str(alert.id))
+        signals.append(_signal_payload(alert, domain, meta))
 
         # Spatial enrichment is best-effort: spikes without coordinates still
         # count toward the domain (news list / orbit), just not the geo metrics.
@@ -267,6 +296,7 @@ async def build_monthly_trend_snapshot(
         "spike_ratio": SPIKE_RATIO,
         "top_sectors": top_sectors,
         "domains": domain_summary,
+        "signals": signals,  # self-contained: UI renders chart/list/detail from these
     }
 
     return {
