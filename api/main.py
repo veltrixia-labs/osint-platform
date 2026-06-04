@@ -56,6 +56,7 @@ from api.routes.pro_reports import router as pro_reports_router
 from api.routes.pro_spatial import router as pro_spatial_router
 from api.routes.dev_tools import router as dev_tools_router
 from api.routes.admin import router as admin_router
+from api.routes.state import router as state_router
 from api.routes.stripe import router as stripe_router
 
 # Production Traceability
@@ -286,6 +287,7 @@ app.include_router(pro_spatial_router, prefix="/api")
 app.include_router(pro_reports_router, prefix="/api")
 app.include_router(dev_tools_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
+app.include_router(state_router, prefix="/api")
 
 # ── Auth Endpoints ─────────────────────────────────────────────────────────────
 
