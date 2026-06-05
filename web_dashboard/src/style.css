@@ -11393,6 +11393,23 @@ body.syslogic-open { overflow: hidden; }
 .tf-spark-wrap { display: flex; flex-direction: column; gap: 4px; }
 .tf-spark { width: 100%; height: 110px; display: block; }
 .tf-chart--wide .tf-spark { height: clamp(170px, 25vh, 250px); }
+
+/* Crisp HTML Y-axis integer labels overlaid on the stretched SVG (kept out of the
+   SVG so preserveAspectRatio=none can't distort the digits). Positioned by the
+   same % as the gridlines, in the left gutter (viewBox padL). */
+.tf-spark-plot { position: relative; width: 100%; }
+.tf-spark-yaxis { position: absolute; inset: 0; pointer-events: none; }
+.tf-spark-ytick {
+  position: absolute;
+  left: 2px;
+  transform: translateY(-50%);
+  color: var(--tf-dim);
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.52rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
 /* Crisp HTML X-axis row (renders outside the stretched SVG so labels keep
    their natural aspect ratio — no horizontal distortion). */
 .tf-spark-axis {

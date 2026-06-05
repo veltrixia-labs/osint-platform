@@ -182,25 +182,37 @@ function _sparklineSvg(
     const todayIdx = Math.floor((Date.now() - start) / DAY_MS);
     const lastIdx = todayIdx >= days ? days - 1 : Math.max(0, Math.min(days - 1, todayIdx));
 
-    const W = 600, H = 220, padX = 10, padTop = 12, padBot = 14;
-    const maxTotal = Math.max(1, ...total);
-    const plotW = W - padX * 2;
+    // Integer Y scale — never stretch a small max to the top of the box. Ceiling
+    // = max(5, dataMax+1) rounded up to a "nice" step, so gridlines/labels land on
+    // real integers and a count of 2 reads at the labeled "2" line (not the top).
+    const dataMax = Math.max(0, ...total);
+    const NICE_STEPS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500, 1000, 2000, 5000];
+    const target = Math.max(5, dataMax + 1);                       // min ceiling of 5
+    const step = NICE_STEPS.find((s) => target / s <= 6) ?? Math.ceil(target / 6);
+    const yMax = Math.ceil(target / step) * step;                  // top tick == yMax
+    const ticks: number[] = [];
+    for (let v = 0; v <= yMax + 1e-9; v += step) ticks.push(Math.round(v));
+
+    const W = 600, H = 220, padL = 26, padR = 10, padTop = 12, padBot = 14;
+    const plotW = W - padL - padR;
     const plotH = H - padTop - padBot;
     const barW = plotW / days;
+    const yOf = (v: number) => padTop + plotH - (v / yMax) * plotH; // value → viewBox y
 
-    const grid = [0.25, 0.5, 0.75, 1].map((f) => {
-        const y = padTop + plotH - f * plotH;
-        return `<line x1="${padX}" y1="${y.toFixed(1)}" x2="${W - padX}" y2="${y.toFixed(1)}" stroke="rgba(120,160,210,0.10)" stroke-width="0.6"></line>`;
+    // Horizontal gridlines exactly on the integer ticks (v=0 doubles as the axis).
+    const grid = ticks.map((v) => {
+        const y = yOf(v).toFixed(1);
+        return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="rgba(120,160,210,${v === 0 ? '0.28' : '0.10'})" stroke-width="${v === 0 ? '0.8' : '0.6'}"></line>`;
     }).join('');
 
     const dayHl = (activeDay != null && activeDay >= 0 && activeDay < days)
-        ? `<rect class="tf-spark-dayhl" x="${(padX + activeDay * barW).toFixed(1)}" y="${padTop}" width="${barW.toFixed(2)}" height="${plotH}"></rect>`
+        ? `<rect class="tf-spark-dayhl" x="${(padL + activeDay * barW).toFixed(1)}" y="${padTop}" width="${barW.toFixed(2)}" height="${plotH}"></rect>`
         : '';
 
     const bars = total.map((c, i) => {
         if (!c || i > lastIdx) return '';   // no bars on empty/future days
-        const h = (c / maxTotal) * plotH;
-        const x = padX + i * barW;
+        const h = (c / yMax) * plotH;       // mapped to the labeled integer scale
+        const x = padL + i * barW;
         const y = padTop + (plotH - h);
         const w = Math.max(barW - 1.5, 1);
         return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="1" fill="rgba(120,160,210,0.16)"></rect>`;
@@ -211,11 +223,9 @@ function _sparklineSvg(
         const domTotal = counts.reduce((s, v) => s + v, 0);
         if (!domTotal) return '';
         // Only plot points up to today so the line ends at the current day.
-        const pts = counts.slice(0, lastIdx + 1).map((v, i) => {
-            const x = padX + i * barW + barW / 2;
-            const y = padTop + (plotH - (v / maxTotal) * plotH);
-            return `${x.toFixed(1)},${y.toFixed(1)}`;
-        }).join(' ');
+        const pts = counts.slice(0, lastIdx + 1).map((v, i) =>
+            `${(padL + i * barW + barW / 2).toFixed(1)},${yOf(v).toFixed(1)}`
+        ).join(' ');
         const dim = activeDomain && activeDomain !== d.id;
         const w = activeDomain === d.id ? 2.6 : 1.6;
         const op = dim ? 0.12 : 0.95;
@@ -225,18 +235,27 @@ function _sparklineSvg(
     // Transparent per-day hit columns → click filters the list to that day.
     const hits = total.map((_c, i) => {
         if (i > lastIdx) return '';   // future days aren't clickable
-        const x = padX + i * barW;
+        const x = padL + i * barW;
         const sel = activeDay === i ? ' tf-spark-hit--on' : '';
         return `<rect class="tf-spark-hit${sel}" data-tf-day="${i}" x="${x.toFixed(1)}" y="${padTop}" width="${barW.toFixed(2)}" height="${plotH}"><title>${_esc(_dayLabel(i))}</title></rect>`;
     }).join('');
 
-    const axisLine = `<line x1="${padX}" y1="${padTop + plotH}" x2="${W - padX}" y2="${padTop + plotH}" stroke="rgba(120,160,210,0.28)" stroke-width="0.8"></line>`;
     const midDay = Math.round(days / 2);
+    // Crisp HTML Y-axis integer labels overlaid on the (horizontally-stretched)
+    // SVG so the digits keep their aspect ratio. Positioned by the SAME fraction
+    // as each gridline (preserveAspectRatio=none maps viewBox-y linearly to box
+    // height), so "2" sits exactly on the "2" gridline.
+    const yLabels = ticks.map((v) =>
+        `<span class="tf-spark-ytick" style="top:${((yOf(v) / H) * 100).toFixed(2)}%">${v}</span>`
+    ).join('');
 
     return (
+        `<div class="tf-spark-plot">` +
         `<svg class="tf-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Daily per-domain spike trajectory">` +
-        grid + dayHl + axisLine + bars + series + hits +
+        grid + dayHl + bars + series + hits +
         `</svg>` +
+        `<div class="tf-spark-yaxis" aria-hidden="true">${yLabels}</div>` +
+        `</div>` +
         `<div class="tf-spark-axis"><span>DAY 1</span><span>${midDay}</span><span>${days}</span></div>`
     );
 }
