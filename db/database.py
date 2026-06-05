@@ -83,7 +83,15 @@ logger.info(f"DB Init: Mode={ssl_mode}, Host={urlparse(db_url).hostname}, URL={m
 engine = create_async_engine(
     db_url,
     echo=False,
-    connect_args=connect_args
+    connect_args=connect_args,
+    # 512MB instance: every pooled connection buffers its own result set, so cap
+    # total concurrent connections at pool_size + max_overflow (= 5). pre_ping +
+    # recycle keep long-lived pooled conns healthy on Render's managed Postgres.
+    pool_size=3,
+    max_overflow=2,
+    pool_timeout=30,
+    pool_pre_ping=True,
+    pool_recycle=1800,
 )
 
 AsyncSessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)

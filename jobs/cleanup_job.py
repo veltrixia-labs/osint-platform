@@ -105,17 +105,18 @@ class VisualAudit:
         logger.info("Building reference map...")
         
         async with AsyncSessionLocal() as db:
-            # 1. Query Reports
-            stmt_reports = select(Report.content_markdown, Report.teaser_md)
-            reports = (await db.execute(stmt_reports)).all()
-            for r_content, r_teaser in reports:
+            # 1. Query Reports — STREAMED in 500-row partitions. Only the small
+            # set of referenced filenames accumulates; the full content_markdown /
+            # teaser text is never materialized into one Python list.
+            stmt_reports = select(Report.content_markdown, Report.teaser_md).execution_options(yield_per=500)
+            async for r_content, r_teaser in await db.stream(stmt_reports):
                 self._extract_from_text(r_content)
                 self._extract_from_text(r_teaser)
-            
-            # 2. Query AlertLog metadata
-            stmt_alerts = select(AlertLog.metadata_json)
-            alerts = (await db.execute(stmt_alerts)).scalars().all()
-            for meta in alerts:
+
+            # 2. Query AlertLog metadata — STREAMED. Loading every metadata_json
+            # blob into one list was the largest unbounded scan (OOM driver).
+            stmt_alerts = select(AlertLog.metadata_json).execution_options(yield_per=500)
+            async for meta in await db.stream_scalars(stmt_alerts):
                 if meta:
                     self._extract_from_text(json.dumps(meta))
         

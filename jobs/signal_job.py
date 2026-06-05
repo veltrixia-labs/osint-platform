@@ -107,24 +107,25 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
     from analysis.signal_engine import calculate_cluster_signal
     from db.models import EventCluster
     
-    cluster_stmt = select(EventCluster).where(EventCluster.created_at >= start_time)
-    clusters = (await db.execute(cluster_stmt)).scalars().all()
-    
+    cluster_stmt = (
+        select(EventCluster).where(EventCluster.created_at >= start_time).execution_options(yield_per=500)
+    )
+    clusters = [c async for c in await db.stream_scalars(cluster_stmt)]
+
     if not clusters:
         logger.info(
             f"[SIGNAL] No clusters found in last {SIGNAL_LOOKBACK_HOURS}h for {signal_type}"
         )
         return
 
-    # Bulk fetch all relevant items for these clusters in one query
-    cluster_ids = [c.id for c in clusters]
-    item_stmt = select(Item).where(Item.cluster_id.in_(cluster_ids))
-    all_cluster_items = (await db.execute(item_stmt)).scalars().all()
-    
-    # Map items to clusters in memory
+    # Stream the items for these clusters in 500-row partitions STRAIGHT INTO the
+    # per-cluster grouping — avoids buffering the whole item join result as a
+    # second full list alongside the grouped dict.
     from collections import defaultdict
+    cluster_ids = [c.id for c in clusters]
     items_by_cluster = defaultdict(list)
-    for it in all_cluster_items:
+    item_stmt = select(Item).where(Item.cluster_id.in_(cluster_ids)).execution_options(yield_per=500)
+    async for it in await db.stream_scalars(item_stmt):
         items_by_cluster[it.cluster_id].append(it)
 
     final_scored_pool = []

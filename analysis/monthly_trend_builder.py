@@ -26,6 +26,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from datetime import datetime, timezone
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import select
@@ -166,18 +167,18 @@ async def build_monthly_trend_snapshot(
     """Compute the flow snapshot dict for a calendar month (no DB writes)."""
     start, end, label = month_bounds(year, month)
 
-    rows = (
-        await session.execute(
-            select(AlertLog)
-            .where(
-                AlertLog.triggered_at >= start,
-                AlertLog.triggered_at < end,
-                AlertLog.suppressed.is_(False),
-            )
-            .order_by(AlertLog.triggered_at.asc())
+    # Stream the month's alerts in 500-row partitions (server-side cursor) instead
+    # of materializing the whole window as one list — keeps the result buffer flat.
+    stmt = (
+        select(AlertLog)
+        .where(
+            AlertLog.triggered_at >= start,
+            AlertLog.triggered_at < end,
+            AlertLog.suppressed.is_(False),
         )
-    ).scalars().all()
-    total = len(rows)
+        .order_by(AlertLog.triggered_at.asc())
+        .execution_options(yield_per=500)
+    )
 
     # Offline geocoder (text → lat/lon) is optional; fall back to row coords.
     geo = None
@@ -198,7 +199,10 @@ async def build_monthly_trend_snapshot(
     # (strategic_domain, site_key) -> [alert_id]
     provenance: Dict[Tuple[str, str], List[str]] = defaultdict(list)
 
-    for alert in rows:
+    total = 0
+    result = await session.stream_scalars(stmt)
+    async for alert in result:
+        total += 1
         # Pass the headline so the sports/entertainment guardrail can intercept
         # items (e.g. World Cup) before macro keyword collisions misroute them.
         meta = alert.metadata_json if isinstance(alert.metadata_json, dict) else {}
@@ -208,7 +212,12 @@ async def build_monthly_trend_snapshot(
         raw = raw_intensity_from_alert(alert)
         # STRICT 1.5x vs the domain's OWN prior population (independent baseline).
         baseline = decayed_domain_baseline(prior_by_domain[domain], now=alert.triggered_at)
-        prior_by_domain[domain].append(alert)  # baseline = strictly prior activity
+        # Retain only the fields decayed_domain_baseline needs (triggered_at +
+        # raw_intensity) instead of the full ORM row — drops the heavy evidence
+        # blobs from the per-domain baseline pool that lives for the whole month.
+        prior_by_domain[domain].append(
+            SimpleNamespace(triggered_at=alert.triggered_at, metadata_json={"raw_intensity": raw})
+        )
         if not _strict_spike(raw, baseline):
             continue
 

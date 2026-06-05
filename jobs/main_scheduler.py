@@ -1,4 +1,5 @@
 import asyncio
+import gc
 import logging
 import os
 from datetime import datetime, timezone
@@ -36,6 +37,11 @@ logger = logging.getLogger(__name__)
 _running_tasks = set()
 # Serialize heavy memory jobs (full pipeline vs discovery scout) to avoid OOM spikes.
 _heavy_work_lock = asyncio.Lock()
+# Shared mutex for the memory-heavy BATCH jobs (monthly_trend, cleanup, ops,
+# daily/weekly/monthly reports). Their cron times overlap (e.g. cleanup is hourly
+# and fires at 09:00 alongside monthly_report); this guarantees only one runs at a
+# time so their full-table scans never stack and blow the 512MB ceiling.
+_heavy_db_lock = asyncio.Lock()
 # Macro API sync runs separately so the 5-minute OSINT pipeline is not blocked.
 _external_data_sync_lock = asyncio.Lock()
 
@@ -120,32 +126,42 @@ async def pipeline_health_check_wrapper():
         await run_health_check(session)
 
 async def daily_reports_wrapper():
-    async with AsyncSessionLocal() as session:
-        await run_all_reports(session, "daily", 1, auto_post_threads=True)
+    async with _heavy_db_lock:
+        async with AsyncSessionLocal() as session:
+            await run_all_reports(session, "daily", 1, auto_post_threads=True)
+    gc.collect()
 
 async def weekly_reports_wrapper():
-    async with AsyncSessionLocal() as session:
-        await run_all_reports(session, "weekly", 7, auto_post_threads=True)
+    async with _heavy_db_lock:
+        async with AsyncSessionLocal() as session:
+            await run_all_reports(session, "weekly", 7, auto_post_threads=True)
+    gc.collect()
 
 async def monthly_reports_wrapper():
-    if datetime.now(timezone.utc).day == 1:
+    if datetime.now(timezone.utc).day != 1:
+        return
+    async with _heavy_db_lock:
         async with AsyncSessionLocal() as session:
             await run_all_reports(session, "monthly", 30, auto_post_threads=True)
+    gc.collect()
 
 async def monthly_trend_wrapper():
     # Spatial subsystem is live (quarantine lifted): the monthly-trend builder
     # routes spikes through SpatialPhysicsEngine + the geo/omni-spatial worker.
     now = datetime.now(timezone.utc)
-    async with AsyncSessionLocal() as session:
-        # On the 1st, lock in the just-completed previous month (idempotent).
-        if now.day == 1:
-            await run_monthly_trend_worker(session)
-        # ALWAYS refresh the IN-PROGRESS current month so the dashboard streams
-        # live data instead of stalling on the last completed month (the cause of
-        # the "stuck on May / no June" gap). Force-rebuild to absorb new spikes.
-        await run_monthly_trend_worker(session, year=now.year, month=now.month, force=True)
-        # Enforce the 3-month rolling window: drop archives older than current+2.
-        await prune_monthly_trends(session, now=now)
+    async with _heavy_db_lock:  # never overlap cleanup / reports / ops (OOM avoidance)
+        async with AsyncSessionLocal() as session:
+            # On the 1st, lock in the just-completed previous month (idempotent).
+            if now.day == 1:
+                await run_monthly_trend_worker(session)
+            # ALWAYS refresh the IN-PROGRESS current month so the dashboard streams
+            # live data instead of stalling on the last completed month. Force-
+            # rebuild to absorb new spikes.
+            await run_monthly_trend_worker(session, year=now.year, month=now.month, force=True)
+            # Enforce the 3-month rolling window: drop archives older than current+2.
+            await prune_monthly_trends(session, now=now)
+            session.expire_all()
+    gc.collect()
 
 async def run_threads_publisher_wrapper():
     async with AsyncSessionLocal() as session:
@@ -160,32 +176,40 @@ async def run_discovery_scout_wrapper():
         await ImpactDiscoveryEngine.run_discovery_scout()
 
 async def run_cleanup_bundle():
-    """Bundle of hourly/daily cleanups to ensure they run under one concurrency guard name."""
-    async with AsyncSessionLocal() as session:
-        logger.info("[CLEANUP] Start Alert Cleanup")
-        await run_alert_cleanup(session)
-        logger.info("[CLEANUP] Start Trend Cleanup")
-        await run_trend_cleanup(session)
-        
-        # Daily specific checks (if we were more granular, we'd split these, 
-        # but for now running hourly is safe and ensures space is reclaimed).
-        logger.info("[CLEANUP] Metadata limit enforcement")
-        await enforce_metadata_limits(session)
+    """Bundle of hourly/daily cleanups under the shared heavy-DB mutex so they
+    never run concurrently with monthly_trend / reports / ops (OOM avoidance).
+    Preserves the cleanup-first ordering: alert → trend → metadata enforcement."""
+    async with _heavy_db_lock:
+        async with AsyncSessionLocal() as session:
+            logger.info("[CLEANUP] Start Alert Cleanup")
+            await run_alert_cleanup(session)
+            logger.info("[CLEANUP] Start Trend Cleanup")
+            await run_trend_cleanup(session)
+
+            # Daily specific checks (if we were more granular, we'd split these,
+            # but for now running hourly is safe and ensures space is reclaimed).
+            logger.info("[CLEANUP] Metadata limit enforcement")
+            await enforce_metadata_limits(session)
+            session.expire_all()
+    gc.collect()
 
 async def run_ops_monitoring():
-    async with AsyncSessionLocal() as session:
-        await run_db_size_check(session)
-        await audit_metadata_sizes(session)
-        await run_retention_audit(session)
-        await run_retention_cleanup(session) # Full retention cleanup
-    
-    # Visual Asset Cleanup (Configurable via ENV)
-    # Defaulting to dry_run=True or archive_only=True during initial rollout for safety
-    dry_run = os.getenv("CLEANUP_DRY_RUN", "true").lower() == "true"
-    archive_only = os.getenv("CLEANUP_ARCHIVE_ONLY", "true").lower() == "true"
-    retention = int(os.getenv("CLEANUP_RETENTION_DAYS", "14"))
-    
-    await run_visual_cleanup(dry_run=dry_run, archive_only=archive_only, retention=retention)
+    async with _heavy_db_lock:
+        async with AsyncSessionLocal() as session:
+            await run_db_size_check(session)
+            await audit_metadata_sizes(session)
+            await run_retention_audit(session)
+            await run_retention_cleanup(session) # Full retention cleanup
+            session.expire_all()
+
+        # Visual Asset Cleanup (Configurable via ENV) — uses the streamed
+        # build_reference_map; kept inside the mutex so it cannot overlap cleanup.
+        # Defaulting to dry_run=True or archive_only=True during initial rollout.
+        dry_run = os.getenv("CLEANUP_DRY_RUN", "true").lower() == "true"
+        archive_only = os.getenv("CLEANUP_ARCHIVE_ONLY", "true").lower() == "true"
+        retention = int(os.getenv("CLEANUP_RETENTION_DAYS", "14"))
+        await run_visual_cleanup(dry_run=dry_run, archive_only=archive_only, retention=retention)
+    gc.collect()
     
     # [v10.21] Entity Lifecycle: recalculate scores and prune obsolete tactical nodes
     await run_entity_lifecycle(db_pressure_critical=False)
