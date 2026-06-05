@@ -11300,6 +11300,33 @@ body.syslogic-open { overflow: hidden; }
   text-transform: uppercase;
 }
 .tf-panel-tag b { color: var(--tf-cyan); font-variant-numeric: tabular-nums; }
+
+/* Discoverable "Show all month" reset — appears in the SPIKED SIGNALS header
+   whenever a chart-day or sector filter narrows the view. Clicking clears both. */
+.tf-day-reset {
+  flex: none;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--tf-cyan) 45%, transparent);
+  background: color-mix(in srgb, var(--tf-cyan) 12%, transparent);
+  color: var(--tf-cyan);
+  font: inherit;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+.tf-day-reset:hover {
+  background: color-mix(in srgb, var(--tf-cyan) 22%, transparent);
+  border-color: var(--tf-cyan);
+}
+.tf-day-reset[hidden] { display: none; }   /* override inline-flex when not active */
 .tf-panel-body { padding: 11px 12px; min-height: 0; }
 
 /* Left (main): wide chart fixed, news scrolls to fill. */

@@ -93,7 +93,7 @@ function _renderSummary(statsEl: HTMLElement, snapshot: MonthlyTrendSnapshot): v
     const top = Array.isArray(s.top_sectors) ? s.top_sectors : [];
     const entropy = typeof s.entropy_index === 'number' ? s.entropy_index.toFixed(3) : (s.entropy_index ?? '—');
     statsEl.innerHTML =
-        `<span class="tf-stat"><b>${s.alerts_spiked ?? 0}</b> SPIKED</span>` +
+        `<span class="tf-stat"><b data-tf-spiked>${s.alerts_spiked ?? 0}</b> SPIKED</span>` +
         `<span class="tf-stat tf-stat--dim"><b>${s.alerts_total ?? 0}</b> TOTAL</span>` +
         `<span class="tf-stat"><b>${entropy}</b> H</span>` +
         `<span class="tf-stat"><b>${s.node_count ?? 0}</b> NODES</span>` +
@@ -102,17 +102,18 @@ function _renderSummary(statsEl: HTMLElement, snapshot: MonthlyTrendSnapshot): v
 }
 
 // ── Top-Right quadrant: interactive 6-node Cyber-Orbit sector selector ───────
-function _buildOrbit(snapshot: MonthlyTrendSnapshot): string {
-    const domains: Record<string, any> = snapshot.summary?.domains || {};
+// `counts` = per-domain spiked totals for the ACTIVE scope (whole month, or the
+// selected chart day) so the radar stays in lockstep with the header + list.
+function _buildOrbit(counts: Record<string, number>): string {
     const R = 37;                      // node ring radius (% of orbit box)
     const SVG = 200, C = SVG / 2, RR = R * 2;
     const N = TF_DOMAINS.length;       // always 6
-    // Center readout = total spiked signals this month (sum of all node counts).
-    const totalSpiked = TF_DOMAINS.reduce((sum, d) => sum + (domains[d.id]?.spiked || 0), 0);
+    // Center readout = total spiked signals in the active scope (sum of nodes).
+    const totalSpiked = TF_DOMAINS.reduce((sum, d) => sum + (counts[d.id] || 0), 0);
 
     let spokes = '';
     const nodes = TF_DOMAINS.map((d, i) => {
-        const spiked = domains[d.id]?.spiked || 0;
+        const spiked = counts[d.id] || 0;
         const ang = (-90 + i * (360 / N)) * Math.PI / 180;
         const leftPct = 50 + R * Math.cos(ang);
         const topPct = 50 + R * Math.sin(ang);
@@ -251,6 +252,22 @@ function _newsItemHtml(a: Alert, domainId: string | undefined): string {
     );
 }
 
+/**
+ * Per-domain spiked counts for the ACTIVE scope — the selected chart day when
+ * `tfActiveDay` is set, otherwise the whole month. Computed from the same
+ * `tfSortedAlerts` that feeds the list, so the radar, the header SPIKED count,
+ * and the list can never disagree.
+ */
+function _scopedSpikedCounts(): Record<string, number> {
+    const counts: Record<string, number> = {};
+    for (const a of tfSortedAlerts) {
+        if (tfActiveDay != null && _alertDayIndex(a) !== tfActiveDay) continue;
+        const d = tfAlertDomain.get(a.id);
+        if (d) counts[d] = (counts[d] || 0) + 1;
+    }
+    return counts;
+}
+
 /** Render the news list from cached alerts, filtered by the active domain AND day. */
 function _renderNewsList(newsEl: HTMLElement, countEl: HTMLElement | null): void {
     if (!tfSortedAlerts.length) {
@@ -367,7 +384,8 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         `<span class="tf-panel-title">SPIKED SIGNALS</span>` +
         `<span class="tf-panel-subnote">Exclusively high-impact signals — already filtered to 1.5×+ per-domain spikes</span>` +
         `</div>` +
-        `<span class="tf-panel-tag"><b data-tf-newscount>0</b> stories<span class="tf-news-filtertag" data-tf-filtertag hidden></span></span></div>` +
+        `<span class="tf-panel-tag"><b data-tf-newscount>0</b> stories</span>` +
+        `<button type="button" class="tf-day-reset" data-tf-day-reset hidden></button></div>` +
         `<div class="tf-panel-body tf-newsfeed" data-tf-news><div class="tf-news-load">Loading…</div></div>` +
         `</div>` +
         // ── BR: signal detail (reuses the Alert Stream detail pane) ─────────
@@ -387,7 +405,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
     const orbitHost = container.querySelector<HTMLElement>('[data-tf-orbit-host]')!;
     const newsEl = container.querySelector<HTMLElement>('[data-tf-news]')!;
     const newsCountEl = container.querySelector<HTMLElement>('[data-tf-newscount]');
-    const filterTagEl = container.querySelector<HTMLElement>('[data-tf-filtertag]');
+    const resetChipEl = container.querySelector<HTMLButtonElement>('[data-tf-day-reset]');
     const detailEl = container.querySelector<HTMLElement>('[data-tf-detail]')!;
     const detailTagEl = container.querySelector<HTMLElement>('[data-tf-detail-tag]');
 
@@ -420,8 +438,29 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
             el.classList.toggle('tf-news-item--active', el.getAttribute('data-tf-alert') === id));
     };
 
-    // Re-sync orbit visuals, filter tag, chart, and the filtered list.
+    // Discoverable "Show all month" reset — shown whenever a day/sector narrows
+    // the view; clicking it clears BOTH filters and returns the full month.
+    const renderResetChip = () => {
+        if (!resetChipEl) return;
+        const parts: string[] = [];
+        if (tfActiveDay != null) parts.push(_dayLabel(tfActiveDay));
+        if (tfActiveDomain) parts.push(_domainLabel(tfActiveDomain));
+        if (parts.length) {
+            resetChipEl.innerHTML = `✕ ${_esc(parts.join(' · '))} · Show all month`;
+            resetChipEl.hidden = false;
+        } else {
+            resetChipEl.hidden = true;
+        }
+    };
+
+    // Re-sync radar + header + chart + list to the ACTIVE scope. The radar node
+    // counts, the header SPIKED total, and the list all derive from the same
+    // day-scoped counts, so "03 SPIKED" and the list can no longer disagree.
     const refresh = () => {
+        const counts = _scopedSpikedCounts();
+        const scopedTotal = Object.values(counts).reduce((sum, v) => sum + v, 0);
+
+        orbitHost.innerHTML = _buildOrbit(counts);   // radar scales to the active day
         orbitHost.querySelectorAll<HTMLElement>('.tf-orbit-node').forEach((n) => {
             const active = n.getAttribute('data-tf-domain') === tfActiveDomain;
             n.classList.toggle('tf-orbit-node--active', active);
@@ -429,15 +468,16 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         });
         orbitHost.querySelector('.tf-orbit')?.classList.toggle('tf-orbit--filtered', !!tfActiveDomain);
         const stateEl = orbitHost.querySelector<HTMLElement>('[data-tf-core-state]');
-        if (stateEl) stateEl.textContent = tfActiveDomain ? `${_domainLabel(tfActiveDomain).toUpperCase()} ONLY` : 'TOTAL SPIKED';
-        if (filterTagEl) {
-            const parts = [
-                tfActiveDomain ? _domainLabel(tfActiveDomain).toUpperCase() : '',
-                tfActiveDay != null ? _dayLabel(tfActiveDay).toUpperCase() : '',
-            ].filter(Boolean);
-            if (parts.length) { filterTagEl.textContent = ` · ${parts.join(' · ')}`; filterTagEl.hidden = false; }
-            else filterTagEl.hidden = true;
+        if (stateEl) {
+            stateEl.textContent = tfActiveDay != null
+                ? _dayLabel(tfActiveDay).toUpperCase()
+                : (tfActiveDomain ? `${_domainLabel(tfActiveDomain).toUpperCase()} ONLY` : 'TOTAL SPIKED');
         }
+        // Header SPIKED count follows the same scope.
+        const spikedEl = statsEl.querySelector<HTMLElement>('[data-tf-spiked]');
+        if (spikedEl) spikedEl.textContent = String(scopedTotal);
+
+        renderResetChip();
         renderChart();
         _renderNewsList(newsEl, newsCountEl);
     };
@@ -462,6 +502,13 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         const day = parseInt(hit.getAttribute('data-tf-day') || '-1', 10);
         if (day < 0) return;
         tfActiveDay = tfActiveDay === day ? null : day;
+        refresh();
+    });
+
+    // "Show all month" reset — clears the day AND sector filters in one click.
+    resetChipEl?.addEventListener('click', () => {
+        tfActiveDay = null;
+        tfActiveDomain = null;
         refresh();
     });
 
@@ -502,7 +549,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         tfActiveDay = null;
         tfSelectedId = null;
         lastSnap = snap;
-        if (filterTagEl) filterTagEl.hidden = true;
+        if (resetChipEl) resetChipEl.hidden = true;
         clearDetail();
         if (!snap) {
             statsEl.innerHTML = '';
@@ -519,8 +566,11 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         }
         subEl.textContent = `${snap.period.label} · per-domain pressure spikes across the 6 strategic sectors`;
         _renderSummary(statsEl, snap);
-        orbitHost.innerHTML = _buildOrbit(snap);
-        _hydrate(snap, chartEl, newsEl, newsCountEl);
+        _hydrate(snap, chartEl, newsEl, newsCountEl);   // populates tfSortedAlerts + tfAlertDomain
+        // Build the radar from the SAME scoped source as the list (whole month on
+        // load, since tfActiveDay is null) so they agree from the first paint.
+        orbitHost.innerHTML = _buildOrbit(_scopedSpikedCounts());
+        renderResetChip();
         // Auto-select the top signal so the detail pane is populated by default
         // (mirrors the Alert Stream's master-detail initial projection).
         if (tfSortedAlerts.length) selectAlert(tfSortedAlerts[0].id);
