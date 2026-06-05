@@ -575,8 +575,15 @@ class AlertManager:
         strategic domain's decayed baseline (the same per-domain model Trend Flow
         uses). Returns None on cold-start (no prior same-domain activity) so the
         caller can fall back to the legacy tier.
+
+        Baseline window = 7 days (168h). A 48h window over-fit to short news
+        cycles: a burst of high-intensity Energy/Defense items inflated the 48h
+        baseline, crushing the ratio (and thus intensity_pct) of every following
+        alert below the 15% feed floor / 82% archive gate. Widening to 7 days (the
+        48h decay half-life still discounts old activity) flattens that inflation
+        so persistent high-volatility events sustain a truthful percentile.
         """
-        window = now - timedelta(hours=48)
+        window = now - timedelta(hours=168)
         rows = (await db.execute(
             select(AlertLog).where(
                 AlertLog.triggered_at >= window,

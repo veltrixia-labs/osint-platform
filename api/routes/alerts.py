@@ -138,12 +138,17 @@ async def _get_alerts_impl(
     if since:
         stmt = stmt.where(AlertLog.triggered_at >= since)
 
-    # Data-Maturity floor in SQL so `limit` returns only COMPUTED, >=15% rows
-    # (cold-start/null are excluded here too) — keeps the window dense instead of
-    # spending slots on noise that the post-serialization filter would drop.
-    stmt = stmt.where(
-        AlertLog.metadata_json["intensity_pct"].astext.cast(Float) >= PERCENT_STREAM_FLOOR
-    )
+    # Data-Maturity floor: on the DEFAULT (all-topics) stream, drop sub-15% noise
+    # so the limited window holds the calibrated signals. BUT when the user
+    # explicitly drills into a topic/domain tab (e.g. Energy), BYPASS the floor and
+    # fall back to severity+recency ordering — a busy domain whose per-domain
+    # percentile model scores most alerts < 15% must not be rendered completely
+    # invisible. Suppressed rows are still excluded; ordering keeps the strongest
+    # signals first.
+    if not topic:
+        stmt = stmt.where(
+            AlertLog.metadata_json["intensity_pct"].astext.cast(Float) >= PERCENT_STREAM_FLOOR
+        )
 
     # Order by THREAT PRIORITY then recency so the rare CRITICAL/ELEVATED signals
     # always make the limited window (they'd otherwise be squeezed out by the

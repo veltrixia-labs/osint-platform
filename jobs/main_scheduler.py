@@ -446,6 +446,13 @@ async def main():
     async with AsyncSessionLocal() as session:
         await update_system_metric(session, "scheduler_status", "running")
 
+    # Startup catch-up: the monthly_trend snapshot otherwise stays stale until the
+    # next :30 after a (re)start — the audit saw a ~2h post-deploy lag. Kick one
+    # rebuild now, non-blocking, so the dashboard is fresh immediately. The hourly
+    # `every().hour.at(":30")` schedule continues to run normally; safe_run's
+    # name-guard means an overlapping :30 fire is simply skipped, not duplicated.
+    asyncio.create_task(safe_run("monthly_trend", monthly_trend_wrapper))
+
     while True:
         if os.getenv("SCHEDULER_PAUSED") == "true":
             await asyncio.sleep(60)
