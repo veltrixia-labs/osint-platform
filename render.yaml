@@ -7,7 +7,10 @@ services:
     name: osint-platform
     runtime: python
     buildCommand: pip install -r requirements.txt && pip install -e . --no-deps && alembic upgrade head
-    startCommand: alembic upgrade head && uvicorn run_api:app --host 0.0.0.0 --port $PORT
+    # Web service: serve the REAL FastAPI app (api/main.py — CORS + all routers).
+    # Do NOT run the scheduler here; the dedicated osint-scheduler Background Worker
+    # owns it (running it here too caused double-scheduler DB-lock contention).
+    startCommand: alembic upgrade head && uvicorn api.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/status
     envVars:
       - key: ENV
