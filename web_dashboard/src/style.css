@@ -11422,7 +11422,7 @@ body.syslogic-open { overflow: hidden; }
 .tf-spark-hit { fill: transparent; cursor: pointer; }
 .tf-spark-hit:hover { fill: rgba(0, 240, 255, 0.06); }
 .tf-spark-hit--on { fill: rgba(0, 240, 255, 0.05); }
-.tf-spark-dayhl { fill: rgba(0, 240, 255, 0.08); }
+.tf-spark-dayhl { fill: rgba(255, 255, 255, 0.05); }   /* subtle full-height band, not a data bar */
 /* Hover tooltip — floating glass card listing that day's spiked titles. */
 .tf-chart-tip {
   position: absolute; z-index: 6; pointer-events: none;

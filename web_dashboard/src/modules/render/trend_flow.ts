@@ -70,7 +70,8 @@ function _alertDayIndex(a: Alert): number {
 /** Short UTC date label for a day index (e.g. "May 14"), matching the bucketing. */
 function _dayLabel(day: number): string {
     const d = new Date(tfPeriodStartMs + day * DAY_MS);
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+    // Force en-US so the day-filter chip reads "Jun 4", not a browser-locale form.
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
 /**
@@ -205,8 +206,10 @@ function _sparklineSvg(
         return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="rgba(120,160,210,${v === 0 ? '0.28' : '0.10'})" stroke-width="${v === 0 ? '0.8' : '0.6'}"></line>`;
     }).join('');
 
+    // Active-day highlight = a SUBTLE FULL-HEIGHT band (y=0 → full viewBox height),
+    // so it reads as a column selection, not a bottom-anchored data bar.
     const dayHl = (activeDay != null && activeDay >= 0 && activeDay < days)
-        ? `<rect class="tf-spark-dayhl" x="${(padL + activeDay * barW).toFixed(1)}" y="${padTop}" width="${barW.toFixed(2)}" height="${plotH}"></rect>`
+        ? `<rect class="tf-spark-dayhl" x="${(padL + activeDay * barW).toFixed(1)}" y="0" width="${barW.toFixed(2)}" height="${H}"></rect>`
         : '';
 
     const bars = total.map((c, i) => {
@@ -218,13 +221,21 @@ function _sparklineSvg(
         return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="1" fill="rgba(120,160,210,0.16)"></rect>`;
     }).join('');
 
-    const series = TF_DOMAINS.map((d) => {
+    // Per-domain horizontal dodge: domains that spike the SAME day with the SAME
+    // count would otherwise render as identical, exactly-overlapping polylines —
+    // that is why "Markets" was hidden behind "Energy" on Jun 4 (not a key bug;
+    // perDomain is keyed by the same domain_id the signals carry). Shift each
+    // domain a few viewBox px sideways; the y value stays exactly on its integer
+    // gridline (no value distortion).
+    const N_DOM = TF_DOMAINS.length;
+    const series = TF_DOMAINS.map((d, di) => {
         const counts = perDomain[d.id];
         const domTotal = counts.reduce((s, v) => s + v, 0);
         if (!domTotal) return '';
+        const dodge = (di - (N_DOM - 1) / 2) * (barW * 0.12);
         // Only plot points up to today so the line ends at the current day.
         const pts = counts.slice(0, lastIdx + 1).map((v, i) =>
-            `${(padL + i * barW + barW / 2).toFixed(1)},${yOf(v).toFixed(1)}`
+            `${(padL + i * barW + barW / 2 + dodge).toFixed(1)},${yOf(v).toFixed(1)}`
         ).join(' ');
         const dim = activeDomain && activeDomain !== d.id;
         const w = activeDomain === d.id ? 2.6 : 1.6;
@@ -268,8 +279,8 @@ function _newsItemHtml(a: Alert, domainId: string | undefined): string {
     const dt = new Date(a.triggered_at);
     const when = Number.isNaN(dt.getTime())
         ? ''
-        : dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' +
-          dt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' +
+          dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     const domChip = domainId
         ? `<span class="tf-news-dom" style="--dom:${color}">${_esc(_domainLabel(domainId))}</span>`
         : '';
