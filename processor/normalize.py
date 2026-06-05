@@ -67,7 +67,7 @@ async def run_normalize(db: AsyncSession):
     result = await db.execute(stmt)
     raw_items = result.scalars().all()
 
-    metrics = {"normalized": 0, "noise_filtered": 0, "deduped": 0}
+    metrics = {"normalized": 0, "noise_filtered": 0, "deduped": 0, "unclassified": 0}
     candidates: list[dict] = []
 
     for raw in raw_items:
@@ -98,10 +98,18 @@ async def run_normalize(db: AsyncSession):
             except Exception:
                 pass
 
+        # Ingestion gate (strict): drops non-strategic media/entertainment noise
+        # and unclassifiable general news (returns None) instead of force-fitting a
+        # strategic domain. `title` enables the minimum-signal rule.
         topic_code = infer_topic_from_text(
             f"{title} {summary}",
+            title=title,
             source_group=raw.source_group,
+            strict=True,
         )
+        if topic_code is None:
+            metrics["unclassified"] += 1
+            continue
 
         candidates.append(
             {
