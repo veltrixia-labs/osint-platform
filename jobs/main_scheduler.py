@@ -294,7 +294,10 @@ def register_jobs():
     schedule.every().day.at("07:00").do(schedule_async, "daily_report", daily_reports_wrapper)
     schedule.every().monday.at("08:00").do(schedule_async, "weekly_report", weekly_reports_wrapper)
     schedule.every().day.at("09:00").do(schedule_async, "monthly_report", monthly_reports_wrapper)
-    schedule.every().day.at("09:30").do(schedule_async, "monthly_trend", monthly_trend_wrapper)
+    # Hourly (at :30, off the top-of-hour cleanup) so the dashboard reflects "today"
+    # intraday. The builder is streamed + idempotent (force-rebuild current month),
+    # and runs under _heavy_db_lock so it never stacks with cleanup on 512MB.
+    schedule.every().hour.at(":30").do(schedule_async, "monthly_trend", monthly_trend_wrapper)
 
     # Cleanup & Retention (Concurrency guarded by "cleanup")
     schedule.every().hour.do(schedule_async, "cleanup", run_cleanup_bundle)

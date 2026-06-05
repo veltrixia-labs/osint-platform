@@ -170,14 +170,15 @@ def percentage_from_ratio(ratio: float) -> float:
 
 
 def severity_from_percentage(pct: float) -> str:
-    """Re-aligned 3-tier threat gate on the distributed percentage.
+    """3-tier threat gate on the distributed percentage, SYNCHRONIZED with the
+    frontend (alertThreatTier: ELEVATED_PCT=82, CRITICAL_PCT=92) so a signal's
+    stored severity matches the tier the UI renders.
 
-    0–49% → watch (sub-spike noise) · 50–79% → elevated (crossed the 1.5x gate)
-    · 80–100% → critical (severe cross-sector ripple).
+    0–81% → watch (sub-ELEVATED) · 82–91% → elevated · 92–100% → critical.
     """
-    if pct >= 80.0:
+    if pct >= 92.0:
         return "critical"
-    if pct >= 50.0:
+    if pct >= 82.0:
         return "elevated"
     return "watch"
 

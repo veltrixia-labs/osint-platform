@@ -49,6 +49,11 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION = "monthly_trend_v3"  # v3: self-contained — embeds per-signal payloads (no live alert fetch)
 SPIKE_RATIO = 1.5  # strict raw-intensity reignite ratio (mirrors _PRO_MIN_REIGNITE_FACTOR)
+# Absolute archive floor = the UI's ELEVATED threshold (alertThreatTier ELEVATED_PCT=82).
+# The 1.5x spike alone maps to only ~50%, which let STANDARD/WATCH signals (e.g. a
+# 68% supply-chain alert) bleed into the archive. Require BOTH the spike AND
+# intensity_pct >= this floor so the archive holds only ELEVATED/CRITICAL signals.
+MIN_ARCHIVE_INTENSITY_PCT = 82.0
 # Month window spans ~30 days; the physics engine's window_hours only scales a few
 # density proxies, so a 30-day window keeps the cluster-density math sane.
 _MONTH_WINDOW_HOURS = 24.0 * 31
@@ -219,6 +224,13 @@ async def build_monthly_trend_snapshot(
             SimpleNamespace(triggered_at=alert.triggered_at, metadata_json={"raw_intensity": raw})
         )
         if not _strict_spike(raw, baseline):
+            continue
+        # Absolute tier gate (IN ADDITION to the 1.5x spike): only archive signals
+        # the UI would render ELEVATED/CRITICAL. Drops the 50-81% bleed band where
+        # a relative spike still reads as STANDARD/WATCH. Cold-start rows (pct None)
+        # are excluded — they aren't yet a validated high-impact signal.
+        pct = meta.get("intensity_pct")
+        if not isinstance(pct, (int, float)) or float(pct) < MIN_ARCHIVE_INTENSITY_PCT:
             continue
 
         spiked_ids_by_domain[domain].append(str(alert.id))
