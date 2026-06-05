@@ -166,10 +166,21 @@ function _sparklineSvg(
         if (Number.isNaN(t)) continue;
         const idx = Math.floor((t - start) / DAY_MS);
         if (idx < 0 || idx >= days) continue;
-        total[idx] += 1;
         const dom = tfAlertDomain.get(a.id);
-        if (dom && perDomain[dom]) perDomain[dom][idx] += 1;
+        if (dom && perDomain[dom]) {
+            perDomain[dom][idx] += 1;
+            // Volatility bar = TOTAL COUNT = the exact SUM of the per-domain line
+            // counts (count only domains that render a line, so bar === Σ lines,
+            // never an intensity/other metric).
+            total[idx] += 1;
+        }
     }
+
+    // Truncate to the current real-world day: the in-progress month stops at
+    // today so lines/bars don't draw flat across empty future days. Past months
+    // (period end <= now) render in full.
+    const todayIdx = Math.floor((Date.now() - start) / DAY_MS);
+    const lastIdx = todayIdx >= days ? days - 1 : Math.max(0, Math.min(days - 1, todayIdx));
 
     const W = 600, H = 220, padX = 10, padTop = 12, padBot = 14;
     const maxTotal = Math.max(1, ...total);
@@ -187,7 +198,7 @@ function _sparklineSvg(
         : '';
 
     const bars = total.map((c, i) => {
-        if (!c) return '';
+        if (!c || i > lastIdx) return '';   // no bars on empty/future days
         const h = (c / maxTotal) * plotH;
         const x = padX + i * barW;
         const y = padTop + (plotH - h);
@@ -199,7 +210,8 @@ function _sparklineSvg(
         const counts = perDomain[d.id];
         const domTotal = counts.reduce((s, v) => s + v, 0);
         if (!domTotal) return '';
-        const pts = counts.map((v, i) => {
+        // Only plot points up to today so the line ends at the current day.
+        const pts = counts.slice(0, lastIdx + 1).map((v, i) => {
             const x = padX + i * barW + barW / 2;
             const y = padTop + (plotH - (v / maxTotal) * plotH);
             return `${x.toFixed(1)},${y.toFixed(1)}`;
@@ -212,6 +224,7 @@ function _sparklineSvg(
 
     // Transparent per-day hit columns → click filters the list to that day.
     const hits = total.map((_c, i) => {
+        if (i > lastIdx) return '';   // future days aren't clickable
         const x = padX + i * barW;
         const sel = activeDay === i ? ' tf-spark-hit--on' : '';
         return `<rect class="tf-spark-hit${sel}" data-tf-day="${i}" x="${x.toFixed(1)}" y="${padTop}" width="${barW.toFixed(2)}" height="${plotH}"><title>${_esc(_dayLabel(i))}</title></rect>`;
