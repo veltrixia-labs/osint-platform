@@ -3,6 +3,8 @@ Keyword-based topic inference (no LLM). Used by normalize + alert pipeline.
 """
 from __future__ import annotations
 
+import re
+
 STRATEGIC_TOPICS = frozenset({
     "energy_resource_risk",
     "global_market_intelligence",
@@ -46,13 +48,27 @@ TOPIC_KEYWORD_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         "urea", "ammonia",
     )),
     ("defense_technology", ("defense", "military", "missile", "navy", "army", "drone", "nato", "war")),
-    ("ai_semiconductor_intelligence", ("ai", "semiconductor", "chip", "gpu", "data center", "nvidia", "tsmc")),
+    # Bare "ai" was dropped — as a 2-letter SUBSTRING it bled into "Ukr-ai-ne",
+    # "ai-rstrike", "camp-ai-gn", etc. Use precise, multi-char terms; word-boundary
+    # matching (below) keeps them from matching inside unrelated words.
+    ("ai_semiconductor_intelligence", (
+        "artificial intelligence", "genai", "llm",
+        "semiconductor", "chips", "gpu", "data center", "nvidia", "tsmc",
+    )),
     # Crypto before broad market keywords so "crypto market" stays CRYPTO
     ("crypto_geopolitics", ("bitcoin", "crypto", "stablecoin", "blockchain", "ethereum", "defi", "binance")),
     ("global_market_intelligence", ("fed", "inflation", "recession", "gdp", "stocks", "bond", "yield", "market")),
 )
 
 DEFAULT_STRATEGIC_TOPIC = "global_market_intelligence"
+
+# Precompiled WORD-BOUNDARY matchers per domain. `\b` stops short tokens (e.g.
+# "war", "oil", "ship", and the removed "ai") matching as substrings inside
+# unrelated words ("toward", "spoiled", "leadership", "Ukraine"). Compiled once.
+_TOPIC_KEYWORD_PATTERNS: tuple[tuple[str, tuple[re.Pattern[str], ...]], ...] = tuple(
+    (code, tuple(re.compile(r"\b" + re.escape(kw) + r"\b", re.IGNORECASE) for kw in keywords))
+    for code, keywords in TOPIC_KEYWORD_RULES
+)
 
 
 def infer_topic_from_text(
@@ -79,8 +95,10 @@ def infer_topic_from_text(
     lowered = (text or "").lower()
     best_code: str | None = None
     best_hits = 0
-    for code, keywords in TOPIC_KEYWORD_RULES:
-        hits = sum(1 for kw in keywords if kw in lowered)
+    for code, patterns in _TOPIC_KEYWORD_PATTERNS:
+        # Count DISTINCT keywords present (word-boundary), preserving the original
+        # tie-break: first domain (in rule order) to reach the max hit-count wins.
+        hits = sum(1 for p in patterns if p.search(lowered))
         if hits > best_hits:
             best_hits = hits
             best_code = code

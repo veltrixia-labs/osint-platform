@@ -84,11 +84,13 @@ engine = create_async_engine(
     db_url,
     echo=False,
     connect_args=connect_args,
-    # 512MB instance: every pooled connection buffers its own result set, so cap
-    # total concurrent connections at pool_size + max_overflow (= 5). pre_ping +
-    # recycle keep long-lived pooled conns healthy on Render's managed Postgres.
-    pool_size=3,
-    max_overflow=2,
+    # 512MB instance shares ONE pool between the FastAPI API and the in-process
+    # scheduler (whose streaming cursors hold a connection for the whole iteration).
+    # 3+2 starved API requests → /api/alerts timed out → blank feed. 10+5 gives the
+    # API headroom while staying bounded for 512MB. pre_ping + recycle keep
+    # long-lived pooled conns healthy on Render's managed Postgres.
+    pool_size=10,
+    max_overflow=5,
     pool_timeout=30,
     pool_pre_ping=True,
     pool_recycle=1800,
