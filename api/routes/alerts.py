@@ -211,8 +211,13 @@ async def _get_alerts_impl(
         a["is_locked"] = False
         final_alerts.append(gate_alert_payload(a, tier))
 
-    # Ground-floor: drop sub-baseline (<25%) noise from the active stream view.
-    final_alerts = [a for a in final_alerts if _above_stream_floor(a)]
+    # Ground-floor: drop sub-baseline / uncomputed noise from the active stream
+    # view — but, exactly like the SQL floor above, ONLY on the DEFAULT all-topics
+    # stream. When the user drills into a specific topic/domain tab, BYPASS this
+    # floor too (it was the second, post-serialization floor that kept Energy at 1
+    # even after the SQL-floor bypass) and fall back to severity+recency ordering.
+    if not topic:
+        final_alerts = [a for a in final_alerts if _above_stream_floor(a)]
 
     # Store in Cache (60s TTL)
     if await blacklist_manager._is_redis_available():
