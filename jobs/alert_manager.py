@@ -267,6 +267,64 @@ def _event_similarity(a: set[str], b: set[str]) -> float:
     return jaccard
 
 
+# ── URL-overlap clustering primitives (deterministic, NLP-independent) ────────
+def _normalize_article_url(raw) -> Optional[str]:
+    """Canonical article permalink — ``host + path`` with scheme, ``www.``, query,
+    fragment and trailing slash stripped — for deterministic cross-signal matching.
+
+    Returns None for generic ROOT / thin SECTION pages (e.g. ``reuters.com/``,
+    ``yahoo.com/news``) that carry no real article slug, so two unrelated stories
+    sharing only a publisher root can NEVER falsely intersect (snowball guard)."""
+    if not raw or not isinstance(raw, str):
+        return None
+    try:
+        p = urlparse(raw.strip())
+    except Exception:
+        return None
+    host = (p.netloc or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    if not host:
+        return None
+    path = (p.path or "").rstrip("/")
+    segments = [s for s in path.split("/") if s]
+    if not segments:
+        return None  # bare root — not a permalink
+    last = segments[-1]
+    # A real permalink has a slug: multiple path segments, or a single segment that
+    # is hyphenated / contains a digit (date or id) / is long. Bare sections fail.
+    is_permalink = (
+        len(segments) >= 2
+        or "-" in last
+        or any(ch.isdigit() for ch in last)
+        or len(last) >= 16
+    )
+    return f"{host}{path}" if is_permalink else None
+
+
+def _normalize_article_urls(evidence_list) -> set[str]:
+    """Set of normalized article permalinks from an evidence_list (root/section
+    pages and non-dict entries are dropped)."""
+    out: set[str] = set()
+    for ev in (evidence_list or []):
+        if not isinstance(ev, dict):
+            continue
+        n = _normalize_article_url(ev.get("url") or ev.get("link"))
+        if n:
+            out.add(n)
+    return out
+
+
+def _evidence_dedup_key(ev: dict) -> str:
+    """Strict de-dup key for an evidence source: the NORMALIZED article URL when
+    present (so ``?query`` variants of the same article collapse), else the raw
+    url/link, else the title."""
+    url = ev.get("url") or ev.get("link")
+    if url:
+        return (_normalize_article_url(url) or str(url).strip())
+    return str(ev.get("title") or "").strip()
+
+
 def _raw_intensity_for_alert(alert_log: AlertLog) -> float:
     """Uncapped intensity for dedupe / reignite (never the asymptotic UI index)."""
     meta = alert_log.metadata_json if isinstance(alert_log.metadata_json, dict) else {}
@@ -404,8 +462,8 @@ class AlertManager:
             #    as an active master alert, absorb it as a corroborating source
             #    instead of creating a near-duplicate row. A >=1.5x intensity surge
             #    vs the master breaks through and emits a fresh escalated alert.
-            master, escalated = await cls._find_event_cluster(
-                db, sig, display_label, topic, intensity
+            master, escalated, matched_by_url = await cls._find_event_cluster(
+                db, sig, display_label, topic, intensity, evidence_list
             )
             if master is not None:
                 if escalated:
@@ -416,7 +474,9 @@ class AlertManager:
                         db, master, sig, evidence_list, intensity, intensity_pct, severity, now_utc
                     )
                 else:
-                    await cls._absorb_into_master(db, master, sig, evidence_list, display_label)
+                    await cls._absorb_into_master(
+                        db, master, sig, evidence_list, display_label, by_url=matched_by_url
+                    )
                 continue
 
             # 3b. Cross-source diversification — never emit two byte-identical
@@ -754,28 +814,30 @@ class AlertManager:
         return keys
 
     @classmethod
-    async def _find_event_cluster(cls, db, sig, display_label, topic, new_intensity):
-        """Find an active master alert (same topic, last CLUSTER_WINDOW_HOURS) that
-        represents the SAME underlying event as the incoming signal.
+    async def _find_event_cluster(cls, db, sig, display_label, topic, new_intensity, evidence_list=None):
+        """Find an active master alert (last CLUSTER_WINDOW_HOURS) representing the
+        SAME underlying event as the incoming signal, via a snowball-safe cascade:
 
-        Returns (master_alert | None, is_escalation). `is_escalation` is True when
-        the new signal is a >= CLUSTER_ESCALATION_FACTOR (1.5x) intensity surge vs
-        the master — in which case the caller emits a fresh escalated alert instead
-        of absorbing it.
+          L1  DOMAIN HARD-BOUNDARY — never merge across primary strategic domains
+              (Energy ≠ Markets), so generic shared URLs can't chain unrelated
+              events into a cross-domain chimera. Checked first, for every candidate.
+          L3  DETERMINISTIC URL INTERSECTION (trumps NLP) — within the same domain,
+              ANY shared NORMALIZED article permalink => same event. This beats the
+              0.6 text gate and `_diversify_headline`'s deliberate title perturbation.
+          Fallback — title-token Jaccard >= CLUSTER_SIM_THRESHOLD (0.6).
+
+        Returns (master | None, is_escalation, matched_by_url). `is_escalation` is
+        True when the new signal is a >= 1.5x intensity surge vs the master (caller
+        emits a fresh escalated alert). `matched_by_url` lets the caller bind the
+        deterministically-matched sources without re-applying the lexical gate.
         """
-        # Cluster on the HEADLINE only — descriptions share heavy boilerplate
-        # vocabulary (e.g. Middle-East geopolitics) that falsely inflates overlap
-        # and chains distinct events together.
-        incoming = _event_tokens(f"{display_label} {sig.target_label or ''}")
-        if not incoming:
-            return None, False
+        text = f"{display_label} {sig.target_label or ''}"
+        incoming = _event_tokens(text)                       # headline tokens only
+        incoming_domain = infer_domain_from_topic(topic or "", text=text)
+        incoming_urls = _normalize_article_urls(evidence_list)
+        if not incoming and not incoming_urls:
+            return None, False, False
 
-        # No topic silo: the SAME event is often classified into different topics
-        # across runs (e.g. an Iran headline → DEFENSE one tick, MARKET the next),
-        # which left cross-topic duplicates. Title-only matching makes cross-topic
-        # clustering safe — near-identical headlines are the same event regardless
-        # of categorization. (`topic` kept in the signature for call-site compat.)
-        _ = topic
         window_start = datetime.now(timezone.utc) - timedelta(hours=CLUSTER_WINDOW_HOURS)
         stmt = (
             select(AlertLog)
@@ -792,50 +854,67 @@ class AlertManager:
         for prev in rows:
             meta = prev.metadata_json if isinstance(prev.metadata_json, dict) else {}
             prev_text = f"{prev.target_label or ''} {meta.get('display_title', '')}"
+
+            # L1: domain hard-boundary — a different primary domain can NEVER merge.
+            if infer_domain_from_topic(prev.topic or "", text=prev_text) != incoming_domain:
+                continue
+
+            # L3: deterministic URL intersection trumps NLP. First (most-recent)
+            # same-domain master sharing an article permalink wins immediately.
+            if incoming_urls and (incoming_urls & _normalize_article_urls(meta.get("evidence_list"))):
+                master_intensity = _raw_intensity_for_alert(prev)
+                escalated = master_intensity > 0 and new_intensity >= master_intensity * CLUSTER_ESCALATION_FACTOR
+                return prev, escalated, True
+
+            # Fallback: title-token Jaccard, but only within the same domain.
             sim = _event_similarity(incoming, _event_tokens(prev_text))
             if sim > best_sim:
                 best, best_sim = prev, sim
 
         if best is None or best_sim < CLUSTER_SIM_THRESHOLD:
-            return None, False
+            return None, False, False
 
         master_intensity = _raw_intensity_for_alert(best)
         escalated = master_intensity > 0 and new_intensity >= master_intensity * CLUSTER_ESCALATION_FACTOR
-        return best, escalated
+        return best, escalated, False
 
     @classmethod
-    async def _absorb_into_master(cls, db, master, sig, evidence_list, incoming_label):
+    async def _absorb_into_master(cls, db, master, sig, evidence_list, incoming_label, by_url=False):
         """Merge the incoming signal's sources into an existing master alert as
-        corroboration — no new row. Dedupes evidence by URL/title and only ever
-        RAISES the master's confidence (intensity is never lowered)."""
+        corroboration — no new row. Strictly de-dupes evidence by NORMALIZED article
+        URL (so ?query variants of the same link never appear twice in the UI) and
+        only ever RAISES the master's confidence (intensity is never lowered).
+
+        ``by_url`` = True when the merge was decided by deterministic URL
+        intersection (_find_event_cluster L3). In that case the shared permalink has
+        already proven same-event, so the lexical gate below is BYPASSED and the
+        incoming sources are bound unconditionally. For NLP-matched merges
+        (by_url=False) the strict lexical gate stays in force as the snowball guard."""
         from sqlalchemy.orm.attributes import flag_modified
 
         meta = dict(master.metadata_json) if isinstance(master.metadata_json, dict) else {}
         existing = list(meta.get("evidence_list") or [])
-        seen = {
-            (e.get("url") or e.get("link") or e.get("title") or "").strip()
-            for e in existing if isinstance(e, dict)
-        }
-        # Phase 1 STRICT LEXICAL GATE: a source is only bound as corroboration if
-        # its title coheres with the master headline at the same bar used to
-        # cluster events (CLUSTER_SIM_THRESHOLD = 0.6). A lone shared anchor
-        # ("china"/"iran") scores far below 0.6, so unrelated events can no longer
-        # fuse into a master's evidence_list. Rejected sources are simply NOT bound
-        # — they remain available to stand as their own signal/alert. (RC-1/RC-3,
-        # docs/clustering_quality_proposal.md.)
+        seen = {_evidence_dedup_key(e) for e in existing if isinstance(e, dict)}
+        seen.discard("")
+        # Phase 1 STRICT LEXICAL GATE (NLP merges only): a source is bound as
+        # corroboration only if its title coheres with the master headline at the
+        # same bar used to cluster events (CLUSTER_SIM_THRESHOLD = 0.6), so a lone
+        # shared anchor ("china"/"iran") can't fuse unrelated events. SKIPPED for
+        # by_url merges — the shared article permalink is stronger proof than text.
         master_tokens = _event_tokens(f"{master.target_label or ''} {meta.get('display_title', '')}")
         added = 0
         rejected = 0
         for ev in (evidence_list or []):
             if not isinstance(ev, dict):
                 continue
-            key = (ev.get("url") or ev.get("link") or ev.get("title") or "").strip()
+            key = _evidence_dedup_key(ev)
             if key and key in seen:
                 continue
-            ev_tokens = _event_tokens(str(ev.get("title") or ""))
-            if master_tokens and _event_similarity(master_tokens, ev_tokens) < CLUSTER_SIM_THRESHOLD:
-                rejected += 1
-                continue
+            if not by_url:
+                ev_tokens = _event_tokens(str(ev.get("title") or ""))
+                if master_tokens and _event_similarity(master_tokens, ev_tokens) < CLUSTER_SIM_THRESHOLD:
+                    rejected += 1
+                    continue
             existing.append(ev)
             if key:
                 seen.add(key)
@@ -852,8 +931,9 @@ class AlertManager:
         flag_modified(master, "metadata_json")
         await db.flush()
         logger.info(
-            "Event clustered: absorbed %r into master %s (+%d new source(s), %d rejected as loose, %d total)",
-            (incoming_label or "")[:60], str(master.id), added, rejected, len(meta["evidence_list"]),
+            "Event clustered: absorbed %r into master %s by=%s (+%d new source(s), %d rejected, %d total)",
+            (incoming_label or "")[:60], str(master.id), "url" if by_url else "nlp",
+            added, rejected, len(meta["evidence_list"]),
         )
 
     @classmethod
