@@ -1,5 +1,7 @@
 import logging
+import math
 import re
+from functools import lru_cache
 from typing import List, Dict, Set, Any
 from collections import Counter
 from sqlalchemy import select, desc, func
@@ -52,6 +54,84 @@ GEO_ENTITIES = {
     "yemen", "houthi", "nato", "eu", "un", "asean", "brics"
 }
 
+# ── Event-class lexicon (anti-"black-hole") ─────────────────────────────────────
+# Distinct EVENT TYPES, used to keep semantically different stories apart even when
+# they share the same geopolitical entities (e.g. a "World Cup" item and a "US/Iran
+# war powers" item both name US + Iran). SOFT-news classes (sports/entertainment)
+# are hard-vetoed from merging into any hard/strategic class — regardless of geo.
+ACTION_LEXICON: Dict[str, tuple] = {
+    "military_action": ("strike", "missile", "airstrike", "shelling", "offensive",
+        "invasion", "troop", "warship", "bombard", "artillery", "siege", "combat",
+        "warfare", "militant", "insurgent", "militia", "raid", "ambush", "war",
+        "frontline", "casualty", "killed", "wounded", "attack", "drone", "rocket"),
+    "diplomacy": ("ceasefire", "truce", "talks", "negotiation", "summit", "treaty",
+        "accord", "envoy", "diplomat", "sanction", "embargo", "resolution"),
+    "governance": ("election", "vote", "ballot", "parliament", "congress", "senate",
+        "legislation", "bill", "war powers", "court", "ruling", "impeach",
+        "cabinet", "referendum", "primary", "policy"),
+    "market": ("stock", "bond", "yield", "inflation", "recession", "gdp", "earnings",
+        "selloff", "rally", "index", "nasdaq", "dow", "fed", "currency", "dollar", "rate"),
+    "energy": ("oil", "gas", "opec", "crude", "pipeline", "lng", "barrel", "refinery",
+        "grid", "electricity"),
+    "trade_supply": ("tariff", "export", "import", "shipping", "freight", "port",
+        "supply chain", "container", "logistics", "cargo"),
+    "crypto": ("bitcoin", "crypto", "ethereum", "stablecoin", "blockchain", "token"),
+    "cyber": ("hack", "breach", "ransomware", "malware", "cyber", "phishing", "ddos", "exploit"),
+    "ai_semi": ("chip", "semiconductor", "nvidia", "gpu", "llm", "data center"),
+    "sports": ("world cup", "fifa", "uefa", "league", "tournament", "midfielder",
+        "goalkeeper", "match", "fans", "club", "championship", "olympic", "playoff",
+        "striker", "messi", "ronaldo", "super bowl", "nba", "world series", "grand slam"),
+    "entertainment": ("film", "movie", "celebrity", "actor", "actress", "singer",
+        "album", "hollywood", "oscar", "grammy", "netflix", "box office", "premiere",
+        "concert", "sitcom", "broadcaster", "correspondent"),
+}
+
+# Soft / non-strategic event classes. A merge between a SOFT class and a non-soft
+# class is hard-vetoed regardless of shared geo entities.
+SOFT_CLASSES = {"sports", "entertainment"}
+
+# Boundary-safe matchers per class (\bkw s?\b) so "war" never matches "warning"
+# and "world cup" matches as a phrase. Compiled once.
+_ACTION_PATTERNS = {
+    cls: tuple(re.compile(r"\b" + re.escape(kw) + r"s?\b", re.IGNORECASE) for kw in kws)
+    for cls, kws in ACTION_LEXICON.items()
+}
+
+# Growth backstop: required confidence rises with cluster size so a large cluster
+# cannot keep absorbing loosely-related items (the "black hole" runaway).
+SIZE_THRESHOLD_K = 0.05
+
+
+@lru_cache(maxsize=4096)
+def event_class_scores(text: str) -> tuple:
+    """((class, hit_count), ...) for every event class present in text (boundary-safe)."""
+    low = text or ""
+    out = []
+    for cls, patterns in _ACTION_PATTERNS.items():
+        hits = sum(1 for p in patterns if p.search(low))
+        if hits:
+            out.append((cls, hits))
+    return tuple(out)
+
+
+def dominant_event_class(text: str):
+    """The single most-represented event class in text, or None if none detected.
+    Ties break by ACTION_LEXICON declaration order (stable)."""
+    scores = event_class_scores(text)
+    if not scores:
+        return None
+    return max(scores, key=lambda kv: kv[1])[0]
+
+
+def _event_classes_conflict(c_a, c_b) -> bool:
+    """Hard veto: exactly one side is SOFT news (sports/entertainment) → the two
+    stories are categorically different events and must NEVER merge, no matter how
+    many geopolitical entities they share."""
+    if not c_a or not c_b or c_a == c_b:
+        return False
+    return (c_a in SOFT_CLASSES) != (c_b in SOFT_CLASSES)
+
+
 def normalize_word(word: str) -> str:
     word = word.lower()
     return NORMALIZATION_MAP.get(word, word)
@@ -92,39 +172,65 @@ def extract_entities(text: str) -> Dict[str, Set[str]]:
     return entities
 
 def calculate_merge_confidence(group1: List[Item], group2: List[Item]) -> Dict[str, float]:
-    """Calculates merge confidence with Agreement Bonus logic (Phase 16)."""
+    """Merge confidence, hardened against entity-only ("black hole") merges.
+
+    Key changes vs the old Agreement-Bonus model:
+    - Geo overlap is an ANCHOR, not a merge driver: it is demoted to a small weight
+      and NO LONGER earns an agreement point on its own (a shared country + one
+      buzzword can no longer fuse unrelated events).
+    - Event-CLASS agreement (military vs market vs sports …) is a first-class
+      signal; divergent hard classes are penalised.
+    - The agreement bonus is shrunk from +0.30/+0.25 to +0.12/+0.10 so a real,
+      multi-signal match still clears the 0.40 floor but a thin one cannot.
+    """
     text1 = " ".join([i.title for i in group1])
     text2 = " ".join([i.title for i in group2])
-    
+
     t1 = tokenize(text1)
     t2 = tokenize(text2)
-    
+
     e1 = extract_entities(text1)
     e2 = extract_entities(text2)
-    
+
     # Base similarities
     lex_sim = calculate_similarity(t1, t2)
-    geo_sim = calculate_similarity(e1["geo"], e2["geo"]) * 1.2
+    geo_sim = calculate_similarity(e1["geo"], e2["geo"])      # NO ×1.2 — geo demoted
     org_sim = calculate_similarity(e1["org"], e2["org"])
     sector_sim = calculate_similarity(e1["sector"], e2["sector"])
-    
-    # Agreement Bonus Logic:
-    # We want to reward the PRESENCE of multiple matching signals.
+
+    # Event-class agreement / divergence.
+    cls1 = dominant_event_class(text1)
+    cls2 = dominant_event_class(text2)
+    class_match = cls1 is not None and cls1 == cls2
+    class_diff = cls1 is not None and cls2 is not None and cls1 != cls2
+
+    # Agreement points — CONTENT signals only (geo is an anchor, never a point).
     match_points = 0
-    if lex_sim > 0.15: match_points += 1
-    if geo_sim > 0.5: match_points += 1 # Over 50% of geo entities match
+    if lex_sim > 0.18: match_points += 1
+    if class_match: match_points += 1
     if org_sim > 0.3: match_points += 1
     if sector_sim > 0.3: match_points += 1
-    
-    # Base score (Lower weights to avoid single-factor merge)
-    score = (lex_sim * 0.2) + (geo_sim * 0.2) + (org_sim * 0.15) + (sector_sim * 0.15)
-    
-    # Agreement Bonus
+
+    # Base score: lexical core + event-class lead; geo a minor anchor.
+    score = (
+        (lex_sim * 0.35)
+        + ((1.0 if class_match else 0.0) * 0.25)
+        + (org_sim * 0.12)
+        + (sector_sim * 0.10)
+        + (min(geo_sim, 1.0) * 0.10)
+    )
+
+    # Shrunk agreement bonus (was +0.30 / +0.25).
     if match_points >= 2:
-        score += 0.30
+        score += 0.12
     if match_points >= 3:
-        score += 0.25
-        
+        score += 0.10
+
+    # Divergent hard event classes (e.g. market vs military): penalise — these are
+    # different events even when they share entities.
+    if class_diff and not class_match:
+        score *= 0.6
+
     return {
         "score": min(score, 1.0),
         "details": {
@@ -132,6 +238,9 @@ def calculate_merge_confidence(group1: List[Item], group2: List[Item]) -> Dict[s
             "geo": geo_sim,
             "org": org_sim,
             "sector": sector_sim,
+            "class1": cls1,
+            "class2": cls2,
+            "class_match": class_match,
             "match_points": match_points
         }
     }
@@ -186,38 +295,51 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
     for item in items:
         best_match_idx = -1
         max_conf = 0.0
-        
+
         # Determine category-specific threshold
         item_cat = (item.category or item.rough_category or "default").lower()
         threshold = CATEGORY_THRESHOLDS.get(item_cat, base_threshold)
-        
+
+        item_geo = extract_entities(item.title)["geo"]
+        item_class = dominant_event_class(item.title)
+
         for idx, cluster in enumerate(clusters):
-            conf_data = calculate_merge_confidence([item], cluster)
-            
-            # Safeguard: Hard Location Conflict — ABSOLUTE VETO (Phase 3).
-            # If both texts name geographies and they are DISJOINT (e.g. China vs
-            # Iran), they are different theaters: never cluster them, regardless of
-            # any shared buzzword. Skip this candidate entirely (previously this
-            # only applied a x0.1 penalty, which the agreement bonus could survive).
-            e_item = extract_entities(item.title)
-            e_cluster = extract_entities(" ".join([it.title for it in cluster]))
-            if e_item["geo"] and e_cluster["geo"] and not (e_item["geo"] & e_cluster["geo"]):
+            # (c) FROZEN FOOTPRINT: compare against the cluster SEED (first item)
+            # only — never the ever-growing concatenation of all titles. This kills
+            # the "black hole" where a big cluster's expanding token/entity surface
+            # keeps matching loosely-related news.
+            seed = cluster[0]
+            seed_geo = extract_entities(seed.title)["geo"]
+
+            # Disjoint-geography ABSOLUTE VETO (different theaters never merge).
+            if item_geo and seed_geo and not (item_geo & seed_geo):
                 continue
 
+            # (a) EVENT-CLASS ABSOLUTE VETO: soft news (sports/entertainment) vs a
+            # hard/strategic event never merge, regardless of shared geo entities.
+            if _event_classes_conflict(item_class, dominant_event_class(seed.title)):
+                continue
+
+            conf_data = calculate_merge_confidence([item], [seed])
             if conf_data["score"] > max_conf:
                 max_conf = conf_data["score"]
                 best_match_idx = idx
-        
-        # Multi-geo over-merge VETO (Phase 3): OSINT events are geographically
-        # localized. If absorbing this item would make the cluster span MORE THAN
-        # 2 distinct geo theaters, treat it as a separate macro-event and start a
-        # new cluster instead of fusing global threads. (Previously this condition
-        # was only counted as a metric at the end, never enforced.)
-        if max_conf >= threshold and best_match_idx >= 0:
+
+        # (d) SIZE-SCALED THRESHOLD: the bigger the target cluster, the higher the
+        # bar to join it — a mechanical backstop against runaway absorption.
+        if best_match_idx >= 0:
+            size = len(clusters[best_match_idx])
+            effective_threshold = threshold + SIZE_THRESHOLD_K * math.log(1 + size)
+        else:
+            effective_threshold = threshold
+
+        # Multi-geo over-merge VETO: an event spanning MORE THAN 2 distinct geo
+        # theaters is a macro-thread, not a single event — split it.
+        if max_conf >= effective_threshold and best_match_idx >= 0:
             merged_geos: Set[str] = set()
             for it in clusters[best_match_idx]:
                 merged_geos |= extract_entities(it.title)["geo"]
-            merged_geos |= extract_entities(item.title)["geo"]
+            merged_geos |= item_geo
             if len(merged_geos) > 2:
                 clusters.append([item])
             else:
@@ -295,17 +417,24 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
         # Reconciliation: Check if a similar cluster already exists
         matched_cluster = None
         
+        rep_class = dominant_event_class(rep_item.title)
+
         # Stage 1: Fast Path (Last 1h)
         for ec_existing in recent_1h:
+            # Event-class veto also applies on reconciliation to existing clusters.
+            if _event_classes_conflict(rep_class, dominant_event_class(ec_existing.representative_title)):
+                continue
             sim = calculate_similarity(tokenize(rep_item.title), tokenize(ec_existing.representative_title))
             if sim >= 0.75: # High confidence match
                 matched_cluster = ec_existing
                 break
-        
+
         # Stage 2: Deep Path (Last 24h, skip if matched in Stage 1)
         if not matched_cluster:
             for ec_existing in existing_clusters:
                 if ec_existing in recent_1h: continue # Guard
+                if _event_classes_conflict(rep_class, dominant_event_class(ec_existing.representative_title)):
+                    continue
                 sim = calculate_similarity(tokenize(rep_item.title), tokenize(ec_existing.representative_title))
                 if sim >= 0.75:
                     matched_cluster = ec_existing
