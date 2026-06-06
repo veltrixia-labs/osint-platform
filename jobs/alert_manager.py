@@ -11,8 +11,8 @@ from sqlalchemy import desc, or_
 from db.models import TrendSignal, EventCluster, Item, AlertLog, Report, AnalystProfile
 from urllib.parse import urlparse
 from processor.location_resolver import LocationResolver
-from processor.lightweight_topic import infer_topic_from_text
-from processor.topic_registry import CANONICAL_TOPICS, normalize_canonical_topic
+from processor.lightweight_topic import infer_topic_from_text, is_non_strategic_noise, STRATEGIC_TOPICS
+from processor.topic_registry import CANONICAL_TOPICS, normalize_canonical_topic, internal_topic_for_fallback
 from analysis.intensity_pressure import (
     decayed_domain_baseline,
     percentage_from_ratio,
@@ -85,10 +85,42 @@ def _base_trend_type(trend_type: str) -> str:
     return trend_type
 
 
-def _resolve_signal_topic(sig: TrendSignal) -> str:
-    """Keyword / existing topic only — no LLM classification required."""
-    text = f"{sig.target_label or ''} {sig.description or ''}"
-    return infer_topic_from_text(text, raw_topic=sig.topic)
+def _resolve_signal_topic(sig: TrendSignal) -> Optional[str]:
+    """Final topic decision for an incoming signal — the SINGLE chokepoint for BOTH
+    signal sources (signal_job AND trend_engine). Returns an internal strategic
+    topic code, or None to SUPPRESS the alert entirely.
+
+    Previously this used a NON-strict infer with `raw_topic=sig.topic`, which (a)
+    returned the global_market default for non-strategic noise (World Cup / media
+    clutter → MARKET alerts) and (b) let a stale/ghost `sig.topic` pass straight
+    through (a crypto headline carrying a ghost AI topic → AI_TECH). Now:
+
+    1. Hard noise drop — sports/entertainment/media never alerts (no MARKET default).
+    2. Content-first, strict, title-anchored — a ghost upstream topic can no longer
+       win over the real headline (e.g. "...4 crypto exchanges" → CRYPTO).
+    3. Fall back to the upstream sig.topic ONLY when the headline is keyword-less
+       (keyword-less but real → recall preserved); a non-strategic/"global" topic
+       with no content signal is suppressed rather than defaulted to MARKET."""
+    text = f"{sig.target_label or ''} {sig.description or ''}".strip()
+
+    # 1. Non-strategic noise → drop outright.
+    if is_non_strategic_noise(text):
+        return None
+
+    # 2. Content-first strict eval (no raw_topic passthrough so ghost topics lose
+    #    to real headline content).
+    content = infer_topic_from_text(text, title=sig.target_label or None, strict=True)
+    if content:
+        return content
+
+    # 3. Keyword-less headline → trust the upstream topic only if it is a valid
+    #    strategic code; otherwise suppress (no blind MARKET default).
+    raw = (sig.topic or "").strip()
+    if raw:
+        internal = internal_topic_for_fallback(raw)
+        if internal in STRATEGIC_TOPICS:
+            return internal
+    return None
 
 
 def _looks_like_source_label(label: str) -> bool:
@@ -389,6 +421,15 @@ class AlertManager:
                 continue
 
             internal_topic = _resolve_signal_topic(sig)
+            if internal_topic is None:
+                # Noise / no-signal: suppress before normalize_canonical_topic(None)
+                # would silently default it to MARKET and leak it into the feed.
+                logger.info(
+                    "Alert suppressed: non-strategic noise / no-signal target=%r sig_topic=%r",
+                    sig.target_label,
+                    sig.topic,
+                )
+                continue
             topic = normalize_canonical_topic(
                 internal_topic,
                 trend_type=sig.trend_type,
