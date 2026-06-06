@@ -147,7 +147,7 @@ def spike_vs_baseline(
 # (ratio < ~0.6x, i.e. well under baseline) is filtered out of the active feed.
 PERCENT_BASELINE_PCT = 25.0               # ratio 1.0x → 25% (baseline volatility)
 PERCENT_GATE_RATIO = REIGNITE_RAW_FACTOR  # 1.5x → 50%
-PERCENT_STREAM_FLOOR = 15.0               # live-feed cutoff: drop pct < 15%
+PERCENT_STREAM_FLOOR = 20.0               # TUNABLE: live-feed intensity cutoff — drop pct < 20% (0–100 scale)
 # Upper-tail stretch exponent. Soft slope tuned so the ELEVATED band (50-79%)
 # spans a WIDE ratio window (1.5x-5x) — 2x→60, 3x→70, 4x→76 — only crossing into
 # CRITICAL (>=80%) at 5.0x, and reaching 90%+ solely for 15x-20x black-swans.

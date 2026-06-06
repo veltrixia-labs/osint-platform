@@ -5,8 +5,10 @@
 
 import { parseApiJson } from './text_encoding';
 
-/** Default page size for Alert Stream list endpoints. */
-export const ALERT_STREAM_DISPLAY_LIMIT = 30;
+/** Payload safety ceiling for Alert Stream list endpoints — NOT the real limiter.
+ *  The stream is now bounded by the backend rolling 1h window + 20% intensity
+ *  floor; this cap only guards against an unexpectedly large payload. */
+export const ALERT_STREAM_DISPLAY_LIMIT = 100;
 
 /** Dashboard hosts that serve static files only (API is on Render). */
 const STATIC_DASHBOARD_HOSTS = new Set(['veltrixia.net', 'www.veltrixia.net']);

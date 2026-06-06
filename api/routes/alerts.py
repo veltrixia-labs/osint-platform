@@ -26,7 +26,7 @@ from analysis.intensity_pressure import PERCENT_STREAM_FLOOR
 def _above_stream_floor(a: dict) -> bool:
     """Data-Maturity Guardrail: the live Alert Stream features ONLY matured,
     computed telemetry. An alert is shown strictly when its intensity_pct is a
-    real number >= PERCENT_STREAM_FLOOR (15%). Anything null / 0 / uncomputed
+    real number >= PERCENT_STREAM_FLOOR (20%). Anything null / 0 / uncomputed
     (cold-start with no reliable baseline) is dropped from the feed view — the
     raw row still persists for the worker to build baselines from over time."""
     pct = a.get("intensity_pct")
@@ -135,20 +135,20 @@ async def _get_alerts_impl(
                 topic_keys.add(k)
                 topic_keys.add(k.upper())
         stmt = stmt.where(AlertLog.topic.in_(topic_keys))
+    # Explicit `since` ONLY (Monthly Trend Flow / date-range callers). The realtime
+    # stream passes no `since`, so there is NO default recency lower bound — results
+    # are bounded by severity-rank/recency ordering + LIMIT below. (The prior default
+    # 1h window was reverted; freshness will be handled in the UI instead.)
     if since:
         stmt = stmt.where(AlertLog.triggered_at >= since)
 
-    # Data-Maturity floor: on the DEFAULT (all-topics) stream, drop sub-15% noise
-    # so the limited window holds the calibrated signals. BUT when the user
-    # explicitly drills into a topic/domain tab (e.g. Energy), BYPASS the floor and
-    # fall back to severity+recency ordering — a busy domain whose per-domain
-    # percentile model scores most alerts < 15% must not be rendered completely
-    # invisible. Suppressed rows are still excluded; ordering keeps the strongest
-    # signals first.
-    if not topic:
-        stmt = stmt.where(
-            AlertLog.metadata_json["intensity_pct"].astext.cast(Float) >= PERCENT_STREAM_FLOOR
-        )
+    # Data-Maturity floor: drop sub-threshold (uncalibrated / noise) telemetry
+    # UNIFORMLY — All AND every category alike (the old `if not topic:` asymmetry is
+    # removed so the floor is always enforced). Suppressed rows are already excluded
+    # above; severity+recency ordering keeps the strongest signals first.
+    stmt = stmt.where(
+        AlertLog.metadata_json["intensity_pct"].astext.cast(Float) >= PERCENT_STREAM_FLOOR
+    )
 
     # Order by THREAT PRIORITY then recency so the rare CRITICAL/ELEVATED signals
     # always make the limited window (they'd otherwise be squeezed out by the
@@ -211,13 +211,10 @@ async def _get_alerts_impl(
         a["is_locked"] = False
         final_alerts.append(gate_alert_payload(a, tier))
 
-    # Ground-floor: drop sub-baseline / uncomputed noise from the active stream
-    # view — but, exactly like the SQL floor above, ONLY on the DEFAULT all-topics
-    # stream. When the user drills into a specific topic/domain tab, BYPASS this
-    # floor too (it was the second, post-serialization floor that kept Energy at 1
-    # even after the SQL-floor bypass) and fall back to severity+recency ordering.
-    if not topic:
-        final_alerts = [a for a in final_alerts if _above_stream_floor(a)]
+    # Ground-floor (post-serialization belt): drop sub-baseline / uncomputed noise
+    # UNIFORMLY — All AND every category alike (the old `if not topic:` asymmetry is
+    # removed so the floor is always enforced; mirrors the SQL floor above).
+    final_alerts = [a for a in final_alerts if _above_stream_floor(a)]
 
     # Store in Cache (60s TTL)
     if await blacklist_manager._is_redis_available():
