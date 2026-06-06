@@ -347,16 +347,20 @@ def _compress_trends(signals: List[TrendSignal], start: datetime, end: datetime,
             "pattern_rank_ratio": rank_ratio,
         }
         
-        patterns.append(TrendSignal(
-            trend_type="risk_pattern",
-            target_label=label,
-            topic=sectors[0] if sectors else "global",
-            intensity_score=final_score,
-            window_start=start,
-            window_end=end,
-            description=description,
-            metrics_json=metrics
-        ))
+        # Skip emission when the pattern group carries NO sector (the branch that
+        # previously fell back to the dead 'global' topic). Real-sector patterns
+        # emit unchanged with their sector.
+        if sectors:
+            patterns.append(TrendSignal(
+                trend_type="risk_pattern",
+                target_label=label,
+                topic=sectors[0],
+                intensity_score=final_score,
+                window_start=start,
+                window_end=end,
+                description=description,
+                metrics_json=metrics
+            ))
         
     return patterns
 
@@ -399,7 +403,11 @@ async def _detect_entity_heat(recent: List[EventCluster], history: List[EventClu
             signals.append((TrendSignal(
                 trend_type="entity_heat",
                 target_label=ent,
-                topic="global",
+                # entity_heat is intentionally pan-domain; the dead 'global' literal
+                # is non-load-bearing — the chokepoint suppresses topic=None
+                # identically (internal_topic_for_fallback("") -> None), and
+                # keyword-entity reclassification still runs content-first on target_label.
+                topic=None,
                 intensity_score=float(delta),
                 window_start=start,
                 window_end=end,
@@ -446,6 +454,11 @@ async def _detect_sustained_events(recent: List[EventCluster], history: List[Eve
     """Links clusters that represent the same ongoing event over multiple days."""
     signals = []
     for rc in recent:
+        # Skip clusters with no strategic category (the branch that previously fell
+        # back to the dead 'global' topic). Category is constant per rc, so no hc
+        # match can rescue it — skip the whole cluster.
+        if not rc.category:
+            continue
         for hc in history:
             # Event Lineage Logic
             # 1. Representative Title Similarity (Fuzzy/Substring)
@@ -471,7 +484,7 @@ async def _detect_sustained_events(recent: List[EventCluster], history: List[Eve
                 signals.append((TrendSignal(
                     trend_type="sustained_event",
                     target_label=(rc.representative_title[:110].rsplit(' ', 1)[0] + "...") if len(rc.representative_title) > 110 else rc.representative_title,
-                    topic=rc.category or "global",
+                    topic=rc.category,
                     intensity_score=float(rc.avg_signal_score),
                     window_start=_ensure_utc(hc.created_at),
                     window_end=_ensure_utc(rc.created_at),
@@ -485,6 +498,10 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
     """Detects events where risk intensity is accelerating rapidly."""
     signals = []
     for rc in recent:
+        # Skip clusters with no strategic category (the branch that previously fell
+        # back to the dead 'global' topic).
+        if not rc.category:
+            continue
         if rc.avg_signal_score > 0.6: # High signal threshold
             # Check if this high-risk event is new or accelerating
             is_new = True
@@ -504,7 +521,7 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
                         signals.append((TrendSignal(
                             trend_type="risk_acceleration",
                             target_label=(rc.representative_title[:110].rsplit(' ', 1)[0] + "...") if len(rc.representative_title) > 110 else rc.representative_title,
-                            topic=rc.category or "global",
+                            topic=rc.category,
                             intensity_score=float(rc.avg_signal_score),
                             window_start=_ensure_utc(hc.created_at),
                             window_end=_ensure_utc(rc.created_at),
@@ -527,7 +544,7 @@ async def _detect_risk_acceleration(recent: List[EventCluster], history: List[Ev
                 signals.append((TrendSignal(
                     trend_type="risk_acceleration",
                     target_label=(rc.representative_title[:110].rsplit(' ', 1)[0] + "...") if len(rc.representative_title) > 110 else rc.representative_title,
-                    topic=rc.category or "global",
+                    topic=rc.category,
                     intensity_score=float(rc.avg_signal_score),
                     window_start=_ensure_utc(rc.created_at),
                     window_end=_ensure_utc(rc.created_at),
