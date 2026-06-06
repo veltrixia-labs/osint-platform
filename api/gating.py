@@ -287,10 +287,11 @@ async def get_watchlist_limit_for_user(user: AnalystProfile) -> int:
 
 # When DEV_MODE is true, EVERY request is elevated to the full ("institutional")
 # payload regardless of the caller's tier — restrictions are bypassed for auditing.
-# PRODUCTION DEFAULT: OFF. Real tier gating applies; the per-request X-Dev-Tier
-# override (non-prod) is the sanctioned way to preview elevated payloads locally.
-# Flip with env DEV_MODE=true only for a deliberate full-unlock audit pass.
-DEV_MODE = os.environ.get("DEV_MODE", "false").lower() == "true"
+# RELEASE-AUDIT DEFAULT: ON. Per the architect's mandate the platform is currently
+# presented as a fully unlocked development version, so paywall payload-shaping
+# (evidence truncation, AI-brief stripping, cascading-impact gating) is bypassed
+# globally. Set env DEV_MODE=false to re-enable real tier gating for launch.
+DEV_MODE = os.environ.get("DEV_MODE", "true").lower() == "true"
 
 # Tier (and above) that receives the full, unrestricted payload = $99 Institutional.
 INSTITUTIONAL_MIN_TIER = PlanTier.EXPERTS.value
