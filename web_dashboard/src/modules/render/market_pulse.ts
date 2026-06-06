@@ -279,10 +279,6 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
                     )}
                 </section>
 
-                <!-- Entity Exposure Heatmap (placeholder for upcoming feature) -->
-                <section class="pro-insight-heatmap pro-insight-section" aria-label="Entity Exposure Heatmap" id="entity-heatmap-section">
-                </section>
-
             </div>
         </div>`;
             shellRendered = true;
