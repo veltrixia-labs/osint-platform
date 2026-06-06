@@ -26,7 +26,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from db.database import AsyncSessionLocal
 from db.models import AlertLog
-from processor.lightweight_topic import TOPIC_KEYWORD_RULES
+from processor.lightweight_topic import best_keyword_topic
 from analysis.pro_domain_config import infer_domain_from_topic
 from processor.headline_composer import compose_headline, is_generic_label
 
@@ -47,13 +47,10 @@ STRATEGIC_TO_CANONICAL = {
 
 
 def _best_domain(text: str) -> tuple[str | None, int]:
-    low = (text or "").lower()
-    best, best_hits = None, 0
-    for code, keywords in TOPIC_KEYWORD_RULES:
-        hits = sum(1 for kw in keywords if kw in low)
-        if hits > best_hits:
-            best, best_hits = code, hits
-    return best, best_hits
+    # Boundary-enforced shared matcher (no naive substring `in`) so the historical
+    # reclassifier obeys the same `\b…s?\b` rules as the live ingest gate.
+    code, hits, _matched = best_keyword_topic(text)
+    return code, hits
 
 
 async def main() -> None:

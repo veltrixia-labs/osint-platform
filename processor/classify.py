@@ -15,6 +15,14 @@ from sqlalchemy.future import select
 from sqlalchemy import not_
 from db.models import Item, Topic, ItemTopic, AnalysisCache
 from llm.client import generate_analysis
+# DRY: single source of truth for the strategic lexicon + boundary-enforced
+# matching. classify.py no longer keeps its own (naive, substring) dictionary —
+# it consumes the same `\b…s?\b` rules as the ingest gate (lightweight_topic).
+from processor.lightweight_topic import (
+    STRATEGIC_KEYWORDS,
+    STRATEGIC_TOPIC_NAMES,
+    best_keyword_topic,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,21 +33,16 @@ BATCH_SIZE = 10
 CACHE_TTL_DAYS = 3
 PROMPT_VERSION = "v2_batch_classify_v3"
 
-INITIAL_TOPICS = [
-    {"code": "energy_resource_risk", "en": "Energy & Resource Risk", "keywords": ["oil", "crude", "OPEC", "LNG", "natural gas", "uranium", "mining", "energy"]},
-    {"code": "global_market_intelligence", "en": "Global Market Intelligence", "keywords": ["fed", "interest rate", "inflation", "recession", "gdp", "stocks", "nasdaq", "bond", "yield"]},
-    {"code": "crypto_geopolitics", "en": "Crypto & Regulatory Geopolitics", "keywords": ["bitcoin", "ethereum", "crypto", "blockchain", "defi", "stablecoin", "cbdc", "sec", "regulation"]},
-    {"code": "ai_semiconductor_intelligence", "en": "AI & Semiconductor Intelligence", "keywords": ["ai", "nvidia", "tsmc", "intel", "semiconductor", "chip", "llm", "export control"]},
-    {"code": "defense_technology", "en": "Defense & Security Technology", "keywords": ["war", "military", "missile", "drone", "defense", "nato", "sanction", "cyber", "espionage"]},
-    {"code": "supply_chain_intelligence", "en": "Supply Chain Intelligence", "keywords": ["supply chain", "shipping", "freight", "logistics", "port", "trade", "tariff", "bottleneck"]},
-]
+# Strategic domain codes, in canonical lexicon order (for LLM prompt + quotas).
+STRATEGIC_TOPIC_CODES = list(STRATEGIC_KEYWORDS.keys())
+
 
 async def seed_topics(db: AsyncSession):
-    for t in INITIAL_TOPICS:
-        stmt = select(Topic).where(Topic.topic_code == t["code"])
+    for code, name in STRATEGIC_TOPIC_NAMES.items():
+        stmt = select(Topic).where(Topic.topic_code == code)
         existing = (await db.execute(stmt)).scalar_one_or_none()
         if not existing:
-            db.add(Topic(topic_code=t["code"], topic_name_en=t["en"]))
+            db.add(Topic(topic_code=code, topic_name_en=name))
     await db.commit()
 
 def calculate_lightweight_score(item: Item, matched_kws: List[str]) -> float:
@@ -64,16 +67,11 @@ async def pre_filter_and_score(db: AsyncSession, items: List[Item]) -> List[Item
         norm_title = "".join(filter(str.isalnum, item.title.lower()))
         if norm_title in seen_titles: continue
         seen_titles.add(norm_title)
-        text = f"{item.title} {item.summary}".lower()
-        best_topic = None
-        max_kws = 0
-        all_matched = []
-        for t in INITIAL_TOPICS:
-            matched = [kw for kw in t["keywords"] if kw.lower() in text]
-            if len(matched) > max_kws:
-                max_kws = len(matched)
-                best_topic = t["code"]
-                all_matched = matched
+        # Boundary-enforced match (shared lexicon) — no naive substring `in` so
+        # "ai" can no longer bleed from "remain"/"again" nor "intel" from
+        # "intelligence". Tie-break = canonical rule order.
+        text = f"{item.title} {item.summary}"
+        best_topic, _max_kws, all_matched = best_keyword_topic(text)
         item.rough_category = best_topic or "misc"
         item.lightweight_score = calculate_lightweight_score(item, all_matched)
         filtered.append(item)
@@ -107,7 +105,7 @@ async def batch_classify_llm(db: AsyncSession, items: List[Item]) -> Dict[str, D
             
         system_prompt = (
             "You are an OSINT Risk Analyst. Classify the following articles into one of these categories: "
-            f"{[t['code'] for t in INITIAL_TOPICS]}, or 'none'.\n"
+            f"{STRATEGIC_TOPIC_CODES}, or 'none'.\n"
             "Return a JSON object with 'results' as a list of objects, each containing:\n"
             "- article_id (exactly as provided)\n- category (code)\n- confidence (0-1)\n- keep (boolean, true if high impact/risk)\n- reason (short)\n"
             "Strictly JSON only."
@@ -117,23 +115,15 @@ async def batch_classify_llm(db: AsyncSession, items: List[Item]) -> Dict[str, D
         batch_res = await generate_analysis(system_prompt, user_prompt, is_batch=True)
         if batch_res == "__DEGRADED_MODE__" or not isinstance(batch_res, dict):
             # --- Robust Fallback (Keyword-Based) ---
-            from sqlalchemy import select
-            from db.models import Topic
-            topics_stmt = select(Topic)
-            all_topics = (await db.execute(topics_stmt)).scalars().all()
-            
+            # Boundary-enforced match against the SHARED lexicon (no DB-keyword
+            # substring loop) so degraded mode obeys the same `\b…s?\b` rules as
+            # the ingest gate and can't reintroduce "ai"/"intel" cross-bleed.
             for it in batch:
-                text = (it.title + " " + (it.summary or "")).lower()
-                best_topic = it.rough_category or "none"
+                text = f"{it.title} {it.summary or ''}"
+                matched_topic, _hits, _matched = best_keyword_topic(text)
+                best_topic = matched_topic or it.rough_category or "none"
                 best_score = it.lightweight_score
-                
-                # Try to improve rough category with specific keywords
-                for t in all_topics:
-                    kws = t.keywords if isinstance(t.keywords, list) else []
-                    if any(kw.lower() in text for kw in kws):
-                        best_topic = t.topic_code
-                        break
-                
+
                 results[str(it.id)] = {
                     "category": best_topic,
                     "confidence": 0.4,

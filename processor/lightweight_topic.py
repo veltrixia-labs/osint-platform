@@ -62,16 +62,66 @@ TOPIC_KEYWORD_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
 
 DEFAULT_STRATEGIC_TOPIC = "global_market_intelligence"
 
-# Precompiled WORD-BOUNDARY matchers per domain. `\b` stops short tokens (e.g.
-# "war", "oil", "ship", and the removed "ai") matching as substrings inside
-# unrelated words ("toward", "spoiled", "leadership", "Ukraine"). Compiled once.
+# ── Canonical strategic lexicon (DRY single source of truth) ────────────────────
+# Every keyword classifier in the platform (ingest gate, signal path, batch
+# classify) MUST consume THIS dictionary and THESE compiled patterns — never a
+# private substring list. `STRATEGIC_KEYWORDS` is the dict view of the rules above.
+STRATEGIC_KEYWORDS: dict[str, tuple[str, ...]] = dict(TOPIC_KEYWORD_RULES)
+
+# Human-readable domain names (for DB Topic seeding / LLM prompts). Keyed by the
+# same internal codes so callers never re-declare keywords alongside names.
+STRATEGIC_TOPIC_NAMES: dict[str, str] = {
+    "energy_resource_risk": "Energy & Resource Risk",
+    "global_market_intelligence": "Global Market Intelligence",
+    "crypto_geopolitics": "Crypto & Regulatory Geopolitics",
+    "ai_semiconductor_intelligence": "AI & Semiconductor Intelligence",
+    "defense_technology": "Defense & Security Technology",
+    "supply_chain_intelligence": "Supply Chain Intelligence",
+}
+
+# Precompiled WORD-BOUNDARY matchers per domain, compiled ONCE here and reused by
+# both `infer_topic_from_text` and the public `best_keyword_topic` helper. `\b`
+# stops short tokens (e.g. "war", "oil", "ship", and the removed "ai") matching as
+# substrings inside unrelated words ("toward", "spoiled", "leadership", "Ukraine").
 # `s?` tolerates the regular plural (missile→missiles, chip→chips, port→ports) so a
 # real strategic story is never DROPPED for a singular/plural keyword mismatch now
 # that the blind default is gone. `\b` still blocks substring bleed (war≠warning).
-_TOPIC_KEYWORD_PATTERNS: tuple[tuple[str, tuple[re.Pattern[str], ...]], ...] = tuple(
-    (code, tuple(re.compile(r"\b" + re.escape(kw) + r"s?\b", re.IGNORECASE) for kw in keywords))
+# Pairs retain the source keyword so callers can report which terms matched.
+_KEYWORD_PATTERN_PAIRS: dict[str, tuple[tuple[str, re.Pattern[str]], ...]] = {
+    code: tuple(
+        (kw, re.compile(r"\b" + re.escape(kw) + r"s?\b", re.IGNORECASE))
+        for kw in keywords
+    )
     for code, keywords in TOPIC_KEYWORD_RULES
+}
+
+_TOPIC_KEYWORD_PATTERNS: tuple[tuple[str, tuple[re.Pattern[str], ...]], ...] = tuple(
+    (code, tuple(pat for _kw, pat in pairs))
+    for code, pairs in _KEYWORD_PATTERN_PAIRS.items()
 )
+
+
+def matched_keywords_for_topic(text: str, code: str) -> list[str]:
+    """Boundary-safe list of keywords from `code`'s lexicon present in `text`."""
+    low = text or ""
+    return [kw for kw, pat in _KEYWORD_PATTERN_PAIRS.get(code, ()) if pat.search(low)]
+
+
+def best_keyword_topic(text: str) -> tuple[str | None, int, list[str]]:
+    """Boundary-enforced best strategic domain for `text` by keyword-hit count.
+
+    Returns (best_code, hit_count, matched_keywords). Uses the SAME `\\b…s?\\b`
+    patterns as `infer_topic_from_text` (no naive substring matching), with the
+    identical tie-break: the first domain in rule order to reach the max wins.
+    Returns (None, 0, []) when nothing matches."""
+    best_code: str | None = None
+    best_hits = 0
+    best_matched: list[str] = []
+    for code in _KEYWORD_PATTERN_PAIRS:
+        matched = matched_keywords_for_topic(text, code)
+        if len(matched) > best_hits:
+            best_code, best_hits, best_matched = code, len(matched), matched
+    return best_code, best_hits, best_matched
 
 # ── Non-strategic NOISE guardrail (media / entertainment / celebrity / sports) ──
 # An OSINT feed must INGEST ONLY WHAT'S CLASSIFIABLE: general media/entertainment

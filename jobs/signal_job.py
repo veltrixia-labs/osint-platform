@@ -55,10 +55,26 @@ def _cluster_has_source_url(items: List[Item]) -> bool:
     return any(_item_has_valid_source_url(it) for it in items)
 
 
-def normalize_strategic_topic(raw_topic=None, source_group=None, title=""):
+def normalize_strategic_topic(raw_topic=None, source_group=None, title="", summary=""):
+    """Resolve an item's strategic topic with the FULL ingest-gate protections.
+
+    Previously this called infer_topic_from_text WITHOUT `title=`/`strict=`, which
+    disabled both the title-anchored minimum-signal rule and the strict noise drop
+    — letting a single incidental keyword flip an item into Defense/AI/etc. We now
+    pass the real title (enables the min-signal rule) and `strict=True` (drops
+    noise / no-signal to None), falling back to the legacy Markets default only
+    when strict inference yields nothing so a signal never carries a null topic."""
     from processor.lightweight_topic import infer_topic_from_text
 
-    return infer_topic_from_text(title or "", raw_topic=raw_topic, source_group=source_group)
+    text = f"{title or ''} {summary or ''}".strip()
+    resolved = infer_topic_from_text(
+        text,
+        title=title or None,
+        raw_topic=raw_topic,
+        source_group=source_group,
+        strict=True,
+    )
+    return resolved or "global_market_intelligence"
 
 from analysis.clustering import cluster_items
 from analysis.signal_engine import run_signal_engine
@@ -167,7 +183,8 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
         topic = normalize_strategic_topic(
             raw_topic=representative.category,
             source_group=representative.source_group,
-            title=f"{representative.title or ''} {representative.summary or ''}",
+            title=representative.title or "",
+            summary=representative.summary or "",
         )
 
         sig = TrendSignal(
