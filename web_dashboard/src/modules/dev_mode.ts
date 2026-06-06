@@ -17,7 +17,7 @@
  * one-off full-unlock audit pass — no call sites need to change either way.
  */
 
-export const DEV_MODE_AUDIT = true;
+export const DEV_MODE_AUDIT = false;
 
 const BODY_CLASS = 'dev-mode-audit';
 const BADGE_ID = 'dev-mode-audit-badge';
