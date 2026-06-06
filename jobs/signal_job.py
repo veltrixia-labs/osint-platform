@@ -10,6 +10,7 @@ from sqlalchemy import desc
 from db.database import AsyncSessionLocal
 from db.models import Item, ItemTopic, SignalRanking, AnalysisCache, TrendSignal
 from llm.client import generate_analysis
+from processor.lightweight_topic import is_non_strategic_noise
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -58,23 +59,53 @@ def _cluster_has_source_url(items: List[Item]) -> bool:
 def normalize_strategic_topic(raw_topic=None, source_group=None, title="", summary=""):
     """Resolve an item's strategic topic with the FULL ingest-gate protections.
 
-    Previously this called infer_topic_from_text WITHOUT `title=`/`strict=`, which
-    disabled both the title-anchored minimum-signal rule and the strict noise drop
-    — letting a single incidental keyword flip an item into Defense/AI/etc. We now
-    pass the real title (enables the min-signal rule) and `strict=True` (drops
-    noise / no-signal to None), falling back to the legacy Markets default only
-    when strict inference yields nothing so a signal never carries a null topic."""
+    Passes the real title (enables the title-anchored minimum-signal rule) and
+    `strict=True` (drops noise / no-signal to None). Returns None when nothing
+    classifies — there is NO `global_market_intelligence` fallback: the caller
+    MUST skip a None cluster rather than resurrect noise as a MARKET alert."""
     from processor.lightweight_topic import infer_topic_from_text
 
     text = f"{title or ''} {summary or ''}".strip()
-    resolved = infer_topic_from_text(
+    return infer_topic_from_text(
         text,
         title=title or None,
         raw_topic=raw_topic,
         source_group=source_group,
         strict=True,
     )
-    return resolved or "global_market_intelligence"
+
+
+def _resolve_cluster_topic(items: List[Item]):
+    """Derive a cluster's topic from the MAJORITY of its items, not items[0].
+
+    A single stale/ghost item can no longer hijack a cluster's domain: we take a
+    reliability-weighted vote over the members' categories, use the winner as the
+    `raw_topic`, and pick the highest-reliability item IN that majority as the
+    representative (its title/text drives the alert + the strict re-eval). Returns
+    (strategic_internal_topic_or_None, representative_item)."""
+    from collections import Counter
+
+    votes: Counter = Counter()
+    for it in items:
+        cat = (it.category or "").strip()
+        if cat:
+            votes[cat] += float(it.reliability_weight or 1.0)
+
+    representative = items[0]
+    majority_cat = None
+    if votes:
+        majority_cat = votes.most_common(1)[0][0]
+        matching = [it for it in items if (it.category or "").strip() == majority_cat]
+        if matching:
+            representative = max(matching, key=lambda it: float(it.reliability_weight or 1.0))
+
+    topic = normalize_strategic_topic(
+        raw_topic=majority_cat,
+        source_group=representative.source_group,
+        title=representative.title or "",
+        summary=representative.summary or "",
+    )
+    return topic, representative
 
 from analysis.clustering import cluster_items
 from analysis.signal_engine import run_signal_engine
@@ -177,16 +208,29 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
         await db.commit()
         return
 
+    # Resolve each cluster's topic by MAJORITY vote and DROP clusters that strict-eval
+    # to None or are non-strategic noise — no MARKET-fallback resurrection of clutter.
+    resolved = []
+    dropped = 0
     for score, items in top_items:
-        representative = items[0]
+        topic, representative = _resolve_cluster_topic(items)
+        text = f"{representative.title or ''} {representative.summary or ''}".strip()
+        if topic is None or is_non_strategic_noise(text):
+            dropped += 1
+            continue
+        resolved.append((score, items, topic, representative))
+    if dropped:
+        logger.info(f"[SIGNAL] {signal_type}: dropped {dropped} cluster(s) as None/noise (no MARKET fallback)")
 
-        topic = normalize_strategic_topic(
-            raw_topic=representative.category,
-            source_group=representative.source_group,
-            title=representative.title or "",
-            summary=representative.summary or "",
-        )
+    # Always clear stale rankings for this type first.
+    await db.execute(delete(SignalRanking).where(SignalRanking.signal_type == signal_type))
 
+    if not resolved:
+        logger.info(f"[SIGNAL] {signal_type}: no clusters left after topic/noise filter; skipping rankings")
+        await db.commit()
+        return
+
+    for score, items, topic, representative in resolved:
         sig = TrendSignal(
             created_at=datetime.now(timezone.utc),
             topic=topic,
@@ -202,15 +246,9 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
                 "supporting_events": [item.title for item in items[:10]]
             }
         )
-
         db.add(sig)
-    
-    # Clear existing rankings for this type
-    await db.execute(delete(SignalRanking).where(SignalRanking.signal_type == signal_type))
-    
-    for rank, (score, items) in enumerate(top_items, 1):
-        representative = items[0]
 
+    for rank, (score, items, topic, representative) in enumerate(resolved, 1):
         db.add(SignalRanking(
             signal_type=signal_type,
             period_start=start_time,
@@ -219,9 +257,9 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
             item_id=representative.id,
             score=float(score)
         ))
-        
+
     await db.commit()
-    logger.info(f"Rankings updated for {signal_type}: {len(top_items)} items ranked from {len(clusters)} source clusters.")
+    logger.info(f"Rankings updated for {signal_type}: {len(resolved)} items ranked from {len(clusters)} source clusters.")
 
 async def run_signal(db: AsyncSession):
     logger.info("Starting High-Efficiency Signal Job")
