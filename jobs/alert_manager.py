@@ -29,6 +29,27 @@ _bg_tasks = set()
 
 logger = logging.getLogger(__name__)
 
+# Phase 0 — LLM importance scoring (ADDITIVE, flag-gated via ENABLE_LLM_IMPORTANCE).
+# Verbatim analyst prompt. The call is isolated in evaluate_and_send and never
+# affects emit / ordering / floor / intensity_pct / severity / MTF / chokepoint.
+_IMPORTANCE_SYSTEM_PROMPT = """You are an intelligence analyst scoring news alerts for a geopolitical/market intelligence platform. This is NOT a general news feed — it is a tool for analyzing how world events ripple into companies, shipping/supply chains, and markets.
+
+Your task: assign each alert an IMPORTANCE score from 0 to 100, measuring how WIDELY and SIGNIFICANTLY the event affects the world. Score the breadth of impact as the primary axis; use objective severity as a secondary factor.
+
+PRIMARY AXIS — breadth of real-world impact: geographic reach (local vs regional vs global), sector reach (how many of energy/markets/defense/semiconductors-AI/crypto/supply-chain and how deeply), economic/commercial impact (companies, shipping/trade routes, commodity prices, markets), and structural vs transient.
+SECONDARY FACTOR — objective severity: scale of the event (casualties, scale of conflict, magnitude of crisis). Raises importance but does not by itself make a locally-contained event globally important.
+
+SCORE BANDS:
+- 80-100: broad cross-region AND cross-sector impact (e.g. a major shipping chokepoint disruption hitting global energy/markets; direct major-power military conflict; sweeping semiconductor export controls cascading into markets+supply chains+defense).
+- 50-79: clear multi-sector OR cross-border impact, not globally sweeping (e.g. a significant regional oil-supply event affecting energy and markets; major-power sector sanctions; sustained regional military escalation with commercial spillover).
+- 20-49: locally or single-sector contained, limited wider ripple (e.g. an isolated strike/casualties in an ongoing conflict with no new commercial spillover; a single-country political event).
+- 0-19: negligible impact on world companies/shipping/markets (e.g. corporate personnel news, retail deals, sports, entertainment).
+
+RULES: Score IMPACT, not newsworthiness or human tragedy alone — a locally devastating event with no wider ripple scores moderate, not high; a broad-reach market/supply-chain event scores high even if undramatic. Be domain-neutral. Evaluate CURRENT impact only — do NOT predict. Base the score ONLY on the given headline and source titles; do not invent facts; if information is thin, score conservatively. Be consistent.
+
+Return ONLY a JSON object, no other text, no markdown fences:
+{"importance_score": <integer 0-100>, "rationale": "<one sentence, max 25 words, on the impact-breadth reason>"}"""
+
 # Config from Environment
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
@@ -555,6 +576,51 @@ class AlertManager:
                 coords = resolver.resolve_heuristically(loc_text.strip())
             lat, lng = coords if coords else (None, None)
 
+            # --- Phase 0: optional, ADDITIVE LLM importance scoring (flag-gated) ---
+            # Mirrors the ENABLE_AI_DISCOVERY env pattern (below). When the flag is
+            # unset/false the whole block is skipped → the alert emits byte-identical
+            # to before. Fully try/except-isolated: ANY failure/None → skip, never
+            # raises into the emit path, never blocks the alert. Purely additive
+            # metadata — does NOT touch intensity_pct/severity/ordering/floor/MTF.
+            importance_result: Optional[dict] = None
+            if os.getenv("ENABLE_LLM_IMPORTANCE", "false").lower() == "true":
+                try:
+                    from llm.client import generate_analysis
+                    ev_titles = [
+                        str(e.get("title")).strip()
+                        for e in (evidence_list or [])[:5]
+                        if isinstance(e, dict) and e.get("title")
+                    ]
+                    importance_user_prompt = (
+                        f"HEADLINE: {display_label or sig.target_label or ''}\n"
+                        "SOURCE TITLES:\n"
+                        + ("\n".join(f"- {t}" for t in ev_titles) if ev_titles else "- (none)")
+                    )
+                    _imp = await generate_analysis(
+                        _IMPORTANCE_SYSTEM_PROMPT, importance_user_prompt, is_batch=True
+                    )
+                    if (
+                        _imp is not None
+                        and _imp != "__DEGRADED_MODE__"
+                        and isinstance(_imp, dict)
+                    ):
+                        _score = _imp.get("importance_score")
+                        if isinstance(_score, bool):
+                            _score = None  # bool is an int subclass — reject it
+                        if isinstance(_score, (int, float)) and 0 <= float(_score) <= 100:
+                            importance_result = {
+                                "importance_score": int(round(float(_score))),
+                                "importance_rationale": str(_imp.get("rationale") or "")[:200],
+                                "importance_scored_at": datetime.now(timezone.utc).isoformat(),
+                                "importance_model": "deepseek-v4-flash",
+                            }
+                except Exception as imp_err:
+                    logger.warning(
+                        "LLM importance scoring skipped (non-fatal) for target=%r: %s",
+                        sig.target_label, imp_err,
+                    )
+                    importance_result = None
+
             meta_base: dict = {
                     "spike_delta": round(float(spike_delta), 2),
                     "domain_count": domain_count,
@@ -576,6 +642,12 @@ class AlertManager:
                     "match_type": loc_detail.match_type,
                     "matched_text": loc_detail.matched_text,
                 }
+
+            # Additive: present ONLY when LLM importance scoring succeeded above.
+            # Absence == not scored (consumers read via .get()). Never affects
+            # emit / ordering / floor.
+            if importance_result:
+                meta_base.update(importance_result)
 
             try:
                 from sqlalchemy.orm.attributes import flag_modified
