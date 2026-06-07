@@ -32,7 +32,10 @@ async def generate_analysis(system_prompt: str, user_prompt: str, is_batch: bool
             # Enforce strict 15s timeout. If DeepSeek is saturated, we fail fast instead of hanging.
             response = await asyncio.wait_for(
                 _deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
+                    # "deepseek-chat" was the pre-2026-07-24 deprecated alias; it maps
+                    # to deepseek-v4-flash in NON-THINKING mode (all callers use this
+                    # non-thinking path — no caller relies on deepseek-reasoner/thinking).
+                    model="deepseek-v4-flash",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
