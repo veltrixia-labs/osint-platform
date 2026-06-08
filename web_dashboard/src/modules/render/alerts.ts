@@ -20,19 +20,20 @@ function normalizeThreatLevel(severity: string | undefined): ThreatLevelTier {
     return 'watch';
 }
 
-// Anti-alert-fatigue: the displayed tier is derived from the calibrated
-// intensity_pct, NOT the stored severity string. CRITICAL (red) is reserved for
-// true global anomalies (>= 92%); ELEVATED is held to a strict >= 82% band so it
-// stays a ~top-15% signal instead of flooding the feed. Everything below 82%
-// gracefully degrades to STANDARD (the 'watch' tier, relabeled for the UI).
-// (Falls back to the stored severity only when pct is absent.)
-const CRITICAL_PCT = 92;
-const ELEVATED_PCT = 82;
-function alertThreatTier(alert: { intensity_pct?: number | null; severity?: string }): ThreatLevelTier {
-    const pct = typeof alert.intensity_pct === 'number' ? alert.intensity_pct : null;
-    if (pct !== null) {
-        if (pct >= CRITICAL_PCT) return 'critical';
-        if (pct >= ELEVATED_PCT) return 'elevated';
+// The displayed tier is derived from IMPORTANCE (the Stream headline axis), NOT the
+// anomaly intensity_pct and NOT the raw stored severity. Bands mirror the scoring
+// prompt: >=80 => CRITICAL, >=50 => ELEVATED, else STANDARD (the 'watch' tier key,
+// relabeled in the UI). Anomaly is kept only as a secondary gauge on the detail ring.
+// Falls back to the stored severity string only when importance_score is absent
+// (rare legacy/unscored rows). Anomaly intensity_pct is no longer used for tiering;
+// it survives only as a secondary gauge on the detail ring (read directly there).
+const IMPORTANCE_CRITICAL = 80;
+const IMPORTANCE_ELEVATED = 50;
+function alertThreatTier(alert: { importance_score?: number | null; intensity_pct?: number | null; severity?: string }): ThreatLevelTier {
+    const imp = typeof alert.importance_score === 'number' ? alert.importance_score : null;
+    if (imp !== null) {
+        if (imp >= IMPORTANCE_CRITICAL) return 'critical';
+        if (imp >= IMPORTANCE_ELEVATED) return 'elevated';
         return 'watch';
     }
     return normalizeThreatLevel(alert.severity);
@@ -145,11 +146,10 @@ export function renderTopicFilterBar(
 
 export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
     // [v16.0] Compact Pulse Bar: Single most critical/recent signal
-    const severityMap: Record<string, number> = { critical: 3, elevated: 2, watch: 1 };
     const latest = [...alerts].sort((a, b) => {
-        const sevA = severityMap[a.severity?.toLowerCase() || ''] || 0;
-        const sevB = severityMap[b.severity?.toLowerCase() || ''] || 0;
-        if (sevA !== sevB) return sevB - sevA;
+        const impA = typeof a.importance_score === 'number' ? a.importance_score : -1;
+        const impB = typeof b.importance_score === 'number' ? b.importance_score : -1;
+        if (impA !== impB) return impB - impA;
         return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
     })[0];
 
@@ -232,7 +232,6 @@ function chudTopicAbbr(canonicalTopic: string): string {
     return CHUD_TOPIC_PREFIX[canonicalTopic] || 'SIG';
 }
 
-const CHUD_SEV_RANK: Record<string, number> = { critical: 3, elevated: 2, watch: 1 };
 /** Threat-ring SVG circumference = 2π·r with r=45 in the 100×100 viewBox. */
 const THREAT_CIRCUMFERENCE = 2 * Math.PI * 45; // ≈ 282.74
 
@@ -795,9 +794,13 @@ export function renderAlerts(
     const sortedAlerts = [...alerts]
         .filter(a => !topicFilter || normalizeTopicCode(a.topic) === topicFilter)
         .sort((a, b) => {
-            const sevA = CHUD_SEV_RANK[alertThreatTier(a)] || 0;
-            const sevB = CHUD_SEV_RANK[alertThreatTier(b)] || 0;
-            if (sevA !== sevB) return sevB - sevA;
+            // Headline axis = importance, fine-grained (mirrors the server order_by:
+            // importance DESC NULLS LAST → triggered_at DESC). A higher importance is
+            // always above a lower one; triggered_at only breaks ties within equal
+            // scores. Unscored rows (null) sort last.
+            const impA = typeof a.importance_score === 'number' ? a.importance_score : -1;
+            const impB = typeof b.importance_score === 'number' ? b.importance_score : -1;
+            if (impA !== impB) return impB - impA;
             return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
         });
 
@@ -805,9 +808,9 @@ export function renderAlerts(
     chudAlerts = sortedAlerts;
     chudLatestAlerts = sortedAlerts;
 
-    // CRIT counter mirrors the displayed CRITICAL tier (calibrated intensity_pct
-    // >= 92), NOT the raw stored severity string — so the header matches the rows.
-    const critical = sortedAlerts.filter(a => typeof a.intensity_pct === 'number' && a.intensity_pct >= CRITICAL_PCT).length;
+    // CRIT counter mirrors the displayed CRITICAL tier (importance_score >= 80),
+    // so the header matches the row badges produced by alertThreatTier.
+    const critical = sortedAlerts.filter(a => typeof a.importance_score === 'number' && a.importance_score >= IMPORTANCE_CRITICAL).length;
     const existing = container.querySelector<HTMLElement>('.chud-root');
 
     // ── Incremental path (≈ every 10s poll) — swap rows only, keep log + detail.
