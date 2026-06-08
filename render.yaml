@@ -32,7 +32,12 @@ services:
     runtime: static
     buildCommand: cd web_dashboard && npm ci && npm run build
     staticPublishPath: web_dashboard/dist
+    envVars:
+      # Build-time API origin for the static dashboard (Vite inlines this).
+      # Must match the LIVE API host; bare osint-platform.onrender.com is retired (no-server).
+      - key: VITE_API_BASE_URL
+        value: https://osint-platform-xs7p.onrender.com/api
     routes:
       - type: rewrite
         source: /api/*
-        destination: https://osint-platform.onrender.com/api/*
+        destination: https://osint-platform-xs7p.onrender.com/api/*
