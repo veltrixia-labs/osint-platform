@@ -53,6 +53,8 @@ TOPIC_KEYWORD_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     # matching (below) keeps them from matching inside unrelated words.
     ("ai_semiconductor_intelligence", (
         "artificial intelligence", "genai", "llm",
+        # AI company/product proper nouns (\b-matched; "ai" bare is NEVER added — it bled into Ukr-ai-ne)
+        "openai", "anthropic", "chatgpt", "copilot", "deepmind",
         "semiconductor", "chip", "gpu", "data center", "nvidia", "tsmc",
     )),
     # Crypto before broad market keywords so "crypto market" stays CRYPTO
