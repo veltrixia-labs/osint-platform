@@ -197,3 +197,136 @@ async def run_classify(db: AsyncSession):
 
     await db.commit()
     logger.info("Processor Classify finished.")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# (C-1) LLM TOPIC-CLASSIFY FALLBACK — ingest-gate rescue layer.
+#
+# Independent of run_classify / batch_classify_llm / AnalysisCache (which stay
+# dead-but-manual-test-only). Called ONLY from processor.normalize, ONLY for
+# keyword-MISS candidates (items the strict keyword gate would otherwise DROP),
+# ONLY when ENABLE_LLM_TOPIC=true. Mirrors phase-0 importance discipline:
+# additive, flag-gated, try/except-isolated, any failure/None -> caller drops
+# (byte-identical to today). Returns {title_norm: internal_topic_code} ONLY for
+# items the LLM maps to a real STRATEGIC_TOPIC; misses/"none"/failures are absent
+# from the dict so the caller drops them exactly as before.
+# ─────────────────────────────────────────────────────────────────────────────
+
+import os as _os_ctopic  # local alias; avoid touching module-top imports
+
+from processor.lightweight_topic import STRATEGIC_TOPICS as _STRATEGIC_TOPICS
+
+_LLM_TOPIC_BATCH_SIZE = 10
+_LLM_TOPIC_PER_CYCLE_CAP = 60
+
+_LLM_TOPIC_SYSTEM_PROMPT = (
+    "You are an OSINT topic classifier for a geopolitical/market intelligence "
+    "platform. Each article failed a keyword filter; decide if it nonetheless "
+    "belongs to one of these strategic domains, or to none.\n"
+    "DOMAINS (use the exact code):\n"
+    "- energy_resource_risk: oil/gas/LNG/power/mining/commodities supply & prices\n"
+    "- supply_chain_intelligence: shipping/ports/freight/logistics/trade flows/agri-inputs\n"
+    "- defense_technology: military action, conflict, strikes, armed forces, security\n"
+    "- ai_semiconductor_intelligence: AI, semiconductors/chips, data centers, compute\n"
+    "- crypto_geopolitics: crypto/blockchain/stablecoins and their regulation\n"
+    "- global_market_intelligence: macro econ, central banks, markets, inflation, growth\n"
+    "RULES: Assign a domain ONLY if the article is genuinely about that domain's "
+    "real-world subject (a geopolitical conflict story with no keyword match is "
+    "defense_technology; a domestic-politics or human-interest story with no "
+    "strategic bearing is none). When unsure, answer none. Do NOT force-fit.\n"
+    "Return ONLY a JSON array, no prose, no markdown fences. Each element: "
+    '{"id": "<id as given>", "topic": "<one domain code or none>"}'
+)
+
+
+def _llm_topic_norm_key(title: str) -> str:
+    """Same normalization the normalize-gate uses for title dedup (lowercased,
+    alnum-only) so the caller can map verdicts back by title_norm."""
+    import re as _re
+    return _re.sub(r"[^a-zA-Z0-9]", "", title or "").lower()
+
+
+async def llm_classify_fallback(candidates: List[Dict[str, Any]]) -> Dict[str, str]:
+    """Second-chance LLM topic classification for keyword-MISS ingest candidates.
+
+    `candidates`: list of dicts with at least {"title": str, "summary": str}.
+    Returns {title_norm: internal_topic_code} ONLY for items mapped to a real
+    STRATEGIC_TOPIC. Anything the LLM calls "none"/unknown, or any parse/LLM
+    failure, is simply absent (caller drops it, same as today). Never raises."""
+    out: Dict[str, str] = {}
+    if not candidates:
+        return out
+
+    # In-run dedup by exact title_norm (probe showed many "Live Updates: ..."
+    # duplicates pre-dedup); classify each unique title once.
+    by_key: Dict[str, Dict[str, Any]] = {}
+    for c in candidates:
+        k = _llm_topic_norm_key(c.get("title", ""))
+        if k and k not in by_key:
+            by_key[k] = c
+    uniques = list(by_key.items())  # [(title_norm, candidate_dict), ...]
+
+    # Per-cycle cost cap: classify at most N unique titles; the rest fall through
+    # to the existing drop (no behavioural regression, just no rescue this cycle).
+    if len(uniques) > _LLM_TOPIC_PER_CYCLE_CAP:
+        uniques = uniques[:_LLM_TOPIC_PER_CYCLE_CAP]
+
+    for i in range(0, len(uniques), _LLM_TOPIC_BATCH_SIZE):
+        batch = uniques[i:i + _LLM_TOPIC_BATCH_SIZE]
+        articles = [
+            {
+                "id": key,
+                "title": (cand.get("title") or "")[:200],
+                "summary": (cand.get("summary") or "")[:300],
+            }
+            for key, cand in batch
+        ]
+        user_prompt = (
+            "Classify each article. Return the JSON array described.\n"
+            + json.dumps(articles, ensure_ascii=False, indent=2)
+        )
+        try:
+            # text mode (is_batch=False): we parse + validate the JSON ourselves
+            # instead of relying on the batch helper's list/dict contract. Low temp
+            # for determinism; Claude fallback opt-in (same as importance scoring).
+            raw = await generate_analysis(
+                _LLM_TOPIC_SYSTEM_PROMPT,
+                user_prompt,
+                is_batch=False,
+                temperature=0.1,
+                enable_fallback=True,
+            )
+        except Exception as exc:  # never let a rescue attempt break ingest
+            logger.warning("[LLM_TOPIC] batch classify failed (non-fatal): %s", exc)
+            continue
+        if not raw or not isinstance(raw, str):
+            continue
+        text = raw.strip()
+        # Strip accidental ```json fences defensively.
+        if text.startswith("```"):
+            text = text.strip("`")
+            if text.lower().startswith("json"):
+                text = text[4:]
+            text = text.strip()
+        try:
+            parsed = json.loads(text)
+        except Exception as exc:
+            logger.warning("[LLM_TOPIC] JSON parse failed (non-fatal): %s", exc)
+            continue
+        if not isinstance(parsed, list):
+            continue
+        for v in parsed:
+            if not isinstance(v, dict):
+                continue
+            vid = v.get("id")
+            vtopic = (v.get("topic") or "").strip()
+            # STRICT: accept ONLY a real strategic internal code. "none"/anything
+            # else -> not added -> caller drops it (today's behaviour).
+            if isinstance(vid, str) and vtopic in _STRATEGIC_TOPICS:
+                out[vid] = vtopic
+
+    logger.info(
+        "[LLM_TOPIC] rescued %d/%d unique keyword-miss candidates",
+        len(out), len(uniques),
+    )
+    return out
