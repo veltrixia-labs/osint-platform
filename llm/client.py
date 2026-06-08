@@ -17,7 +17,7 @@ _deepseek_client: Optional[AsyncOpenAI] = None
 if settings.deepseek_api_key:
     _deepseek_client = AsyncOpenAI(api_key=settings.deepseek_api_key, base_url="https://api.deepseek.com")
 
-async def generate_analysis(system_prompt: str, user_prompt: str, is_batch: bool = False, **kwargs) -> str | List[Dict] | None:
+async def generate_analysis(system_prompt: str, user_prompt: str, is_batch: bool = False, temperature: float = 0.7, **kwargs) -> str | List[Dict] | None:
     """
     Step 1: Single path DeepSeek execution. No fallback, no automatic provider hopping.
     If it fails, it fails fast.
@@ -40,8 +40,8 @@ async def generate_analysis(system_prompt: str, user_prompt: str, is_batch: bool
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    temperature=0.7
-                ), 
+                    temperature=temperature
+                ),
                 timeout=15.0
             )
             

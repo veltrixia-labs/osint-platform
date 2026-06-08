@@ -596,8 +596,11 @@ class AlertManager:
                         "SOURCE TITLES:\n"
                         + ("\n".join(f"- {t}" for t in ev_titles) if ev_titles else "- (none)")
                     )
+                    # Low temperature for reproducible/consistent importance scoring
+                    # (vs the 0.7 default used by generative features like reports).
                     _imp = await generate_analysis(
-                        _IMPORTANCE_SYSTEM_PROMPT, importance_user_prompt, is_batch=True
+                        _IMPORTANCE_SYSTEM_PROMPT, importance_user_prompt, is_batch=True,
+                        temperature=0.1,
                     )
                     if (
                         _imp is not None
