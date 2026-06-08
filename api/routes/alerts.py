@@ -23,12 +23,21 @@ from api.rate_limit import rate_limit
 from analysis.intensity_pressure import PERCENT_STREAM_FLOOR
 
 
+def _above_pulse_floor(a: dict) -> bool:
+    """`/alerts/live` (dashboard pulse) ONLY. Unchanged anomaly-maturity gate:
+    show a pulse row strictly when intensity_pct is a real number
+    >= PERCENT_STREAM_FLOOR (20%). The pulse is a separate high-fidelity feed and
+    is intentionally NOT migrated to importance — leave its behavior byte-identical."""
+    pct = a.get("intensity_pct")
+    return isinstance(pct, (int, float)) and pct >= PERCENT_STREAM_FLOOR
+
+
 def _above_stream_floor(a: dict) -> bool:
-    """Data-Maturity Guardrail: the live Alert Stream features ONLY matured,
-    computed telemetry. An alert is shown strictly when its intensity_pct is a
-    real number >= PERCENT_STREAM_FLOOR (20%). Anything null / 0 / uncomputed
-    (cold-start with no reliable baseline) is dropped from the feed view — the
-    raw row still persists for the worker to build baselines from over time."""
+    """Main Alert Stream (`/api/alerts`) post-serialization belt. NOTE: the
+    importance/24h flooring is enforced in SQL; this belt only enforces the
+    anomaly DATA-MATURITY existence gate (intensity_pct must be a computed real
+    number — cold-start null/0/uncomputed rows are dropped). In commit ① this is
+    still identical to the old behavior; commit ② narrows it to importance."""
     pct = a.get("intensity_pct")
     return isinstance(pct, (int, float)) and pct >= PERCENT_STREAM_FLOOR
 
@@ -195,6 +204,10 @@ async def _get_alerts_impl(
             "intensity_label": "High" if a.intensity >= 8.0 else "Elevated" if a.intensity >= 4.0 else "Low",
             "intensity_display": f"{a.intensity:.1f}",
             "intensity_pct": a.metadata_json.get("intensity_pct") if isinstance(a.metadata_json, dict) else None,
+            "importance_score": a.metadata_json.get("importance_score") if isinstance(a.metadata_json, dict) else None,
+            "importance_rationale": a.metadata_json.get("importance_rationale") if isinstance(a.metadata_json, dict) else None,
+            "importance_scored_at": a.metadata_json.get("importance_scored_at") if isinstance(a.metadata_json, dict) else None,
+            "importance_model": a.metadata_json.get("importance_model") if isinstance(a.metadata_json, dict) else None,
             "backbone_discovery_status": a.metadata_json.get("backbone_discovery_status", "idle") if a.metadata_json else "idle"
         }
         for a in alerts
@@ -293,7 +306,7 @@ async def _get_live_alerts_impl(
         final_live.append(a)
 
     # Ground-floor: drop sub-baseline (<25%) noise from the active stream view.
-    final_live = [a for a in final_live if _above_stream_floor(a)]
+    final_live = [a for a in final_live if _above_pulse_floor(a)]
 
     return final_live
 

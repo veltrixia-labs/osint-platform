@@ -312,6 +312,10 @@ export interface Alert {
     intensity_label: string;
     intensity_display: string;
     intensity_pct?: number | null;
+    importance_score?: number | null;
+    importance_rationale?: string | null;
+    importance_scored_at?: string | null;
+    importance_model?: string | null;
     status: string;
     country?: string;
     description?: string;
