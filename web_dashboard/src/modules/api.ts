@@ -12,7 +12,7 @@ export const ALERT_STREAM_DISPLAY_LIMIT = 100;
 
 /** Dashboard hosts that serve static files only (API is on Render). */
 const STATIC_DASHBOARD_HOSTS = new Set(['veltrixia.net', 'www.veltrixia.net']);
-const DEFAULT_REMOTE_API_ORIGIN = 'https://osint-platform.onrender.com';
+const DEFAULT_REMOTE_API_ORIGIN = 'https://osint-platform-xs7p.onrender.com';
 
 const FETCH_RETRY_ATTEMPTS = 3;
 const FETCH_RETRY_BASE_MS = 400;
