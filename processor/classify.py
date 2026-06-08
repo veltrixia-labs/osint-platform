@@ -217,7 +217,7 @@ import os as _os_ctopic  # local alias; avoid touching module-top imports
 from processor.lightweight_topic import STRATEGIC_TOPICS as _STRATEGIC_TOPICS
 
 _LLM_TOPIC_BATCH_SIZE = 10
-_LLM_TOPIC_PER_CYCLE_CAP = 60
+_LLM_TOPIC_PER_CYCLE_CAP = 30  # conservative start (C-3); raise toward 60 after latency check
 
 _LLM_TOPIC_SYSTEM_PROMPT = (
     "You are an OSINT topic classifier for a geopolitical/market intelligence "
