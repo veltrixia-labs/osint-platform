@@ -598,9 +598,12 @@ class AlertManager:
                     )
                     # Low temperature for reproducible/consistent importance scoring
                     # (vs the 0.7 default used by generative features like reports).
+                    # enable_fallback: importance scoring degrades DeepSeek -> Claude
+                    # (claude-haiku-4-5) for resilience instead of skipping on a DeepSeek
+                    # outage. Opt-in here only; all other callers stay DeepSeek-only.
                     _imp = await generate_analysis(
                         _IMPORTANCE_SYSTEM_PROMPT, importance_user_prompt, is_batch=True,
-                        temperature=0.1,
+                        temperature=0.1, enable_fallback=True,
                     )
                     if (
                         _imp is not None
