@@ -11,7 +11,7 @@ from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Query, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.future import select
-from sqlalchemy import desc, case, Float
+from sqlalchemy import desc, Float
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import AlertLog, AlertDelivery, AnalystProfile
