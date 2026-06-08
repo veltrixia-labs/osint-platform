@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Item, RawItem
 from processor.lightweight_topic import infer_topic_from_text
+from processor.classify import llm_classify_fallback  # (C-1) keyword-miss rescue
 from reports.text_encoding import sanitize_unicode_text
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,8 @@ async def run_normalize(db: AsyncSession):
 
     metrics = {"normalized": 0, "noise_filtered": 0, "deduped": 0, "unclassified": 0}
     candidates: list[dict] = []
+    pending_llm: list[dict] = []  # (C-1) keyword-miss, awaiting LLM rescue
+    _enable_llm_topic = os.getenv("ENABLE_LLM_TOPIC", "false").lower() == "true"
 
     for raw in raw_items:
         payload = raw.payload_json or {}
@@ -108,7 +111,23 @@ async def run_normalize(db: AsyncSession):
             strict=True,
         )
         if topic_code is None:
-            metrics["unclassified"] += 1
+            # (C-1) Flag OFF -> identical to before: count + drop.
+            # Flag ON -> stash for a single post-loop LLM batch; only items the
+            # LLM maps to a real strategic domain are rescued, the rest still drop.
+            if _enable_llm_topic:
+                pending_llm.append(
+                    {
+                        "raw": raw,
+                        "url_hash": url_hash,
+                        "title_hash": title_hash,
+                        "title": title,
+                        "summary": summary,
+                        "url": url,
+                        "pub_date": pub_date,
+                    }
+                )
+            else:
+                metrics["unclassified"] += 1
             continue
 
         candidates.append(
@@ -123,6 +142,24 @@ async def run_normalize(db: AsyncSession):
                 "topic_code": topic_code,
             }
         )
+
+    # (C-1) Post-loop LLM rescue of keyword-miss candidates (flag-gated). Any
+    # failure is swallowed inside llm_classify_fallback -> these items simply
+    # stay dropped, exactly as before the flag existed.
+    if _enable_llm_topic and pending_llm:
+        try:
+            verdicts = await llm_classify_fallback(pending_llm)
+        except Exception as _llm_exc:  # defensive; fn already isolates, double-guard
+            logger.warning("[LLM_TOPIC] rescue batch errored (non-fatal): %s", _llm_exc)
+            verdicts = {}
+        for _pc in pending_llm:
+            _key = normalize_text(_pc["title"])
+            _rescued = verdicts.get(_key)
+            if _rescued:
+                _pc["topic_code"] = _rescued
+                candidates.append(_pc)
+            else:
+                metrics["unclassified"] += 1
 
     if not candidates:
         logger.info("Processor Normalize finished. Metrics: %s", metrics)
