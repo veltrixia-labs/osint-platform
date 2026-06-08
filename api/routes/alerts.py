@@ -33,13 +33,16 @@ def _above_pulse_floor(a: dict) -> bool:
 
 
 def _above_stream_floor(a: dict) -> bool:
-    """Main Alert Stream (`/api/alerts`) post-serialization belt. NOTE: the
-    importance/24h flooring is enforced in SQL; this belt only enforces the
-    anomaly DATA-MATURITY existence gate (intensity_pct must be a computed real
-    number — cold-start null/0/uncomputed rows are dropped). In commit ① this is
-    still identical to the old behavior; commit ② narrows it to importance."""
+    """Main Alert Stream (`/api/alerts`) post-serialization belt mirroring the SQL
+    floor (package A): keep a row iff importance_score >= 20 AND intensity_pct is a
+    computed real number (data-maturity existence gate, NOT a >= threshold). The 24h
+    time-floor is enforced in SQL only. Anomaly magnitude is not used for the Stream."""
+    imp = a.get("importance_score")
     pct = a.get("intensity_pct")
-    return isinstance(pct, (int, float)) and pct >= PERCENT_STREAM_FLOOR
+    return (
+        isinstance(imp, (int, float)) and imp >= 20
+        and isinstance(pct, (int, float))
+    )
 
 router = APIRouter(tags=["alerts"])
 logger = logging.getLogger(__name__)
@@ -149,26 +152,38 @@ async def _get_alerts_impl(
     # are bounded by severity-rank/recency ordering + LIMIT below. (The prior default
     # 1h window was reverted; freshness will be handled in the UI instead.)
     if since:
+        # Explicit `since` (Monthly Trend Flow / date-range callers): honored as-is,
+        # no extra recency bound — MTF must be able to reach back into history.
         stmt = stmt.where(AlertLog.triggered_at >= since)
+    else:
+        # Realtime Alert Stream: bound to the last 24h. The stream is "what is moving
+        # now"; history is served by the Monthly Trend Flow. now() computed app-side in
+        # UTC (DB now() has a known clock-skew anomaly).
+        _stream_cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+        stmt = stmt.where(AlertLog.triggered_at >= _stream_cutoff)
 
-    # Data-Maturity floor: drop sub-threshold (uncalibrated / noise) telemetry
-    # UNIFORMLY — All AND every category alike (the old `if not topic:` asymmetry is
-    # removed so the floor is always enforced). Suppressed rows are already excluded
-    # above; severity+recency ordering keeps the strongest signals first.
+    # Stream floor (importance-based, package A). The headline axis is IMPORTANCE:
+    # drop filler (importance < 20) outright, which also rescues the old "cut-zone"
+    # (high-importance / low-anomaly events that the anomaly floor used to hide).
+    # The anomaly value is KEPT only as a data-maturity EXISTENCE gate: intensity_pct
+    # must be a computed real number (cold-start null/uncomputed rows are excluded) —
+    # this is no longer a >= threshold, just "is it calibrated yet".
     stmt = stmt.where(
-        AlertLog.metadata_json["intensity_pct"].astext.cast(Float) >= PERCENT_STREAM_FLOOR
+        AlertLog.metadata_json["importance_score"].astext.cast(Float) >= 20
+    )
+    stmt = stmt.where(
+        AlertLog.metadata_json["intensity_pct"].astext.cast(Float) != None  # noqa: E711
     )
 
-    # Order by THREAT PRIORITY then recency so the rare CRITICAL/ELEVATED signals
-    # always make the limited window (they'd otherwise be squeezed out by the
-    # high volume of recent WATCH-tier telemetry). The client re-sorts identically.
-    _sev_rank = case(
-        (AlertLog.severity == "critical", 3),
-        (AlertLog.severity == "elevated", 2),
-        (AlertLog.severity == "watch", 1),
-        else_=0,
-    )
-    stmt = stmt.order_by(_sev_rank.desc(), AlertLog.triggered_at.desc()).limit(limit)
+    # Order by IMPORTANCE (the headline axis), fine-grained: a higher importance is
+    # always above a lower one; triggered_at is only a tiebreaker within equal scores.
+    # NULLS LAST so any unscored/legacy rows sink to the bottom (we do not backfill;
+    # they age out via the 24h floor). The client re-sorts identically. Anomaly is NOT
+    # used for Stream ordering (it belongs to Pro analysis).
+    _importance = AlertLog.metadata_json["importance_score"].astext.cast(Float)
+    stmt = stmt.order_by(
+        _importance.desc().nullslast(), AlertLog.triggered_at.desc()
+    ).limit(limit)
     result = await db.execute(stmt)
     alerts = result.scalars().all()
 
