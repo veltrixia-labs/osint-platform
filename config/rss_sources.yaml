@@ -136,7 +136,7 @@ sources:
   # E. AI / Semiconductor / Tech
   - source_id: techcrunch_feed
     source_name: TechCrunch
-    source_group: ai_semiconductor
+    source_group: tech_media
     source_type: rss
     rss_url: "https://techcrunch.com/feed/"
     default_topic_candidates: ["ai_semiconductor_intelligence"]
@@ -146,7 +146,7 @@ sources:
 
   - source_id: arstechnica_feed
     source_name: Ars Technica
-    source_group: ai_semiconductor
+    source_group: tech_media
     source_type: rss
     rss_url: "https://feeds.arstechnica.com/arstechnica/index"
     default_topic_candidates: ["ai_semiconductor_intelligence"]
@@ -156,7 +156,7 @@ sources:
 
   - source_id: mit_techreview_feed
     source_name: MIT Technology Review
-    source_group: ai_semiconductor
+    source_group: tech_media
     source_type: rss
     rss_url: "https://www.technologyreview.com/feed/"
     default_topic_candidates: ["ai_semiconductor_intelligence"]
@@ -186,7 +186,7 @@ sources:
 
   - source_id: venturebeat_ai_feed
     source_name: VentureBeat AI
-    source_group: ai_semiconductor
+    source_group: tech_media
     source_type: rss
     rss_url: "https://venturebeat.com/category/ai/feed/"
     default_topic_candidates: ["ai_semiconductor_intelligence"]
@@ -196,7 +196,7 @@ sources:
 
   - source_id: tomshardware_feed
     source_name: Tom's Hardware
-    source_group: ai_semiconductor
+    source_group: tech_media
     source_type: rss
     rss_url: "https://www.tomshardware.com/feeds/all"
     default_topic_candidates: ["ai_semiconductor_intelligence"]

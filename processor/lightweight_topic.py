@@ -158,6 +158,7 @@ _NOISE_WEAK_RE = [re.compile(r"\b" + re.escape(t) + r"s?\b", re.IGNORECASE) for 
 _GENERIC_SOURCE_GROUPS = frozenset({
     "global_news", "news", "world_news", "top_news", "general",
     "policy_institutions", "central_banks", "regulators",
+    "tech_media",  # omnivore tech feeds (TechCrunch/Ars/MIT/VentureBeat/Toms): content-classify, never feed-confer AI
 })
 
 
