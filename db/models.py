@@ -38,6 +38,8 @@ class Item(Base):
     cluster_id = Column(UUID(as_uuid=True), ForeignKey("event_clusters.id", ondelete="SET NULL"), nullable=True)
     geo = Column(JSON)
     tags = Column(JSON)
+    title_original = Column(String)  # original non-English title (NULL for English items)
+    lang = Column(String)            # "ja" / "en" / NULL (legacy rows)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class Topic(Base):
