@@ -15,6 +15,7 @@ from db.database import AsyncSessionLocal
 from db.models import RawItem, SourceRegistry
 from reports.text_encoding import sanitize_unicode_text
 import feedparser
+import aiohttp  # (C-4) GDELT fetcher
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -61,6 +62,33 @@ async def fetch_feed(source: dict) -> list[dict]:
                 "link": sanitize_unicode_text(entry.get("link", "") or ""),
                 "published": sanitize_unicode_text(entry.get("published", "") or ""),
                 "summary": sanitize_unicode_text(entry.get("summary", "") or ""),
+            }
+        )
+    return items
+
+
+async def fetch_gdelt(source: dict) -> list[dict]:
+    """(C-4) Fetch a GDELT DOC 2.0 API source. source['rss_url'] holds a complete
+    GDELT query URL (mode=artlist&format=json&...). Maps GDELT's artlist JSON into
+    the SAME payload shape as fetch_feed so all downstream code is unchanged.
+    GDELT returns no article summary -> summary="" (the normalize length gate
+    admits translated/title-only items). Per-source errors propagate to the
+    run_ingest try/except guard, exactly like fetch_feed."""
+    timeout = aiohttp.ClientTimeout(total=30)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.get(source["rss_url"]) as resp:
+            resp.raise_for_status()
+            data = await resp.json(content_type=None)
+    items = []
+    for art in (data.get("articles", []) if isinstance(data, dict) else []):
+        items.append(
+            {
+                "title": sanitize_unicode_text(art.get("title", "") or ""),
+                "link": sanitize_unicode_text(art.get("url", "") or ""),
+                "published": sanitize_unicode_text(art.get("seendate", "") or ""),
+                "summary": "",
+                "language": sanitize_unicode_text(art.get("language", "") or ""),
+                "sourcecountry": sanitize_unicode_text(art.get("sourcecountry", "") or ""),
             }
         )
     return items
@@ -160,7 +188,16 @@ async def run_ingest(db: AsyncSession):
     for src in yaml_sources:
         source_id = src["source_id"]
         try:
-            items = await fetch_feed(src)
+            # (C-4) Dispatch by source_type. RSS path is byte-identical. GDELT is
+            # gated by ENABLE_GDELT_INGEST (default off -> gdelt sources skipped,
+            # ingest byte-identical).
+            _stype = (src.get("source_type") or "rss").strip().lower()
+            if _stype == "gdelt":
+                if os.getenv("ENABLE_GDELT_INGEST", "false").lower() != "true":
+                    continue
+                items = await fetch_gdelt(src)
+            else:
+                items = await fetch_feed(src)
             logger.info("Fetched %s items from %s", len(items), source_id)
 
             new_count = await ingest_feed_for_source(db, src, items)
