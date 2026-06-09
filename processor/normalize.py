@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.models import Item, RawItem
 from processor.lightweight_topic import infer_topic_from_text
 from processor.classify import llm_classify_fallback  # (C-1) keyword-miss rescue
+from processor.classify import detect_ja, llm_translate_to_en  # (C-4) JA translate-at-ingest
 from reports.text_encoding import sanitize_unicode_text
 
 logger = logging.getLogger(__name__)
@@ -73,16 +74,66 @@ async def run_normalize(db: AsyncSession):
     pending_llm: list[dict] = []  # (C-1) keyword-miss, awaiting LLM rescue
     _enable_llm_topic = os.getenv("ENABLE_LLM_TOPIC", "false").lower() == "true"
 
+    # (C-4) JA translate-at-ingest pre-pass (flag-gated). When ON, JA raw items
+    # are batch-translated to English BEFORE the length gate / title_hash, so the
+    # whole English pipeline downstream runs unchanged on a real English title.
+    # When OFF, `translations` stays empty -> every branch below is byte-identical.
+    _enable_translate = os.getenv("ENABLE_LLM_TRANSLATE", "false").lower() == "true"
+    translations: dict = {}  # {str(raw.id): {"title_en", "title_original", "lang"}}
+    if _enable_translate:
+        ja_cands = []
+        for raw in raw_items:
+            _p = raw.payload_json or {}
+            _t = sanitize_unicode_text(_p.get("title", "") or "")
+            if _t and detect_ja(_t, _p.get("language")):
+                ja_cands.append({
+                    "id": str(raw.id),
+                    "title": _t,
+                    "summary": sanitize_unicode_text(_p.get("summary", "") or ""),
+                })
+        if ja_cands:
+            try:
+                _verdicts = await llm_translate_to_en(ja_cands)
+            except Exception as _tx_exc:  # double-guard; fn already isolates
+                logger.warning("[LLM_TRANSLATE] pre-pass errored (non-fatal): %s", _tx_exc)
+                _verdicts = {}
+            for _c in ja_cands:
+                _te = _verdicts.get(_c["id"])
+                if _te:
+                    translations[_c["id"]] = {
+                        "title_en": _te,
+                        "title_original": _c["title"],
+                        "lang": "ja",
+                    }
+
     for raw in raw_items:
         payload = raw.payload_json or {}
         url = payload.get("link", "")
         title = sanitize_unicode_text(payload.get("title", "") or "")
         summary = sanitize_unicode_text(payload.get("summary", "") or "")
 
+        # (C-4) If this JA item was translated, swap in the English title for all
+        # downstream processing (length gate, title_hash, keyword/LLM topic,
+        # clustering) and remember the original + language for persistence.
+        _tr = translations.get(str(raw.id))
+        if _tr:
+            title_original = _tr["title_original"]
+            lang = "ja"
+            title = _tr["title_en"]
+            summary = ""  # GDELT/translated path is title-only
+            is_translated = True
+        else:
+            title_original = None
+            lang = "en"
+            is_translated = False
+
         if not url or not title:
             continue
-
-        if len(title) < 15 or len(summary) < 20:
+        # Length gate: English RSS unchanged. Translated/title-only (GDELT) items
+        # are admitted on title alone (no summary requirement); the minimum-signal
+        # keyword rule still runs on the title downstream.
+        _summary_ok = (len(summary) >= 20) or is_translated
+        if len(title) < 15 or not _summary_ok:
             metrics["noise_filtered"] += 1
             continue
 
@@ -118,6 +169,8 @@ async def run_normalize(db: AsyncSession):
                 pending_llm.append(
                     {
                         "raw": raw,
+                        "title_original": title_original,
+                        "lang": lang,
                         "url_hash": url_hash,
                         "title_hash": title_hash,
                         "title": title,
@@ -133,6 +186,8 @@ async def run_normalize(db: AsyncSession):
         candidates.append(
             {
                 "raw": raw,
+                "title_original": title_original,
+                "lang": lang,
                 "url_hash": url_hash,
                 "title_hash": title_hash,
                 "title": title,
@@ -195,6 +250,8 @@ async def run_normalize(db: AsyncSession):
                 "published_at": c["pub_date"],
                 "title": c["title"],
                 "summary": c["summary"],
+                "title_original": c.get("title_original"),
+                "lang": c.get("lang", "en"),
                 "source_name": raw.source_system,
                 "source_url": c["url"],
                 "source_id": raw.source_id,
