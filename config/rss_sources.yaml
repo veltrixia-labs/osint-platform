@@ -286,7 +286,7 @@ sources:
     source_name: GDELT Japanese (geopolitics/markets)
     source_group: global_news
     source_type: gdelt
-    rss_url: "https://api.gdeltproject.org/api/v2/doc/doc?query=sourcelang%3Ajapanese%20%28oil%20OR%20gas%20OR%20LNG%20OR%20pipeline%20OR%20sanctions%20OR%20shipping%20OR%20port%20OR%20freight%20OR%20semiconductor%20OR%20chip%20OR%20export%20OR%20military%20OR%20missile%20OR%20defense%20OR%20conflict%20OR%20tariff%20OR%20crypto%20OR%20bitcoin%20OR%20%22central%20bank%22%20OR%20inflation%29&mode=artlist&format=json&maxrecords=75&timespan=4h&sort=datedesc"
+    rss_url: "https://api.gdeltproject.org/api/v2/doc/doc?query=sourcelang%3Ajapanese%20%28theme%3AMILITARY%20OR%20theme%3AARMEDCONFLICT%20OR%20theme%3AENV_OIL%20OR%20theme%3AENV_NATURALGAS%20OR%20theme%3AWB_507_ENERGY_AND_EXTRACTIVES%20OR%20theme%3AECON_STOCKMARKET%20OR%20theme%3AECON_WORLDCURRENCIES%20OR%20theme%3AMARITIME%20OR%20theme%3AWB_167_PORTS%20OR%20theme%3AECON_BITCOIN%29&mode=artlist&format=json&maxrecords=75&timespan=4h&sort=datedesc"
     default_topic_candidates: ["global_general", "defense_technology", "energy_resource_risk", "supply_chain_intelligence"]
     reliability_weight: 0.60
     language: ja
