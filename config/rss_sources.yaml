@@ -276,3 +276,18 @@ sources:
     reliability_weight: 1.00
     language: en
     enabled: true
+
+  # I. Multilingual pilot (C-4) — GDELT DOC 2.0 API, Japanese coverage.
+  # source_type: gdelt -> fetched by fetch_gdelt (gated by ENABLE_GDELT_INGEST).
+  # rss_url holds a complete GDELT query URL (sourcelang:japanese, 6-topic core
+  # terms). global_news is a GENERIC source_group -> never feed-confers a domain;
+  # items are content/LLM classified after JA->EN translation.
+  - source_id: gdelt_ja_geo
+    source_name: GDELT Japanese (geopolitics/markets)
+    source_group: global_news
+    source_type: gdelt
+    rss_url: "https://api.gdeltproject.org/api/v2/doc/doc?query=sourcelang%3Ajapanese%20%28oil%20OR%20gas%20OR%20LNG%20OR%20pipeline%20OR%20sanctions%20OR%20shipping%20OR%20port%20OR%20freight%20OR%20semiconductor%20OR%20chip%20OR%20export%20OR%20military%20OR%20missile%20OR%20defense%20OR%20conflict%20OR%20tariff%20OR%20crypto%20OR%20bitcoin%20OR%20%22central%20bank%22%20OR%20inflation%29&mode=artlist&format=json&maxrecords=75&timespan=1h&sort=datedesc"
+    default_topic_candidates: ["global_general", "defense_technology", "energy_resource_risk", "supply_chain_intelligence"]
+    reliability_weight: 0.60
+    language: ja
+    enabled: true
