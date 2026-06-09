@@ -337,3 +337,133 @@ async def llm_classify_fallback(candidates: List[Dict[str, Any]]) -> Dict[str, s
         len(out), len(uniques),
     )
     return out
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# (C-4) Japanese pilot — translate-at-ingest. Mirrors llm_classify_fallback
+# discipline EXACTLY: additive, flag-gated (caller checks ENABLE_LLM_TRANSLATE),
+# try/except-isolated, never raises, per-cycle cap, shares _global_llm_semaphore
+# via generate_analysis. Independent of all existing functions (none touched).
+#
+# Purpose is NOT classification (the language-agnostic llm_classify_fallback
+# already covers topic). Translation exists so the English pipeline downstream
+# (length gate, alnum title_hash, whitespace-Jaccard clustering, importance) all
+# work on a real English title. The original JA title is preserved by the caller
+# in items.title_original.
+#
+# Key choice: verdicts are keyed by the caller-supplied opaque id (raw.id as str),
+# NOT by an alnum title_norm — a JA title normalizes to "" (alnum-only), so a
+# title-based key would collide. The caller maps results back by that id.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_LLM_TRANSLATE_BATCH_SIZE = 10
+_LLM_TRANSLATE_PER_CYCLE_CAP = 30  # conservative start; raise after latency check (shares the single LLM slot)
+
+_LLM_TRANSLATE_SYSTEM_PROMPT = (
+    "You are a professional news-headline translator for an OSINT "
+    "geopolitical/market intelligence platform. Translate each Japanese news "
+    "headline into accurate, natural English.\n"
+    "RULES: Render proper nouns, place names, organizations, and people in their "
+    "standard English forms (e.g. 日銀 -> Bank of Japan, 経産省 -> METI). Translate "
+    "faithfully and literally — do NOT summarize, paraphrase, editorialize, add, "
+    "or omit information. Preserve numbers, units, and named entities. If a field "
+    "is empty, return an empty string for it.\n"
+    "Return ONLY a JSON array, no prose, no markdown fences. Each element: "
+    '{"id": "<id as given>", "title_en": "<english translation>"}'
+)
+
+
+def detect_ja(title: str, source_lang: str | None = None) -> bool:
+    """True if the text is (very likely) Japanese. Dependency-free.
+
+    Primary signal: presence of kana — Hiragana (U+3040–309F) or Katakana
+    (U+30A0–30FF) — which is unambiguous for Japanese. Kanji-only text is
+    ambiguous with Chinese, so we fall back to an explicit source language hint
+    (GDELT 'language' field / YAML 'language') when no kana is present."""
+    for ch in (title or ""):
+        o = ord(ch)
+        if 0x3040 <= o <= 0x30FF:  # Hiragana + Katakana block
+            return True
+    sl = (source_lang or "").strip().lower()
+    return sl in ("ja", "jpn", "japanese")
+
+
+async def llm_translate_to_en(candidates: List[Dict[str, Any]]) -> Dict[str, str]:
+    """Batch-translate JA candidates to English. Mirror of llm_classify_fallback.
+
+    `candidates`: list of dicts with {"id": <opaque str>, "title": <JA str>,
+    optional "summary": <JA str>}. Returns {id: title_en} ONLY for items that
+    produced a non-empty English title. Parse/LLM failures or empty results are
+    simply absent (caller keeps the original -> dropped by the existing gate,
+    byte-identical to today). Never raises."""
+    out: Dict[str, str] = {}
+    if not candidates:
+        return out
+
+    # In-run dedup by id (caller passes unique raw ids; guard anyway).
+    by_key: Dict[str, Dict[str, Any]] = {}
+    for c in candidates:
+        k = c.get("id")
+        if isinstance(k, str) and k and k not in by_key:
+            by_key[k] = c
+    uniques = list(by_key.items())  # [(id, candidate_dict), ...]
+
+    # Per-cycle cap: translate at most N this cycle; the rest fall through to the
+    # existing drop (no rescue this cycle, no regression).
+    if len(uniques) > _LLM_TRANSLATE_PER_CYCLE_CAP:
+        uniques = uniques[:_LLM_TRANSLATE_PER_CYCLE_CAP]
+
+    for i in range(0, len(uniques), _LLM_TRANSLATE_BATCH_SIZE):
+        batch = uniques[i:i + _LLM_TRANSLATE_BATCH_SIZE]
+        articles = [
+            {
+                "id": key,
+                "title": (cand.get("title") or "")[:300],
+                "summary": (cand.get("summary") or "")[:300],
+            }
+            for key, cand in batch
+        ]
+        user_prompt = (
+            "Translate each headline. Return the JSON array described.\n"
+            + json.dumps(articles, ensure_ascii=False, indent=2)
+        )
+        try:
+            raw = await generate_analysis(
+                _LLM_TRANSLATE_SYSTEM_PROMPT,
+                user_prompt,
+                is_batch=False,
+                temperature=0.1,
+                enable_fallback=True,
+            )
+        except Exception as exc:  # never let a translate attempt break ingest
+            logger.warning("[LLM_TRANSLATE] batch translate failed (non-fatal): %s", exc)
+            continue
+        if not raw or not isinstance(raw, str):
+            continue
+        text = raw.strip()
+        # Strip accidental ```json fences defensively (same as llm_classify_fallback).
+        if text.startswith("```"):
+            text = text.strip("`")
+            if text.lower().startswith("json"):
+                text = text[4:]
+            text = text.strip()
+        try:
+            parsed = json.loads(text)
+        except Exception as exc:
+            logger.warning("[LLM_TRANSLATE] JSON parse failed (non-fatal): %s", exc)
+            continue
+        if not isinstance(parsed, list):
+            continue
+        for v in parsed:
+            if not isinstance(v, dict):
+                continue
+            vid = v.get("id")
+            vtitle = (v.get("title_en") or "").strip()
+            if isinstance(vid, str) and vtitle:
+                out[vid] = vtitle
+
+    logger.info(
+        "[LLM_TRANSLATE] translated %d/%d unique JA candidates",
+        len(out), len(uniques),
+    )
+    return out
