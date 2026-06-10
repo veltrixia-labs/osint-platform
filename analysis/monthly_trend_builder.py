@@ -6,12 +6,9 @@ Builds one month's flow/network snapshot from the Alert Stream:
   1. Pull every (non-suppressed) AlertLog in the calendar month. Alerts are
      already 24h-cluster-deduped at creation (jobs/alert_manager.py), so this is
      a straight time-window read.
-  2. STRICT 1.5x spike filter, evaluated PER STRATEGIC DOMAIN (independent
-     populations): keep an alert only when its raw intensity is >= 1.5x the
-     decayed baseline of *its own* strategic domain at that moment. The baseline
-     denominator is the domain's own prior population — so a Defense or Crypto
-     surge is judged against Defense/Crypto history, never crowded out by
-     high-volume Energy/Markets noise. No severity OR-clause.
+  2. IMPORTANCE-primary selection: keep an alert when importance_score >= 50
+     (the headline axis), or as a fallback when the stored anomaly intensity_pct is
+     sufficiently high. No spike/baseline computation.
   3. Bucket spiked alerts into the 6 canonical STRATEGIC_DOMAINS and (where
      coordinates resolve) route them through SpatialPhysicsEngine for entropy /
      viscosity / epicenter metrics, using the domain's omni geography.
@@ -26,14 +23,12 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from datetime import datetime, timezone
-from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import AlertLog
-from analysis.intensity_pressure import raw_intensity_from_alert, decayed_domain_baseline
 from analysis.pro_domain_config import infer_domain_from_topic, STRATEGIC_DOMAINS
 from analysis.spatial_physics_engine import (
     DOMAIN_SITE_KEYS,
@@ -48,12 +43,13 @@ from jobs.omni_spatial_worker import resolve_alert_coordinates
 logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION = "monthly_trend_v3"  # v3: self-contained — embeds per-signal payloads (no live alert fetch)
-SPIKE_RATIO = 1.5  # strict raw-intensity reignite ratio (mirrors _PRO_MIN_REIGNITE_FACTOR)
-# Absolute archive floor = the UI's ELEVATED threshold (alertThreatTier ELEVATED_PCT=82).
-# The 1.5x spike alone maps to only ~50%, which let STANDARD/WATCH signals (e.g. a
-# 68% supply-chain alert) bleed into the archive. Require BOTH the spike AND
-# intensity_pct >= this floor so the archive holds only ELEVATED/CRITICAL signals.
-MIN_ARCHIVE_INTENSITY_PCT = 82.0
+# MTF selection axis = IMPORTANCE (mirrors Alert Stream anomaly->importance migration).
+# PRIMARY: importance >= MTF_MIN_IMPORTANCE archives unconditionally. FALLBACK for
+# importance-absent/low rows: stored anomaly intensity_pct >= the fallback floor.
+# The former 1.5x-spike + 82 anomaly gates are removed (importance and anomaly are
+# orthogonal, so those gates silently dropped every major story).
+MTF_MIN_IMPORTANCE = 50.0
+MIN_ARCHIVE_INTENSITY_FALLBACK_PCT = 60.0
 # Month window spans ~30 days; the physics engine's window_hours only scales a few
 # density proxies, so a 30-day window keeps the cluster-density math sane.
 _MONTH_WINDOW_HOURS = 24.0 * 31
@@ -88,11 +84,6 @@ def month_bounds(year: int, month: int) -> Tuple[datetime, datetime, str]:
         end = datetime(year, month + 1, 1, tzinfo=timezone.utc)
     label = f"{_MONTH_NAMES[month - 1]} {year}"
     return start, end, label
-
-
-def _strict_spike(raw_current: float, baseline_raw: float) -> bool:
-    """STRICT 1.5x raw-ratio spike (no UI-delta fallback)."""
-    return baseline_raw > 0 and raw_current >= SPIKE_RATIO * baseline_raw
 
 
 def _node_payload(n: ComputedSpatialNode, domain_id: str, source_alert_ids: List[str]) -> Dict[str, Any]:
@@ -160,6 +151,8 @@ def _signal_payload(alert, domain_id: str, meta: Dict[str, Any]) -> Dict[str, An
         "status": alert.status,
         "backbone_discovery_status": meta.get("backbone_discovery_status", "idle"),
         "intensity_pct": meta.get("intensity_pct"),
+        "importance_score": meta.get("importance_score"),
+        "importance_rationale": meta.get("importance_rationale"),
         "is_locked": False,
         "source_url": src,
         "evidence_list": ev,
@@ -196,7 +189,6 @@ async def build_monthly_trend_snapshot(
     engine = SpatialPhysicsEngine(window_hours=_MONTH_WINDOW_HOURS)
 
     # Per-STRATEGIC-domain independent populations (the 6 canonical domains).
-    prior_by_domain: Dict[str, list] = defaultdict(list)       # baseline pool (prior activity)
     spiked_ids_by_domain: Dict[str, List[str]] = defaultdict(list)  # ALL spikes, time-ordered
     events_by_domain: Dict[str, list] = defaultdict(list)      # mappable spikes → spatial events
     total_by_domain: Dict[str, int] = defaultdict(int)
@@ -214,23 +206,13 @@ async def build_monthly_trend_snapshot(
         alert_text = f"{alert.target_label or ''} {meta.get('display_title', '')}"
         domain = infer_domain_from_topic(alert.topic or "", text=alert_text)
         total_by_domain[domain] += 1
-        raw = raw_intensity_from_alert(alert)
-        # STRICT 1.5x vs the domain's OWN prior population (independent baseline).
-        baseline = decayed_domain_baseline(prior_by_domain[domain], now=alert.triggered_at)
-        # Retain only the fields decayed_domain_baseline needs (triggered_at +
-        # raw_intensity) instead of the full ORM row — drops the heavy evidence
-        # blobs from the per-domain baseline pool that lives for the whole month.
-        prior_by_domain[domain].append(
-            SimpleNamespace(triggered_at=alert.triggered_at, metadata_json={"raw_intensity": raw})
-        )
-        if not _strict_spike(raw, baseline):
-            continue
-        # Absolute tier gate (IN ADDITION to the 1.5x spike): only archive signals
-        # the UI would render ELEVATED/CRITICAL. Drops the 50-81% bleed band where
-        # a relative spike still reads as STANDARD/WATCH. Cold-start rows (pct None)
-        # are excluded — they aren't yet a validated high-impact signal.
+        # IMPORTANCE-PRIMARY admission. importance >= MTF_MIN_IMPORTANCE archives
+        # unconditionally; otherwise fall back to the stored anomaly intensity_pct.
+        imp = meta.get("importance_score")
         pct = meta.get("intensity_pct")
-        if not isinstance(pct, (int, float)) or float(pct) < MIN_ARCHIVE_INTENSITY_PCT:
+        imp_ok = isinstance(imp, (int, float)) and float(imp) >= MTF_MIN_IMPORTANCE
+        pct_ok = isinstance(pct, (int, float)) and float(pct) >= MIN_ARCHIVE_INTENSITY_FALLBACK_PCT
+        if not (imp_ok or pct_ok):
             continue
 
         spiked_ids_by_domain[domain].append(str(alert.id))
@@ -314,7 +296,6 @@ async def build_monthly_trend_snapshot(
         "viscosity_coefficient": round(sum(viscosities) / len(viscosities), 4) if viscosities else 0.0,
         "node_count": len(nodes),
         "edge_count": len(edges),
-        "spike_ratio": SPIKE_RATIO,
         "top_sectors": top_sectors,
         "domains": domain_summary,
         "signals": signals,  # self-contained: UI renders chart/list/detail from these
