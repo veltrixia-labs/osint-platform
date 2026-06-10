@@ -22,6 +22,12 @@ logger = logging.getLogger(__name__)
 
 HASH_CHUNK_SIZE = int(os.getenv("INGEST_HASH_CHUNK_SIZE", "500"))
 
+# (C-4 follow-up) GDELT free API rate limit: throttle per-source fetch frequency to avoid 429.
+# In-process memory of last fetch ATTEMPT (success or failure) per source_id, so 429s also back off.
+GDELT_MIN_FETCH_INTERVAL_MIN = int(os.getenv("GDELT_MIN_FETCH_INTERVAL_MIN", "60"))
+_last_gdelt_attempt: dict[str, datetime] = {}
+
+
 
 def load_sources_from_yaml() -> list[dict]:
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -195,6 +201,15 @@ async def run_ingest(db: AsyncSession):
             if _stype == "gdelt":
                 if os.getenv("ENABLE_GDELT_INGEST", "false").lower() != "true":
                     continue
+                _now = datetime.now(timezone.utc)
+                _last = _last_gdelt_attempt.get(source_id)
+                if _last is not None and (_now - _last).total_seconds() < GDELT_MIN_FETCH_INTERVAL_MIN * 60:
+                    logger.info(
+                        "Throttled gdelt source %s (last attempt %.1f min ago < %s min); skipping",
+                        source_id, (_now - _last).total_seconds() / 60.0, GDELT_MIN_FETCH_INTERVAL_MIN,
+                    )
+                    continue
+                _last_gdelt_attempt[source_id] = _now
                 items = await fetch_gdelt(src)
             else:
                 items = await fetch_feed(src)
