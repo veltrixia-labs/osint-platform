@@ -521,6 +521,24 @@ export function chudDetailHtml(alert: Alert | null): string {
         ? `<p class="chud-detail-desc">${chudEscape(alert.description)}</p>`
         : '';
 
+    // IMPORTANCE (headline axis). Additive display only — server already
+    // serializes importance_score/_rationale; the anomaly arc above is unchanged.
+    const impRaw = typeof alert.importance_score === 'number' ? alert.importance_score : null;
+    const impVal = impRaw === null ? null : Math.max(0, Math.min(100, Math.round(impRaw)));
+    const impPct = impVal === null ? 0 : impVal;
+    const impText = impVal === null ? '—' : String(impVal);
+    const impRationale = typeof alert.importance_rationale === 'string' ? alert.importance_rationale : '';
+    const importanceBlockHtml = `
+        <div class="chud-imp chud-imp--${sev}" title="${chudEscape(impRationale)}">
+            <div class="chud-imp-head">
+                <span class="chud-imp-cap">IMPORTANCE</span>
+                <span class="chud-imp-val">${impText}</span>
+            </div>
+            <div class="chud-imp-track">
+                <div class="chud-imp-fill" style="width:${impPct}%"></div>
+            </div>
+        </div>`;
+
     return `
         <div class="chud-detail-inner${locked ? ' chud-detail-inner--locked' : ''}" style="${getTopicCssVars(canonicalTopic)}">
             <button type="button" class="chud-detail-back" data-chud-back aria-label="Close detail">✕ Close</button>
@@ -541,12 +559,13 @@ export function chudDetailHtml(alert: Alert | null): string {
                     </svg>
                     <div class="chud-threat-core">
                         <span class="chud-threat-val">${displayPercentage}</span>
-                        <span class="chud-threat-cap">THREAT LEVEL</span>
+                        <span class="chud-threat-cap">ANOMALY</span>
                     </div>
                 </div>
                 <div class="chud-threat-meta">
                     <div class="chud-threat-sev chud-sev--${sev}">${TIER_LABEL[sev]}</div>
                     ${statusLabel ? `<div class="chud-threat-status chud-status--${status}">${statusLabel}</div>` : ''}
+                    ${importanceBlockHtml}
                 </div>
             </div>
 

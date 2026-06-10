@@ -10254,6 +10254,35 @@ body.checkout-email-modal-scroll-lock {
 .chud-status--complete { color: #57f5a3; border-color: rgba(87, 245, 163, 0.4); }
 .chud-status--processing { color: var(--chud-elev); border-color: rgba(255, 176, 32, 0.4); }
 
+.chud-imp {
+  --ring-c: var(--chud-watch);
+  margin-top: 2px;
+  display: flex; flex-direction: column; gap: 3px;
+  width: max-content; min-width: 96px;
+}
+.chud-imp--critical { --ring-c: var(--chud-crit); }
+.chud-imp--elevated { --ring-c: var(--chud-elev); }
+.chud-imp--watch    { --ring-c: var(--chud-watch); }
+.chud-imp-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+}
+.chud-imp-cap {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.5rem; letter-spacing: 0.1em; color: var(--chud-dim);
+}
+.chud-imp-val {
+  font-size: 1rem; font-weight: 800; line-height: 1; color: #fff;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.85), 0 0 3px rgba(255, 255, 255, 0.22);
+}
+.chud-imp-track {
+  height: 4px; border-radius: 999px; background: rgba(120, 160, 200, 0.14); overflow: hidden;
+}
+.chud-imp-fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--ring-c), color-mix(in srgb, var(--ring-c) 45%, transparent));
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .chud-detail-headline {
   margin: 0;
   font-family: var(--font-sans, system-ui), sans-serif;
