@@ -291,3 +291,46 @@ sources:
     reliability_weight: 0.60
     language: ja
     enabled: false
+
+# J. Specialist supply boosters (2026-06-10) — official publisher RSS, probed live.
+  # RSS source_type -> fetch_feed (byte-identical path). Specialist source_groups
+  # (energy_resources/defense/supply_chain) keep step3 topic recall-protection.
+  - source_id: rigzone_main
+    source_name: Rigzone
+    source_group: energy_resources
+    source_type: rss
+    rss_url: "https://www.rigzone.com/news/rss/rigzone_latest.aspx"
+    default_topic_candidates: ["energy_resource_risk", "global_market_intelligence"]
+    reliability_weight: 0.80
+    language: en
+    enabled: true
+
+  - source_id: breakingdefense_feed
+    source_name: Breaking Defense
+    source_group: defense
+    source_type: rss
+    rss_url: "https://breakingdefense.com/feed/"
+    default_topic_candidates: ["defense_technology"]
+    reliability_weight: 0.82
+    language: en
+    enabled: true
+
+  - source_id: theloadstar_feed
+    source_name: The Loadstar
+    source_group: supply_chain
+    source_type: rss
+    rss_url: "https://theloadstar.com/feed/"
+    default_topic_candidates: ["supply_chain_intelligence", "global_market_intelligence"]
+    reliability_weight: 0.80
+    language: en
+    enabled: true
+
+  - source_id: gcaptain_feed
+    source_name: gCaptain
+    source_group: supply_chain
+    source_type: rss
+    rss_url: "https://gcaptain.com/feed/"
+    default_topic_candidates: ["supply_chain_intelligence", "energy_resource_risk", "defense_technology"]
+    reliability_weight: 0.80
+    language: en
+    enabled: true
