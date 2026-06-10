@@ -290,4 +290,4 @@ sources:
     default_topic_candidates: ["global_general", "defense_technology", "energy_resource_risk", "supply_chain_intelligence"]
     reliability_weight: 0.60
     language: ja
-    enabled: true
+    enabled: false
