@@ -10,6 +10,7 @@ import {
 import { resolveAlertHeadline } from '../alert_display';
 import { formatIntelFeedTimestamp, formatIntelTime } from './utils';
 import { DEV_MODE_AUDIT } from '../dev_mode';
+import { renderPanelGuide, wirePanelGuideTooltips } from './pro_dashboard_primitives';
 
 type ThreatLevelTier = 'critical' | 'elevated' | 'watch';
 
@@ -430,6 +431,14 @@ function chudTagChip(label: string, kind: string): string {
     return `<span class="chud-chip chud-chip--${kind}">${chudEscape(label)}</span>`;
 }
 
+// Plain-language explainer for the two orthogonal axes shown in the detail
+// pane (anomaly ring + importance bar). Wired as a click ⓘ popover.
+const AXES_GUIDE_HTML = `
+    <strong>Two independent axes</strong><br>
+    <b>ANOMALY</b> — how sharply this story's source-domain deviated from its own recent baseline (a self-normalizing "unusualness" ratio, not importance; usually 20–60%).<br>
+    <b>IMPORTANCE</b> — how widely the event affects the world (energy, markets, shipping, defense, AI/semiconductors, crypto), scored 0–100 by an LLM from the headline.<br>
+    They're independent: a globally important story can show low anomaly, and a high-anomaly blip can be globally trivial.`;
+
 export function chudDetailHtml(alert: Alert | null): string {
     if (!alert) {
         return `
@@ -563,6 +572,7 @@ export function chudDetailHtml(alert: Alert | null): string {
                     </div>
                 </div>
                 <div class="chud-threat-meta">
+                    <div class="chud-threat-axes-guide">${renderPanelGuide('Anomaly and Importance', AXES_GUIDE_HTML)}</div>
                     <div class="chud-threat-sev chud-sev--${sev}">${TIER_LABEL[sev]}</div>
                     ${statusLabel ? `<div class="chud-threat-status chud-status--${status}">${statusLabel}</div>` : ''}
                     ${importanceBlockHtml}
@@ -602,7 +612,7 @@ function chudSelect(container: HTMLElement, id: string | null): void {
     chudSelectedId = id;
     const detail = container.querySelector<HTMLElement>('.chud-detail');
     const alert = id ? chudAlerts.find(a => a.id === id) ?? null : null;
-    if (detail) detail.innerHTML = chudDetailHtml(alert);
+    if (detail) { detail.innerHTML = chudDetailHtml(alert); wirePanelGuideTooltips(detail); }
 
     container.querySelectorAll<HTMLElement>('.chud-row').forEach(row => {
         row.classList.toggle('is-active', !!id && row.dataset.id === id);
@@ -640,7 +650,7 @@ function openChudDetailModal(alert: Alert | null): void {
     // Idempotent: if already open, just swap content for the freshly-tapped signal.
     if (chudDetailModalEl) {
         const room = chudDetailModalEl.querySelector<HTMLElement>('.chud-detail-modal-room');
-        if (room) room.innerHTML = chudDetailHtml(alert);
+        if (room) { room.innerHTML = chudDetailHtml(alert); wirePanelGuideTooltips(room); }
         return;
     }
 
@@ -660,6 +670,8 @@ function openChudDetailModal(alert: Alert | null): void {
     document.body.appendChild(overlay);
     document.body.classList.add('chud-detail-modal-open');
     chudDetailModalEl = overlay;
+    const _modalRoom = overlay.querySelector<HTMLElement>('.chud-detail-modal-room');
+    if (_modalRoom) wirePanelGuideTooltips(_modalRoom);
 
     // Delegated interactions inside the portaled detail — mirrors the in-place
     // .chud-detail handler: ✕ Close / backdrop, evidence-sources modal, and the

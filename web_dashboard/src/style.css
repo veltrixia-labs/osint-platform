@@ -10240,6 +10240,19 @@ body.checkout-email-modal-scroll-lock {
   text-align: center;
 }
 .chud-threat-meta { display: flex; flex-direction: column; gap: 6px; }
+/* Anomaly/Importance guide: the detail pane sits flush-left, so the shared
+   popover's default right:0 (opens leftward) overflows into the stream. Open it
+   rightward + upward and clamp the width so it stays inside the detail pane. */
+.chud-threat-axes-guide { display: inline-flex; }
+.chud-threat-axes-guide .intel-section-guide-popover {
+    right: auto;
+    left: 0;
+    top: calc(100% + 8px);
+    bottom: auto;
+    width: min(260px, 80vw);
+    max-height: 60vh;
+    overflow-y: auto;
+}
 .chud-threat-sev {
   font-size: 1rem;
   font-weight: 800;
