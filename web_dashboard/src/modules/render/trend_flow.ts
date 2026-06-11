@@ -24,6 +24,7 @@ import {
     type MonthlyTrendSnapshot,
 } from '../api';
 import { chudDetailHtml } from './alerts';
+import { wirePanelGuideTooltips } from './pro_dashboard_primitives';
 
 const DAY_MS = 86_400_000;
 
@@ -464,6 +465,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
     const clearDetail = () => {
         tfSelectedId = null;
         detailEl.innerHTML = chudDetailHtml(null);
+        wirePanelGuideTooltips(detailEl);
         if (detailTagEl) detailTagEl.textContent = 'select a signal';
         newsEl.querySelectorAll<HTMLElement>('.tf-news-item--active').forEach((el) => el.classList.remove('tf-news-item--active'));
     };
@@ -472,6 +474,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         if (!a) return;
         tfSelectedId = id;
         detailEl.innerHTML = chudDetailHtml(a);
+        wirePanelGuideTooltips(detailEl);
         detailEl.scrollTop = 0;
         if (detailTagEl) {
             const dom = tfAlertDomain.get(id);
