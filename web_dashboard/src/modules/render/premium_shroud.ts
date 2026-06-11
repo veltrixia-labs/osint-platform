@@ -21,7 +21,7 @@ const FEATURE_META: Record<ShroudFeature, FeatureMeta> = {
         icon: '📈',
         title: 'Market Pulse',
         blurb: 'Real-time quantitative domain pressure, sector distribution indices, and historical risk trend lines for tactical monitoring.',
-        bullets: ['Live per-domain pressure gauges', 'Macro transmission & regime signals', 'Cross-asset market-entropy index'],
+        bullets: ['Live per-domain pressure gauges', 'Macro transmission & regime signals'],
     },
     'pro-insights': {
         icon: '💎',
