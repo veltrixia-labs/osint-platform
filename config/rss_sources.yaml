@@ -277,6 +277,26 @@ sources:
     language: en
     enabled: true
 
+  - source_id: ecb_press
+    source_name: ECB Press
+    source_group: central_banks
+    source_type: rss
+    rss_url: "https://www.ecb.europa.eu/rss/press.html"
+    default_topic_candidates: ["global_market_intelligence", "crypto_geopolitics"]
+    reliability_weight: 1.00
+    language: en
+    enabled: true
+
+  - source_id: sec_press
+    source_name: SEC Press Releases
+    source_group: regulators
+    source_type: rss
+    rss_url: "https://www.sec.gov/news/pressreleases.rss"
+    default_topic_candidates: ["crypto_geopolitics", "global_market_intelligence", "ai_semiconductor_intelligence"]
+    reliability_weight: 1.00
+    language: en
+    enabled: true
+
   # I. Multilingual pilot (C-4) — GDELT DOC 2.0 API, Japanese coverage.
   # source_type: gdelt -> fetched by fetch_gdelt (gated by ENABLE_GDELT_INGEST).
   # rss_url holds a complete GDELT query URL (sourcelang:japanese, 6-topic core
