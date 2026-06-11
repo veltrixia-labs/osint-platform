@@ -275,25 +275,18 @@ function chudGenerateLogLine(pool: Alert[]): string {
     const topic = a ? getTopicDisplayLabel(normalizeTopicCode(a.topic)) : 'GLOBAL';
     const tok = a ? chudToken(a) : `SYS-${chudPick(['00A1', '7F2C', '4E90', 'BB13'])}`;
     const country = (a?.country || chudPick(['US', 'CN', 'RU', 'IR', 'UA', 'SA', 'TW', 'EU', 'IL'])).toUpperCase();
-    const sev = (a?.severity || 'watch').toUpperCase();
-    const n = 8 + Math.floor(Math.random() * 240);
-    const entropy = (Math.random() * 0.6 + 0.05).toFixed(3);
-    const visc = (Math.random() * 1.2 + 0.1).toFixed(3);
-    const lat = (Math.random() * 40 + 1).toFixed(2);
-    const conf = (Math.random() * 0.28 + 0.7).toFixed(2);
-
+    const sev = (a?.severity || 'WATCH').toUpperCase();
+    // Honest log lines only — every field below is a real alert property
+    // (token from id, topic, country, severity, intensity, backbone status).
+    // When no alert is in the pool yet, emit a neutral idle line (no fabricated metrics).
+    if (!a) {
+        return `[STREAM] awaiting signals :: ${topic}`;
+    }
     const templates = [
-        `[RSS] parsed ${n} nodes :: stream=${topic}`,
         `[GEO-RESOLVER] mapping coordinates for ${tok} → ${country}`,
-        `[PHYSICS] entropy stable at ${entropy} · ν=${visc}`,
-        `[NLP] entity match ${tok} :: confidence ${conf}`,
-        `[BACKBONE] discovery ${tok} status=${a?.backbone_discovery_status || 'idle'}`,
-        `[SIGNAL] ${sev} intensity=${a?.intensity_display ?? '—'} topic=${topic}`,
-        `[INGEST] flush buffer ${n} items · lat=${lat}ms`,
-        `[VECTOR] recompute affinity matrix dim=${n}×${n}`,
-        `[CACHE] hit-ratio ${(Math.random() * 18 + 80).toFixed(1)}% · evict=${Math.floor(Math.random() * 9)}`,
-        `[ENTROPY] phase-transition guard nominal :: Δ${(Math.random() * 0.04).toFixed(4)}`,
-        `[XFEED] cross-domain link ${tok} ⇄ ${country} weight=${Math.random().toFixed(2)}`,
+        `[BACKBONE] discovery ${tok} status=${a.backbone_discovery_status || 'idle'}`,
+        `[SIGNAL] ${sev} intensity=${a.intensity_display ?? '—'} topic=${topic}`,
+        `[CLUSTER] ${tok} :: ${topic} (${country})`,
     ];
     return chudPick(templates);
 }
@@ -313,14 +306,9 @@ function chudLogLineHtml(line: string): string {
 
 /** Lightly fluctuate the pipeline telemetry cluster (hyper-real, not jumpy). */
 function chudUpdateTelemetry(): void {
-    const set = (key: string, val: string) => {
-        const el = document.querySelector<HTMLElement>(`[data-ptl="${key}"]`);
-        if (el) el.textContent = val;
-    };
-    set('rate', (Math.random() * 6 + 9.5).toFixed(1));        // 9.5–15.5 sig/s
-    set('lat', String(28 + Math.floor(Math.random() * 32)));  // 28–60 ms
-    set('load', String(31 + Math.floor(Math.random() * 22))); // 31–53 %
-    set('up', (Math.random() < 0.5 ? 99.9 : 100.0).toFixed(1));
+    // Real value only: the count of signals currently tracked in the stream.
+    const el = document.querySelector<HTMLElement>('[data-ptl="tracked"]');
+    if (el) el.textContent = String(chudAlerts.length);
 }
 
 /** Start (or restart) the single self-cleaning raw-log interval. */
@@ -878,20 +866,16 @@ export function renderAlerts(
                             <div class="chud-log-track"></div>
                             <div class="pipeline-telemetry" aria-label="Pipeline telemetry">
                                 <div class="ptl-item">
-                                    <span class="ptl-k">INGEST RATE</span>
-                                    <span class="ptl-v"><b data-ptl="rate">12.4</b> <span class="ptl-u">sig/s</span></span>
+                                    <span class="ptl-k">TRACKED</span>
+                                    <span class="ptl-v"><b data-ptl="tracked">—</b> <span class="ptl-u">signals</span></span>
                                 </div>
                                 <div class="ptl-item">
-                                    <span class="ptl-k">LATENCY</span>
-                                    <span class="ptl-v"><b data-ptl="lat">42</b> <span class="ptl-u">ms</span></span>
-                                </div>
-                                <div class="ptl-item">
-                                    <span class="ptl-k">CORE LOAD</span>
-                                    <span class="ptl-v"><b data-ptl="load">37</b> <span class="ptl-u">%</span></span>
+                                    <span class="ptl-k">POLL</span>
+                                    <span class="ptl-v"><b data-ptl="poll">10</b> <span class="ptl-u">s</span></span>
                                 </div>
                                 <div class="ptl-item ptl-item--ok">
-                                    <span class="ptl-k">UPTIME</span>
-                                    <span class="ptl-v"><b data-ptl="up">99.9</b> <span class="ptl-u">%</span></span>
+                                    <span class="ptl-k">FEED</span>
+                                    <span class="ptl-v ptl-v--ok"><b data-ptl="feed">LIVE</b></span>
                                 </div>
                             </div>
                         </div>
