@@ -1,4 +1,4 @@
-import { type Alert } from '../api';
+import { type Alert, fetchMarketEntropy } from '../api';
 import {
     STRATEGIC_TOPIC_FILTERS,
     getTopicColor,
@@ -999,23 +999,23 @@ const SYS_LOGIC_STAGES: ReadonlyArray<{
 }> = [
     {
         idx: '01', glyph: '📡', title: 'Ingestion & Normalization', tag: '[Delta Polling / Cache]',
-        desc: 'Fetches the active data window using the since cursor, matching server-side Redis constraints.',
-        tick: 'src=<b data-sl="sources">1208</b> · dedup <b data-sl="dedup">99.2%</b>',
+        desc: 'Fetches the active data window using the since cursor against the alerts API.',
+        tick: 'window <b data-sl="win">—</b>h · <b data-sl="nalerts">—</b> alerts',
     },
     {
         idx: '02', glyph: '🛰', title: 'NLP Entity Tracking & Geocoding', tag: '[Geospatial Resolver]',
         desc: 'Identifies company contexts and assigns physical coordinates (lat, lon).',
-        tick: 'vec(φ,λ) ok <b data-sl="ner">96.4%</b> · ents <b data-sl="ents">37</b>',
+        tick: 'offline geocoder · lat/lon when resolvable',
     },
     {
         idx: '03', glyph: '🧮', title: 'Multi-Domain Classification', tag: '[Domain Matrix]',
         desc: 'Sorts filtered signals into AI-Semi, Energy, Shipping, Defense & Crypto lattices without human bias.',
-        tick: 'matched <b data-sl="domains">6</b>/6 domains · conf <b data-sl="dconf">0.91</b>',
+        tick: '6 strategic domains · keyword + LLM fallback',
     },
     {
         idx: '04', glyph: '🖥', title: 'UI State Engine & Repaint', tag: '[Stateful Hydration]',
         desc: 'Pipes the fresh delta payloads into the modular rendering queue to drive the Cyber-HUD layout.',
-        tick: 'upsert <b data-sl="upsert">3</b> rows · repaint <b data-sl="repaint">6</b>ms',
+        tick: 'incremental DOM upsert · selection preserved',
     },
 ];
 
@@ -1119,47 +1119,49 @@ sorted = <span class="sl-fn">stableSort</span>(rank, recency)</pre>`;
             <section class="sl-math-block">
                 <div class="sl-math-label">NETWORK ENTROPY · information-theoretic volatility</div>
                 ${entropy}
-                <div class="sl-math-live">Iterating: ΔH = <b data-sl="dH">0.281</b> · Current Entropy: <b data-sl="entropy">2.317</b> bits</div>
+                <div class="sl-math-live">Normalised entropy <b data-sl="entropy">—</b> · regime <b data-sl="regime">—</b> · <b data-sl="nalerts2">—</b> alerts (<b data-sl="win2">—</b>h)</div>
                 <div class="sl-divider" aria-hidden="true"></div>
                 ${interceptor}
-                <div class="sl-math-live">intercepted <b data-sl="intercepted">128</b> · deduped <b data-sl="deduped">12</b> · sorted ok</div>
+                <div class="sl-math-live">dedupe by id · stable sort by importance, then recency</div>
             </section>
             <section class="sl-math-block">
                 <div class="sl-math-label">INCREMENTAL TICKER ENGINE · delta state hydration</div>
                 ${hydration}
                 ${telemetry}
-                <div class="sl-math-live">Spatial Worker Handoff (downstream) <b data-sl="adj">62.6%</b> · cyc <b data-sl="iter">0</b></div>
+                <div class="sl-math-live">downstream: spatial worker (monthly trend flow) · cyc <b data-sl="iter">0</b></div>
             </section>
         </div>`;
 }
 
-function sysLogicRandom(min: number, max: number, dp: number): string {
-    return (Math.random() * (max - min) + min).toFixed(dp);
+/** Advances the System Logic modal's cycle counter (the only live readout). */
+function sysLogicTick(root: HTMLElement): void {
+    // Only the cycle counter ticks — everything else is real, fetched once on open.
+    sysLogicIter += 1;
+    const el = root.querySelector<HTMLElement>('[data-sl="iter"]');
+    if (el) el.textContent = String(sysLogicIter);
 }
 
-/** Cascade fresh values into every [data-sl] readout for the "deep compute" feel. */
-function sysLogicTick(root: HTMLElement): void {
-    sysLogicIter += 1;
+// One-shot: fetch the REAL market entropy and fill the honest readouts. No randomness.
+async function sysLogicLoadReal(root: HTMLElement): Promise<void> {
     const set = (key: string, val: string) => {
         const el = root.querySelector<HTMLElement>(`[data-sl="${key}"]`);
         if (el) el.textContent = val;
     };
-    // Stage telemetry — ingestion / NER / classification / UI repaint.
-    set('sources', String(1200 + Math.floor(Math.random() * 96)));
-    set('dedup', sysLogicRandom(98.4, 99.9, 1) + '%');
-    set('ner', sysLogicRandom(94.5, 98.9, 1) + '%');
-    set('ents', String(24 + Math.floor(Math.random() * 40)));
-    set('domains', String(4 + Math.floor(Math.random() * 3)));
-    set('dconf', sysLogicRandom(0.86, 0.98, 2));
-    set('upsert', String(Math.floor(Math.random() * 12)));
-    set('repaint', String(2 + Math.floor(Math.random() * 14)));
-    // State-panel readouts — Shannon entropy + interception (left), hydration (right).
-    set('dH', sysLogicRandom(0.18, 0.42, 3));
-    set('entropy', sysLogicRandom(2.0, 2.9, 3));
-    set('intercepted', String(40 + Math.floor(Math.random() * 200)));
-    set('deduped', String(1 + Math.floor(Math.random() * 40)));
-    set('adj', sysLogicRandom(40, 88, 1) + '%');
-    set('iter', String(sysLogicIter));
+    try {
+        const e = await fetchMarketEntropy();
+        if (!e) {
+            ['entropy', 'regime', 'nalerts', 'nalerts2', 'win', 'win2'].forEach(k => set(k, 'n/a'));
+            return;
+        }
+        set('entropy', e.entropy_normalised.toFixed(3));
+        set('regime', e.regime_label || '—');
+        set('nalerts', String(e.n_alerts));
+        set('nalerts2', String(e.n_alerts));
+        set('win', String(e.window_hours));
+        set('win2', String(e.window_hours));
+    } catch {
+        ['entropy', 'regime', 'nalerts', 'nalerts2', 'win', 'win2'].forEach(k => set(k, 'n/a'));
+    }
 }
 
 function closeSystemLogic(): void {
@@ -1221,6 +1223,7 @@ function openSystemLogic(): void {
     // Entrance + live computation cascade.
     requestAnimationFrame(() => overlay.classList.add('syslogic-overlay--in'));
     sysLogicTick(overlay);
+    void sysLogicLoadReal(overlay);
     sysLogicTimer = window.setInterval(() => {
         if (!sysLogicEl || !document.body.contains(overlay)) {
             if (sysLogicTimer !== null) clearInterval(sysLogicTimer);
