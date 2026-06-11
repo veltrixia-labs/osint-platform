@@ -402,7 +402,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         `<div class="tf-head">` +
         `<div class="tf-head-left">` +
         `<span class="tf-title">MONTHLY TREND FLOW</span>` +
-        `<span class="tf-sub" data-tf-sub>Per-domain pressure spikes across the 6 strategic sectors</span>` +
+        `<span class="tf-sub" data-tf-sub>High-impact signals across the 6 strategic sectors</span>` +
         `</div>` +
         `<div class="tf-controls">` +
         `<select class="tf-archive" data-tf-archive aria-label="Select archived month"></select>` +
@@ -426,7 +426,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         `<div class="tf-panel tf-quad tf-quad--news">` +
         `<div class="tf-panel-head"><div class="tf-panel-headcol">` +
         `<span class="tf-panel-title">SPIKED SIGNALS</span>` +
-        `<span class="tf-panel-subnote">Exclusively high-impact signals — already filtered to 1.5×+ per-domain spikes</span>` +
+        `<span class="tf-panel-subnote">Exclusively high-impact signals — filtered by importance (≥50)</span>` +
         `</div>` +
         `<span class="tf-panel-tag"><b data-tf-newscount>0</b> stories</span>` +
         `<button type="button" class="tf-day-reset" data-tf-day-reset hidden></button></div>` +
@@ -610,7 +610,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
             tfSortedAlerts = [];
             return;
         }
-        subEl.textContent = `${snap.period.label} · per-domain pressure spikes across the 6 strategic sectors`;
+        subEl.textContent = `${snap.period.label} · high-impact signals across the 6 strategic sectors`;
         _renderSummary(statsEl, snap);
         _hydrate(snap, chartEl, newsEl, newsCountEl);   // populates tfSortedAlerts + tfAlertDomain
         // Build the radar from the SAME scoped source as the list (whole month on
