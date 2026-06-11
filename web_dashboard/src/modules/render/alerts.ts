@@ -1,4 +1,4 @@
-import { type Alert, fetchMarketEntropy } from '../api';
+import { type Alert, type DomainItem, fetchMarketEntropy } from '../api';
 import {
     STRATEGIC_TOPIC_FILTERS,
     getTopicColor,
@@ -1216,4 +1216,71 @@ function openSystemLogic(): void {
         }
         sysLogicTick(overlay);
     }, 720);
+}
+
+// -- Per-domain comprehensive list ("full sector feed") ----------------------
+// Second section under a domain tab: the raw, time-ordered, LLM-free item feed
+// for that category. NOT a selection - no importance/anomaly badges (handover
+// 15.5). The Alert Stream above stays the curated importance view; this is the
+// full net. Local esc helpers (alerts.ts has none of its own).
+function diEscHtml(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function diEscAttr(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+const DOMAIN_LIST_GUIDE_HTML = `
+    <strong>Two views, one domain.</strong>
+    <span class="intel-guide-p"><b>Alert Stream</b> (above) is the <em>curated</em> view -
+    world events ranked by importance, the same global lens as "All".</span>
+    <span class="intel-guide-p"><b>Full sector feed</b> (below) is the <em>comprehensive</em>
+    view - every raw item collected for this sector, newest first. No ranking, no impact
+    filter: the full net, so nothing in the sector is hidden.</span>
+    <span class="intel-guide-p">A story can be important yet appear only in the list, or be
+    routine yet still listed. That is expected - the list is breadth, the stream is selection.</span>`;
+
+function domainItemRowHtml(it: DomainItem): string {
+    const when = it.published_at ?? it.created_at ?? '';
+    const ts = when ? formatIntelTime(when) : '';
+    const src = it.source_name ?? '';
+    const title = it.title ?? '(untitled)';
+    const href = it.source_url ?? '';
+    const titleHtml = href
+        ? `<a class="domain-item-title" href="${diEscAttr(href)}" target="_blank" rel="noopener noreferrer">${diEscHtml(title)}</a>`
+        : `<span class="domain-item-title">${diEscHtml(title)}</span>`;
+    return `<li class="domain-item">
+        ${titleHtml}
+        <span class="domain-item-meta">${diEscHtml(src)}${src && ts ? ' \u00b7 ' : ''}${diEscHtml(ts)}</span>
+    </li>`;
+}
+
+/** Render the comprehensive item list into its own host (sibling of #alerts-list).
+ *  Owned entirely by this fn - the 10s Alert Stream poll never touches it. */
+export function renderDomainItems(
+    host: HTMLElement,
+    items: DomainItem[],
+    label: string,
+    color: string,
+): void {
+    const guide = renderPanelGuide('Curated stream vs comprehensive list', DOMAIN_LIST_GUIDE_HTML);
+    const body = items.length
+        ? `<ul class="domain-item-list">${items.map(domainItemRowHtml).join('')}</ul>`
+        : `<div class="domain-empty">No items collected for this sector yet.</div>`;
+    host.innerHTML = `
+        <section class="domain-items" style="--domain-color:${diEscAttr(color)};" aria-label="${diEscAttr(label)} comprehensive news list">
+            <div class="domain-items-head">
+                <span class="domain-items-icon" aria-hidden="true">\u{1F4CB}</span>
+                <span class="domain-items-title">${diEscHtml(label)} - full sector feed</span>
+                <span class="domain-items-count">${items.length}</span>
+                ${guide}
+            </div>
+            ${body}
+        </section>`;
+    wirePanelGuideTooltips(host);
+}
+
+/** Clear the comprehensive list (used when "All" is selected or tab changes). */
+export function clearDomainItems(host: HTMLElement): void {
+    host.innerHTML = '';
 }

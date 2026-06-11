@@ -621,6 +621,31 @@ export async function fetchAlerts(params: Record<string, string> = {}): Promise<
     return resp.ok ? await resp.json() : [];
 }
 
+/** One row of the per-domain comprehensive feed (GET /items). Raw, time-ordered,
+ *  LLM-free — deliberately carries no importance/anomaly (that's the Alert Stream). */
+export interface DomainItem {
+    id: string;
+    title: string | null;
+    title_original: string | null;
+    lang: string | null;
+    source_name: string | null;
+    source_url: string | null;
+    published_at: string | null;
+    created_at: string | null;
+    reliability_weight: number | null;
+    category: string | null;
+}
+
+/** Comprehensive per-domain item list (newest-first). `topic` is the long-code
+ *  category (e.g. 'ai_semiconductor_intelligence'), exactly what the topic tab
+ *  carries. Empty topic / failure -> []. */
+export async function fetchItems(topic: string, limit = 100): Promise<DomainItem[]> {
+    if (!topic) return [];
+    const query = new URLSearchParams({ topic, limit: String(limit) }).toString();
+    const resp = await apiClient.get(`/items?${query}`);
+    return resp.ok ? await resp.json() : [];
+}
+
 export async function fetchAlert(id: string): Promise<Alert> {
     const resp = await apiClient.get(`/alerts/${id}`);
     if (!resp.ok) throw new Error("Alert not found");

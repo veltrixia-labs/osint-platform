@@ -11840,3 +11840,15 @@ body.syslogic-open { overflow: hidden; }
   .tf-float, .tf-float-card { transition: none; }
   .tf-float-close:hover { transform: none; }
 }
+/* -- Per-domain comprehensive item list (full sector feed) ----------------- */
+.domain-items { margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.75rem; }
+.domain-items-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.domain-items-icon { font-size: var(--font-sm); }
+.domain-items-title { font-weight: 600; font-size: var(--font-sm); }
+.domain-items-count { font-size: var(--font-xs); opacity: 0.7; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 0 0.5rem; }
+.domain-item-list { list-style: none; margin: 0; padding: 0; }
+.domain-item { padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.domain-item-title { text-decoration: none; color: inherit; }
+.domain-item-title:hover { text-decoration: underline; color: var(--domain-color, #58a6ff); }
+.domain-item-meta { display: block; font-size: var(--font-xs); opacity: 0.6; margin-top: 0.15rem; }
+.domain-empty { font-size: var(--font-xs); opacity: 0.6; padding: 0.5rem 0; }
