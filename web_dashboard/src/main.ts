@@ -9,7 +9,7 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderTopicFilterBar, renderDomainItems, clearDomainItems, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
+import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderTopicFilterBar, renderDomainItems, renderDomainItemsHint, clearDomainItems, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
 import { normalizeTopicCode, STRATEGIC_TOPIC_FILTERS, type StrategicTopicCode } from './modules/topics'
 import { formatIntelTime } from './modules/render/utils'
 // (Pro reports now handled within Pro Insights hub)
@@ -634,6 +634,7 @@ async function initDashboard() {
             <div id="pulse-bar" class="pulse-bar"></div>
             <div id="topic-filter-bar" class="topic-filter-bar"></div>
             <div id="alerts-list"></div>
+            <div id="domain-items-hint"></div>
             <div id="domain-items"></div>
           </div>
           <div id="map-page-container" style="display:none;"></div>
@@ -658,6 +659,7 @@ async function initDashboard() {
     const pulseBar = document.querySelector<HTMLElement>('#pulse-bar')!
     const topicFilterBar = document.querySelector<HTMLElement>('#topic-filter-bar')!
     const domainItemsHost = document.querySelector<HTMLElement>('#domain-items')!
+    const domainItemsHint = document.querySelector<HTMLElement>('#domain-items-hint')!
     const pageSubtitleWrap = document.querySelector<HTMLElement>('#page-subtitle-wrap')
     const pageSubtitle = document.querySelector<HTMLElement>('#page-subtitle')
     const pageProCta = document.querySelector<HTMLAnchorElement>('#page-pro-cta')
@@ -799,6 +801,11 @@ async function initDashboard() {
             domainItemsEl.style.display = tab === 'feed' ? 'block' : 'none';
             if (tab !== 'feed') domainItemsEl.innerHTML = '';
         }
+        const domainItemsHintEl = document.querySelector<HTMLElement>('#domain-items-hint');
+        if (domainItemsHintEl) {
+            domainItemsHintEl.style.display = tab === 'feed' ? 'block' : 'none';
+            if (tab !== 'feed') domainItemsHintEl.innerHTML = '';
+        }
 
         // Stop any active DashboardState polling to prevent background /api/alerts requests
         (window as any).stopPolling?.();
@@ -875,12 +882,18 @@ async function initDashboard() {
 
         const loadDomainItems = async (topic: StrategicTopicCode | null) => {
             // "All" (null) shows only the curated stream - no comprehensive list.
-            if (!topic) { clearDomainItems(domainItemsHost); return; }
+            if (!topic) { clearDomainItems(domainItemsHost); domainItemsHint.innerHTML = ''; return; }
             const meta = STRATEGIC_TOPIC_FILTERS.find(f => f.code === topic);
             const items = await fetchItems(topic);
             // Guard a race: user may have switched tab/topic mid-fetch.
             if (currentTab !== 'feed' || activeTopicFilter !== topic) return;
             renderDomainItems(domainItemsHost, items, meta?.label ?? 'Sector', meta?.color ?? '#58a6ff');
+            // Discoverability: the curated stream above caps to the viewport, so the
+            // comprehensive list below sits off-screen. Mount a visible, poll-safe
+            // hint chip (outside .chud-root) that smooth-scrolls down on click.
+            renderDomainItemsHint(domainItemsHint, items.length, meta?.label ?? 'Sector', meta?.color ?? '#58a6ff', () => {
+                domainItemsHost.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
         };
 
         const bindTopicFilterBar = () => {

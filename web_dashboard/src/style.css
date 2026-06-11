@@ -11852,3 +11852,12 @@ body.syslogic-open { overflow: hidden; }
 .domain-item-title:hover { text-decoration: underline; color: var(--domain-color, #58a6ff); }
 .domain-item-meta { display: block; font-size: var(--font-xs); opacity: 0.6; margin-top: 0.15rem; }
 .domain-empty { font-size: var(--font-xs); opacity: 0.6; padding: 0.5rem 0; }
+/* discoverability chip (above the fold, outside .chud-root, poll-safe) */
+#domain-items-hint { margin-top: 0.5rem; }
+.domain-items-hint { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.55rem 0.85rem; cursor: pointer; border: 1px solid color-mix(in srgb, var(--domain-color, #58a6ff) 45%, var(--border)); border-radius: 10px; background: color-mix(in srgb, var(--domain-color, #58a6ff) 12%, transparent); color: var(--text-primary, #e6edf3); font-size: var(--font-xs); transition: background 0.15s ease; }
+.domain-items-hint:hover { background: color-mix(in srgb, var(--domain-color, #58a6ff) 20%, transparent); }
+.domain-items-hint-text { flex: 1; text-align: left; font-weight: 600; }
+.domain-items-hint-arrow { opacity: 0.85; }
+/* landing offset + sticky header so the label stays visible after scrolling down */
+.domain-items { scroll-margin-top: 0.75rem; }
+.domain-items-head { position: sticky; top: 0; z-index: 2; background: var(--card-bg); padding-bottom: 0.35rem; }

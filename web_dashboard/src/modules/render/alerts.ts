@@ -1280,6 +1280,26 @@ export function renderDomainItems(
     wirePanelGuideTooltips(host);
 }
 
+/** Visible, poll-safe discoverability chip mounted above the fold (outside
+ *  .chud-root). The curated stream caps to the viewport, so the comprehensive
+ *  list sits off-screen; this chip says it exists and scrolls to it on click. */
+export function renderDomainItemsHint(
+    host: HTMLElement,
+    count: number,
+    label: string,
+    color: string,
+    onJump: () => void,
+): void {
+    if (!count) { host.innerHTML = ''; return; }
+    host.innerHTML = `
+        <button type="button" class="domain-items-hint" style="--domain-color:${diEscAttr(color)};">
+            <span class="domain-items-hint-icon" aria-hidden="true">\u{1F4CB}</span>
+            <span class="domain-items-hint-text">${diEscHtml(label)} \u2014 ${count} more in full sector feed</span>
+            <span class="domain-items-hint-arrow" aria-hidden="true">\u2193</span>
+        </button>`;
+    host.querySelector<HTMLButtonElement>('.domain-items-hint')?.addEventListener('click', onJump);
+}
+
 /** Clear the comprehensive list (used when "All" is selected or tab changes). */
 export function clearDomainItems(host: HTMLElement): void {
     host.innerHTML = '';
