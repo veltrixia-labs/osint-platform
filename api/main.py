@@ -45,6 +45,7 @@ from api.gating import (
 
 # ── Feature Routers ────────────────────────────────────────────────────────────
 from api.routes.alerts import router as alerts_router
+from api.routes.items import router as items_router
 from api.routes.reports import router as reports_router
 from api.routes.analysts import router as analysts_router
 from api.routes.system import router as system_router
@@ -276,6 +277,7 @@ from fastapi.staticfiles import StaticFiles
 app.include_router(payments_router, prefix="/api/payments", tags=["payments"])
 app.include_router(stripe_router, prefix="/api/stripe")
 app.include_router(alerts_router, prefix="/api")
+app.include_router(items_router, prefix="/api")
 app.include_router(reports_router, prefix="/api")
 app.include_router(analysts_router, prefix="/api")
 app.include_router(system_router, prefix="/api")
