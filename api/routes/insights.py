@@ -641,10 +641,10 @@ async def get_macro_transmission(
 @router.get("/insights/market-entropy")
 async def get_market_entropy(
     db: AsyncSession = Depends(get_db),
-    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
+    user_data: tuple = Depends(requires_tier(PlanTier.FREE.value)),
 ):
     """
-    Tier: Pro+ — Statistical-mechanics market entropy gauge.
+    Tier: Free — public Alert Stream / MTF surface (statistical-mechanics market entropy gauge).
 
     Returns a normalised entropy in [0, 1] combining topic dispersion (60%)
     and intensity dispersion (40%) over the last 24h cluster window.
