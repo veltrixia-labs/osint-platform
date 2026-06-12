@@ -1026,8 +1026,9 @@ function sysLogicStageHtml(): string {
         </article>`).join('<div class="sl-arrow" aria-hidden="true">▶</div>');
 }
 
-/** Glowing SVG spine with declarative (SMIL) particle flow across all stages. */
-function sysLogicFlowSvg(): string {
+/** Glowing SVG spine with declarative (SMIL) particle flow across all stages.
+ *  Exported: the MTF System Logic overlay reuses the same 4-node spine. */
+export function sysLogicFlowSvg(): string {
     const nodes = [125, 375, 625, 875];
     const nodeCircles = nodes.map((x, i) => `
         <circle class="sl-node" cx="${x}" cy="60" r="11" style="--sl-n:${i}"/>
@@ -1169,7 +1170,15 @@ function closeSystemLogic(): void {
     }
 }
 
-function openSystemLogic(): void {
+/**
+ * Generic System Logic overlay opener — shared chrome (backdrop, head, close
+ * wiring, Escape, entrance, 720ms cycle ticker). The subtitle, body, footer, and
+ * an optional one-shot live loader (onOpen) are injected by the caller. The Alert
+ * Stream wrapper below (openSystemLogic) emits byte-identical DOM. Singleton state
+ * (sysLogicEl / sysLogicTimer / sysLogicKeyHandler) is shared on purpose — the
+ * Alert Stream and MTF System Logic tabs are mutually exclusive, never open together.
+ */
+export function openSysLogicOverlay(opts: { subtitle: string; bodyHtml: string; footNote: string; onOpen?: (root: HTMLElement) => void; }): void {
     if (sysLogicEl) return; // already open — idempotent
 
     const overlay = document.createElement('div');
@@ -1184,20 +1193,18 @@ function openSystemLogic(): void {
             <header class="syslogic-head">
                 <div class="syslogic-head-titles">
                     <div class="syslogic-title"><span class="syslogic-gear" aria-hidden="true">⚙</span> SYSTEM LOGIC // PIPELINE BLUEPRINT</div>
-                    <div class="syslogic-sub">REAL-TIME COMPUTATIONAL SCHEMATIC · OSINT-CORE</div>
+                    <div class="syslogic-sub">${opts.subtitle}</div>
                 </div>
                 <button type="button" class="syslogic-close" aria-label="Close System Logic">×</button>
             </header>
 
             <div class="syslogic-body">
-                ${sysLogicFlowSvg()}
-                <div class="sl-stages">${sysLogicStageHtml()}</div>
-                ${sysLogicStatePanelsHtml()}
+                ${opts.bodyHtml}
             </div>
 
             <footer class="syslogic-foot">
                 <span class="syslogic-foot-dot" aria-hidden="true"></span>
-                ENGINE NOMINAL · pipeline executing · press <kbd>ESC</kbd> to return to stream
+                ${opts.footNote}
             </footer>
         </div>`;
 
@@ -1215,7 +1222,7 @@ function openSystemLogic(): void {
     // Entrance + live computation cascade.
     requestAnimationFrame(() => overlay.classList.add('syslogic-overlay--in'));
     sysLogicTick(overlay);
-    void sysLogicLoadReal(overlay);
+    opts.onOpen?.(overlay);
     sysLogicTimer = window.setInterval(() => {
         if (!sysLogicEl || !document.body.contains(overlay)) {
             if (sysLogicTimer !== null) clearInterval(sysLogicTimer);
@@ -1224,6 +1231,18 @@ function openSystemLogic(): void {
         }
         sysLogicTick(overlay);
     }, 720);
+}
+
+function openSystemLogic(): void {
+    openSysLogicOverlay({
+        subtitle: 'REAL-TIME COMPUTATIONAL SCHEMATIC · OSINT-CORE',
+        bodyHtml:
+            sysLogicFlowSvg() +
+            `<div class="sl-stages">${sysLogicStageHtml()}</div>` +
+            sysLogicStatePanelsHtml(),
+        footNote: 'ENGINE NOMINAL · pipeline executing · press <kbd>ESC</kbd> to return to stream',
+        onOpen: (root) => { void sysLogicLoadReal(root); },
+    });
 }
 
 // -- Per-domain comprehensive list ("full sector feed") ----------------------
