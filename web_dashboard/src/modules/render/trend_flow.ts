@@ -95,7 +95,7 @@ function _renderSummary(statsEl: HTMLElement, snapshot: MonthlyTrendSnapshot): v
     const top = Array.isArray(s.top_sectors) ? s.top_sectors : [];
     const entropy = typeof s.entropy_index === 'number' ? s.entropy_index.toFixed(3) : (s.entropy_index ?? '—');
     statsEl.innerHTML =
-        `<span class="tf-stat"><b data-tf-spiked>${s.alerts_spiked ?? 0}</b> SPIKED</span>` +
+        `<span class="tf-stat"><b data-tf-spiked>${s.alerts_spiked ?? 0}</b> HIGH-IMPACT</span>` +
         `<span class="tf-stat tf-stat--dim"><b>${s.alerts_total ?? 0}</b> TOTAL</span>` +
         `<span class="tf-stat"><b>${entropy}</b> H</span>` +
         `<span class="tf-stat"><b>${s.node_count ?? 0}</b> NODES</span>` +
@@ -126,7 +126,7 @@ function _buildOrbit(counts: Record<string, number>): string {
         return (
             `<button type="button" class="tf-orbit-node${quiet}" data-tf-domain="${_esc(d.id)}"` +
             ` style="left:${leftPct.toFixed(2)}%;top:${topPct.toFixed(2)}%;--node:${d.color}"` +
-            ` aria-pressed="false" title="${_esc(d.label)} — ${spiked} spiked">` +
+            ` aria-pressed="false" title="${_esc(d.label)} — ${spiked} high-impact">` +
             `<span class="tf-orbit-node-val">${spiked}</span>` +
             `<span class="tf-orbit-node-lbl">${_esc(d.label)}</span>` +
             `</button>`
@@ -142,7 +142,7 @@ function _buildOrbit(counts: Record<string, number>): string {
         `</svg>` +
         `<button type="button" class="tf-orbit-core" data-tf-core title="Show all sectors (reset filter)">` +
         `<span class="tf-orbit-core-val">${String(totalSpiked).padStart(2, '0')}</span>` +
-        `<span class="tf-orbit-core-lbl" data-tf-core-state>TOTAL SPIKED</span>` +
+        `<span class="tf-orbit-core-lbl" data-tf-core-state>TOTAL</span>` +
         `</button>` +
         nodes +
         `</div>`
@@ -263,7 +263,7 @@ function _sparklineSvg(
 
     return (
         `<div class="tf-spark-plot">` +
-        `<svg class="tf-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Daily per-domain spike trajectory">` +
+        `<svg class="tf-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Daily per-domain impact trajectory">` +
         grid + dayHl + bars + series + hits +
         `</svg>` +
         `<div class="tf-spark-yaxis" aria-hidden="true">${yLabels}</div>` +
@@ -315,7 +315,7 @@ function _scopedSpikedCounts(): Record<string, number> {
 /** Render the news list from cached alerts, filtered by the active domain AND day. */
 function _renderNewsList(newsEl: HTMLElement, countEl: HTMLElement | null): void {
     if (!tfSortedAlerts.length) {
-        newsEl.innerHTML = `<div class="tf-news-empty">No spiked signals this month.</div>`;
+        newsEl.innerHTML = `<div class="tf-news-empty">No high-impact signals this month.</div>`;
         if (countEl) countEl.textContent = '0';
         return;
     }
@@ -328,7 +328,7 @@ function _renderNewsList(newsEl: HTMLElement, countEl: HTMLElement | null): void
             tfActiveDomain ? _domainLabel(tfActiveDomain) : '',
             tfActiveDay != null ? _dayLabel(tfActiveDay) : '',
         ].filter(Boolean).join(' · ');
-        newsEl.innerHTML = `<div class="tf-news-empty">No spikes${scope ? ` for ${_esc(scope)}` : ''} this month.</div>`;
+        newsEl.innerHTML = `<div class="tf-news-empty">No high-impact signals${scope ? ` for ${_esc(scope)}` : ''} this month.</div>`;
         if (countEl) countEl.textContent = '0';
         return;
     }
@@ -378,7 +378,7 @@ function _hydrate(
 
     if (!signals.length) {
         tfSortedAlerts = [];
-        chartEl.innerHTML = `<div class="tf-chart-empty">No spike trajectory</div>`;
+        chartEl.innerHTML = `<div class="tf-chart-empty">No impact trajectory</div>`;
         newsEl.innerHTML = `<div class="tf-news-empty">No spiked signals in ${_esc(snapshot.period?.label ?? 'this period')}.</div>`;
         if (countEl) countEl.textContent = '0';
         return;
@@ -412,7 +412,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         `<div class="tf-grid tf-grid--quad">` +
         // ── TL: chart ──────────────────────────────────────────────────────
         `<div class="tf-panel tf-quad tf-quad--chart">` +
-        `<div class="tf-panel-head"><span class="tf-panel-title">30-DAY SPIKE TRAJECTORY</span>` +
+        `<div class="tf-panel-head"><span class="tf-panel-title">30-DAY IMPACT TRAJECTORY</span>` +
         `<span class="tf-legend"><i class="tf-legend-bar"></i>volatility <i class="tf-legend-line"></i>per-domain · click a day</span></div>` +
         `<div class="tf-panel-body tf-chart tf-chart--wide" data-tf-chart><div class="tf-chart-load">Loading…</div></div>` +
         `</div>` +
@@ -425,7 +425,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         // ── BL: spiked signals list ────────────────────────────────────────
         `<div class="tf-panel tf-quad tf-quad--news">` +
         `<div class="tf-panel-head"><div class="tf-panel-headcol">` +
-        `<span class="tf-panel-title">SPIKED SIGNALS</span>` +
+        `<span class="tf-panel-title">HIGH-IMPACT SIGNALS</span>` +
         `<span class="tf-panel-subnote">Exclusively high-impact signals — filtered by importance (≥50)</span>` +
         `</div>` +
         `<span class="tf-panel-tag"><b data-tf-newscount>0</b> stories</span>` +
@@ -517,7 +517,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         if (stateEl) {
             stateEl.textContent = tfActiveDay != null
                 ? _dayLabel(tfActiveDay).toUpperCase()
-                : (tfActiveDomain ? `${_domainLabel(tfActiveDomain).toUpperCase()} ONLY` : 'TOTAL SPIKED');
+                : (tfActiveDomain ? `${_domainLabel(tfActiveDomain).toUpperCase()}` : 'TOTAL');
         }
         // Header SPIKED count follows the same scope.
         const spikedEl = statsEl.querySelector<HTMLElement>('[data-tf-spiked]');
