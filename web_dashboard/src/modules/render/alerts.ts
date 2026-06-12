@@ -1086,9 +1086,9 @@ function sysLogicStatePanelsHtml(): string {
 <span class="sl-kw">const</span> seen = <span class="sl-kw">new</span> <span class="sl-fn">Set</span>()
 <span class="sl-kw">for</span> (sig <span class="sl-kw">of</span> Δ_payload) {
   <span class="sl-kw">if</span> (seen.<span class="sl-fn">has</span>(sig.id)) <span class="sl-kw">continue</span> <span class="sl-cmt">// dedupe</span>
-  rank = SEV_RANK[sig.severity] <span class="sl-cmt">// crit &gt; elev &gt; watch</span>
+  key = sig.importance_score ?? -1 <span class="sl-cmt">// unscored last</span>
 }
-sorted = <span class="sl-fn">stableSort</span>(rank, recency)</pre>`;
+sorted = <span class="sl-fn">stableSort</span>(key ↓, recency ↓)</pre>`;
 
     // Right — the actual incremental UI rendering / state-hydration loop.
     const hydration = `
