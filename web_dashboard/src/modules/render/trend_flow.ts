@@ -426,7 +426,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         `<div class="tf-panel tf-quad tf-quad--news">` +
         `<div class="tf-panel-head"><div class="tf-panel-headcol">` +
         `<span class="tf-panel-title">HIGH-IMPACT SIGNALS</span>` +
-        `<span class="tf-panel-subnote">Exclusively high-impact signals — filtered by importance (≥50)</span>` +
+        `<span class="tf-panel-subnote">High-impact signals — importance ≥50, plus high-anomaly (≥60%) signals not yet scored</span>` +
         `</div>` +
         `<span class="tf-panel-tag"><b data-tf-newscount>0</b> stories</span>` +
         `<button type="button" class="tf-day-reset" data-tf-day-reset hidden></button></div>` +

@@ -352,7 +352,7 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
     'trend-flow': {
         icon: '🌊',
         title: 'Monthly Trend Flow',
-        subtitle: 'Aggregated cross-sector ripple of each month’s high-impact signals — browsable historical archives.',
+        subtitle: 'Each month’s high-impact signals, archived by day and sector — browse how global pressure built up.',
     },
     map: {
         icon: '🌐',
