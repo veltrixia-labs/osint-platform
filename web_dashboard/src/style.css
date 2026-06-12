@@ -9925,6 +9925,18 @@ body.checkout-email-modal-scroll-lock {
     background: rgba(0, 240, 255, 0.25);
     border-radius: 4px;
   }
+  /* Field tabs (no --filled): STOP the two columns from being scroll containers
+     at all. Base rules make .chud-stream-list overflow-y:auto and .chud-detail
+     overflow:hidden (which turns the experiment-1 overflow-y:visible into a
+     computed `auto`) — so both stay scrollers with ZERO scroll range, and their
+     intentional `overscroll-behavior:none` then BLOCKS wheel events from
+     chaining to the page (dead zones under the list and over the detail head).
+     Making them overflow:visible removes them from the scroll chain entirely;
+     the overscroll rules stay in place and simply no longer apply. --filled
+     (All tab) keeps its internal scroll: these :not() selectors never match it. */
+  .chud-root:not(.chud-root--filled) .chud-stream-list { overflow-y: visible; }
+  .chud-root:not(.chud-root--filled) .chud-detail { overflow: visible; }
+
   /* "All" tab (topicFilter === null) restores the old fixed-height filled panel
      with internal column scroll and no gap. Placed AFTER the experiment-1
      .chud-root .chud-* rules so these win the equal-specificity (0,2,0) cascade
@@ -10398,6 +10410,24 @@ body.checkout-email-modal-scroll-lock {
    animatable scrollHeight, so the scroll stays rock-solid for lists of any length. */
 .chud-src-secondary { display: none; }
 .chud-src-secondary.expanded { display: block; }
+
+/* Cap the EXPANDED secondary-sources list and scroll it locally. Field tabs run
+   height:auto since experiment-1 (16.2c), so a 30+ source expansion used to
+   balloon .chud-detail -> .chud-root -> the whole page. A STATIC max-height
+   (viewport-based, definite; never transitioned) keeps the no-phantom-height
+   guarantee documented above, while overflow-y:auto confines the growth to this
+   list. The Hide/View toggle (.chud-src-more) sits OUTSIDE this box and stays
+   visible. overscroll-behavior matches the chud-split/stream/detail pattern. */
+.chud-src-secondary.expanded {
+  max-height: min(48vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+.chud-src-secondary.expanded::-webkit-scrollbar { width: 7px; }
+.chud-src-secondary.expanded::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.25);
+  border-radius: 4px;
+}
 
 /* Phase 8.15 — Contextual Topology mini-graph (Pro spatial-engine teaser). */
 .chud-topo-wrap {
