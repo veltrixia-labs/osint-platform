@@ -23,7 +23,7 @@ import {
     type MonthlyTrendIndexItem,
     type MonthlyTrendSnapshot,
 } from '../api';
-import { chudDetailHtml } from './alerts';
+import { chudDetailHtml, openSysLogicOverlay, sysLogicFlowSvg } from './alerts';
 import { wirePanelGuideTooltips } from './pro_dashboard_primitives';
 
 const DAY_MS = 86_400_000;
@@ -54,6 +54,7 @@ let tfActiveDomain: string | null = null; // orbit sector filter (null = all)
 let tfActiveDay: number | null = null;     // chart day filter (null = all days)
 let tfSelectedId: string | null = null;    // master-detail selection (persists across list re-renders)
 let tfPeriodStartMs = 0;            // current period start (UTC ms) for day math
+let tfLastSnapshot: MonthlyTrendSnapshot | null = null; // latest loaded snapshot — System Logic reads its stats (no re-fetch)
 
 function _esc(s: unknown): string {
     return String(s ?? '')
@@ -87,6 +88,8 @@ export function disposeTrendFlow(): void {
     tfActiveDay = null;
     tfSelectedId = null;
     tfPeriodStartMs = 0;
+    tfLastSnapshot = null;
+    tfUnmountSystemLogicButton();
 }
 
 // ── Top statbar (global month summary) ───────────────────────────────────────
@@ -595,6 +598,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         tfActiveDay = null;
         tfSelectedId = null;
         lastSnap = snap;
+        tfLastSnapshot = snap;
         if (resetChipEl) resetChipEl.hidden = true;
         clearDetail();
         if (!snap) {
@@ -654,4 +658,162 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
             `<div class="tf-empty"><div class="tf-empty-title">Could not load Trend Flow</div>` +
             `<div class="tf-empty-sub">${_esc(err?.message || 'Connection error')}</div></div>`;
     }
+
+    tfMountSystemLogicButton();
+}
+
+// ── System Logic overlay (Monthly Archive schematic) ─────────────────────────
+// Reuses the Alert Stream's extracted overlay chrome (openSysLogicOverlay) + the
+// animated 4-node spine (sysLogicFlowSvg). The MTF-specific stage cards, panels
+// and loader below describe THIS pipeline truthfully (monthly archive read →
+// importance-primary admission → domain bucketing + spatial physics → frozen v3
+// snapshot). Mounted into .header-row on render, removed on dispose.
+const TF_SYS_LOGIC_STAGES: ReadonlyArray<{
+    idx: string; glyph: string; title: string; tag: string; desc: string; tick: string;
+}> = [
+    {
+        idx: '01', glyph: '📚', title: 'Monthly Archive Read', tag: '[AlertLog window]',
+        desc: 'Pulls every non-suppressed alert in the calendar month; alerts are already 24h-cluster-deduped at creation.',
+        tick: '<b data-tfsl="total">—</b> alerts in month',
+    },
+    {
+        idx: '02', glyph: '⚖', title: 'Importance-Primary Admission', tag: '[two-gate filter]',
+        desc: 'Keeps an alert when importance ≥ 50; unscored or low rows fall back to stored anomaly intensity ≥ 60%.',
+        tick: '<b data-tfsl="spiked">—</b> admitted · imp ≥50 OR pct ≥60',
+    },
+    {
+        idx: '03', glyph: '🧭', title: 'Sector & Geographic Mapping', tag: '[6-sector grouping]',
+        desc: 'Groups admitted alerts into the 6 strategic sectors and pins those with resolvable locations on the map; how evenly activity spreads across sectors is summarised with Shannon entropy.',
+        tick: 'H <b data-tfsl="entropy">—</b> · <b data-tfsl="nodes">—</b> nodes / <b data-tfsl="edges">—</b> edges',
+    },
+    {
+        idx: '04', glyph: '🧊', title: 'Monthly Archive Record', tag: '[immutable snapshot]',
+        desc: 'Saves the month as one complete, immutable record — every admitted signal with up to 6 sources embedded — so browsing past months replays instantly with no refetching.',
+        tick: 'schema monthly_trend_v3 · <b data-tfsl="period">—</b>',
+    },
+];
+
+function tfStageHtml(): string {
+    return TF_SYS_LOGIC_STAGES.map((s, i) => `
+        <article class="sl-card" style="--sl-i:${i}">
+            <div class="sl-card-rail" aria-hidden="true"></div>
+            <header class="sl-card-head">
+                <span class="sl-card-idx">${s.idx}</span>
+                <span class="sl-card-glyph" aria-hidden="true">${s.glyph}</span>
+            </header>
+            <div class="sl-card-tag">${_esc(s.tag)}</div>
+            <h3 class="sl-card-title">${_esc(s.title)}</h3>
+            <p class="sl-card-desc">${_esc(s.desc)}</p>
+            <div class="sl-card-tick">${s.tick}</div>
+        </article>`).join('<div class="sl-arrow" aria-hidden="true">▶</div>');
+}
+
+function tfStatePanelsHtml(): string {
+    // Left (top) — Shannon entropy: H = −∑ᵢ P(xᵢ) log P(xᵢ) (same markup as the Alert Stream).
+    const entropy = `
+        <div class="sl-eq">
+            <span class="sl-var">H</span>
+            <span class="sl-op">=</span>
+            <span class="sl-neg">−</span>
+            <span class="sl-sum">∑<span class="sl-sub">i</span></span>
+            <span class="sl-term">P(x<span class="sl-sub">i</span>)</span>
+            <span class="sl-op">log</span>
+            <span class="sl-term">P(x<span class="sl-sub">i</span>)</span>
+        </div>`;
+
+    const admission = `
+        <pre class="sl-code"><span class="sl-code-head">[Admission Gate]</span>
+<span class="sl-kw">for</span> (alert <span class="sl-kw">of</span> month_alerts) {
+  imp = alert.importance_score
+  pct = alert.intensity_pct
+  keep = (imp &gt;= 50) || (imp == <span class="sl-kw">null</span> &amp;&amp; pct &gt;= 60)
+}</pre>`;
+
+    const replay = `
+        <pre class="sl-code"><span class="sl-code-head">[Archive Replay Loop]</span>
+snap = <span class="sl-fn">fetch</span>(<span class="sl-str">'/api/monthly-trends/'</span> + selected_month)
+<span class="sl-fn">hydrate</span>(chart, orbit, list, detail)   <span class="sl-cmt">// 4 quadrants</span>
+<span class="sl-cmt">// no polling: the archive is immutable</span></pre>`;
+
+    const telemetry = `
+        <div class="sl-telemetry">
+            <div class="sl-telem-row"><span class="sl-telem-k">Rebuild cadence</span><span class="sl-telem-v">scheduler · on new alerts</span></div>
+            <div class="sl-telem-row"><span class="sl-telem-k">Snapshot</span><span class="sl-telem-v sl-telem-v--ok">self-contained · v3</span></div>
+            <div class="sl-telem-row"><span class="sl-telem-k">Live fetch on replay</span><span class="sl-telem-v">None</span></div>
+        </div>`;
+
+    return `
+        <div class="sl-math">
+            <section class="sl-math-block">
+                <div class="sl-math-label">SECTOR DISPERSION · Shannon entropy of the month's activity</div>
+                ${entropy}
+                <div class="sl-math-live">Snapshot entropy <b data-tfsl="entropy2">—</b> · <b data-tfsl="total2">—</b> alerts · <b data-tfsl="spiked2">—</b> admitted</div>
+                <div class="sl-divider" aria-hidden="true"></div>
+                ${admission}
+                <div class="sl-math-live">importance-primary · anomaly fallback for unscored rows</div>
+            </section>
+            <section class="sl-math-block">
+                <div class="sl-math-label">SNAPSHOT REPLAY · frozen-archive hydration</div>
+                ${replay}
+                ${telemetry}
+                <div class="sl-math-live">upstream: Alert Stream admission · cyc <b data-sl="iter">0</b></div>
+            </section>
+        </div>`;
+}
+
+// One-shot: fill the data-tfsl slots from the latest loaded snapshot (no fetch).
+function tfSysLogicLoadReal(root: HTMLElement): void {
+    const set = (key: string, val: string) => {
+        const el = root.querySelector<HTMLElement>(`[data-tfsl="${key}"]`);
+        if (el) el.textContent = val;
+    };
+    const snap = tfLastSnapshot;
+    if (!snap) {
+        ['total', 'total2', 'spiked', 'spiked2', 'entropy', 'entropy2', 'nodes', 'edges', 'period']
+            .forEach((k) => set(k, 'n/a'));
+        return;
+    }
+    const s = snap.summary || {};
+    const numStr = (v: unknown) => (typeof v === 'number' ? String(v) : 'n/a');
+    const entStr = typeof s.entropy_index === 'number' ? s.entropy_index.toFixed(3) : 'n/a';
+    const totalStr = numStr(s.alerts_total);
+    const spikedStr = numStr(s.alerts_spiked);
+    set('total', totalStr);
+    set('total2', totalStr);
+    set('spiked', spikedStr);
+    set('spiked2', spikedStr);
+    set('entropy', entStr);
+    set('entropy2', entStr);
+    set('nodes', numStr(s.node_count));
+    set('edges', numStr(s.edge_count));
+    set('period', snap.period && snap.period.label ? snap.period.label : 'n/a');
+}
+
+function openTfSystemLogic(): void {
+    openSysLogicOverlay({
+        subtitle: 'MONTHLY ARCHIVE SCHEMATIC · TREND-FLOW CORE',
+        bodyHtml:
+            sysLogicFlowSvg() +
+            `<div class="sl-stages">${tfStageHtml()}</div>` +
+            tfStatePanelsHtml(),
+        footNote: 'ARCHIVE NOMINAL · snapshot replay · press <kbd>ESC</kbd> to return to the archive',
+        onOpen: (root) => tfSysLogicLoadReal(root),
+    });
+}
+
+function tfMountSystemLogicButton(): void {
+    const headerRow = document.querySelector<HTMLElement>('.header-row');
+    if (!headerRow || headerRow.querySelector('#tf-syslogic-header')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'tf-syslogic-header';
+    btn.className = 'syslogic-toggle syslogic-toggle--header';
+    btn.title = 'How this monthly archive is built';
+    btn.innerHTML = '<span class="syslogic-toggle-gear" aria-hidden="true">⚙</span> System Logic';
+    btn.addEventListener('click', () => openTfSystemLogic());
+    headerRow.appendChild(btn);
+}
+
+function tfUnmountSystemLogicButton(): void {
+    document.getElementById('tf-syslogic-header')?.remove();
 }
