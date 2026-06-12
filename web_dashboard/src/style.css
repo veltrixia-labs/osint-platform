@@ -9893,6 +9893,11 @@ body.checkout-email-modal-scroll-lock {
     height: calc(100vh - 120px);
     overflow: hidden;
   }
+  .chud-root.chud-root--sparse {
+    height: auto;
+    max-height: calc(100vh - 120px);
+    overflow: visible;
+  }
   .chud-root .chud-split {
     flex: 1 1 auto;
     min-height: 0;        /* allow the grid to shrink below content height */
