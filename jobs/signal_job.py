@@ -42,6 +42,14 @@ VALID_STRATEGIC_TOPICS = {
     "supply_chain_intelligence",
 }
 
+SINGLETON_RESCUE_TOPICS = {
+    "ai_semiconductor_intelligence",
+    "supply_chain_intelligence",
+}
+SINGLETON_RESCUE_CAP = 3          # max new rescue signals per topic per cycle
+SINGLETON_RESCUE_LOOKBACK_HOURS = 24
+SINGLETON_RESCUE_DEDUP_HOURS = 48  # don't re-rescue an item already rescued recently
+
 
 def _item_has_valid_source_url(item: Item) -> bool:
     """Clusters without at least one http(s) URL are dropped before TrendSignal creation."""
@@ -261,10 +269,76 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
     await db.commit()
     logger.info(f"Rankings updated for {signal_type}: {len(resolved)} items ranked from {len(clusters)} source clusters.")
 
+async def generate_singleton_rescue_signals(db: AsyncSession):
+    """Flag-gated (ENABLE_SINGLETON_RESCUE): turn a small capped set of
+    un-clustered (cluster_id IS NULL) items in sparse strategic topics into
+    marker-tagged TrendSignals so alert_manager can importance-score them.
+    No LLM calls here. OFF => no-op."""
+    import os
+    if os.getenv("ENABLE_SINGLETON_RESCUE", "false").lower() != "true":
+        return
+    now = datetime.now(timezone.utc)
+    item_window = now - timedelta(hours=SINGLETON_RESCUE_LOOKBACK_HOURS)
+    dedup_window = now - timedelta(hours=SINGLETON_RESCUE_DEDUP_HOURS)
+
+    # IDs already rescued recently (read metrics_json marker)
+    prior = (await db.execute(
+        select(TrendSignal.metrics_json).where(TrendSignal.created_at >= dedup_window)
+    )).scalars().all()
+    rescued_ids = {
+        m.get("rescued_item_id") for m in prior
+        if isinstance(m, dict) and m.get("singleton_rescue")
+    }
+
+    created = 0
+    for topic in sorted(SINGLETON_RESCUE_TOPICS):
+        stmt = (
+            select(Item)
+            .where(
+                Item.category == topic,
+                Item.cluster_id == None,          # noqa: E711  — true singleton
+                Item.created_at >= item_window,
+            )
+            .order_by(desc(Item.created_at))
+            .limit(50)                            # small scan window, filter below
+        )
+        cands = (await db.execute(stmt)).scalars().all()
+        n = 0
+        for it in cands:
+            if n >= SINGLETON_RESCUE_CAP:
+                break
+            if str(it.id) in rescued_ids or it.id in rescued_ids:
+                continue
+            if not _item_has_valid_source_url(it):
+                continue
+            sig = TrendSignal(
+                created_at=now,
+                topic=topic,
+                trend_type="risk_acceleration",
+                target_label=it.title,
+                intensity_score=0.0,              # honest: no cluster corroboration
+                metrics_json={
+                    "baseline": 0.0, "recent": 0.0, "delta": 0.0,
+                    "supporting_cluster_count": 1,
+                    "cluster_id": None,
+                    "supporting_events": [it.title],   # exact-title evidence fallback
+                    "singleton_rescue": True,
+                    "rescued_item_id": str(it.id),
+                },
+            )
+            db.add(sig)
+            n += 1
+            created += 1
+        if n:
+            logger.info(f"[RESCUE] {topic}: created {n} singleton rescue signal(s)")
+    if created:
+        await db.commit()
+
 async def run_signal(db: AsyncSession):
     logger.info("Starting High-Efficiency Signal Job")
     for signal_type, topic_code in TOPIC_SIGNAL_TYPES:
         await generate_rankings_for_type(db, signal_type, filter_topic=topic_code)
+    await generate_singleton_rescue_signals(db)
     logger.info("Signal job finished.")
 
 if __name__ == "__main__":
