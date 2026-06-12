@@ -633,8 +633,8 @@ async function initDashboard() {
           <div class="main-feed" id="alerts-container">
             <div id="pulse-bar" class="pulse-bar"></div>
             <div id="topic-filter-bar" class="topic-filter-bar"></div>
-            <div id="alerts-list"></div>
             <div id="domain-items-hint"></div>
+            <div id="alerts-list"></div>
             <div id="domain-items"></div>
           </div>
           <div id="map-page-container" style="display:none;"></div>
