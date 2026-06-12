@@ -466,6 +466,14 @@ class AlertManager:
                 )
                 continue
 
+            # Singleton-rescue detection (flag-gated): rescue signals carry a
+            # `singleton_rescue` marker in metrics_json. Only "armed" when
+            # ENABLE_SINGLETON_RESCUE is true; otherwise is_singleton_rescue is
+            # always False and every rescue-specific branch below is dead.
+            _mj = sig.metrics_json if isinstance(sig.metrics_json, dict) else {}
+            is_singleton_rescue = bool(_mj.get("singleton_rescue")) and \
+                os.getenv("ENABLE_SINGLETON_RESCUE", "false").lower() == "true"
+
             # Map the signal's trend_type to an appropriate display trigger_type
             trigger_type_map = {
                 "risk_pattern": "pattern_risk",
@@ -501,16 +509,31 @@ class AlertManager:
             #    signals that clear the platform minimums get logged at all.
             legacy_severity = cls._determine_severity(intensity, spike_delta, domain_count)
             if not legacy_severity:
-                logger.info(
-                    "Alert suppressed: no severity (intensity=%.2f, spike=%.2f, domains=%s) "
-                    "target=%r topic=%r",
-                    intensity,
-                    spike_delta,
-                    domain_count,
-                    sig.target_label,
-                    topic,
-                )
-                continue
+                if is_singleton_rescue:
+                    cached = _mj.get("rescue_importance")
+                    if cached is None:
+                        cached = await cls._score_importance_once(
+                            db, sig, display_label, evidence_list
+                        )
+                    if cached is not None and cached >= 50:
+                        legacy_severity = "watch"   # proceed into the normal flow
+                    else:
+                        logger.info(
+                            "[RESCUE] suppressed (importance=%s < 50) target=%r topic=%r",
+                            cached, sig.target_label, topic,
+                        )
+                        continue
+                else:
+                    logger.info(
+                        "Alert suppressed: no severity (intensity=%.2f, spike=%.2f, domains=%s) "
+                        "target=%r topic=%r",
+                        intensity,
+                        spike_delta,
+                        domain_count,
+                        sig.target_label,
+                        topic,
+                    )
+                    continue
 
             # 2b. Calibrated label: distributed ratio-% vs the alert's OWN strategic
             #     domain baseline → 3-tier gate (1.5x=50% ELEVATED, >=80% CRITICAL).
@@ -583,7 +606,16 @@ class AlertManager:
             # raises into the emit path, never blocks the alert. Purely additive
             # metadata — does NOT touch intensity_pct/severity/ordering/floor/MTF.
             importance_result: Optional[dict] = None
-            if os.getenv("ENABLE_LLM_IMPORTANCE", "false").lower() == "true":
+            if is_singleton_rescue and _mj.get("rescue_importance") is not None:
+                # Already scored once (sticky) at the rescue suppress-gate; reuse the
+                # burned-in value — do NOT call generate_analysis again this cycle.
+                importance_result = {
+                    "importance_score": int(_mj["rescue_importance"]),
+                    "importance_rationale": str(_mj.get("rescue_rationale") or "")[:200],
+                    "importance_scored_at": _mj.get("rescue_scored_at") or now_utc.isoformat(),
+                    "importance_model": "deepseek-v4-flash",
+                }
+            elif os.getenv("ENABLE_LLM_IMPORTANCE", "false").lower() == "true":
                 try:
                     from llm.client import generate_analysis
                     ev_titles = [
@@ -746,6 +778,54 @@ class AlertManager:
             return "watch"
             
         return None
+
+    @classmethod
+    async def _score_importance_once(cls, db, sig, display_label, evidence_list) -> Optional[int]:
+        """STICKY one-shot importance score for a singleton-rescue signal. Builds the
+        SAME prompt as the Phase 0 block and calls generate_analysis with identical
+        params, validating identically. On success burns rescue_importance /
+        rescue_rationale / rescue_scored_at into sig.metrics_json (one LLM call per
+        item lifetime — re-eval cycles reuse it). On failure returns None and burns
+        nothing (safe to retry next cycle)."""
+        from llm.client import generate_analysis
+        from sqlalchemy.orm.attributes import flag_modified
+        try:
+            ev_titles = [
+                str(e.get("title")).strip()
+                for e in (evidence_list or [])[:5]
+                if isinstance(e, dict) and e.get("title")
+            ]
+            user_prompt = (
+                f"HEADLINE: {display_label or sig.target_label or ''}\n"
+                "SOURCE TITLES:\n"
+                + ("\n".join(f"- {t}" for t in ev_titles) if ev_titles else "- (none)")
+            )
+            _imp = await generate_analysis(
+                _IMPORTANCE_SYSTEM_PROMPT, user_prompt, is_batch=True,
+                temperature=0.1, enable_fallback=True,
+            )
+        except Exception as exc:
+            logger.warning(
+                "[RESCUE] importance scoring failed (non-fatal) target=%r: %s",
+                sig.target_label, exc,
+            )
+            return None
+        if not (_imp is not None and _imp != "__DEGRADED_MODE__" and isinstance(_imp, dict)):
+            return None
+        _score = _imp.get("importance_score")
+        if isinstance(_score, bool):
+            _score = None  # bool is an int subclass — reject it
+        if not (isinstance(_score, (int, float)) and 0 <= float(_score) <= 100):
+            return None
+        score = int(round(float(_score)))
+        meta = sig.metrics_json if isinstance(sig.metrics_json, dict) else {}
+        meta["rescue_importance"] = score
+        meta["rescue_rationale"] = str(_imp.get("rationale") or "")[:200]
+        meta["rescue_scored_at"] = datetime.now(timezone.utc).isoformat()
+        sig.metrics_json = meta
+        flag_modified(sig, "metrics_json")
+        await db.commit()
+        return score
 
     @classmethod
     async def _domain_intensity_pct(cls, db, domain: str, raw_current: float, now: datetime) -> Optional[float]:
