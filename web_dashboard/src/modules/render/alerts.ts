@@ -829,6 +829,7 @@ export function renderAlerts(
 
     const SPARSE_MAX = 2;  // 0–2 alerts = sparse → shrink panel so the
                            // off-screen domain-items hint chip is reachable
+    const isAllTab = topicFilter === null;  // "All" tab keeps the old fixed-height filled panel
 
     // CRIT counter mirrors the displayed CRITICAL tier (importance_score >= 80),
     // so the header matches the row badges produced by alertThreatTier.
@@ -838,6 +839,7 @@ export function renderAlerts(
     // ── Incremental path (≈ every 10s poll) — swap rows only, keep log + detail.
     if (existing) {
         existing.classList.toggle('chud-root--sparse', sortedAlerts.length <= SPARSE_MAX);
+        existing.classList.toggle('chud-root--filled', isAllTab);
         const list = existing.querySelector<HTMLElement>('.chud-stream-list');
         if (list) list.innerHTML = chudStreamRowsHtml(sortedAlerts);
         const countEl = existing.querySelector<HTMLElement>('[data-chud-count]');
@@ -906,6 +908,7 @@ export function renderAlerts(
 
     const root = container.querySelector<HTMLElement>('.chud-root')!;
     root.classList.toggle('chud-root--sparse', sortedAlerts.length <= SPARSE_MAX);
+    root.classList.toggle('chud-root--filled', isAllTab);
 
     // Phase 8.25 — dock the Domain Filter Bar into the header's control pad.
     chudRelocateFilterBar(root);

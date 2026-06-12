@@ -9890,8 +9890,8 @@ body.checkout-email-modal-scroll-lock {
    The ancestor qualifier guarantees these win regardless of source order. */
 @media (min-width: 901px) {
   .chud-root {
-    height: calc(100vh - 120px);
-    overflow: hidden;
+    height: auto;
+    overflow: visible;
   }
   .chud-root.chud-root--sparse {
     height: auto;
@@ -9901,12 +9901,12 @@ body.checkout-email-modal-scroll-lock {
   .chud-root .chud-split {
     flex: 1 1 auto;
     min-height: 0;        /* allow the grid to shrink below content height */
-    overflow: hidden;     /* the split never grows the page; columns scroll */
+    overflow: visible;    /* experiment: panel flows with the page, no internal clip */
   }
   /* Left: the stream fills its column; its inner .chud-stream-list keeps the
      existing scroll so the SIGNAL STREAM header stays pinned. */
   .chud-root .chud-stream {
-    height: 100%;
+    height: auto;
     min-height: 0;
   }
   /* Right: the detail panel IS the scroll box now (drop sticky/min-height so
@@ -9914,9 +9914,9 @@ body.checkout-email-modal-scroll-lock {
   .chud-root .chud-detail {
     position: static;
     align-self: stretch;
-    height: 100%;
+    height: auto;
     min-height: 0;
-    overflow-y: auto;
+    overflow-y: visible;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 240, 255, 0.3) transparent;
   }
@@ -9925,6 +9925,17 @@ body.checkout-email-modal-scroll-lock {
     background: rgba(0, 240, 255, 0.25);
     border-radius: 4px;
   }
+  /* "All" tab (topicFilter === null) restores the old fixed-height filled panel
+     with internal column scroll and no gap. Placed AFTER the experiment-1
+     .chud-root .chud-* rules so these win the equal-specificity (0,2,0) cascade
+     when --filled is present. */
+  .chud-root.chud-root--filled {
+    height: calc(100vh - 120px);
+    overflow: hidden;
+  }
+  .chud-root--filled .chud-split { overflow: hidden; }
+  .chud-root--filled .chud-stream { height: 100%; }
+  .chud-root--filled .chud-detail { height: 100%; overflow-y: auto; }
 }
 
 /* ── Stream (left) ──────────────────────────────────────────────────── */
