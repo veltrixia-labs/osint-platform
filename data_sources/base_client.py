@@ -94,6 +94,12 @@ class BaseAPIClient:
                 return response.json()
 
             except requests.exceptions.RequestException as e:
+                status_code = getattr(getattr(e, "response", None), "status_code", None)
+                if status_code is not None and 400 <= status_code < 500 and status_code != 429:
+                    logger.warning(f"{self.source_name}: client error {status_code} — not retrying (series/endpoint invalid): {e}")
+                    if hasattr(e, "response") and hasattr(e.response, "text"):
+                        logger.error(f"Response Body: {e.response.text}")
+                    raise
                 if attempt < self.max_retries:
                     sleep_time = self.backoff_factor * (2 ** attempt)
                     logger.warning(f"Request failed for {self.source_name} (Attempt {attempt+1}/{self.max_retries+1}): {e}. Retrying in {sleep_time}s...")
