@@ -830,17 +830,17 @@ async function initDashboard() {
             }
             else if (tab === 'market-pulse') {
                 if (isAuthSessionPending()) return;
-                if (!isProOrAbove(user!.tier) && !DEV_MODE_AUDIT) { renderPremiumShroud(alertsContainer, 'market-pulse', user!, () => handleTabSwitch('plans')); return; }
+                if (!isProOrAbove(user!.tier) && !DEV_MODE_AUDIT) { renderPremiumShroud(alertsContainer, 'market-pulse', user!, () => handleTabSwitch('plans')); if (mainContent) mainContent.style.opacity = '1'; return; }
                 renderMarketPulse(alertsContainer, user!, () => handleTabSwitch('plans'));
             }
             else if (tab === 'pro-insights') {
                 if (isAuthSessionPending()) return;
-                if (!isProOrAbove(user!.tier) && !DEV_MODE_AUDIT) { renderPremiumShroud(alertsContainer, 'pro-insights', user!, () => handleTabSwitch('plans')); return; }
+                if (!isProOrAbove(user!.tier) && !DEV_MODE_AUDIT) { renderPremiumShroud(alertsContainer, 'pro-insights', user!, () => handleTabSwitch('plans')); if (mainContent) mainContent.style.opacity = '1'; return; }
                 renderPro(alertsContainer, user!, () => handleTabSwitch('plans'));
             }
             else if (tab === 'pro-map') {
                 if (isAuthSessionPending()) return;
-                if (!isProOrAbove(user!.tier) && !DEV_MODE_AUDIT) { renderPremiumShroud(proMapContainer!, 'pro-map', user!, () => handleTabSwitch('plans')); return; }
+                if (!isProOrAbove(user!.tier) && !DEV_MODE_AUDIT) { renderPremiumShroud(proMapContainer!, 'pro-map', user!, () => handleTabSwitch('plans')); if (mainContent) mainContent.style.opacity = '1'; return; }
                 renderProMap();
             }
             else if (tab === 'expert-intel') {
