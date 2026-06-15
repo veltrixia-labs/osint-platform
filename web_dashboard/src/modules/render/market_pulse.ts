@@ -204,6 +204,9 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
         if (sessionId !== marketPulseSession) return;
         if (container.dataset.dashboardView !== 'market-pulse') return;
         const riskSummary = (data?.risk_summary || {}) as Record<string, unknown>;
+        // Lead-Lag panel is hidden entirely when the backend returns an empty
+        // matrix (ENABLE_LEADLAG default-OFF) — no placeholder, no engine call.
+        const leadLagActive = Array.isArray(data?.lead_lag_matrix) && (data?.lead_lag_matrix?.length ?? 0) > 0;
 
         if (!shellRendered) {
             injectRegimeBannerStyles();
@@ -235,6 +238,7 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
                     )}
                 </section>
 
+                ${leadLagActive ? `
                 <!-- Module A: Risk Contagion & Lead-Lag Tracker (Radial Grid) -->
                 <section class="pro-insight-leadlag pro-insight-section" aria-label="Risk Contagion Lead-Lag Tracker">
                     ${renderProPanel(
@@ -245,6 +249,7 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
                         renderPanelGuide('Risk Contagion &amp; Lead-Lag Tracker', LEAD_LAG_GUIDE_HTML),
                     )}
                 </section>
+                ` : ''}
 
                 <!-- Macro Transmission Channel -->
                 <section class="pro-insight-transmission pro-insight-section" aria-label="Macro Transmission Channel">
@@ -297,10 +302,14 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
         // Store live riskSummary for poll cycle
         (container as any).__mpRiskSummary = riskSummary;
 
-        // Render Radial Network Grid
-        const radialContainer = container.querySelector('#radial-network-container') as HTMLElement;
-        if (radialContainer) {
-            new RadialNetworkEngine(radialContainer, data?.lead_lag_matrix || [], riskSummary as any);
+        // Render Radial Network Grid — only when lead-lag is active. When inactive
+        // the panel section above is not emitted, so the container won't exist;
+        // skip the engine explicitly so it never draws an empty framed panel.
+        if (leadLagActive) {
+            const radialContainer = container.querySelector('#radial-network-container') as HTMLElement;
+            if (radialContainer) {
+                new RadialNetworkEngine(radialContainer, data?.lead_lag_matrix || [], riskSummary as any);
+            }
         }
     };
 
