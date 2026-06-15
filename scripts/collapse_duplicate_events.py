@@ -78,8 +78,8 @@ async def main() -> None:
                 continue
             best, best_sim = None, 0.0
             for c in clusters:
-                if c["topic"] != a.topic:
-                    continue
+                # No topic silo — cluster purely on title similarity, so the same
+                # event split across topics (DEFENSE vs MARKET) collapses together.
                 sim = _event_similarity(toks, c["rep_tokens"])
                 if sim > best_sim:
                     best, best_sim = c, sim
