@@ -724,6 +724,26 @@ async def get_sanctions_network(
     Tier classification per node:
       primary | direct_collateral | indirect_collateral | background
     """
+    # Flag-gated OFF by default: the sanctions network is hollow today (dependencies
+    # table empty, all stakeholders unsanctioned → constant network_score). Return a
+    # 200 shape-compatible empty payload (matches expand_collateral_subgraph / the
+    # SanctionsNetwork TS type) so the (currently unused) fetcher won't throw if it
+    # is ever wired up. ENABLE_SANCTIONS_NETWORK=true restores the engine path below.
+    if os.getenv("ENABLE_SANCTIONS_NETWORK", "false").lower() != "true":
+        return {
+            "nodes": [],
+            "edges": [],
+            "root_entity_id": root_entity_id,
+            "stats": {
+                "primary_count": 0,
+                "direct_collateral_count": 0,
+                "indirect_collateral_count": 0,
+                "total_nodes": 0,
+                "total_edges": 0,
+                "reason": "disabled",
+            },
+            "disabled": True,
+        }
     _ = user_data
     from analysis.sanctions_network import expand_collateral_subgraph
     try:
