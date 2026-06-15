@@ -26,3 +26,24 @@ outputs/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# --- transient probes / one-off outputs (repo root only; none tracked) ---
+/probe_*.py
+/sn.json
+/pro.json
+/pro2.json
+/ha.json
+/mm.json
+/alerts_probe.json
+
+# --- local DB-state backups (keep on disk, don't track) ---
+/*_backup_*.json
+
+# --- large local data blobs (cities geodata; backbone JSON stays tracked) ---
+/data/cities1000.txt
+/data/cities1000.zip
+
+# --- local env / agent dirs (keep on disk, don't track) ---
+/start_local_env.bat
+/.claude/
+/backups/
