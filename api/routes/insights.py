@@ -1,4 +1,5 @@
 import logging
+import os
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.future import select
@@ -236,7 +237,10 @@ async def build_pro_insights_payload(
     risk_summary = await _build_risk_summary(db, now, lookback)
 
     # ── Module A: Risk Contagion Lead-Lag Matrix ───────────────────────────────
-    lead_lag_matrix = await compute_lead_lag_matrix(db)
+    if os.getenv("ENABLE_LEADLAG", "false").lower() == "true":
+        lead_lag_matrix = await compute_lead_lag_matrix(db)
+    else:
+        lead_lag_matrix = []
 
     active_domains = sum(
         1
