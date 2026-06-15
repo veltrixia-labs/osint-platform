@@ -1,5 +1,5 @@
 """
-Audit AlertLog and Context Briefs (free_alert) coverage by topic — last N hours.
+Audit AlertLog coverage by topic — last N hours.
 
 Usage (repo root, DATABASE_URL or .env):
   py -3 scripts/audit_outputs.py
@@ -29,13 +29,6 @@ from processor.topic_registry import (
 )
 
 SEVERITY_ORDER = ("critical", "elevated", "watch")
-
-
-def _has_context_brief(meta: Any) -> bool:
-    if not isinstance(meta, dict):
-        return False
-    free_alert = meta.get("free_alert")
-    return isinstance(free_alert, dict) and len(free_alert) > 0
 
 
 def _classify_raw_topic(raw: str | None) -> tuple[str, str]:
@@ -106,7 +99,6 @@ async def run_audit(hours: int) -> int:
     by_topic: dict[str, dict[str, Any]] = defaultdict(
         lambda: {
             "alerts": 0,
-            "briefs": 0,
             "last_triggered": None,
             "severities": defaultdict(int),
         }
@@ -121,8 +113,6 @@ async def run_audit(hours: int) -> int:
 
         bucket = by_topic[canon]
         bucket["alerts"] += 1
-        if _has_context_brief(a.metadata_json):
-            bucket["briefs"] += 1
 
         sev = (a.severity or "unknown").lower()
         bucket["severities"][sev] += 1
@@ -138,37 +128,24 @@ async def run_audit(hours: int) -> int:
     )
     rows: list[list[str]] = []
     sum_alerts = 0
-    sum_briefs = 0
     for topic in topic_order:
         if topic not in by_topic:
             continue
         b = by_topic[topic]
         n_a = b["alerts"]
-        n_b = b["briefs"]
         sum_alerts += n_a
-        sum_briefs += n_b
-        pct = f"{100.0 * n_b / n_a:.0f}%" if n_a else "-"
-        briefs_cell = f"{n_b} ({pct})"
         rows.append(
             [
                 topic,
                 str(n_a),
-                briefs_cell,
                 _fmt_ts(b["last_triggered"]),
             ]
         )
 
-    rows.append(
-        [
-            "TOTAL",
-            str(sum_alerts),
-            f"{sum_briefs} ({100.0 * sum_briefs / sum_alerts:.0f}%)" if sum_alerts else "0",
-            "-",
-        ]
-    )
+    rows.append(["TOTAL", str(sum_alerts), "-"])
 
     print("--- By topic ---")
-    _print_table(["Topic", "Alerts", "Briefs", "Last Triggered"], rows)
+    _print_table(["Topic", "Alerts", "Last Triggered"], rows)
     print()
 
     # Severity
@@ -212,7 +189,7 @@ async def run_audit(hours: int) -> int:
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Audit alerts and Context Briefs by topic")
+    p = argparse.ArgumentParser(description="Audit alerts by topic")
     p.add_argument("--hours", type=int, default=48, help="Lookback window (default: 48)")
     args = p.parse_args()
     raise SystemExit(asyncio.run(run_audit(args.hours)))

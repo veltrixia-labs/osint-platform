@@ -6,7 +6,6 @@ Fixes legacy rows where source_group=crypto but category/topic was classified as
 Usage (repo root, DATABASE_URL or .env):
   py -3 scripts/backfill_crypto_categories.py --dry-run
   py -3 scripts/backfill_crypto_categories.py --days 7
-  py -3 scripts/backfill_crypto_categories.py --days 7 --regenerate-free-alerts --limit 50
 """
 from __future__ import annotations
 
@@ -187,11 +186,6 @@ async def normalize_crypto_alert_topics(db, *, cutoff: datetime, dry_run: bool) 
         alert.topic = CRYPTO_STRATEGIC
         meta = dict(alert.metadata_json) if isinstance(alert.metadata_json, dict) else {}
         meta["internal_topic"] = CRYPTO_INTERNAL
-        fa = meta.get("free_alert")
-        if isinstance(fa, dict):
-            fa = dict(fa)
-            fa["topic"] = CRYPTO_STRATEGIC
-            meta["free_alert"] = fa
         alert.metadata_json = meta
         flag_modified(alert, "metadata_json")
         db.add(alert)
@@ -235,11 +229,6 @@ async def backfill_alert_logs(
         alert.topic = CRYPTO_STRATEGIC
         meta = dict(alert.metadata_json) if isinstance(alert.metadata_json, dict) else {}
         meta["internal_topic"] = CRYPTO_INTERNAL
-        fa = meta.get("free_alert")
-        if isinstance(fa, dict):
-            fa = dict(fa)
-            fa["topic"] = CRYPTO_STRATEGIC
-            meta["free_alert"] = fa
         alert.metadata_json = meta
         flag_modified(alert, "metadata_json")
         db.add(alert)
@@ -289,39 +278,6 @@ async def load_crypto_item_ids(db, cutoff: datetime) -> set[str]:
     return {str(r) for r in rows}
 
 
-async def regenerate_free_alerts(db, *, cutoff: datetime, limit: int, dry_run: bool) -> int:
-    from jobs.free_alert_feed_generator import persist_free_alert_feed_item
-
-    stmt = (
-        select(AlertLog)
-        .where(AlertLog.triggered_at >= cutoff)
-        .where(
-            or_(
-                AlertLog.topic == CRYPTO_STRATEGIC,
-                AlertLog.topic == CRYPTO_INTERNAL,
-            )
-        )
-        .order_by(AlertLog.triggered_at.desc())
-        .limit(limit * 2)
-    )
-    rows = (await db.execute(stmt)).scalars().all()
-    ok = 0
-    for alert in rows:
-        if ok >= limit:
-            break
-        if dry_run:
-            ok += 1
-            continue
-        try:
-            await persist_free_alert_feed_item(db, alert, commit=True)
-            ok += 1
-        except Exception as e:
-            logger.exception("free_alert regenerate failed for %s: %s", alert.id, e)
-            await db.rollback()
-    logger.info("Regenerated free_alert payloads: %s", ok)
-    return ok
-
-
 async def print_summary(db, cutoff: datetime) -> None:
     item_crypto = (
         await db.execute(
@@ -366,12 +322,6 @@ async def main() -> None:
     p = argparse.ArgumentParser(description="Backfill CRYPTO categories and alert topics")
     p.add_argument("--days", type=int, default=7, help="Lookback window (default 7)")
     p.add_argument("--dry-run", action="store_true", help="Report only, no writes")
-    p.add_argument(
-        "--regenerate-free-alerts",
-        action="store_true",
-        help="Re-run persist_free_alert_feed_item for CRYPTO AlertLogs",
-    )
-    p.add_argument("--limit", type=int, default=50, help="Max free_alert regenerations")
     args = p.parse_args()
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=args.days)
@@ -385,11 +335,6 @@ async def main() -> None:
             db, cutoff=cutoff, crypto_item_ids=crypto_ids, dry_run=args.dry_run
         )
         signal_stats = await backfill_trend_signals(db, cutoff=cutoff, dry_run=args.dry_run)
-
-        if args.regenerate_free_alerts and not args.dry_run:
-            await regenerate_free_alerts(db, cutoff=cutoff, limit=args.limit, dry_run=False)
-        elif args.regenerate_free_alerts:
-            logger.info("[dry-run] Would regenerate up to %s free_alert payloads", args.limit)
 
         if not args.dry_run:
             await print_summary(db, cutoff)
