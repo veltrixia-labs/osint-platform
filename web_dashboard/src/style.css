@@ -9934,7 +9934,17 @@ body.checkout-email-modal-scroll-lock {
      Making them overflow:visible removes them from the scroll chain entirely;
      the overscroll rules stay in place and simply no longer apply. --filled
      (All tab) keeps its internal scroll: these :not() selectors never match it. */
-  .chud-root:not(.chud-root--filled) .chud-stream-list { overflow-y: visible; }
+  /* Domain/field tabs: cap the signal list so it scrolls internally instead of
+     collapsing (rows hidden) or running page-tall. Its parent .chud-stream has
+     no fixed height next to the taller detail column, so the base flex:1/min-
+     height:0 cannot bound it — give the list an explicit cap (~10 rows at
+     43px stride + 16px padding) and let overflow handle the rest. Detail
+     (next line) intentionally untouched (keeps its dead-zone fix). */
+  .chud-root:not(.chud-root--filled) .chud-stream-list {
+    flex: 0 1 auto;
+    max-height: 446px;
+    overflow-y: auto;
+  }
   .chud-root:not(.chud-root--filled) .chud-detail { overflow: visible; }
 
   /* "All" tab (topicFilter === null) restores the old fixed-height filled panel
