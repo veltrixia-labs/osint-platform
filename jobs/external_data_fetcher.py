@@ -140,7 +140,7 @@ class ExternalDataFetcher:
             current_year = datetime.now().year
             start_year = current_year - 2
             
-            raw_response = client.get_timeseries(series_ids, start_year=start_year, end_year=current_year)
+            raw_response = client.get_timeseries(sync_series_ids, start_year=start_year, end_year=current_year)
             parsed_data = client.parse_series_data(raw_response)
             
             info_map = {s["series_id"]: s for s in target_series}
