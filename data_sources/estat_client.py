@@ -76,7 +76,7 @@ class EStatClient(BaseAPIClient):
         """
         Fetch table values and return normalized observation rows (newest first).
         """
-        raw = self.get_stats_data(stats_data_id, limit=100_000, narrowing=narrowing)
+        raw = self.get_stats_data(stats_data_id, limit=100_000, meta_get_flg="Y", narrowing=narrowing)
         if raw.get("error"):
             return []
 
@@ -111,6 +111,26 @@ class EStatClient(BaseAPIClient):
         return str(result.get("ERROR_MSG") or result.get("errorMsg") or "unknown error")
 
     @staticmethod
+    def _build_time_label_map(response: Dict[str, Any]) -> Dict[str, str]:
+        """Map TIME-axis @code -> @name (e.g. '0500100' -> '201801') from CLASS_INF, if present."""
+        root = response.get("GET_STATS_DATA") or response.get("getStatsData") or {}
+        stat = root.get("STATISTICAL_DATA") or root.get("statisticalData") or {}
+        class_inf = (stat.get("CLASS_INF") or {}).get("CLASS_OBJ") or []
+        if isinstance(class_inf, dict):
+            class_inf = [class_inf]
+        out: Dict[str, str] = {}
+        for obj in class_inf:
+            if not isinstance(obj, dict) or obj.get("@id") != "time":
+                continue
+            cls = obj.get("CLASS") or []
+            if isinstance(cls, dict):
+                cls = [cls]
+            for item in cls:
+                if isinstance(item, dict) and item.get("@code") is not None:
+                    out[str(item.get("@code"))] = str(item.get("@name") or "")
+        return out
+
+    @staticmethod
     def _parse_value_rows(response: Dict[str, Any]) -> List[Dict[str, Any]]:
         root = response.get("GET_STATS_DATA") or response.get("getStatsData") or {}
         stat = root.get("STATISTICAL_DATA") or root.get("statisticalData") or {}
@@ -123,28 +143,73 @@ class EStatClient(BaseAPIClient):
         if isinstance(values, dict):
             values = [values]
 
+        time_labels = EStatClient._build_time_label_map(response)
+
         parsed: List[Dict[str, Any]] = []
         for cell in values:
             if not isinstance(cell, dict):
                 continue
-            time_code = (
-                cell.get("@time")
-                or cell.get("time")
-                or cell.get("@cat01")
-            )
+            time_code = cell.get("@time") or cell.get("time") or cell.get("@cat01")
             val = _extract_numeric(cell)
-            dt = parse_estat_time_to_date(str(time_code) if time_code else "")
-            if dt is None or val is None:
+            if val is None:
                 continue
+            # Prefer the TIME-axis @name (true YYYYMM) when available (METI IIP encodes
+            # @time as an opaque serial; @name carries the real period). Fall back to
+            # parsing @time directly (e.g. CPI tables where @time is already YYYYMM...).
+            label = time_labels.get(str(time_code)) if time_code is not None else None
+            if label:
+                # Labelled table (e.g. METI IIP numeric '201801', CPI kanji '2026年5月').
+                # If the label is a known non-monthly aggregate (年度/年/期), DROP the row —
+                # never fall back to the raw @time serial, which would misparse e.g.
+                # FY '2021100000' as October and collide with the real month.
+                dt = _parse_yyyymm_label(label)
+                if dt is None:
+                    continue
+                period = label
+            else:
+                # Label-less table: fall back to parsing the @time code directly.
+                dt = parse_estat_time_to_date(str(time_code) if time_code else "")
+                if dt is None:
+                    continue
+                period = str(time_code)
             parsed.append(
                 {
                     "date": dt.isoformat(),
                     "value": val,
-                    "period_label": str(time_code),
+                    "period_label": period,
                     "raw": cell,
                 }
             )
         return parsed
+
+
+def _parse_yyyymm_label(label: str) -> Optional[date]:
+    """
+    Parse an e-Stat TIME-axis @name into a monthly date.
+    Handles two label formats and rejects non-monthly aggregates:
+      - numeric  '201801'        -> 2018-01  (METI IIP)
+      - kanji    '2026年5月'      -> 2026-05  (CPI)
+    Non-monthly labels ('2025年度', '2025年' annual, weight rows, etc.) -> None.
+    """
+    if not label:
+        return None
+    text = str(label)
+    # Reject explicit non-monthly aggregates outright.
+    if ("年度" in text) or ("年計" in text) or ("期" in text):
+        return None
+    # Kanji form: YYYY年M月
+    m = re.search(r"(\d{4})\s*年\s*(\d{1,2})\s*月", text)
+    if m:
+        y, mo = int(m.group(1)), int(m.group(2))
+    else:
+        # Numeric form: exactly YYYYMM (6 digits). Anything else is not a plain month.
+        s = re.sub(r"\D", "", text)
+        if len(s) != 6:
+            return None
+        y, mo = int(s[:4]), int(s[4:6])
+    if y < 1900 or y > 2100 or not (1 <= mo <= 12):
+        return None
+    return date(y, mo, 1)
 
 
 def parse_estat_time_to_date(time_code: str) -> Optional[date]:
@@ -155,8 +220,12 @@ def parse_estat_time_to_date(time_code: str) -> Optional[date]:
     if len(digits) < 4:
         return None
     year = int(digits[:4])
+    if year < 1900 or year > 2100:
+        return None
     if len(digits) >= 6:
-        month = max(1, min(12, int(digits[4:6])))
+        month = int(digits[4:6])
+        if not (1 <= month <= 12):
+            return None  # month '00' = annual/aggregate row (e.g. CPI YYYY000000) -> drop, don't clamp to Jan
         return date(year, month, 1)
     return date(year, 1, 1)
 

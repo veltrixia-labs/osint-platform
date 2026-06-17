@@ -10,9 +10,9 @@ from typing import Any, Dict, List
 ESTAT_SERIES_CATALOG: Dict[str, List[Dict[str, Any]]] = {
     "industrial_production": [
         {
-            "stats_data_id": "0004015804",
-            "series_id": "0004015804",
-            "name": "Japan IIP — monthly production index (2020=100, by industry)",
+            "stats_data_id": "0004052177",
+            "series_id": "0004052177",
+            "name": "Japan IIP — production, by industry, monthly, seasonally adjusted (2020=100)",
             "unit": "index",
             "frequency_hint": "monthly",
             "category": "industrial_production",
