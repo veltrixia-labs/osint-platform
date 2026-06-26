@@ -2,6 +2,7 @@ import asyncio
 import gc
 import logging
 import os
+import resource
 from datetime import datetime, timezone
 
 import schedule
@@ -75,6 +76,12 @@ def schedule_async(name, coro_func, *args, **kwargs):
     except RuntimeError:
         logger.error(f"Cannot schedule task '{name}': No running event loop.")
 
+
+def _rss_mb() -> float:
+    # ru_maxrss is peak RSS in KB on Linux
+    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+
+
 # --- Jobs & Wrappers ---
 
 async def pipeline_full_processing():
@@ -109,7 +116,15 @@ async def _pipeline_full_processing_locked():
             
             from jobs.cleanup_job import update_system_metric
             await update_system_metric(session, "scheduler_last_full_run", datetime.now(timezone.utc).isoformat())
-            
+
+            # Clear the ORM identity map before the session closes, then force a
+            # GC pass so each 5-min cycle returns its working set (signal's
+            # per-topic ORM loads + clustering buffers) to the OS instead of
+            # letting it accrue toward the 512MB ceiling.
+            session.expire_all()
+
+        gc.collect()
+        logger.info(f"[MEM] pipeline cycle end peak_rss={_rss_mb():.0f}MB")
         logger.info("--- Pipeline Completed Successfully ---")
     except Exception as e:
         err_msg = str(e)
@@ -218,7 +233,11 @@ async def pro_automation_wrapper():
     """Rule-based Pro Structural Brief compile (6 domains, no LLM)."""
     from jobs.pro_realtime_stream import run_continuous_pro_intelligence_stream
 
-    await run_continuous_pro_intelligence_stream()
+    # Serialize under the shared heavy-work mutex (same lock as the full pipeline
+    # and discovery scout) so the structural-brief compile can never run
+    # concurrently with the 5-min pipeline and stack memory past 512MB.
+    async with _heavy_work_lock:
+        return await run_continuous_pro_intelligence_stream()
 
 
 async def run_cftc_sync_wrapper():
@@ -239,7 +258,12 @@ async def run_omni_spatial_worker_wrapper():
         return
     from jobs.omni_spatial_worker import run_omni_spatial_worker
 
-    summary = await run_omni_spatial_worker()
+    # Serialize against the full pipeline / discovery scout (shared heavy-work
+    # mutex) so the spatial contagion build — which fires on the SAME 5-min tick
+    # as the pipeline — can no longer stack on top of it and blow the 512MB
+    # ceiling (the daily ~14:30 multi-job OOM).
+    async with _heavy_work_lock:
+        summary = await run_omni_spatial_worker()
     logger.info("Omni spatial worker summary: %s", summary)
 
 

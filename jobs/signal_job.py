@@ -1,7 +1,9 @@
 import asyncio
+import gc
 import logging
 import json
 import os
+import resource
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +20,7 @@ logger = logging.getLogger(__name__)
 # --- Config ---
 # Shorter lookback + item cap keeps clustering O(n^2) bounded on Render.
 SIGNAL_LOOKBACK_HOURS = int(os.getenv("SIGNAL_LOOKBACK_HOURS", "168"))  # 7 days
-MAX_CLUSTERING_ITEMS = int(os.getenv("SIGNAL_MAX_CLUSTERING_ITEMS", "1000"))
+MAX_CLUSTERING_ITEMS = int(os.getenv("SIGNAL_MAX_CLUSTERING_ITEMS", "400"))
 BATCH_SIZE = 5
 PROMPT_VERSION = "v2_batch_signal"
 CACHE_TTL_DAYS = 3
@@ -338,7 +340,16 @@ async def run_signal(db: AsyncSession):
     logger.info("Starting High-Efficiency Signal Job")
     for signal_type, topic_code in TOPIC_SIGNAL_TYPES:
         await generate_rankings_for_type(db, signal_type, filter_topic=topic_code)
+        # Release the per-topic working set (up to MAX_CLUSTERING_ITEMS ORM rows
+        # in the identity map + the O(n^2) clustering buffers) before the next
+        # topic, so peak RSS stays flat across all 7 topics instead of
+        # accumulating toward the 512MB ceiling. Placed here (not inside
+        # generate_rankings_for_type) so it runs after EVERY topic regardless of
+        # that function's several early returns.
+        db.expire_all()
+        gc.collect()
     await generate_singleton_rescue_signals(db)
+    logger.info(f"[MEM] run_signal end peak_rss={resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0:.0f}MB")
     logger.info("Signal job finished.")
 
 if __name__ == "__main__":
