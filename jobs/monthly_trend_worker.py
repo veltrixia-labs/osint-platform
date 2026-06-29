@@ -119,6 +119,93 @@ async def run_monthly_trend_worker(
         snapshot = await build_monthly_trend_snapshot(session, year, month)
         summary = snapshot["summary"]
 
+        # ── Accumulate signals across rebuilds ───────────────────────────────
+        # alert_logs is purged at ALERT_RETENTION_HOURS (~24h), so every rebuild
+        # only ever sees the last day of alerts and build_monthly_trend_snapshot()
+        # collapses the current month to ~3 days. The per-signal payloads are
+        # fully SELF-CONTAINED (the UI renders chart/list/detail straight from
+        # them, never re-reading alert_logs), so we UNION the freshly-built
+        # signals with those already frozen in the existing row — the snapshot
+        # then accumulates a true 30-day trajectory instead of resetting.
+        # Forward-only: already-purged days are unrecoverable. Geo-derived fields
+        # (node/edge counts, entropy, viscosity, *_payload, alerts_total) still
+        # need live AlertLog rows and remain best-effort current-window — a
+        # documented limitation. On ANY failure we fall back to the freshly-built
+        # summary unchanged (never crash the worker, never lose the live rebuild).
+        if existing is not None:
+            try:
+                prior = (
+                    existing.summary_json.get("signals", [])
+                    if isinstance(existing.summary_json, dict)
+                    else []
+                )
+                # Key by signal id; freshly-built payloads OVERWRITE prior ones on
+                # collision (reflects re-scored importance). Ignore non-dict /
+                # id-less entries from either source.
+                merged_by_id: Dict[str, Any] = {}
+                for sig in prior:
+                    if isinstance(sig, dict) and sig.get("id"):
+                        merged_by_id[str(sig["id"])] = sig
+                for sig in summary.get("signals", []):
+                    if isinstance(sig, dict) and sig.get("id"):
+                        merged_by_id[str(sig["id"])] = sig
+
+                def _parse_in_window(sig):
+                    """Return the tz-aware triggered_at if it falls in [start, end);
+                    None if missing, unparseable, or out-of-window."""
+                    raw = sig.get("triggered_at")
+                    if not isinstance(raw, str):
+                        return None
+                    try:
+                        ts = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                    except ValueError:
+                        return None
+                    if ts.tzinfo is None:
+                        ts = ts.replace(tzinfo=timezone.utc)
+                    return ts if start <= ts < end else None
+
+                dated = []
+                for sig in merged_by_id.values():
+                    ts = _parse_in_window(sig)
+                    if ts is not None:
+                        dated.append((ts, sig))
+                dated.sort(key=lambda pair: pair[0])  # triggered_at ascending
+                merged = [sig for _, sig in dated]
+
+                # Recompute ONLY the signal-derived aggregates from the merged
+                # list; geo-derived fields are left exactly as built.
+                ids_by_domain: Dict[str, Any] = {}
+                for sig in merged:
+                    dom = sig.get("domain_id")
+                    sid = sig.get("id")
+                    if dom and sid:
+                        ids_by_domain.setdefault(dom, []).append(str(sid))
+
+                summary["signals"] = merged
+                summary["alerts_spiked"] = len(merged)
+
+                domains = summary.get("domains")
+                if isinstance(domains, dict):
+                    for dom_id, dom_summary in domains.items():
+                        if isinstance(dom_summary, dict):
+                            ids = ids_by_domain.get(dom_id, [])
+                            dom_summary["spiked"] = len(ids)
+                            dom_summary["source_alert_ids"] = ids
+                    summary["top_sectors"] = [
+                        d for d, v in sorted(
+                            domains.items(),
+                            key=lambda kv: kv[1].get("spiked", 0) if isinstance(kv[1], dict) else 0,
+                            reverse=True,
+                        )
+                        if isinstance(v, dict) and v.get("spiked", 0) > 0
+                    ]
+            except Exception:
+                logger.warning(
+                    "Monthly trend signal accumulation failed for %04d-%02d; "
+                    "falling back to freshly-built summary.",
+                    year, month, exc_info=True,
+                )
+
         if existing is not None:
             existing.period_start = start
             existing.period_end = end
