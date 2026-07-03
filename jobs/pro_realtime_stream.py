@@ -48,10 +48,21 @@ async def run_continuous_pro_intelligence_stream(
         )
         logger.info("Pro realtime stream INSERT domain=%s report_id=%s", domain_id, report.id)
 
-    outcomes = await asyncio.gather(
-        *[_compile_domain(domain_id) for domain_id in targets],
-        return_exceptions=True,
-    )
+    # Compile in sequential chunks of 2 rather than one all-domains gather: caps
+    # the concurrent working set at ~2 domains (was up to 6), cutting the pro-
+    # compile peak to ~1/3 to stay under the 512MB worker ceiling. Slightly longer
+    # wall time. `outcomes` stays 1:1 with `targets` (order + return_exceptions
+    # semantics preserved) so the error mapping below is unchanged.
+    _COMPILE_CHUNK_SIZE = 2
+    outcomes: List[Any] = []
+    for _i in range(0, len(targets), _COMPILE_CHUNK_SIZE):
+        _batch = targets[_i:_i + _COMPILE_CHUNK_SIZE]
+        outcomes.extend(
+            await asyncio.gather(
+                *[_compile_domain(domain_id) for domain_id in _batch],
+                return_exceptions=True,
+            )
+        )
     for domain_id, outcome in zip(targets, outcomes):
         if isinstance(outcome, Exception):
             logger.exception("Pro realtime stream failed for %s", domain_id)
