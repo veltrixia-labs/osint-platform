@@ -3,7 +3,6 @@ import gc
 import logging
 import json
 import os
-import resource
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +10,7 @@ from sqlalchemy.future import select
 from sqlalchemy import desc
 from db.database import AsyncSessionLocal
 from db.models import Item, ItemTopic, SignalRanking, AnalysisCache, TrendSignal
+from jobs._memutil import current_rss_mb, peak_rss_mb
 from llm.client import generate_analysis
 from processor.lightweight_topic import is_non_strategic_noise
 
@@ -349,7 +349,7 @@ async def run_signal(db: AsyncSession):
         db.expire_all()
         gc.collect()
     await generate_singleton_rescue_signals(db)
-    logger.info(f"[MEM] run_signal end peak_rss={resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0:.0f}MB")
+    logger.info(f"[MEM] run_signal end rss={current_rss_mb():.0f}MB peak_rss={peak_rss_mb():.0f}MB")
     logger.info("Signal job finished.")
 
 if __name__ == "__main__":

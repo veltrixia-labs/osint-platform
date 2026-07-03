@@ -2,13 +2,13 @@ import asyncio
 import gc
 import logging
 import os
-import resource
 from datetime import datetime, timezone
 
 import schedule
 
 from db.database import AsyncSessionLocal
 from db.seeding import seed_admin
+from jobs._memutil import current_rss_mb, peak_rss_mb
 from jobs.ingest_job import run_ingest
 from processor.normalize import run_normalize
 from jobs.signal_job import run_signal
@@ -77,11 +77,6 @@ def schedule_async(name, coro_func, *args, **kwargs):
         logger.error(f"Cannot schedule task '{name}': No running event loop.")
 
 
-def _rss_mb() -> float:
-    # ru_maxrss is peak RSS in KB on Linux
-    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
-
-
 # --- Jobs & Wrappers ---
 
 async def pipeline_full_processing():
@@ -124,7 +119,7 @@ async def _pipeline_full_processing_locked():
             session.expire_all()
 
         gc.collect()
-        logger.info(f"[MEM] pipeline cycle end peak_rss={_rss_mb():.0f}MB")
+        logger.info(f"[MEM] pipeline cycle end rss={current_rss_mb():.0f}MB peak_rss={peak_rss_mb():.0f}MB")
         logger.info("--- Pipeline Completed Successfully ---")
     except Exception as e:
         err_msg = str(e)
