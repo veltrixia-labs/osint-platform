@@ -36,6 +36,13 @@ logger = logging.getLogger(__name__)
 # --- Safe Task Execution & Concurrency Guards ---
 
 _running_tasks = set()
+# NOTE: _heavy_work_lock / _heavy_db_lock / _external_data_sync_lock are three
+#       INTENTIONALLY SEPARATE locks. The daily external-sync tail (the 6-domain
+#       pro compile in external_data_sync.py) runs inside _external_data_sync_lock
+#       and additionally grabs _heavy_work_lock — safe under the EDS→HW order. If
+#       you ever merge these into one lock, that wrap re-acquires an already-held
+#       lock (EDS) and self-deadlocks: REMOVE the wrap in external_data_sync.py
+#       when merging. (Mirror of the NOTE at that wrap site.)
 # Serialize heavy memory jobs (full pipeline vs discovery scout) to avoid OOM spikes.
 _heavy_work_lock = asyncio.Lock()
 # Shared mutex for the memory-heavy BATCH jobs (monthly_trend, cleanup, ops,

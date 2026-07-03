@@ -276,10 +276,24 @@ async def run_daily_external_data_sync_pipeline() -> Dict[str, Any]:
     try:
         from jobs.pro_generation_policy import pro_regen_after_external_sync
         from jobs.pro_realtime_stream import run_continuous_pro_intelligence_stream
+        # Lazy import (main_scheduler imports this module at top → a module-level
+        # import here would be circular). By runtime main_scheduler is fully
+        # loaded, so this returns the same singleton lock pro_automation_wrapper
+        # uses. This was the last unlocked 6-domain pro compile path: without the
+        # guard it stacked on heavy_work jobs and could blow the 512MB ceiling.
+        # NOTE: _heavy_work_lock / _heavy_db_lock / _external_data_sync_lock are
+        #       intentionally SEPARATE locks. Wrapping this external-sync tail in
+        #       _heavy_work_lock is safe under the EDS→HW lock order (this fn runs
+        #       inside _external_data_sync_lock). But if the three are ever merged
+        #       into one lock, this becomes re-acquisition of a held lock (EDS
+        #       already held) → self-deadlock. If you merge the locks, REMOVE this
+        #       wrap. (Mirror of the NOTE at the lock definitions in main_scheduler.)
+        from jobs.main_scheduler import _heavy_work_lock
 
         if pro_regen_after_external_sync():
             logger.info("[ExternalDataSync] Triggering Pro realtime intelligence stream (force INSERT).")
-            summary["pro_intelligence_stream"] = await run_continuous_pro_intelligence_stream()
+            async with _heavy_work_lock:
+                summary["pro_intelligence_stream"] = await run_continuous_pro_intelligence_stream()
     except Exception as pro_exc:
         logger.error("[ExternalDataSync] Pro realtime stream hook failed: %s", pro_exc)
         summary["pro_intelligence_stream"] = {"status": "error", "error": str(pro_exc)}
