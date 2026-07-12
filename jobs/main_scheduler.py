@@ -19,7 +19,6 @@ from jobs.trend_analyze_job import run_trend_analysis
 from jobs.alert_manager import run_alert_manager
 from jobs.monthly_trend_worker import run_monthly_trend_worker, prune_monthly_trends
 from jobs.threads_publisher_job import run_threads_publisher
-from jobs.learning_loop import run_learning_job
 from jobs.cleanup_job import (
     run_alert_cleanup, run_retention_cleanup, run_db_size_check,
     enforce_metadata_limits, audit_metadata_sizes, update_system_metric,
@@ -184,9 +183,6 @@ async def run_threads_publisher_wrapper():
     async with AsyncSessionLocal() as session:
         await run_threads_publisher(session)
 
-async def run_learning_wrapper():
-    await run_learning_job()
-
 async def run_discovery_scout_wrapper():
     """Autonomous scout for AI discovery."""
     async with _heavy_work_lock:
@@ -346,9 +342,6 @@ def register_jobs():
 
     # [v10.21] Entity Lifecycle Management (Strategic Score + Pruning @ 03:00 daily)
     schedule.every().day.at("03:00").do(schedule_async, "entity_lifecycle", run_entity_lifecycle)
-
-    # Phase 4: Self-Learning Feedback Loop (Daily at 02:00)
-    schedule.every().day.at("02:00").do(schedule_async, "learning_loop", run_learning_wrapper)
 
     # Phase 7: Pro Structural Brief Automation (continuous INSERT stream)
     pro_interval_min = int(os.getenv("PRO_AUTOMATION_INTERVAL_MINUTES", "30"))
