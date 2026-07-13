@@ -170,8 +170,16 @@ function _normalizeSpatialPayload(raw: any): SpatialContagion {
             lat: Number(n.lat),
             lon: Number(n.lon),
             country: n.country,
+            // `?? 0` is kept — downstream radius/colour math needs a number. But it
+            // DESTROYS the null, so capture the distinction first: unknown ≠ zero.
+            unquantified: n.impact_score == null,
             impact_score: Number(n.impact_score ?? 0),
-            type: (n.type === 'epicenter' ? 'epicenter' : 'affected'),
+            type: (
+                n.type === 'epicenter' ? 'epicenter'
+                : n.type === 'exposed_unquantified' ? 'exposed_unquantified'
+                : 'affected'
+            ),
+            why: n.why,
             order: (n.order as ContagionOrder | undefined),
             confidence: n.confidence,
         }))
@@ -192,6 +200,8 @@ function _normalizeSpatialPayload(raw: any): SpatialContagion {
             return {
                 source_id,
                 target_id,
+                // Same rule as nodes: keep the numeric coercion, but remember it was null.
+                unquantified: (e.intensity ?? e.edge_intensity) == null,
                 intensity: Number(e.intensity ?? e.edge_intensity ?? 0),
                 target_order: order,
             };
@@ -231,7 +241,16 @@ export type SpatialNode = {
     lon: number;
     country?: string;
     impact_score: number;
-    type: 'epicenter' | 'affected';
+    /**
+     * 'exposed_unquantified' — structurally exposed to the hub, but the magnitude
+     * is UNKNOWN (payload carries impact_score: null). It is NOT a low-impact node.
+     * Never let it reach the affected colour ramp: 0 would read as "benign".
+     */
+    type: 'epicenter' | 'affected' | 'exposed_unquantified';
+    /** True when the payload's impact_score was null. Survives the `?? 0` coercion below. */
+    unquantified?: boolean;
+    /** Payload-supplied rationale, e.g. "structurally exposed via X; magnitude unknown". */
+    why?: string;
     /** Phase 2 — N-th Order Impact. Optional on payloads older than spatial_contagion_v2. */
     order?: ContagionOrder;
     confidence?: string;
@@ -242,6 +261,8 @@ export type SpatialEdge = {
     source_id: string;
     target_id: string;
     intensity: number;
+    /** True when the payload's intensity was null (unknown magnitude, not zero). */
+    unquantified?: boolean;
     /** Mirrors the target node's order so the frontend can split layers without re-joining. */
     target_order?: ContagionOrder;
     /** Omni-aggregate — originating Pro domain (Energy, Shipping, …). */
@@ -276,6 +297,8 @@ type ResolvedEdge = {
     target_lon: number;
     target_lat: number;
     intensity: number;
+    /** True when the payload's intensity was null — rendered grey/dashed, never as a weak arc. */
+    unquantified?: boolean;
     /** target node order (1/2/3) — drives per-layer visual scaling. */
     target_order: ContagionOrder;
     /** Omni-aggregate — Pro domain that owns this arc. */
@@ -371,10 +394,64 @@ function buildResolvedEdge(
     return {
         ...shifted,
         intensity: edge.intensity,
+        unquantified: edge.unquantified === true,
         target_order: targetOrder,
         domain_id,
         lane_offset,
     };
+}
+
+// ── Unquantified ("structurally exposed, magnitude unknown") styling ──────────
+//
+// These nodes/edges arrive with impact_score / intensity === null. After the
+// `?? 0` coercion they would otherwise render as small cyan dots and hairline
+// arcs — i.e. visually IDENTICAL to a genuinely negligible impact. That is a
+// lie, so they get their own grey, hollow, pseudo-dashed treatment and are
+// excluded from the affected colour ramp and the epicenter styling entirely.
+const UNQ_NODE_STROKE: [number, number, number, number] = [148, 163, 184, 220]; // slate — hollow ring
+const UNQ_ARC_RGBA: [number, number, number, number] = [148, 163, 184, 120];    // slate — faint arc
+const UNQ_NODE_RADIUS_M = 16_000;   // FIXED: never scale a meaningless 0
+const UNQ_ARC_WIDTH = 1.2;          // FIXED: never scale a meaningless 0
+
+/** Hollow grey ring for structurally-exposed-but-unquantified nodes. */
+function buildExposedLayer(Ctor: any, sid: string, nodes: SpatialNode[]): any {
+    return new Ctor({
+        id: `sc-exposed-${sid}`,
+        data: nodes.filter((n: SpatialNode) => n.type === 'exposed_unquantified'),
+        pickable: true,
+        stroked: true,
+        filled: false,                      // hollow — the "we don't know" signal
+        radiusUnits: 'meters',
+        radiusMinPixels: 5,
+        radiusMaxPixels: 24,
+        lineWidthMinPixels: 1.5,
+        getPosition: (d: any) => [d.lon, d.lat],
+        getRadius: () => UNQ_NODE_RADIUS_M,  // fixed — impact_score is meaningless here
+        getLineColor: UNQ_NODE_STROKE,
+    });
+}
+
+/**
+ * Faint grey arc for unquantified edges. Deck.gl's ArcLayer has no native dash
+ * support, so we reuse the established order-3 pseudo-dash recipe already used
+ * in TM_ORDER_STYLE (very thin + low alpha) to read as a broken/uncertain line.
+ */
+function buildUnquantifiedArcLayer(Ctor: any, sid: string, edges: ResolvedEdge[]): any {
+    return new Ctor({
+        id: `sc-arcs-unq-${sid}`,
+        data: edges.filter((e: ResolvedEdge) => e.unquantified === true),
+        pickable: false,
+        getSourcePosition: (d: ResolvedEdge) => [d.source_lon, d.source_lat],
+        getTargetPosition: (d: ResolvedEdge) => [d.target_lon, d.target_lat],
+        getSourceColor: UNQ_ARC_RGBA,
+        getTargetColor: UNQ_ARC_RGBA,
+        getWidth: () => UNQ_ARC_WIDTH,       // fixed — intensity is meaningless here
+        widthMinPixels: 1,
+        widthMaxPixels: 2,
+        greatCircle: true,
+        getHeight: 0.45,
+        numSegments: 64,
+    });
 }
 
 function resolveEdgesFlat(
@@ -1215,6 +1292,19 @@ function injectImmersiveStyles(): void {
             font-variant-numeric: tabular-nums;
             font-family: ui-monospace, Consolas, 'SF Mono', Menlo, monospace;
         }
+        /* Rationale line for structurally-exposed-but-unquantified nodes.
+           This is the ONLY thing that explains why the marker is a hollow grey
+           ring rather than a scored dot — without it the ring is meaningless. */
+        .sc-badge-why {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(148, 163, 184, 0.25);
+            font-size: 11px;
+            line-height: 1.45;
+            color: #94a3b8;
+            font-style: italic;
+            max-width: 260px;
+        }
 
         /* === Responsive collapsing (compact tablets) =================== */
         @media (max-width: 720px) {
@@ -1253,15 +1343,18 @@ function injectImmersiveStyles(): void {
 //   • Drop-shadow glow keyed to the tier accent
 function buildTooltipHtml(node: SpatialNode): string {
     const isEpi = node.type === 'epicenter';
+    const isUnq = node.type === 'exposed_unquantified' || node.unquantified === true;
     const order: 1 | 2 | 3 = (isEpi ? 1 : (node.order ?? 2)) as 1 | 2 | 3;
-    const accent =
+    // Unquantified nodes must NEVER take the order-based amber/red accent — a
+    // coloured tier chip would imply a magnitude we do not have.
+    const accent = isUnq ? '#94a3b8' :
         order === 1 ? '#ef4444' :
         order === 2 ? '#f59e0b' :
                       '#fbbf24';
-    const tierLabel = isEpi ? 'EPICENTER' : `ORDER ${order}`;
-    const confidence = node.confidence
-        ? esc(String(node.confidence).toUpperCase())
-        : 'UNVERIFIED';
+    const tierLabel = isUnq ? 'EXPOSED · UNQUANTIFIED' : (isEpi ? 'EPICENTER' : `ORDER ${order}`);
+    const confidence = isUnq
+        ? 'MAGNITUDE UNKNOWN'
+        : (node.confidence ? esc(String(node.confidence).toUpperCase()) : 'UNVERIFIED');
     const country = node.country ? esc(node.country) : 'Global';
     // Decorative classification chip: chokepoints (negative geonameid) get
     // a MARITIME tag, real cities get TACTICAL.
@@ -1280,13 +1373,14 @@ function buildTooltipHtml(node: SpatialNode): string {
         <div class="sc-badge-metrics">
             <div class="sc-badge-metric">
                 <span class="k">Impact</span>
-                <span class="v">${node.impact_score.toFixed(1)}</span>
+                <span class="v">${isUnq ? 'unknown' : node.impact_score.toFixed(1)}</span>
             </div>
             <div class="sc-badge-metric">
                 <span class="k">Coords</span>
                 <span class="v">${node.lat.toFixed(2)}&deg; · ${node.lon.toFixed(2)}&deg;</span>
             </div>
         </div>
+        ${isUnq && node.why ? `<div class="sc-badge-why">${esc(node.why)}</div>` : ''}
     </div>`;
 }
 
@@ -1450,10 +1544,15 @@ export async function mountSpatialContagionMap(
             getLineColor: [148, 163, 184, 140],
         });
 
-        // Contagion arcs — red source → cyan target, slight 3-D tilt
+        // Structurally exposed, magnitude unknown — hollow grey ring, fixed radius.
+        const exposedLayer = buildExposedLayer(ScatterplotLayer, sid, nodes);
+
+        // Contagion arcs — red source → cyan target, slight 3-D tilt.
+        // Unquantified edges are excluded here and drawn by their own grey layer;
+        // an intensity of 0 would otherwise render them as a "negligible" hairline.
         const arcLayer = new ArcLayer({
             id: `sc-arcs-${sid}`,
-            data: edgesFlat,
+            data: edgesFlat.filter((e: ResolvedEdge) => !e.unquantified),
             pickable: false,
             getSourcePosition: (d: ResolvedEdge) => [d.source_lon, d.source_lat],
             getTargetPosition: (d: ResolvedEdge) => [d.target_lon, d.target_lat],
@@ -1467,6 +1566,8 @@ export async function mountSpatialContagionMap(
             numSegments: 64,
         });
 
+        const unquantifiedArcLayer = buildUnquantifiedArcLayer(ArcLayer, sid, edgesFlat);
+
         // ── MapboxOverlay with interleaved:true ───────────────────────────────
         // interleaved:true → deck.gl shares MapLibre's WebGL2 context.
         // Internally, _onAddInterleaved() accesses map.painter.context.gl and
@@ -1474,7 +1575,7 @@ export async function mountSpatialContagionMap(
         // This requires map.painter to be initialised, hence we add inside 'load'.
         const overlay = new MapboxOverlay({
             interleaved: true,
-            layers: [arcLayer, affectedLayer, epicenterLayer],
+            layers: [unquantifiedArcLayer, arcLayer, exposedLayer, affectedLayer, epicenterLayer],
             getTooltip: ({ object }: { object: any }) => {
                 if (!object || typeof object.impact_score !== 'number') return null;
                 return {
@@ -1552,6 +1653,8 @@ export async function mountSpatialContagionMap(
                 arcLayer,
                 affectedLayer,
                 epicenterLayer,
+                exposedLayer,
+                unquantifiedArcLayer,
                 ScatterplotLayer,
                 nodes,
                 edgesFlat,
@@ -1817,6 +1920,11 @@ type SurveillanceMapCtorArgs = {
     arcLayer: any;
     affectedLayer: any;
     epicenterLayer: any;
+    /** Hollow grey ring layer for exposed_unquantified nodes. Optional so the
+     *  legacy renderGlobalSurveillanceMap() path can omit it. */
+    exposedLayer?: any;
+    /** Faint grey arc layer for unquantified edges. */
+    unquantifiedArcLayer?: any;
     ScatterplotLayer: any;
     /** @deck.gl/layers ArcLayer constructor — required for forecast ghost arcs.
      *  Optional only because the legacy renderGlobalSurveillanceMap() path
@@ -2483,8 +2591,13 @@ class SurveillanceMapController {
         // Group edges by their target node's order so each tier produces a
         // dedicated ArcLayer + particle layer. Empty tiers create no layers
         // (Dev Mode philosophy — no empty placeholder layers).
+        // Unquantified edges are EXCLUDED from the per-order tiers: they own a
+        // dedicated grey layer. Leaving them in would re-draw them in red/cyan
+        // (and give them flow particles), implying a direction and magnitude the
+        // payload explicitly says is unknown.
         const edgesByOrder = new Map<ContagionOrder, ResolvedEdge[]>();
         for (const e of this.args.edgesFlat) {
+            if (e.unquantified) continue;
             const o = (e.target_order ?? 2) as ContagionOrder;
             const bucket = edgesByOrder.get(o);
             if (bucket) bucket.push(e);
@@ -2598,6 +2711,14 @@ class SurveillanceMapController {
             });
             builtLayers.push(particleLayerForTier);
         }
+
+        // — Unquantified: static grey. Deliberately NOT pulsed and NOT scaled —
+        //   any animation keyed to impact_score/intensity (both 0 here) would
+        //   fabricate a magnitude we do not have. Pushed first so it sits behind
+        //   the quantified layers. Omitting these would let setProps() wipe the
+        //   exposed nodes/arcs off the map on the first animation frame.
+        if (this.args.unquantifiedArcLayer) builtLayers.push(this.args.unquantifiedArcLayer);
+        if (this.args.exposedLayer) builtLayers.push(this.args.exposedLayer);
 
         // — Affected nodes: pulse only when impact_score crosses the trigger
         //   threshold (the >1.5x intensity surrogate).
@@ -3337,9 +3458,10 @@ class DashboardSpatialController {
             },
             getLineColor: [148, 163, 184, 140],
         });
+        const exposedLayer = buildExposedLayer(ScatterplotLayer, sid, nodes);
         const arcLayer = new ArcLayer({
             id: `sc-arcs-${sid}`,
-            data: edgesFlat,
+            data: edgesFlat.filter((e: ResolvedEdge) => !e.unquantified),
             pickable: false,
             getSourcePosition: (d: ResolvedEdge) => [d.source_lon, d.source_lat],
             getTargetPosition: (d: ResolvedEdge) => [d.target_lon, d.target_lat],
@@ -3359,10 +3481,13 @@ class DashboardSpatialController {
             numSegments: 64,
             ...arcLayerBlendProps(isAggregate),
         });
+        const unquantifiedArcLayer = buildUnquantifiedArcLayer(ArcLayer, sid, edgesFlat);
 
         // One synchronous setProps so the user never sees a blank overlay
         // between teardown and the new animation loop's first repaint.
-        this.overlay.setProps({ layers: [arcLayer, affectedLayer, epicenterLayer] });
+        this.overlay.setProps({
+            layers: [unquantifiedArcLayer, arcLayer, exposedLayer, affectedLayer, epicenterLayer],
+        });
 
         this.surveillance = new SurveillanceMapController({
             container: this.stageEl,
@@ -3370,6 +3495,7 @@ class DashboardSpatialController {
             mapEl: this.mapEl,
             overlay: this.overlay,
             arcLayer, affectedLayer, epicenterLayer,
+            exposedLayer, unquantifiedArcLayer,
             ScatterplotLayer,
             ArcLayerCtor: ArcLayer,
             TextLayer,
