@@ -1,0 +1,1172 @@
+{
+ "schema_version": "vault_cascade_v1",
+ "scenario": {
+  "hub": "Strait_of_Hormuz",
+  "hub_type": "route",
+  "aliases": [
+   "ホルムズ海峡",
+   "Strait of Hormuz",
+   "Hormuz"
+  ],
+  "domain": [
+   "energy",
+   "supply_chain"
+  ]
+ },
+ "generated_at": "2026-07-13",
+ "graph": {
+  "nodes": 300,
+  "edges": 1496,
+  "gate": "PASS"
+ },
+ "scaling": {
+  "impact_score": "round(100*|raw_impact|), clamp[0,100], epicenter=100 (linear)",
+  "intensity": "|raw_impact| clamp[0,1]",
+  "confidence": {
+   "order1": 1.0,
+   "order2": 1.0,
+   "order3": 0.7
+  },
+  "node_types": {
+   "epicenter": "the hub",
+   "affected": "quantified impact (impact_score 0-100)",
+   "exposed_unquantified": "real edge, weight:null -> impact_score null (NOT 0; 0 would mean no impact)"
+  },
+  "render_hint": "Colour by TYPE, shade by SCORE. Do not colour by score alone: a fully-routed order-2 node (Qatar 1.00 -> 100) legitimately ties the epicenter score. Edges with \"unquantified\": true have intensity null -> draw dashed/hollow."
+ },
+ "nodes": [
+  {
+   "id": "Strait_of_Hormuz",
+   "name": "Strait of Hormuz",
+   "lat": 26.5667,
+   "lon": 56.25,
+   "country": null,
+   "type": "epicenter",
+   "order": 1,
+   "impact_score": 100,
+   "confidence": 1.0
+  },
+  {
+   "id": "Qatar",
+   "name": "Qatar",
+   "lat": 25.35,
+   "lon": 51.18,
+   "country": "QA",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 100,
+   "confidence": 1.0,
+   "role": "supply",
+   "raw_impact": 1.0,
+   "why": "route:supply weight 1.00"
+  },
+  {
+   "id": "Iran",
+   "name": "Iran",
+   "lat": 32.4279,
+   "lon": 53.688,
+   "country": "IR",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 95,
+   "confidence": 1.0,
+   "role": "supply",
+   "raw_impact": 0.95,
+   "why": "route:supply weight 0.95"
+  },
+  {
+   "id": "Iraq",
+   "name": "Iraq",
+   "lat": 33.22,
+   "lon": 43.68,
+   "country": "IQ",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 94,
+   "confidence": 1.0,
+   "role": "supply",
+   "raw_impact": 0.94,
+   "why": "route:supply weight 0.94"
+  },
+  {
+   "id": "Japan",
+   "name": "Japan",
+   "lat": 36.2048,
+   "lon": 138.2529,
+   "country": "JP",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 90,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.9,
+   "why": "route:demand weight 0.90"
+  },
+  {
+   "id": "SOMO",
+   "name": "SOMO",
+   "lat": 33.315,
+   "lon": 44.366,
+   "country": "IQ",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 85,
+   "confidence": 1.0,
+   "role": "supply",
+   "raw_impact": 0.85,
+   "why": "route:supply weight 0.85"
+  },
+  {
+   "id": "Saudi_Arabia",
+   "name": "Saudi Arabia",
+   "lat": 23.89,
+   "lon": 45.08,
+   "country": "SA",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 85,
+   "confidence": 1.0,
+   "role": "supply",
+   "raw_impact": 0.85,
+   "why": "route:supply weight 0.85"
+  },
+  {
+   "id": "South_Korea",
+   "name": "South Korea",
+   "lat": 35.91,
+   "lon": 127.77,
+   "country": "KR",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 70,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.7,
+   "why": "route:demand weight 0.70"
+  },
+  {
+   "id": "India",
+   "name": "India",
+   "lat": 20.59,
+   "lon": 78.96,
+   "country": "IN",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 55,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.55,
+   "why": "route:demand weight 0.55"
+  },
+  {
+   "id": "China",
+   "name": "China",
+   "lat": 35.8617,
+   "lon": 104.1954,
+   "country": "CN",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 48,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.48,
+   "why": "route:demand weight 0.48"
+  },
+  {
+   "id": "QatarEnergy",
+   "name": "QatarEnergy",
+   "lat": 25.2854,
+   "lon": 51.531,
+   "country": "QA",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 70,
+   "confidence": 0.7,
+   "role": "supply",
+   "raw_impact": -0.7,
+   "tickers": [],
+   "why": "Qatar (supply 1.00) x DECAY 0.7"
+  },
+  {
+   "id": "Panasonic",
+   "name": "Panasonic",
+   "lat": 34.737,
+   "lon": 135.586,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 63,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.63,
+   "tickers": [
+    "6752"
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7"
+  },
+  {
+   "id": "Kawasaki_Heavy_Industries",
+   "name": "Kawasaki Heavy Industries",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 63,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.63,
+   "tickers": [
+    "7012"
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7"
+  },
+  {
+   "id": "Mitsubishi_Heavy_Industries",
+   "name": "Mitsubishi Heavy Industries",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 63,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.63,
+   "tickers": [
+    "7011"
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7"
+  },
+  {
+   "id": "JSR",
+   "name": "JSR",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 63,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.63,
+   "tickers": [],
+   "why": "Japan (demand 0.90) x DECAY 0.7"
+  },
+  {
+   "id": "SUMCO",
+   "name": "SUMCO",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 63,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.63,
+   "tickers": [
+    "3436"
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7"
+  },
+  {
+   "id": "Shin-Etsu_Chemical",
+   "name": "Shin-Etsu Chemical",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 63,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.63,
+   "tickers": [
+    "4063"
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7"
+  },
+  {
+   "id": "Tokyo_Ohka",
+   "name": "Tokyo Ohka",
+   "lat": 35.531,
+   "lon": 139.703,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 63,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.63,
+   "tickers": [
+    "4186"
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7"
+  },
+  {
+   "id": "Mitsui_OSK",
+   "name": "Mitsui OSK",
+   "lat": 35.69,
+   "lon": 139.7,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 63,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.63,
+   "tickers": [
+    "9104"
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7"
+  },
+  {
+   "id": "NYK",
+   "name": "NYK",
+   "lat": 35.69,
+   "lon": 139.7,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 63,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.63,
+   "tickers": [
+    "9101"
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7"
+  },
+  {
+   "id": "Saudi_Aramco",
+   "name": "Saudi Aramco",
+   "lat": 26.236111,
+   "lon": 50.039722,
+   "country": "SA",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 60,
+   "confidence": 0.7,
+   "role": "supply",
+   "raw_impact": -0.595,
+   "tickers": [
+    "2222"
+   ],
+   "why": "Saudi_Arabia (supply 0.85) x DECAY 0.7"
+  },
+  {
+   "id": "Maaden",
+   "name": "Maaden",
+   "lat": 24.713,
+   "lon": 46.675,
+   "country": "SA",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 60,
+   "confidence": 0.7,
+   "role": "supply",
+   "raw_impact": -0.595,
+   "tickers": [
+    "1211"
+   ],
+   "why": "Saudi_Arabia (supply 0.85) x DECAY 0.7"
+  },
+  {
+   "id": "LG_Energy_Solution",
+   "name": "LG Energy Solution",
+   "lat": 37.566,
+   "lon": 126.978,
+   "country": "KR",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "373220"
+   ],
+   "why": "South_Korea (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "SK_On",
+   "name": "SK On",
+   "lat": 37.566,
+   "lon": 126.978,
+   "country": "KR",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [],
+   "why": "South_Korea (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "Samsung_SDI",
+   "name": "Samsung SDI",
+   "lat": 37.241,
+   "lon": 127.178,
+   "country": "KR",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "006400"
+   ],
+   "why": "South_Korea (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "CATL",
+   "name": "CATL",
+   "lat": 26.665,
+   "lon": 119.548,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [
+    "300750",
+    "3750"
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "CNNC",
+   "name": "CNNC",
+   "lat": 39.904,
+   "lon": 116.407,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "CSSC",
+   "name": "CSSC",
+   "lat": 39.904,
+   "lon": 116.407,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "CGN",
+   "name": "CGN",
+   "lat": 22.543,
+   "lon": 114.058,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [
+    "1816"
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "CNOOC",
+   "name": "CNOOC",
+   "lat": 39.921,
+   "lon": 116.42,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [
+    "0883",
+    "600938",
+    "CEO"
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "CNPC",
+   "name": "CNPC",
+   "lat": 39.904,
+   "lon": 116.407,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "PetroChina",
+   "name": "PetroChina",
+   "lat": 39.9042,
+   "lon": 116.4074,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [
+    "0857",
+    "601857",
+    "PTR"
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "Sinopec",
+   "name": "Sinopec",
+   "lat": 39.917,
+   "lon": 116.418,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [
+    "0386",
+    "600028",
+    "SNP"
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "HMN_Tech",
+   "name": "HMN Tech",
+   "lat": 39.084,
+   "lon": 117.201,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "CMOC",
+   "name": "CMOC",
+   "lat": 34.618,
+   "lon": 112.454,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [
+    "3993"
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "COSCO",
+   "name": "COSCO",
+   "lat": 31.2304,
+   "lon": 121.4737,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [
+    "1919",
+    "601919"
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "OOCL",
+   "name": "OOCL",
+   "lat": 22.302,
+   "lon": 114.177,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "Shenghe",
+   "name": "Shenghe",
+   "lat": 30.573,
+   "lon": 104.066,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [
+    "600392"
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "Tsingshan",
+   "name": "Tsingshan",
+   "lat": 27.994,
+   "lon": 120.699,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [],
+   "why": "China (demand 0.48) x DECAY 0.7"
+  },
+  {
+   "id": "Russia",
+   "name": "Russia",
+   "lat": 61.524,
+   "lon": 105.3188,
+   "country": "RU",
+   "type": "exposed_unquantified",
+   "order": 2,
+   "impact_score": null,
+   "confidence": null,
+   "role": "supply",
+   "raw_impact": null,
+   "why": "structurally exposed via Strait_of_Hormuz; magnitude unknown (weight: null)"
+  }
+ ],
+ "edges": [
+  {
+   "source_id": "Strait_of_Hormuz",
+   "target_id": "Qatar",
+   "source_lat": 26.5667,
+   "source_lon": 56.25,
+   "target_lat": 25.35,
+   "target_lon": 51.18,
+   "intensity": 1.0,
+   "target_order": 2,
+   "role": "supply"
+  },
+  {
+   "source_id": "Strait_of_Hormuz",
+   "target_id": "Iran",
+   "source_lat": 26.5667,
+   "source_lon": 56.25,
+   "target_lat": 32.4279,
+   "target_lon": 53.688,
+   "intensity": 0.95,
+   "target_order": 2,
+   "role": "supply"
+  },
+  {
+   "source_id": "Strait_of_Hormuz",
+   "target_id": "Iraq",
+   "source_lat": 26.5667,
+   "source_lon": 56.25,
+   "target_lat": 33.22,
+   "target_lon": 43.68,
+   "intensity": 0.94,
+   "target_order": 2,
+   "role": "supply"
+  },
+  {
+   "source_id": "Strait_of_Hormuz",
+   "target_id": "Japan",
+   "source_lat": 26.5667,
+   "source_lon": 56.25,
+   "target_lat": 36.2048,
+   "target_lon": 138.2529,
+   "intensity": 0.9,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Hormuz",
+   "target_id": "SOMO",
+   "source_lat": 26.5667,
+   "source_lon": 56.25,
+   "target_lat": 33.315,
+   "target_lon": 44.366,
+   "intensity": 0.85,
+   "target_order": 2,
+   "role": "supply"
+  },
+  {
+   "source_id": "Strait_of_Hormuz",
+   "target_id": "Saudi_Arabia",
+   "source_lat": 26.5667,
+   "source_lon": 56.25,
+   "target_lat": 23.89,
+   "target_lon": 45.08,
+   "intensity": 0.85,
+   "target_order": 2,
+   "role": "supply"
+  },
+  {
+   "source_id": "Strait_of_Hormuz",
+   "target_id": "South_Korea",
+   "source_lat": 26.5667,
+   "source_lon": 56.25,
+   "target_lat": 35.91,
+   "target_lon": 127.77,
+   "intensity": 0.7,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Hormuz",
+   "target_id": "India",
+   "source_lat": 26.5667,
+   "source_lon": 56.25,
+   "target_lat": 20.59,
+   "target_lon": 78.96,
+   "intensity": 0.55,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Hormuz",
+   "target_id": "China",
+   "source_lat": 26.5667,
+   "source_lon": 56.25,
+   "target_lat": 35.8617,
+   "target_lon": 104.1954,
+   "intensity": 0.48,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Hormuz",
+   "target_id": "Russia",
+   "source_lat": 26.5667,
+   "source_lon": 56.25,
+   "target_lat": 61.524,
+   "target_lon": 105.3188,
+   "intensity": null,
+   "unquantified": true,
+   "target_order": 2,
+   "role": "supply"
+  },
+  {
+   "source_id": "Qatar",
+   "target_id": "QatarEnergy",
+   "source_lat": 25.35,
+   "source_lon": 51.18,
+   "target_lat": 25.2854,
+   "target_lon": 51.531,
+   "intensity": 0.7,
+   "target_order": 3,
+   "role": "supply"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Panasonic",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 34.737,
+   "target_lon": 135.586,
+   "intensity": 0.63,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Kawasaki_Heavy_Industries",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.63,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Mitsubishi_Heavy_Industries",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.63,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "JSR",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.63,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "SUMCO",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.63,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Shin-Etsu_Chemical",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.63,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Tokyo_Ohka",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.531,
+   "target_lon": 139.703,
+   "intensity": 0.63,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Mitsui_OSK",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.69,
+   "target_lon": 139.7,
+   "intensity": 0.63,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "NYK",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.69,
+   "target_lon": 139.7,
+   "intensity": 0.63,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Saudi_Arabia",
+   "target_id": "Saudi_Aramco",
+   "source_lat": 23.89,
+   "source_lon": 45.08,
+   "target_lat": 26.236111,
+   "target_lon": 50.039722,
+   "intensity": 0.595,
+   "target_order": 3,
+   "role": "supply"
+  },
+  {
+   "source_id": "Saudi_Arabia",
+   "target_id": "Maaden",
+   "source_lat": 23.89,
+   "source_lon": 45.08,
+   "target_lat": 24.713,
+   "target_lon": 46.675,
+   "intensity": 0.595,
+   "target_order": 3,
+   "role": "supply"
+  },
+  {
+   "source_id": "South_Korea",
+   "target_id": "LG_Energy_Solution",
+   "source_lat": 35.91,
+   "source_lon": 127.77,
+   "target_lat": 37.566,
+   "target_lon": 126.978,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "South_Korea",
+   "target_id": "SK_On",
+   "source_lat": 35.91,
+   "source_lon": 127.77,
+   "target_lat": 37.566,
+   "target_lon": 126.978,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "South_Korea",
+   "target_id": "Samsung_SDI",
+   "source_lat": 35.91,
+   "source_lon": 127.77,
+   "target_lat": 37.241,
+   "target_lon": 127.178,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CATL",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 26.665,
+   "target_lon": 119.548,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CNNC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.904,
+   "target_lon": 116.407,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CSSC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.904,
+   "target_lon": 116.407,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CGN",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 22.543,
+   "target_lon": 114.058,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CNOOC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.921,
+   "target_lon": 116.42,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CNPC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.904,
+   "target_lon": 116.407,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "PetroChina",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.9042,
+   "target_lon": 116.4074,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "Sinopec",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.917,
+   "target_lon": 116.418,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "HMN_Tech",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.084,
+   "target_lon": 117.201,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CMOC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 34.618,
+   "target_lon": 112.454,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "COSCO",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 31.2304,
+   "target_lon": 121.4737,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "OOCL",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 22.302,
+   "target_lon": 114.177,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "Shenghe",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 30.573,
+   "target_lon": 104.066,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "Tsingshan",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 27.994,
+   "target_lon": 120.699,
+   "intensity": 0.336,
+   "target_order": 3,
+   "role": "demand"
+  }
+ ],
+ "conduits": [
+  {
+   "commodity": "Natural_Gas",
+   "weight": 0.2,
+   "unit": "share"
+  },
+  {
+   "commodity": "Crude_Oil",
+   "weight": 0.34,
+   "unit": "share"
+  }
+ ],
+ "no_map": [
+  {
+   "id": "OPEC",
+   "type": "org",
+   "raw_impact": 0.5,
+   "reason": "no coordinates (org node)"
+  },
+  {
+   "id": "Brent",
+   "type": "market",
+   "raw_impact": null,
+   "reason": "exposed but weight:null; no coordinates"
+  },
+  {
+   "id": "Natural_Gas",
+   "type": "market",
+   "raw_impact": 0.2,
+   "reason": "conduit; no location"
+  },
+  {
+   "id": "Crude_Oil",
+   "type": "market",
+   "raw_impact": 0.34,
+   "reason": "conduit; no location"
+  }
+ ],
+ "honest_gaps": {
+  "exposed_null": [
+   {
+    "id": "Brent",
+    "role": "supply"
+   },
+   {
+    "id": "Russia",
+    "role": "supply"
+   }
+  ],
+  "node_gaps": [
+   {
+    "id": "Iran",
+    "impact": 0.95,
+    "reason": "no company node with country=IR & domain∩['energy', 'supply_chain']"
+   },
+   {
+    "id": "Iraq",
+    "impact": 0.94,
+    "reason": "no company node with country=IQ & domain∩['energy', 'supply_chain']"
+   },
+   {
+    "id": "India",
+    "impact": 0.55,
+    "reason": "no company node with country=IN & domain∩['energy', 'supply_chain']"
+   }
+  ]
+ }
+}

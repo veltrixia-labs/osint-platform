@@ -1,0 +1,1174 @@
+{
+ "schema_version": "vault_cascade_v1",
+ "scenario": {
+  "hub": "Strait_of_Malacca",
+  "hub_type": "route",
+  "aliases": [
+   "マラッカ海峡",
+   "Strait of Malacca",
+   "Malacca Strait",
+   "Strait of Melaka",
+   "マラッカ"
+  ],
+  "domain": [
+   "supply_chain",
+   "energy"
+  ]
+ },
+ "generated_at": "2026-07-13",
+ "graph": {
+  "nodes": 300,
+  "edges": 1496,
+  "gate": "PASS"
+ },
+ "scaling": {
+  "impact_score": "round(100*|raw_impact|), clamp[0,100], epicenter=100 (linear)",
+  "intensity": "|raw_impact| clamp[0,1]",
+  "confidence": {
+   "order1": 1.0,
+   "order2": 1.0,
+   "order3": 0.7
+  },
+  "node_types": {
+   "epicenter": "the hub",
+   "affected": "quantified impact (impact_score 0-100)",
+   "exposed_unquantified": "real edge, weight:null -> impact_score null (NOT 0; 0 would mean no impact)"
+  },
+  "render_hint": "Colour by TYPE, shade by SCORE. Do not colour by score alone: a fully-routed order-2 node (Qatar 1.00 -> 100) legitimately ties the epicenter score. Edges with \"unquantified\": true have intensity null -> draw dashed/hollow."
+ },
+ "nodes": [
+  {
+   "id": "Strait_of_Malacca",
+   "name": "Strait of Malacca",
+   "lat": 4.0,
+   "lon": 100.0,
+   "country": null,
+   "type": "epicenter",
+   "order": 1,
+   "impact_score": 100,
+   "confidence": 1.0
+  },
+  {
+   "id": "China",
+   "name": "China",
+   "lat": 35.8617,
+   "lon": 104.1954,
+   "country": "CN",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 80,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.8,
+   "why": "route:demand weight 0.80"
+  },
+  {
+   "id": "Port_of_Singapore",
+   "name": "Port of Singapore",
+   "lat": 1.2644,
+   "lon": 103.82,
+   "country": "SG",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 80,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.8,
+   "why": "route:demand weight 0.80"
+  },
+  {
+   "id": "Strait_of_Hormuz",
+   "name": "Strait of Hormuz",
+   "lat": 26.5667,
+   "lon": 56.25,
+   "country": null,
+   "type": "affected",
+   "order": 2,
+   "impact_score": 72,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.72,
+   "why": "route:demand weight 0.72"
+  },
+  {
+   "id": "Japan",
+   "name": "Japan",
+   "lat": 36.2048,
+   "lon": 138.2529,
+   "country": "JP",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 70,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.7,
+   "why": "route:demand weight 0.70"
+  },
+  {
+   "id": "South_Korea",
+   "name": "South Korea",
+   "lat": 35.91,
+   "lon": 127.77,
+   "country": "KR",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 70,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.7,
+   "why": "route:demand weight 0.70"
+  },
+  {
+   "id": "South_China_Sea",
+   "name": "South China Sea",
+   "lat": 13.5,
+   "lon": 114.5,
+   "country": null,
+   "type": "affected",
+   "order": 2,
+   "impact_score": 70,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.7,
+   "why": "route:demand weight 0.70"
+  },
+  {
+   "id": "CMA_CGM",
+   "name": "CMA CGM",
+   "lat": 43.296,
+   "lon": 5.37,
+   "country": "FR",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 50,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.5,
+   "why": "route:demand weight 0.50"
+  },
+  {
+   "id": "COSCO",
+   "name": "COSCO",
+   "lat": 31.2304,
+   "lon": 121.4737,
+   "country": "CN",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 50,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.5,
+   "why": "route:demand weight 0.50"
+  },
+  {
+   "id": "Evergreen",
+   "name": "Evergreen",
+   "lat": 25.033,
+   "lon": 121.5654,
+   "country": "TW",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 50,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.5,
+   "why": "route:demand weight 0.50"
+  },
+  {
+   "id": "OOCL",
+   "name": "OOCL",
+   "lat": 22.302,
+   "lon": 114.177,
+   "country": "CN",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 50,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.5,
+   "why": "route:demand weight 0.50"
+  },
+  {
+   "id": "Taiwan_Strait",
+   "name": "Taiwan Strait",
+   "lat": 24.8,
+   "lon": 119.9,
+   "country": null,
+   "type": "affected",
+   "order": 2,
+   "impact_score": 50,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.5,
+   "why": "route:demand weight 0.50"
+  },
+  {
+   "id": "Hapag-Lloyd",
+   "name": "Hapag-Lloyd",
+   "lat": 53.5511,
+   "lon": 9.9937,
+   "country": "DE",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 45,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.45,
+   "why": "route:demand weight 0.45"
+  },
+  {
+   "id": "CSSC",
+   "name": "CSSC",
+   "lat": 39.904,
+   "lon": 116.407,
+   "country": "CN",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 30,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.3,
+   "why": "route:demand weight 0.30"
+  },
+  {
+   "id": "India",
+   "name": "India",
+   "lat": 20.59,
+   "lon": 78.96,
+   "country": "IN",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 30,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.3,
+   "why": "route:demand weight 0.30"
+  },
+  {
+   "id": "CATL",
+   "name": "CATL",
+   "lat": 26.665,
+   "lon": 119.548,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [
+    "300750",
+    "3750"
+   ],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "CNNC",
+   "name": "CNNC",
+   "lat": 39.904,
+   "lon": 116.407,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "CGN",
+   "name": "CGN",
+   "lat": 22.543,
+   "lon": 114.058,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [
+    "1816"
+   ],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "CNOOC",
+   "name": "CNOOC",
+   "lat": 39.921,
+   "lon": 116.42,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [
+    "0883",
+    "600938",
+    "CEO"
+   ],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "CNPC",
+   "name": "CNPC",
+   "lat": 39.904,
+   "lon": 116.407,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "PetroChina",
+   "name": "PetroChina",
+   "lat": 39.9042,
+   "lon": 116.4074,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [
+    "0857",
+    "601857",
+    "PTR"
+   ],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "Sinopec",
+   "name": "Sinopec",
+   "lat": 39.917,
+   "lon": 116.418,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [
+    "0386",
+    "600028",
+    "SNP"
+   ],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "HMN_Tech",
+   "name": "HMN Tech",
+   "lat": 39.084,
+   "lon": 117.201,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "CMOC",
+   "name": "CMOC",
+   "lat": 34.618,
+   "lon": 112.454,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [
+    "3993"
+   ],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "Shenghe",
+   "name": "Shenghe",
+   "lat": 30.573,
+   "lon": 104.066,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [
+    "600392"
+   ],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "Tsingshan",
+   "name": "Tsingshan",
+   "lat": 27.994,
+   "lon": 120.699,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 56,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.56,
+   "tickers": [],
+   "why": "China (demand 0.80) x DECAY 0.7"
+  },
+  {
+   "id": "Panasonic",
+   "name": "Panasonic",
+   "lat": 34.737,
+   "lon": 135.586,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "6752"
+   ],
+   "why": "Japan (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "Kawasaki_Heavy_Industries",
+   "name": "Kawasaki Heavy Industries",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "7012"
+   ],
+   "why": "Japan (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "Mitsubishi_Heavy_Industries",
+   "name": "Mitsubishi Heavy Industries",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "7011"
+   ],
+   "why": "Japan (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "JSR",
+   "name": "JSR",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [],
+   "why": "Japan (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "SUMCO",
+   "name": "SUMCO",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "3436"
+   ],
+   "why": "Japan (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "Shin-Etsu_Chemical",
+   "name": "Shin-Etsu Chemical",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "4063"
+   ],
+   "why": "Japan (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "Tokyo_Ohka",
+   "name": "Tokyo Ohka",
+   "lat": 35.531,
+   "lon": 139.703,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "4186"
+   ],
+   "why": "Japan (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "Mitsui_OSK",
+   "name": "Mitsui OSK",
+   "lat": 35.69,
+   "lon": 139.7,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "9104"
+   ],
+   "why": "indirect via Japan (demand 0.70) x DECAY 0.7 = 0.49; ALSO holds a DIRECT edge to Strait_of_Malacca whose weight is unmeasured (null) -- true exposure may be higher",
+   "has_unquantified_direct_edge": true
+  },
+  {
+   "id": "NYK",
+   "name": "NYK",
+   "lat": 35.69,
+   "lon": 139.7,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "9101"
+   ],
+   "why": "indirect via Japan (demand 0.70) x DECAY 0.7 = 0.49; ALSO holds a DIRECT edge to Strait_of_Malacca whose weight is unmeasured (null) -- true exposure may be higher",
+   "has_unquantified_direct_edge": true
+  },
+  {
+   "id": "LG_Energy_Solution",
+   "name": "LG Energy Solution",
+   "lat": 37.566,
+   "lon": 126.978,
+   "country": "KR",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "373220"
+   ],
+   "why": "South_Korea (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "SK_On",
+   "name": "SK On",
+   "lat": 37.566,
+   "lon": 126.978,
+   "country": "KR",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [],
+   "why": "South_Korea (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "Samsung_SDI",
+   "name": "Samsung SDI",
+   "lat": 37.241,
+   "lon": 127.178,
+   "country": "KR",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "006400"
+   ],
+   "why": "South_Korea (demand 0.70) x DECAY 0.7"
+  },
+  {
+   "id": "PTP",
+   "name": "PTP",
+   "lat": 1.363,
+   "lon": 103.548,
+   "country": "MY",
+   "type": "exposed_unquantified",
+   "order": 2,
+   "impact_score": null,
+   "confidence": null,
+   "role": "supply",
+   "raw_impact": null,
+   "why": "structurally exposed via Strait_of_Malacca; magnitude unknown (weight: null)"
+  },
+  {
+   "id": "Singapore",
+   "name": "Singapore",
+   "lat": 1.35,
+   "lon": 103.82,
+   "country": "SG",
+   "type": "exposed_unquantified",
+   "order": 2,
+   "impact_score": null,
+   "confidence": null,
+   "role": "supply",
+   "raw_impact": null,
+   "why": "structurally exposed via Strait_of_Malacca; magnitude unknown (weight: null)"
+  }
+ ],
+ "edges": [
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "China",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 35.8617,
+   "target_lon": 104.1954,
+   "intensity": 0.8,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "Port_of_Singapore",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 1.2644,
+   "target_lon": 103.82,
+   "intensity": 0.8,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "Strait_of_Hormuz",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 26.5667,
+   "target_lon": 56.25,
+   "intensity": 0.72,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "Japan",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 36.2048,
+   "target_lon": 138.2529,
+   "intensity": 0.7,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "South_Korea",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 35.91,
+   "target_lon": 127.77,
+   "intensity": 0.7,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "South_China_Sea",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 13.5,
+   "target_lon": 114.5,
+   "intensity": 0.7,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "CMA_CGM",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 43.296,
+   "target_lon": 5.37,
+   "intensity": 0.5,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "COSCO",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 31.2304,
+   "target_lon": 121.4737,
+   "intensity": 0.5,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "Evergreen",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 25.033,
+   "target_lon": 121.5654,
+   "intensity": 0.5,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "OOCL",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 22.302,
+   "target_lon": 114.177,
+   "intensity": 0.5,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "Taiwan_Strait",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 24.8,
+   "target_lon": 119.9,
+   "intensity": 0.5,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "Hapag-Lloyd",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 53.5511,
+   "target_lon": 9.9937,
+   "intensity": 0.45,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "CSSC",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 39.904,
+   "target_lon": 116.407,
+   "intensity": 0.3,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "India",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 20.59,
+   "target_lon": 78.96,
+   "intensity": 0.3,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "PTP",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 1.363,
+   "target_lon": 103.548,
+   "intensity": null,
+   "unquantified": true,
+   "target_order": 2,
+   "role": "supply"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "Singapore",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 1.35,
+   "target_lon": 103.82,
+   "intensity": null,
+   "unquantified": true,
+   "target_order": 2,
+   "role": "supply"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "Mitsui_OSK",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 35.69,
+   "target_lon": 139.7,
+   "intensity": null,
+   "unquantified": true,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Strait_of_Malacca",
+   "target_id": "NYK",
+   "source_lat": 4.0,
+   "source_lon": 100.0,
+   "target_lat": 35.69,
+   "target_lon": 139.7,
+   "intensity": null,
+   "unquantified": true,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CATL",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 26.665,
+   "target_lon": 119.548,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CNNC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.904,
+   "target_lon": 116.407,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CGN",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 22.543,
+   "target_lon": 114.058,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CNOOC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.921,
+   "target_lon": 116.42,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CNPC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.904,
+   "target_lon": 116.407,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "PetroChina",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.9042,
+   "target_lon": 116.4074,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "Sinopec",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.917,
+   "target_lon": 116.418,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "HMN_Tech",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.084,
+   "target_lon": 117.201,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CMOC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 34.618,
+   "target_lon": 112.454,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "Shenghe",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 30.573,
+   "target_lon": 104.066,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "Tsingshan",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 27.994,
+   "target_lon": 120.699,
+   "intensity": 0.56,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Panasonic",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 34.737,
+   "target_lon": 135.586,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Kawasaki_Heavy_Industries",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Mitsubishi_Heavy_Industries",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "JSR",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "SUMCO",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Shin-Etsu_Chemical",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Tokyo_Ohka",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.531,
+   "target_lon": 139.703,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Mitsui_OSK",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.69,
+   "target_lon": 139.7,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "NYK",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.69,
+   "target_lon": 139.7,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "South_Korea",
+   "target_id": "LG_Energy_Solution",
+   "source_lat": 35.91,
+   "source_lon": 127.77,
+   "target_lat": 37.566,
+   "target_lon": 126.978,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "South_Korea",
+   "target_id": "SK_On",
+   "source_lat": 35.91,
+   "source_lon": 127.77,
+   "target_lat": 37.566,
+   "target_lon": 126.978,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "South_Korea",
+   "target_id": "Samsung_SDI",
+   "source_lat": 35.91,
+   "source_lon": 127.77,
+   "target_lat": 37.241,
+   "target_lon": 127.178,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  }
+ ],
+ "conduits": [
+  {
+   "commodity": "Natural_Gas",
+   "weight": 9.2,
+   "unit": "Bcf_per_d"
+  },
+  {
+   "commodity": "Crude_Oil",
+   "weight": 0.45,
+   "unit": "share"
+  }
+ ],
+ "no_map": [
+  {
+   "id": "Natural_Gas",
+   "type": "market",
+   "raw_impact": 9.2,
+   "reason": "conduit; no location"
+  },
+  {
+   "id": "Crude_Oil",
+   "type": "market",
+   "raw_impact": 0.45,
+   "reason": "conduit; no location"
+  }
+ ],
+ "honest_gaps": {
+  "exposed_null": [
+   {
+    "id": "PTP",
+    "role": "supply"
+   },
+   {
+    "id": "Singapore",
+    "role": "supply"
+   },
+   {
+    "id": "Mitsui_OSK",
+    "role": "demand"
+   },
+   {
+    "id": "NYK",
+    "role": "demand"
+   }
+  ],
+  "node_gaps": [
+   {
+    "id": "India",
+    "impact": 0.3,
+    "reason": "no company node with country=IN & domain∩['energy', 'supply_chain']"
+   }
+  ]
+ }
+}
