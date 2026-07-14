@@ -1805,18 +1805,19 @@ export async function mountSpatialContagionMap(
             });
             surveillance.start();
 
-            // Keep the co-location ring at a constant ON-SCREEN separation: re-fan
-            // from the new metres-per-pixel whenever the zoom changes materially.
-            // Without this the ring is frozen at the mount zoom and either overlaps
-            // (zoomed out) or flies apart (zoomed in).
+            // Keep the co-location ring at a constant ON-SCREEN separation: re-fan from
+            // the new metres-per-pixel whenever the zoom changes materially. Named (not
+            // inline) so stop() can map.off() it — see addCleanup below.
             let lastFanZoom = initialZoomForFan;
-            map.on('zoomend', () => {
+            const onZoomEnd = (): void => {
                 const z = map.getZoom();
                 if (Math.abs(z - lastFanZoom) < 0.4) return;
                 lastFanZoom = z;
                 displayNodes = applyColocationOffsets(nodes, z);
                 surveillance.updateGeometry(displayNodes, resolveEdgesFlat(displayNodes, edges, false));
-            });
+            };
+            map.on('zoomend', onZoomEnd);
+            surveillance.addCleanup(() => map.off('zoomend', onZoomEnd));
             // ─────────────────────────────────────────────────────────────
 
             // Dismiss loading overlay
@@ -2155,6 +2156,8 @@ class SurveillanceMapController {
     private playTimer: number | null = null;
     private pollTimer: number | null = null;
     private aborted = false;
+    /** Unsubscribe fns drained by stop() — see addCleanup(). */
+    private cleanups: Array<() => void> = [];
     private offsets: number[] = [];    // per-arc phase offsets so particles are staggered
     // Phase 6.5.9 — has at least one history poll attempt completed (success
     // OR failure)? Lets refreshPanel() distinguish the cold "Awaiting history…"
@@ -2207,7 +2210,10 @@ class SurveillanceMapController {
         this.rafId = requestAnimationFrame(this.frame);
     }
 
-    /** Idempotent teardown — cancels RAF + intervals + DOM hooks. */
+    /**
+     * Idempotent teardown. INVARIANT: every setProps/DOM write is `aborted`-guarded, and
+     * teardown removes LISTENERS as well as timers. A stopped controller can reach nothing.
+     */
     stop = (): void => {
         if (this.aborted) return;
         this.aborted = true;
@@ -2215,9 +2221,22 @@ class SurveillanceMapController {
         if (this.playTimer !== null) window.clearInterval(this.playTimer);
         if (this.pollTimer !== null) window.clearInterval(this.pollTimer);
         this.rafId = this.playTimer = this.pollTimer = null;
+        // Unsubscribe anything registered via addCleanup() (e.g. map 'zoomend').
+        // A listener outliving its controller is worse than a dead write: a zoom event
+        // would drive a DEAD controller's repaintLayers() into the LIVE overlay.
+        for (const fn of this.cleanups) {
+            try { fn(); } catch { /* teardown must never throw */ }
+        }
+        this.cleanups.length = 0;
         this.panel?.remove();
         this.tickerPanel?.remove();
     };
+
+    /** Register an unsubscribe fn to run on stop(). Fires immediately if already stopped. */
+    public addCleanup(fn: () => void): void {
+        if (this.aborted) { try { fn(); } catch { /* ignore */ } return; }
+        this.cleanups.push(fn);
+    }
 
     private installTeardownHandle(): void {
         // Persist the teardown so future mounts (e.g. domain swap) can clean
@@ -2230,6 +2249,10 @@ class SurveillanceMapController {
             }
         });
         observer.observe(document.body, { childList: true, subtree: true });
+        // No exceptions to the invariant: stop() unsubscribes this too. On a domain/scenario
+        // switch the wrapEl SURVIVES, so the self-disconnect above never fires and a
+        // document-wide subtree observer would leak (holding a dead controller) per switch.
+        this.addCleanup(() => observer.disconnect());
     }
 
     // ─── UI ──────────────────────────────────────────────────────────────
@@ -2696,6 +2719,7 @@ class SurveillanceMapController {
                 return;
             }
             const body: any = await resp.json();
+            if (this.aborted) return;   // fetch may have landed after stop()
             const incoming = Array.isArray(body?.series) ? body.series : [];
             const { newPoints } = this.state.ingest(incoming);
             // New history points can flip phase_transition_warning flags
@@ -2752,6 +2776,7 @@ class SurveillanceMapController {
      * arrays; the next repaint picks them up automatically.
      */
     public updateGeometry(nodes: SpatialNode[], edgesFlat: ResolvedEdge[]): void {
+        if (this.aborted) return;   // INVARIANT (see stop())
         this.args.nodes = nodes;
         this.args.edgesFlat = edgesFlat;
         this.args.epicenterLayer = this.args.epicenterLayer.clone({
@@ -2777,6 +2802,7 @@ class SurveillanceMapController {
     }
 
     private repaintLayers(): void {
+        if (this.aborted) return;   // INVARIANT (see stop())
         const pt = this.state.point();
         const entropy = pt ? pt.entropy : 0;
         const viscosity = pt ? pt.viscosity : 0;
@@ -3128,6 +3154,7 @@ class SurveillanceMapController {
     // ─── Panel sync ──────────────────────────────────────────────────────
 
     private refreshPanel(): void {
+        if (this.aborted) return;   // INVARIANT (see stop())
         const series = this.state.series;
         const pt = this.state.point();
 
@@ -3229,6 +3256,7 @@ class SurveillanceMapController {
 
     /** Phase 7.10 — top metric strip tracks live nodes + timeline frame. */
     private refreshStatsHud(pt: HistoryPoint | null): void {
+        if (this.aborted) return;   // INVARIANT (see stop())
         const host =
             this.args.container.closest('.pro-map-global-container') ??
             this.args.container.parentElement;
@@ -3803,6 +3831,10 @@ class DashboardSpatialController {
         this.overlay.setProps({
             layers: [unquantifiedArcLayer, arcLayer, exposedLayer, affectedLayer, epicenterLayer],
         });
+
+        // Stop the outgoing controller at the single point of replacement, so no caller
+        // can forget it and orphan a live rAF/poll loop. Idempotent.
+        this._teardownSurveillance();
 
         this.surveillance = new SurveillanceMapController({
             container: this.stageEl,
