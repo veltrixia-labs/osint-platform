@@ -737,9 +737,26 @@ class SpatialNode(Base):
     name = Column(String, nullable=False)
     lat = Column(Float, nullable=False)
     lon = Column(Float, nullable=False)
-    impact_score = Column(Float, nullable=False, default=0.0)        # >= 75 → frontend Critical pulse
+    # NULLABLE: null == "magnitude never measured", which is NOT the same claim as 0.0
+    # ("no impact"). Coercing null→0.0 at the DB boundary is the exact falsehood the
+    # renderer's exposed_unquantified class exists to prevent. Readers MUST guard.
+    impact_score = Column(Float, nullable=True, default=0.0)          # >= 75 → frontend Critical pulse
     entropy_index = Column(Float, nullable=False, default=0.0)        # used for 1.5x spike detection
+    # Retained for back-compat: the fake engine + existing readers still use it.
+    # New writers set BOTH: is_epicenter = (node_type == 'epicenter').
     is_epicenter = Column(Boolean, nullable=False, default=False)
+    # 'epicenter' | 'affected' | 'exposed_unquantified'
+    node_type = Column(String, nullable=False, server_default="affected", default="affected")
+    node_id = Column(String, nullable=True)      # vault canonical id, e.g. 'Mitsui_OSK' (join key)
+    country = Column(String, nullable=True)      # ISO-2
+    order_level = Column(Integer, nullable=True)  # 1|2|3 — nodes carry no order today, edges do
+    why = Column(Text, nullable=True)            # tooltip rationale, verbatim from the payload
+    confidence = Column(Float, nullable=True)    # 0.0-1.0, numeric end-to-end (TS retyped to match)
+    # True when this node is quantified but has at least one unquantified inbound edge
+    # (the "hybrid": measured score AND an unmeasured direct exposure).
+    has_unquantified_direct_edge = Column(
+        Boolean, nullable=False, server_default="false", default=False
+    )
     updated_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -767,7 +784,14 @@ class SpatialEdge(Base):
     source_lat = Column(Float, nullable=False)
     target_lon = Column(Float, nullable=False)
     target_lat = Column(Float, nullable=False)
-    edge_intensity = Column(Float, nullable=False, default=0.0)
+    # NULLABLE for the same reason as SpatialNode.impact_score: an unmeasured
+    # exposure must not be recorded as an intensity of 0.0 ("negligible").
+    edge_intensity = Column(Float, nullable=True, default=0.0)
+    # True when edge_intensity is unknown (not zero). Denormalised so readers can
+    # branch without a NULL check, and so the flag survives JSONB serialisation.
+    unquantified = Column(Boolean, nullable=False, server_default="false", default=False)
+    source_node_id = Column(String, nullable=True)   # vault canonical ids — joins + debugging
+    target_node_id = Column(String, nullable=True)
     viscosity_coefficient = Column(Float, nullable=False, default=0.0)
     order_level = Column(Integer, nullable=False, default=2)  # 1 | 2 | 3
     updated_at = Column(

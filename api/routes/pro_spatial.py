@@ -71,22 +71,44 @@ def _require_pro(tier: str, detail: str) -> None:
         raise HTTPException(status_code=403, detail=detail)
 
 
+def _nullable_float(v: Optional[float]) -> Optional[float]:
+    """
+    None survives as None. An UNMEASURED magnitude is not zero.
+
+    `float(None)` raises TypeError, and coercing None -> 0.0 would assert
+    "no impact" about something we never measured. The renderer already speaks
+    this dialect: a null impact_score / intensity drives the `exposed_unquantified`
+    hollow-grey path (see pro_interactive_map.ts, fedd638).
+    """
+    return None if v is None else float(v)
+
+
 def _node_to_dict(n: SpatialNode) -> Dict[str, Any]:
     """Serialise a SpatialNode row to the frontend's expected shape."""
     return {
-        "id": str(n.id),
+        # Prefer the vault canonical id (the edge join key). Falls back to the row
+        # UUID, which is byte-identical to the previous behaviour while node_id is
+        # NULL — i.e. for every row written by the existing engine.
+        "id": n.node_id or str(n.id),
         "domain_id": n.domain_id,
         "name": n.name,
         "lat": float(n.lat),
         "lon": float(n.lon),
-        "impact_score": float(n.impact_score),
+        "impact_score": _nullable_float(n.impact_score),
         "entropy_index": float(n.entropy_index),
-        "type": "epicenter" if n.is_epicenter else "affected",
+        # node_type is the source of truth; is_epicenter is the back-compat fallback.
+        "type": n.node_type or ("epicenter" if n.is_epicenter else "affected"),
+        "country": n.country,
+        "order": n.order_level,
+        "confidence": n.confidence,
+        "why": n.why,
+        "has_unquantified_direct_edge": bool(n.has_unquantified_direct_edge),
         "updated_at": n.updated_at.isoformat() if n.updated_at else None,
     }
 
 
 def _edge_to_dict(e: SpatialEdge) -> Dict[str, Any]:
+    intensity = _nullable_float(e.edge_intensity)
     return {
         "id": str(e.id),
         "domain_id": e.domain_id,
@@ -94,8 +116,13 @@ def _edge_to_dict(e: SpatialEdge) -> Dict[str, Any]:
         "source_lat": float(e.source_lat),
         "target_lon": float(e.target_lon),
         "target_lat": float(e.target_lat),
-        "intensity": float(e.edge_intensity),
-        "edge_intensity": float(e.edge_intensity),
+        "intensity": intensity,
+        "edge_intensity": intensity,
+        # Explicit flag: unknown, not zero. Denormalised so the renderer never has
+        # to infer intent from a null.
+        "unquantified": bool(e.unquantified),
+        "source_id": e.source_node_id,
+        "target_id": e.target_node_id,
         "viscosity_coefficient": float(e.viscosity_coefficient),
         "order_level": int(e.order_level),
         # alias kept for frontend's ResolvedEdge.target_order mapping
@@ -113,14 +140,35 @@ def _shape_contagion_payload(
     serialised_nodes = [_node_to_dict(n) for n in nodes]
     serialised_edges = [_edge_to_dict(e) for e in edges]
 
-    epicenter_impact = 0.0
-    intensity_sum = 0.0
+    # ── Aggregates EXCLUDE unmeasured magnitudes ─────────────────────────────
+    # An unmeasured node must not be mistaken for the colour-ramp denominator, and
+    # an unmeasured edge must not dilute the mean. Note the DIVISOR changes too:
+    # we average over the edges actually summed, not over every edge.
+    measured_scores = [float(n.impact_score) for n in nodes if n.impact_score is not None]
+    measured_intensities = [
+        float(e.edge_intensity) for e in edges if e.edge_intensity is not None
+    ]
+
+    if measured_scores:
+        epicenter_impact = max(measured_scores)
+    elif nodes:
+        # Nodes exist but every magnitude is unmeasured. The renderer divides by
+        # this value (`t = impact_score / epicenter_impact_score`), so it must never
+        # be 0 -> use a 1.0 sentinel rather than a divide-by-zero.
+        epicenter_impact = 1.0
+    else:
+        # No nodes at all — preserve the existing 0.0 (the frontend's
+        # `epicenter_impact_score || 100` fallback depends on this being falsy).
+        epicenter_impact = 0.0
+
+    mean_intensity = (
+        sum(measured_intensities) / len(measured_intensities)
+        if measured_intensities
+        else 0.0
+    )
+
     order_counts = {1: 0, 2: 0, 3: 0}
-    for n in nodes:
-        if n.impact_score > epicenter_impact:
-            epicenter_impact = float(n.impact_score)
     for e in edges:
-        intensity_sum += float(e.edge_intensity)
         if e.order_level in order_counts:
             order_counts[e.order_level] += 1
 
@@ -129,7 +177,7 @@ def _shape_contagion_payload(
         "nodes": serialised_nodes,
         "edges": serialised_edges,
         "epicenter_impact_score": epicenter_impact,
-        "edge_intensity": (intensity_sum / len(edges)) if edges else 0.0,
+        "edge_intensity": mean_intensity,
         "node_count": len(serialised_nodes),
         "edge_count": len(serialised_edges),
         "order_counts": {
@@ -339,14 +387,19 @@ async def get_fragility_history(
     elif snapshots:
         # Cold-state fallback: rehydrate from the newest history snapshot.
         newest = snapshots[-1]
+        # NB: `.get("impact_score", 0)` is NOT null-safe — a JSONB key that is
+        # PRESENT with a null value returns None, not the default. Filter explicitly,
+        # and exclude unmeasured nodes from the max (as everywhere else).
+        replay_scores = [
+            float(n["impact_score"])
+            for n in (newest.nodes_payload or [])
+            if isinstance(n, dict) and n.get("impact_score") is not None
+        ]
         latest_spatial = {
             "domain_id": domain,
             "nodes": newest.nodes_payload or [],
             "edges": newest.edges_payload or [],
-            "epicenter_impact_score": max(
-                (float(n.get("impact_score", 0)) for n in (newest.nodes_payload or [])),
-                default=0.0,
-            ),
+            "epicenter_impact_score": max(replay_scores, default=0.0),
             "edge_intensity": 0.0,
             "schema_version": "spatial_engine_v1_history_replay",
         }

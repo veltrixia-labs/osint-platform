@@ -352,15 +352,28 @@ async def _fetch_live_spatial_graph(
         nodes, edges = await _load("global")
         used_domain = "global" if nodes else short_id
 
+    # None survives as None: an UNMEASURED magnitude is not zero. `float(None)` would
+    # raise, and coercing it to 0.0 would assert "no impact" about something we never
+    # measured. The renderer's exposed_unquantified path already handles a null.
+    def _nf(v: Optional[float]) -> Optional[float]:
+        return None if v is None else float(v)
+
     serialised_nodes: List[Dict[str, Any]] = [
         {
-            "id": str(n.id),
+            # Vault canonical id when present (the edge join key); otherwise the row
+            # UUID — byte-identical to the previous behaviour while node_id is NULL.
+            "id": n.node_id or str(n.id),
             "name": n.name,
             "lat": float(n.lat),
             "lon": float(n.lon),
-            "impact_score": float(n.impact_score),
+            "impact_score": _nf(n.impact_score),
             "entropy_index": float(n.entropy_index),
-            "type": "epicenter" if n.is_epicenter else "affected",
+            "type": n.node_type or ("epicenter" if n.is_epicenter else "affected"),
+            "country": n.country,
+            "order": n.order_level,
+            "confidence": n.confidence,
+            "why": n.why,
+            "has_unquantified_direct_edge": bool(n.has_unquantified_direct_edge),
         } for n in nodes
     ]
     serialised_edges: List[Dict[str, Any]] = [
@@ -369,20 +382,35 @@ async def _fetch_live_spatial_graph(
             "source_lon": float(e.source_lon),
             "target_lat": float(e.target_lat),
             "target_lon": float(e.target_lon),
-            "intensity": float(e.edge_intensity),
-            "edge_intensity": float(e.edge_intensity),
+            "intensity": _nf(e.edge_intensity),
+            "edge_intensity": _nf(e.edge_intensity),
+            "unquantified": bool(e.unquantified),
+            "source_id": e.source_node_id,
+            "target_id": e.target_node_id,
             "viscosity_coefficient": float(e.viscosity_coefficient),
             "order_level": int(e.order_level),
             "target_order": int(e.order_level),
         } for e in edges
     ]
 
-    epicenter_impact = max(
-        (float(n.impact_score) for n in nodes), default=0.0,
-    )
+    # Aggregates EXCLUDE unmeasured magnitudes — and the DIVISOR counts only the
+    # edges actually summed, so an unmeasured edge cannot dilute the mean.
+    measured_scores = [float(n.impact_score) for n in nodes if n.impact_score is not None]
+    measured_intensities = [
+        float(e.edge_intensity) for e in edges if e.edge_intensity is not None
+    ]
+
+    if measured_scores:
+        epicenter_impact = max(measured_scores)
+    elif nodes:
+        # Nodes exist but nothing is measured. The renderer divides by this value,
+        # so a 0 would be a divide-by-zero -> 1.0 sentinel.
+        epicenter_impact = 1.0
+    else:
+        epicenter_impact = 0.0  # no nodes at all — unchanged from today
     mean_intensity = (
-        sum(float(e.edge_intensity) for e in edges) / len(edges)
-        if edges else 0.0
+        sum(measured_intensities) / len(measured_intensities)
+        if measured_intensities else 0.0
     )
     order_counts = {1: 0, 2: 0, 3: 0}
     for e in edges:
