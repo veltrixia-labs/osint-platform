@@ -740,7 +740,11 @@ class SpatialNode(Base):
     # NULLABLE: null == "magnitude never measured", which is NOT the same claim as 0.0
     # ("no impact"). Coercing null→0.0 at the DB boundary is the exact falsehood the
     # renderer's exposed_unquantified class exists to prevent. Readers MUST guard.
-    impact_score = Column(Float, nullable=True, default=0.0)          # >= 75 → frontend Critical pulse
+    # NO `default=0.0`. A SQLAlchemy scalar default FIRES WHEN THE VALUE IS None,
+    # so it would silently rewrite a null magnitude back to 0.0 on INSERT — the very
+    # coercion this column was made nullable to prevent. Every writer sets this
+    # explicitly; nothing relies on an implicit default.
+    impact_score = Column(Float, nullable=True)          # >= 75 → frontend Critical pulse
     entropy_index = Column(Float, nullable=False, default=0.0)        # used for 1.5x spike detection
     # Retained for back-compat: the fake engine + existing readers still use it.
     # New writers set BOTH: is_epicenter = (node_type == 'epicenter').
@@ -786,7 +790,9 @@ class SpatialEdge(Base):
     target_lat = Column(Float, nullable=False)
     # NULLABLE for the same reason as SpatialNode.impact_score: an unmeasured
     # exposure must not be recorded as an intensity of 0.0 ("negligible").
-    edge_intensity = Column(Float, nullable=True, default=0.0)
+    # NO `default=0.0` — see SpatialNode.impact_score. The scalar default fires on
+    # None and would silently turn "unmeasured" back into "zero intensity".
+    edge_intensity = Column(Float, nullable=True)
     # True when edge_intensity is unknown (not zero). Denormalised so readers can
     # branch without a NULL check, and so the flag survives JSONB serialisation.
     unquantified = Column(Boolean, nullable=False, server_default="false", default=False)
