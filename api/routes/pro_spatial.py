@@ -34,7 +34,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from db.database import AsyncSessionLocal
-from db.models import SpatialNode, SpatialEdge, ContagionHistory
+from db.models import SpatialNode, SpatialEdge, ContagionHistory, AlertLog
 from api.gating import (
     get_effective_tier,
     TIER_PRO,
@@ -276,11 +276,19 @@ def _load_scenario_catalogue() -> List[Dict[str, Any]]:
             hub = sc.get("hub") or ""
             if not hub:
                 continue
+            # Hub coordinates: read from the payload's OWN epicenter node. Never
+            # re-derive them — the cascade already declares where its hub is.
+            epi = next(
+                (n for n in (payload.get("nodes") or []) if n.get("type") == "epicenter"),
+                None,
+            )
             out.append(
                 {
                     "id": _slugify_hub(hub),          # the domain_id
                     "hub": hub,
                     "hub_type": sc.get("hub_type"),
+                    "lat": (epi or {}).get("lat"),
+                    "lon": (epi or {}).get("lon"),
                     # Derived, NOT invented: the payload carries no display title.
                     # 'Strait_of_Hormuz' -> 'Strait of Hormuz'. See the report — a
                     # real title (e.g. a closure/blockade framing) is a CLAIM the
@@ -308,6 +316,163 @@ async def list_scenarios(
     for k, v in _NO_STORE_HEADERS.items():
         response.headers[k] = v
     return {"scenarios": _load_scenario_catalogue()}
+
+
+# ── Scenario triggers ────────────────────────────────────────────────────────
+#
+# Which scenarios are FIRING right now, per the Alert Stream. Every rule below was
+# derived from measuring the live data — none of them is a guess.
+#
+#  WINDOW 24h: alert_logs retention is ~24h (the whole table held 56 rows spanning
+#      one day). A 7-day window would be a fiction.
+#
+#  TITLE ONLY: match target_label + metadata_json->>'display_title'. NOT description,
+#      and emphatically NOT evidence_list — that is a CORROBORATION bundle of loosely
+#      related articles, and matching it fired Hormuz on "Amazon announces 2026 holiday
+#      fulfillment fees", "Germany Plans $1.7B Gas Reserve" and a Libya mediation piece
+#      (6 measured false positives). Title-only yielded 20 hits, all genuine — and it is
+#      also exactly the text the UI shows, so a firing is explainable: the headline says it.
+#
+#  CHOKEPOINT ALIASES ONLY: from the payload's own scenario.aliases. NEVER a bare country
+#      name — "Iran" alone matches 35% of the stream ("Iran war live: US bombs Iranian
+#      cities" is about the war, not the strait).
+#
+#  THRESHOLD 2: one stray headline must not light up the map.
+#
+#  match_count and max_importance are reported SEPARATELY and never combined. Any weighting
+#      between "how many" and "how important" would be an invented number.
+_TRIGGER_WINDOW_HOURS = 24
+_TRIGGER_MIN_MATCHES = 2          # >= 2 alerts to fire
+_TRIGGER_MAX_RECEIPTS = 10        # matched_alerts cap
+
+
+def _alias_pattern(alias: str) -> "re.Pattern[str]":
+    """Word-boundary for latin aliases; plain substring for CJK (no word breaks)."""
+    if alias.isascii():
+        return re.compile(rf"\b{re.escape(alias)}\b", re.IGNORECASE)
+    return re.compile(re.escape(alias))
+
+
+def _alert_title_text(a: AlertLog) -> str:
+    """The MATCHABLE surface: target_label + display_title. Nothing else."""
+    meta = a.metadata_json if isinstance(a.metadata_json, dict) else {}
+    return " | ".join(
+        p for p in (a.target_label or "", str(meta.get("display_title") or "")) if p
+    )
+
+
+def _alert_importance(a: AlertLog) -> Optional[float]:
+    """metadata_json.importance_score (0-100). None when unscored — never 0."""
+    meta = a.metadata_json if isinstance(a.metadata_json, dict) else {}
+    raw = meta.get("importance_score")
+    if raw is None:
+        return None
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def _alert_source_url(a: AlertLog) -> Optional[str]:
+    meta = a.metadata_json if isinstance(a.metadata_json, dict) else {}
+    for e in (meta.get("evidence_list") or []):
+        if isinstance(e, dict):
+            url = e.get("url") or e.get("link")
+            if url:
+                return str(url)
+    return None
+
+
+@router.get("/domains/scenarios/triggers")
+async def get_scenario_triggers(
+    response: Response,
+    db: AsyncSession = Depends(_get_db),
+    tier: str = Depends(_get_current_tier),
+):
+    """
+    Which scenarios the last 24h of alerts are firing — with receipts.
+
+    Scenarios BELOW threshold are still returned (`firing: false`, with their real
+    counts) so the UI can offer them for honest manual selection rather than hiding
+    them. An empty alert_logs table yields firing:false everywhere — never a 500.
+    """
+    _require_pro(tier, "Pro subscription required for spatial contagion.")
+    for k, v in _NO_STORE_HEADERS.items():
+        response.headers[k] = v
+
+    since = datetime.now(timezone.utc) - timedelta(hours=_TRIGGER_WINDOW_HOURS)
+    alerts = (
+        await db.execute(
+            select(AlertLog).where(
+                AlertLog.triggered_at >= since,
+                AlertLog.suppressed.is_(False),
+            )
+        )
+    ).scalars().all()
+
+    # Pre-compute each alert's matchable title once.
+    scanned = [(a, _alert_title_text(a)) for a in alerts]
+
+    out: List[Dict[str, Any]] = []
+    for sc in _load_scenario_catalogue():
+        aliases = [a for a in (sc.get("aliases") or []) if a]
+        matches: List[Dict[str, Any]] = []
+        for a, title in scanned:
+            if not title:
+                continue
+            for alias in aliases:
+                if _alias_pattern(alias).search(title):
+                    matches.append(
+                        {
+                            "id": str(a.id),
+                            "title": _alert_title_text(a).split(" | ")[0],
+                            "importance": _alert_importance(a),
+                            "severity": a.severity,
+                            "triggered_at": a.triggered_at.isoformat() if a.triggered_at else None,
+                            "matched_alias": alias,
+                            "source_url": _alert_source_url(a),
+                        }
+                    )
+                    break   # one alert counts once, however many aliases it hits
+
+        importances = [m["importance"] for m in matches if m["importance"] is not None]
+        stamps = [m["triggered_at"] for m in matches if m["triggered_at"]]
+        # Receipts ordered by importance desc; unscored alerts sort last (-1), never 0 —
+        # an unscored alert is not a zero-importance one.
+        receipts = sorted(
+            matches,
+            key=lambda m: (m["importance"] if m["importance"] is not None else -1),
+            reverse=True,
+        )[:_TRIGGER_MAX_RECEIPTS]
+
+        out.append(
+            {
+                "id": sc["id"],
+                "hub": sc["hub"],
+                "label": sc.get("label"),
+                "aliases": aliases,
+                "lat": sc.get("lat"),
+                "lon": sc.get("lon"),
+                "firing": len(matches) >= _TRIGGER_MIN_MATCHES,
+                "match_count": len(matches),
+                # Reported SEPARATELY from match_count. None when nothing matched or
+                # nothing was scored — never 0, which would assert a measured minimum.
+                "max_importance": max(importances) if importances else None,
+                "latest_match_at": max(stamps) if stamps else None,
+                "matched_alerts": receipts,
+            }
+        )
+
+    # Firing first, then by match_count — the UI's default ordering.
+    out.sort(key=lambda s: (not s["firing"], -s["match_count"]))
+
+    return {
+        "window_hours": _TRIGGER_WINDOW_HOURS,
+        "min_matches_to_fire": _TRIGGER_MIN_MATCHES,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "alerts_in_window": len(alerts),
+        "scenarios": out,
+    }
 
 
 @router.get("/domains/{domain_id}/spatial-contagion")
