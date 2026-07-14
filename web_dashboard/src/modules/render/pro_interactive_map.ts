@@ -931,9 +931,15 @@ function renderStatsHudBody(sc: SpatialContagion | null | undefined): string {
         nodes.find((n) => n.type === 'epicenter') ??
         [...nodes].sort((a, b) => (b.impact_score ?? 0) - (a.impact_score ?? 0))[0];
     const epiName = epicenter?.name ?? (nodes.length > 0 ? 'Live cluster' : '—');
-    const impact = (sc?.epicenter_impact_score ?? epicenter?.impact_score ?? 0).toFixed(1);
+    // UNKNOWN IS NOT ZERO. The old `?? 0` chain printed "0.0" whether the value was a
+    // genuine zero or simply absent — the same lie we removed from the map itself.
+    // A real 0 still renders as 0.0; only a null/undefined becomes "--".
+    const impactRaw: number | null | undefined =
+        (sc?.epicenter_impact_score as number | null | undefined) ?? epicenter?.impact_score;
+    const impact = impactRaw == null ? '--' : impactRaw.toFixed(1);
     const affectedN = Math.max(0, (sc?.node_count ?? nodes.length) - 1);
-    const edgeI = (sc?.edge_intensity ?? 0).toFixed(3);
+    const edgeRaw = sc?.edge_intensity as number | null | undefined;
+    const edgeI = edgeRaw == null ? '--' : edgeRaw.toFixed(3);
     return `
         <div class="sc-hud-stat">
             <span class="sc-hud-stat-label">Epicenter</span>
@@ -970,7 +976,16 @@ function wireStatsHudObserver(container: HTMLElement): void {
     // the controller toggles aria-pressed off→on→off during transitions.
     let lastRendered: string | null = null;
 
+    /** True while a scenario row is selected. */
+    const scenarioActive = (): boolean =>
+        !!sidebar.querySelector('button[data-scenario][aria-checked="true"]');
+
     const handleDomainChange = async (domainId: string): Promise<void> => {
+        // This observer only understands DOMAINS. In scenario mode the controller owns
+        // the HUD, and this writer must not clobber it — its async fetch would otherwise
+        // land after the scenario render and repaint the HUD with domain-aggregate stats
+        // (which is exactly what showed "Middle East Energy Corridor" over a Hormuz map).
+        if (scenarioActive()) return;
         if (domainId === lastRendered) return;
         lastRendered = domainId;
         try {
@@ -987,6 +1002,9 @@ function wireStatsHudObserver(container: HTMLElement): void {
             );
             if (!resp.ok) return;
             const body: any = await resp.json();
+            // Re-check AFTER the await: the user may have selected a scenario while this
+            // fetch was in flight. Writing now would silently overwrite the scenario HUD.
+            if (scenarioActive()) return;
             const sc = body?.latest_spatial_contagion;
             if (sc && Array.isArray(sc.nodes) && sc.nodes.length > 0) {
                 hud.innerHTML = renderStatsHudBody(sc as SpatialContagion);
@@ -2028,20 +2046,29 @@ function buildStatsHudPayload(
     nodes: SpatialNode[],
     pt: HistoryPoint | null,
     fallbackImpact: number,
-    fallbackEdgeIntensity = 0,
+    // null = "no measured edges to average" → the HUD prints "--", not a fake 0.000.
+    fallbackEdgeIntensity: number | null = null,
 ): SpatialContagion {
+    // The epicenter is the node the payload DECLARES as such. Only fall back to
+    // "highest score" when no epicenter is declared — and rank unmeasured nodes
+    // last (-1) rather than treating a null as 0, which would let an unmeasured
+    // node tie with a genuinely zero-impact one.
     const epicenter =
         nodes.find((n) => n.type === 'epicenter') ??
-        [...nodes].sort((a, b) => (b.impact_score ?? 0) - (a.impact_score ?? 0))[0];
+        [...nodes].sort(
+            (a, b) => (b.impact_score ?? -1) - (a.impact_score ?? -1),
+        )[0];
     const impactVal = pt
         ? pt.entropy * 100
-        : (epicenter?.impact_score ?? fallbackImpact ?? 0);
+        : (epicenter?.impact_score ?? fallbackImpact);
     const edgeVal = pt ? pt.viscosity : fallbackEdgeIntensity;
     return {
         nodes,
         edges: [],
-        epicenter_impact_score: impactVal,
-        edge_intensity: edgeVal,
+        // Cast: these are `number` on SpatialContagion, but the HUD renderer reads
+        // them as nullable so it can print "--" for genuinely-unknown stats.
+        epicenter_impact_score: impactVal as number,
+        edge_intensity: edgeVal as number,
         node_count: nodes.length,
         edge_count: 0,
     };
@@ -3125,6 +3152,11 @@ class SurveillanceMapController {
             }
             this.dateLabel.textContent = 'STATIC SCENARIO · no time series';
             this.metricsLabel.textContent = 'structural cascade';
+            // MUST still refresh the ticker + top HUD. An early return here skipped
+            // refreshStatsHud() below, which is why the HUD kept showing the previous
+            // (domain-aggregate) stats while the map correctly drew the scenario.
+            this.refreshTicker();
+            this.refreshStatsHud(null);
             return;
         }
 
@@ -3204,11 +3236,22 @@ class SurveillanceMapController {
             ?? host?.querySelector<HTMLElement>('.pro-map-hud--top');
         if (!hud) return;
         const livePt = pt ?? (this.state.series.length > 0 ? this.state.point() : null);
+        // The 4th arg was omitted, so fallbackEdgeIntensity silently defaulted to 0 —
+        // EDGE N rendered "0.000" for every payload, always. Compute the real mean,
+        // over MEASURED edges only (an unquantified edge must not dilute the divisor),
+        // and pass null when there is nothing to average so the HUD prints "--", not 0.
+        const measured = this.args.edgesFlat.filter(
+            (e) => !e.unquantified && typeof e.intensity === 'number',
+        );
+        const meanIntensity = measured.length
+            ? measured.reduce((s, e) => s + e.intensity, 0) / measured.length
+            : null;
         hud.innerHTML = renderStatsHudBody(
             buildStatsHudPayload(
                 this.args.nodes,
                 livePt,
                 this.args.epicenterScore,
+                meanIntensity,
             ),
         );
     }
@@ -3820,12 +3863,14 @@ class DashboardSpatialController {
             this.stageEl.closest('.pro-map-global-container') ?? this.stageEl.parentElement;
         const hud = host?.querySelector<HTMLElement>('.pro-map-hud--top');
         if (!hud) return;
+        // Pass the payload's own stats straight through — no `?? 0`. A null must stay
+        // null so the HUD can print "--"; coercing it to 0 asserts a measured zero.
         hud.innerHTML = renderStatsHudBody(
             buildStatsHudPayload(
                 payload.nodes ?? [],
                 null,
-                (payload.epicenter_impact_score as number) ?? 0,
-                (payload.edge_intensity as number) ?? 0,
+                payload.epicenter_impact_score as number,
+                (payload.edge_intensity as number | null | undefined) ?? null,
             ),
         );
     }
