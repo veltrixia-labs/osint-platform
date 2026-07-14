@@ -37,6 +37,38 @@ type DomainRegistryEntry = {
     accent: string;
     isAggregate?: boolean;
 };
+/**
+ * A vault scenario cascade, from GET /pro/domains/scenarios.
+ *
+ * These are NOT domains: they are standalone structural graphs and must be
+ * selected EXCLUSIVELY. Merging Hormuz with Malacca would produce a graph that
+ * describes no event that has ever happened.
+ */
+export type ScenarioMeta = {
+    id: string;            // the domain_id, e.g. 'strait_of_hormuz'
+    hub: string;           // 'Strait_of_Hormuz'
+    hub_type?: string;
+    label?: string;        // derived: 'Strait of Hormuz'
+    aliases?: string[];    // e.g. ['ホルムズ海峡', 'Strait of Hormuz', 'Hormuz']
+    domain?: string[];
+    node_count?: number;
+    edge_count?: number;
+};
+
+/**
+ * Display name for a scenario.
+ *
+ * Prefers a CJK alias when the payload carries one (ホルムズ海峡), else the derived
+ * label. Deliberately states only the HUB — never a premise. The payload asserts a
+ * chokepoint, a type and aliases; it does NOT assert that the strait is closed, so
+ * the UI must not say "封鎖"/"closure". Naming an event we have no evidence for is
+ * the same class of quiet falsehood as rendering an unmeasured impact as zero.
+ */
+function scenarioDisplayName(s: ScenarioMeta): string {
+    const cjk = (s.aliases ?? []).find((a) => /[　-鿿＀-￯]/.test(a));
+    return cjk || s.label || (s.hub ?? s.id).replace(/_/g, ' ');
+}
+
 const DOMAIN_REGISTRY: DomainRegistryEntry[] = [
     { id: 'global',                          label: 'Global',   icon: 'SYNC', accent: '#22d3ee', isAggregate: true },
     { id: 'energy_resource_risk',            label: 'Energy',   icon: '⛽',   accent: '#eab308' },
@@ -251,9 +283,19 @@ export type SpatialNode = {
     unquantified?: boolean;
     /** Payload-supplied rationale, e.g. "structurally exposed via X; magnitude unknown". */
     why?: string;
+    /** True position, preserved when applyColocationOffsets() fans a co-located
+     *  group onto a display ring. lat/lon may be the DISPLAY position; these are
+     *  the real ones and are what the tooltip must report. */
+    trueLat?: number;
+    trueLon?: number;
     /** Phase 2 — N-th Order Impact. Optional on payloads older than spatial_contagion_v2. */
     order?: ContagionOrder;
-    confidence?: string;
+    /**
+     * 0.0–1.0. DATA, not presentation — the producer emits a number and the badge
+     * formats it. (Was typed `string`, which forced producers to pre-render "100%"
+     * and made a real 0.0 indistinguishable from "absent" under a truthiness check.)
+     */
+    confidence?: number;
     geonameid?: number;
 };
 
@@ -412,6 +454,83 @@ const UNQ_NODE_STROKE: [number, number, number, number] = [148, 163, 184, 220]; 
 const UNQ_ARC_RGBA: [number, number, number, number] = [148, 163, 184, 120];    // slate — faint arc
 const UNQ_NODE_RADIUS_M = 16_000;   // FIXED: never scale a meaningless 0
 const UNQ_ARC_WIDTH = 1.2;          // FIXED: never scale a meaningless 0
+
+// ── Co-located node fan-out (display-time only) ───────────────────────────────
+//
+// Real payloads put many entities on ONE point: 7 companies share Tokyo's
+// (35.7, 139.7), 6 share Beijing's (39.9, 116.4). Drawn at their true coords
+// they collapse into a single blob — unreadable and unclickable.
+//
+// The SOURCE DATA IS NEVER MUTATED. We fan the members of a co-located group
+// onto a small circle around the true point at DISPLAY time and stash the real
+// position on `trueLat`/`trueLon` so the tooltip still reports the truth.
+// Arc endpoints follow automatically: resolveEdgesFlat() reads the node objects,
+// so offsetting a node offsets every arc touching it (otherwise arcs would point
+// at empty space).
+//
+// The ring radius is ZOOM-AWARE — it is sized in METRES from the current
+// metres-per-pixel so the on-screen separation stays ~constant as you zoom.
+// The epicenter is NEVER displaced: it anchors its own point.
+const COLOCATION_PIXEL_GAP = 30;      // target on-screen separation, px
+const COLOCATION_MIN_M = 6_000;
+const COLOCATION_MAX_M = 220_000;
+
+/** Web-Mercator ground resolution at a given latitude/zoom. */
+function metresPerPixel(lat: number, zoom: number): number {
+    return (156543.03392 * Math.cos((lat * Math.PI) / 180)) / Math.pow(2, zoom);
+}
+
+/**
+ * Returns a NEW node array in which co-located nodes are fanned onto a ring.
+ * Never mutates the input. Pure function of (nodes, zoom) → deterministic.
+ */
+function applyColocationOffsets(nodes: SpatialNode[], zoom: number): SpatialNode[] {
+    const groups = new Map<string, SpatialNode[]>();
+    for (const n of nodes) {
+        // ~2dp ≈ 1.1 km — anything closer is "the same point" for display purposes.
+        const key = `${n.lat.toFixed(2)}|${n.lon.toFixed(2)}`;
+        const bucket = groups.get(key);
+        if (bucket) bucket.push(n);
+        else groups.set(key, [n]);
+    }
+
+    const out: SpatialNode[] = [];
+    for (const members of groups.values()) {
+        const anchored = members.filter((n) => n.type === 'epicenter');
+        const movable = members.filter((n) => n.type !== 'epicenter');
+
+        // The epicenter keeps its true position, always.
+        for (const n of anchored) out.push({ ...n, trueLat: n.lat, trueLon: n.lon });
+
+        // A lone node (or a lone non-epicenter beside the epicenter) needs no fan-out.
+        if (movable.length <= 1 && anchored.length === 0) {
+            for (const n of movable) out.push({ ...n, trueLat: n.lat, trueLon: n.lon });
+            continue;
+        }
+        if (movable.length === 0) continue;
+
+        const radius = Math.min(
+            COLOCATION_MAX_M,
+            Math.max(COLOCATION_MIN_M, COLOCATION_PIXEL_GAP * metresPerPixel(members[0].lat, zoom)),
+        );
+        const count = movable.length;
+        movable.forEach((n, i) => {
+            // Deterministic: index i of n always lands on the same spoke.
+            const angle = (2 * Math.PI * i) / count - Math.PI / 2;
+            const dLat = (radius * Math.sin(angle)) / 111_320;
+            const cosLat = Math.max(0.2, Math.cos((n.lat * Math.PI) / 180));
+            const dLon = (radius * Math.cos(angle)) / (111_320 * cosLat);
+            out.push({
+                ...n,
+                trueLat: n.lat,
+                trueLon: n.lon,
+                lat: n.lat + dLat,
+                lon: n.lon + dLon,
+            });
+        });
+    }
+    return out;
+}
 
 /** Hollow grey ring for structurally-exposed-but-unquantified nodes. */
 function buildExposedLayer(Ctor: any, sid: string, nodes: SpatialNode[]): any {
@@ -574,7 +693,6 @@ export function getGlobalFallbackSpatialContagion(): SpatialContagion {
             country: 'Gulf',
             impact_score: 96,
             type: 'epicenter',
-            confidence: 'fallback',
         },
         {
             id: 'south-china-sea',
@@ -585,7 +703,6 @@ export function getGlobalFallbackSpatialContagion(): SpatialContagion {
             country: 'Indo-Pacific',
             impact_score: 88,
             type: 'affected',
-            confidence: 'fallback',
         },
         {
             id: 'eastern-europe-frontier',
@@ -596,7 +713,6 @@ export function getGlobalFallbackSpatialContagion(): SpatialContagion {
             country: 'Eastern Europe',
             impact_score: 84,
             type: 'affected',
-            confidence: 'fallback',
         },
         {
             id: 'red-sea-chokepoint',
@@ -607,7 +723,6 @@ export function getGlobalFallbackSpatialContagion(): SpatialContagion {
             country: 'Red Sea',
             impact_score: 82,
             type: 'affected',
-            confidence: 'fallback',
         },
         {
             id: 'taiwan-strait',
@@ -618,7 +733,6 @@ export function getGlobalFallbackSpatialContagion(): SpatialContagion {
             country: 'Taiwan Strait',
             impact_score: 79,
             type: 'affected',
-            confidence: 'fallback',
         },
     ];
 
@@ -1352,9 +1466,14 @@ function buildTooltipHtml(node: SpatialNode): string {
         order === 2 ? '#f59e0b' :
                       '#fbbf24';
     const tierLabel = isUnq ? 'EXPOSED · UNQUANTIFIED' : (isEpi ? 'EPICENTER' : `ORDER ${order}`);
+    // confidence is a NUMBER (0..1); formatting is presentation, done here.
+    // NB: a `node.confidence ? …` truthiness check would render a genuine 0.0
+    // as "UNVERIFIED" — an explicit typeof test is required.
     const confidence = isUnq
         ? 'MAGNITUDE UNKNOWN'
-        : (node.confidence ? esc(String(node.confidence).toUpperCase()) : 'UNVERIFIED');
+        : (typeof node.confidence === 'number'
+            ? `${Math.round(node.confidence * 100)}% CONF`
+            : 'UNVERIFIED');
     const country = node.country ? esc(node.country) : 'Global';
     // Decorative classification chip: chokepoints (negative geonameid) get
     // a MARITIME tag, real cities get TACTICAL.
@@ -1377,7 +1496,7 @@ function buildTooltipHtml(node: SpatialNode): string {
             </div>
             <div class="sc-badge-metric">
                 <span class="k">Coords</span>
-                <span class="v">${node.lat.toFixed(2)}&deg; · ${node.lon.toFixed(2)}&deg;</span>
+                <span class="v">${(node.trueLat ?? node.lat).toFixed(2)}&deg; · ${(node.trueLon ?? node.lon).toFixed(2)}&deg;</span>
             </div>
         </div>
         ${isUnq && node.why ? `<div class="sc-badge-why">${esc(node.why)}</div>` : ''}
@@ -1470,7 +1589,11 @@ export async function mountSpatialContagionMap(
             console.warn(`${LOG} ${unresolved.length} edge(s) could not be resolved`);
         }
 
-        const edgesFlat = resolveEdgesFlat(nodes, edges, false);
+        // Fan co-located nodes onto a ring BEFORE resolving edges, so arc endpoints
+        // land on the displayed dots rather than on the shared true point.
+        const initialZoomForFan = nodes.length === 1 ? 5 : 2;
+        let displayNodes = applyColocationOffsets(nodes, initialZoomForFan);
+        const edgesFlat = resolveEdgesFlat(displayNodes, edges, false);
 
         console.log(`${LOG} edges resolved: ${edgesFlat.length}/${edges.length}`);
 
@@ -1504,7 +1627,7 @@ export async function mountSpatialContagionMap(
         // Epicenter nodes — crimson
         const epicenterLayer = new ScatterplotLayer({
             id: `sc-epicenter-${sid}`,
-            data: nodes.filter((n: SpatialNode) => n.type === 'epicenter'),
+            data: displayNodes.filter((n: SpatialNode) => n.type === 'epicenter'),
             pickable: true,
             stroked: true,
             filled: true,
@@ -1521,7 +1644,7 @@ export async function mountSpatialContagionMap(
         // Affected nodes — amber ↔ cyan based on impact rank
         const affectedLayer = new ScatterplotLayer({
             id: `sc-affected-${sid}`,
-            data: nodes.filter((n: SpatialNode) => n.type === 'affected'),
+            data: displayNodes.filter((n: SpatialNode) => n.type === 'affected'),
             pickable: true,
             stroked: true,
             filled: true,
@@ -1545,7 +1668,7 @@ export async function mountSpatialContagionMap(
         });
 
         // Structurally exposed, magnitude unknown — hollow grey ring, fixed radius.
-        const exposedLayer = buildExposedLayer(ScatterplotLayer, sid, nodes);
+        const exposedLayer = buildExposedLayer(ScatterplotLayer, sid, displayNodes);
 
         // Contagion arcs — red source → cyan target, slight 3-D tilt.
         // Unquantified edges are excluded here and drawn by their own grey layer;
@@ -1656,13 +1779,26 @@ export async function mountSpatialContagionMap(
                 exposedLayer,
                 unquantifiedArcLayer,
                 ScatterplotLayer,
-                nodes,
+                nodes: displayNodes,
                 edgesFlat,
                 domainId: normalizedDomainId,
                 epicenterScore,
                 mapRef: map,   // ← triggerRepaint() keeps interleaved animation alive
             });
             surveillance.start();
+
+            // Keep the co-location ring at a constant ON-SCREEN separation: re-fan
+            // from the new metres-per-pixel whenever the zoom changes materially.
+            // Without this the ring is frozen at the mount zoom and either overlaps
+            // (zoomed out) or flies apart (zoomed in).
+            let lastFanZoom = initialZoomForFan;
+            map.on('zoomend', () => {
+                const z = map.getZoom();
+                if (Math.abs(z - lastFanZoom) < 0.4) return;
+                lastFanZoom = z;
+                displayNodes = applyColocationOffsets(nodes, z);
+                surveillance.updateGeometry(displayNodes, resolveEdgesFlat(displayNodes, edges, false));
+            });
             // ─────────────────────────────────────────────────────────────
 
             // Dismiss loading overlay
@@ -1944,6 +2080,9 @@ type SurveillanceMapCtorArgs = {
      * the time-machine slider stays disabled.
      */
     enableHistoryPolling?: boolean;
+    /** A vault scenario cascade: one snapshot, no time axis. Disables the scrubber
+     *  and relabels the panel instead of leaving a dead control that looks broken. */
+    staticScenario?: boolean;
     /** Fallback entropy when polling is disabled. */
     seedEntropy?: number;
     /** Fallback viscosity when polling is disabled. */
@@ -2076,7 +2215,10 @@ class SurveillanceMapController {
         // weight as the other HUD plates without depending on injected CSS.
         panel.className = 'time-machine-panel cryo-glass';
         Object.assign(panel.style, {
-            position: 'absolute', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
+            // Anchored bottom-LEFT, not centred. Dead-centre placement sat directly
+            // on top of the epicenter (worst on Malacca, whose hub is mid-frame) —
+            // the HUD was hiding the single most important node on the map.
+            position: 'absolute', bottom: '32px', left: '24px', transform: 'none',
             width: 'min(440px, calc(100% - 48px))', padding: '12px 16px',
             borderRadius: '14px',
             display: 'flex', flexDirection: 'column', gap: '8px', zIndex: '9999',
@@ -2259,7 +2401,7 @@ class SurveillanceMapController {
         Object.assign(ticker.style, {
             position: 'absolute',
             bottom: '136px',                       // 12px gap above time-machine panel
-            left: '50%', transform: 'translateX(-50%)',
+            left: '24px', transform: 'none',       // bottom-LEFT — see the panel above
             width: 'min(440px, calc(100% - 48px))',
             height: '44px',
             padding: '6px 14px',
@@ -2573,6 +2715,40 @@ class SurveillanceMapController {
      *   order 2 → standard               (direct affected — backbone)
      *   order 3 → thin, dim, slow        (2-hop downstream ripple)
      */
+    /**
+     * Swap in re-fanned geometry (co-location ring resized for a new zoom).
+     *
+     * The per-frame rebuild in repaintLayers() CLONES the base layers, and a
+     * clone inherits its parent's `data` reference — so mutating the arrays in
+     * place would never reach the GPU (deck.gl only re-uploads attributes when
+     * the data REFERENCE changes). Hence we rebuild the base layers with the new
+     * arrays; the next repaint picks them up automatically.
+     */
+    public updateGeometry(nodes: SpatialNode[], edgesFlat: ResolvedEdge[]): void {
+        this.args.nodes = nodes;
+        this.args.edgesFlat = edgesFlat;
+        this.args.epicenterLayer = this.args.epicenterLayer.clone({
+            data: nodes.filter((n) => n.type === 'epicenter'),
+        });
+        this.args.affectedLayer = this.args.affectedLayer.clone({
+            data: nodes.filter((n) => n.type === 'affected'),
+        });
+        if (this.args.exposedLayer) {
+            this.args.exposedLayer = this.args.exposedLayer.clone({
+                data: nodes.filter((n) => n.type === 'exposed_unquantified'),
+            });
+        }
+        this.args.arcLayer = this.args.arcLayer.clone({
+            data: edgesFlat.filter((e) => !e.unquantified),
+        });
+        if (this.args.unquantifiedArcLayer) {
+            this.args.unquantifiedArcLayer = this.args.unquantifiedArcLayer.clone({
+                data: edgesFlat.filter((e) => e.unquantified),
+            });
+        }
+        this.repaintLayers();
+    }
+
     private repaintLayers(): void {
         const pt = this.state.point();
         const entropy = pt ? pt.entropy : 0;
@@ -2927,6 +3103,31 @@ class SurveillanceMapController {
     private refreshPanel(): void {
         const series = this.state.series;
         const pt = this.state.point();
+
+        // A scenario cascade is STATIC — it has exactly one snapshot, because it is
+        // a structural graph, not a rolling observation. Rather than leave a dead
+        // scrubber that looks broken, say so plainly. We do NOT fake a trajectory:
+        // there is no time dimension here to scrub, and inventing one would be a lie.
+        if (this.args.staticScenario) {
+            this.slider.disabled = true;
+            this.playBtn.disabled = true;
+            this.forecastBtn.disabled = true;
+            this.playBtn.style.opacity = '0.35';
+            this.forecastBtn.style.opacity = '0.35';
+            this.forecastBtn.style.cursor = 'not-allowed';
+            this.playBtn.style.cursor = 'not-allowed';
+            const dot = this.args.wrapEl.querySelector<HTMLElement>('.tm-live-dot');
+            if (dot) {
+                // Not "live" — kill the pulsing cyan dot that implies a feed.
+                dot.style.animation = 'none';
+                dot.style.background = '#94a3b8';
+                dot.style.boxShadow = 'none';
+            }
+            this.dateLabel.textContent = 'STATIC SCENARIO · no time series';
+            this.metricsLabel.textContent = 'structural cascade';
+            return;
+        }
+
         const pollingDisabled = this.args.enableHistoryPolling === false;
         const maxIdx = Math.max(0, series.length - 1);
         const hasHistory = maxIdx > 0;
@@ -3064,6 +3265,11 @@ class DashboardSpatialController {
      * activeDomains is intentionally seeded with all specialized domains
      * so the default view is the full cross-domain network.
      */
+    /** Scenario catalogue (GET /pro/domains/scenarios). Empty until fetched. */
+    private scenarios: ScenarioMeta[] = [];
+    /** Currently-selected scenario, or null when in normal (multi-domain) mode.
+     *  Scenario selection is EXCLUSIVE — it bypasses the domain aggregate entirely. */
+    private scenarioId: string | null = null;
     private activeDomains: Set<string> = new Set(SPECIALIZED_DOMAIN_IDS);
 
     /** Guard against re-entrant rebuilds (rapid toggle clicks). */
@@ -3106,6 +3312,10 @@ class DashboardSpatialController {
         this.domainCache.set(GLOBAL_DOMAIN_ID, initialPayload);
 
         await this._attachDomain(initialPayload, GLOBAL_DOMAIN_ID, /*animatePan=*/ false);
+        // Catalogue BEFORE the sidebar: _buildSidebar() renders the Scenarios
+        // section from this.scenarios, so an empty list would omit it entirely.
+        // Never throws — an unavailable catalogue just means no scenario section.
+        await this._loadScenarioCatalogue();
         this._buildSidebar();
         this._refreshDomainRowStates();
 
@@ -3184,8 +3394,66 @@ class DashboardSpatialController {
      *   • A rebuild that finds another rebuild already in flight chains itself
      *     via the rebuildInFlight promise — no overlapping setProps calls.
      */
+    // ─── Scenario mode (exclusive) ───────────────────────────────────────
+    //
+    // A scenario is a standalone structural cascade, not a domain to be summed
+    // into the aggregate. Selecting one leaves domain mode entirely; selecting any
+    // domain row returns to it.
+
+    /** Fetch the catalogue. Never throws — an unavailable catalogue just hides the section. */
+    private async _loadScenarioCatalogue(): Promise<void> {
+        try {
+            const resp = await apiClient.get('/pro/domains/scenarios', { cache: 'no-store' }, true);
+            if (!resp.ok) return;
+            const body: any = await resp.json();
+            this.scenarios = Array.isArray(body?.scenarios) ? body.scenarios : [];
+        } catch {
+            this.scenarios = [];
+        }
+    }
+
+    /** The scenario graph, straight from the generic route (no history wrapper). */
+    private async _fetchScenarioPayload(scenarioId: string): Promise<SpatialContagion> {
+        const empty: SpatialContagion = {
+            nodes: [], edges: [],
+            epicenter_impact_score: 0, edge_intensity: 0,
+            schema_version: 'empty', warning: 'no_scenario_payload',
+        };
+        try {
+            const resp = await apiClient.get(
+                `/pro/domains/${encodeURIComponent(scenarioId)}/spatial-contagion`,
+                { cache: 'no-store' },
+                true,
+            );
+            if (!resp.ok) return { ...empty, warning: `fetch_failed_${resp.status}` };
+            return _normalizeSpatialPayload(await resp.json());
+        } catch {
+            return empty;
+        }
+    }
+
+    /** Select a scenario EXCLUSIVELY — never merged with the domain aggregate. */
+    async selectScenario(scenarioId: string): Promise<void> {
+        if (this.destroyed) return;
+        this.scenarioId = scenarioId;
+        this.lastInteractionDomainId = scenarioId;
+
+        const payload = await this._fetchScenarioPayload(scenarioId);
+        if (payload.nodes.length === 0) {
+            console.warn(`${LOG} scenario '${scenarioId}' returned no nodes — has the loader run?`);
+        }
+        this.domainCache.set(scenarioId, payload);
+        this._updateStatsHud(payload);
+        // isAggregate is derived as (domainId === GLOBAL_DOMAIN_ID), so a scenario id
+        // correctly renders as a single non-aggregate graph (no domain lane offsets).
+        await this._attachDomain(payload, scenarioId, /*animatePan=*/ true);
+        this._refreshDomainRowStates();
+    }
+
     async toggleDomain(domainId: string): Promise<void> {
         if (this.destroyed) return;
+        // Any domain interaction leaves scenario mode.
+        this.scenarioId = null;
         this.lastInteractionDomainId = domainId;
 
         if (domainId === GLOBAL_DOMAIN_ID) {
@@ -3423,14 +3691,18 @@ class DashboardSpatialController {
         }
 
         const isAggregate = domainId === GLOBAL_DOMAIN_ID;
-        const edgesFlat = resolveEdgesFlat(nodes, edges, isAggregate);
+        // Same co-location fan-out as the mount path (see applyColocationOffsets).
+        // Applied BEFORE resolveEdgesFlat so arcs follow the displayed dots.
+        const fanZoom = this.map?.getZoom?.() ?? 2;
+        const displayNodes = applyColocationOffsets(nodes, fanZoom);
+        const edgesFlat = resolveEdgesFlat(displayNodes, edges, isAggregate);
 
         const sid = safeId(domainId);
         const epicenterScore = (payload.epicenter_impact_score as number) || 100;
 
         const epicenterLayer = new ScatterplotLayer({
             id: `sc-epicenter-${sid}`,
-            data: nodes.filter((n) => n.type === 'epicenter'),
+            data: displayNodes.filter((n) => n.type === 'epicenter'),
             pickable: true, stroked: true, filled: true,
             radiusUnits: 'meters', radiusMinPixels: 10, radiusMaxPixels: 60,
             lineWidthMinPixels: 2,
@@ -3441,7 +3713,7 @@ class DashboardSpatialController {
         });
         const affectedLayer = new ScatterplotLayer({
             id: `sc-affected-${sid}`,
-            data: nodes.filter((n) => n.type === 'affected'),
+            data: displayNodes.filter((n) => n.type === 'affected'),
             pickable: true, stroked: true, filled: true,
             radiusUnits: 'meters', radiusMinPixels: 5, radiusMaxPixels: 36,
             lineWidthMinPixels: 1,
@@ -3458,7 +3730,7 @@ class DashboardSpatialController {
             },
             getLineColor: [148, 163, 184, 140],
         });
-        const exposedLayer = buildExposedLayer(ScatterplotLayer, sid, nodes);
+        const exposedLayer = buildExposedLayer(ScatterplotLayer, sid, displayNodes);
         const arcLayer = new ArcLayer({
             id: `sc-arcs-${sid}`,
             data: edgesFlat.filter((e: ResolvedEdge) => !e.unquantified),
@@ -3499,12 +3771,14 @@ class DashboardSpatialController {
             ScatterplotLayer,
             ArcLayerCtor: ArcLayer,
             TextLayer,
-            nodes, edgesFlat,
+            nodes: displayNodes, edgesFlat,
             domainId,
             epicenterScore,
             // Phase 6.5.8: backend now serves global fragility-history, so
             // polling is always enabled (Global slider/play must stay live).
-            enableHistoryPolling: true,
+            // A scenario has no time axis — don't poll, and relabel the panel.
+            enableHistoryPolling: this.scenarioId === null,
+            staticScenario: this.scenarioId !== null,
             seedEntropy: (payload.entropy_index as number) ?? undefined,
             seedViscosity: (payload.viscosity_coefficient as number) ?? undefined,
             mapRef: this.map,   // ← needed for triggerRepaint() in the animation loop
@@ -3854,9 +4128,37 @@ class DashboardSpatialController {
                 `;
             })
             .join('');
-        listEl.innerHTML = rowsHtml;
+        // ── Scenario section ────────────────────────────────────────────
+        // Appended BELOW the domains, behind its own heading, because these are a
+        // different kind of thing: exclusive structural cascades, not summable
+        // domains. Rendered only when the catalogue returned something, so the
+        // section simply doesn't exist if the API is unavailable.
+        const scenarioHtml = this.scenarios.length
+            ? `
+                <div class="dsr-separator" aria-hidden="true"></div>
+                <div class="dsr-section-head">Scenarios</div>
+                ${this.scenarios.map((s) => `
+                    <button type="button" class="dsr-domain-row dsr-scenario-row"
+                        data-scenario="${esc(s.id)}"
+                        style="--dsr-accent:#94a3b8;"
+                        role="radio" aria-checked="false"
+                        title="${esc(s.hub ?? s.id)}">
+                        <span class="dsr-icon" aria-hidden="true">◎</span>
+                        <span class="dsr-label">${esc(scenarioDisplayName(s))}</span>
+                        <span class="dsr-orders" title="nodes / edges">${s.node_count ?? '—'}n</span>
+                    </button>
+                `).join('')}
+              `
+            : '';
+
+        listEl.innerHTML = rowsHtml + scenarioHtml;
         listEl.querySelectorAll<HTMLButtonElement>('button.dsr-domain-row').forEach((btn) => {
             btn.addEventListener('click', () => {
+                const scenario = btn.dataset.scenario;
+                if (scenario) {
+                    void this.selectScenario(scenario);
+                    return;
+                }
                 const target = btn.dataset.domain;
                 if (target) void this.toggleDomain(target);
             });
@@ -3874,9 +4176,22 @@ class DashboardSpatialController {
         if (!list) return;
         const allActive = SPECIALIZED_DOMAIN_IDS.every((d) => this.activeDomains.has(d));
         list.querySelectorAll<HTMLElement>('button.dsr-domain-row').forEach((btn) => {
+            // Scenario rows are radio-exclusive and carry data-scenario, not data-domain.
+            const scenario = btn.dataset.scenario;
+            if (scenario) {
+                const on = this.scenarioId === scenario;
+                btn.classList.toggle('is-active', on);
+                const s = on ? 'true' : 'false';
+                if (btn.getAttribute('aria-checked') !== s) btn.setAttribute('aria-checked', s);
+                return;
+            }
             const id = btn.dataset.domain;
             if (!id) return;
-            const active = id === GLOBAL_DOMAIN_ID ? allActive : this.activeDomains.has(id);
+            // While a scenario is showing, NO domain row is active — the aggregate
+            // isn't on screen, and lighting one up would misreport what's rendered.
+            const active = this.scenarioId
+                ? false
+                : (id === GLOBAL_DOMAIN_ID ? allActive : this.activeDomains.has(id));
             btn.classList.toggle('is-active', active);
             const nextStr = active ? 'true' : 'false';
             // Guard each setAttribute behind a value-changed check: a
@@ -3926,6 +4241,18 @@ class DashboardSpatialController {
                 background: rgba(148,163,184,0.18);
                 margin: 4px 6px;
             }
+            /* Scenarios are a different KIND of selection (exclusive structural
+               cascades, not summable domains) — give the group its own heading. */
+            .dsr-section-head {
+                padding: 6px 12px 2px;
+                font-size: 10px;
+                font-weight: 800;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: #64748b;
+            }
+            .dsr-scenario-row .dsr-icon { color: #94a3b8; }
+            .dsr-scenario-row.is-active .dsr-icon { color: #e2e8f0; }
             .dsr-domain-row {
                 display: flex;
                 align-items: center;
