@@ -20,6 +20,11 @@ Both endpoints are gated to Pro / Experts / Enterprise tiers and return
 no-store headers so the polling client always sees fresh data.
 """
 
+import glob
+import json
+import logging
+import os
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -37,6 +42,8 @@ from api.gating import (
     TIER_ENTERPRISE,
 )
 from api.auth import get_optional_current_user
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/pro", tags=["Pro Spatial"])
 
@@ -234,6 +241,111 @@ async def get_global_spatial_contagion(
         )
     ).scalars().all()
     return _shape_contagion_payload("global", list(all_nodes), list(all_edges))
+
+
+# ── Scenario catalogue ───────────────────────────────────────────────────────
+#
+# Read from data/scenarios/*.json rather than SELECT DISTINCT domain_id, which
+# would be brittle (a LIKE 'strait_%' prefix match is not a schema) and would show
+# nothing until the loader has run. The files ARE the catalogue.
+_SCENARIO_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "data",
+    "scenarios",
+)
+_scenario_cache: Optional[List[Dict[str, Any]]] = None
+
+
+def _slugify_hub(hub: str) -> str:
+    """Must match jobs.load_scenarios.slugify_hub — this is the domain_id."""
+    return re.sub(r"[^a-z0-9_]+", "_", (hub or "").strip().lower()).strip("_")
+
+
+def _load_scenario_catalogue() -> List[Dict[str, Any]]:
+    """Parse the scenario payloads' `scenario` block. Cached — the files are static."""
+    global _scenario_cache
+    if _scenario_cache is not None:
+        return _scenario_cache
+
+    out: List[Dict[str, Any]] = []
+    for path in sorted(glob.glob(os.path.join(_SCENARIO_DIR, "*.json"))):
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                payload = json.load(fh)
+            sc = payload.get("scenario") or {}
+            hub = sc.get("hub") or ""
+            if not hub:
+                continue
+            out.append(
+                {
+                    "id": _slugify_hub(hub),          # the domain_id
+                    "hub": hub,
+                    "hub_type": sc.get("hub_type"),
+                    # Derived, NOT invented: the payload carries no display title.
+                    # 'Strait_of_Hormuz' -> 'Strait of Hormuz'. See the report — a
+                    # real title (e.g. a closure/blockade framing) is a CLAIM the
+                    # payload does not make, so we do not fabricate one here.
+                    "label": hub.replace("_", " "),
+                    "aliases": sc.get("aliases") or [],
+                    "domain": sc.get("domain") or [],
+                    "node_count": len(payload.get("nodes") or []),
+                    "edge_count": len(payload.get("edges") or []),
+                }
+            )
+        except Exception as exc:  # noqa: BLE001 — a bad file must not 500 the catalogue
+            logger.warning("scenario catalogue: skipping %s (%s)", path, exc)
+    _scenario_cache = out
+    return out
+
+
+@router.get("/domains/scenarios")
+async def list_scenarios(
+    response: Response,
+    tier: str = Depends(_get_current_tier),
+):
+    """Available scenario domains, for the frontend's selector."""
+    _require_pro(tier, "Pro subscription required for spatial contagion.")
+    for k, v in _NO_STORE_HEADERS.items():
+        response.headers[k] = v
+    return {"scenarios": _load_scenario_catalogue()}
+
+
+@router.get("/domains/{domain_id}/spatial-contagion")
+async def get_domain_spatial_contagion(
+    domain_id: str,
+    response: Response,
+    db: AsyncSession = Depends(_get_db),
+    tier: str = Depends(_get_current_tier),
+):
+    """
+    Spatial contagion graph for ANY domain_id — including the scenario domains
+    ('strait_of_hormuz', 'strait_of_malacca') that the literal /domains/global/
+    route cannot address.
+
+    ADD-ONLY: the literal 'global' route is declared ABOVE this one and therefore
+    still wins for domain_id='global' (FastAPI matches in declaration order), so
+    the Omni-Monitor's aggregate behaviour is preserved untouched.
+
+    An unknown/unseeded domain returns 200 with an EMPTY payload, not 404 —
+    matching the literal route, which likewise shapes an empty result rather than
+    raising. The frontend can then render an honest "no data" state.
+    """
+    _require_pro(tier, "Pro subscription required for spatial contagion.")
+    for k, v in _NO_STORE_HEADERS.items():
+        response.headers[k] = v
+
+    nodes = (
+        await db.execute(
+            select(SpatialNode).where(SpatialNode.domain_id == domain_id)
+        )
+    ).scalars().all()
+    edges = (
+        await db.execute(
+            select(SpatialEdge).where(SpatialEdge.domain_id == domain_id)
+        )
+    ).scalars().all()
+    # _shape_contagion_payload is already null-guarded and emits the new columns.
+    return _shape_contagion_payload(domain_id, list(nodes), list(edges))
 
 
 def _snapshot_to_series_point(snap: ContagionHistory) -> Dict[str, Any]:
