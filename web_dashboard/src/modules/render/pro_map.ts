@@ -1,24 +1,27 @@
-import { renderGlobalSurveillanceMap } from './pro_interactive_map';
+import { renderTriggerMap } from './pro_trigger_map';
 
 /**
- * Pro Interactive Map route.
+ * Pro Interactive Map route — two-stage, news-triggered.
  *
- * The sidebar route is a global surveillance monitor by default. It uses the
- * same MapLibre + deck.gl interleaved renderer as Pro report spatial sections,
- * but starts from the global fallback data set when no specific domain/report
- * context is available.
+ *   Stage 1: WHERE is something happening (one node per FIRING scenario).
+ *   Stage 2: WHAT it affects (the full cascade, on click).
+ *
+ * Replaces the previous entry state, which opened straight into a global
+ * multi-domain aggregate built by the legacy spatial engine. That view answered a
+ * question nobody had asked, and it asserted an "epicenter" whether or not anything
+ * was actually happening. The backend routes and the legacy engine are untouched —
+ * other consumers still read those tables — but the map no longer opens on them.
  */
-
 export function renderProMap() {
     const container = document.getElementById('pro-map-container');
     if (!container) return;
 
-    if (container.dataset.globalSurveillanceMounted === '1') {
+    if (container.dataset.triggerMapMounted === '1') {
         requestAnimationFrame(() => {
             window.dispatchEvent(new Event('resize'));
         });
         return;
     }
-    container.dataset.globalSurveillanceMounted = '1';
-    renderGlobalSurveillanceMap(container);
+    container.dataset.triggerMapMounted = '1';
+    renderTriggerMap(container);
 }

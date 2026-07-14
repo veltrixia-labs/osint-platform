@@ -622,7 +622,7 @@ function esc(s: string): string {
 function safeId(s: string | null | undefined): string {
     return String(s || GLOBAL_DOMAIN_ID).replace(/[^a-z0-9]/gi, '_');
 }
-function injectMaplibreCss(): void {
+export function injectMaplibreCss(): void {
     if (document.querySelector('#maplibre-gl-css')) return;
     const link = document.createElement('link');
     link.id = 'maplibre-gl-css';
@@ -1526,6 +1526,9 @@ export async function mountSpatialContagionMap(
     container: HTMLElement,
     sc?: any,
     domainId = GLOBAL_DOMAIN_ID,
+    /** A vault scenario cascade: one snapshot, no time axis. Disables the scrubber and
+     *  relabels the panel, instead of leaving a dead control that looks broken. */
+    opts?: { staticScenario?: boolean },
 ): Promise<void> {
     const normalizedDomainId = domainId || GLOBAL_DOMAIN_ID;
     let payload: SpatialContagion | any = sc;
@@ -1801,6 +1804,9 @@ export async function mountSpatialContagionMap(
                 edgesFlat,
                 domainId: normalizedDomainId,
                 epicenterScore,
+                // A static cascade has no time axis — don't poll, and say so on the panel.
+                enableHistoryPolling: opts?.staticScenario !== true,
+                staticScenario: opts?.staticScenario === true,
                 mapRef: map,   // ← triggerRepaint() keeps interleaved animation alive
             });
             surveillance.start();
