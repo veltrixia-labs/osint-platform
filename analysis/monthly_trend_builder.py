@@ -38,7 +38,7 @@ from analysis.spatial_physics_engine import (
     ComputedSpatialEdge,
     omni_domain_for_pro_domain,
 )
-from jobs.omni_spatial_worker import resolve_alert_coordinates
+from analysis.geo_resolver import resolve_alert_coordinates
 
 logger = logging.getLogger(__name__)
 

@@ -32,56 +32,15 @@ from analysis.spatial_physics_engine import (
     ComputedSpatialNode,
     DomainSpatialGraph,
     SpatialPhysicsEngine,
-    _keyword_hits,
     prior_entropy_index_map,
 )
+from analysis.geo_resolver import resolve_alert_coordinates
 from db.database import AsyncSessionLocal
 from db.models import AlertLog, ContagionHistory, SpatialEdge, SpatialNode
 
 logger = logging.getLogger(__name__)
 
 WINDOW_HOURS = 24.0
-
-
-def _alert_text_bundle(alert: AlertLog) -> str:
-    parts: List[str] = [str(alert.target_label or "")]
-    meta = alert.metadata_json
-    if isinstance(meta, dict):
-        for key in ("location_label", "headline", "title", "summary", "cluster_label"):
-            val = meta.get(key)
-            if val:
-                parts.append(str(val))
-    return " ".join(parts)
-
-
-def resolve_alert_coordinates(
-    alert: AlertLog,
-    geo: GeoLocator,
-) -> Optional[Tuple[float, float, str]]:
-    """Return (lat, lon, label) or None when no offline resolution is possible."""
-    if alert.location_lat is not None and alert.location_lng is not None:
-        try:
-            lat = float(alert.location_lat)
-            lon = float(alert.location_lng)
-            if -90 <= lat <= 90 and -180 <= lon <= 180:
-                return lat, lon, str(alert.target_label or "")
-        except (TypeError, ValueError):
-            pass
-
-    bundle = _alert_text_bundle(alert)
-    for kw in _keyword_hits(bundle):
-        hit = geo.get_coordinates(kw)
-        if hit:
-            return float(hit["lat"]), float(hit["lon"]), str(hit.get("name") or kw)
-
-    for raw in (alert.target_label, bundle):
-        if not raw or len(str(raw).strip()) < 3:
-            continue
-        hit = geo.get_coordinates(str(raw).strip())
-        if hit:
-            return float(hit["lat"]), float(hit["lon"]), str(hit.get("name") or raw)
-
-    return None
 
 
 def _node_payload(n: ComputedSpatialNode, node_id: str, domain_id: str) -> Dict[str, Any]:
