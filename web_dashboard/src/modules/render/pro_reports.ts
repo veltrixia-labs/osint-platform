@@ -1852,33 +1852,30 @@ function renderEventTimelineAppendix(timeline: any[]): string {
 // overallCoverage is now computed in the payload (divergence_check.overall_coverage)
 
 /**
- * Phase 7.4 — Composite Risk HUD.
+ * Systemic Fragility HUD.
  *
- * Renders a single Luminous Cryo-Glass plate directly under Section 01 that
- * exposes the four metrics the rest of the brief was previously hiding:
- *   • Composite Multiplier (Phase 7.4 cross-domain amplification)
+ * Renders a single Luminous Cryo-Glass plate directly under Section 01 with the
+ * metrics we can actually measure:
  *   • Systemic Entropy (Shannon, 0..1)
  *   • Viscosity Coefficient (kinematic, 0..0.5 typical)
  *   • Phase Transition Warning (flashing when true)
+ * plus the tier-by-tier edge counts from `spatial_contagion.edges[].order_level`.
  *
- * Below the metric grid we also show the tier-by-tier spillover path
- * sourced from `spatial_contagion.edges[].order_level`. If no live spatial
- * graph is present we fall back to the propagation_path string returned
- * by `compute_composite_multiplier`.
+ * The former "Composite Multiplier / propagation path" was removed: it came from
+ * the fake spatial engine's entropy and only ever rendered a hardcoded "Stable".
  *
- * Returns `''` if the payload has neither composite_risk_profile nor
- * systemic_fragility — so old briefs don't render an empty plate.
+ * Returns `''` if the payload has neither systemic_fragility nor spatial_contagion
+ * — so old briefs don't render an empty plate.
  */
 function renderCompositeRiskHud(p: any): string {
-    const composite = p?.composite_risk_profile;
+    // The cross-domain "composite multiplier" was removed — it was derived from the
+    // fake spatial engine's entropy and only ever reported a hardcoded "Stable".
+    // This plate now shows only what it can actually measure: systemic fragility and
+    // the spatial-tier edge counts. It renders NOTHING for the composite metric
+    // rather than a fabricated 1.00x.
     const fragility = p?.systemic_fragility;
     const spatial = p?.spatial_contagion;
-    if (!composite && !fragility && !spatial) return '';
-
-    const mult = Number(composite?.composite_multiplier ?? 1.0);
-    const multCritical = mult >= 1.5;
-    const path: string = composite?.primary_propagation_path
-        || 'Stable (no cross-domain spillover)';
+    if (!fragility && !spatial) return '';
 
     const entropy = Number(fragility?.entropy_index ?? 0);
     const viscosity = Number(fragility?.viscosity_coefficient ?? 0);
@@ -1893,8 +1890,6 @@ function renderCompositeRiskHud(p: any): string {
     }
     const hasTiers = (tierCounts[1] + tierCounts[2] + tierCounts[3]) > 0;
 
-    const multColor = multCritical ? '#fca5a5' : '#7dd3fc';
-    const multGlow = multCritical ? 'rgba(248,113,113,0.55)' : 'rgba(125,211,252,0.40)';
     const warnColor = phaseWarn ? '#fca5a5' : '#94a3b8';
     const warnGlow = phaseWarn ? 'rgba(248,113,113,0.55)' : 'transparent';
 
@@ -1952,13 +1947,9 @@ function renderCompositeRiskHud(p: any): string {
             color: #7dd3fc; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
             margin-bottom: 10px;
         }
-        .crh-head .crh-path {
-            color: #cbd5e1; letter-spacing: 0.08em; font-weight: 700;
-            text-shadow: 0 0 8px rgba(125,211,252,0.25);
-        }
         .crh-grid {
             display: grid;
-            grid-template-columns: 1.4fr 1fr 1fr 1.1fr;
+            grid-template-columns: 1fr 1fr 1.1fr;
             gap: 14px 22px;
             padding-bottom: 12px;
             border-bottom: 1px solid rgba(125,211,252,0.10);
@@ -2018,19 +2009,11 @@ function renderCompositeRiskHud(p: any): string {
             font-style: italic; letter-spacing: 0.04em;
         }
     </style>
-    <section class="composite-risk-hud" aria-label="Composite Risk Profile">
+    <section class="composite-risk-hud" aria-label="Systemic Fragility">
         <div class="crh-head">
-            <span>◷ Composite Risk Profile · Phase 7.4</span>
-            <span class="crh-path">${escHtml(path)}</span>
+            <span>◷ Systemic Fragility &amp; Spatial Tiers</span>
         </div>
         <div class="crh-grid">
-            <div class="crh-cell">
-                <span class="crh-k">Composite Multiplier</span>
-                <span class="crh-v"
-                      style="color:${multColor}; text-shadow: 0 0 12px ${multGlow};">
-                    ${mult.toFixed(2)}x
-                </span>
-            </div>
             <div class="crh-cell">
                 <span class="crh-k">Systemic Entropy</span>
                 <span class="crh-v crh-v--sub" style="color:#e2e8f0;">

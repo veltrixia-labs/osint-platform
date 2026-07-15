@@ -26,10 +26,7 @@ from db.models import (
     SpatialNode,
     SpatialEdge,
 )
-from analysis.spatial_composite_risk import (
-    compute_composite_multiplier,
-    topic_to_spatial_domain,
-)
+from analysis.spatial_composite_risk import topic_to_spatial_domain
 from analysis.pro_domain_config import (
     PRO_DOMAIN_CONFIG,
     get_pro_domain_config,
@@ -979,11 +976,6 @@ async def build_pro_structural_context(
     spatial_contagion_payload = await _fetch_live_spatial_graph(
         db, topic_code=resolved_domain_id,
     )
-    # Synthesise the cross-domain composite multiplier directly off the
-    # same Spatial Engine rows.
-    composite_risk_profile = await compute_composite_multiplier(
-        db, current_context=None,
-    )
 
     # 6.6 Structured analytical sections grounded in quantitative data.
     cascading_impacts = build_cascading_impacts(
@@ -1042,8 +1034,6 @@ async def build_pro_structural_context(
         "tail_risk_scenarios": tail_risk_scenarios,
         "quantitative_evidence_matrix": quantitative_evidence_matrix,
         "spatial_contagion": spatial_contagion_payload,
-        # Phase 7.4 — cross-domain amplification + propagation path.
-        "composite_risk_profile": composite_risk_profile,
     }
 
     context = sanitize_unicode_tree(context)

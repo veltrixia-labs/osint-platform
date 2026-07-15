@@ -1017,11 +1017,6 @@ def build_pro_structural_report_payload(context: dict) -> dict:
         # linking the epicenter to each affected location with entropy-derived
         # intensity. Powers the Interactive Map in the Pro dashboard.
         "spatial_contagion": context.get("spatial_contagion"),
-        # Phase 7.4 — cross-domain composite multiplier + propagation path.
-        # Pulled live from the Spatial Engine in pro_structural_context, then
-        # passed straight through here so the frontend Composite Risk HUD
-        # renders without any extra mapping.
-        "composite_risk_profile": context.get("composite_risk_profile"),
         "domain": {
             "domain_id": domain.get("domain_id"),
             "display_name": domain.get("display_name"),
