@@ -249,22 +249,6 @@ async def run_cftc_sync_wrapper():
     logger.info("CFTC sync summary: %s", summary)
 
 
-async def run_omni_spatial_worker_wrapper():
-    """Phase 7.2: Translate recent AlertLog rows into spatial contagion graphs."""
-    if os.getenv("SCHEDULER_PAUSED") == "true":
-        logger.warning("SCHEDULER_PAUSED — skipping omni spatial worker.")
-        return
-    from jobs.omni_spatial_worker import run_omni_spatial_worker
-
-    # Serialize against the full pipeline / discovery scout (shared heavy-work
-    # mutex) so the spatial contagion build — which fires on the SAME 5-min tick
-    # as the pipeline — can no longer stack on top of it and blow the 512MB
-    # ceiling (the daily ~14:30 multi-job OOM).
-    async with _heavy_work_lock:
-        summary = await run_omni_spatial_worker()
-    logger.info("Omni spatial worker summary: %s", summary)
-
-
 async def run_sanctions_sync_wrapper():
     """Daily OpenSanctions bulk dump + PageRank recompute."""
     if os.getenv("SCHEDULER_PAUSED") == "true":
@@ -294,14 +278,6 @@ def register_jobs():
     
     # Core Pipeline
     schedule.every(5).minutes.do(schedule_async, "pipeline", pipeline_full_processing)
-
-    # Phase 7.2: RSS → physics-based spatial contagion (Omni monitor tables)
-    schedule.every(5).minutes.do(
-        schedule_async,
-        "omni_spatial",
-        run_omni_spatial_worker_wrapper,
-    )
-    logger.info("Registered omni_spatial every 5 minutes (spatial_nodes / spatial_edges / contagion_history).")
 
     # [v12.0] Autonomous Discovery Scout (High Frequency)
     schedule.every(1).minutes.do(schedule_async, "discovery_scout", run_discovery_scout_wrapper)
