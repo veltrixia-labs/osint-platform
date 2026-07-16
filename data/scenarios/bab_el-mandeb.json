@@ -1,0 +1,189 @@
+{
+ "schema_version": "vault_cascade_v1",
+ "scenario": {
+  "hub": "Bab_el-Mandeb",
+  "hub_type": "route",
+  "aliases": [
+   "Bab el-Mandeb",
+   "Bab al-Mandab",
+   "Bab-el-Mandeb",
+   "Red Sea",
+   "バブ・エル・マンデブ海峡",
+   "紅海"
+  ],
+  "domain": [
+   "supply_chain",
+   "energy"
+  ]
+ },
+ "generated_at": "2026-07-13",
+ "graph": {
+  "nodes": 300,
+  "edges": 1497,
+  "gate": "PASS"
+ },
+ "scaling": {
+  "impact_score": "round(100*|raw_impact|), clamp[0,100], epicenter=100 (linear)",
+  "intensity": "|raw_impact| clamp[0,1]",
+  "confidence": {
+   "order1": 1.0,
+   "order2": 1.0,
+   "order3": 0.7
+  },
+  "node_types": {
+   "epicenter": "the hub",
+   "affected": "quantified impact (impact_score 0-100)",
+   "exposed_unquantified": "real edge, weight:null -> impact_score null (NOT 0; 0 would mean no impact)"
+  },
+  "render_hint": "Colour by TYPE, shade by SCORE. Do not colour by score alone: a fully-routed order-2 node (Qatar 1.00 -> 100) legitimately ties the epicenter score. Edges with \"unquantified\": true have intensity null -> draw dashed/hollow."
+ },
+ "nodes": [
+  {
+   "id": "Bab_el-Mandeb",
+   "name": "Bab el-Mandeb",
+   "lat": 12.5833,
+   "lon": 43.3333,
+   "country": null,
+   "type": "epicenter",
+   "order": 1,
+   "impact_score": 100,
+   "confidence": 1.0
+  },
+  {
+   "id": "Saudi_Aramco",
+   "name": "Saudi Aramco",
+   "lat": 26.236111,
+   "lon": 50.039722,
+   "country": "SA",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 40,
+   "confidence": 1.0,
+   "role": "supply",
+   "raw_impact": 0.4,
+   "why": "route:supply weight 0.40",
+   "tickers": [
+    "2222"
+   ]
+  },
+  {
+   "id": "India",
+   "name": "India",
+   "lat": 20.59,
+   "lon": 78.96,
+   "country": "IN",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 40,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.4,
+   "why": "route:demand weight 0.40"
+  },
+  {
+   "id": "Strait_of_Hormuz",
+   "name": "Strait of Hormuz",
+   "lat": 26.5667,
+   "lon": 56.25,
+   "country": null,
+   "type": "affected",
+   "order": 2,
+   "impact_score": 30,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.3,
+   "why": "route:demand weight 0.30"
+  },
+  {
+   "id": "Iran",
+   "name": "Iran",
+   "lat": 32.4279,
+   "lon": 53.688,
+   "country": "IR",
+   "type": "exposed_unquantified",
+   "order": 2,
+   "impact_score": null,
+   "confidence": null,
+   "role": "demand",
+   "raw_impact": null,
+   "why": "structurally exposed via Bab_el-Mandeb; magnitude unknown (weight: null)"
+  }
+ ],
+ "edges": [
+  {
+   "source_id": "Bab_el-Mandeb",
+   "target_id": "Saudi_Aramco",
+   "source_lat": 12.5833,
+   "source_lon": 43.3333,
+   "target_lat": 26.236111,
+   "target_lon": 50.039722,
+   "intensity": 0.4,
+   "target_order": 2,
+   "role": "supply"
+  },
+  {
+   "source_id": "Bab_el-Mandeb",
+   "target_id": "India",
+   "source_lat": 12.5833,
+   "source_lon": 43.3333,
+   "target_lat": 20.59,
+   "target_lon": 78.96,
+   "intensity": 0.4,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Bab_el-Mandeb",
+   "target_id": "Strait_of_Hormuz",
+   "source_lat": 12.5833,
+   "source_lon": 43.3333,
+   "target_lat": 26.5667,
+   "target_lon": 56.25,
+   "intensity": 0.3,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Bab_el-Mandeb",
+   "target_id": "Iran",
+   "source_lat": 12.5833,
+   "source_lon": 43.3333,
+   "target_lat": 32.4279,
+   "target_lon": 53.688,
+   "intensity": null,
+   "unquantified": true,
+   "target_order": 2,
+   "role": "demand"
+  }
+ ],
+ "conduits": [
+  {
+   "commodity": "Crude_Oil",
+   "weight": 0.11,
+   "unit": "share"
+  }
+ ],
+ "no_map": [
+  {
+   "id": "Crude_Oil",
+   "type": "market",
+   "raw_impact": 0.11,
+   "reason": "conduit; no location"
+  }
+ ],
+ "honest_gaps": {
+  "exposed_null": [
+   {
+    "id": "Iran",
+    "role": "demand"
+   }
+  ],
+  "node_gaps": [
+   {
+    "id": "India",
+    "impact": 0.4,
+    "reason": "no company node with country=IN & domain∩['energy', 'supply_chain']"
+   }
+  ]
+ }
+}
