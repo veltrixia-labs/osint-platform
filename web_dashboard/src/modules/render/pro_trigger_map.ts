@@ -65,10 +65,15 @@ function esc(s: string): string {
 /**
  * Name the HUB, never a premise. The payload asserts that a chokepoint is in the
  * news; it does NOT assert that the strait is closed. The headlines supply the event.
+ *
+ * English display: prefer a Latin/ASCII alias ("Strait of Hormuz"), then the
+ * explicit label, then the hub id with underscores stripped. The Japanese aliases
+ * stay in the payload for MATCHING (the trigger scans all of them) — they are just
+ * not shown as the name.
  */
 function displayName(s: { aliases?: string[]; label?: string | null; hub?: string; id?: string }): string {
-    const cjk = (s.aliases ?? []).find((a) => /[　-鿿＀-￯]/.test(a));
-    return cjk || s.label || (s.hub ?? s.id ?? '').replace(/_/g, ' ');
+    const latin = (s.aliases ?? []).find((a) => /^[\x00-\x7F]+$/.test(a));
+    return latin || s.label || (s.hub ?? s.id ?? '').replace(/_/g, ' ');
 }
 
 /** Unknown is not zero. */
