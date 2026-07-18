@@ -196,51 +196,12 @@ def _shape_contagion_payload(
     }
 
 
-@router.get("/domains/global/spatial-contagion")
-async def get_global_spatial_contagion(
-    response: Response,
-    db: AsyncSession = Depends(_get_db),
-    tier: str = Depends(_get_current_tier),
-):
-    """
-    Return the cross-domain Omni-Monitor view.
-
-    Strategy:
-      1. If at least one row has `domain_id='global'`, return that directly
-         (the spatial-engine job has produced an explicit aggregate).
-      2. Otherwise, merge every non-'global' domain into a synthetic
-         aggregate. Cheap because we already have indexes on domain_id.
-    """
-    _require_pro(tier, "Pro subscription required for spatial contagion.")
-    for k, v in _NO_STORE_HEADERS.items():
-        response.headers[k] = v
-
-    explicit_nodes = (
-        await db.execute(
-            select(SpatialNode).where(SpatialNode.domain_id == "global")
-        )
-    ).scalars().all()
-
-    if explicit_nodes:
-        explicit_edges = (
-            await db.execute(
-                select(SpatialEdge).where(SpatialEdge.domain_id == "global")
-            )
-        ).scalars().all()
-        return _shape_contagion_payload("global", list(explicit_nodes), list(explicit_edges))
-
-    # Aggregate path — fold every per-domain row into one payload.
-    all_nodes = (
-        await db.execute(
-            select(SpatialNode).where(SpatialNode.domain_id != "global")
-        )
-    ).scalars().all()
-    all_edges = (
-        await db.execute(
-            select(SpatialEdge).where(SpatialEdge.domain_id != "global")
-        )
-    ).scalars().all()
-    return _shape_contagion_payload("global", list(all_nodes), list(all_edges))
+# The literal /domains/global/spatial-contagion route was removed: the map opens on
+# the news trigger, not a manufactured global aggregate, and its `!= 'global'` merge
+# would have blended the scenario domains into one nonsense payload. The generic
+# /domains/{domain_id}/spatial-contagion route below serves every real domain.
+# _shape_contagion_payload + _aggregate_global_series are KEPT — both are used by the
+# generic route and the live fragility-history route.
 
 
 # ── Scenario catalogue ───────────────────────────────────────────────────────
