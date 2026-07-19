@@ -581,30 +581,6 @@ export function getGlobalFallbackSpatialContagion(): SpatialContagion {
     };
 }
 
-async function fetchGlobalSpatialContagion(): Promise<SpatialContagion | null> {
-    const candidatePaths = [
-        '/spatial/global',
-        '/pro/spatial/global',
-        '/pro/domains/global/spatial-contagion',
-    ];
-
-    for (const path of candidatePaths) {
-        try {
-            const resp = await apiClient.get(path, { cache: 'no-store' }, true);
-            if (!resp.ok) continue;
-            const body = await resp.json();
-            const sc = body?.spatial_contagion ?? body;
-            if (Array.isArray(sc?.nodes) && sc.nodes.length > 0) {
-                return sc as SpatialContagion;
-            }
-        } catch (err) {
-            console.warn(`${LOG} global endpoint failed (${path})`, err);
-        }
-    }
-
-    return null;
-}
-
 // ── Section header ────────────────────────────────────────────────────────────
 function sectionHead(num: string, title: string): string {
     return `<div class="intel-section-head">
@@ -772,8 +748,12 @@ export async function mountSpatialContagionMap(
 
     if (!Array.isArray(payload?.nodes) || payload.nodes.length === 0) {
         if (normalizedDomainId === GLOBAL_DOMAIN_ID) {
-            console.warn(`${LOG} no global payload supplied — trying global API endpoints before fallback`);
-            payload = await fetchGlobalSpatialContagion() ?? getGlobalFallbackSpatialContagion();
+            // Unconditional fallback — not a last resort. The three global endpoints this used
+            // to probe first (/spatial/global, /pro/spatial/global,
+            // /pro/domains/global/spatial-contagion) were removed in d8a696d, so the fetch 404'd
+            // through all of them on every call and always landed here anyway.
+            console.warn(`${LOG} no global payload supplied — using client-side fallback`);
+            payload = getGlobalFallbackSpatialContagion();
         } else {
             console.warn(`${LOG} no nodes in payload — skipping map init`);
             return;
