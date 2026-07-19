@@ -99,6 +99,24 @@ function markerShade(maxImportance: number | null): { fill: string; ring: string
     return { fill: `hsla(38, 95%, ${light}%, 0.28)`, ring: `hsl(38, 95%, ${light}%)` };
 }
 
+/**
+ * Real coordinate, formatted DD.DDN DDD.DDE from the payload's own lat/lon. Two decimals
+ * is the hub centroid's real precision, zero-padded for column alignment only — nothing is
+ * padded to fake exactness we do not have.
+ */
+function fmtCoord(lat: number, lon: number): string {
+    const fmt = (v: number, intDigits: number, pos: string, neg: string): string => {
+        const [w, f] = Math.abs(v).toFixed(2).split('.');
+        return `${w.padStart(intDigits, '0')}.${f}${v >= 0 ? pos : neg}`;
+    };
+    return `${fmt(lat, 2, 'N', 'S')} ${fmt(lon, 3, 'E', 'W')}`;
+}
+
+/** UTC timestamp, ISO 8601 Zulu, whole seconds (e.g. 2026-07-20T14:03:07Z). */
+function utcStamp(): string {
+    return new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
 function timeAgo(iso: string | null): string {
     if (!iso) return '';
     const ms = Date.now() - new Date(iso).getTime();
@@ -188,7 +206,17 @@ class TriggerMapController {
         const firing = p.scenarios.filter((s) => s.firing && s.lat != null && s.lon != null);
         const dormant = p.scenarios.filter((s) => !s.firing);
 
-        this.stageEl.innerHTML = `<div class="tm2-map" id="tm2-map"></div>`;
+        this.stageEl.innerHTML = `
+            <div class="tm2-map" id="tm2-map"></div>
+            <div class="tm2-frame" aria-hidden="true">
+                <i class="tm2-corner tm2-corner--tl"></i><i class="tm2-corner tm2-corner--tr"></i>
+                <i class="tm2-corner tm2-corner--bl"></i><i class="tm2-corner tm2-corner--br"></i>
+            </div>
+            <div class="tm2-hud">
+                <span class="tm2-hud-title">Spatial Contagion</span>
+                <span class="tm2-hud-src">OSINT // Open Source</span>
+                <span class="tm2-hud-clock" id="tm2-clock"></span>
+            </div>`;
         this.renderPanel(firing, dormant, p);
 
         const mapEl = this.stageEl.querySelector<HTMLElement>('#tm2-map');
@@ -207,43 +235,128 @@ class TriggerMapController {
             return;
         }
 
-        // Centre on the firing set; a stable world view when nothing fires.
-        const lons = firing.map((s) => s.lon as number);
-        const lats = firing.map((s) => s.lat as number);
-        const center: [number, number] = firing.length
-            ? [(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]
-            : [20, 25];
+        const BoundsCtor = maplibregl?.LngLatBounds ?? maplibregl?.default?.LngLatBounds;
 
         this.map = new MapCtor({
             container: mapEl,
             style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-            center,
-            zoom: firing.length === 1 ? 3.4 : 1.9,
+            center: [20, 25],
+            zoom: 1.4,
             attributionControl: false,
         });
         this.addCleanup(() => this.disposeStage1Map());
 
+        // Auto-fit to the firing set on open — never a hardcoded camera. The fit key is
+        // stamped on the map instance, so a future in-place poll that keeps the SAME map
+        // (unchanged firing set) will not yank a camera the user has since panned. A changed
+        // firing set, or a freshly rebuilt map, fits again.
+        this.fitToFiring(firing, BoundsCtor);
+
+        // Reticles. Firing = amber, pulsing, sized by match_count. Dormant (watched, not
+        // firing) = small desaturated slate, clearly subordinate — the map shows what is
+        // being watched, not only what is loud.
+        //
+        // Label de-collision (§ never move the reticle): the reticle stays on its true
+        // coordinate; only the TAG is offset, with a leader line. Placement alternates
+        // below/above by descending match_count rank (largest below, next above, …), so two
+        // nearby scenarios of different volume — Hormuz vs Bab el-Mandeb — always land on
+        // opposite sides of their reticles instead of stacking.
+        const tagUpFor = new Map<string, boolean>();
+        [...firing]
+            .sort((a, b) => b.match_count - a.match_count)
+            .forEach((s, i) => tagUpFor.set(s.id, i % 2 === 1));
+
         for (const s of firing) {
-            const el = this.buildMarkerEl(s);
+            const el = this.buildMarkerEl(s, { dormant: false, tagUp: tagUpFor.get(s.id) ?? false });
             const marker = new MarkerCtor({ element: el }).setLngLat([s.lon, s.lat]).addTo(this.map);
             this.markers.push(marker);
         }
+        for (const s of dormant) {
+            if (s.lat == null || s.lon == null) continue;
+            const el = this.buildMarkerEl(s, { dormant: true, tagUp: false });
+            const marker = new MarkerCtor({ element: el }).setLngLat([s.lon, s.lat]).addTo(this.map);
+            this.markers.push(marker);
+        }
+
+        // UTC clock in the map HUD (ISO 8601, Zulu). Ticks once a second; cleaned up on stop().
+        const clockEl = this.stageEl.querySelector<HTMLElement>('#tm2-clock');
+        if (clockEl) {
+            const tick = (): void => {
+                if (this.aborted) return;
+                clockEl.textContent = utcStamp();
+            };
+            tick();
+            const id = window.setInterval(tick, 1000);
+            this.addCleanup(() => window.clearInterval(id));
+        }
     }
 
-    /** One node per firing scenario. Size = match_count. Shade = max_importance. */
-    private buildMarkerEl(s: ScenarioTrigger): HTMLElement {
-        const r = markerRadiusPx(s.match_count);
-        const { fill, ring } = markerShade(s.max_importance);
+    /**
+     * Fit the camera to the firing set. World view when nothing fires; clamp maxZoom so a
+     * single firing scenario does not zoom to street level. The fit key lives on the map
+     * instance, so this is idempotent for a given (map, firing set): the initial open fits,
+     * and after that the user's pan/zoom is left alone unless the firing set changes.
+     */
+    private fitToFiring(firing: ScenarioTrigger[], BoundsCtor: any): void {
+        if (!this.map) return;
+        const key = firing.map((s) => s.id).sort().join(',');
+        if (this.map.__tmFitKey === key) return;   // same map + same set → keep the user's camera
+        this.map.__tmFitKey = key;
+
+        if (!firing.length || !BoundsCtor) {
+            this.map.jumpTo({ center: [20, 25], zoom: 1.4 });   // zero firing → stable world view
+            return;
+        }
+        const bounds = new BoundsCtor();
+        for (const s of firing) bounds.extend([s.lon as number, s.lat as number]);
+        this.map.fitBounds(bounds, {
+            padding: { top: 110, bottom: 72, left: 72, right: 72 },
+            maxZoom: firing.length === 1 ? 4.5 : 5,
+            duration: 0,
+        });
+    }
+
+    /**
+     * One reticle per scenario. Firing: size = match_count, amber shade = max_importance —
+     * two SEPARATE encodings, both NEWS SIGNAL, never impact. Dormant: fixed small slate,
+     * subordinate. The reticle is anchored on the true coordinate; only the tag is offset.
+     */
+    private buildMarkerEl(s: ScenarioTrigger, opts: { dormant: boolean; tagUp: boolean }): HTMLElement {
+        const dormant = opts.dormant;
+        const r = dormant ? 9 : markerRadiusPx(s.match_count);
+        const ring = dormant ? '#64748b' : markerShade(s.max_importance).ring;
+        const name = displayName(s);
+        const coord = (s.lat != null && s.lon != null) ? fmtCoord(s.lat, s.lon) : '';
+
         const el = document.createElement('button');
         el.type = 'button';
-        el.className = 'tm2-marker';
-        el.setAttribute('aria-label', `${displayName(s)} — ${s.match_count} alerts`);
+        el.className = `tm2-marker${dormant ? ' tm2-marker--dormant' : ''}${opts.tagUp ? ' tm2-marker--tagup' : ''}`;
+        el.setAttribute(
+            'aria-label',
+            `${name} — ${s.match_count} alert${s.match_count === 1 ? '' : 's'}${dormant ? ' (watched, not firing)' : ''}`,
+        );
         el.style.width = `${r * 2}px`;
         el.style.height = `${r * 2}px`;
+        el.style.setProperty('--ring', ring);
+
+        const tag = dormant
+            ? `<span class="tm2-tag"><span class="tm2-tag-name">${esc(name)}</span></span>`
+            : `<span class="tm2-tag">
+                   <span class="tm2-tag-name">${esc(name)}</span>
+                   ${coord ? `<span class="tm2-tag-coord">${esc(coord)}</span>` : ''}
+               </span>`;
+
         el.innerHTML = `
-            <span class="tm2-marker-dot" style="border-color:${ring}; background:${fill};"></span>
-            <span class="tm2-marker-count" style="color:${ring};">${s.match_count}</span>
-            <span class="tm2-marker-label">${esc(displayName(s))}</span>`;
+            <span class="tm2-ret">
+                <span class="tm2-ret-ring tm2-ret-ring--outer"></span>
+                <span class="tm2-ret-ring tm2-ret-ring--inner"></span>
+                <i class="tm2-ret-tick tm2-ret-tick--n"></i>
+                <i class="tm2-ret-tick tm2-ret-tick--s"></i>
+                <i class="tm2-ret-tick tm2-ret-tick--e"></i>
+                <i class="tm2-ret-tick tm2-ret-tick--w"></i>
+                <span class="tm2-ret-count">${s.match_count}</span>
+            </span>
+            ${tag}`;
         const onClick = (): void => { void this.enterStage2(s); };
         el.addEventListener('click', onClick);
         this.addCleanup(() => el.removeEventListener('click', onClick));
@@ -296,6 +409,11 @@ class TriggerMapController {
                     <div class="tm2-card-head">
                         <span class="tm2-card-name">${esc(displayName(s))}</span>
                         <button type="button" class="tm2-view" data-scenario="${esc(s.id)}">View cascade →</button>
+                    </div>
+                    <div class="tm2-readouts">
+                        <span class="tm2-ro"><span class="tm2-ro-k">Match</span><span class="tm2-ro-v">${s.match_count}</span></span>
+                        <span class="tm2-ro"><span class="tm2-ro-k">Peak</span><span class="tm2-ro-v">${fmtImportance(s.max_importance)}</span></span>
+                        <span class="tm2-ro"><span class="tm2-ro-k">Window</span><span class="tm2-ro-v">${p.window_hours}h</span></span>
                     </div>
                     <div class="tm2-card-why">
                         Firing on <b>${s.match_count} alerts</b> in the last ${p.window_hours} hours —
@@ -445,7 +563,9 @@ function injectTriggerMapStyles(): void {
     st.textContent = `
     .tm2-host { display:flex; gap:0 !important; padding:0 !important;
                 height:calc(100vh - 80px); min-height:640px;
-                background:#020617; color:#e2e8f0; }
+                background:#020617; color:#e2e8f0;
+                font-family:ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+                font-variant-numeric:tabular-nums; }
     .tm2-stage { position:relative; flex:1 1 auto; min-width:0; }
     /* Specificity 0,2,0 on purpose. MapLibre stamps .maplibregl-map (position:relative)
        onto this same element, and its stylesheet loads AFTER ours -- a single class would
@@ -458,7 +578,7 @@ function injectTriggerMapStyles(): void {
                    color:#64748b; font-size:13px; }
 
     .tm2-head { margin-bottom:16px; }
-    .tm2-head-title { font-size:17px; font-weight:800; letter-spacing:-0.01em; }
+    .tm2-head-title { font-size:15px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; }
     .tm2-head-sub { margin-top:4px; font-size:11.5px; color:#64748b; line-height:1.5; }
     .tm2-back { background:transparent; border:1px solid rgba(148,163,184,0.35); color:#94a3b8;
                 border-radius:6px; padding:5px 10px; font-size:11px; font-weight:700;
@@ -474,7 +594,13 @@ function injectTriggerMapStyles(): void {
     .tm2-card { border:1px solid rgba(148,163,184,0.18); border-radius:10px;
                 padding:14px; margin-bottom:14px; background:rgba(8,13,28,0.6); }
     .tm2-card-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-    .tm2-card-name { font-size:15px; font-weight:800; }
+    .tm2-card-name { font-size:13px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; }
+
+    /* Readout strip — KEY over value, tabular. The honesty prose below it is unchanged. */
+    .tm2-readouts { display:flex; gap:18px; margin:11px 0 3px; }
+    .tm2-ro { display:flex; flex-direction:column; gap:2px; }
+    .tm2-ro-k { font-size:9px; font-weight:800; letter-spacing:0.14em; text-transform:uppercase; color:#64748b; }
+    .tm2-ro-v { font-size:16px; font-weight:800; color:#e2e8f0; line-height:1; }
     .tm2-view { background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.45);
                 color:#fbbf24; border-radius:6px; padding:5px 9px; font-size:11px;
                 font-weight:800; cursor:pointer; white-space:nowrap; }
@@ -519,19 +645,63 @@ function injectTriggerMapStyles(): void {
     .tm2-sw--aff { background:#22d3ee; }
     .tm2-sw--unq { background:transparent; border:1.5px solid #94a3b8; }
 
-    /* Stage-1 marker: AMBER = news signal. Deliberately NOT the cascade's impact ramp. */
+    /* ── Map chrome: command-post HUD + corner brackets. pointer-events:none so the
+       basemap stays draggable underneath. Open-source data — no classification marks. */
+    .tm2-hud { position:absolute; top:0; left:0; right:0; z-index:5; pointer-events:none;
+               display:flex; align-items:center; gap:14px; padding:9px 14px;
+               font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+               background:linear-gradient(180deg, rgba(2,6,23,0.78), rgba(2,6,23,0)); }
+    .tm2-hud-title { color:#cbd5e1; font-weight:800; }
+    .tm2-hud-src   { color:#64748b; }
+    .tm2-hud-clock { margin-left:auto; color:#94a3b8; letter-spacing:0.08em; }
+
+    .tm2-frame { position:absolute; inset:10px; z-index:4; pointer-events:none; }
+    .tm2-corner { position:absolute; width:15px; height:15px; border:1px solid rgba(148,163,184,0.5); }
+    .tm2-corner--tl { top:0; left:0;    border-right:0; border-bottom:0; }
+    .tm2-corner--tr { top:0; right:0;   border-left:0;  border-bottom:0; }
+    .tm2-corner--bl { bottom:0; left:0;  border-right:0; border-top:0; }
+    .tm2-corner--br { bottom:0; right:0; border-left:0;  border-top:0; }
+
+    /* ── Stage-1 reticle. AMBER = news signal, deliberately NOT the cascade's impact ramp.
+       --ring carries the amber shade (or slate, for dormant). The reticle sits ON the true
+       coordinate; only the tag is offset for legibility (see the de-collision rule above). */
     .tm2-marker { position:relative; display:flex; align-items:center; justify-content:center;
-                  background:transparent; border:0; padding:0; cursor:pointer; }
-    .tm2-marker-dot { position:absolute; inset:0; border-radius:50%; border-width:2px;
-                      border-style:solid; animation:tm2-pulse 2.4s ease-in-out infinite; }
-    .tm2-marker-count { position:relative; font-size:13px; font-weight:800;
-                        font-family:ui-monospace, Menlo, monospace; pointer-events:none; }
-    .tm2-marker-label { position:absolute; top:100%; left:50%; transform:translateX(-50%);
-                        margin-top:5px; white-space:nowrap; font-size:11px; font-weight:700;
-                        color:#e2e8f0; text-shadow:0 1px 4px #000; pointer-events:none; }
+                  background:transparent; border:0; padding:0; cursor:pointer; --ring:#f59e0b; }
+    .tm2-ret { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+    .tm2-ret-ring { position:absolute; border-radius:50%; border:1px solid var(--ring); }
+    .tm2-ret-ring--outer { inset:0; opacity:0.5; animation:tm2-pulse 2.4s ease-in-out infinite; }
+    .tm2-ret-ring--inner { inset:34%; opacity:0.9; }
+    .tm2-ret-tick { position:absolute; background:var(--ring); opacity:0.7; }
+    .tm2-ret-tick--n, .tm2-ret-tick--s { left:50%; width:1px; height:16%; transform:translateX(-0.5px); }
+    .tm2-ret-tick--e, .tm2-ret-tick--w { top:50%; height:1px; width:16%; transform:translateY(-0.5px); }
+    .tm2-ret-tick--n { top:0; } .tm2-ret-tick--s { bottom:0; }
+    .tm2-ret-tick--w { left:0; } .tm2-ret-tick--e { right:0; }
+    .tm2-ret-count { position:relative; font-size:12px; font-weight:800; color:var(--ring);
+                     text-shadow:0 1px 3px #000; pointer-events:none; }
+
+    /* Tag = scenario name + real coordinates, offset from the reticle by a thin leader line.
+       The reticle never moves; only this tag does. */
+    .tm2-tag { position:absolute; left:50%; top:100%; transform:translate(-50%, 12px);
+               display:flex; flex-direction:column; align-items:center; gap:1px;
+               white-space:nowrap; text-align:center; pointer-events:none; }
+    .tm2-tag::before { content:''; position:absolute; left:50%; bottom:100%; width:1px; height:12px;
+                       background:rgba(148,163,184,0.55); transform:translateX(-0.5px); }
+    .tm2-marker--tagup .tm2-tag { top:auto; bottom:100%; transform:translate(-50%, -12px); }
+    .tm2-marker--tagup .tm2-tag::before { bottom:auto; top:100%; }
+    .tm2-tag-name { font-size:10.5px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase;
+                    color:#e2e8f0; text-shadow:0 1px 4px #000; }
+    .tm2-tag-coord { font-size:9.5px; letter-spacing:0.06em; color:#94a3b8; text-shadow:0 1px 3px #000; }
+
+    /* Dormant: watched but not firing — small, slate, no pulse, clearly subordinate. */
+    .tm2-marker--dormant { --ring:#64748b; opacity:0.7; }
+    .tm2-marker--dormant .tm2-ret-ring--outer { animation:none; opacity:0.3; }
+    .tm2-marker--dormant .tm2-ret-count { font-size:10px; }
+    .tm2-marker--dormant .tm2-tag-name { font-size:9px; font-weight:700; color:#94a3b8; }
+    .tm2-marker--dormant:hover { opacity:1; }
+
     @keyframes tm2-pulse {
         0%,100% { box-shadow:0 0 0 0 rgba(245,158,11,0.28); }
-        50%     { box-shadow:0 0 0 10px rgba(245,158,11,0); }
+        50%     { box-shadow:0 0 0 9px rgba(245,158,11,0); }
     }
     @media (max-width: 900px) {
         .tm2-host { flex-direction:column; height:auto; }
