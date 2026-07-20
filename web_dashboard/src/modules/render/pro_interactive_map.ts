@@ -625,7 +625,7 @@ export function renderSpatialContagionShell(sc: any, sectionNum: string, domainI
     const title = normalizedDomainId === GLOBAL_DOMAIN_ID ? 'Global Surveillance Monitor' : 'Spatial Contagion Network';
     const intro = normalizedDomainId === GLOBAL_DOMAIN_ID
         ? 'Pentagon-style situational awareness layer for high-impact physical computations and critical alerts. Global fallback sectors remain visible while backend aggregation routes come online.'
-        : 'Sovereign geo-engine resolves entity coordinates from signal intelligence and plots contagion propagation arcs. Arc width reflects entropy-derived edge intensity; node radius scales with impact score. Hover nodes for details.';
+        : 'Propagation computed from the vault dependency graph. Arc width is the measured edge weight; node radius scales with impact score. Dashed = structurally exposed, magnitude never measured.';
 
     return `<div class="intel-panel intel-spatial-panel" data-sc-domain="${esc(normalizedDomainId)}">
         ${sectionHead(sectionNum, title)}
