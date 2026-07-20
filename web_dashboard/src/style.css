@@ -8999,6 +8999,79 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
     100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
 }
 
+/* ── Static-cascade command-post chrome ──────────────────────────────────────
+   Gated ENTIRELY behind .pm-c2 — a class the controller stamps on the map wrap
+   only when staticScenario is true. The Pro Brief mounts without staticScenario,
+   so it never carries .pm-c2 and keeps its live Time Machine untouched. */
+.pm-c2 .time-machine-panel,
+.pm-c2 .tm-event-ticker {
+    display: none !important;   /* no time axis to scrub → collapse the live plates */
+}
+
+.pm-c2 .pm-c2-frame {
+    position: absolute;
+    inset: 10px;
+    z-index: 6;
+    pointer-events: none;
+}
+.pm-c2 .pm-c2-corner {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border: 1px solid rgba(148, 163, 184, 0.5);
+}
+.pm-c2 .pm-c2-corner--tl { top: 0; left: 0;    border-right: 0; border-bottom: 0; }
+.pm-c2 .pm-c2-corner--tr { top: 0; right: 0;   border-left: 0;  border-bottom: 0; }
+.pm-c2 .pm-c2-corner--bl { bottom: 0; left: 0;  border-right: 0; border-top: 0; }
+.pm-c2 .pm-c2-corner--br { bottom: 0; right: 0; border-left: 0;  border-top: 0; }
+
+.pm-c2 .pm-c2-legend {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 6;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.6rem 0.75rem;
+    background: rgba(7, 11, 18, 0.9);
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #cbd5e1;
+}
+.pm-c2 .pm-c2-leg-row { display: flex; align-items: center; gap: 0.5rem; }
+.pm-c2 .pm-c2-sw { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.pm-c2 .pm-c2-sw--epi { background: #ef4444; }
+.pm-c2 .pm-c2-sw--aff { background: #22d3ee; }
+.pm-c2 .pm-c2-sw--unq { background: transparent; border: 1.5px solid #94a3b8; }
+
+.pm-c2 .pm-c2-static {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 6;
+    pointer-events: none;
+    padding: 0.5rem 0.7rem;
+    background: rgba(7, 11, 18, 0.9);
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
 /* Guest Stripe checkout — founding member email modal (glassmorphism) */
 .checkout-email-modal-root {
   position: fixed;

@@ -1401,6 +1401,10 @@ class SurveillanceMapController {
     start(): void {
         this.buildPanel();
         this.installTeardownHandle();
+        // A static cascade has no time axis. Stamp .pm-c2 on the wrap and swap the live
+        // Time Machine / Event Stream for a command-post readout + legend. Gated on
+        // staticScenario, so the Pro Brief (which mounts without it) is never affected.
+        if (this.args.staticScenario) this.injectStaticChrome();
         // Seed the state with the payload's static entropy/viscosity so the
         // animation has sensible scaling values even before any polling.
         if (
@@ -1476,6 +1480,34 @@ class SurveillanceMapController {
         // switch the wrapEl SURVIVES, so the self-disconnect above never fires and a
         // document-wide subtree observer would leak (holding a dead controller) per switch.
         this.addCleanup(() => observer.disconnect());
+    }
+
+    /**
+     * Static-cascade chrome (.pm-c2 idiom). The CSS hides the live Time Machine + Event
+     * Stream and this adds three overlays in the Stage-1 command-post register: corner
+     * brackets, a bottom-left legend, and a bottom-right "STATIC CASCADE · NO TIME SERIES"
+     * readout. Deliberately no entropy/viscosity number: for a scenario domain both are
+     * stored as 0.0 sentinels ("not applicable"), so printing 0.000 would assert a
+     * measurement that was never made — the same lie removed everywhere else.
+     */
+    private injectStaticChrome(): void {
+        const wrap = this.args.wrapEl;
+        wrap.classList.add('pm-c2');
+        const chrome = document.createElement('div');
+        chrome.className = 'pm-c2-chrome';
+        chrome.innerHTML = `
+            <div class="pm-c2-frame" aria-hidden="true">
+                <i class="pm-c2-corner pm-c2-corner--tl"></i><i class="pm-c2-corner pm-c2-corner--tr"></i>
+                <i class="pm-c2-corner pm-c2-corner--bl"></i><i class="pm-c2-corner pm-c2-corner--br"></i>
+            </div>
+            <div class="pm-c2-legend">
+                <div class="pm-c2-leg-row"><span class="pm-c2-sw pm-c2-sw--epi"></span>Epicenter</div>
+                <div class="pm-c2-leg-row"><span class="pm-c2-sw pm-c2-sw--aff"></span>Affected · measured</div>
+                <div class="pm-c2-leg-row"><span class="pm-c2-sw pm-c2-sw--unq"></span>Exposed · magnitude unknown</div>
+            </div>
+            <div class="pm-c2-static">Static cascade · no time series</div>`;
+        wrap.appendChild(chrome);
+        this.addCleanup(() => { chrome.remove(); wrap.classList.remove('pm-c2'); });
     }
 
     // ─── UI ──────────────────────────────────────────────────────────────
