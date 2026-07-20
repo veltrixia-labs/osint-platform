@@ -461,6 +461,44 @@ class TriggerMapController {
 
     // ── STAGE 2 — WHAT IT AFFECTS ────────────────────────────────────────────
 
+    /**
+     * The cascade's own node inventory, for the Stage-2 side panel. Ordered by MEASURED
+     * impact desc; exposed_unquantified entries are grouped SEPARATELY and show "--", never
+     * 0 — an unmeasured node is not a zero-impact node, and sorting it as 0 would bury the
+     * real ones. (Bidirectional row↔node highlight/zoom lands with the node-vocabulary pass.)
+     */
+    private buildCascadeListHtml(sc: any): string {
+        const nodes: any[] = Array.isArray(sc?.nodes) ? sc.nodes : [];
+        const isExposed = (n: any): boolean => n.type === 'exposed_unquantified' || n.unquantified === true;
+        const nameOf = (n: any): string => esc(String(n.name ?? n.id ?? '—'));
+        const scoreOf = (n: any): string =>
+            isExposed(n) || n.impact_score == null ? '--' : String(Math.round(n.impact_score));
+        const ordOf = (n: any): string => (n.order ? `O${n.order}` : '');
+
+        const epi = nodes.filter((n) => n.type === 'epicenter');
+        const affected = nodes
+            .filter((n) => n.type === 'affected' && !isExposed(n))
+            .sort((a, b) => (b.impact_score ?? 0) - (a.impact_score ?? 0));
+        const exposed = nodes.filter(isExposed);
+
+        const row = (n: any, cls: string): string => `
+            <div class="tm2-node ${cls}">
+                <span class="tm2-node-sw"></span>
+                <span class="tm2-node-name" title="${nameOf(n)}">${nameOf(n)}</span>
+                <span class="tm2-node-ord">${ordOf(n)}</span>
+                <span class="tm2-node-score">${scoreOf(n)}</span>
+            </div>`;
+
+        const group = (label: string, items: any[], cls: string): string =>
+            items.length ? `<div class="tm2-node-group">${esc(label)}</div>${items.map((n) => row(n, cls)).join('')}` : '';
+
+        return `<div class="tm2-cascade">
+            ${group('Epicenter', epi, 'tm2-node--epi')}
+            ${group(`Affected · measured (${affected.length})`, affected, 'tm2-node--aff')}
+            ${group(`Exposed · magnitude unknown (${exposed.length})`, exposed, 'tm2-node--unq')}
+        </div>`;
+    }
+
     private async enterStage2(s: ScenarioTrigger): Promise<void> {
         if (this.aborted) return;
         this.disposeStage1Map();     // Stage 1's map must die before Stage 2 builds its own.
@@ -473,12 +511,8 @@ class TriggerMapController {
                     Structural cascade from the vault graph.
                     <b>Not</b> derived from headline volume.
                 </div>
-            </div>
-            <div class="tm2-legend">
-                <div><span class="tm2-sw tm2-sw--epi"></span> epicenter</div>
-                <div><span class="tm2-sw tm2-sw--aff"></span> affected (measured)</div>
-                <div><span class="tm2-sw tm2-sw--unq"></span> exposed · magnitude unknown</div>
             </div>`;
+        // Legend moved onto the map itself (the .pm-c2 bottom-left overlay); no longer duplicated here.
 
         const back = this.panelEl.querySelector<HTMLButtonElement>('#tm2-back');
         if (back) {
@@ -510,6 +544,10 @@ class TriggerMapController {
                 </div>`;
             return;
         }
+
+        // Fill the side panel with the cascade's own content — was a title + legend then
+        // ~800px of dead space. Appended (not replaced) so the Back button + its listener survive.
+        this.panelEl.insertAdjacentHTML('beforeend', this.buildCascadeListHtml(sc));
 
         // Delegate to the existing cascade renderer: fan-out, arcs, and the hollow
         // grey rings for exposed_unquantified all come along unchanged.
@@ -636,6 +674,23 @@ function injectTriggerMapStyles(): void {
     .tm2-manual-row:hover { color:#e2e8f0; border-color:#475569; }
     .tm2-manual-count { font-size:10.5px; color:#475569;
                         font-family:ui-monospace, Menlo, monospace; }
+
+    /* Stage-2 cascade node inventory (side panel). Mono is inherited from .tm2-host. */
+    .tm2-cascade { margin-top:16px; }
+    .tm2-node-group { font-size:9.5px; font-weight:800; letter-spacing:0.13em; text-transform:uppercase;
+                      color:#64748b; margin:14px 0 6px; }
+    .tm2-node { display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:8px;
+                padding:6px 0; border-top:1px solid rgba(148,163,184,0.08); font-size:11.5px; }
+    .tm2-node-sw { width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
+    .tm2-node--epi .tm2-node-sw { background:#ef4444; }
+    .tm2-node--aff .tm2-node-sw { background:#22d3ee; }
+    .tm2-node--unq .tm2-node-sw { background:transparent; border:1.5px solid #94a3b8; }
+    .tm2-node-name { text-transform:uppercase; letter-spacing:0.04em; color:#cbd5e1;
+                     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tm2-node-ord { font-size:9.5px; color:#64748b; }
+    .tm2-node-score { font-weight:800; color:#e2e8f0; font-variant-numeric:tabular-nums;
+                      min-width:2ch; text-align:right; }
+    .tm2-node--unq .tm2-node-score { color:#64748b; }
 
     .tm2-legend { display:flex; flex-direction:column; gap:6px; margin-top:14px;
                   font-size:11.5px; color:#94a3b8; }
