@@ -376,6 +376,87 @@ function buildExposedLayer(Ctor: any, sid: string, nodes: SpatialNode[]): any {
     });
 }
 
+// ── Stage-2 reticle glyphs (STATIC cascade only) ────────────────────────────
+// Canvas-generated icons for a deck.gl IconLayer, so Stage 2's nodes speak the
+// same reticle language as Stage 1. One glyph per (role, detail); the controller
+// caches each so it is drawn exactly once. Detail degrades with size — ticks
+// collapse into noise on small nodes, so they are dropped. That is a rendering
+// choice, NOT a data claim: size still encodes impact_score, which is real.
+const RETICLE_PX = 128;
+type ReticleKind = 'epi' | 'aff' | 'exp';
+type ReticleDetail = 'full' | 'ticks' | 'ring' | 'dashed';
+
+function makeReticleIcon(kind: ReticleKind, detail: ReticleDetail): string {
+    const S = RETICLE_PX;
+    const canvas = document.createElement('canvas');
+    canvas.width = S;
+    canvas.height = S;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+    const cx = S / 2;
+    const cy = S / 2;
+    const color = kind === 'epi' ? '#ef4444' : kind === 'aff' ? '#22d3ee' : '#94a3b8';
+    const outer = S * 0.42;
+    const inner = S * 0.24;
+    ctx.strokeStyle = color;
+    ctx.lineCap = 'round';
+
+    if (detail === 'dashed') {
+        // Exposed · magnitude unknown — coarse dashes + no fill, so it reads as broken
+        // even at the smallest render size and never as a measured ring.
+        ctx.lineWidth = S * 0.05;
+        ctx.setLineDash([S * 0.11, S * 0.08]);
+        ctx.beginPath();
+        ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        return canvas.toDataURL('image/png');
+    }
+
+    // Outer ring — every non-dashed variant.
+    ctx.lineWidth = S * 0.045;
+    ctx.beginPath();
+    ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner ring — only the 'full' glyph is double-ringed (epicenter, or large affected).
+    if (detail === 'full') {
+        ctx.lineWidth = S * 0.038;
+        ctx.beginPath();
+        ctx.arc(cx, cy, inner, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    // N/S/E/W ticks — dropped for the small 'ring'-only variant.
+    if (detail === 'full' || detail === 'ticks') {
+        ctx.lineWidth = S * 0.045;
+        const t0 = outer - S * 0.10;
+        const t1 = outer + S * 0.055;
+        const ticks: Array<[number, number, number, number]> = [
+            [cx, cy - t0, cx, cy - t1],
+            [cx, cy + t0, cx, cy + t1],
+            [cx + t0, cy, cx + t1, cy],
+            [cx - t0, cy, cx - t1, cy],
+        ];
+        for (const [x0, y0, x1, y1] of ticks) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.stroke();
+        }
+    }
+
+    // Epicenter carries a small solid centre so the origin reads at a glance.
+    if (kind === 'epi') {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(cx, cy, S * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    return canvas.toDataURL('image/png');
+}
+
 /**
  * Faint grey arc for unquantified edges. Deck.gl's ArcLayer has no native dash
  * support, so we reuse the established order-3 pseudo-dash recipe already used
@@ -803,6 +884,7 @@ export async function mountSpatialContagionMap(
         // @deck.gl/layers: named exports (ScatterplotLayer, ArcLayer)
         const ScatterplotLayer: any = (layersMod as any).ScatterplotLayer;
         const ArcLayer: any        = (layersMod as any).ArcLayer;
+        const IconLayer: any       = (layersMod as any).IconLayer;   // static-cascade reticles
         // ScatterplotLayer doubles as the particle layer — each particle is
         // a small filled circle whose position is parametrically interpolated
         // along the arc's great-circle path each animation frame.
@@ -1017,6 +1099,7 @@ export async function mountSpatialContagionMap(
                 exposedLayer,
                 unquantifiedArcLayer,
                 ScatterplotLayer,
+                IconLayer,
                 nodes: displayNodes,
                 edgesFlat,
                 domainId: normalizedDomainId,
@@ -1313,6 +1396,9 @@ type SurveillanceMapCtorArgs = {
     /** Faint grey arc layer for unquantified edges. */
     unquantifiedArcLayer?: any;
     ScatterplotLayer: any;
+    /** @deck.gl/layers IconLayer constructor — static-cascade reticle glyphs. Optional:
+     *  absent → the static path falls back to the standard dot layers. */
+    IconLayer?: any;
     /** @deck.gl/layers ArcLayer constructor — required for forecast ghost arcs.
      *  Optional only because the legacy renderGlobalSurveillanceMap() path
      *  predates Phase 6 forecast mode and doesn't supply it. */
@@ -2056,6 +2142,84 @@ class SurveillanceMapController {
         this.repaintLayers();
     }
 
+    /** (role, detail) → cached IconLayer icon descriptor. Generated once per glyph. */
+    private reticleIconCache = new Map<string, any>();
+
+    private reticleIcon(kind: ReticleKind, detail: ReticleDetail): any {
+        const key = `${kind}:${detail}`;
+        let icon = this.reticleIconCache.get(key);
+        if (!icon) {
+            icon = {
+                url: makeReticleIcon(kind, detail),
+                width: RETICLE_PX,
+                height: RETICLE_PX,
+                anchorX: RETICLE_PX / 2,
+                anchorY: RETICLE_PX / 2,
+                mask: false,   // the glyph carries its own colour; do NOT tint by getColor
+            };
+            this.reticleIconCache.set(key, icon);
+        }
+        return icon;
+    }
+
+    /**
+     * Static-cascade node vocabulary: reticles instead of glowing dots, so Stage 2 speaks
+     * the same language as Stage 1. Split by cascade ROLE only (type) — no entity taxonomy
+     * exists in the data, so none is invented. Radius mirrors the dot formulas (size still
+     * encodes impact_score); ticks degrade out on small nodes as a legibility choice.
+     */
+    private pushStaticNodeReticles(builtLayers: any[], sid: string, nodeScale: number, triggerPulse: number): void {
+        const IconLayer = this.args.IconLayer;
+        const nodes = this.args.nodes;
+
+        // Exposed · magnitude unknown — dashed slate hollow ring, fixed size, drawn behind
+        // the measured nodes. Must never read as a measured ring.
+        const exposed = nodes.filter((n) => n.type === 'exposed_unquantified');
+        if (exposed.length) {
+            builtLayers.push(new IconLayer({
+                id: `sc-reticle-exposed-${sid}`,
+                data: exposed,
+                pickable: true,
+                sizeUnits: 'meters',
+                sizeMinPixels: 24,
+                sizeMaxPixels: 46,
+                getPosition: (d: any) => [d.lon, d.lat],
+                getIcon: () => this.reticleIcon('exp', 'dashed'),
+                getSize: () => UNQ_NODE_RADIUS_M * 2.4,
+            }));
+        }
+
+        // Measured — epicenter (red double ring + ticks) + affected (cyan; ticks degrade by
+        // impact). One layer, role/impact picked per node.
+        const measured = nodes.filter((n) => n.type === 'epicenter' || n.type === 'affected');
+        if (measured.length) {
+            const affDetail = (impact: number): ReticleDetail =>
+                impact >= 75 ? 'full' : impact >= 40 ? 'ticks' : 'ring';
+            builtLayers.push(new IconLayer({
+                id: `sc-reticle-measured-${sid}`,
+                data: measured,
+                pickable: true,
+                sizeUnits: 'meters',
+                sizeMinPixels: 14,
+                sizeMaxPixels: 112,
+                getPosition: (d: any) => [d.lon, d.lat],
+                getIcon: (d: any) =>
+                    d.type === 'epicenter'
+                        ? this.reticleIcon('epi', 'full')
+                        : this.reticleIcon('aff', affDetail(d.impact_score ?? 0)),
+                getSize: (d: any) => {
+                    if (d.type === 'epicenter') {
+                        return Math.max(25_000 + (d.impact_score ?? 100) * 1_200, 35_000) * nodeScale * triggerPulse * 2.4;
+                    }
+                    const base = Math.max(12_000 + (d.impact_score ?? 0) * 800, 16_000) * nodeScale;
+                    const pulsed = (d.impact_score ?? 0) >= TM_TRIGGER_IMPACT_THRESHOLD ? base * triggerPulse : base;
+                    return pulsed * 2.4;
+                },
+                updateTriggers: { getSize: this.animationPhase },
+            }));
+        }
+    }
+
     private repaintLayers(): void {
         if (this.aborted) return;   // INVARIANT (see stop())
         const pt = this.state.point();
@@ -2201,32 +2365,39 @@ class SurveillanceMapController {
         //   fabricate a magnitude we do not have. Pushed first so it sits behind
         //   the quantified layers. Omitting these would let setProps() wipe the
         //   exposed nodes/arcs off the map on the first animation frame.
+        // Static cascade → reticle vocabulary (Stage-1 idiom); otherwise the standard dots.
+        // The exposed reticle replaces the grey hollow ring, so skip that push when reticling.
+        const useReticles = this.args.staticScenario === true && !!this.args.IconLayer;
         if (this.args.unquantifiedArcLayer) builtLayers.push(this.args.unquantifiedArcLayer);
-        if (this.args.exposedLayer) builtLayers.push(this.args.exposedLayer);
+        if (this.args.exposedLayer && !useReticles) builtLayers.push(this.args.exposedLayer);
 
-        // — Affected nodes: pulse only when impact_score crosses the trigger
-        //   threshold (the >1.5x intensity surrogate).
-        const animatedAffected = this.args.affectedLayer.clone({
-            getRadius: (d: any) => {
-                const base = Math.max(12_000 + d.impact_score * 800, 16_000) * nodeScale;
-                return d.impact_score >= TM_TRIGGER_IMPACT_THRESHOLD
-                    ? base * triggerPulse
-                    : base;
-            },
-            updateTriggers: { getRadius: this.animationPhase },
-        });
-        builtLayers.push(animatedAffected);
+        if (useReticles) {
+            this.pushStaticNodeReticles(builtLayers, sid, nodeScale, triggerPulse);
+        } else {
+            // — Affected nodes: pulse only when impact_score crosses the trigger
+            //   threshold (the >1.5x intensity surrogate).
+            const animatedAffected = this.args.affectedLayer.clone({
+                getRadius: (d: any) => {
+                    const base = Math.max(12_000 + d.impact_score * 800, 16_000) * nodeScale;
+                    return d.impact_score >= TM_TRIGGER_IMPACT_THRESHOLD
+                        ? base * triggerPulse
+                        : base;
+                },
+                updateTriggers: { getRadius: this.animationPhase },
+            });
+            builtLayers.push(animatedAffected);
 
-        // — Epicenter: always-on heavy pulse (it IS the trigger by definition)
-        const animatedEpicenter = this.args.epicenterLayer.clone({
-            getRadius: (d: any) =>
-                Math.max(25_000 + d.impact_score * 1_200, 35_000) * nodeScale * triggerPulse,
-            getLineColor: warning
-                ? [255, 80, 80, Math.round(200 + 55 * arcPulse)]
-                : [255, 100, 100, 240],
-            updateTriggers: { getRadius: this.animationPhase, getLineColor: warning ? this.animationPhase : 0 },
-        });
-        builtLayers.push(animatedEpicenter);
+            // — Epicenter: always-on heavy pulse (it IS the trigger by definition)
+            const animatedEpicenter = this.args.epicenterLayer.clone({
+                getRadius: (d: any) =>
+                    Math.max(25_000 + d.impact_score * 1_200, 35_000) * nodeScale * triggerPulse,
+                getLineColor: warning
+                    ? [255, 80, 80, Math.round(200 + 55 * arcPulse)]
+                    : [255, 100, 100, 240],
+                updateTriggers: { getRadius: this.animationPhase, getLineColor: warning ? this.animationPhase : 0 },
+            });
+            builtLayers.push(animatedEpicenter);
+        }
 
         // — Phase 6.5: Three concentric ripple rings for critical nodes —
         // Each ring expands outward, fades, then resets — three offset
