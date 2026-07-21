@@ -18,7 +18,7 @@
  * fabrication.
  */
 import { apiClient } from '../api';
-import { renderSpatialContagionShell, mountSpatialContagionMap, injectMaplibreCss } from './pro_interactive_map';
+import { renderStaticCascadeShell, renderDrawer, mountSpatialContagionMap, injectMaplibreCss } from './pro_interactive_map';
 
 const LOG = '[TriggerMap]';
 
@@ -201,6 +201,10 @@ class TriggerMapController {
     private async renderStage1(): Promise<void> {
         if (this.aborted || !this.payload) return;
         this.disposeStage1Map();
+        // Full-bleed: the receipts live in the map's own drawer (open by default — they justify
+        // the firing state, so hiding them would leave the map unexplained). The fixed 380px
+        // sidebar stays retired in Stage 1 too.
+        this.panelEl.style.display = 'none';
 
         const p = this.payload;
         const firing = p.scenarios.filter((s) => s.firing && s.lat != null && s.lon != null);
@@ -216,8 +220,12 @@ class TriggerMapController {
                 <span class="tm2-hud-title">Spatial Contagion</span>
                 <span class="tm2-hud-src">OSINT // Open Source</span>
                 <span class="tm2-hud-clock" id="tm2-clock"></span>
-            </div>`;
-        this.renderPanel(firing, dormant, p);
+            </div>
+            ${renderDrawer('Receipts', 'triggers', true)}`;
+
+        const drawerBody = this.stageEl.querySelector<HTMLElement>('.sc-drawer-body');
+        if (drawerBody) this.renderPanel(firing, dormant, p, drawerBody);
+        this.wireDrawer();
 
         const mapEl = this.stageEl.querySelector<HTMLElement>('#tm2-map');
         if (!mapEl) return;
@@ -357,7 +365,12 @@ class TriggerMapController {
                 <span class="tm2-ret-count">${s.match_count}</span>
             </span>
             ${tag}`;
-        const onClick = (): void => { void this.enterStage2(s); };
+        const onClick = (): void => {
+            // Firing → surface its receipts in the drawer (the card's "View cascade →" goes deeper).
+            // Dormant has no receipt card, so it jumps straight into its cascade.
+            if (opts.dormant) void this.enterStage2(s);
+            else this.highlightScenarioCard(s.id);
+        };
         el.addEventListener('click', onClick);
         this.addCleanup(() => el.removeEventListener('click', onClick));
         return el;
@@ -365,7 +378,7 @@ class TriggerMapController {
 
     // ── The receipts panel — WHY it is firing ────────────────────────────────
 
-    private renderPanel(firing: ScenarioTrigger[], dormant: ScenarioTrigger[], p: TriggerPayload): void {
+    private renderPanel(firing: ScenarioTrigger[], dormant: ScenarioTrigger[], p: TriggerPayload, target: HTMLElement): void {
         if (this.aborted) return;
 
         const zero = firing.length === 0;
@@ -405,7 +418,7 @@ class TriggerMapController {
                 </li>`).join('');
 
             return `
-                <div class="tm2-card">
+                <div class="tm2-card" data-scenario="${esc(s.id)}">
                     <div class="tm2-card-head">
                         <span class="tm2-card-name">${esc(displayName(s))}</span>
                         <button type="button" class="tm2-view" data-scenario="${esc(s.id)}">View cascade →</button>
@@ -446,9 +459,9 @@ class TriggerMapController {
                     </button>`).join('')}
             </div>` : '';
 
-        this.panelEl.innerHTML = header + (zero ? zeroState : cards) + manual;
+        target.innerHTML = header + (zero ? zeroState : cards) + manual;
 
-        this.panelEl.querySelectorAll<HTMLButtonElement>('button[data-scenario]').forEach((btn) => {
+        target.querySelectorAll<HTMLButtonElement>('button[data-scenario]').forEach((btn) => {
             const id = btn.dataset.scenario;
             if (!id) return;
             const target = (this.payload?.scenarios ?? []).find((s) => s.id === id);
@@ -482,12 +495,12 @@ class TriggerMapController {
         const exposed = nodes.filter(isExposed);
 
         const row = (n: any, cls: string): string => `
-            <div class="tm2-node ${cls}">
+            <button type="button" class="tm2-node ${cls}" data-node-id="${esc(String(n.id ?? ''))}">
                 <span class="tm2-node-sw"></span>
                 <span class="tm2-node-name" title="${nameOf(n)}">${nameOf(n)}</span>
                 <span class="tm2-node-ord">${ordOf(n)}</span>
                 <span class="tm2-node-score">${scoreOf(n)}</span>
-            </div>`;
+            </button>`;
 
         const group = (label: string, items: any[], cls: string): string =>
             items.length ? `<div class="tm2-node-group">${esc(label)}</div>${items.map((n) => row(n, cls)).join('')}` : '';
@@ -499,27 +512,53 @@ class TriggerMapController {
         </div>`;
     }
 
+    /** Wire the "← Triggers" affordance (new shell's .sc-static-back, or the empty-state #tm2-back). */
+    private wireBack(): void {
+        const back = this.stageEl.querySelector<HTMLButtonElement>('.sc-static-back, #tm2-back');
+        if (!back) return;
+        const onBack = (): void => { void this.renderStage1(); };
+        back.addEventListener('click', onBack);
+        this.addCleanup(() => back.removeEventListener('click', onBack));
+    }
+
+    /** Wire the drawer's slide toggle. Shared by Stage 1 (Receipts) and Stage 2 (Roster). */
+    private wireDrawer(): void {
+        const drawer = this.stageEl.querySelector<HTMLElement>('.sc-drawer');
+        const handle = this.stageEl.querySelector<HTMLButtonElement>('.sc-drawer-handle');
+        if (!drawer || !handle) return;
+        const onToggle = (): void => {
+            const open = drawer.classList.toggle('sc-drawer--open');
+            handle.setAttribute('aria-expanded', String(open));
+            drawer.setAttribute('aria-hidden', String(!open));
+        };
+        handle.addEventListener('click', onToggle);
+        this.addCleanup(() => handle.removeEventListener('click', onToggle));
+    }
+
+    /** Map→panel link: open the drawer and flash+scroll a firing scenario's receipt card. */
+    private highlightScenarioCard(id: string): void {
+        const drawer = this.stageEl.querySelector<HTMLElement>('.sc-drawer');
+        const handle = this.stageEl.querySelector<HTMLButtonElement>('.sc-drawer-handle');
+        if (drawer && !drawer.classList.contains('sc-drawer--open')) {
+            drawer.classList.add('sc-drawer--open');
+            drawer.setAttribute('aria-hidden', 'false');
+            handle?.setAttribute('aria-expanded', 'true');
+        }
+        const card = this.stageEl.querySelector<HTMLElement>(`.tm2-card[data-scenario="${id}"]`);
+        if (!card) return;
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        card.classList.add('tm2-card--flash');
+        window.setTimeout(() => card.classList.remove('tm2-card--flash'), 1600);
+    }
+
     private async enterStage2(s: ScenarioTrigger): Promise<void> {
         if (this.aborted) return;
         this.disposeStage1Map();     // Stage 1's map must die before Stage 2 builds its own.
 
-        this.panelEl.innerHTML = `
-            <div class="tm2-head">
-                <button type="button" class="tm2-back" id="tm2-back">← Back to triggers</button>
-                <div class="tm2-head-title">${esc(displayName(s))}</div>
-                <div class="tm2-head-sub">
-                    Structural cascade from the vault graph.
-                    <b>Not</b> derived from headline volume.
-                </div>
-            </div>`;
-        // Legend moved onto the map itself (the .pm-c2 bottom-left overlay); no longer duplicated here.
-
-        const back = this.panelEl.querySelector<HTMLButtonElement>('#tm2-back');
-        if (back) {
-            const onBack = (): void => { void this.renderStage1(); };
-            back.addEventListener('click', onBack);
-            this.addCleanup(() => back.removeEventListener('click', onBack));
-        }
+        // Full-bleed: the roster moves into the map's own drawer, so the fixed 380px sidebar is
+        // retired for Stage 2 and the map goes edge-to-edge. renderStage1() restores it on Back.
+        this.panelEl.style.display = 'none';
+        this.panelEl.innerHTML = '';
 
         this.stageEl.innerHTML = `<div class="tm2-loading">Loading cascade…</div>`;
         let sc: any = null;
@@ -539,21 +578,43 @@ class TriggerMapController {
         if (!sc || !Array.isArray(sc.nodes) || sc.nodes.length === 0) {
             this.stageEl.innerHTML = `
                 <div class="tm2-empty tm2-empty--stage">
+                    <button type="button" class="tm2-back" id="tm2-back">← Back to triggers</button>
                     <div class="tm2-empty-title">No cascade data for ${esc(displayName(s))}.</div>
                     <div class="tm2-empty-sub">The scenario is triggered, but its graph has not been loaded.</div>
                 </div>`;
+            this.wireBack();
             return;
         }
 
-        // Fill the side panel with the cascade's own content — was a title + legend then
-        // ~800px of dead space. Appended (not replaced) so the Back button + its listener survive.
-        this.panelEl.insertAdjacentHTML('beforeend', this.buildCascadeListHtml(sc));
+        // Full-bleed drawer shell; the roster lives in the drawer, not a sidebar.
+        this.stageEl.innerHTML = renderStaticCascadeShell(sc, s.id);
 
-        // Delegate to the existing cascade renderer: fan-out, arcs, and the hollow
-        // grey rings for exposed_unquantified all come along unchanged.
-        this.stageEl.innerHTML = renderSpatialContagionShell(sc, '01', s.id);
+        const titleEl = this.stageEl.querySelector<HTMLElement>('.sc-static-title');
+        if (titleEl) titleEl.textContent = displayName(s);
+        this.wireBack();
+
+        const body = this.stageEl.querySelector<HTMLElement>('.sc-drawer-body');
+        if (body) body.innerHTML = this.buildCascadeListHtml(sc);
+
+        this.wireDrawer();
+
+        // Delegate to the existing cascade renderer: fan-out, arcs, hollow rings, reticles.
+        // start() also installs wrapEl.__scFocusNode() for the drawer→card wiring below.
         await mountSpatialContagionMap(this.stageEl, sc, s.id, { staticScenario: true });
         if (this.aborted) return;
+
+        // Drawer row → open that node's card on the map (read at click time, so the mount race
+        // is harmless — __scFocusNode is present well before any click).
+        const wrap = this.stageEl.querySelector<HTMLElement>('.sc-map-wrap');
+        if (body && wrap) {
+            const onRow = (e: Event): void => {
+                const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-node-id]');
+                const id = btn?.getAttribute('data-node-id');
+                if (id) (wrap as any).__scFocusNode?.(id);
+            };
+            body.addEventListener('click', onRow);
+            this.addCleanup(() => body.removeEventListener('click', onRow));
+        }
         // mountSpatialContagionMap installs its own teardown handle on the wrap element
         // (__scTeardown) and self-stops when that element leaves the DOM — which is exactly
         // what happens when renderStage1() replaces stageEl.innerHTML. No orphan.
@@ -631,6 +692,11 @@ function injectTriggerMapStyles(): void {
 
     .tm2-card { border:1px solid rgba(148,163,184,0.18); border-radius:10px;
                 padding:14px; margin-bottom:14px; background:rgba(8,13,28,0.6); }
+    .tm2-card--flash { animation:tm2-card-flash 1.6s ease; }
+    @keyframes tm2-card-flash {
+        0%,100% { box-shadow:0 0 0 0 rgba(251,191,36,0); border-color:rgba(148,163,184,0.18); }
+        18%     { box-shadow:0 0 0 2px rgba(251,191,36,0.85); border-color:#fbbf24; }
+    }
     .tm2-card-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .tm2-card-name { font-size:13px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; }
 
@@ -680,7 +746,10 @@ function injectTriggerMapStyles(): void {
     .tm2-node-group { font-size:9.5px; font-weight:800; letter-spacing:0.13em; text-transform:uppercase;
                       color:#64748b; margin:14px 0 6px; }
     .tm2-node { display:grid; grid-template-columns:auto 1fr auto auto; align-items:center; gap:8px;
-                padding:6px 0; border-top:1px solid rgba(148,163,184,0.08); font-size:11.5px; }
+                width:100%; padding:6px 4px; border:0; border-top:1px solid rgba(148,163,184,0.08);
+                background:transparent; color:inherit; font:inherit; font-size:11.5px;
+                text-align:left; cursor:pointer; border-radius:4px; }
+    .tm2-node:hover { background:rgba(148,163,184,0.08); }
     .tm2-node-sw { width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
     .tm2-node--epi .tm2-node-sw { background:#ef4444; }
     .tm2-node--aff .tm2-node-sw { background:#22d3ee; }

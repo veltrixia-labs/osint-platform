@@ -9081,6 +9081,151 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
     color: #94a3b8;
 }
 
+/* ── Static-cascade full-bleed drawer shell (Stage 2 of the trigger map) ──────
+   Rendered inside #tm2-stage inside #pro-map-container, so every rule is scoped
+   there — the Pro Brief (outside #pro-map-container) never matches these. */
+#pro-map-container .sc-static-shell {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+}
+#pro-map-container .sc-static-shell .sc-map-wrap { position: absolute; inset: 0; }
+/* No section head here, so the stats strip sits just below the top bar. */
+#pro-map-container .sc-static-shell .sc-stats-bar { top: 3.4rem; }
+
+#pro-map-container .sc-static-topbar {
+    position: absolute;
+    top: 0.85rem;
+    left: 1rem;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+#pro-map-container .sc-static-back {
+    background: rgba(7, 11, 18, 0.9);
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    color: #cbd5e1;
+    font: inherit;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+#pro-map-container .sc-static-back:hover { color: #e2e8f0; border-color: #475569; }
+#pro-map-container .sc-static-title {
+    color: #e2e8f0;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 6px #000;
+}
+
+/* Right-edge drawer, collapsed by default; slides in on the vertical ROSTER handle. */
+#pro-map-container .sc-drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 320px;
+    max-width: 84%;
+    z-index: 7;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    background: rgba(7, 11, 18, 0.94);
+    border-left: 1px solid #1e293b;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+#pro-map-container .sc-drawer--open { transform: translateX(0); }
+#pro-map-container .sc-drawer-handle {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate(-100%, -50%);
+    background: rgba(7, 11, 18, 0.94);
+    border: 1px solid #1e293b;
+    border-right: 0;
+    border-radius: 8px 0 0 8px;
+    color: #94a3b8;
+    font: inherit;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 0.8rem 0.4rem;
+    cursor: pointer;
+    writing-mode: vertical-rl;
+}
+#pro-map-container .sc-drawer-handle:hover { color: #e2e8f0; }
+#pro-map-container .sc-drawer-body { height: 100%; overflow-y: auto; padding: 1rem 0.9rem; }
+
+/* Node detail card — anchored beside a clicked node; role-coloured left border. */
+#pro-map-container .sc-node-card {
+    position: absolute;
+    z-index: 8;
+    min-width: 190px;
+    max-width: 260px;
+    padding: 0.7rem 0.8rem;
+    background: rgba(7, 11, 18, 0.95);
+    border: 1px solid #1e293b;
+    border-left-width: 3px;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+#pro-map-container .sc-node-card--epi { border-left-color: #ef4444; }
+#pro-map-container .sc-node-card--aff { border-left-color: #22d3ee; }
+#pro-map-container .sc-node-card--unq { border-left-color: #94a3b8; }
+#pro-map-container .sc-node-card-close {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    background: transparent;
+    border: 0;
+    color: #64748b;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+#pro-map-container .sc-node-card-close:hover { color: #e2e8f0; }
+#pro-map-container .sc-card-name {
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding-right: 1rem;
+}
+#pro-map-container .sc-card-role {
+    font-size: 0.56rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-top: 2px;
+}
+#pro-map-container .sc-card-rows { margin-top: 0.55rem; display: flex; flex-direction: column; gap: 3px; }
+#pro-map-container .sc-card-row { display: flex; justify-content: space-between; gap: 12px; }
+#pro-map-container .sc-card-k { color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.56rem; }
+#pro-map-container .sc-card-v { color: #e2e8f0; font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+#pro-map-container .sc-card-why {
+    margin-top: 0.55rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    font-size: 0.64rem;
+    line-height: 1.45;
+    color: #94a3b8;
+}
+
 /* Guest Stripe checkout — founding member email modal (glassmorphism) */
 .checkout-email-modal-root {
   position: fixed;

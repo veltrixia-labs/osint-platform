@@ -720,6 +720,79 @@ export function renderSpatialContagionShell(sc: any, sectionNum: string, domainI
 }
 
 /**
+ * The shared map skeleton — the ONE place the `#sc-wrap-${sid}` / `#sc-map-${sid}` id
+ * contract lives. mountSpatialContagionMap() looks these up by id. (renderSpatialContagionShell
+ * predates this and inlines its own identical copy; it is left byte-for-byte unchanged so the
+ * Pro Brief is provably untouched — only the new static shell routes through here.)
+ */
+function renderMapWrap(sid: string, hasData: boolean): string {
+    const overlay = hasData
+        ? `<div class="sc-map-overlay sc-map-overlay--loading" id="sc-loading-${sid}">
+               <div class="sc-loading-pulse"></div>
+               <span class="sc-loading-text">Initializing spatial intelligence layer...</span>
+           </div>`
+        : `<div class="sc-map-overlay">
+               <div class="sc-map-overlay-content">
+                   <span class="sc-map-overlay-icon">&#x1F310;</span>
+                   <span class="sc-map-overlay-text">Awaiting Spatial Data...</span>
+                   <span class="sc-map-overlay-sub">Geographic entities could not be resolved for this event. Check back after the next intelligence cycle.</span>
+               </div>
+           </div>`;
+    return `<div class="sc-map-wrap" id="sc-wrap-${sid}">
+            <div id="sc-map-${sid}" class="sc-map-canvas"></div>
+            ${overlay}
+        </div>`;
+}
+
+/**
+ * The map drawer — a right-edge slide-out with a vertical handle. Shared by the static cascade
+ * (roster, collapsed by default) and Stage 1 of the trigger map (receipts, expanded by default:
+ * the receipts ARE the justification for the firing state, so hiding them would leave the map
+ * unexplained). The caller fills `#sc-drawer-body-${sid}` and wires the handle toggle.
+ */
+export function renderDrawer(label: string, sid: string, open: boolean): string {
+    return `<aside class="sc-drawer${open ? ' sc-drawer--open' : ''}" id="sc-drawer-${sid}" aria-hidden="${open ? 'false' : 'true'}">
+        <button type="button" class="sc-drawer-handle" aria-expanded="${open ? 'true' : 'false'}">${esc(label)}</button>
+        <div class="sc-drawer-body" id="sc-drawer-body-${sid}"></div>
+    </aside>`;
+}
+
+/**
+ * Full-bleed, drawer-based shell for the STATIC cascade (Stage 2 of the trigger map). Distinct
+ * from renderSpatialContagionShell (the Pro Brief's inline report card) on purpose: no section
+ * head, no intro paragraph, map fills the whole area, and the node roster lives in a right-edge
+ * drawer instead of a fixed sidebar. Shares only the map skeleton (renderMapWrap) + the stats
+ * strip markup. The .pm-c2 chrome (corners/legend/static readout) is injected by the controller
+ * onto #sc-wrap-${sid}, so it carries over here unchanged.
+ */
+export function renderStaticCascadeShell(sc: any, domainId: string): string {
+    const normalizedDomainId = domainId || GLOBAL_DOMAIN_ID;
+    const nodes: SpatialNode[] = sc?.nodes ?? [];
+    const epicenter = nodes.find((n: SpatialNode) => n.type === 'epicenter');
+    const hasData = nodes.length > 0 && !String(sc?.warning ?? '').includes('no_resolved');
+    const sid = safeId(normalizedDomainId);
+
+    const statsBar = epicenter
+        ? `<div class="sc-stats-bar">
+            <div class="sc-stat"><span class="sc-stat-label">Epicenter</span><span class="sc-stat-val">${esc(epicenter.name)}</span></div>
+            <div class="sc-stat"><span class="sc-stat-label">Impact Score</span><span class="sc-stat-val sc-stat-val--critical">${(sc.epicenter_impact_score ?? 0).toFixed(1)}</span></div>
+            <div class="sc-stat"><span class="sc-stat-label">Affected Nodes</span><span class="sc-stat-val">${Math.max(0, (sc.node_count ?? nodes.length) - 1)}</span></div>
+            <div class="sc-stat"><span class="sc-stat-label">Edge Intensity</span><span class="sc-stat-val">${(sc.edge_intensity ?? 0).toFixed(3)}</span></div>
+           </div>`
+        : '';
+
+    return `<div class="sc-static-shell" data-sc-domain="${esc(normalizedDomainId)}">
+        ${renderMapWrap(sid, hasData)}
+        <div class="sc-static-topbar">
+            <button type="button" class="sc-static-back" id="sc-back-${sid}">&larr; Triggers</button>
+            <span class="sc-static-title" id="sc-title-${sid}"></span>
+        </div>
+        ${statsBar}
+        ${renderDrawer('Roster', sid, false)}
+    </div>`;
+}
+
+/**
  * Stats HUD body — the same four cards Phase 4 had, but stripped of any
  * panel chrome. The wireStatsHudObserver() refreshes these on domain swap.
  */
@@ -1490,7 +1563,7 @@ class SurveillanceMapController {
         // A static cascade has no time axis. Stamp .pm-c2 on the wrap and swap the live
         // Time Machine / Event Stream for a command-post readout + legend. Gated on
         // staticScenario, so the Pro Brief (which mounts without it) is never affected.
-        if (this.args.staticScenario) this.injectStaticChrome();
+        if (this.args.staticScenario) { this.injectStaticChrome(); this.installNodeCard(); }
         // Seed the state with the payload's static entropy/viscosity so the
         // animation has sensible scaling values even before any polling.
         if (
@@ -1594,6 +1667,118 @@ class SurveillanceMapController {
             <div class="pm-c2-static">Static cascade · no time series</div>`;
         wrap.appendChild(chrome);
         this.addCleanup(() => { chrome.remove(); wrap.classList.remove('pm-c2'); });
+    }
+
+    // ─── Node detail card (static cascade only) ──────────────────────────
+    private cardEl: HTMLElement | null = null;
+    private activeNodeId: string | null = null;
+    private cardMoveHandler: (() => void) | null = null;
+
+    /** Wire click→card: a reticle click opens a detail card; empty-map click closes it. Also
+     *  exposes wrapEl.__scFocusNode(id) so drawer rows can open the same card. */
+    private installNodeCard(): void {
+        const card = document.createElement('div');
+        card.className = 'sc-node-card';
+        card.style.display = 'none';
+        this.args.wrapEl.appendChild(card);
+        this.cardEl = card;
+        this.addCleanup(() => { card.remove(); this.cardEl = null; });
+
+        // onClick merges into the overlay's existing props (getTooltip/layers survive; the
+        // per-frame setProps({layers}) does not clobber it).
+        this.args.overlay.setProps({
+            onClick: (info: any): void => {
+                const obj = info?.object;
+                if (obj && (obj.type === 'epicenter' || obj.type === 'affected' || obj.type === 'exposed_unquantified')) {
+                    this.showCardForNode(obj);
+                } else {
+                    this.hideCard();
+                }
+            },
+        });
+
+        const onCardClick = (e: Event): void => {
+            if ((e.target as HTMLElement).closest('.sc-node-card-close')) this.hideCard();
+        };
+        card.addEventListener('click', onCardClick);
+        this.addCleanup(() => card.removeEventListener('click', onCardClick));
+
+        (this.args.wrapEl as any).__scFocusNode = (id: string): void => this.focusNodeById(id);
+        this.addCleanup(() => { try { delete (this.args.wrapEl as any).__scFocusNode; } catch { /* ignore */ } });
+    }
+
+    private focusNodeById(id: string): void {
+        const node = this.args.nodes.find((n) => String(n.id) === String(id));
+        if (node) this.showCardForNode(node);
+    }
+
+    private showCardForNode(node: any): void {
+        if (!this.cardEl) return;
+        const roleCls = node.type === 'epicenter' ? 'epi' : node.type === 'affected' ? 'aff' : 'unq';
+        this.activeNodeId = String(node.id);
+        this.cardEl.className = `sc-node-card sc-node-card--${roleCls}`;
+        this.cardEl.innerHTML = this.buildNodeCardHtml(node);
+        this.cardEl.style.display = 'block';
+        this.positionCard(node);
+        // Re-anchor on pan/zoom (registered once).
+        if (!this.cardMoveHandler) {
+            this.cardMoveHandler = (): void => {
+                const n = this.args.nodes.find((x) => String(x.id) === this.activeNodeId);
+                if (n && this.cardEl && this.cardEl.style.display !== 'none') this.positionCard(n);
+            };
+            this.args.mapRef?.on('move', this.cardMoveHandler);
+            this.addCleanup(() => { if (this.cardMoveHandler) this.args.mapRef?.off('move', this.cardMoveHandler); });
+        }
+    }
+
+    /** Anchor beside the node; flip to the other side on horizontal overflow, clamp to the wrap. */
+    private positionCard(node: any): void {
+        const card = this.cardEl;
+        const map = this.args.mapRef;
+        if (!card || !map || node.lon == null || node.lat == null) return;
+        const p = map.project([node.lon, node.lat]);
+        const w = this.args.wrapEl.getBoundingClientRect();
+        const cw = card.offsetWidth || 240;
+        const ch = card.offsetHeight || 160;
+        const gap = 16;
+        let x = p.x + gap;
+        if (x + cw > w.width) x = p.x - cw - gap;           // flip left
+        x = Math.max(8, Math.min(x, w.width - cw - 8));      // clamp X
+        let y = p.y - ch / 2;
+        y = Math.max(8, Math.min(y, w.height - ch - 8));     // clamp Y
+        card.style.left = `${Math.round(x)}px`;
+        card.style.top = `${Math.round(y)}px`;
+    }
+
+    private hideCard(): void {
+        this.activeNodeId = null;
+        if (this.cardEl) this.cardEl.style.display = 'none';
+    }
+
+    /** Only fields the node object actually carries. impact → "--" for exposed/null (never 0).
+     *  `why` is the payload's own provenance string (it carries the upstream/weight text — there
+     *  is no structured VIA field on the node). */
+    private buildNodeCardHtml(node: any): string {
+        const isExposed = node.type === 'exposed_unquantified' || node.impact_score == null;
+        const roleLabel = node.type === 'epicenter' ? 'Epicenter'
+            : node.type === 'affected' ? 'Affected · measured'
+            : 'Exposed · magnitude unknown';
+        const impact = isExposed || node.impact_score == null ? '--' : Number(node.impact_score).toFixed(1);
+        const rows: string[] = [
+            `<div class="sc-card-row"><span class="sc-card-k">Impact</span><span class="sc-card-v">${impact}</span></div>`,
+        ];
+        if (node.order != null) rows.push(`<div class="sc-card-row"><span class="sc-card-k">Order</span><span class="sc-card-v">O${esc(String(node.order))}</span></div>`);
+        if (node.country) rows.push(`<div class="sc-card-row"><span class="sc-card-k">Country</span><span class="sc-card-v">${esc(String(node.country))}</span></div>`);
+        if (node.lat != null && node.lon != null) {
+            const coord = `${Math.abs(node.lat).toFixed(2)}${node.lat >= 0 ? 'N' : 'S'} ${Math.abs(node.lon).toFixed(2)}${node.lon >= 0 ? 'E' : 'W'}`;
+            rows.push(`<div class="sc-card-row"><span class="sc-card-k">Coord</span><span class="sc-card-v">${coord}</span></div>`);
+        }
+        const why = node.why ? `<div class="sc-card-why">${esc(String(node.why))}</div>` : '';
+        return `<button type="button" class="sc-node-card-close" aria-label="Close">&times;</button>
+            <div class="sc-card-name">${esc(String(node.name ?? node.id ?? '—'))}</div>
+            <div class="sc-card-role">${esc(roleLabel)}</div>
+            <div class="sc-card-rows">${rows.join('')}</div>
+            ${why}`;
     }
 
     // ─── UI ──────────────────────────────────────────────────────────────
@@ -2180,6 +2365,10 @@ class SurveillanceMapController {
                 id: `sc-reticle-exposed-${sid}`,
                 data: exposed,
                 pickable: true,
+                // Pick the whole icon quad, not just opaque pixels. IconLayer's default
+                // alphaCutoff (0.05) discards the transparent interior AND the dash gaps from
+                // picking, so the sparse dashed exposed ring was almost unclickable.
+                alphaCutoff: 0,
                 sizeUnits: 'meters',
                 sizeMinPixels: 24,
                 sizeMaxPixels: 46,
@@ -2199,6 +2388,7 @@ class SurveillanceMapController {
                 id: `sc-reticle-measured-${sid}`,
                 data: measured,
                 pickable: true,
+                alphaCutoff: 0,   // full-quad picking (see exposed layer) — click the ring's interior too
                 sizeUnits: 'meters',
                 sizeMinPixels: 14,
                 sizeMaxPixels: 112,
@@ -2404,8 +2594,13 @@ class SurveillanceMapController {
         // phases create a staggered "sonar" effect rather than a single
         // pulsating dot. Uses the same ScatterplotLayer ctor so no extra
         // module import is needed.
+        //
+        // Dropped in static-cascade (reticle) mode: the expanding cyan rings sit on top of
+        // every impact>=75 node and drown the reticle glyphs, so epicenter/affected/exposed
+        // stop being distinguishable. The reticle IS the vocabulary now, and radius already
+        // encodes impact continuously — the >=75 sonar was the old dot design's flourish.
         const ScatterplotCtor = this.args.ScatterplotLayer;
-        if (ScatterplotCtor) {
+        if (ScatterplotCtor && !useReticles) {
             const criticalForRings = this.args.nodes.filter(
                 (n) => n.type === 'epicenter' || n.impact_score >= TM_TRIGGER_IMPACT_THRESHOLD,
             );
