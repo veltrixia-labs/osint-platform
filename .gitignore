@@ -47,3 +47,9 @@ Thumbs.db
 /start_local_env.bat
 /.claude/
 /backups/
+
+# local py3.11 venv for running the backend during visual verification
+.venv311/
+# playwright map screenshots (visual verification)
+.map-shots/
+web_dashboard/.map-shots/
