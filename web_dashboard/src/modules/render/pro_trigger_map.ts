@@ -752,7 +752,7 @@ function injectTriggerMapStyles(): void {
     .tm2-node:hover { background:rgba(148,163,184,0.08); }
     .tm2-node-sw { width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
     .tm2-node--epi .tm2-node-sw { background:#ef4444; }
-    .tm2-node--aff .tm2-node-sw { background:#22d3ee; }
+    .tm2-node--aff .tm2-node-sw { background:#00ff5a; }
     .tm2-node--unq .tm2-node-sw { background:transparent; border:1.5px solid #94a3b8; }
     .tm2-node-name { text-transform:uppercase; letter-spacing:0.04em; color:#cbd5e1;
                      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -766,7 +766,7 @@ function injectTriggerMapStyles(): void {
     .tm2-legend > div { display:flex; align-items:center; gap:8px; }
     .tm2-sw { width:11px; height:11px; border-radius:50%; display:inline-block; }
     .tm2-sw--epi { background:#ef4444; }
-    .tm2-sw--aff { background:#22d3ee; }
+    .tm2-sw--aff { background:#00ff5a; }
     .tm2-sw--unq { background:transparent; border:1.5px solid #94a3b8; }
 
     /* ── Map chrome: command-post HUD + corner brackets. pointer-events:none so the
