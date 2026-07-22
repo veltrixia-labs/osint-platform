@@ -9056,7 +9056,7 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
 .pm-c2 .pm-c2-leg-row { display: flex; align-items: center; gap: 0.5rem; }
 .pm-c2 .pm-c2-sw { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
 .pm-c2 .pm-c2-sw--epi { background: #ef4444; }
-.pm-c2 .pm-c2-sw--aff { background: #22d3ee; }
+.pm-c2 .pm-c2-sw--aff { background: #00ff5a; }
 .pm-c2 .pm-c2-sw--unq { background: transparent; border: 1.5px solid #94a3b8; }
 
 /* bottom-CENTRE: clear of the legend (bottom-left) and the required CARTO/OSM attribution (bottom-right) */
@@ -9080,6 +9080,116 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
     text-transform: uppercase;
     color: #94a3b8;
 }
+
+/* ── Map-free GRAPH view ──────────────────────────────────────────────────────
+   The open button lives in the .pm-c2 chrome; the overlay covers the whole map area
+   (map stays mounted underneath). All scoped so the Pro Brief never sees it. */
+.pm-c2 .pm-c2-graphbtn {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.75rem;
+    z-index: 6;
+    pointer-events: auto;
+    background: rgba(7, 11, 18, 0.92);
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    color: #cbd5e1;
+    font: inherit;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+.pm-c2 .pm-c2-graphbtn:hover { color: #e2e8f0; border-color: #475569; }
+
+#pro-map-container .pm-graph {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    /* Fully OPAQUE so the map underneath can't show through and compete with the labels. The map
+       is not unmounted — it stays live behind this overlay; closing just hides the panel. */
+    background: radial-gradient(circle at 50% 44%, #0b1424, #04060e);
+    font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+}
+#pro-map-container .pm-graph-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    flex: 0 0 auto;
+}
+#pro-map-container .pm-graph-title {
+    color: #e2e8f0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+#pro-map-container .pm-graph-close {
+    background: rgba(7, 11, 18, 0.9);
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    color: #cbd5e1;
+    font: inherit;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+}
+#pro-map-container .pm-graph-close:hover { color: #e2e8f0; border-color: #475569; }
+#pro-map-container .pm-graph-svg { flex: 1 1 auto; min-height: 0; width: 100%; display: block; }
+#pro-map-container .pm-graph-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    padding: 0.6rem 1rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    font-size: 0.56rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    flex: 0 0 auto;
+}
+#pro-map-container .pm-graph-legend span { display: flex; align-items: center; gap: 6px; }
+#pro-map-container .pm-gl { width: 11px; height: 11px; display: inline-block; }
+#pro-map-container .pm-gl--epi { background: #ef4444; border-radius: 50%; }
+#pro-map-container .pm-gl--aff { background: #00ff5a; border-radius: 50%; }
+#pro-map-container .pm-gl--unq { background: transparent; border: 1.5px dashed #94a3b8; border-radius: 50%; }
+#pro-map-container .pm-gl--om  { background: rgba(125, 211, 252, 0.2); border: 1px solid #7dd3fc; transform: rotate(45deg); }
+#pro-map-container .pm-gl--der { width: 16px; height: 0; border-top: 2px dotted #7dd3fc; }
+
+/* SVG marks */
+#pro-map-container .pm-g-edge { stroke: rgba(148, 163, 184, 0.42); fill: none; }
+#pro-map-container .pm-g-edge--unq { stroke: rgba(148, 163, 184, 0.5); stroke-width: 1 !important; stroke-dasharray: 5 5; }
+#pro-map-container .pm-g-edge--derived { stroke: #7dd3fc; stroke-opacity: 0.5; stroke-width: 1; stroke-dasharray: 1.5 4; }
+#pro-map-container .pm-g-node { cursor: pointer; }
+#pro-map-container .pm-g-node--epi circle { fill: #ef4444; stroke: #ff8080; stroke-width: 1.5; }
+#pro-map-container .pm-g-node--aff circle { fill: #00ff5a; fill-opacity: 0.85; stroke: #00ff5a; stroke-width: 1; }
+#pro-map-container .pm-g-node--unq circle { fill: none; stroke: #94a3b8; stroke-width: 1.5; stroke-dasharray: 3 3; }
+#pro-map-container .pm-g-node--om path { fill: rgba(125, 211, 252, 0.18); stroke: #7dd3fc; stroke-width: 1.5; }
+#pro-map-container .pm-g-label {
+    fill: #cbd5e1;
+    font-size: 12px;
+    /* text-anchor is set per-element (outward: start on the right half, end on the left) — a CSS
+       value here would override the attribute, so it is deliberately omitted. */
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    pointer-events: none;
+    paint-order: stroke;
+    stroke: rgba(2, 6, 23, 0.92);
+    stroke-width: 3px;
+}
+#pro-map-container .pm-g-label--om { fill: #7dd3fc; }
+#pro-map-container .pm-graph-card { position: absolute; }
 
 /* ── Static-cascade full-bleed drawer shell (Stage 2 of the trigger map) ──────
    Rendered inside #tm2-stage inside #pro-map-container, so every rule is scoped
@@ -9185,7 +9295,7 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 #pro-map-container .sc-node-card--epi { border-left-color: #ef4444; }
-#pro-map-container .sc-node-card--aff { border-left-color: #22d3ee; }
+#pro-map-container .sc-node-card--aff { border-left-color: #00ff5a; }
 #pro-map-container .sc-node-card--unq { border-left-color: #94a3b8; }
 #pro-map-container .sc-node-card-close {
     position: absolute;

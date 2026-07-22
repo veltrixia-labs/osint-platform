@@ -267,6 +267,43 @@ def _load_scenario_catalogue() -> List[Dict[str, Any]]:
     return out
 
 
+_scenario_offmap_cache: Optional[Dict[str, Dict[str, Any]]] = None
+
+
+def _load_scenario_offmap() -> Dict[str, Dict[str, Any]]:
+    """Map domain_id → the payload's PLACELESS fields (conduits / no_map / honest_gaps), read
+    from the same data/scenarios/*.json the catalogue uses (same _SCENARIO_DIR + _slugify_hub;
+    the filename is NOT the slug — 'bab_el-mandeb.json' → 'bab_el_mandeb' — so we match by the
+    payload's own hub, never by guessing a path). Cached — the files are static.
+
+    Values pass through VERBATIM: Brent's raw_impact is null and stays null. Only keys the file
+    actually carries are included, so a file without `honest_gaps` yields it ABSENT, not empty.
+    A missing/corrupt file is skipped, never raised — a broken scenario file must not 500 the map.
+    """
+    global _scenario_offmap_cache
+    if _scenario_offmap_cache is not None:
+        return _scenario_offmap_cache
+
+    out: Dict[str, Dict[str, Any]] = {}
+    for path in sorted(glob.glob(os.path.join(_SCENARIO_DIR, "*.json"))):
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                payload = json.load(fh)
+            hub = (payload.get("scenario") or {}).get("hub") or ""
+            if not hub:
+                continue
+            fields: Dict[str, Any] = {
+                key: payload[key]
+                for key in ("conduits", "no_map", "honest_gaps")
+                if key in payload
+            }
+            out[_slugify_hub(hub)] = fields
+        except Exception as exc:  # noqa: BLE001 — a bad file must not 500 the route
+            logger.warning("scenario off-map: skipping %s (%s)", path, exc)
+    _scenario_offmap_cache = out
+    return out
+
+
 @router.get("/domains/scenarios")
 async def list_scenarios(
     response: Response,
@@ -471,7 +508,14 @@ async def get_domain_spatial_contagion(
         )
     ).scalars().all()
     # _shape_contagion_payload is already null-guarded and emits the new columns.
-    return _shape_contagion_payload(domain_id, list(nodes), list(edges))
+    payload = _shape_contagion_payload(domain_id, list(nodes), list(edges))
+    # Attach the placeless fields from the scenario JSON — ONLY for scenario domains. A domain with
+    # no matching file (energy / shipping / global relics) gets them ABSENT, never fabricated. The
+    # DB-derived nodes/edges above are not touched; the values pass through verbatim.
+    off_map = _load_scenario_offmap().get(domain_id)
+    if off_map:
+        payload.update(off_map)
+    return payload
 
 
 def _snapshot_to_series_point(snap: ContagionHistory) -> Dict[str, Any]:

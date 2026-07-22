@@ -137,6 +137,15 @@ export type SpatialEdge = {
     domain_id?: string;
 };
 
+/** Placeless payload fields — coordinate-less nodes the map cannot show. Passed through
+ *  verbatim by the API from the scenario JSON; raw_impact/weight may be null (never 0). */
+export type Conduit = { commodity: string; weight: number | null; unit: string };
+export type OffMapNode = { id: string; type?: string; raw_impact: number | null; reason?: string };
+export type HonestGaps = {
+    exposed_null?: Array<{ id: string; role?: string }>;
+    node_gaps?: Array<{ id: string; impact?: number | null; reason?: string }>;
+};
+
 export type SpatialContagion = {
     nodes: SpatialNode[];
     edges: SpatialEdge[];
@@ -146,6 +155,10 @@ export type SpatialContagion = {
     edge_count?: number;
     schema_version?: string;
     warning?: string;
+    /** Coordinate-less nodes / conduits / model gaps — present only for scenario domains. */
+    conduits?: Conduit[];
+    no_map?: OffMapNode[];
+    honest_gaps?: HonestGaps;
     /** v2 payload — counts per order (1/2/3). Drives sidebar mini-text. */
     order_counts?: {
         order_1?: number;
@@ -395,7 +408,7 @@ function makeReticleIcon(kind: ReticleKind, detail: ReticleDetail): string {
     if (!ctx) return '';
     const cx = S / 2;
     const cy = S / 2;
-    const color = kind === 'epi' ? '#ef4444' : kind === 'aff' ? '#22d3ee' : '#94a3b8';
+    const color = kind === 'epi' ? '#ef4444' : kind === 'aff' ? '#00ff5a' : '#94a3b8';
     const outer = S * 0.42;
     const inner = S * 0.24;
     ctx.strokeStyle = color;
@@ -1005,6 +1018,10 @@ export async function mountSpatialContagionMap(
             style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
             center: [centerLon, centerLat],
             zoom: initialZoom,
+            // Static cascade opens tilted so the raised arcs read as curves over the surface;
+            // the Pro Brief (no staticScenario) stays flat (0 = MapLibre default). Set only once
+            // here — never re-applied on refresh, so the user's later pitch/bearing/zoom stick.
+            pitch: opts?.staticScenario ? 50 : 0,
             attributionControl: false,
             antialias: true,   // Required: ensures WebGL2 context attributes for deck.gl interleaved mode
         });
@@ -1147,7 +1164,19 @@ export async function mountSpatialContagionMap(
                     [Math.min(...lons), Math.min(...lats)],
                     [Math.max(...lons), Math.max(...lats)],
                 );
-                map.fitBounds(bounds, { padding: 70, maxZoom: 7, duration: 900 });
+                if (opts?.staticScenario) {
+                    // MapLibre's cameraForBounds computes the fit zoom TOP-DOWN — it does not
+                    // account for pitch. A pitched frustum reveals MORE ground than top-down at the
+                    // same zoom, so nothing is cut off, but the framing is looser and the cluster
+                    // sits low. Extra top padding pushes it down off the compressed horizon; keep
+                    // the tilt (pitch/bearing forwarded to the eased camera). Applied once — not on refresh.
+                    map.fitBounds(bounds, {
+                        padding: { top: 130, bottom: 60, left: 70, right: 70 },
+                        maxZoom: 7, pitch: 50, bearing: 0, duration: 900,
+                    });
+                } else {
+                    map.fitBounds(bounds, { padding: 70, maxZoom: 7, duration: 900 });
+                }
             }
 
             // ─────────────────────────────────────────────────────────────
@@ -1180,6 +1209,9 @@ export async function mountSpatialContagionMap(
                 // A static cascade has no time axis — don't poll, and say so on the panel.
                 enableHistoryPolling: opts?.staticScenario !== true,
                 staticScenario: opts?.staticScenario === true,
+                // Placeless fields for the OFF-MAP panel — verbatim, no coercion.
+                offMap: { conduits: payload?.conduits, no_map: payload?.no_map, honest_gaps: payload?.honest_gaps },
+                graphEdges: payload?.edges,   // raw edges (source_id/target_id) for the GRAPH view
                 mapRef: map,   // ← triggerRepaint() keeps interleaved animation alive
             });
             surveillance.start();
@@ -1493,6 +1525,12 @@ type SurveillanceMapCtorArgs = {
     /** A vault scenario cascade: one snapshot, no time axis. Disables the scrubber
      *  and relabels the panel instead of leaving a dead control that looks broken. */
     staticScenario?: boolean;
+    /** Placeless payload fields (conduits / no_map / honest_gaps) — for the static OFF-MAP panel.
+     *  Verbatim from the payload; absent for non-scenario domains. */
+    offMap?: { conduits?: Conduit[]; no_map?: OffMapNode[]; honest_gaps?: HonestGaps };
+    /** RAW payload edges (with source_id/target_id) — the adjacency the map-free GRAPH view needs.
+     *  edgesFlat is coordinate-only, so it cannot supply the id join. */
+    graphEdges?: SpatialEdge[];
     /** Fallback entropy when polling is disabled. */
     seedEntropy?: number;
     /** Fallback viscosity when polling is disabled. */
@@ -1664,9 +1702,248 @@ class SurveillanceMapController {
                 <div class="pm-c2-leg-row"><span class="pm-c2-sw pm-c2-sw--aff"></span>Affected · measured</div>
                 <div class="pm-c2-leg-row"><span class="pm-c2-sw pm-c2-sw--unq"></span>Exposed · magnitude unknown</div>
             </div>
-            <div class="pm-c2-static">Static cascade · no time series</div>`;
+            <div class="pm-c2-static">Static cascade · no time series</div>
+            <button type="button" class="pm-c2-graphbtn" aria-label="Open the relationship graph">◈ Graph</button>`;
         wrap.appendChild(chrome);
         this.addCleanup(() => { chrome.remove(); wrap.classList.remove('pm-c2'); });
+
+        // GRAPH view — a full-panel overlay that COVERS the map (the map is NOT unmounted). It
+        // carries the off-map nodes as first-class diamonds, replacing the old OFF-MAP text panel.
+        const graphBtn = chrome.querySelector<HTMLButtonElement>('.pm-c2-graphbtn');
+        if (graphBtn) {
+            const onGraph = (): void => this.openGraph();
+            graphBtn.addEventListener('click', onGraph);
+            this.addCleanup(() => graphBtn.removeEventListener('click', onGraph));
+        }
+    }
+
+    // ─── Map-free GRAPH view (static cascade only) ───────────────────────
+    private graphEl: HTMLElement | null = null;
+    private graphCardEl: HTMLElement | null = null;
+
+    /** Open the relationship graph as a full-panel overlay OVER the map. The map is NOT unmounted —
+     *  it stays live underneath; closing just hides this overlay. Built once (deterministic radial
+     *  layout, no force sim), so it looks identical every open. */
+    private openGraph(): void {
+        if (this.graphEl) { this.graphEl.style.display = 'flex'; return; }
+        const host = this.args.wrapEl.parentElement ?? this.args.wrapEl;
+        const el = document.createElement('div');
+        el.className = 'pm-graph';
+        const epiName = this.args.nodes.find((n) => n.type === 'epicenter')?.name ?? this.args.domainId;
+        el.innerHTML = `
+            <div class="pm-graph-head">
+                <span class="pm-graph-title">Cascade graph · ${esc(String(epiName))}</span>
+                <button type="button" class="pm-graph-close">&times; Map</button>
+            </div>
+            ${this.buildGraphSvg()}
+            <div class="pm-graph-legend">
+                <span><i class="pm-gl pm-gl--epi"></i>Epicenter</span>
+                <span><i class="pm-gl pm-gl--aff"></i>Affected · size = impact</span>
+                <span><i class="pm-gl pm-gl--unq"></i>Exposed · dashed, magnitude unknown</span>
+                <span><i class="pm-gl pm-gl--om"></i>Off-map · market/org, no coordinates</span>
+                <span><i class="pm-gl pm-gl--der"></i>Dotted edge = derived from weight, not a payload edge</span>
+            </div>`;
+        host.appendChild(el);
+        this.graphEl = el;
+
+        const onClick = (ev: Event): void => {
+            const target = ev.target as HTMLElement;
+            if (target.closest('.pm-graph-close')) { this.closeGraph(); return; }
+            const g = target.closest<HTMLElement>('.pm-g-node');
+            if (!g) { this.hideGraphCard(); return; }
+            const rect = el.getBoundingClientRect();
+            const x = (ev as MouseEvent).clientX - rect.left;
+            const y = (ev as MouseEvent).clientY - rect.top;
+            const nid = g.getAttribute('data-nid');
+            const omid = g.getAttribute('data-omid');
+            if (nid) {
+                const node = this.args.nodes.find((n) => String(n.id) === nid);
+                if (node) {
+                    const role = node.type === 'epicenter' ? 'epi' : node.type === 'affected' ? 'aff' : 'unq';
+                    this.graphShowCard(this.buildNodeCardHtml(node), role, x, y);
+                }
+            } else if (omid) {
+                const om = (this.args.offMap?.no_map ?? []).find((o) => String(o.id) === omid);
+                if (om) this.graphShowCard(this.buildOffMapCardHtml(om), 'unq', x, y);
+            }
+        };
+        el.addEventListener('click', onClick);
+        this.addCleanup(() => { el.removeEventListener('click', onClick); el.remove(); this.graphEl = null; });
+    }
+
+    private closeGraph(): void {
+        if (this.graphEl) this.graphEl.style.display = 'none';
+        this.hideGraphCard();
+    }
+
+    private hideGraphCard(): void {
+        if (this.graphCardEl) this.graphCardEl.style.display = 'none';
+    }
+
+    private graphShowCard(html: string, roleCls: string, x: number, y: number): void {
+        if (!this.graphEl) return;
+        let card = this.graphCardEl;
+        if (!card) { card = document.createElement('div'); this.graphEl.appendChild(card); this.graphCardEl = card; }
+        card.className = `sc-node-card sc-node-card--${roleCls} pm-graph-card`;
+        card.innerHTML = html;
+        card.style.display = 'block';
+        const gr = this.graphEl.getBoundingClientRect();
+        const cw = card.offsetWidth || 220;
+        const ch = card.offsetHeight || 160;
+        let cx = x + 14;
+        if (cx + cw > gr.width) cx = x - cw - 14;
+        cx = Math.max(8, Math.min(cx, gr.width - cw - 8));
+        let cy = y - ch / 2;
+        cy = Math.max(8, Math.min(cy, gr.height - ch - 8));
+        card.style.left = `${Math.round(cx)}px`;
+        card.style.top = `${Math.round(cy)}px`;
+    }
+
+    /** Card for an off-map node — it has no cascade role/coords, so a small variant (id · type ·
+     *  weight; "--" for null, never 0). */
+    private buildOffMapCardHtml(om: OffMapNode): string {
+        const weight = om.raw_impact == null ? '--' : String(om.raw_impact);
+        return `<button type="button" class="sc-node-card-close" aria-label="Close">&times;</button>
+            <div class="sc-card-name">${esc(String(om.id ?? '—'))}</div>
+            <div class="sc-card-role">Off-map · ${esc(String(om.type ?? ''))} — no coordinates</div>
+            <div class="sc-card-rows"><div class="sc-card-row"><span class="sc-card-k">Weight</span><span class="sc-card-v">${weight}</span></div></div>
+            ${om.reason ? `<div class="sc-card-why">${esc(String(om.reason))}</div>` : ''}`;
+    }
+
+    /**
+     * Deterministic radial layout of ONE cascade — no force sim, so it's identical every open.
+     * Rings by order: centre=epicenter, R1=order-2, R2=order-3 (placed within their parent's angular
+     * sector so the tree reads), ROFF=off-map (a synthesised hub→node edge from no_map.raw_impact,
+     * drawn DOTTED to mark it derived-from-weight, not a payload edge). It is a DAG: every payload
+     * edge is drawn, so a node with two parents keeps both (Malacca's Mitsui/NYK: measured via Japan
+     * + an unquantified dashed direct edge from the strait).
+     */
+    private buildGraphSvg(): string {
+        const CX = 500, CY = 500, TAU = Math.PI * 2, TOP = -Math.PI / 2;
+        const R1 = 185, R2 = 350, ROFF = 470;
+        const nodes = this.args.nodes;
+        const edges = this.args.graphEdges ?? [];
+        const noMap = Array.isArray(this.args.offMap?.no_map) ? (this.args.offMap!.no_map as OffMapNode[]) : [];
+        const idOf = (n: any): string => String(n.id ?? '');
+
+        const epi = nodes.find((n) => n.type === 'epicenter');
+        const hubId = epi ? idOf(epi) : '';
+        const order2 = nodes.filter((n) => n.order === 2);
+        const order3 = nodes.filter((n) => n.order === 3);
+        const o2ids = new Set(order2.map(idOf));
+
+        const parentsOf = new Map<string, string[]>();
+        const addTo = (m: Map<string, string[]>, k: string, v: string): void => { const a = m.get(k); if (a) a.push(v); else m.set(k, [v]); };
+        for (const e of edges) {
+            if (!e.source_id || !e.target_id) continue;
+            addTo(parentsOf, e.target_id, e.source_id);
+        }
+
+        // Group order-3 under their PRIMARY order-2 parent; hub-only order-3 are "orphans".
+        const o3ByParent = new Map<string, SpatialNode[]>();
+        const orphans: SpatialNode[] = [];
+        for (const c of order3) {
+            const o2p = (parentsOf.get(idOf(c)) ?? []).find((p) => o2ids.has(p));
+            if (o2p) addToNode(o3ByParent, o2p, c);
+            else orphans.push(c);
+        }
+        function addToNode(m: Map<string, SpatialNode[]>, k: string, v: SpatialNode): void { const a = m.get(k); if (a) a.push(v); else m.set(k, [v]); }
+
+        const o2sorted = [...order2].sort((a, b) => (idOf(a) < idOf(b) ? -1 : 1));
+        const N2 = o2sorted.length || 1;
+        const childCounts = o2sorted.map((o) => o3ByParent.get(idOf(o))?.length ?? 0);
+        const totalChildren = childCounts.reduce((s, c) => s + c, 0);
+        // Every order-2 node gets a GUARANTEED minimum sector (60% of the equal share) so childless
+        // high-impact nodes (Iraq/Iran/India) are not crushed. The rest is a child-proportional BONUS,
+        // then re-weighted by |cos(angle)| (two-pass: lay out once to get each fan's angle, then give
+        // HORIZONTAL fans — 3/9 o'clock, where horizontal labels run into each other — more width than
+        // vertical ones, where labels stack). The min stays fixed. Deterministic: order is by id.
+        const MIN_SECTOR = (TAU / N2) * 0.6;
+        const ORPH_SECTOR = orphans.length ? (TAU / N2) * 0.5 : 0;
+        const bonusTotal = Math.max(0, TAU - N2 * MIN_SECTOR - ORPH_SECTOR);
+        const evenBonus = childCounts.map((c) => (totalChildren > 0 ? bonusTotal * (c / totalChildren) : bonusTotal / N2));
+        let paAcc = 0; const provAng: number[] = [];
+        for (let i = 0; i < N2; i++) { const wi = MIN_SECTOR + evenBonus[i]; provAng.push(paAcc + wi / 2 + TOP); paAcc += wi; }
+        const wBonus = evenBonus.map((b, i) => b * (1 + 0.9 * Math.abs(Math.cos(provAng[i]))));
+        const wSum = wBonus.reduce((s, b) => s + b, 0) || 1;
+        const sectorW = wBonus.map((b) => MIN_SECTOR + bonusTotal * (b / wSum));
+
+        // id → {x, y, ang}; ang drives the OUTWARD label anchoring below.
+        const pos = new Map<string, { x: number; y: number; ang: number }>();
+        const place = (id: string, r: number, a: number): void => { pos.set(id, { x: CX + r * Math.cos(a), y: CY + r * Math.sin(a), ang: a }); };
+        if (epi) pos.set(hubId, { x: CX, y: CY, ang: 0 });
+
+        const SUBRINGS = 5, RSTEP = 32;
+        // 5 sub-rings + push horizontal children (|cos| large) further out, where the arc is longer,
+        // so same-ring siblings separate. Names stay full — never truncated, never rotated.
+        const childR = (j: number, a: number): number => R2 + (j % SUBRINGS) * RSTEP + Math.abs(Math.cos(a)) * 42;
+        let ang = 0;
+        for (let i = 0; i < o2sorted.length; i++) {
+            const w = sectorW[i];
+            const start = ang; ang += w;
+            place(idOf(o2sorted[i]), R1, (start + ang) / 2 + TOP);
+            const kids = o3ByParent.get(idOf(o2sorted[i])) ?? [];
+            for (let j = 0; j < kids.length; j++) {
+                const f = kids.length === 1 ? 0.5 : 0.1 + (0.8 * j) / (kids.length - 1);
+                const a = start + w * f + TOP;
+                place(idOf(kids[j]), childR(j, a), a);
+            }
+        }
+        for (let j = 0; j < orphans.length; j++) {
+            const f = orphans.length === 1 ? 0.5 : j / (orphans.length - 1);
+            const a = ang + ORPH_SECTOR * f + TOP;
+            place(idOf(orphans[j]), childR(j, a), a);
+        }
+        noMap.forEach((n, k) => place(`om:${n.id}`, ROFF, (k / Math.max(1, noMap.length)) * TAU + TOP));
+
+        const parts: string[] = [];
+        // Edges first (so nodes sit on top). Payload edges: solid, width = intensity; unquantified dashed.
+        for (const e of edges) {
+            const s = pos.get(e.source_id); const t = pos.get(e.target_id);
+            if (!s || !t) continue;
+            const w = e.unquantified ? 1 : Math.max(0.6, (e.intensity ?? 0) * 2.4);
+            parts.push(`<line class="pm-g-edge${e.unquantified ? ' pm-g-edge--unq' : ''}" x1="${s.x.toFixed(1)}" y1="${s.y.toFixed(1)}" x2="${t.x.toFixed(1)}" y2="${t.y.toFixed(1)}" stroke-width="${w.toFixed(2)}"/>`);
+        }
+        // Derived off-map edges (hub → off-map): dotted, distinct — NOT in edges[].
+        const hub = pos.get(hubId);
+        if (hub) noMap.forEach((n) => {
+            const p = pos.get(`om:${n.id}`); if (!p) return;
+            parts.push(`<line class="pm-g-edge pm-g-edge--derived" x1="${hub.x.toFixed(1)}" y1="${hub.y.toFixed(1)}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}"/>`);
+        });
+
+        const num = (v: number | null | undefined): string => (v == null ? '--' : String(Math.round(v)));
+        const geoR = (n: any): number =>
+            (n.type === 'exposed_unquantified' || n.impact_score == null)
+                ? 9                                                              // fixed small — never zero-sized
+                : 9 + (Math.min(100, Math.max(0, n.impact_score)) / 100) * 15;  // 9..24 by impact
+        // OUTWARD label placement: text grows AWAY from the centre — right-half start-anchored,
+        // left-half end-anchored — so long names (KAWASAKI HEAVY INDUSTRIES) extend outward instead
+        // of across their neighbours toward the centre. Epicenter label sits centred above the hub.
+        const labelAttrs = (a: number, r: number, isEpi: boolean): { anchor: string; x: string; y: string } => {
+            if (isEpi) return { anchor: 'middle', x: '0', y: (-(r + 8)).toFixed(1) };
+            const c = Math.cos(a), s = Math.sin(a);
+            return { anchor: c >= 0 ? 'start' : 'end', x: (c >= 0 ? r + 6 : -(r + 6)).toFixed(1), y: (5 + s * 5).toFixed(1) };
+        };
+        for (const n of nodes) {
+            const p = pos.get(idOf(n)); if (!p) continue;
+            const r = geoR(n);
+            const role = n.type === 'epicenter' ? 'epi' : n.type === 'affected' ? 'aff' : 'unq';
+            const la = labelAttrs(p.ang, r, n.type === 'epicenter');
+            parts.push(`<g class="pm-g-node pm-g-node--${role}" data-nid="${esc(idOf(n))}" transform="translate(${p.x.toFixed(1)},${p.y.toFixed(1)})">`
+                + `<circle r="${r.toFixed(1)}"/>`
+                + `<text class="pm-g-label" text-anchor="${la.anchor}" x="${la.x}" y="${la.y}">${esc(String(n.name ?? n.id ?? ''))} ${num(n.impact_score)}</text></g>`);
+        }
+        // Off-map nodes: DIAMONDS (different shape) in a distinct hue — a different kind of thing.
+        noMap.forEach((n) => {
+            const p = pos.get(`om:${n.id}`); if (!p) return;
+            const r = n.raw_impact == null ? 8 : 8 + Math.min(1, Math.max(0, n.raw_impact)) * 7;   // small, own (0..1) scale
+            const la = labelAttrs(p.ang, r, false);
+            parts.push(`<g class="pm-g-node pm-g-node--om" data-omid="${esc(String(n.id))}" transform="translate(${p.x.toFixed(1)},${p.y.toFixed(1)})">`
+                + `<path d="M 0 ${-r} L ${r} 0 L 0 ${r} L ${-r} 0 Z"/>`
+                + `<text class="pm-g-label pm-g-label--om" text-anchor="${la.anchor}" x="${la.x}" y="${la.y}">${esc(String(n.id))} ${n.raw_impact == null ? '--' : String(n.raw_impact)}</text></g>`);
+        });
+
+        return `<svg class="pm-graph-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">${parts.join('')}</svg>`;
     }
 
     // ─── Node detail card (static cascade only) ──────────────────────────
@@ -2353,7 +2630,7 @@ class SurveillanceMapController {
      * exists in the data, so none is invented. Radius mirrors the dot formulas (size still
      * encodes impact_score); ticks degrade out on small nodes as a legibility choice.
      */
-    private pushStaticNodeReticles(builtLayers: any[], sid: string, nodeScale: number, triggerPulse: number): void {
+    private pushStaticNodeReticles(builtLayers: any[], sid: string, triggerPulse: number): void {
         const IconLayer = this.args.IconLayer;
         const nodes = this.args.nodes;
 
@@ -2365,20 +2642,21 @@ class SurveillanceMapController {
                 id: `sc-reticle-exposed-${sid}`,
                 data: exposed,
                 pickable: true,
+                billboard: true,   // face the camera + hold constant px size when the map is pitched
                 // Pick the whole icon quad, not just opaque pixels. IconLayer's default
                 // alphaCutoff (0.05) discards the transparent interior AND the dash gaps from
                 // picking, so the sparse dashed exposed ring was almost unclickable.
                 alphaCutoff: 0,
-                sizeUnits: 'meters',
-                sizeMinPixels: 24,
-                sizeMaxPixels: 46,
+                sizeUnits: 'pixels',   // constant screen size across zoom (was metres → ballooned when zoomed in)
+                sizeMinPixels: 16,
+                sizeMaxPixels: 22,
                 getPosition: (d: any) => [d.lon, d.lat],
                 getIcon: () => this.reticleIcon('exp', 'dashed'),
-                getSize: () => UNQ_NODE_RADIUS_M * 2.4,
+                getSize: () => 18,     // fixed — impact is meaningless for exposed; large enough to stay visibly dashed
             }));
         }
 
-        // Measured — epicenter (red double ring + ticks) + affected (cyan; ticks degrade by
+        // Measured — epicenter (red double ring + ticks) + affected (green; ticks degrade by
         // impact). One layer, role/impact picked per node.
         const measured = nodes.filter((n) => n.type === 'epicenter' || n.type === 'affected');
         if (measured.length) {
@@ -2388,24 +2666,110 @@ class SurveillanceMapController {
                 id: `sc-reticle-measured-${sid}`,
                 data: measured,
                 pickable: true,
+                billboard: true,   // face the camera + hold constant px size when the map is pitched
                 alphaCutoff: 0,   // full-quad picking (see exposed layer) — click the ring's interior too
-                sizeUnits: 'meters',
-                sizeMinPixels: 14,
-                sizeMaxPixels: 112,
+                sizeUnits: 'pixels',   // CONSTANT screen size across zoom (was 'meters' → reticles ballooned when zoomed in)
+                sizeMinPixels: 6,
+                sizeMaxPixels: 40,
                 getPosition: (d: any) => [d.lon, d.lat],
                 getIcon: (d: any) =>
                     d.type === 'epicenter'
                         ? this.reticleIcon('epi', 'full')
                         : this.reticleIcon('aff', affDetail(d.impact_score ?? 0)),
+                // impact_score → screen pixels: 10px @ impact 0 → 26px @ impact 100 (epicenter +2).
+                // The epicenter pulse still multiplies the size; the high-impact affected pulse is
+                // unchanged. nodeScale (viscosity-derived, 0 for scenarios) is dropped — it was for
+                // the metre-based dynamic and has no role in a constant pixel size.
                 getSize: (d: any) => {
-                    if (d.type === 'epicenter') {
-                        return Math.max(25_000 + (d.impact_score ?? 100) * 1_200, 35_000) * nodeScale * triggerPulse * 2.4;
-                    }
-                    const base = Math.max(12_000 + (d.impact_score ?? 0) * 800, 16_000) * nodeScale;
-                    const pulsed = (d.impact_score ?? 0) >= TM_TRIGGER_IMPACT_THRESHOLD ? base * triggerPulse : base;
-                    return pulsed * 2.4;
+                    const px = 10 + clamp01((d.impact_score ?? (d.type === 'epicenter' ? 100 : 0)) / 100) * 16;
+                    if (d.type === 'epicenter') return (px + 2) * triggerPulse;
+                    return (d.impact_score ?? 0) >= TM_TRIGGER_IMPACT_THRESHOLD ? px * triggerPulse : px;
                 },
                 updateTriggers: { getSize: this.animationPhase },
+            }));
+        }
+    }
+
+    /**
+     * Command-room tracer treatment (static cascade only). Three layers per repaint:
+     *   1. a persistent dark TRACK for every quantified edge — width = the measured weight,
+     *      no pulse, always visible so the structure reads when nothing is travelling;
+     *   2. a bright COMET running the track source→target — a short bright-headed segment
+     *      fading behind, at UNIFORM speed (speed encodes nothing; width already carries the
+     *      weight, and a speed difference would assert a quantity we never measured);
+     *   3. an arrival BLOOM ring that expands + fades when the comet reaches its target.
+     * Per-edge phase offset staggers them so they don't fire in lockstep. Unquantified edges are
+     * excluded entirely — they keep their dashed track and get no tracer, because nothing should
+     * appear to flow along an edge whose magnitude was never measured.
+     */
+    private pushStaticTracers(builtLayers: any[], sid: string): void {
+        const ScatterCtor = this.args.ScatterplotLayer;
+        const edges = this.args.edgesFlat.filter((e) => !e.unquantified);
+        if (!edges.length || !ScatterCtor) return;
+
+        // 1) Track — a single thin, pale-blue line, normal alpha blend. No halo: the neon
+        //    core+halo glow washed the map out at convergence. Width carries the measured edge
+        //    weight; the pale blue encodes nothing and stays clear of the green/red/slate nodes.
+        const arcHeight = (d: ResolvedEdge) => 0.40 + Math.abs(d.lane_offset ?? 0) * 0.22;
+        builtLayers.push(this.args.arcLayer.clone({
+            id: `sc-track-${sid}`,
+            data: edges,
+            getWidth: (d: ResolvedEdge) => Math.max(d.intensity * 1.6, 0.8),
+            getSourceColor: [0, 210, 255, 190],
+            getTargetColor: [0, 210, 255, 190],
+            getHeight: arcHeight,
+            ...arcLayerBlendProps(false),
+        }));
+
+        // 2) comet (bright head + fading tail) + 3) arrival bloom — keyed to a uniform head phase.
+        const TAIL = 7;
+        const TAIL_SPAN = 0.16;   // fraction of the arc the comet covers
+        const BLOOM_W = 0.14;     // arrival window as a fraction of the loop
+        const comet: Array<{ lon: number; lat: number; head: number; alpha: number; size: number }> = [];
+        const blooms: Array<{ lon: number; lat: number; radius: number; alpha: number }> = [];
+
+        for (let i = 0; i < edges.length; i++) {
+            const e = edges[i];
+            const offset = this.offsets[i % this.offsets.length] ?? 0;
+            const head = (this.animationPhase + offset) % 1;   // uniform speed; offset = the stagger
+            for (let k = 0; k < TAIL; k++) {
+                const t = head - (k / (TAIL - 1)) * TAIL_SPAN;
+                if (t < 0) continue;                            // tail not yet clear of the source
+                const [lon, lat] = greatCircleAt(e.source_lon, e.source_lat, e.target_lon, e.target_lat, t);
+                const f = 1 - k / TAIL;                         // 1 at the head → ~0 at the tail
+                comet.push({ lon, lat, head: k === 0 ? 1 : 0, alpha: Math.round(235 * f * f), size: 1_200 + 2_800 * f });
+            }
+            if (head >= 1 - BLOOM_W) {
+                const p = (head - (1 - BLOOM_W)) / BLOOM_W;     // 0 at arrival → 1 fully expanded
+                blooms.push({ lon: e.target_lon, lat: e.target_lat, radius: 16_000 + 30_000 * p, alpha: Math.round(200 * (1 - p)) });
+            }
+        }
+
+        builtLayers.push(new ScatterCtor({
+            id: `sc-tracer-${sid}`,
+            data: comet,
+            pickable: false, stroked: false, filled: true,
+            // Sits ON the thin track; a comet fatter than its own track reads wrong.
+            radiusUnits: 'meters', radiusMinPixels: 0.8, radiusMaxPixels: 2.5,
+            getPosition: (d: any) => [d.lon, d.lat],
+            getRadius: (d: any) => d.size,
+            getFillColor: (d: any) => (d.head ? [190, 250, 255, 255] : [0, 210, 255, d.alpha]),
+            parameters: { depthTest: false },
+            updateTriggers: { getPosition: this.animationPhase, getFillColor: this.animationPhase, getRadius: this.animationPhase },
+        }));
+
+        if (blooms.length) {
+            builtLayers.push(new ScatterCtor({
+                id: `sc-bloom-${sid}`,
+                data: blooms,
+                pickable: false, stroked: true, filled: false,
+                radiusUnits: 'meters', lineWidthMinPixels: 1.5, lineWidthMaxPixels: 3,
+                getPosition: (d: any) => [d.lon, d.lat],
+                getRadius: (d: any) => d.radius,
+                getLineColor: (d: any) => [0, 255, 90, d.alpha],   // phosphor green — blooms from the (green) target node
+                getLineWidth: 2.5,
+                parameters: { depthTest: false },
+                updateTriggers: { getRadius: this.animationPhase, getLineColor: this.animationPhase },
             }));
         }
     }
@@ -2446,7 +2810,14 @@ class SurveillanceMapController {
         // particles, then nodes — so node halos always sit on top.
         const builtLayers: any[] = [];
 
-        const orderedTiers: ContagionOrder[] = [3, 2, 1];   // back to front
+        // Static cascade → command-room tracer treatment (persistent dark track + a bright comet
+        // running source→target + an arrival bloom) instead of the per-order pulsing arcs and
+        // crawling particles. Empty tier list ⇒ the loop below is a no-op in static mode; the
+        // non-static path (the Pro Brief) is byte-identical.
+        const useReticles = this.args.staticScenario === true && !!this.args.IconLayer;
+        if (useReticles) this.pushStaticTracers(builtLayers, sid);
+
+        const orderedTiers: ContagionOrder[] = useReticles ? [] : [3, 2, 1];   // back to front
         for (const order of orderedTiers) {
             const tierEdges = edgesByOrder.get(order);
             if (!tierEdges || tierEdges.length === 0) continue;
@@ -2555,14 +2926,13 @@ class SurveillanceMapController {
         //   fabricate a magnitude we do not have. Pushed first so it sits behind
         //   the quantified layers. Omitting these would let setProps() wipe the
         //   exposed nodes/arcs off the map on the first animation frame.
-        // Static cascade → reticle vocabulary (Stage-1 idiom); otherwise the standard dots.
-        // The exposed reticle replaces the grey hollow ring, so skip that push when reticling.
-        const useReticles = this.args.staticScenario === true && !!this.args.IconLayer;
+        // The exposed reticle replaces the grey hollow ring, so skip that push when reticling
+        // (useReticles is defined above, at the tracer/tier branch).
         if (this.args.unquantifiedArcLayer) builtLayers.push(this.args.unquantifiedArcLayer);
         if (this.args.exposedLayer && !useReticles) builtLayers.push(this.args.exposedLayer);
 
         if (useReticles) {
-            this.pushStaticNodeReticles(builtLayers, sid, nodeScale, triggerPulse);
+            this.pushStaticNodeReticles(builtLayers, sid, triggerPulse);
         } else {
             // — Affected nodes: pulse only when impact_score crosses the trigger
             //   threshold (the >1.5x intensity surrogate).
