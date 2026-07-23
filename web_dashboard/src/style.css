@@ -9336,6 +9336,168 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
     color: #94a3b8;
 }
 
+/* ── Immersive company detail panel ──────────────────────────────────────────
+   A floating, draggable, MULTI-instance panel that replaces the small card for
+   company nodes. Above the card (z 8) and the graph overlay (z 20). Shares the
+   .pm-c2 mono/uppercase idiom + the affected role hue. */
+#pro-map-container .pm-co-panel {
+    position: absolute;
+    width: 420px;
+    height: 520px;
+    display: flex;
+    flex-direction: column;
+    background: rgba(7, 11, 18, 0.97);
+    border: 1px solid #1e293b;
+    border-left: 3px solid #00ff5a;               /* affected role hue */
+    border-radius: 10px;
+    color: #e2e8f0;
+    font-family: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    overflow: hidden;
+}
+/* Maximise: fill the map area, restore returns to the inline left/top/size. */
+#pro-map-container .pm-co-panel--max {
+    left: 8px !important;
+    top: 8px !important;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+    height: auto;
+}
+#pro-map-container .pm-co-head {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+    cursor: grab;
+    touch-action: none;
+    background: rgba(0, 255, 90, 0.04);
+}
+#pro-map-container .pm-co-head:active { cursor: grabbing; }
+#pro-map-container .pm-co-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+#pro-map-container .pm-co-role {
+    font-size: 0.56rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #00ff5a;
+    margin-top: 3px;
+}
+#pro-map-container .pm-co-ctl { display: flex; gap: 4px; flex: 0 0 auto; }
+#pro-map-container .pm-co-btn {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid #1e293b;
+    border-radius: 5px;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    line-height: 1;
+    cursor: pointer;
+}
+#pro-map-container .pm-co-btn:hover { color: #e2e8f0; border-color: #334155; }
+#pro-map-container .pm-co-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0.7rem 0.8rem 1rem;
+}
+#pro-map-container .pm-co-blurb {
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+#pro-map-container .pm-co-sec { margin-top: 0.8rem; }
+#pro-map-container .pm-co-sec-h {
+    font-size: 0.56rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+#pro-map-container .pm-co-count {
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.12);
+    border-radius: 999px;
+    padding: 0 6px;
+    font-size: 0.52rem;
+}
+#pro-map-container .pm-co-kv { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+#pro-map-container .pm-co-k { color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.56rem; }
+#pro-map-container .pm-co-v { color: #e2e8f0; font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+#pro-map-container .pm-co-why {
+    margin-top: 0.4rem;
+    font-size: 0.64rem;
+    line-height: 1.45;
+    color: #94a3b8;
+}
+/* Financials — value line + a provenance line beneath (source badge + as_of). */
+#pro-map-container .pm-co-fin {
+    padding: 0.4rem 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+#pro-map-container .pm-co-fin:first-of-type { border-top: 0; }
+#pro-map-container .pm-co-fin-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+#pro-map-container .pm-co-fin-label { color: #cbd5e1; font-size: 0.66rem; }
+#pro-map-container .pm-co-fin-val { color: #e2e8f0; font-size: 0.82rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+#pro-map-container .pm-co-unit { color: #64748b; font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.06em; }
+#pro-map-container .pm-co-prov { display: flex; gap: 8px; align-items: center; margin-top: 3px; }
+#pro-map-container .pm-co-src {
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid currentColor;
+}
+#pro-map-container .pm-co-src--obs { color: #34d399; }     /* observed — a measured claim */
+#pro-map-container .pm-co-src--est { color: #fbbf24; }     /* estimated — a weaker claim, marked */
+#pro-map-container .pm-co-src--unk { color: #64748b; }
+#pro-map-container .pm-co-asof { color: #64748b; font-size: 0.56rem; }
+/* Neighbourhood — scrollable list of the company's own edges. */
+#pro-map-container .pm-co-nb-list { display: flex; flex-direction: column; }
+#pro-map-container .pm-co-nb {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "target weight" "rel weight";
+    gap: 0 10px;
+    padding: 0.35rem 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+#pro-map-container .pm-co-nb:first-child { border-top: 0; }
+#pro-map-container .pm-co-nb-t { grid-area: target; color: #e2e8f0; font-size: 0.68rem; }
+#pro-map-container .pm-co-nb-rel {
+    grid-area: rel;
+    color: #64748b;
+    font-size: 0.54rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+#pro-map-container .pm-co-nb-w {
+    grid-area: weight;
+    align-self: center;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
 /* Guest Stripe checkout — founding member email modal (glassmorphism) */
 .checkout-email-modal-root {
   position: fixed;

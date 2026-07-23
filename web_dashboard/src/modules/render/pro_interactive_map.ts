@@ -123,6 +123,13 @@ export type SpatialNode = {
      */
     confidence?: number;
     geonameid?: number;
+    /** Per-company detail merged onto the node by the API from the scenario JSON (whitelist-only:
+     *  the DB has no column for these). Present ONLY on affected company nodes; absent on the
+     *  epicenter, exposed nodes, and company-less affected nodes (countries/routes). */
+    title?: string;
+    role_blurb?: string;
+    financials?: Record<string, { value: number; unit: string; source: string; as_of: string }>;
+    neighbourhood?: Array<{ target: string; type: string; role: string | null; weight: number | null; unit: string | null }>;
 };
 
 export type SpatialEdge = {
@@ -1759,6 +1766,7 @@ class SurveillanceMapController {
             if (nid) {
                 const node = this.args.nodes.find((n) => String(n.id) === nid);
                 if (node) {
+                    if (this.isCompany(node)) { this.openCompanyPanel(node); return; }
                     const role = node.type === 'epicenter' ? 'epi' : node.type === 'affected' ? 'aff' : 'unq';
                     this.graphShowCard(this.buildNodeCardHtml(node), role, x, y);
                 }
@@ -1951,6 +1959,14 @@ class SurveillanceMapController {
     private activeNodeId: string | null = null;
     private cardMoveHandler: (() => void) | null = null;
 
+    /** Immersive company detail panels, keyed by node id — MULTIPLE may be open at once (unlike the
+     *  single node card). Each is torn down on its own close and all of them on stop(). */
+    private companyPanels = new Map<string, HTMLElement>();
+    /** Monotonic spawn counter so a second panel cascades off the first instead of landing on it. */
+    private panelSpawns = 0;
+    /** Top of the panel z-stack; bumped on bring-to-front. Above the card (8) and graph (20). */
+    private panelTopZ = 40;
+
     /** Wire click→card: a reticle click opens a detail card; empty-map click closes it. Also
      *  exposes wrapEl.__scFocusNode(id) so drawer rows can open the same card. */
     private installNodeCard(): void {
@@ -1990,6 +2006,9 @@ class SurveillanceMapController {
     }
 
     private showCardForNode(node: any): void {
+        // Company nodes get the immersive detail panel, not the small card. Everything else
+        // (epicenter / exposed / company-less affected) keeps the card path byte-for-byte.
+        if (this.isCompany(node)) { this.openCompanyPanel(node); return; }
         if (!this.cardEl) return;
         const roleCls = node.type === 'epicenter' ? 'epi' : node.type === 'affected' ? 'aff' : 'unq';
         this.activeNodeId = String(node.id);
@@ -2056,6 +2075,218 @@ class SurveillanceMapController {
             <div class="sc-card-role">${esc(roleLabel)}</div>
             <div class="sc-card-rows">${rows.join('')}</div>
             ${why}`;
+    }
+
+    // ─── Immersive company detail panel (static path only) ───────────────────
+
+    /** A company node carries JSON-merged detail the DB has no column for. Only `affected` nodes
+     *  are ever enriched, and `title` is the reliable marker the panel needs. Countries/routes and
+     *  the epicenter/exposed nodes fail this and keep the small card. */
+    private isCompany(node: any): boolean {
+        return node?.type === 'affected' && node?.title != null;
+    }
+
+    /** Open (or re-focus) the floating detail panel for a company node. Panels are keyed by id so a
+     *  second click on the same company brings its existing panel forward rather than duplicating it;
+     *  distinct companies stack, cascading their spawn so they never land exactly on each other. */
+    private openCompanyPanel(node: any): void {
+        const id = String(node.id);
+        const existing = this.companyPanels.get(id);
+        if (existing) { this.bringPanelToFront(existing); return; }
+
+        // Float above BOTH the map card and the graph overlay — same host the graph mounts on.
+        const host = (this.args.wrapEl.parentElement ?? this.args.wrapEl) as HTMLElement;
+        const panel = document.createElement('div');
+        panel.className = 'pm-co-panel';
+        panel.innerHTML = this.buildCompanyPanelHtml(node);
+        // Cascade: base inset + step per already-spawned panel, wrapped so it stays on-screen.
+        const step = (this.panelSpawns++ % 6) * 26;
+        panel.style.left = `${28 + step}px`;
+        panel.style.top = `${28 + step}px`;
+        panel.style.zIndex = String(++this.panelTopZ);
+        host.appendChild(panel);
+        this.companyPanels.set(id, panel);
+
+        const head = panel.querySelector<HTMLElement>('.pm-co-head');
+
+        // Bring-to-front on any interaction with the panel.
+        const onFront = (): void => this.bringPanelToFront(panel);
+        panel.addEventListener('pointerdown', onFront);
+
+        // Controls: close / maximise (via delegation so innerHTML stays simple).
+        const onClick = (e: Event): void => {
+            const t = e.target as HTMLElement;
+            if (t.closest('.pm-co-close')) { this.closeCompanyPanel(id); return; }
+            if (t.closest('.pm-co-max')) { panel.classList.toggle('pm-co-panel--max'); this.bringPanelToFront(panel); }
+        };
+        panel.addEventListener('click', onClick);
+
+        // Drag by the header (never while maximised; never when the pointer is on a control button).
+        let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+        const onMove = (e: PointerEvent): void => {
+            if (!dragging) return;
+            const wrap = host.getBoundingClientRect();
+            const nx = Math.max(0, Math.min(ox + (e.clientX - sx), wrap.width - panel.offsetWidth));
+            const ny = Math.max(0, Math.min(oy + (e.clientY - sy), wrap.height - panel.offsetHeight));
+            panel.style.left = `${Math.round(nx)}px`;
+            panel.style.top = `${Math.round(ny)}px`;
+        };
+        const onUp = (): void => {
+            dragging = false;
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+        };
+        const onDown = (e: PointerEvent): void => {
+            if ((e.target as HTMLElement).closest('button')) return;
+            if (panel.classList.contains('pm-co-panel--max')) return;
+            dragging = true;
+            sx = e.clientX; sy = e.clientY;
+            ox = panel.offsetLeft; oy = panel.offsetTop;
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', onUp);
+            e.preventDefault();
+        };
+        head?.addEventListener('pointerdown', onDown);
+
+        // Teardown: remove the DOM + all listeners, both on per-panel close and on stop().
+        this.addCleanup(() => {
+            panel.removeEventListener('pointerdown', onFront);
+            panel.removeEventListener('click', onClick);
+            head?.removeEventListener('pointerdown', onDown);
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+            panel.remove();
+            this.companyPanels.delete(id);
+        });
+    }
+
+    private bringPanelToFront(panel: HTMLElement): void {
+        panel.style.zIndex = String(++this.panelTopZ);
+    }
+
+    private closeCompanyPanel(id: string): void {
+        const panel = this.companyPanels.get(id);
+        if (panel) panel.remove();
+        this.companyPanels.delete(id);
+    }
+
+    /** Build the panel body — only what the payload actually carries. DB-derived fields (impact_score,
+     *  why, country) and JSON-merged detail (role_blurb, financials, neighbourhood) both render here. */
+    private buildCompanyPanelHtml(node: any): string {
+        const name = String(node.title ?? node.name ?? node.id ?? '—');
+        const order = node.order != null ? `ORDER 0${esc(String(node.order))}` : 'ORDER —';
+        const impact = node.impact_score == null ? '--' : Number(node.impact_score).toFixed(1);
+
+        // Blurb — verbatim (EN for some, JP for COSCO/Saudi_Aramco). Never truncated or hidden.
+        const blurb = node.role_blurb
+            ? `<div class="pm-co-blurb" lang="und">${esc(String(node.role_blurb))}</div>`
+            : '';
+
+        const impactSec = `
+            <section class="pm-co-sec">
+                <div class="pm-co-sec-h">Impact</div>
+                <div class="pm-co-kv"><span class="pm-co-k">Score</span><span class="pm-co-v">${impact}</span></div>
+                ${node.why ? `<div class="pm-co-why">${esc(String(node.why))}</div>` : ''}
+            </section>`;
+
+        // Identity — country always if present; listing/tickers only when the payload carries them.
+        const idRows: string[] = [];
+        if (node.country) idRows.push(this.coKv('Country', String(node.country)));
+        if (node.listing) idRows.push(this.coKv('Listing', String(node.listing)));
+        if (Array.isArray(node.tickers) && node.tickers.length) idRows.push(this.coKv('Tickers', node.tickers.join(' · ')));
+        const idSec = idRows.length
+            ? `<section class="pm-co-sec"><div class="pm-co-sec-h">Identity</div>${idRows.join('')}</section>`
+            : '';
+
+        const finSec = this.buildFinancialsHtml(node.financials);
+        const nbSec = this.buildNeighbourhoodHtml(node.neighbourhood);
+
+        return `
+            <div class="pm-co-head">
+                <div class="pm-co-titles">
+                    <div class="pm-co-title">${esc(name)}</div>
+                    <div class="pm-co-role">Company · ${order}</div>
+                </div>
+                <div class="pm-co-ctl">
+                    <button type="button" class="pm-co-btn pm-co-max" aria-label="Maximise / restore">▢</button>
+                    <button type="button" class="pm-co-btn pm-co-close" aria-label="Close">&times;</button>
+                </div>
+            </div>
+            <div class="pm-co-body">
+                ${blurb}
+                ${impactSec}
+                ${idSec}
+                ${finSec}
+                ${nbSec}
+            </div>`;
+    }
+
+    private coKv(k: string, v: string): string {
+        return `<div class="pm-co-kv"><span class="pm-co-k">${esc(k)}</span><span class="pm-co-v">${esc(v)}</span></div>`;
+    }
+
+    /** Financials — each metric shows value+unit AND provenance (source + as_of). The provenance is
+     *  the point: an estimated 18 usd_bn is a different claim from an observed 268. A metric that
+     *  isn't in the payload is OMITTED — never rendered as 0. */
+    private buildFinancialsHtml(fin: any): string {
+        if (!fin || typeof fin !== 'object') return '';
+        const ORDER: Array<[string, string]> = [
+            ['market_cap', 'Market cap'],
+            ['total_debt', 'Total debt'],
+            ['equity_volatility', 'Equity volatility'],
+        ];
+        const known = new Set(ORDER.map(([k]) => k));
+        const keys = [...ORDER.map(([k]) => k), ...Object.keys(fin).filter((k) => !known.has(k))];
+        const rows: string[] = [];
+        for (const key of keys) {
+            const m = fin[key];
+            if (!m || m.value == null) continue;                 // absent metric → omitted, never 0
+            const label = (ORDER.find(([k]) => k === key)?.[1]) ?? key.replace(/_/g, ' ');
+            const unit = m.unit ? `<span class="pm-co-unit">${esc(String(m.unit))}</span>` : '';
+            const src = m.source ? String(m.source) : '';
+            const srcCls = src === 'observed' ? 'obs' : src === 'estimated' ? 'est' : 'unk';
+            const prov = [
+                src ? `<span class="pm-co-src pm-co-src--${srcCls}">${esc(src)}</span>` : '',
+                m.as_of ? `<span class="pm-co-asof">as of ${esc(String(m.as_of))}</span>` : '',
+            ].filter(Boolean).join('');
+            rows.push(`
+                <div class="pm-co-fin">
+                    <div class="pm-co-fin-top">
+                        <span class="pm-co-fin-label">${esc(label)}</span>
+                        <span class="pm-co-fin-val">${esc(String(m.value))} ${unit}</span>
+                    </div>
+                    ${prov ? `<div class="pm-co-prov">${prov}</div>` : ''}
+                </div>`);
+        }
+        if (!rows.length) return '';
+        return `<section class="pm-co-sec"><div class="pm-co-sec-h">Financials</div>${rows.join('')}</section>`;
+    }
+
+    /** Neighbourhood — the company's own edges. Weighted relations sort first (desc) so 19 rows stay
+     *  scannable; unweighted structural rows (located_in, weight null) follow, rendered "--" — never
+     *  0 or blank, which would read as a real zero-weight relation. */
+    private buildNeighbourhoodHtml(nb: any): string {
+        if (!Array.isArray(nb) || !nb.length) return '';
+        const weighted = nb.filter((e) => e && e.weight != null).sort((a, b) => Number(b.weight) - Number(a.weight));
+        const unweighted = nb.filter((e) => e && e.weight == null);
+        const ordered = [...weighted, ...unweighted];
+        const rows = ordered.map((e) => {
+            const target = esc(String(e.target ?? '—'));
+            const rel = esc(String(e.type ?? ''));
+            const role = e.role ? ` · ${esc(String(e.role))}` : '';
+            const w = e.weight == null ? '--' : String(e.weight);
+            const unit = (e.weight != null && e.unit) ? ` <span class="pm-co-unit">${esc(String(e.unit))}</span>` : '';
+            return `
+                <div class="pm-co-nb">
+                    <span class="pm-co-nb-t">${target}</span>
+                    <span class="pm-co-nb-rel">${rel}${role}</span>
+                    <span class="pm-co-nb-w">${w}${unit}</span>
+                </div>`;
+        }).join('');
+        return `<section class="pm-co-sec">
+            <div class="pm-co-sec-h">Neighbourhood <span class="pm-co-count">${ordered.length}</span></div>
+            <div class="pm-co-nb-list">${rows}</div>
+        </section>`;
     }
 
     // ─── UI ──────────────────────────────────────────────────────────────
