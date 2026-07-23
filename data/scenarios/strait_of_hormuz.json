@@ -115,7 +115,39 @@
    "role": "supply",
    "raw_impact": 0.85,
    "why": "route:supply weight 0.85",
-   "tickers": []
+   "tickers": [],
+   "neighbourhood": [
+    {
+     "target": "Crude_Oil",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 3.4,
+     "unit": "mb_per_d"
+    },
+    {
+     "target": "OPEC",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Strait_of_Hormuz",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.85,
+     "unit": "share"
+    },
+    {
+     "target": "Iraq",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "title": "SOMO",
+   "role_blurb": "Iraq's state crude MARKETING/EXPORT organ (SOE) — markets/exports Iraqi crude (~3.4M b/d export); a marketing entity, NOT a producer, distinct from the Iraq state and from production (cf. PDVSA = production)"
   },
   {
    "id": "Saudi_Arabia",
@@ -186,7 +218,39 @@
    "role": "supply",
    "raw_impact": -0.7,
    "tickers": [],
-   "why": "Qatar (supply 1.00) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Qatar",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "ExxonMobil",
+     "type": "joint_venture",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Shell",
+     "type": "joint_venture",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "TotalEnergies",
+     "type": "joint_venture",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "Qatar (supply 1.00) x DECAY 0.7",
+   "title": "QatarEnergy",
+   "role_blurb": "国営の世界トップLNG輸出企業（[[Qatar]] の上流実体。100%ホルムズ依存＋米 Golden Pass で地理的分散）"
   },
   {
    "id": "Panasonic",
@@ -203,7 +267,87 @@
    "tickers": [
     "6752"
    ],
-   "why": "Japan (demand 0.90) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "EV_Battery",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.037,
+     "unit": "share"
+    },
+    {
+     "target": "Tesla",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.3,
+     "unit": "share"
+    },
+    {
+     "target": "Lithium",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.08,
+     "unit": "share"
+    },
+    {
+     "target": "Nickel",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.08,
+     "unit": "share"
+    },
+    {
+     "target": "Cobalt",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.06,
+     "unit": "share"
+    },
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Samsung_SDI",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "SK_On",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7",
+   "title": "Panasonic",
+   "role_blurb": "Japanese diversified-electronics major; EV battery is ONE segment (Tesla's historical primary cell supplier, ~3.7% global battery share); LISTED (TSE:6752) → Merton-computable",
+   "financials": {
+    "market_cap": {
+     "value": 33.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 12.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2025"
+    },
+    "equity_volatility": {
+     "value": 0.4322,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "Kawasaki_Heavy_Industries",
@@ -220,7 +364,52 @@
    "tickers": [
     "7012"
    ],
-   "why": "Japan (demand 0.90) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "customer",
+     "role": null,
+     "weight": 0.2,
+     "unit": "share"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.4,
+     "unit": "share"
+    }
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7",
+   "title": "川崎重工業",
+   "role_blurb": "日本の多角化重工コングロマリット（SIPRI Top 100・日本の防衛",
+   "financials": {
+    "market_cap": {
+     "value": 16.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 4.11,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.5321,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "Mitsubishi_Heavy_Industries",
@@ -237,7 +426,66 @@
    "tickers": [
     "7011"
    ],
-   "why": "Japan (demand 0.90) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "customer",
+     "role": null,
+     "weight": 0.2,
+     "unit": "share"
+    },
+    {
+     "target": "Nuclear_Power",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.35,
+     "unit": "share"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.4,
+     "unit": "share"
+    },
+    {
+     "target": "Orano",
+     "type": "shareholder",
+     "role": null,
+     "weight": 0.05,
+     "unit": "share"
+    }
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7",
+   "title": "Mitsubishi Heavy Industries, Ltd.",
+   "role_blurb": "日本最大の多角化重工コングロマリット（SIPRI Top 100",
+   "financials": {
+    "market_cap": {
+     "value": 90.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 11.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q1"
+    },
+    "equity_volatility": {
+     "value": 0.426,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "JSR",
@@ -252,7 +500,68 @@
    "role": "demand",
    "raw_impact": -0.63,
    "tickers": [],
-   "why": "Japan (demand 0.90) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "TSMC",
+     "type": "customer",
+     "role": null,
+     "weight": 0.35,
+     "unit": "share"
+    },
+    {
+     "target": "Samsung",
+     "type": "customer",
+     "role": null,
+     "weight": 0.25,
+     "unit": "share"
+    },
+    {
+     "target": "Intel",
+     "type": "customer",
+     "role": null,
+     "weight": 0.15,
+     "unit": "share"
+    },
+    {
+     "target": "Tokyo_Ohka",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Semiconductor_Materials",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": "share"
+    }
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7",
+   "title": "JSR",
+   "role_blurb": "World's",
+   "financials": {
+    "market_cap": {
+     "value": 6.4,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    }
+   }
   },
   {
    "id": "SUMCO",
@@ -269,7 +578,66 @@
    "tickers": [
     "3436"
    ],
-   "why": "Japan (demand 0.90) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "TSMC",
+     "type": "customer",
+     "role": null,
+     "weight": 0.35,
+     "unit": "share"
+    },
+    {
+     "target": "Samsung",
+     "type": "customer",
+     "role": null,
+     "weight": 0.25,
+     "unit": "share"
+    },
+    {
+     "target": "Intel",
+     "type": "customer",
+     "role": null,
+     "weight": 0.15,
+     "unit": "share"
+    },
+    {
+     "target": "Semiconductor_Materials",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.26,
+     "unit": "share"
+    }
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7",
+   "title": "SUMCO",
+   "role_blurb": "Japanese silicon-wafer maker (world",
+   "financials": {
+    "market_cap": {
+     "value": 9.22,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 2.8,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.7753,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "Shin-Etsu_Chemical",
@@ -286,7 +654,80 @@
    "tickers": [
     "4063"
    ],
-   "why": "Japan (demand 0.90) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "TSMC",
+     "type": "customer",
+     "role": null,
+     "weight": 0.3,
+     "unit": "share"
+    },
+    {
+     "target": "Samsung",
+     "type": "customer",
+     "role": null,
+     "weight": 0.22,
+     "unit": "share"
+    },
+    {
+     "target": "Tokyo_Electron",
+     "type": "complementary",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.5,
+     "unit": "share"
+    },
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "SUMCO",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Semiconductor_Materials",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.28,
+     "unit": "share"
+    }
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7",
+   "title": "Shin-Etsu Chemical",
+   "role_blurb": "素材のチョークポイント（世界最大のシリコンウェハ生産者＋フォトレジスト寡占の一角）／非中国の希土類磁石供給源",
+   "financials": {
+    "market_cap": {
+     "value": 84.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 0.2,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.3842,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "Tokyo_Ohka",
@@ -303,7 +744,73 @@
    "tickers": [
     "4186"
    ],
-   "why": "Japan (demand 0.90) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "TSMC",
+     "type": "customer",
+     "role": null,
+     "weight": 0.35,
+     "unit": "share"
+    },
+    {
+     "target": "Samsung",
+     "type": "customer",
+     "role": null,
+     "weight": 0.25,
+     "unit": "share"
+    },
+    {
+     "target": "Intel",
+     "type": "customer",
+     "role": null,
+     "weight": 0.15,
+     "unit": "share"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Semiconductor_Materials",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": "share"
+    }
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7",
+   "title": "Tokyo_Ohka",
+   "role_blurb": "Japanese photoresist leader (TOK); JSR's EUV-photoresist twin; the listed pure-play after JSR went private",
+   "financials": {
+    "market_cap": {
+     "value": 8.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 0.5,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.5187,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "Mitsui_OSK",
@@ -320,7 +827,52 @@
    "tickers": [
     "9104"
    ],
-   "why": "Japan (demand 0.90) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "NYK",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": null,
+     "unit": "share"
+    }
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7",
+   "title": "Mitsui OSK",
+   "role_blurb": "Diversified maritime major (tanker + dry-bulk + LNG + car-carrier + container via ONE) — market position + transit-route economics",
+   "financials": {
+    "market_cap": {
+     "value": 11.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-06"
+    },
+    "total_debt": {
+     "value": 5.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2025-FY"
+    },
+    "equity_volatility": {
+     "value": 0.4,
+     "unit": "annualized",
+     "source": "estimated",
+     "as_of": "2026-07"
+    }
+   }
   },
   {
    "id": "NYK",
@@ -337,7 +889,45 @@
    "tickers": [
     "9101"
    ],
-   "why": "Japan (demand 0.90) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": null,
+     "unit": "share"
+    }
+   ],
+   "why": "Japan (demand 0.90) x DECAY 0.7",
+   "title": "NYK",
+   "role_blurb": "Japan's largest diversified maritime group (dry-bulk + LNG + car-carrier + container via ONE + logistics) — market position + transit-route economics",
+   "financials": {
+    "market_cap": {
+     "value": 12.74,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-07"
+    },
+    "total_debt": {
+     "value": 4.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2025-FY"
+    },
+    "equity_volatility": {
+     "value": 0.4,
+     "unit": "annualized",
+     "source": "estimated",
+     "as_of": "2026-07"
+    }
+   }
   },
   {
    "id": "Saudi_Aramco",
@@ -354,7 +944,45 @@
    "tickers": [
     "2222"
    ],
-   "why": "Saudi_Arabia (supply 0.85) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Saudi_Arabia",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Bab_el-Mandeb",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.4,
+     "unit": "share"
+    }
+   ],
+   "why": "Saudi_Arabia (supply 0.85) x DECAY 0.7",
+   "title": "Saudi Aramco",
+   "role_blurb": "世界最大の国営石油会社（[[Saudi_Arabia]] の上流実体。Petroline→Yanbu が2026ホルムズ迂回の鍵）",
+   "financials": {
+    "market_cap": {
+     "value": 1683.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 85.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.1503,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "Maaden",
@@ -371,7 +999,52 @@
    "tickers": [
     "1211"
    ],
-   "why": "Saudi_Arabia (supply 0.85) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Saudi_Arabia",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.03,
+     "unit": "share"
+    },
+    {
+     "target": "MP_Materials",
+     "type": "joint_venture",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "Saudi_Arabia (supply 0.85) x DECAY 0.7",
+   "title": "Maaden",
+   "role_blurb": "Saudi Arabia's national mining champion (phosphate/aluminum/gold); MP Materials rare-earth JV (2025-11); Vision-2030 minerals pillar",
+   "financials": {
+    "market_cap": {
+     "value": 65.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 9.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.324,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "LG_Energy_Solution",
@@ -388,7 +1061,129 @@
    "tickers": [
     "373220"
    ],
-   "why": "South_Korea (demand 0.70) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "EV_Battery",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.11,
+     "unit": "share"
+    },
+    {
+     "target": "Tesla",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.12,
+     "unit": "share"
+    },
+    {
+     "target": "GM",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.2,
+     "unit": "share"
+    },
+    {
+     "target": "Hyundai",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.1,
+     "unit": "share"
+    },
+    {
+     "target": "Volkswagen",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.08,
+     "unit": "share"
+    },
+    {
+     "target": "Lithium",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.15,
+     "unit": "share"
+    },
+    {
+     "target": "Cobalt",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.12,
+     "unit": "share"
+    },
+    {
+     "target": "Nickel",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.15,
+     "unit": "share"
+    },
+    {
+     "target": "South_Korea",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Panasonic",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Samsung_SDI",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "SK_On",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Honda",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.08,
+     "unit": "share"
+    },
+    {
+     "target": "Renault",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.06,
+     "unit": "share"
+    }
+   ],
+   "why": "South_Korea (demand 0.70) x DECAY 0.7",
+   "title": "LG Energy Solution",
+   "role_blurb": "Korean EV-battery maker —",
+   "financials": {
+    "market_cap": {
+     "value": 68.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 10.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2025"
+    },
+    "equity_volatility": {
+     "value": 0.5964,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "SK_On",
@@ -403,7 +1198,67 @@
    "role": "demand",
    "raw_impact": -0.49,
    "tickers": [],
-   "why": "South_Korea (demand 0.70) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "EV_Battery",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.05,
+     "unit": "share"
+    },
+    {
+     "target": "Hyundai",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.12,
+     "unit": "share"
+    },
+    {
+     "target": "Ford",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.2,
+     "unit": "share"
+    },
+    {
+     "target": "Volkswagen",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.06,
+     "unit": "share"
+    },
+    {
+     "target": "Nickel",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.07,
+     "unit": "share"
+    },
+    {
+     "target": "Cobalt",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.05,
+     "unit": "share"
+    },
+    {
+     "target": "South_Korea",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Nissan",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.1,
+     "unit": "share"
+    }
+   ],
+   "why": "South_Korea (demand 0.70) x DECAY 0.7",
+   "title": "SK On",
+   "role_blurb": "Korean EV-battery maker (~4-7% global share; high-nickel NCM) — subsidiary of SK Innovation (NOT independently listed) → mc-null (Merton-excluded); supplies Hyundai/Ford/VW"
   },
   {
    "id": "Samsung_SDI",
@@ -420,7 +1275,80 @@
    "tickers": [
     "006400"
    ],
-   "why": "South_Korea (demand 0.70) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "EV_Battery",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.027,
+     "unit": "share"
+    },
+    {
+     "target": "Stellantis",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.1,
+     "unit": "share"
+    },
+    {
+     "target": "Nickel",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.06,
+     "unit": "share"
+    },
+    {
+     "target": "Cobalt",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.05,
+     "unit": "share"
+    },
+    {
+     "target": "South_Korea",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "SK_On",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "BMW",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.12,
+     "unit": "share"
+    }
+   ],
+   "why": "South_Korea (demand 0.70) x DECAY 0.7",
+   "title": "Samsung SDI",
+   "role_blurb": "Korean EV-battery maker (~2.7% global share; high-nickel NCM prismatic); LISTED (KRX:006400) → Merton-computable; ★ SEPARATE from Samsung Electronics (semiconductors); supplies BMW/Audi/Rivian + Stellantis (StarPlus JV)",
+   "financials": {
+    "market_cap": {
+     "value": 15.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 5.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2025"
+    },
+    "equity_volatility": {
+     "value": 0.6765,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "CATL",
@@ -438,7 +1366,164 @@
     "300750",
     "3750"
    ],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "EV_Battery",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.8,
+     "unit": "share"
+    },
+    {
+     "target": "Tesla",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.15,
+     "unit": "share"
+    },
+    {
+     "target": "Volkswagen",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.08,
+     "unit": "share"
+    },
+    {
+     "target": "Toyota",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.04,
+     "unit": "share"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Renewable_Energy",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Lithium",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.65,
+     "unit": "share"
+    },
+    {
+     "target": "Cobalt",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.45,
+     "unit": "share"
+    },
+    {
+     "target": "Nickel",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.45,
+     "unit": "share"
+    },
+    {
+     "target": "Indonesia",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "CMOC",
+     "type": "shareholder",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "LG_Energy_Solution",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Panasonic",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Samsung_SDI",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "SK_On",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "BMW",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.06,
+     "unit": "share"
+    },
+    {
+     "target": "Mercedes_Benz",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.05,
+     "unit": "share"
+    },
+    {
+     "target": "Renault",
+     "type": "customer",
+     "role": "demand",
+     "weight": 0.05,
+     "unit": "share"
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "CATL",
+   "role_blurb": "World's largest EV-battery + ESS maker; anchors the EV_Battery hub; supplies Tesla/VW/Toyota; BYD's battery rival",
+   "financials": {
+    "market_cap": {
+     "value": 268.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 18.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q1"
+    },
+    "equity_volatility": {
+     "value": 0.463,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "CNNC",
@@ -453,7 +1538,39 @@
    "role": "demand",
    "raw_impact": -0.336,
    "tickers": [],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Nuclear_Power",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.55,
+     "unit": "share"
+    },
+    {
+     "target": "Uranium_Enrichment",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.4,
+     "unit": "share"
+    },
+    {
+     "target": "China",
+     "type": "customer",
+     "role": null,
+     "weight": 0.8,
+     "unit": "share"
+    },
+    {
+     "target": "Rosatom",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "CNNC",
+   "role_blurb": "state-owned nuclear power, construction & fuel-cycle conglomerate"
   },
   {
    "id": "CSSC",
@@ -468,7 +1585,46 @@
    "role": "demand",
    "raw_impact": -0.336,
    "tickers": [],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "customer",
+     "role": null,
+     "weight": 0.7,
+     "unit": "share"
+    },
+    {
+     "target": "COSCO",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Port_of_Shanghai",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.3,
+     "unit": "share"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "CSSC",
+   "role_blurb": "state-owned shipbuilding conglomerate; world's largest shipbuilder"
   },
   {
    "id": "CGN",
@@ -485,7 +1641,53 @@
    "tickers": [
     "1816"
    ],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Nuclear_Power",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.6,
+     "unit": "share"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "CNNC",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Rosatom",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "CGN",
+   "role_blurb": "China's largest nuclear power generator",
+   "financials": {
+    "market_cap": {
+     "value": 35.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.2648,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "CNOOC",
@@ -504,7 +1706,66 @@
     "600938",
     "CEO"
    ],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Crude_Oil",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 1.1,
+     "unit": "mb_per_d"
+    },
+    {
+     "target": "Natural_Gas",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "PetroChina",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Sinopec",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "CNOOC",
+   "role_blurb": "China's offshore oil & gas producer — LISTED (HK/Shanghai) PURE UPSTREAM E&P (no refining); highest oil-price sensitivity of the 3 majors. Parent CNOOC Group (SASAC ~65%)",
+   "financials": {
+    "market_cap": {
+     "value": 110.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 18.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2025"
+    },
+    "equity_volatility": {
+     "value": 0.3608,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "CNPC",
@@ -519,7 +1780,67 @@
    "role": "demand",
    "raw_impact": -0.336,
    "tickers": [],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Crude_Oil",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 2.6,
+     "unit": "mb_per_d"
+    },
+    {
+     "target": "Gazprom",
+     "type": "joint_venture",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Power_of_Siberia",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "PDVSA",
+     "type": "joint_venture",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Rosneft",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Iran",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "PetroChina",
+     "type": "owns",
+     "role": null,
+     "weight": 0.82,
+     "unit": "share"
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "CNPC",
+   "role_blurb": "China's largest state-owned oil & gas PARENT (SOE, unlisted) — ~2/3 of China's domestic crude production; parent of the listed PetroChina (a separate entity). Distinct from peers Sinopec/CNOOC."
   },
   {
    "id": "PetroChina",
@@ -538,7 +1859,66 @@
     "601857",
     "PTR"
    ],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Crude_Oil",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 2.5,
+     "unit": "mb_per_d"
+    },
+    {
+     "target": "Natural_Gas",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "CNPC",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Sinopec",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "PetroChina",
+   "role_blurb": "China's largest oil & gas producer — LISTED (NYSE/HK/Shanghai) integrated major; 82% held by parent CNPC (a separate SOE). Merton-computable (unlike unlisted CNPC)",
+   "financials": {
+    "market_cap": {
+     "value": 250.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 55.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2025"
+    },
+    "equity_volatility": {
+     "value": 0.3245,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "Sinopec",
@@ -557,7 +1937,52 @@
     "600028",
     "SNP"
    ],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Crude_Oil",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 5.0,
+     "unit": "mb_per_d"
+    },
+    {
+     "target": "Natural_Gas",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "Sinopec",
+   "role_blurb": "China's largest refiner — LISTED (HK/Shanghai) downstream major (refining/chemicals/~30k stations); a crude BUYER (opposite oil-price exposure to producers). Parent China Petrochemical Corp (SASAC ~68%)",
+   "financials": {
+    "market_cap": {
+     "value": 90.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 45.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2025"
+    },
+    "equity_volatility": {
+     "value": 0.2698,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "HMN_Tech",
@@ -572,7 +1997,32 @@
    "role": "demand",
    "raw_impact": -0.336,
    "tickers": [],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Subsea_Cables",
+     "type": "manufactures",
+     "role": "supply",
+     "weight": null,
+     "unit": "share"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": "share"
+    },
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "HMN Technologies Co., Ltd.",
+   "role_blurb": "Chinese submarine-cable manufacturer & cable-laying operator (~10% of new systems, ~4% planned through 2026); Hengtong-owned (rebranded from Huawei Marine 2020)"
   },
   {
    "id": "CMOC",
@@ -589,7 +2039,66 @@
    "tickers": [
     "3993"
    ],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Cobalt",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.31,
+     "unit": "share"
+    },
+    {
+     "target": "DRC",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Glencore",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Copper",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "CMOC",
+   "role_blurb": "World's",
+   "financials": {
+    "market_cap": {
+     "value": 64.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 0.75,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.5872,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "COSCO",
@@ -607,7 +2116,108 @@
     "1919",
     "601919"
    ],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "China",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "MSC",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Maersk",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "CMA_CGM",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Hapag-Lloyd",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Evergreen",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.5,
+     "unit": "share"
+    },
+    {
+     "target": "Port_of_Shanghai",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Panama_Canal",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.5,
+     "unit": "share"
+    },
+    {
+     "target": "OOIL",
+     "type": "owns",
+     "role": "supply",
+     "weight": 0.75,
+     "unit": "share"
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "COSCO",
+   "role_blurb": "中国国有の大手コンテナ船社（第3〜4位。Ocean Alliance。中国サプライチェーンの戦略手段）",
+   "financials": {
+    "market_cap": {
+     "value": 32.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 28.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.2869,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "OOCL",
@@ -622,7 +2232,46 @@
    "role": "demand",
    "raw_impact": -0.336,
    "tickers": [],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.5,
+     "unit": "share"
+    },
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "COSCO",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Maersk",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "MSC",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "OOCL",
+   "role_blurb": "Hong Kong container carrier — Ocean Alliance member; subsidiary of listed OOIL, COSCO-controlled; standalone unlisted → mc-null (Merton-excluded)"
   },
   {
    "id": "Shenghe",
@@ -639,7 +2288,52 @@
    "tickers": [
     "600392"
    ],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.1,
+     "unit": "share"
+    },
+    {
+     "target": "MP_Materials",
+     "type": "shareholder",
+     "role": null,
+     "weight": 0.077,
+     "unit": "share"
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "Shenghe",
+   "role_blurb": "Chinese rare-earth trader/refiner; 7.7% shareholder of MP_Materials (offtake severed 2026-01); the concrete MP-China link",
+   "financials": {
+    "market_cap": {
+     "value": 8.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 1.5,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.6395,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
   },
   {
    "id": "Tsingshan",
@@ -654,7 +2348,32 @@
    "role": "demand",
    "raw_impact": -0.336,
    "tickers": [],
-   "why": "China (demand 0.48) x DECAY 0.7"
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Nickel",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Indonesia",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "why": "China (demand 0.48) x DECAY 0.7",
+   "title": "Tsingshan",
+   "role_blurb": "Chinese group; world's largest nickel producer; dominant in Indonesia nickel/HPAL (IMIP Morowali); privately-held/unlisted"
   },
   {
    "id": "Russia",

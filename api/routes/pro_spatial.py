@@ -304,6 +304,49 @@ def _load_scenario_offmap() -> Dict[str, Dict[str, Any]]:
     return out
 
 
+_scenario_node_fields_cache: Optional[Dict[str, Dict[str, Dict[str, Any]]]] = None
+
+# Per-node detail the DB has NO column for. WHITELISTED (not blacklisted) so a future JSON field can
+# never silently override a DB-derived value: only these four are ever merged onto a node. Everything
+# else the JSON node carries (impact_score/order/country/why/role/tickers/raw_impact) stays whatever
+# the loader wrote to the DB — the map's source of truth. If the two ever drift, the DB wins.
+_NODE_DETAIL_FIELDS = ("title", "role_blurb", "financials", "neighbourhood")
+
+
+def _load_scenario_node_fields() -> Dict[str, Dict[str, Dict[str, Any]]]:
+    """Map domain_id → {node_id → {the whitelisted per-node detail fields that node carries}}. Read
+    from the same data/scenarios/*.json as the off-map loader, keyed by _slugify_hub(hub) — NOT the
+    filename. Cached. Values pass through VERBATIM (nested financials/neighbourhood stay objects, nulls
+    stay null); only fields a node actually has are included, so detail-less nodes map to nothing. A
+    missing/corrupt file is skipped, never raised — a broken scenario file must not 500 the map.
+    """
+    global _scenario_node_fields_cache
+    if _scenario_node_fields_cache is not None:
+        return _scenario_node_fields_cache
+
+    out: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    for path in sorted(glob.glob(os.path.join(_SCENARIO_DIR, "*.json"))):
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                payload = json.load(fh)
+            hub = (payload.get("scenario") or {}).get("hub") or ""
+            if not hub:
+                continue
+            by_node: Dict[str, Dict[str, Any]] = {}
+            for node in payload.get("nodes") or []:
+                nid = node.get("id")
+                if not nid:
+                    continue
+                detail = {k: node[k] for k in _NODE_DETAIL_FIELDS if k in node}
+                if detail:
+                    by_node[nid] = detail
+            out[_slugify_hub(hub)] = by_node
+        except Exception as exc:  # noqa: BLE001 — a bad file must not 500 the route
+            logger.warning("scenario node-fields: skipping %s (%s)", path, exc)
+    _scenario_node_fields_cache = out
+    return out
+
+
 @router.get("/domains/scenarios")
 async def list_scenarios(
     response: Response,
@@ -515,6 +558,15 @@ async def get_domain_spatial_contagion(
     off_map = _load_scenario_offmap().get(domain_id)
     if off_map:
         payload.update(off_map)
+    # Per-node detail (title / role_blurb / financials / neighbourhood) from the same JSON, merged onto
+    # the matching DB-derived node by id. Whitelisted, so the JSON never overrides a DB-derived value.
+    # An unmatched node (epicenter, a node the file has no detail for) is left untouched — keys ABSENT,
+    # never fabricated null/empty. Non-scenario domains get an empty map and skip the loop entirely.
+    node_fields = _load_scenario_node_fields().get(domain_id) or {}
+    for nd in payload["nodes"]:
+        extra = node_fields.get(nd.get("id"))
+        if extra:
+            nd.update(extra)
     return payload
 
 
