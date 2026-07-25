@@ -80,14 +80,92 @@ html, body,
 
 .app-container {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  /* The first track is a var so a shell class can close it to 0 — a real grid REFLOW (not a
+     transform), so MapLibre's default trackResize observer resizes both map canvases for free. */
+  grid-template-columns: var(--nav-w, 280px) 1fr;
   gap: var(--space-m);
   max-width: 100vw;
   margin: 0;
   padding: var(--space-m);
   height: 100vh;
   overflow: hidden;
+  position: relative;                 /* anchors the collapsed re-open handle */
+  transition: grid-template-columns 0.2s ease, gap 0.2s ease;
 }
+
+/* Desktop left-rail collapse. Only ever toggled by JS on desktop; inert on mobile because the
+   mobile breakpoint overrides .app-container to flex-column (the var stops applying) and hides
+   .sidebar-header (the collapse button). gap → 0 too, so no dead gutter is left beside the map. */
+.app-container--nav-collapsed { --nav-w: 0px; gap: 0; }
+
+/* The grid TRACK closes to 0, but the sidebar is a border-box grid item whose padding (1.5rem each
+   side) + 1px border can't shrink below ~50px — so the box overhangs its 0-width track and that
+   50px band (with a sliver of brand/dev-console text) paints over the map's top-left. overflow:hidden
+   only clips the CONTENT, not the padding band. Zero the padding/border/min-width when collapsed so
+   the item genuinely reaches 0. Still a grid-track collapse — this just lets the item follow it. */
+.app-container--nav-collapsed .sidebar {
+  padding: 0;
+  border-width: 0;
+  min-width: 0;
+}
+
+/* Clip the 280px of content as the track closes, so nothing spills during the transition. */
+.sidebar { overflow: hidden; }
+
+/* Collapse control — lives in .sidebar-header (visible only when expanded). */
+.sidebar-collapse {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.sidebar-collapse:hover { color: var(--text-primary, #e2e8f0); border-color: var(--accent); }
+
+/* Re-open handle — a floating tab OUTSIDE the 0-width sidebar, at the shell's left edge. Shown only
+   when collapsed (its [hidden] is cleared by JS). Vertically centred so it clears the map's own
+   .pm-c2 corner brackets (top/bottom corners) and its bottom legend/readout. Below the mobile
+   overlay (1003) so it never covers the drawer, and force-hidden on mobile where collapse is inert.
+   Reads as a control: solid card panel, accent left-edge, chevron, lift shadow. */
+.sidebar-reopen {
+  position: absolute;
+  top: 50%;
+  left: 8px;                          /* inset off the extreme edge so it floats as a distinct tab */
+  transform: translateY(-50%);
+  z-index: 30;
+  width: 26px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--card-bg, #0e1420);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: width 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.sidebar-reopen:hover {
+  width: 30px;
+  color: var(--text-primary, #e2e8f0);
+  background: rgba(88, 166, 255, 0.15);   /* accent tint, matching the app's hover idiom */
+  border-color: var(--accent);
+}
+.sidebar-reopen[hidden] { display: none; }
 
 .main-content {
   flex: 1;

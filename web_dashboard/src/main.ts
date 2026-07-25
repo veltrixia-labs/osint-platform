@@ -260,6 +260,45 @@ type HashRoute = { tab: TabId; alertId?: string }
 
 type TabSwitchFn = (tab: TabId, focusAlertId?: string, skipPushState?: boolean) => void
 
+const SIDEBAR_COLLAPSE_KEY = 'sidebar-collapsed';
+
+/**
+ * Desktop left-rail collapse. Toggles a shell class that closes the grid track (a real reflow,
+ * so MapLibre's trackResize observer resizes both map canvases with no manual plumbing). State
+ * persists to localStorage and is restored on every shell render, so it survives reload.
+ *
+ * Orthogonal to the mobile off-canvas drawer (mobile_nav.ts): that is position:fixed + .active
+ * and ignores the grid, and the mobile breakpoint neutralises this (flex-column shell, hidden
+ * collapse button, force-hidden re-open handle). Escape belongs to the drawer — untouched here.
+ */
+function bindSidebarCollapse(): void {
+    const shell = document.querySelector<HTMLElement>('.app-container');
+    const collapseBtn = document.getElementById('sidebar-collapse-btn');
+    const reopenBtn = document.getElementById('sidebar-reopen-btn');
+    if (!shell || !collapseBtn || !reopenBtn) return;
+
+    const apply = (collapsed: boolean): void => {
+        shell.classList.toggle('app-container--nav-collapsed', collapsed);
+        collapseBtn.setAttribute('aria-expanded', String(!collapsed));
+        reopenBtn.setAttribute('aria-expanded', String(!collapsed));
+        (reopenBtn as HTMLButtonElement).hidden = !collapsed;
+    };
+
+    // Restore persisted state before this shell is interacted with.
+    apply(localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === '1');
+
+    // Guard against double-binding the same shell element (same idiom as mobile_nav.ts).
+    if (shell.dataset.collapseBound === 'true') return;
+    shell.dataset.collapseBound = 'true';
+
+    const set = (collapsed: boolean): void => {
+        apply(collapsed);
+        try { localStorage.setItem(SIDEBAR_COLLAPSE_KEY, collapsed ? '1' : '0'); } catch { /* ignore */ }
+    };
+    collapseBtn.addEventListener('click', () => set(true));
+    reopenBtn.addEventListener('click', () => set(false));
+}
+
 function normalizeHashTab(raw: string, tier?: string): TabId | null {
     const resolved = (HASH_TAB_ALIASES[raw] ?? raw) as TabId
     let tab = resolved
@@ -606,8 +645,12 @@ async function initDashboard() {
       </header>
       <div class="mobile-overlay" id="mobile-overlay" aria-hidden="true"></div>
       <div class="app-container dashboard-terminal">
+        <button type="button" id="sidebar-reopen-btn" class="sidebar-reopen" aria-label="Expand sidebar" aria-controls="sidebar" aria-expanded="true" hidden>&rsaquo;</button>
         <aside class="sidebar" id="sidebar">
-          <div class="sidebar-header u-flex"><h2>VELTRIXIA LABS</h2></div>
+          <div class="sidebar-header u-flex">
+            <h2>VELTRIXIA LABS</h2>
+            <button type="button" id="sidebar-collapse-btn" class="sidebar-collapse" aria-label="Collapse sidebar" aria-controls="sidebar" aria-expanded="true">&lsaquo;</button>
+          </div>
           <div id="sidebar-nav-container" style="display:flex; flex-direction:column; flex:1;"></div>
         </aside>
         <main class="main-content">
@@ -650,6 +693,7 @@ async function initDashboard() {
       </footer>
       `;
         bindMobileSidebarControls();
+        bindSidebarCollapse();
     };
 
     if (generation !== dashboardInitGeneration) return

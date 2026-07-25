@@ -41,6 +41,12 @@
     display: none;
   }
 
+  /* Desktop-only collapse controls never show on mobile: the drawer is a fixed off-canvas
+     panel driven by mobile_nav.ts, orthogonal to the grid collapse. */
+  .sidebar-reopen {
+    display: none !important;
+  }
+
   #app {
     overflow-x: hidden;
     padding: 0 0 calc(3.25rem + env(safe-area-inset-bottom, 0px)) 0;
