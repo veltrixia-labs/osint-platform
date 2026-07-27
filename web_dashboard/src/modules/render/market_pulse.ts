@@ -227,17 +227,6 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
                     )}
                 </section>
 
-                <!-- Choke-Point Fluid-Dynamics Map -->
-                <section class="pro-insight-chokepoints pro-insight-section" aria-label="Fluid-Dynamics Choke-Point Analyzer">
-                    ${renderProPanel(
-                        'Fluid-Dynamics Choke-Point Analyzer',
-                        '<div id="choke-point-container" class="w-full"></div>',
-                        undefined,
-                        '#f59e0b',
-                        renderPanelGuide('Fluid-Dynamics Choke-Point Analyzer', '<p>Models global logistics as a fluid network. Each maritime node&#39;s halo encodes the restriction factor <code>sigmoid(OSINT_viscosity / physical_Q − baseline)</code>; click to inspect downstream sector drag.</p>')
-                    )}
-                </section>
-
                 ${leadLagActive ? `
                 <!-- Module A: Risk Contagion & Lead-Lag Tracker (Radial Grid) -->
                 <section class="pro-insight-leadlag pro-insight-section" aria-label="Risk Contagion Lead-Lag Tracker">
@@ -294,7 +283,6 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
             import('./macro_chart').then(m => m.renderMacroTransmissionChart('macro-transmission-chart'));
             import('./macro_matrix').then(m => m.renderMacroInfluenceMatrix('macro-matrix-container'));
             import('./market_entropy_gauge').then(m => m.renderMarketEntropyGauge('market-entropy-container'));
-            import('./choke_point_map').then(m => m.renderChokePointMap('choke-point-container'));
             import('./hidden_accumulation').then(m => m.renderHiddenAccumulation('hidden-accumulation-container'));
             void refreshRegimeBanner(container);
         }
@@ -323,7 +311,6 @@ export async function renderMarketPulse(container: HTMLElement, user: UserMe, on
         void import('./macro_chart').then(m => (m as any).refreshMacroTransmissionChart?.());
         void import('./macro_matrix').then(m => (m as any).refreshMacroInfluenceMatrix?.());
         void import('./market_entropy_gauge').then(m => (m as any).refreshMarketEntropyGauge?.());
-        void import('./choke_point_map').then(m => (m as any).refreshChokePointMap?.());
         void import('./hidden_accumulation').then(m => (m as any).refreshHiddenAccumulation?.());
         void refreshRegimeBanner(container);
     }, MARKET_PULSE_REFRESH_MS);

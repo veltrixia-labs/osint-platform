@@ -663,27 +663,6 @@ async def get_market_entropy(
         raise HTTPException(status_code=500, detail="Error computing market entropy")
 
 
-@router.get("/insights/choke-points")
-async def get_choke_points(
-    db: AsyncSession = Depends(get_db),
-    user_data: tuple = Depends(requires_tier(PlanTier.PRO.value)),
-):
-    """
-    Tier: Pro+ — Fluid Dynamics choke-point analysis.
-
-    Returns six maritime nodes (Hormuz, Malacca, Suez, Bab-el-Mandeb, Panama,
-    Bosphorus) with current OSINT viscosity, restriction factor, and
-    downstream sector drag projections.
-    """
-    _ = user_data
-    from analysis.choke_point_flow import compute_choke_point_flow
-    try:
-        return await compute_choke_point_flow(db)
-    except Exception as e:
-        logger.error("Choke-point engine failed: %s", e, exc_info=True)
-        raise HTTPException(status_code=500, detail="Error computing choke-point flow")
-
-
 @router.get("/insights/hidden-accumulation")
 async def get_hidden_accumulation(
     db: AsyncSession = Depends(get_db),

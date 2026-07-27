@@ -1038,57 +1038,6 @@ export async function fetchMarketEntropy(): Promise<MarketEntropy | null> {
     }
 }
 
-// ── Choke-Point Flow ─────────────────────────────────────────────────────
-export type ChokePointNode = {
-    id: string;
-    label: string;
-    lat: number;
-    lng: number;
-    daily_volume_mbpd: number;
-    primary_commodity?: string | null;
-    description?: string | null;
-    viscosity: number;
-    peak_intensity: number;
-    matched_alert_count: number;
-    matched_alerts: Array<{
-        alert_id: string;
-        topic?: string | null;
-        domain?: string | null;
-        intensity: number;
-        target_label?: string | null;
-        triggered_at?: string | null;
-    }>;
-    restriction: number;
-    restriction_label: string;
-    downstream_sectors: string[];
-};
-export type ChokePointEdge = {
-    from_node: string;
-    from_label: string;
-    sector: string;
-    drag: number;
-    explanation: string;
-};
-export type ChokePointFlow = {
-    nodes: ChokePointNode[];
-    edges: ChokePointEdge[];
-    global_restriction: number;
-    global_restriction_label: string;
-    window_hours: number;
-    baseline_viscosity: number;
-    generated_at: string;
-};
-
-export async function fetchChokePointFlow(): Promise<ChokePointFlow | null> {
-    try {
-        const resp = await apiClient.get('/insights/choke-points');
-        return resp.ok ? ((await resp.json()) as ChokePointFlow) : null;
-    } catch (e) {
-        console.warn('[Choke-Point Flow] fetch failed', e);
-        return null;
-    }
-}
-
 // ── Hidden Accumulation ──────────────────────────────────────────────────
 export type COTOverlay = {
     market: string;
