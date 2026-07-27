@@ -1,0 +1,449 @@
+{
+ "schema_version": "vault_cascade_v1",
+ "scenario": {
+  "hub": "Suez_Canal",
+  "hub_type": "route",
+  "aliases": [
+   "Suez Canal",
+   "Suez",
+   "スエズ運河"
+  ],
+  "domain": [
+   "supply_chain",
+   "energy"
+  ]
+ },
+ "generated_at": "2026-07-13",
+ "graph": {
+  "nodes": 300,
+  "edges": 1497,
+  "gate": "PASS"
+ },
+ "scaling": {
+  "impact_score": "round(100*|raw_impact|), clamp[0,100], epicenter=100 (linear)",
+  "intensity": "|raw_impact| clamp[0,1]",
+  "confidence": {
+   "order1": 1.0,
+   "order2": 1.0,
+   "order3": 0.7
+  },
+  "node_types": {
+   "epicenter": "the hub",
+   "affected": "quantified impact (impact_score 0-100)",
+   "exposed_unquantified": "real edge, weight:null -> impact_score null (NOT 0; 0 would mean no impact)"
+  },
+  "render_hint": "Colour by TYPE, shade by SCORE. Do not colour by score alone: a fully-routed order-2 node (Qatar 1.00 -> 100) legitimately ties the epicenter score. Edges with \"unquantified\": true have intensity null -> draw dashed/hollow."
+ },
+ "nodes": [
+  {
+   "id": "Suez_Canal",
+   "name": "Suez Canal",
+   "lat": 30.705,
+   "lon": 32.3481,
+   "country": null,
+   "type": "epicenter",
+   "order": 1,
+   "impact_score": 100,
+   "confidence": 1.0
+  },
+  {
+   "id": "Bab_el-Mandeb",
+   "name": "Bab el-Mandeb",
+   "lat": 12.5833,
+   "lon": 43.3333,
+   "country": null,
+   "type": "affected",
+   "order": 2,
+   "impact_score": 60,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.6,
+   "why": "route:demand weight 0.60"
+  },
+  {
+   "id": "Maersk",
+   "name": "Maersk",
+   "lat": 55.677,
+   "lon": 12.568,
+   "country": "DK",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 60,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.6,
+   "why": "route:demand weight 0.60",
+   "tickers": [
+    "MAERSK B"
+   ],
+   "neighbourhood": [
+    {
+     "target": "MSC",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "COSCO",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "CMA_CGM",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Hapag-Lloyd",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Evergreen",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "OOCL",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "PTP",
+     "type": "shareholder",
+     "role": null,
+     "weight": 0.3,
+     "unit": "share"
+    },
+    {
+     "target": "Suez_Canal",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.6,
+     "unit": "share"
+    },
+    {
+     "target": "Port_of_Rotterdam",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Panama_Canal",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.6,
+     "unit": "share"
+    },
+    {
+     "target": "Denmark",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    }
+   ],
+   "title": "Maersk",
+   "role_blurb": "世界第2位のコンテナ船社（Gemini Cooperation）。2026年1〜2月にスエズ構造復帰を開始も2026 紅海海運リスク上昇後に反転、2026年央は喜望峰（「安全が許せば」スエズ優先）",
+   "financials": {
+    "market_cap": {
+     "value": 35.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 17.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.3666,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   }
+  },
+  {
+   "id": "CMB.TECH",
+   "name": "CMB.TECH",
+   "lat": 51.219,
+   "lon": 4.402,
+   "country": "BE",
+   "type": "exposed_unquantified",
+   "order": 2,
+   "impact_score": null,
+   "confidence": null,
+   "role": "demand",
+   "raw_impact": null,
+   "why": "structurally exposed via Suez_Canal; magnitude unknown (weight: null)",
+   "tickers": [
+    "CMBT",
+    "CMBT"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Belgium",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Frontline",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Suez_Canal",
+     "type": "context_link",
+     "role": "demand",
+     "weight": null,
+     "unit": "share"
+    }
+   ],
+   "title": "CMB.TECH",
+   "role_blurb": "Diversified maritime group (crude tankers + dry-bulk + container + chemical + offshore wind); ex-Euronav, CMB/Saverys ~53% — market position + transit-route economics",
+   "financials": {
+    "market_cap": {
+     "value": 4.41,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-07-07"
+    },
+    "total_debt": {
+     "value": 2.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2025-FY"
+    },
+    "equity_volatility": {
+     "value": 0.48,
+     "unit": "annualized",
+     "source": "estimated",
+     "as_of": "2026-07"
+    }
+   }
+  },
+  {
+   "id": "Frontline",
+   "name": "Frontline",
+   "lat": 34.707,
+   "lon": 33.022,
+   "country": "NO",
+   "type": "exposed_unquantified",
+   "order": 2,
+   "impact_score": null,
+   "confidence": null,
+   "role": "demand",
+   "raw_impact": null,
+   "why": "structurally exposed via Suez_Canal; magnitude unknown (weight: null)",
+   "tickers": [
+    "FRO",
+    "FRO"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Norway",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "CMB.TECH",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Suez_Canal",
+     "type": "context_link",
+     "role": "demand",
+     "weight": null,
+     "unit": "share"
+    }
+   ],
+   "title": "Frontline",
+   "role_blurb": "Major crude/product tanker owner (VLCC/Suezmax; Fredriksen-linked) — market position + transit-route economics",
+   "financials": {
+    "market_cap": {
+     "value": 8.38,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-07-07"
+    },
+    "total_debt": {
+     "value": 2.8,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2025-FY"
+    },
+    "equity_volatility": {
+     "value": 0.4888,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-07"
+    }
+   }
+  },
+  {
+   "id": "OOIL",
+   "name": "OOIL",
+   "lat": 22.2783,
+   "lon": 114.1747,
+   "country": "HK",
+   "type": "exposed_unquantified",
+   "order": 2,
+   "impact_score": null,
+   "confidence": null,
+   "role": "demand",
+   "raw_impact": null,
+   "why": "structurally exposed via Suez_Canal; magnitude unknown (weight: null)",
+   "tickers": [
+    "0316"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Hong_Kong",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null
+    },
+    {
+     "target": "Suez_Canal",
+     "type": "context_link",
+     "role": "demand",
+     "weight": null,
+     "unit": "share"
+    },
+    {
+     "target": "Panama_Canal",
+     "type": "context_link",
+     "role": "demand",
+     "weight": null,
+     "unit": "share"
+    }
+   ],
+   "title": "OOIL",
+   "role_blurb": "Container liner (OOCL); COSCO-controlled (~75%) — market position + transit-route economics",
+   "financials": {
+    "market_cap": {
+     "value": 10.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-07"
+    },
+    "total_debt": {
+     "value": 1.5,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2025-FY"
+    },
+    "equity_volatility": {
+     "value": 0.4,
+     "unit": "annualized",
+     "source": "estimated",
+     "as_of": "2026-07"
+    }
+   }
+  }
+ ],
+ "edges": [
+  {
+   "source_id": "Suez_Canal",
+   "target_id": "Bab_el-Mandeb",
+   "source_lat": 30.705,
+   "source_lon": 32.3481,
+   "target_lat": 12.5833,
+   "target_lon": 43.3333,
+   "intensity": 0.6,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Suez_Canal",
+   "target_id": "Maersk",
+   "source_lat": 30.705,
+   "source_lon": 32.3481,
+   "target_lat": 55.677,
+   "target_lon": 12.568,
+   "intensity": 0.6,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Suez_Canal",
+   "target_id": "CMB.TECH",
+   "source_lat": 30.705,
+   "source_lon": 32.3481,
+   "target_lat": 51.219,
+   "target_lon": 4.402,
+   "intensity": null,
+   "unquantified": true,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Suez_Canal",
+   "target_id": "Frontline",
+   "source_lat": 30.705,
+   "source_lon": 32.3481,
+   "target_lat": 34.707,
+   "target_lon": 33.022,
+   "intensity": null,
+   "unquantified": true,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Suez_Canal",
+   "target_id": "OOIL",
+   "source_lat": 30.705,
+   "source_lon": 32.3481,
+   "target_lat": 22.2783,
+   "target_lon": 114.1747,
+   "intensity": null,
+   "unquantified": true,
+   "target_order": 2,
+   "role": "demand"
+  }
+ ],
+ "conduits": [],
+ "no_map": [],
+ "honest_gaps": {
+  "exposed_null": [
+   {
+    "id": "CMB.TECH",
+    "role": "demand"
+   },
+   {
+    "id": "Frontline",
+    "role": "demand"
+   },
+   {
+    "id": "OOIL",
+    "role": "demand"
+   }
+  ],
+  "node_gaps": []
+ }
+}
