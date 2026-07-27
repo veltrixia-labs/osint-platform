@@ -101,6 +101,13 @@ function describeLag(data: MacroTransmissionData, opts: MacroTransmissionOptions
     const sourceLabel = findMacro(opts, data.source)?.label ?? data.source;
     const targetLabel = findTopic(opts, data.target)?.label ?? data.target;
     const lag = data.lag_days;
+    if (lag === null) {
+        return {
+            headline: `${sourceLabel} — awaiting ${targetLabel} alert history`,
+            detail: 'Insufficient overlap between the macro series and sector alert intensity to compute a lead/lag relationship.',
+            direction: 'sync',
+        };
+    }
     if (lag > 0) {
         return {
             headline: `${sourceLabel} leads ${targetLabel}`,
@@ -123,12 +130,14 @@ function describeLag(data: MacroTransmissionData, opts: MacroTransmissionOptions
     };
 }
 
-function formatCorrelation(r: number): string {
+function formatCorrelation(r: number | null): string {
+    if (r === null) return '—';
     const sign = r > 0 ? '+' : '';
     return `${sign}${r.toFixed(3)}`;
 }
 
-function correlationStrengthLabel(r: number): string {
+function correlationStrengthLabel(r: number | null): string {
+    if (r === null) return '—';
     const a = Math.abs(r);
     if (a >= 0.7) return 'Strong';
     if (a >= 0.4) return 'Moderate';
@@ -549,7 +558,7 @@ function renderEvidenceModal(state: ChartState): void {
                 <div class="kv">
                     <span class="k">Lag (days)</span><span class="v">${data?.lag_days ?? '—'}</span>
                     <span class="k">Correlation</span><span class="v">${data ? formatCorrelation(data.correlation) : '—'} (${data ? correlationStrengthLabel(data.correlation) : '—'})</span>
-                    <span class="k">Beta</span><span class="v">${data ? data.beta.toFixed(4) : '—'}</span>
+                    <span class="k">Beta</span><span class="v">${data && data.beta !== null ? data.beta.toFixed(4) : '—'}</span>
                     <span class="k">Sample size</span><span class="v">${series.length} ${data?.resolution === 'monthly' ? 'monthly' : 'daily'} points</span>
                     <span class="k">Resolution</span><span class="v">${escAttr(data?.resolution || 'daily')}</span>
                     <span class="k">RoC window</span><span class="v">${data?.roc_window_days ?? '—'} days</span>
@@ -605,7 +614,7 @@ function renderMetrics(host: HTMLElement, data: MacroTransmissionData, opts: Mac
         </div>
         <div class="macro-tx-metric">
             <span class="label">Lag (days)</span>
-            <span class="value">${data.lag_days > 0 ? '+' : ''}${data.lag_days}</span>
+            <span class="value">${data.lag_days === null ? '—' : `${data.lag_days > 0 ? '+' : ''}${data.lag_days}`}</span>
             <span class="hint">${escAttr(lag.headline)}</span>
         </div>
         <div class="macro-tx-metric">
@@ -615,7 +624,7 @@ function renderMetrics(host: HTMLElement, data: MacroTransmissionData, opts: Mac
         </div>
         <div class="macro-tx-metric">
             <span class="label">Beta</span>
-            <span class="value">${data.beta.toFixed(3)}</span>
+            <span class="value">${data.beta === null ? '—' : data.beta.toFixed(3)}</span>
             <span class="hint">Sensitivity at peak lag</span>
         </div>
         <div class="macro-tx-metric">
@@ -640,8 +649,9 @@ function renderChart(host: HTMLElement, data: MacroTransmissionData, state: Char
     const macroValues = data.series.map((s) => s.macro_value);
     const intensityValues = data.series.map((s) => s.intensity);
 
-    const titleText = data.beta !== 0 || data.correlation !== 0
-        ? `${lag.headline} — corr ${formatCorrelation(data.correlation)} · β ${data.beta.toFixed(2)}`
+    const hasMetrics = data.correlation !== null && data.beta !== null;
+    const titleText = hasMetrics
+        ? `${lag.headline} — corr ${formatCorrelation(data.correlation)} · β ${data.beta!.toFixed(2)}`
         : `${sourceLabel} — awaiting sufficient ${targetLabel} alerts for CCF`;
 
     const options = {
@@ -712,7 +722,17 @@ async function loadAndRender(card: HTMLElement, state: ChartState): Promise<void
         }
         state.lastData = data;
         chartHost.innerHTML = '';
-        renderMetrics(metricsHost, data, state.options);
+        // Metrics were not measured (null) → show the insufficient-data treatment in the
+        // METRICS AREA only; the price chart still renders from the observed `series`.
+        if (data.correlation === null) {
+            setStatus(
+                metricsHost,
+                `Insufficient overlap to compute correlation${data.status ? ` (${escAttr(data.status)})` : ''}. `
+                + 'The macro series is charted below; sector alert history is too short for a CCF.',
+            );
+        } else {
+            renderMetrics(metricsHost, data, state.options);
+        }
         renderChart(chartHost, data, state);
     } catch (err) {
         console.error('Failed to render macro transmission chart:', err);

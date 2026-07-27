@@ -890,14 +890,19 @@ export async function fetchProStructuralReport(id: string): Promise<ProStructura
 export type MacroTransmissionData = {
     source: string;
     target: string;
-    lag_days: number;
-    correlation: number;
-    beta: number;
+    // null when the metric was NOT measured (no macro / no alerts / insufficient overlap);
+    // `status` says which. Never 0 in that case — 0 would read as a measured zero.
+    lag_days: number | null;
+    correlation: number | null;
+    beta: number | null;
     series: Array<{
         date: string;
         macro_value: number;
         intensity: number;
     }>;
+    /** Present when the metrics are absent: "no_macro_data" | "no_alerts" | "insufficient_overlap" (else "ok"/omitted). */
+    status?: string;
+    sample_size?: number;
     /** "daily" or "monthly" — engine-reported sampling resolution */
     resolution?: 'daily' | 'monthly';
     roc_window_days?: number;

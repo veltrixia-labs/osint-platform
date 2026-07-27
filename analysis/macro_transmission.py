@@ -109,6 +109,7 @@ class MacroTransmissionEngine:
             return self._empty_result(
                 macro_series_id, target_topic,
                 roc_window=roc_window, days_lookback=days_lookback,
+                status="no_macro_data",
             )
 
         df_macro = pd.DataFrame(macro_data, columns=["date", "macro_value"])
@@ -139,6 +140,7 @@ class MacroTransmissionEngine:
             return self._empty_result(
                 macro_series_id, target_topic, df_macro,
                 roc_window=roc_window, days_lookback=days_lookback,
+                status="no_alerts",
             )
 
         df_alert = pd.DataFrame(alert_data, columns=["date", "intensity"])
@@ -171,6 +173,7 @@ class MacroTransmissionEngine:
             return self._empty_result(
                 macro_series_id, target_topic, df_macro,
                 roc_window=roc_window, days_lookback=days_lookback,
+                status="insufficient_overlap",
             )
 
         macro_signal = df_calc["macro_roc"].values
@@ -409,7 +412,12 @@ class MacroTransmissionEngine:
         df_macro: Optional[pd.DataFrame] = None,
         roc_window: int = 7,
         days_lookback: int = 90,
+        status: str = "insufficient_overlap",
     ) -> Dict[str, Any]:
+        # The metrics were NOT measured (no macro / no alerts / no overlap), so they are
+        # reported as null with a status — never 0.0, which would read as a measured zero
+        # correlation. Mirrors the matrix path's _null_cell vocabulary. The `series` payload
+        # is preserved: the macro series IS observed and must still chart.
         series_data = []
         if df_macro is not None and not df_macro.empty:
             df_full = df_macro.copy()
@@ -423,9 +431,11 @@ class MacroTransmissionEngine:
         return {
             "source": macro_series_id,
             "target": target_topic,
-            "lag_days": 0,
-            "correlation": 0.0,
-            "beta": 0.0,
+            "lag_days": None,
+            "correlation": None,
+            "beta": None,
+            "sample_size": 0,
+            "status": status,
             "series": series_data,
             "resolution": "monthly" if is_monthly_series(macro_series_id) else "daily",
             "roc_window_days": int(roc_window),
