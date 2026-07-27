@@ -316,15 +316,16 @@ async def _fetch_live_spatial_graph(
     db: AsyncSession,
     *,
     topic_code: str,
-) -> Dict[str, Any]:
+) -> Optional[Dict[str, Any]]:
     """
-    Phase 7.4 — pull the spatial contagion graph from the dedicated
-    Spatial Engine tables for ``topic_code``. Falls back to the 'global'
-    aggregate if the per-domain rows are unseeded so the brief always
-    surfaces *something*.
+    Pull the spatial contagion graph from the spatial tables for the domain
+    ``topic_code`` resolves to (see ``topic_to_spatial_domain``).
 
-    Returns the same `spatial_contagion` shape the frontend Pro Brief
-    already understands.
+    Returns the `spatial_contagion` shape the frontend Pro Brief understands
+    when the resolved domain has a loaded cascade, or ``None`` when it has no
+    nodes — so the brief renders NO spatial section rather than a 'global'
+    relic aggregate or an "Awaiting Spatial Data" placeholder that would assert
+    data is pending when no cascade exists for this topic.
     """
     short_id = topic_to_spatial_domain(topic_code)
 
@@ -344,10 +345,12 @@ async def _fetch_live_spatial_graph(
     nodes, edges = await _load(short_id)
     used_domain = short_id
     if not nodes:
-        # Cold-state fallback: surface the global aggregate so the Pro Brief
-        # never renders an empty spatial section.
-        nodes, edges = await _load("global")
-        used_domain = "global" if nodes else short_id
+        # A topic with no real cascade renders NO spatial section. We return None
+        # (the caller/payload/frontend all treat that as clean absence). We do NOT
+        # fall back to a relic 'global' aggregate, and we do NOT emit an empty
+        # graph: an "Awaiting Spatial Data" placeholder would assert that data is
+        # coming when none exists for this topic.
+        return None
 
     # None survives as None: an UNMEASURED magnitude is not zero. `float(None)` would
     # raise, and coercing it to 0.0 would assert "no impact" about something we never

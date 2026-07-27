@@ -12,13 +12,19 @@ from __future__ import annotations
 
 from typing import Dict
 
-# Aliases from the long topic_code form (used by Pro reports) to the short
-# Spatial Engine domain_id form (used by spatial_nodes/edges). Kept in sync
-# with the frontend's SPATIAL_DOMAIN_ALIAS table.
+# Aliases from the long topic_code form (used by Pro reports) to the real
+# scenario domain_id (a loaded cascade in spatial_nodes/edges).
+#
+# Only the two topics a real scenario legitimately serves are mapped. All four
+# vault scenarios (strait_of_hormuz, strait_of_malacca, bab_el-mandeb,
+# suez_canal) tag [supply_chain, energy]; NONE tags ai_semiconductor, crypto,
+# defense, or global_market — so those four topics intentionally have no spatial
+# domain and render no spatial section (see _fetch_live_spatial_graph, which now
+# returns None rather than an empty/relic placeholder). Fixed mapping for now;
+# dynamic selection of the currently-firing scenario is a separate task.
 _TOPIC_TO_SPATIAL: Dict[str, str] = {
-    "energy_resource_risk": "energy",
-    "supply_chain_intelligence": "shipping",
-    # supply_chain is also seeded directly under its plain id.
+    "energy_resource_risk": "strait_of_hormuz",
+    "supply_chain_intelligence": "strait_of_malacca",
 }
 
 
