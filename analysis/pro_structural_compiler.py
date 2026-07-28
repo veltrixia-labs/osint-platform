@@ -729,6 +729,8 @@ def build_quantitative_evidence_matrix(
             "asset_class": p.get("asset_class"),
             "latest_close": p.get("latest_close"),
             "percent_change": round(float(p.get("percent_change")), 3),
+            "latest_date": p.get("latest_date"),
+            "span_days": p.get("span_days"),
         })
 
     # Alert intensity stats from related events.

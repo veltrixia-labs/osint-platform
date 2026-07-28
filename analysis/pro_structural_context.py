@@ -1255,6 +1255,7 @@ async def _get_market_confirmation(db: AsyncSession, config: dict, lookback_days
             "latest_close": latest.close,
             "previous_date": previous.date.isoformat() if previous else None,
             "previous_close": previous.close if previous else None,
+            "span_days": (latest.date - previous.date).days if previous else None,
             "percent_change": change_pct,
             "interval": latest.interval
         })
