@@ -1113,6 +1113,8 @@ async def _get_macro_observations(
             "source": latest.source,
             "latest_value": latest.value,
             "latest_date": latest.date.isoformat(),
+            "previous_date": previous.date.isoformat() if previous else None,
+            "span_days": (latest.date - previous.date).days if previous else None,
             "period_label": latest.period_label,
             "previous_value": previous.value if previous else None,
             "change_pct": change_pct,

@@ -577,6 +577,8 @@ def build_cascading_impacts(
                 "series_id": obs.get("series_id"),
                 "display_name": obs.get("display_name") or obs.get("series_id"),
                 "change_pct": float(chg),
+                "latest_date": obs.get("latest_date"),
+                "span_days": obs.get("span_days"),
             })
 
     return {
@@ -711,6 +713,8 @@ def build_quantitative_evidence_matrix(
             "display_name": obs.get("display_name") or obs.get("series_id"),
             "latest_value": obs.get("latest_value"),
             "change_pct": round(float(obs.get("change_pct")), 3),
+            "latest_date": obs.get("latest_date"),
+            "span_days": obs.get("span_days"),
         })
 
     # Top market moves (largest |percent_change|, up to 5).
