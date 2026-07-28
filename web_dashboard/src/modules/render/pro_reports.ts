@@ -2316,7 +2316,7 @@ type CascadingTierEntry = {
 };
 type CascadingChannel = { channel?: string; note?: string };
 type CascadingSpillover = { spillover_domain?: string; mechanism?: string };
-type CascadingMacroPressure = { series_id?: string; display_name?: string; change_pct?: number };
+type CascadingMacroPressure = { series_id?: string; display_name?: string; change_pct?: number; latest_date?: string | null; span_days?: number | null };
 interface CascadingImpactsPayload {
     tier_1_direct?: CascadingTierEntry[];
     tier_2_downstream?: CascadingTierEntry[];
@@ -2349,6 +2349,8 @@ type QuantMacroMove = {
     display_name?: string;
     latest_value?: number | string | null;
     change_pct?: number;
+    latest_date?: string | null;
+    span_days?: number | null;
 };
 type QuantMarketMove = {
     symbol?: string;
@@ -2383,6 +2385,16 @@ function fmtNum(v: number | string | null | undefined): string {
     if (!Number.isFinite(n)) return String(v);
     if (Math.abs(n) >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
     return n.toFixed(2);
+}
+
+function fmtObsDate(v: string | null | undefined): string {
+    if (v == null || v === '') return '';
+    return v;
+}
+
+function fmtSpanDays(v: number | null | undefined): string {
+    if (v == null) return '';
+    return `${v}d`;
 }
 
 function renderCascadingImpactsSection(ci: CascadingImpactsPayload | null | undefined, sectionNum: string): string {
@@ -2463,17 +2475,19 @@ function renderCascadingImpactsSection(ci: CascadingImpactsPayload | null | unde
         const rows = pressure.map((m) => {
             const chg = typeof m.change_pct === 'number' ? m.change_pct : null;
             const dir = chg != null && chg > 0 ? 'up' : 'down';
+            const span = fmtSpanDays(m.span_days);
             return `<tr>
                 <td><code>${escHtml(m.series_id || '—')}</code></td>
                 <td>${escHtml(m.display_name || m.series_id || '—')}</td>
-                <td class="intel-pressure-delta ${dir}">${fmtPct(chg)}</td>
+                <td>${escHtml(fmtObsDate(m.latest_date))}</td>
+                <td class="intel-pressure-delta ${dir}">${fmtPct(chg)}${span ? ` / ${span}` : ''}</td>
             </tr>`;
         }).join('');
         pressureHtml = `
             <div class="intel-active-pressure">
                 <h5>Active Macro Pressure (≥3% lookback)</h5>
                 <table class="intel-active-pressure-table">
-                    <thead><tr><th>Series</th><th>Label</th><th>Change</th></tr></thead>
+                    <thead><tr><th>Series</th><th>Label</th><th>As of</th><th>Change</th></tr></thead>
                     <tbody>${rows}</tbody>
                 </table>
             </div>`;
@@ -2575,17 +2589,19 @@ function renderQuantitativeEvidenceMatrixSection(matrix: QuantitativeEvidenceMat
         const rows = macroRows.map((m) => {
             const chg = typeof m.change_pct === 'number' ? m.change_pct : null;
             const dir = chg != null && chg > 0 ? 'up' : 'down';
+            const span = fmtSpanDays(m.span_days);
             return `<tr>
                 <td><code>${escHtml(m.series_id || '—')}</code></td>
                 <td>${escHtml(m.display_name || m.series_id || '—')}</td>
                 <td class="num">${fmtNum(m.latest_value)}</td>
-                <td class="num ${dir}">${fmtPct(chg)}</td>
+                <td>${escHtml(fmtObsDate(m.latest_date))}</td>
+                <td class="num ${dir}">${fmtPct(chg)}${span ? ` / ${span}` : ''}</td>
             </tr>`;
         }).join('');
         macroHtml = `
             <h5 class="intel-quant-subtable-title">Top Structural Moves (by |Δ%|)</h5>
             <table class="intel-quant-table">
-                <thead><tr><th>Series</th><th>Label</th><th>Latest</th><th>Δ Lookback</th></tr></thead>
+                <thead><tr><th>Series</th><th>Label</th><th>Latest</th><th>As of</th><th>Δ</th></tr></thead>
                 <tbody>${rows}</tbody>
             </table>`;
     }
