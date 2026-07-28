@@ -68,6 +68,19 @@ async def run_continuous_pro_intelligence_stream(
             logger.exception("Pro realtime stream failed for %s", domain_id)
             errors.append({"domain_id": domain_id, "error": str(outcome)})
 
+    # Visibility only: the per-domain logger.exception above is easy to miss, so
+    # emit ONE aggregate line naming every failed domain when any fail. This does
+    # NOT change return_exceptions=True — a single domain failing must still not
+    # block the other five; the successful ones are already committed above.
+    # NOTE: a stale report is still SERVED with no freshness check on the read side
+    # (pro_structural_report_filters has no age filter), so an ops-level
+    # report-freshness alert remains a separate, unimplemented task.
+    if errors:
+        logger.warning(
+            "PRO_STREAM_PARTIAL: %d/%d domain compiles failed this cycle: %s",
+            len(errors), len(targets), ", ".join(e["domain_id"] for e in errors),
+        )
+
     pruned = 0
     if pro_compile_dedup_enabled():
         async with AsyncSessionLocal() as db:

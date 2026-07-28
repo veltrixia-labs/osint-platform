@@ -1095,7 +1095,17 @@ async def _get_macro_observations(
         previous = prev_res.scalar_one_or_none()
         
         change_pct = None
-        if previous and previous.value != 0 and latest.value is not None:
+        # `previous.value is not None` is load-bearing: None != 0 is True in Python,
+        # so the prior `!= 0` test did NOT exclude a NULL. A NULL daily observation is
+        # a real no-data day (FRED market holidays — DCOILWTICO/DGS10/DTWEXBGS/VIXCLS
+        # all carry NULLs, most recently 2026-07-03), not a number. When it is NULL the
+        # change was not measured, so change_pct stays None — never coerced to 0.
+        if (
+            previous
+            and previous.value is not None
+            and previous.value != 0
+            and latest.value is not None
+        ):
             change_pct = ((latest.value - previous.value) / abs(previous.value)) * 100
 
         results.append({

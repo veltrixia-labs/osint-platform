@@ -105,7 +105,11 @@ async def get_ppi_change(
         "change_percent": None
     }
     
-    if curr and prev and prev.value and prev.value != 0:
+    # Same class of defect as pro_structural_context._get_macro_observations: the
+    # curr operand must be None-checked too (a row can exist with a NULL value).
+    # Unreachable today only because bls_ppi_observations is empty; guarded so it
+    # cannot fire if that table is ever populated. NULL -> change stays None, never 0.
+    if curr and prev and curr.value is not None and prev.value and prev.value != 0:
         res["change_percent"] = round(((curr.value - prev.value) / prev.value) * 100, 2)
         res["series_name"] = curr.series_name
         
