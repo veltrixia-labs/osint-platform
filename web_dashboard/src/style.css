@@ -8496,7 +8496,7 @@ button.domain-chip.pro-domain-filter-btn--all.pro-domain-filter-btn--active {
 /* Status Bar (hero sub-bar) */
 .intel-status-bar {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.75rem;
   margin-bottom: 2rem;
 }

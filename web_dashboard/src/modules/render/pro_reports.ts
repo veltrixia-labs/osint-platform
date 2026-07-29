@@ -2080,8 +2080,7 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
     html += `<div class="intel-status-bar">
         <div class="intel-status-card"><div class="intel-status-label">Structural Risk</div><div class="intel-status-val" style="color:${sc(divCheck.structural_risk)}">${(divCheck.structural_risk||'N/A').toUpperCase()}</div></div>
         <div class="intel-status-card"><div class="intel-status-label">Market Status</div><div class="intel-status-val" style="color:${sc(market.status)}">${(market.status||'N/A').toUpperCase()}</div></div>
-        <div class="intel-status-card"><div class="intel-status-label">Data Coverage</div><div class="intel-status-val" style="color:${sc(covLabel)}">${covLabel.toUpperCase()}</div></div>
-        <div class="intel-status-card"><div class="intel-status-label">Data Lag</div><div class="intel-status-val" style="color:${sc(divCheck.data_lag==='low'?'high':divCheck.data_lag==='high'?'low':'medium')}">${(divCheck.data_lag||'N/A').toUpperCase()}</div></div>
+        <div class="intel-status-card"><div class="intel-status-label">Sources Present</div><div class="intel-status-val" style="color:${sc(covLabel)}">${covLabel.toUpperCase()}</div></div>
     </div>`;
 
     // 01 Senior Quant Analyst Narrative (LLM), with legacy summary fallback
@@ -2135,7 +2134,7 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
         html += `<div class="intel-panel">${sh(nextSectionNum(),'Quantitative Context', '06')}<div class="intel-metric-grid">${macro.slice(0,12).map((m:any)=>`<div class="intel-metric-card"><div class="metric-label">${m.display_name || m.series_id}</div>${m.display_name ? `<div style="font-size:0.65rem;color:var(--text-secondary);font-family:monospace;margin-bottom:0.25rem;">${m.series_id}</div>` : ''}<div class="metric-value">${m.latest_value??'N/A'}</div><div class="metric-change" style="color:${(m.change_pct||0)>0?'var(--success)':'var(--danger)'}">${(m.change_pct||0)>0?'+':''}${m.change_pct?m.change_pct.toFixed(2):'0.00'}%</div>${m.trend_meaning ? `<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:0.35rem;line-height:1.3;">${m.trend_meaning}</div>` : ''}</div>`).join('')}</div></div>`;
     }
 
-    // 07 Market Confirmation Breakdown + Real-Time Market Pulse
+    // 07 Market Confirmation Breakdown + Market Prices
     // Derive movers directly from latest_prices for maximum fidelity.
     const latestPrices: any[] = market.latest_prices || [];
     const sigPosMvrs = latestPrices.filter((p: any) => (p.percent_change ?? 0) > 0.5)
@@ -2172,7 +2171,7 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
         <div class="intel-pulse-section">
             <div class="intel-pulse-header">
                 <span class="intel-pulse-dot"></span>
-                Real-Time Market Pulse
+                Market Prices
                 ${supplyDrivenBadge}
                 ${limitedInstr > 0 ? `<span class="intel-pulse-limited">${limitedInstr} instruments awaiting price data</span>` : ''}
             </div>
@@ -2215,7 +2214,6 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
             <div class="intel-div-grid">
                 <div class="intel-div-item"><span class="intel-div-label">Structural Risk</span><span class="intel-div-val" style="color:${sc(divCheck.structural_risk)}">${(divCheck.structural_risk||'N/A').toUpperCase()}</span></div>
                 <div class="intel-div-item"><span class="intel-div-label">Market Confirmation</span><span class="intel-div-val" style="color:${sc(divCheck.market_confirmation)}">${(divCheck.market_confirmation||'N/A').toUpperCase()}</span></div>
-                <div class="intel-div-item"><span class="intel-div-label">Data Lag</span><span class="intel-div-val" style="color:${sc(divCheck.data_lag==='low'?'high':divCheck.data_lag==='high'?'low':'medium')}">${(divCheck.data_lag||'N/A').toUpperCase()}</span></div>
             </div>
             <p class="intel-body-text" style="margin-top:1rem;">${divCheck.interpretation}</p></div>`;
     }
@@ -2272,7 +2270,7 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
 
     // Data Notes (collapsible)
     const limList = notes.coverage_limitations || [];
-    html += `<details class="intel-data-details"><summary class="intel-data-summary">Data Notes & Coverage Limitations</summary><div class="intel-data-details-body"><div><strong>Data Freshness:</strong> ${notes.freshness||'Unknown'}</div>${limList.length?`<div style="margin-top:0.5rem;"><strong>Limitations:</strong></div><ul style="padding-left:1.2rem;margin-top:0.25rem;">${limList.map((l:string)=>`<li>${escHtml(l)}</li>`).join('')}</ul>`:''}</div></details>`;
+    html += `<details class="intel-data-details"><summary class="intel-data-summary">Data Notes & Coverage Limitations</summary><div class="intel-data-details-body"><div><strong>Freshest input:</strong> ${notes.freshness||'Unknown'}</div>${limList.length?`<div style="margin-top:0.5rem;"><strong>Limitations:</strong></div><ul style="padding-left:1.2rem;margin-top:0.25rem;">${limList.map((l:string)=>`<li>${escHtml(l)}</li>`).join('')}</ul>`:''}</div></details>`;
 
     html += timelineAppendixHtml;
 
@@ -2357,6 +2355,8 @@ type QuantMarketMove = {
     asset_class?: string;
     latest_close?: number | string | null;
     percent_change?: number;
+    latest_date?: string | null;
+    span_days?: number | null;
 };
 type QuantIntensityStats = { count?: number; max?: number; mean?: number };
 interface QuantitativeEvidenceMatrixPayload {
@@ -2611,17 +2611,19 @@ function renderQuantitativeEvidenceMatrixSection(matrix: QuantitativeEvidenceMat
         const rows = marketRows.map((p) => {
             const chg = typeof p.percent_change === 'number' ? p.percent_change : null;
             const dir = chg != null && chg > 0 ? 'up' : 'down';
+            const span = fmtSpanDays(p.span_days);
             return `<tr>
                 <td><code>${escHtml(p.symbol || '—')}</code></td>
                 <td>${escHtml(p.asset_class || '—')}</td>
                 <td class="num">${fmtNum(p.latest_close)}</td>
-                <td class="num ${dir}">${fmtPct(chg)}</td>
+                <td>${escHtml(fmtObsDate(p.latest_date))}</td>
+                <td class="num ${dir}">${fmtPct(chg)}${span ? ` / ${span}` : ''}</td>
             </tr>`;
         }).join('');
         marketHtml = `
             <h5 class="intel-quant-subtable-title">Top Market Moves (by |Δ%|)</h5>
             <table class="intel-quant-table">
-                <thead><tr><th>Symbol</th><th>Class</th><th>Latest Close</th><th>Δ</th></tr></thead>
+                <thead><tr><th>Symbol</th><th>Class</th><th>Latest Close</th><th>As of</th><th>Δ</th></tr></thead>
                 <tbody>${rows}</tbody>
             </table>`;
     }
