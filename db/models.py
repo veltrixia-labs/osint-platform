@@ -859,3 +859,65 @@ class MonthlyTrendReport(Base):
     summary_json = Column(JSONB, nullable=False)     # counts, entropy, top sectors
     alerts_total = Column(Integer, default=0)
     alerts_spiked = Column(Integer, default=0)
+
+
+class ImpactRosterRow(Base):
+    """
+    One (scenario, entity) impact row from the vault's cascade output, joined to
+    the Merton PD slice. Loaded read-only from two JSON artifacts that live
+    OUTSIDE this repo (see jobs/load_impact_roster.py).
+
+    Nulls are load-bearing: a null pd / asset_value / debt / sigma / d2 / bucket /
+    pd_reason means "not measurable for this entity", NOT zero — never coerce.
+    """
+    __tablename__ = "impact_roster_rows"
+    __table_args__ = (
+        Index("ix_impact_roster_rows_load_id", "load_id"),
+        Index("ix_impact_roster_rows_scenario", "scenario"),
+        Index("ix_impact_roster_rows_entity", "entity"),
+    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    load_id = Column(UUID(as_uuid=True), nullable=False)   # links to impact_roster_loads.id
+    scenario = Column(Text, nullable=False)
+    scenario_kind = Column(Text, nullable=False)           # 'base' for now
+    entity = Column(Text, nullable=False)
+    entity_kind = Column(Text, nullable=False)             # 'firm' | 'region_or_hub'
+    impact = Column(Float, nullable=False)
+    pd = Column(Float, nullable=True)
+    pd_status = Column(Text, nullable=True)                # verbatim `status` from the PD artifact
+    pd_category = Column(Text, nullable=True)              # derived from reason prefix (see loader)
+    pd_reason = Column(Text, nullable=True)                # verbatim `reason`
+    asset_value = Column(Float, nullable=True)             # V
+    debt = Column(Float, nullable=True)                    # D
+    sigma = Column(Float, nullable=True)
+    d2 = Column(Float, nullable=True)
+    bucket = Column(Text, nullable=True)
+    # pd_source_as_of is the upstream artifact's HAND-EDITED `as_of` constant — a
+    # literal string in the PD generator (model_slice_v12/v13.py), stored verbatim.
+    # It is NOT a measured or system-generated date and MUST NOT be presented to
+    # users as a freshness signal.
+    pd_source_as_of = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class ImpactRosterLoad(Base):
+    """
+    One load run of jobs/load_impact_roster.py. Always written on --commit, even
+    when zero rows are inserted: a zero-row load records status='partial' with an
+    explanatory error_message, never 'success'. This is the market-fetcher lesson —
+    a silent no-op must remain visible in the DB.
+    """
+    __tablename__ = "impact_roster_loads"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    finished_at = Column(DateTime(timezone=True), nullable=True)
+    status = Column(Text, nullable=False)                  # 'success' | 'partial' | 'failed'
+    source_dir = Column(Text, nullable=False)
+    impacts_sha256 = Column(Text, nullable=True)
+    pd_sha256 = Column(Text, nullable=True)
+    pd_source_as_of = Column(Text, nullable=True)          # verbatim upstream constant; not a date signal
+    scenarios_seen = Column(Integer, nullable=False, default=0)
+    scenarios_loaded = Column(Integer, nullable=False, default=0)
+    scenarios_skipped = Column(Text, nullable=True)        # comma-joined variant keys skipped
+    rows_written = Column(Integer, nullable=False, default=0)
+    error_message = Column(Text, nullable=True)
