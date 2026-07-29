@@ -814,11 +814,15 @@ def _ensure_event_timeline_floor(
 
 
 def _compute_market_status(prices: List[dict]) -> str:
-    pos_movers = [p for p in prices if (p.get("percent_change") or 0) > 0.5]
-    neg_movers = [p for p in prices if (p.get("percent_change") or 0) < -0.5]
-    if not prices:
+    # Only current prices carry a market signal. Records predating the is_stale
+    # field (stored payloads) lack the key and default to fresh, preserving old
+    # behaviour.
+    fresh = [p for p in prices if not p.get("is_stale")]
+    if not fresh:
         return "Limited"
-    if len(pos_movers) > len(prices) * 0.6 or len(neg_movers) > len(prices) * 0.6:
+    pos_movers = [p for p in fresh if (p.get("percent_change") or 0) > 0.5]
+    neg_movers = [p for p in fresh if (p.get("percent_change") or 0) < -0.5]
+    if len(pos_movers) > len(fresh) * 0.6 or len(neg_movers) > len(fresh) * 0.6:
         return "Confirming"
     if len(pos_movers) > 0 and len(neg_movers) > 0:
         return "Mixed"

@@ -135,10 +135,26 @@ class MarketDataFetcher:
                     logger.warning(f"Alpha Vantage rate limit hit for {symbol}")
                     error_msg = f"Rate limit hit at {symbol}"
                     break
+                elif "Information" in res:
+                    logger.warning(f"Alpha Vantage rate/premium limit for {symbol}: {res['Information']}")
+                    error_msg = f"Rate/premium limit at {symbol}: {res['Information']}"
+                    break
                 elif "Error Message" in res:
                     logger.error(f"AV Error for {symbol}: {res['Error Message']}")
+                    error_msg = f"AV error at {symbol}: {res['Error Message']}"
+                else:
+                    logger.warning(f"AV unrecognized response for {symbol}; keys={list(res.keys())}")
+                    error_msg = f"Unrecognized AV response at {symbol}; keys={list(res.keys())}"
 
-            status = "partial" if error_msg else "success"
+            # Belt-and-braces: a run that requested instruments but saved zero rows
+            # must not record clean success, even for a future unknown response shape.
+            if error_msg:
+                status = "partial"
+            elif inst_requested > 0 and rows_saved == 0:
+                status = "partial"
+                error_msg = f"Zero rows saved despite {inst_requested} instrument(s) requested"
+            else:
+                status = "success"
             await self.repo.finish_fetch_log(
                 log, status=status, 
                 instruments_requested=inst_requested, 

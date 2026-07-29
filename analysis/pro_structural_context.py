@@ -163,6 +163,11 @@ _GEO_KEYWORDS: tuple = (
 _SPATIAL_MAX_NODES = 10
 _SPATIAL_MAX_CANDIDATES = 24    # candidates fed into the geocoder; deduped to MAX_NODES
 
+# Calendar days before a market price is treated as stale. Sized to survive a
+# weekend plus a holiday. Market prices are daily-traded, so this threshold is
+# well-defined (unlike mixed-cadence macro series).
+_MARKET_PRICE_STALE_DAYS = 7
+
 # 2-hop expansion: when a 1st-hop "affected" node lives in country XX, we
 # pick this country's flagship city as the order-3 ripple. The map is small
 # and curated — we don't want random geocoder noise muddying the visual.
@@ -1211,7 +1216,8 @@ async def _get_market_confirmation(db: AsyncSession, config: dict, lookback_days
         return {"instruments": [], "latest_prices": []}
 
     latest_prices = []
-    
+    today_utc = datetime.now(timezone.utc).date()
+
     for symbol in symbols:
         # Get latest price and join with instrument to get asset_class
         stmt = (
@@ -1256,6 +1262,7 @@ async def _get_market_confirmation(db: AsyncSession, config: dict, lookback_days
             "previous_date": previous.date.isoformat() if previous else None,
             "previous_close": previous.close if previous else None,
             "span_days": (latest.date - previous.date).days if previous else None,
+            "is_stale": (today_utc - latest.date).days > _MARKET_PRICE_STALE_DAYS,
             "percent_change": change_pct,
             "interval": latest.interval
         })
