@@ -9,7 +9,7 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderTopicFilterBar, renderDomainItems, renderDomainItemsHint, clearDomainItems, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
+import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderImpactRoster, renderTopicFilterBar, renderDomainItems, renderDomainItemsHint, clearDomainItems, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
 import { normalizeTopicCode, STRATEGIC_TOPIC_FILTERS, type StrategicTopicCode } from './modules/topics'
 import { formatIntelTime } from './modules/render/utils'
 // (Pro reports now handled within Pro Insights hub)
@@ -247,9 +247,9 @@ export async function renderSignup() {
     });
 }
 
-type TabId = 'feed' | 'trend-flow' | 'plans' | 'reports' | 'map' | 'legal' | 'market-pulse' | 'pro-insights' | 'pro-map' | 'expert-intel'
+type TabId = 'feed' | 'trend-flow' | 'plans' | 'reports' | 'map' | 'legal' | 'market-pulse' | 'pro-insights' | 'pro-map' | 'impact-roster' | 'expert-intel'
 
-const BOOT_TABS: TabId[] = ['feed', 'trend-flow', 'map', 'plans', 'legal', 'market-pulse', 'pro-insights', 'pro-map', 'expert-intel']
+const BOOT_TABS: TabId[] = ['feed', 'trend-flow', 'map', 'plans', 'legal', 'market-pulse', 'pro-insights', 'pro-map', 'impact-roster', 'expert-intel']
 
 /** Legacy hash aliases (e.g. bookmarks, old LP links). */
 const HASH_TAB_ALIASES: Record<string, TabId> = {
@@ -403,6 +403,7 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
         },
     },
     'pro-map': { title: 'Pro Interactive Map' },
+    'impact-roster': { title: 'Impact Roster' },
     'market-pulse': {
         icon: '📈',
         title: 'Market Pulse',
@@ -682,6 +683,7 @@ async function initDashboard() {
           </div>
           <div id="map-page-container" style="display:none;"></div>
           <div id="pro-map-container" style="display:none;"></div>
+          <div id="impact-roster-container" style="display:none;"></div>
         </main>
       </div>
       <footer class="mobile-status-bar" aria-live="polite">
@@ -825,6 +827,7 @@ async function initDashboard() {
         const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
         const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
         const proMapContainer = document.querySelector<HTMLElement>('#pro-map-container');
+        const impactRosterContainer = document.querySelector<HTMLElement>('#impact-roster-container');
         applyPageHeader(tab);
         mainContent?.classList.toggle('main-content--global-map', tab === 'map');
 
@@ -860,6 +863,7 @@ async function initDashboard() {
             if (feedContainer) feedContainer.style.display = isFeedLike ? 'block' : 'none';
             if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
             if (proMapContainer) proMapContainer.style.display = (tab === 'pro-map') ? 'flex' : 'none';
+            if (impactRosterContainer) impactRosterContainer.style.display = (tab === 'impact-roster') ? 'flex' : 'none';
 
             if (tab === 'feed') renderIntelligenceFeed();
             else if (tab === 'trend-flow') void renderTrendFlow(alertsContainer, user!.tier);
@@ -886,6 +890,11 @@ async function initDashboard() {
                 if (isAuthSessionPending()) return;
                 if (!isProOrAbove(user!.tier) && !DEV_MODE_AUDIT) { renderPremiumShroud(proMapContainer!, 'pro-map', user!, () => handleTabSwitch('plans')); if (mainContent) mainContent.style.opacity = '1'; return; }
                 renderProMap();
+            }
+            else if (tab === 'impact-roster') {
+                if (isAuthSessionPending()) return;
+                if (!isProOrAbove(user!.tier) && !DEV_MODE_AUDIT) { renderPremiumShroud(impactRosterContainer!, 'impact-roster', user!, () => handleTabSwitch('plans')); if (mainContent) mainContent.style.opacity = '1'; return; }
+                renderImpactRoster();
             }
             else if (tab === 'expert-intel') {
                 const isExpertPlus =

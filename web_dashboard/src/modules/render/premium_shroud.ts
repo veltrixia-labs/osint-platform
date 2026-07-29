@@ -12,7 +12,7 @@
  */
 import type { UserMe } from '../api';
 
-export type ShroudFeature = 'market-pulse' | 'pro-insights' | 'pro-map';
+export type ShroudFeature = 'market-pulse' | 'pro-insights' | 'pro-map' | 'impact-roster';
 
 type FeatureMeta = { icon: string; title: string; blurb: string; bullets: string[] };
 
@@ -34,6 +34,12 @@ const FEATURE_META: Record<ShroudFeature, FeatureMeta> = {
         title: 'Pro Interactive Map',
         blurb: 'Global spatial surveillance — geolocated signal clusters, maritime choke-point flow, and collateral contagion networks.',
         bullets: ['Geospatial signal clustering', 'Maritime choke-point flow', 'Sanctions contagion graph'],
+    },
+    'impact-roster': {
+        icon: '🎯',
+        title: 'Impact Roster',
+        blurb: 'Scenario-based exposure rosters — for each supply-shock scenario, the firms it affects ranked by impact against Merton credit fragility.',
+        bullets: ['Per-scenario firm exposure rosters', 'Impact × credit-fragility ranking', 'Country and choke-point impact tables'],
     },
 };
 
