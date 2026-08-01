@@ -4,6 +4,8 @@ Development and controlled production utilities for Pro data sync and rebuild.
 Production: set PRO_BRIEF_REGEN_SECRET and pass header X-Pro-Regen-Secret on every call.
 """
 
+import hmac
+import logging
 import os
 from typing import Any, Dict, List, Optional
 
@@ -21,6 +23,8 @@ from jobs.pro_brief_regenerator import (
     regenerate_pro_structural_briefs,
     run_pro_platform_rebuild,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/dev", tags=["Dev Tools"])
 
@@ -47,11 +51,18 @@ def _require_ops_auth(x_pro_regen_secret: Optional[str]) -> None:
             detail="PRO_BRIEF_REGEN_SECRET is not configured on this server.",
         )
     expected = os.environ.get("PRO_BRIEF_REGEN_SECRET", "").strip()
-    if not x_pro_regen_secret or x_pro_regen_secret.strip() != expected:
+    if not x_pro_regen_secret or not hmac.compare_digest(
+        x_pro_regen_secret.strip().encode("utf-8"), expected.encode("utf-8")
+    ):
         raise HTTPException(
             status_code=403,
             detail="Invalid or missing X-Pro-Regen-Secret header.",
         )
+
+
+def _auth_mode() -> str:
+    """Which branch of _require_ops_auth admitted the caller. Never touches the secret."""
+    return "dev_bypass" if _dev_tools_allowed() else "secret_header"
 
 
 @router.get("/external-data-coverage")
@@ -74,7 +85,6 @@ async def pro_structural_audit(
 
 
 @router.post("/sync-external-data")
-@router.get("/sync-external-data")
 async def sync_external_data(
     full: bool = Query(
         False,
@@ -84,7 +94,13 @@ async def sync_external_data(
         False,
         description="After sync, purge and regenerate pro_structural briefs (V2)",
     ),
-    purge: bool = Query(True, description="When rebuild=true, delete old pro_structural rows first"),
+    purge: bool = Query(
+        False,
+        description=(
+            "Opt-in destructive: when rebuild=true, delete old pro_structural rows first. "
+            "Off by default — deletion never happens unless explicitly requested."
+        ),
+    ),
     domains: Optional[str] = Query(None, description="Comma-separated domain_ids for rebuild"),
     x_pro_regen_secret: Optional[str] = Header(None, alias="X-Pro-Regen-Secret"),
 ) -> Dict[str, Any]:
@@ -96,6 +112,15 @@ async def sync_external_data(
     With rebuild=true: chains sync → purge → generate-pro-structural-briefs internally.
     """
     _require_ops_auth(x_pro_regen_secret)
+    logger.warning(
+        "dev_tools invoked: route=%s auth=%s full=%s rebuild=%s purge=%s domains=%s",
+        "sync-external-data",
+        _auth_mode(),
+        full,
+        rebuild,
+        purge,
+        domains,
+    )
 
     sync_result = await run_sync_external_data(full_pipeline=full, include_market=True)
 
@@ -120,20 +145,30 @@ async def sync_external_data(
 
 
 @router.post("/sync-pro-macro-data")
-@router.get("/sync-pro-macro-data")
 async def sync_pro_macro_data(
     full: bool = Query(False, description="Run full daily pipeline (all sources)"),
     x_pro_regen_secret: Optional[str] = Header(None, alias="X-Pro-Regen-Secret"),
 ) -> Dict[str, Any]:
     """Alias for Pro-priority sync (backward compatible)."""
     _require_ops_auth(x_pro_regen_secret)
+    logger.warning(
+        "dev_tools invoked: route=%s auth=%s full=%s",
+        "sync-pro-macro-data",
+        _auth_mode(),
+        full,
+    )
     return await run_sync_external_data(full_pipeline=full, include_market=True)
 
 
 @router.post("/backfill-and-rebuild")
-@router.get("/backfill-and-rebuild")
 async def backfill_and_rebuild(
-    purge: bool = Query(True, description="Purge pro_structural before regeneration"),
+    purge: bool = Query(
+        False,
+        description=(
+            "Opt-in destructive: purge pro_structural before regeneration. "
+            "Off by default — deletion never happens unless explicitly requested."
+        ),
+    ),
     full: bool = Query(False, description="Use full daily external sync pipeline"),
     domains: Optional[str] = Query(None, description="Comma-separated domain_ids"),
     x_pro_regen_secret: Optional[str] = Header(None, alias="X-Pro-Regen-Secret"),
@@ -146,6 +181,14 @@ async def backfill_and_rebuild(
         -H "X-Pro-Regen-Secret: $PRO_BRIEF_REGEN_SECRET"
     """
     _require_ops_auth(x_pro_regen_secret)
+    logger.warning(
+        "dev_tools invoked: route=%s auth=%s purge=%s full=%s domains=%s",
+        "backfill-and-rebuild",
+        _auth_mode(),
+        purge,
+        full,
+        domains,
+    )
 
     domain_list: Optional[List[str]] = None
     if domains:
@@ -159,13 +202,19 @@ async def backfill_and_rebuild(
 
 
 @router.post("/generate-pro-structural-briefs")
-@router.get("/generate-pro-structural-briefs")
 async def generate_pro_structural_briefs(
     purge: bool = Query(False, description="Delete existing pro_structural rows first"),
     domains: Optional[str] = Query(None, description="Comma-separated domain_ids"),
     x_pro_regen_secret: Optional[str] = Header(None, alias="X-Pro-Regen-Secret"),
 ) -> Dict[str, Any]:
     _require_ops_auth(x_pro_regen_secret)
+    logger.warning(
+        "dev_tools invoked: route=%s auth=%s purge=%s domains=%s",
+        "generate-pro-structural-briefs",
+        _auth_mode(),
+        purge,
+        domains,
+    )
 
     domain_list: List[str] = DEFAULT_DOMAINS
     if domains:
@@ -178,9 +227,14 @@ async def generate_pro_structural_briefs(
 
 
 @router.post("/rebuild-pro-platform")
-@router.get("/rebuild-pro-platform")
 async def rebuild_pro_platform(
-    purge: bool = Query(True, description="Purge existing pro_structural briefs before regen"),
+    purge: bool = Query(
+        False,
+        description=(
+            "Opt-in destructive: purge existing pro_structural briefs before regen. "
+            "Off by default — deletion never happens unless explicitly requested."
+        ),
+    ),
     sync_macro: bool = Query(True, description="Run macro/market sync before regeneration"),
     full_macro: bool = Query(False, description="Use full external sync pipeline (slower)"),
     domains: Optional[str] = Query(None, description="Comma-separated domain_ids"),
@@ -188,6 +242,15 @@ async def rebuild_pro_platform(
 ) -> Dict[str, Any]:
     """Backward-compatible alias for run_pro_platform_rebuild."""
     _require_ops_auth(x_pro_regen_secret)
+    logger.warning(
+        "dev_tools invoked: route=%s auth=%s purge=%s sync_macro=%s full_macro=%s domains=%s",
+        "rebuild-pro-platform",
+        _auth_mode(),
+        purge,
+        sync_macro,
+        full_macro,
+        domains,
+    )
 
     domain_list: Optional[List[str]] = None
     if domains:
