@@ -133,7 +133,7 @@ async def run_sync_external_data(
 
 async def run_backfill_and_rebuild(
     *,
-    purge_first: bool = True,
+    purge_first: bool = False,
     full_sync: bool = False,
     domains: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
@@ -150,16 +150,23 @@ async def run_backfill_and_rebuild(
         include_market=True,
     )
 
-    from jobs.pro_brief_regenerator import regenerate_pro_structural_briefs
+    from jobs.pro_brief_regenerator import (
+        component_status,
+        regenerate_pro_structural_briefs,
+        worst_status,
+    )
 
     regen_result = await regenerate_pro_structural_briefs(
         domains=domains,
         purge_first=purge_first,
     )
 
+    components: Dict[str, Any] = {"sync": sync_result, "regeneration": regen_result}
+
     finished = datetime.now(timezone.utc)
     return {
-        "status": "ok",
+        "status": worst_status(components),
+        "component_status": {name: component_status(v) for name, v in components.items()},
         "pipeline": "backfill_and_rebuild",
         "started_at": started.isoformat(),
         "finished_at": finished.isoformat(),

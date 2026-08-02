@@ -32,6 +32,42 @@ CORE_PRO_DOMAINS = [
     "defense_technology",
 ]
 
+UNKNOWN_STATUS = "unknown"
+
+# Severity ordering for status propagation. A status we do not recognise, or a nested
+# result that carries none at all, is UNKNOWN_STATUS — never silently a success.
+_STATUS_SEVERITY = {
+    "ok": 0,
+    "success": 0,
+    "completed": 0,
+    "skipped": 1,
+    "partial": 2,
+    UNKNOWN_STATUS: 3,
+    "failed": 4,
+    "error": 4,
+}
+
+
+def component_status(result: Any) -> str:
+    """Read one nested result's status. Missing or unrecognised reads as unknown."""
+    if not isinstance(result, dict):
+        return UNKNOWN_STATUS
+    raw = result.get("status")
+    if not isinstance(raw, str):
+        return UNKNOWN_STATUS
+    value = raw.strip().lower()
+    return value if value in _STATUS_SEVERITY else UNKNOWN_STATUS
+
+
+def worst_status(components: Dict[str, Any]) -> str:
+    """Worst status across the nested results that were actually attempted."""
+    if not components:
+        return UNKNOWN_STATUS
+    return max(
+        (component_status(value) for value in components.values()),
+        key=lambda status: _STATUS_SEVERITY[status],
+    )
+
 
 async def audit_pro_structural_reports(db: AsyncSession) -> Dict[str, Any]:
     """Summarize existing pro_structural rows for freshness / schema checks."""
@@ -111,7 +147,7 @@ async def regenerate_pro_structural_briefs(
     """
     target_domains = domains or CORE_PRO_DOMAINS
     generated: List[Dict[str, Any]] = []
-    errors: List[Dict[str, str]] = []
+    errors: List[Dict[str, Optional[str]]] = []
 
     async with AsyncSessionLocal() as db:
         before_audit = await audit_pro_structural_reports(db)
@@ -162,13 +198,32 @@ async def regenerate_pro_structural_briefs(
             )
         except Exception as exc:
             logger.exception("Pro brief regen failed for %s", domain_id)
-            errors.append({"domain_id": domain_id, "alert_id": alert_id, "error": str(exc)})
+            errors.append(
+                {
+                    "domain_id": domain_id,
+                    "alert_id": alert_id,
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                }
+            )
 
     async with AsyncSessionLocal() as db:
         after_audit = await audit_pro_structural_reports(db)
 
+    if errors:
+        run_status = "partial"
+    elif not generated:
+        run_status = "failed"
+    else:
+        run_status = "ok"
+
     return {
-        "status": "ok",
+        "status": run_status,
+        "counts": {
+            "generated": len(generated),
+            "errors": len(errors),
+            "purged": purged,
+        },
         "regenerated_at": datetime.now(timezone.utc).isoformat(),
         "domains": target_domains,
         "purged_count": purged,
@@ -183,7 +238,7 @@ async def regenerate_pro_structural_briefs(
 
 async def run_pro_platform_rebuild(
     *,
-    purge_first: bool = True,
+    purge_first: bool = False,
     sync_macro_first: bool = True,
     full_macro_pipeline: bool = False,
     domains: Optional[List[str]] = None,
@@ -206,9 +261,16 @@ async def run_pro_platform_rebuild(
         purge_first=purge_first,
     )
 
+    # Rank only what this run actually attempted: when sync_macro_first is False the
+    # macro sync did not run, so it is absent rather than assigned a status it never had.
+    components: Dict[str, Any] = {"regeneration": regen}
+    if sync_macro_first:
+        components["macro_sync"] = macro_sync
+
     finished = datetime.now(timezone.utc)
     return {
-        "status": "ok",
+        "status": worst_status(components),
+        "component_status": {name: component_status(v) for name, v in components.items()},
         "started_at": started.isoformat(),
         "finished_at": finished.isoformat(),
         "elapsed_sec": (finished - started).total_seconds(),

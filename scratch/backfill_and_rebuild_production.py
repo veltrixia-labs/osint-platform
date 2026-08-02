@@ -4,8 +4,11 @@ Production backfill + Pro V2 rebuild (uses DATABASE_URL from environment).
   # Sync only
   py scratch/backfill_and_rebuild_production.py --sync-only
 
-  # Full pipeline (sync → purge → regenerate)
+  # Full pipeline (sync → regenerate). Existing briefs are left in place.
   py scratch/backfill_and_rebuild_production.py
+
+  # Same, but delete the existing pro_structural briefs first (destructive, opt-in)
+  py scratch/backfill_and_rebuild_production.py --purge
 
   # Hit remote API instead of local DB job code
   py scratch/backfill_and_rebuild_production.py --remote \\
@@ -64,7 +67,11 @@ async def main() -> None:
     parser = argparse.ArgumentParser(description="Backfill external data and rebuild Pro V2 briefs")
     parser.add_argument("--sync-only", action="store_true", help="Only run external data sync")
     parser.add_argument("--full", action="store_true", help="Full daily external sync pipeline")
-    parser.add_argument("--no-purge", action="store_true", help="Skip purge on rebuild")
+    parser.add_argument(
+        "--purge",
+        action="store_true",
+        help="Destructive, opt-in: delete existing pro_structural briefs before regenerating",
+    )
     parser.add_argument("--remote", action="store_true", help="POST to production API")
     parser.add_argument("--api-base", default="https://osint-platform.onrender.com")
     parser.add_argument(
@@ -82,13 +89,13 @@ async def main() -> None:
             secret=args.secret,
             sync_only=args.sync_only,
             full=args.full,
-            purge=not args.no_purge,
+            purge=args.purge,
         )
     else:
         result = await run_local(
             sync_only=args.sync_only,
             full=args.full,
-            purge=not args.no_purge,
+            purge=args.purge,
         )
 
     print(json.dumps(result, indent=2, default=str))

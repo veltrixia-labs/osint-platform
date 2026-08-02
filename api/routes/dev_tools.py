@@ -20,8 +20,10 @@ from jobs.pro_backfill_pipeline import (
 from jobs.pro_brief_regenerator import (
     CORE_PRO_DOMAINS,
     audit_pro_structural_reports,
+    component_status,
     regenerate_pro_structural_briefs,
     run_pro_platform_rebuild,
+    worst_status,
 )
 
 logger = logging.getLogger(__name__)
@@ -136,8 +138,11 @@ async def sync_external_data(
         purge_first=purge,
     )
 
+    components: Dict[str, Any] = {"sync": sync_result, "regeneration": regen_result}
+
     return {
-        "status": "ok",
+        "status": worst_status(components),
+        "component_status": {name: component_status(v) for name, v in components.items()},
         "pipeline": "sync_external_data_then_rebuild",
         "sync": sync_result,
         "regeneration": regen_result,
