@@ -5,7 +5,7 @@ import time
 import json
 from enum import Enum
 from typing import Dict, Any, Optional, List
-from openai import AsyncOpenAI
+from openai import APIConnectionError, APIStatusError, AsyncOpenAI, RateLimitError
 from anthropic import AsyncAnthropic
 from config.settings import settings
 
@@ -16,7 +16,15 @@ _global_llm_semaphore = asyncio.Semaphore(1)
 
 _deepseek_client: Optional[AsyncOpenAI] = None
 if settings.deepseek_api_key:
-    _deepseek_client = AsyncOpenAI(api_key=settings.deepseek_api_key, base_url="https://api.deepseek.com")
+    # max_retries=0: the SDK default is 2, so up to three HTTP attempts used to happen
+    # inside one asyncio.wait_for — which made a fast 429/5xx retried internally
+    # indistinguishable from a genuinely slow generation. The outer wait_for below is
+    # the single authority on the time budget; no timeout= is passed here on purpose.
+    _deepseek_client = AsyncOpenAI(
+        api_key=settings.deepseek_api_key,
+        base_url="https://api.deepseek.com",
+        max_retries=0,
+    )
 
 # Stage 1: Anthropic Claude client constructed-but-unused (key-guarded, mirrors the
 # DeepSeek idiom above). Stage 2 wires it as a fallback inside generate_analysis;
@@ -44,10 +52,20 @@ def _parse_batch_or_text(text: str, is_batch: bool, provider: str) -> str | List
         return None
 
 
+def _retry_after(exc: Any) -> Optional[str]:
+    """The provider's Retry-After header, when the SDK exposes one. None otherwise."""
+    headers = getattr(getattr(exc, "response", None), "headers", None)
+    return headers.get("retry-after") if headers is not None else None
+
+
 async def _deepseek_attempt(system_prompt: str, user_prompt: str, is_batch: bool, temperature: float) -> str | List[Dict] | None:
     """One DeepSeek call under the strict 15s timeout. Returns the parsed
     result/text on success, or None on timeout / API error / batch-parse failure.
-    Never raises — a None return is the signal to retry or fall back."""
+    Never raises — a None return is the signal to retry or fall back.
+
+    Every failure path logs elapsed seconds: a 15.0s exhausted budget and a 2.1s
+    fast rejection are different conditions and must not read the same."""
+    started = time.monotonic()
     try:
         response = await asyncio.wait_for(
             _deepseek_client.chat.completions.create(
@@ -66,10 +84,41 @@ async def _deepseek_attempt(system_prompt: str, user_prompt: str, is_batch: bool
         text = response.choices[0].message.content
         return _parse_batch_or_text(text, is_batch, "DeepSeek")
     except (asyncio.TimeoutError, TimeoutError):
-        logger.error("[LLM] DeepSeek API timeout (15s).")
+        logger.error("[LLM] DeepSeek API timeout (15s). elapsed=%.2fs", time.monotonic() - started)
+        return None
+    except RateLimitError as e:
+        logger.error(
+            "[LLM] DeepSeek rate limited: HTTP %s retry_after=%s elapsed=%.2fs: %s",
+            getattr(e, "status_code", None),
+            _retry_after(e),
+            time.monotonic() - started,
+            e,
+        )
+        return None
+    except APIStatusError as e:
+        logger.error(
+            "[LLM] DeepSeek API status error: HTTP %s retry_after=%s elapsed=%.2fs: %s",
+            getattr(e, "status_code", None),
+            _retry_after(e),
+            time.monotonic() - started,
+            e,
+        )
+        return None
+    except APIConnectionError as e:
+        logger.error(
+            "[LLM] DeepSeek connection error: type=%s elapsed=%.2fs: %s",
+            type(e).__name__,
+            time.monotonic() - started,
+            e,
+        )
         return None
     except Exception as e:
-        logger.error(f"[LLM] DeepSeek API Error: {e}.")
+        logger.error(
+            "[LLM] DeepSeek API Error: %s. type=%s elapsed=%.2fs",
+            e,
+            type(e).__name__,
+            time.monotonic() - started,
+        )
         return None
 
 
