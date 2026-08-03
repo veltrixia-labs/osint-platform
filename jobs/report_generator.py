@@ -66,15 +66,9 @@ REQUIRED STRUCTURE:
 TONE: Objective, analytical, and forward-looking.
 """
 
-# Visualization is optional in production to avoid heavy matplotlib dependency issues
-try:
-    from analysis.visual_engine import generate_intensity_chart, generate_diversity_chart
-    HAS_VISUAL_ENGINE = True
-except ImportError:
-    logger.warning("Visual engine (matplotlib) not found. Skipping chart generation.")
-    HAS_VISUAL_ENGINE = False
-    generate_intensity_chart = None
-    generate_diversity_chart = None
+# Deliberately does NOT import analysis.visual_engine: this module is eagerly imported by
+# the scheduler, and that import loaded matplotlib + pyplot into a 512MB worker for two
+# chart functions no line of this file ever called.
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Analysis Context Helpers
@@ -211,7 +205,9 @@ from analysis.skeleton_builder import build_threads_teaser, build_substack_skele
 from llm.prompts import SYSTEM_PROMPT, NEUTRAL_ANALYSIS_PROMPT, LLM_POLISH_PROMPT
 from integrations.substack_client import generate_slug, create_draft, update_draft, get_final_url
 from db.models import ExternalPost, AnalystProfile
-from api.gating import get_effective_tier, TIER_PRO, TIER_ENTERPRISE
+# Deliberately does NOT import api.*: this module runs in the scheduler process, and
+# importing api.gating dragged fastapi, jose and redis into a 512MB worker for three
+# names no line of this file ever read.
 
 # Threads Posting Controls
 THREADS_DAILY_CAP = 5
