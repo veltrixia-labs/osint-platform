@@ -17,7 +17,7 @@ import uuid
 
 from db.database import AsyncSessionLocal
 from db.models import Report, AnalystProfile, AlertLog, SystemicFragilityLog
-from api.gating import get_effective_tier, TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE, TIER_GUEST
+from api.gating import get_effective_tier, is_tier_sufficient, TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE, TIER_GUEST
 from api.auth import get_optional_current_user
 from reports.text_encoding import sanitize_unicode_tree
 from jobs.pro_structural_reports import pro_structural_report_filters
@@ -161,7 +161,6 @@ async def get_pro_report_detail(
     """
     Fetch the full Markdown content of a specific Pro Structural Brief (auth + Pro required).
     """
-    allowed_tiers = [TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE]
     try:
         report_uuid = uuid.UUID(report_id)
     except ValueError:
@@ -170,14 +169,22 @@ async def get_pro_report_detail(
     stmt = select(Report).where(Report.id == report_uuid)
     result = await db.execute(stmt)
     report = result.scalar_one_or_none()
-    
+
     if not report:
         raise HTTPException(status_code=404, detail="Report not found.")
-        
-    # Double check gating on the specific report
-    if report.plan_required == "pro" and tier not in allowed_tiers:
-         raise HTTPException(status_code=403, detail="Insufficient tier for this report.")
-        
+
+    # ── Strict Plan Gating (same helper and idiom as reports.get_report_detail) ──
+    # The previous check compared report.plan_required to the literal "pro" and could
+    # never fire: require_authenticated_pro_tier has already constrained tier to
+    # [pro, experts, enterprise], so `tier not in allowed_tiers` was always False. A
+    # pro subscriber could therefore read an experts-tier report in full.
+    plan_required = report.plan_required or "free"
+    if not is_tier_sufficient(tier, plan_required):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Subscription upgrade required. This report requires the '{plan_required}' plan."
+        )
+
     return {
         "id": str(report.id),
         "title": sanitize_unicode_tree(report.title),

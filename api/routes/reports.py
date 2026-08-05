@@ -1,6 +1,6 @@
 """
 api/routes/reports.py
-Report endpoints: GET /api/reports, /api/reports/{id}, /api/public/reports/{id}
+Report endpoints: GET /api/reports, /api/reports/{id}
 """
 from fastapi import APIRouter, HTTPException, Depends, Response
 from sqlalchemy.future import select
@@ -149,36 +149,6 @@ async def list_reports(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/public/reports/{report_id}")
-async def get_public_report_preview(
-    report_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
-):
-    """Retrieve a public truncated preview of a report (no auth required)."""
-    stmt = select(Report).where(Report.id == report_id)
-    report = (await db.execute(stmt)).scalar_one_or_none()
-
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
-
-    content = report.content_markdown or ""
-    paragraphs = [p for p in content.split('\n\n') if p.strip()]
-    preview_parts = paragraphs[:3]
-    preview_text = "\n\n".join(preview_parts)
-
-    if len(preview_text) > 1000:
-        preview_text = preview_text[:1000] + "..."
-
-    return {
-        "id": str(report.id),
-        "report_type": report.report_type,
-        "topic_code": report.topic_code,
-        "content_preview": preview_text,
-        "is_preview": True,
-        "is_premium": report.is_premium,
-        "source_count": report.source_count,
-        "confidence_level": report.confidence_level,
-        "created_at": report.created_at.isoformat() if hasattr(report.created_at, 'isoformat') else report.created_at,
-        "location_lat": report.location_lat,
-        "location_lng": report.location_lng
-    }
+# GET /public/reports/{report_id} was removed: it served up to 1000 characters of
+# content_markdown for any report id with no auth dependency and no plan_required
+# check. Every row in the table is plan_required 'pro' or 'experts'.

@@ -27,7 +27,7 @@ from sqlalchemy.future import select
 
 from db.database import get_db
 from db.enums import ReportType
-from db.models import AnalystProfile, Report, SystemMetric
+from db.models import AnalystProfile, SystemMetric
 
 from api.auth import (
     get_password_hash, verify_password, create_access_token,
@@ -203,13 +203,9 @@ async def get_version():
         }
     }
 
-@app.get("/api/reports/sample")
-async def get_reports_sample(db: AsyncSession = Depends(get_db)):
-    """Internal debug endpoint to verify raw report presence."""
-    stmt = select(Report).order_by(Report.created_at.desc()).limit(3)
-    result = await db.execute(stmt)
-    reports = result.scalars().all()
-    return [{"id": str(r.id), "type": r.report_type, "topic": r.topic_code, "title": r.title} for r in reports]
+# GET /api/reports/sample was removed: an unauthenticated handler that returned the id,
+# type, topic and title of the 3 newest reports. Every row in the table is plan_required
+# 'pro' or 'experts', so it published paid-tier report ids to anonymous callers.
 
 # Config
 API_PORT = int(os.getenv("PORT", os.getenv("API_PORT", 8000)))
