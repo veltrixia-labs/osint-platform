@@ -15,7 +15,7 @@ CORE_GLOBAL_SERIES: Dict[str, Dict[str, List[str]]] = {
         "fred_series": ["CPIAUCSL", "FEDFUNDS"],
     },
     "japan": {
-        "estat_series": ["0003427113", "0004015804"],
+        "estat_series": ["0003427113", "0004052177"],
     },
     "europe": {
         "ecb_series": [
@@ -35,7 +35,7 @@ CORE_GLOBAL_REPRESENTATIVE_IDS: List[str] = [
 # Per-pole pick order: CPI (or inflation) first, then policy rate, then other core series
 CORE_GLOBAL_POLE_PICK_ORDER: Dict[str, List[str]] = {
     "us": ["CPIAUCSL", "FEDFUNDS"],
-    "japan": ["0003427113", "0004015804"],
+    "japan": ["0003427113", "0004052177"],
     "europe": ["ICP.M.U2.N.000000.4.ANR", "FM.D.U2.EUR.4F.KR.MRR_RT.LEV"],
 }
 
@@ -156,7 +156,7 @@ GLOBAL_RELEVANCE_MAP: Dict[str, Dict[str, str]] = {
         "up_meaning": "Domestic inflation firming; BoJ normalization risk rises.",
         "down_meaning": "Japan disinflation; sustained ultra-loose policy bias.",
     },
-    "0004015804": {
+    "0004052177": {
         "display_name": "Japan IIP — production (2020=100)",
         "up_meaning": "Manufacturing cycle strengthening; export engine warming.",
         "down_meaning": "Industrial output contraction; Asia supply chain softening.",

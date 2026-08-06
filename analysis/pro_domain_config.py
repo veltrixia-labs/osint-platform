@@ -334,7 +334,7 @@ PRO_DOMAIN_CONFIG = {
             "fred_series": ["IPB53122S", "DGS10"], # Semi Production, Rates
             "bls_series": ["PCU334413334413"], # PPI Semi
             "worldbank_indicators": [],
-            "estat_series": ["0004015804"],  # Japan IIP (2020 base, monthly production)
+            "estat_series": ["0004052177"],  # Japan IIP (2020 base, monthly production)
             "comtrade_commodity_codes": ["8542"], # Integrated circuits
             "bea_metrics": ["Value-Added-Manufacturing"],
             "census_metrics": ["CBP-Semi-Estab"],
@@ -405,7 +405,7 @@ PRO_DOMAIN_CONFIG = {
             "IPB53122S": "US semiconductor industrial production index",
             "DGS10": "Long-term discount rate — tech valuation sensitivity",
             "PCU334413334413": "PPI for semiconductor manufacturing",
-            "0004015804": "Japan IIP — manufacturing output cycle (semi supply chain)",
+            "0004052177": "Japan IIP — manufacturing output cycle (semi supply chain)",
             "8542": "Integrated circuit global trade volume",
             "SMH": "Semiconductor equity ETF — sector sentiment",
             "SOXX": "Broad semiconductor index — confirmation",
