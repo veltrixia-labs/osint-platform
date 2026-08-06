@@ -2131,7 +2131,19 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
 
     // 06 Quantitative Context
     if (macro.length > 0) {
-        html += `<div class="intel-panel">${sh(nextSectionNum(),'Quantitative Context', '06')}<div class="intel-metric-grid">${macro.slice(0,12).map((m:any)=>`<div class="intel-metric-card"><div class="metric-label">${m.display_name || m.series_id}</div>${m.display_name ? `<div style="font-size:0.65rem;color:var(--text-secondary);font-family:monospace;margin-bottom:0.25rem;">${m.series_id}</div>` : ''}<div class="metric-value">${m.latest_value??'N/A'}</div><div class="metric-change" style="color:${(m.change_pct||0)>0?'var(--success)':'var(--danger)'}">${(m.change_pct||0)>0?'+':''}${m.change_pct?m.change_pct.toFixed(2):'0.00'}%</div>${m.trend_meaning ? `<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:0.35rem;line-height:1.3;">${m.trend_meaning}</div>` : ''}</div>`).join('')}</div></div>`;
+        const metricCards = macro.slice(0,12).map((m:any)=>{
+            // A not-computed change and a measured 0.00% must not look alike, and
+            // neither is a decline: both render neutral, only a real sign colours.
+            const chg = typeof m.change_pct === 'number' && Number.isFinite(m.change_pct) ? m.change_pct : null;
+            const chgColor = (chg === null || chg === 0) ? 'var(--text-secondary)' : (chg > 0 ? 'var(--success)' : 'var(--danger)');
+            // Observation date + measurement span. Absent date renders nothing at all —
+            // no placeholder, and never a date borrowed from elsewhere in the payload.
+            const obsDate = fmtObsDate(m.latest_date);
+            const span = fmtSpanDays(m.span_days);
+            const asOf = obsDate ? `<div style="font-size:0.62rem;color:var(--text-secondary);font-variant-numeric:tabular-nums;white-space:nowrap;margin-top:0.25rem;">${escHtml(obsDate)}${span ? ` / ${span}` : ''}</div>` : '';
+            return `<div class="intel-metric-card"><div class="metric-label">${m.display_name || m.series_id}</div>${m.display_name ? `<div style="font-size:0.65rem;color:var(--text-secondary);font-family:monospace;margin-bottom:0.25rem;">${m.series_id}</div>` : ''}<div class="metric-value">${m.latest_value??'N/A'}</div><div class="metric-change" style="color:${chgColor}">${fmtPct(chg)}</div>${asOf}${m.trend_meaning ? `<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:0.35rem;line-height:1.3;">${m.trend_meaning}</div>` : ''}</div>`;
+        }).join('');
+        html += `<div class="intel-panel">${sh(nextSectionNum(),'Quantitative Context', '06')}<div class="intel-metric-grid">${metricCards}</div></div>`;
     }
 
     // 07 Market Confirmation Breakdown + Market Prices
