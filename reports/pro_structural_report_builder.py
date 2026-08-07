@@ -146,8 +146,6 @@ def _build_quantitative_context(ctx: dict) -> str:
     
     display_cards = s_ctx.get("macro_display_cards") or s_ctx.get("macro_observations", [])
     all_macro = s_ctx.get("macro_observations", [])
-    if not display_cards:
-        display_cards = pad_macro_display_cards(ctx, [], min_cards=MIN_MACRO_DISPLAY_CARDS)
 
     if display_cards:
         lines.append("<div class=\"metric-card-grid\">")
@@ -859,7 +857,6 @@ def _apply_macro_and_market_priorities(context: dict) -> dict:
     display_cards = select_quantitative_context_cards(
         enriched, domain_id, structural_data, limit=MAX_MACRO_DISPLAY_CARDS
     )
-    display_cards = pad_macro_display_cards(ctx, display_cards, min_cards=MIN_MACRO_DISPLAY_CARDS)
     picked = {c["series_id"] for c in display_cards}
     s_ctx["macro_display_cards"] = display_cards
     s_ctx["macro_observations"] = display_cards + [
