@@ -38,23 +38,33 @@ class MarketDataFetcher:
         Respects free tier rate limits.
         """
         logger.info(f"Starting Alpha Vantage sync (domain={domain_id})...")
-        client = AlphaVantageClient()
+        # Open and COMMIT the log row before constructing the client. create_fetch_log
+        # only flushes, and a flushed row is discarded when the session unwinds on a
+        # raise — so a missing ALPHA_VANTAGE_API_KEY used to leave no row at all, which
+        # is indistinguishable from the job never firing. Committing here costs an
+        # orphan "running" row on a hard kill; that is a diagnosis, absence is not.
         log = await self.repo.create_fetch_log(provider="alpha_vantage", job_name=f"sync_alpha_vantage_{domain_id or 'sample'}")
-        
+        await self.db.commit()
+
         inst_requested = 0
         rows_fetched = 0
         rows_saved = 0
         error_msg = None
-        
-        # Get target instruments from catalog
-        if domain_id:
-            targets = get_instruments_for_domain(domain_id)
-        else:
-            # Default fallback for general sync
-            default_symbols = ["SPY", "QQQ", "XLE", "SMH", "BTC", "USDJPY"]
-            targets = [i for i in MARKET_INSTRUMENT_DEFINITIONS if i["symbol"] in default_symbols]
 
         try:
+            # Inside the try: AlphaVantageClient() raises when the key is absent or
+            # empty (data_sources/base_client.py:52), and get_instruments_for_domain
+            # can raise on a malformed catalog entry.
+            client = AlphaVantageClient()
+
+            # Get target instruments from catalog
+            if domain_id:
+                targets = get_instruments_for_domain(domain_id)
+            else:
+                # Default fallback for general sync
+                default_symbols = ["SPY", "QQQ", "XLE", "SMH", "BTC", "USDJPY"]
+                targets = [i for i in MARKET_INSTRUMENT_DEFINITIONS if i["symbol"] in default_symbols]
+
             for inst_def in targets:
                 if inst_def["provider"] != "alpha_vantage":
                     continue

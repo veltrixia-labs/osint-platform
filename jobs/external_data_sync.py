@@ -200,15 +200,46 @@ async def run_pro_macro_data_sync(
             async with AsyncSessionLocal() as session:
                 mf = MarketDataFetcher(session)
                 for domain_id in core_pro_domains:
-                    res = await mf.sync_alpha_vantage_sample(domain_id=domain_id)
+                    # Per-domain isolation: one domain's failure must not abort the
+                    # remaining domains, nor the keyless Frankfurter call below.
+                    try:
+                        res = await mf.sync_alpha_vantage_sample(domain_id=domain_id)
+                    except Exception as exc:
+                        logger.error("[ProMacroSync] Market sync failed for %s: %s", domain_id, exc)
+                        res = {"provider": "alpha_vantage", "status": "failed", "error": str(exc)}
                     market_results.append({"domain_id": domain_id, "result": res})
                     await asyncio.sleep(2)
-                fx_res = await mf.sync_frankfurter_fx_history(days=31)
+                # Frankfurter requires no API key and is the one path that works when
+                # ALPHA_VANTAGE_API_KEY is absent. Keep it reachable regardless.
+                try:
+                    fx_res = await mf.sync_frankfurter_fx_history(days=31)
+                except Exception as exc:
+                    logger.error("[ProMacroSync] Frankfurter FX sync failed: %s", exc)
+                    fx_res = {"provider": "frankfurter", "status": "failed", "error": str(exc)}
                 market_results.append({"domain_id": "_fx", "result": fx_res})
-            market_summary = {"status": "ok", "domains": market_results}
+
+                # Derive the top-level status from what actually happened rather than
+                # asserting success. Every entry carries its own "status"; ok/success/
+                # completed are the success-equivalent values already used across this
+                # codebase (_STATUS_SEVERITY, jobs/pro_brief_regenerator.py:39-48).
+                # Not worst_status(): that is worst-wins and would call 5-of-6 "failed".
+                outcomes = [(r.get("result") or {}).get("status") for r in market_results]
+                ok_count = sum(1 for s in outcomes if s in ("ok", "success", "completed"))
+                failed_count = sum(1 for s in outcomes if s == "failed")
+                if not outcomes:
+                    market_status = "failed"
+                elif ok_count == len(outcomes):
+                    market_status = "ok"
+                elif failed_count == len(outcomes):
+                    market_status = "failed"
+                else:
+                    market_status = "partial"
+            market_summary = {"status": market_status, "domains": market_results}
         except Exception as exc:
             logger.error("[ProMacroSync] Market data sync failed: %s", exc)
-            market_summary = {"status": "failed", "error": str(exc)}
+            # Preserve whatever completed before the session-level failure; discarding
+            # it reported one aggregate failure over up to six independent outcomes.
+            market_summary = {"status": "failed", "error": str(exc), "domains": market_results}
 
     finished = datetime.now(timezone.utc)
     return {
