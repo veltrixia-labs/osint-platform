@@ -273,6 +273,55 @@ async def run_external_data_sync_wrapper():
         await run_daily_external_data_sync_pipeline()
 
 
+# Market prices are fetched one group per day so the Alpha Vantage free tier is not
+# exhausted mid-run. Every symbol refreshes within 3 days, which stays inside
+# _MARKET_PRICE_STALE_DAYS = 7 even with a Friday-close-fetched-Monday trading lag.
+_MARKET_ROTATION_GROUPS = {
+    0: ["global_market_intelligence", "defense_technology"],
+    1: ["energy_resource_risk", "supply_chain_intelligence"],
+    2: ["ai_semiconductor_intelligence", "crypto_geopolitics"],
+}
+
+
+async def market_price_sync_wrapper():
+    """
+    Daily slot working a 3-day rotation over the six Pro domains.
+
+    Selector is toordinal() % 3, NOT tm_yday % 3: tm_yday resets to 1 every Jan 1,
+    and 365 % 3 == 2 / 366 % 3 == 0, so a day-of-year cycle breaks at every year
+    boundary and can leave a group unfetched for up to 5 days — fatal against a
+    7-day threshold. toordinal() is a continuous day count since year 1, so it needs
+    no epoch constant and is unbroken across year and leap boundaries. No other
+    cyclic date selector exists in this repo; do not "simplify" this to day-of-year.
+    """
+    from jobs.market_data_fetcher import MarketDataFetcher
+
+    group = datetime.now(timezone.utc).date().toordinal() % 3
+    domains = _MARKET_ROTATION_GROUPS[group]
+    logger.info("[MarketSync] group=%s domains=%s", group, domains)
+
+    async with _heavy_db_lock:
+        async with AsyncSessionLocal() as session:
+            mf = MarketDataFetcher(session)
+            for domain_id in domains:
+                # One domain raising must not abort the rest of the group, nor the
+                # Frankfurter call below (mirrors external_data_sync.py:203-211,
+                # which this wrapper cannot reuse — that function hardcodes all six).
+                try:
+                    res = await mf.sync_alpha_vantage_sample(domain_id=domain_id)
+                    logger.info("[MarketSync] %s -> %s", domain_id, res.get("status"))
+                except Exception as exc:
+                    logger.error("[MarketSync] %s failed: %s", domain_id, exc)
+            # Frankfurter needs no API key and is the one path that still works when
+            # Alpha Vantage is exhausted or keyless. It runs in every group.
+            try:
+                fx_res = await mf.sync_frankfurter_fx_history(days=31)
+                logger.info("[MarketSync] _fx -> %s", fx_res.get("status"))
+            except Exception as exc:
+                logger.error("[MarketSync] _fx failed: %s", exc)
+    gc.collect()
+
+
 def register_jobs():
     logger.info("Registering job schedules (Async Native Mapping)...")
     
@@ -373,6 +422,20 @@ def register_jobs():
         run_sanctions_sync_wrapper,
     )
     logger.info("Registered sanctions_sync daily at %s UTC.", sanctions_sync_time)
+
+    # Market prices — one daily slot, 3-day domain rotation (_MARKET_ROTATION_GROUPS).
+    # 14:00 UTC sits mid-way through the 10:00-20:00 window that carries no other
+    # wall-clock daily job, and is before the US equity close either side of DST.
+    market_sync_time = os.getenv("MARKET_SYNC_UTC_TIME", "14:00")
+    schedule.every().day.at(market_sync_time).do(
+        schedule_async,
+        "market_price_sync",
+        market_price_sync_wrapper,
+    )
+    logger.info(
+        "Registered market_price_sync daily at %s UTC (3-day rotation over 6 domains).",
+        market_sync_time,
+    )
 
 async def run_startup_checks():
     """Execute immediate tests to verify environment health on startup."""
