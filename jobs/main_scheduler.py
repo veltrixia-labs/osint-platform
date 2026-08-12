@@ -426,14 +426,22 @@ def register_jobs():
     )
     logger.info("Registered cftc_sync every %s at %s UTC.", cftc_sync_day, cftc_sync_time)
 
-    # OpenSanctions bulk dump — daily ingestion + PageRank recompute.
-    sanctions_sync_time = os.getenv("SANCTIONS_SYNC_UTC_TIME", "05:30")
-    schedule.every().day.at(sanctions_sync_time).do(
-        schedule_async,
-        "sanctions_sync",
-        run_sanctions_sync_wrapper,
-    )
-    logger.info("Registered sanctions_sync daily at %s UTC.", sanctions_sync_time)
+    # sanctions_sync is DELIBERATELY NOT REGISTERED. It is not missing.
+    #
+    # It wrote the identical value 1/53974 to all 53,974 stakeholder rows roughly
+    # daily — 2,874,973 updates over 53 days — which is the uniform PageRank baseline
+    # for a graph with zero edges, not a measurement.
+    #
+    # No consumer is reachable: GET /insights/sanctions-network is flag-gated off and
+    # returns before it queries, the frontend fetcher has zero call sites across all
+    # history, and git history shows no consumer was ever built and later removed.
+    #
+    # run_sanctions_sync_wrapper (above), jobs/sanctions_sync_job.py,
+    # data_sources/opensanctions_client.py, analysis/sanctions_network.py and both the
+    # stakeholders and dependencies tables are all retained. Re-registering is one line.
+    #
+    # The tables are deliberately NOT dropped: api/ runs `alembic upgrade head` in its
+    # buildCommand, so a future migration touching a dropped table would fail the build.
 
     # Market prices — one daily slot, 3-day domain rotation (_MARKET_ROTATION_GROUPS).
     # 14:00 UTC sits mid-way through the 10:00-20:00 window that carries no other
