@@ -276,8 +276,20 @@ async def run_external_data_sync_wrapper():
 # Market prices are fetched one group per day so the Alpha Vantage free tier is not
 # exhausted mid-run. Every symbol refreshes within 3 days, which stays inside
 # _MARKET_PRICE_STALE_DAYS = 7 even with a Friday-close-fetched-Monday trading lag.
+#
+# ORDER WITHIN A GROUP IS SIGNIFICANT. The loop below is serial and awaited, so
+# fetch order is list order, and every domain in a group draws on one shared daily
+# Alpha Vantage budget. Whatever is listed first gets served; whatever is listed
+# last gets whatever is left. On the first scheduled run (2026-08-11) the budget
+# ran out at request 13 of group 0's 16: global_market_intelligence spent 12 and
+# defense_technology was rejected on ITA, its very first symbol.
+#
+# Hence defense first. This does NOT make group 0 complete — the budget still runs
+# out around global_market_intelligence's 9th symbol. It moves the shortfall onto
+# the domain that already has 11 symbols of history and loses only freshness,
+# instead of onto the one that has never had a single row.
 _MARKET_ROTATION_GROUPS = {
-    0: ["global_market_intelligence", "defense_technology"],
+    0: ["defense_technology", "global_market_intelligence"],
     1: ["energy_resource_risk", "supply_chain_intelligence"],
     2: ["ai_semiconductor_intelligence", "crypto_geopolitics"],
 }
