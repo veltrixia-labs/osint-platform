@@ -1165,8 +1165,16 @@ function escAttr(s: string): string {
     return escHtml(s).replace(/'/g, '&#39;');
 }
 
-function sh(num: string, title: string, guideKey: string = num): string {
-    const guide = PRO_SECTION_GUIDES[guideKey];
+// guideKey is optional with NO default. It used to default to `num`, but `num` is a
+// display number produced by a runtime counter, not a panel identity — so a panel that
+// omitted its key inherited whichever guide happened to sit at its position. Systemic
+// Fragility (:1666) rendered under Market Confirmation's explanation on all six briefs.
+// An omitted key now yields no guide at all, which is what the Appendix ('APP', not a
+// key in the map) has always done. The `guideKey ?` guard is required: strict mode
+// rejects indexing Record<string, string> with string | undefined (TS2538), so do not
+// "simplify" this back to a default parameter.
+function sh(num: string, title: string, guideKey?: string): string {
+    const guide = guideKey ? PRO_SECTION_GUIDES[guideKey] : undefined;
     const guideHtml = guide
         ? `<span class="intel-section-guide-wrap">
             <button type="button" class="intel-section-guide" aria-label="About ${escAttr(title)}" aria-expanded="false">
