@@ -137,7 +137,7 @@ const PRO_SECTION_GUIDES: Record<string, string> = {
     '10': 'Core security ETFs and sector spending metrics mapped for real-time monitoring.',
     '11': 'Dual-perspective modeling weighing long-term revenue visibility against sudden policy shifts.',
     '12': 'Direct tactical mapping showing how specific business tiers and suppliers are impacted.',
-    '13': 'Evaluates data fidelity and limitation notes to calibrate your decision-making confidence.',
+    '13': 'Grades each source category by the number of records present in this brief.',
     '14': 'Three-tier systemic propagation: direct exposure (1st-order), downstream channels (2nd-order), and cross-domain spillover (3rd-order).',
     '15': 'Low-probability, high-impact contrarian paths sourced from invalidating conditions, extreme macro moves, and short-lag transmission acceleration.',
     '16': 'Exact numeric foundation of the brief: CCF lag, [-1, 1]-clipped correlation, log-return beta, and the largest macro / market moves driving the analysis.',
