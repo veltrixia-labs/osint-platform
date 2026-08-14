@@ -1238,7 +1238,10 @@ def _build_coverage_matrix(s_ctx: dict, m_ctx: dict, timeline: list, sig: dict) 
         "trade_data": _level(trade_count),
         "geo_data": _level(geo_count),
         "news_evidence": _level(news_count),
-        "notes": " ".join(notes_parts) if notes_parts else "Data coverage is adequate across available sources."
+        "notes": " ".join(notes_parts) if notes_parts else (
+            f"Records counted: {macro_count} macro, {market_count} market, "
+            f"{trade_count} trade, {geo_count} geo, {news_count} news."
+        )
     }
 
 
@@ -1345,12 +1348,7 @@ def _build_executive_summary(
     # Coverage
     cov_levels = [coverage.get(k, "low") for k in ["macro_data", "market_data", "trade_data", "news_evidence"]]
     high_count = sum(1 for c in cov_levels if c == "high")
-    if high_count >= 3:
-        parts.append("Data coverage is strong across most source categories.")
-    elif high_count >= 1:
-        parts.append("Data coverage is moderate; some source categories have limited observations.")
-    else:
-        parts.append("Data coverage is limited; findings should be interpreted with caution.")
+    parts.append(f"{high_count} of 4 source categories (macro, market, trade, news) hold 3 or more records.")
 
     # Geo
     regions = geo_context.get("mentioned_regions", [])
