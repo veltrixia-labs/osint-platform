@@ -13,7 +13,7 @@ import time
 from datetime import date
 from typing import Any, Dict, List, Optional
 
-from data_sources.base_client import BaseAPIClient
+from data_sources.base_client import BaseAPIClient, redact_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +63,10 @@ class EStatClient(BaseAPIClient):
         try:
             return self.get_json(ESTAT_GET_STATS_DATA_PATH, params=params)
         except Exception as exc:
-            logger.error("e-Stat getStatsData failed for %s: %s", stats_data_id, exc)
-            return {"error": str(exc), "stats_data_id": stats_data_id}
+            # appId is a query parameter, so the HTTPError message carries it.
+            safe = redact_credentials(exc)
+            logger.error("e-Stat getStatsData failed for %s: %s", stats_data_id, safe)
+            return {"error": safe, "stats_data_id": stats_data_id}
 
     def get_stats_data_observations(
         self,

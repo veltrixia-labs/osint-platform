@@ -10,6 +10,7 @@ import logging
 from typing import Optional, List, Dict, Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from data_sources.base_client import redact_credentials
 from db.models import MarketDataInstrument, MarketDataPrice, MarketDataFetchLog
 from datetime import datetime, date
 
@@ -156,7 +157,16 @@ class MarketDataRepository:
         log.instruments_requested = instruments_requested
         log.rows_fetched = rows_fetched
         log.rows_saved = rows_saved
-        log.error_message = error_message
+        # Redact at the setter, not at the call sites. Alpha Vantage has no local
+        # exception handler, so a raise_for_status message carrying the full URL —
+        # and with it the apikey query parameter — reaches this column directly via
+        # market_data_fetcher.py:191/:264. `is not None` matters: an unredacted None
+        # must stay NULL, not become the empty string. The locally-composed
+        # "Zero rows saved despite N instrument(s) requested" and the provider
+        # response-body strings carry no query string, so this is a no-op for them.
+        log.error_message = (
+            redact_credentials(error_message) if error_message is not None else None
+        )
         if metadata_json:
             log.metadata_json = metadata_json
         await self.db.flush()

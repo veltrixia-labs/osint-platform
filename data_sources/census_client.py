@@ -7,7 +7,7 @@ Economic Indicators, County Business Patterns, and International Trade.
 
 import logging
 from typing import List, Dict, Any, Optional
-from data_sources.base_client import BaseAPIClient
+from data_sources.base_client import BaseAPIClient, redact_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +35,12 @@ class CensusClient(BaseAPIClient):
         try:
             return self.get_json(path, params=params)
         except Exception as e:
-            logger.error(f"Census API request failed for {dataset_path}: {e}")
-            return [["error"], [str(e)]]
+            # The key travels as the "key" query parameter, so the HTTPError message
+            # carries it. Redact the returned row too: sync_census_cbp persists this
+            # value verbatim into external_industry_stats.raw_json.
+            safe = redact_credentials(e)
+            logger.error(f"Census API request failed for {dataset_path}: {safe}")
+            return [["error"], [safe]]
 
     def get_variables(self, dataset_path: str) -> Dict[str, Any]:
         """
@@ -47,8 +51,9 @@ class CensusClient(BaseAPIClient):
         try:
             return self.get_json(path)
         except Exception as e:
-            logger.error(f"Failed to fetch variables for {dataset_path}: {e}")
-            return {"error": str(e)}
+            safe = redact_credentials(e)
+            logger.error(f"Failed to fetch variables for {dataset_path}: {safe}")
+            return {"error": safe}
 
     def format_as_dicts(self, data: List[List[Any]]) -> List[Dict[str, Any]]:
         """

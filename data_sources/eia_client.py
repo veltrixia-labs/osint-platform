@@ -11,7 +11,7 @@ import logging
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from data_sources.base_client import BaseAPIClient
+from data_sources.base_client import BaseAPIClient, redact_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -64,8 +64,11 @@ class EIAClient(BaseAPIClient):
         try:
             return self._get_json_params(url, params)
         except Exception as exc:
-            logger.error("EIA route fetch failed for %s: %s", api_route, exc)
-            return {"error": str(exc), "api_route": api_route}
+            # api_key is a query parameter; _get_json_params raises straight from
+            # requests, so the message carries the full URL.
+            safe = redact_credentials(exc)
+            logger.error("EIA route fetch failed for %s: %s", api_route, safe)
+            return {"error": safe, "api_route": api_route}
 
     def get_seriesid_data(
         self,
@@ -86,8 +89,9 @@ class EIAClient(BaseAPIClient):
         try:
             return self.get_json(url, params=params)
         except Exception as exc:
-            logger.error("EIA seriesid fetch failed for %s: %s", v1_series_id, exc)
-            return {"error": str(exc), "v1_series_id": v1_series_id}
+            safe = redact_credentials(exc)
+            logger.error("EIA seriesid fetch failed for %s: %s", v1_series_id, safe)
+            return {"error": safe, "v1_series_id": v1_series_id}
 
     def fetch_catalog_observations(
         self,

@@ -11,6 +11,7 @@ from datetime import datetime, date
 from typing import Dict, Any, Optional, Union
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from data_sources.base_client import redact_credentials
 from db.models import (
     ExternalDataSeries, 
     ExternalObservation, 
@@ -303,7 +304,16 @@ class ExternalDataRepository:
         log.status = status
         log.rows_fetched = rows_fetched
         log.rows_saved = rows_saved
-        log.error_message = error_message
+        # Redact at the setter, not at the ~12 call sites that pass str(e): BEA and
+        # Alpha Vantage have no local exception handler, so a raise_for_status message
+        # carrying the full URL — and with it the api_key/UserID query parameter —
+        # reaches this column directly. Doing it here means a future caller cannot
+        # bypass it. `is not None` matters: an unredacted None must stay NULL, not
+        # become the empty string. Locally-composed messages carry no query string,
+        # so this is a verified no-op for them.
+        log.error_message = (
+            redact_credentials(error_message) if error_message is not None else None
+        )
         log.finished_at = func.now()
         if metadata_json:
             if log.metadata_json:

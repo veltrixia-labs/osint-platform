@@ -13,6 +13,7 @@ import os
 from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Dict, List
 
+from data_sources.base_client import redact_credentials
 from db.database import AsyncSessionLocal
 from jobs.external_data_fetcher import ExternalDataFetcher
 
@@ -27,7 +28,7 @@ PRO_MACRO_SYNC_STEPS: List[tuple[str, str, str]] = [
     ("opec", "Energy Strategy (OPEC)", "sync_opec_energy_stats"),
     ("comtrade", "UN Comtrade", "sync_comtrade"),
     ("worldbank", "World Bank", "sync_worldbank"),
-    ("census", "Census CBP", "sync_census_cbp"),
+    # census removed here too — see the note at EXTERNAL_SYNC_STEPS below.
 ]
 
 # (step_id, log label, fetcher method name)
@@ -37,7 +38,34 @@ EXTERNAL_SYNC_STEPS: List[tuple[str, str, str]] = [
     ("worldbank", "World Bank", "sync_worldbank"),
     ("comtrade", "UN Comtrade", "sync_comtrade"),
     ("bea", "BEA GDPbyIndustry", "sync_bea_industry_stats"),
-    ("census", "Census CBP", "sync_census_cbp"),
+    # census is DELIBERATELY NOT REGISTERED, in this list or in PRO_MACRO_SYNC_STEPS
+    # above. It is not missing. The reason does not depend on the trigger, so removing
+    # it from only one list would recreate the config divergence this change exists to
+    # remove.
+    #
+    # It has no reader. The sole consumer of external_industry_stats
+    # (analysis/pro_structural_context.py:1171-1178) orders by year DESC, value DESC
+    # and takes 20 rows; that window is 20 BEA 2023 rows, and the census rows are 2022.
+    # The consumer also never projects raw_json, so nothing it writes is reachable.
+    #
+    # It fails every day and records success. The response fails JSON parse
+    # ("Expecting value: line 1 column 1 (char 0)"), census_client.py:39 turns the
+    # exception into [["error"], [str(e)]], format_as_dicts turns that into one
+    # synthetic row, and sync_census_cbp writes it three times into
+    # external_industry_stats with value NULL and the exception string in raw_json —
+    # then calls finish_fetch_log(status="success"). 95 of 95 logged runs say success.
+    #
+    # The only data that ever landed is 2022 US state-level totals (industry_id NULL,
+    # industry_name "Total") — no industry breakdown, which is what the domain configs
+    # ask of this source. Measured cost while failing: 4 HTTP attempts per day, because
+    # JSONDecodeError carries no .response so base_client.py:98 cannot take the 4xx
+    # early-raise and the full max_retries+1 loop runs.
+    #
+    # data_sources/census_client.py, sync_census_cbp in jobs/external_data_fetcher.py
+    # and every import are retained. Re-registering is one line in each list.
+    #
+    # The three NULL-valued census rows already in external_industry_stats are
+    # deliberately NOT deleted here.
     ("estat", "Japan Stats (e-Stat)", "sync_estat_japan_stats"),
     ("eia", "Energy Stats (EIA)", "sync_eia_energy_stats"),
     ("ecb", "Europe Stats (ECB)", "sync_ecb_market_stats"),
@@ -103,7 +131,11 @@ async def _run_one_step(step_id: str, label: str, method_name: str) -> Dict[str,
             "label": label,
             "status": "failed",
             "elapsed_sec": elapsed,
-            "error": str(exc),
+            # This dict is returned to the caller and becomes the HTTP response body
+            # of POST /api/dev/sync-external-data and /api/dev/sync-pro-macro-data,
+            # so an exception carrying a credential-bearing URL would be served to
+            # whoever holds the ops secret. Redact before it leaves the function.
+            "error": redact_credentials(exc),
         }
 
 

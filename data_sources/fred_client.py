@@ -7,7 +7,7 @@ from the St. Louis Fed API.
 
 import logging
 from typing import Dict, Any, Optional
-from data_sources.base_client import BaseAPIClient
+from data_sources.base_client import BaseAPIClient, redact_credentials
 
 logger = logging.getLogger(__name__)
 
@@ -48,5 +48,9 @@ class FREDClient(BaseAPIClient):
         try:
             return self.get_json("series/observations", params=params)
         except Exception as e:
-            logger.error(f"FRED API request failed for series {series_id}: {e}")
-            return {"error": str(e), "series_id": series_id}
+            # api_key travels as a query parameter, so the HTTPError message carries it.
+            # Redact both the log line and the returned dict: the dict has no reader
+            # today, but it is one data.get("error") away from external_data_fetch_logs.
+            safe = redact_credentials(e)
+            logger.error(f"FRED API request failed for series {series_id}: {safe}")
+            return {"error": safe, "series_id": series_id}
