@@ -365,14 +365,6 @@ def _build_data_notes(ctx: dict) -> str:
     lines.append("</div>")
     lines.append("</details>")
             
-    # Priority Sync List for AI/Semi
-    domain_id = ctx.get("domain", {}).get("domain_id")
-    if domain_id == "ai_semiconductor_intelligence":
-        missing = ["SOXX", "USDTWD", "EWJ", "EWY"]
-        lines.append("\n**Priority Synchronization List (Next Cycle)**:")
-        for m in missing:
-            lines.append(f"- [ ] {m} (Market Data)")
-            
     freshness = ctx.get("data_freshness", {})
     if freshness.get("last_update"):
         lines.append(f"\n<div class=\"data-freshness-meta\">Data Freshness Index: {freshness['last_update']}</div>")
@@ -1071,7 +1063,6 @@ def build_pro_structural_report_payload(context: dict) -> dict:
         "data_notes": {
             "freshness": freshness.get("last_update"),
             "coverage_limitations": context.get("data_notes", []),
-            "missing_data": []
         }
     }
     return sanitize_unicode_tree(payload)
