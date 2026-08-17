@@ -39,9 +39,9 @@ PRO_DOMAIN_CONFIG = {
         "market_data": {
             "alpha_vantage_symbols": [
                 "XLE", "XOP", "USO", "IYT", "JETS",
-                "N225", "DAX", "EWJ", "EWG",
+                "EWJ", "EWG",
             ],
-            "frankfurter_fx_pairs": ["USDCAD", "USDNOK", "USDBRL", "EURUSD", "USDJPY"],
+            "frankfurter_fx_pairs": ["USDCAD", "USDNOK", "USDBRL", "USDEUR", "USDJPY"],
             "instrument_symbols": ["DCOILWTICO", "WPU05", "2709", "2711"]
         },
         "transmission_channels": ["Direct input costs", "Logistics premiums", "Currency volatility in petro-states"],
@@ -99,12 +99,10 @@ PRO_DOMAIN_CONFIG = {
             "USDCAD": "Petro-state FX: Canadian dollar sensitivity",
             "USDNOK": "Petro-state FX: Norwegian krone sensitivity",
             "USDBRL": "EM petro-state FX: Brazilian real sensitivity",
-            "N225": "Nikkei 225 — Japan risk sentiment on energy shocks",
-            "DAX": "DAX — European industrial / energy import sensitivity",
-            "EURUSD": "EUR/USD — European terms-of-trade and ECB reaction",
+            "USDEUR": "USD/EUR — European terms-of-trade and ECB reaction",
             "USDJPY": "USD/JPY — Japan energy import bill and BoJ pressure",
             "EWJ": "Japan equity proxy when Nikkei index feed unavailable",
-            "EWG": "Germany/Europe equity proxy for DAX region",
+            "EWG": "Germany/Europe equity proxy for the euro-area cycle",
             "2709": "Crude petroleum trade volume",
             "2711": "Natural gas trade volume",
             "2805": "Strategic metals trade volume"
@@ -119,11 +117,9 @@ PRO_DOMAIN_CONFIG = {
             "USDCAD": {"group": "Petro FX", "order": 4},
             "USDNOK": {"group": "Petro FX", "order": 4},
             "USDBRL": {"group": "Petro FX", "order": 4},
-            "N225": {"group": "Japan Market", "order": 5},
             "EWJ": {"group": "Japan Market", "order": 5},
-            "DAX": {"group": "Europe Market", "order": 6},
             "EWG": {"group": "Europe Market", "order": 6},
-            "EURUSD": {"group": "Tri-Polar FX", "order": 7},
+            "USDEUR": {"group": "Tri-Polar FX", "order": 7},
             "USDJPY": {"group": "Tri-Polar FX", "order": 7},
         },
         "market_group_interpretation": {
@@ -182,9 +178,9 @@ PRO_DOMAIN_CONFIG = {
         "market_data": {
             "alpha_vantage_symbols": [
                 "SPY", "QQQ", "IWM", "TLT", "SHY", "GLD", "USO",
-                "N225", "DAX", "EWJ", "EWG",
+                "EWJ", "EWG",
             ],
-            "frankfurter_fx_pairs": ["EURUSD", "USDJPY", "GBPUSD", "AUDUSD"],
+            "frankfurter_fx_pairs": ["USDEUR", "USDJPY", "USDGBP", "USDAUD"],
             "instrument_symbols": ["FEDFUNDS", "DGS10", "CPIAUCSL", "DTWEXBGS"]
         },
         "transmission_channels": ["Cost of capital", "Discount rates for equities", "Cross-border capital flows"],
@@ -266,12 +262,10 @@ PRO_DOMAIN_CONFIG = {
             "SHY": "Short-duration Treasury — front-end rate expectations",
             "GLD": "Gold — real rate and safe-haven proxy",
             "USO": "Crude oil — inflation input component",
-            "EURUSD": "Euro/USD — transatlantic policy divergence",
+            "USDEUR": "USD/EUR — transatlantic policy divergence",
             "USDJPY": "USD/JPY — carry trade and BoJ policy proxy",
-            "GBPUSD": "GBP/USD — UK macro sensitivity",
-            "AUDUSD": "AUD/USD — commodity and China growth proxy",
-            "N225": "Nikkei 225 — Japan macro and BoJ sensitivity",
-            "DAX": "DAX — euro-area industrial cycle",
+            "USDGBP": "USD/GBP — UK macro sensitivity",
+            "USDAUD": "USD/AUD — commodity and China growth proxy",
             "EWJ": "Japan equity ETF proxy",
             "EWG": "Germany/Europe equity ETF proxy",
         },
@@ -283,13 +277,11 @@ PRO_DOMAIN_CONFIG = {
             "SHY": {"group": "Fixed Income", "order": 2},
             "GLD": {"group": "Safe Haven", "order": 3},
             "USO": {"group": "Commodities", "order": 4},
-            "EURUSD": {"group": "FX Majors", "order": 5},
+            "USDEUR": {"group": "FX Majors", "order": 5},
             "USDJPY": {"group": "FX Majors", "order": 5},
-            "GBPUSD": {"group": "FX Majors", "order": 5},
-            "AUDUSD": {"group": "FX Majors", "order": 5},
-            "N225": {"group": "Asia-Pacific Indices", "order": 6},
+            "USDGBP": {"group": "FX Majors", "order": 5},
+            "USDAUD": {"group": "FX Majors", "order": 5},
             "EWJ": {"group": "Asia-Pacific Indices", "order": 6},
-            "DAX": {"group": "European Indices", "order": 7},
             "EWG": {"group": "European Indices", "order": 7},
         },
         "market_group_interpretation": {
@@ -310,7 +302,7 @@ PRO_DOMAIN_CONFIG = {
             "deescalation": [
                 {"condition": "Yield curve normalizes; equity vol subsides", "monitored_data": ["DGS10", "SPY"]},
                 {"condition": "Fed guidance turns dovish or neutral", "monitored_data": ["FEDFUNDS"]},
-                {"condition": "EM FX stabilizes; capital outflows slow", "monitored_data": ["DTWEXBGS", "AUDUSD"]}
+                {"condition": "EM FX stabilizes; capital outflows slow", "monitored_data": ["DTWEXBGS", "USDAUD"]}
             ]
         },
         "exposure_matrix_details": [
@@ -342,7 +334,7 @@ PRO_DOMAIN_CONFIG = {
         },
         "market_data": {
             "alpha_vantage_symbols": ["SMH", "SOXX", "QQQ", "EWJ", "EWY"],
-            "frankfurter_fx_pairs": ["USDJPY", "USDKRW", "USDTWD"],
+            "frankfurter_fx_pairs": ["USDJPY", "USDKRW"],
             "instrument_symbols": ["8542", "DGS10", "DTWEXBGS"]
         },
         "transmission_channels": ["CapEx cycles", "Export license approvals", "Geopolitical foundry concentration"],
@@ -414,7 +406,6 @@ PRO_DOMAIN_CONFIG = {
             "EWY": "South Korea equities — memory/foundry exposure",
             "USDJPY": "JPY sensitivity to tech export cycles",
             "USDKRW": "KRW sensitivity to semiconductor exports",
-            "USDTWD": "TWD sensitivity to foundry revenue concentration"
         },
         "market_group_map": {
             "SMH": {"group": "Semiconductor Equities", "order": 1},
@@ -424,7 +415,6 @@ PRO_DOMAIN_CONFIG = {
             "EWY": {"group": "Asia Tech Exposure", "order": 3},
             "USDJPY": {"group": "Tech-Sensitive FX", "order": 4},
             "USDKRW": {"group": "Tech-Sensitive FX", "order": 4},
-            "USDTWD": {"group": "Tech-Sensitive FX", "order": 4}
         },
         "market_group_interpretation": {
             "Semiconductor Equities": {"positive_means": "confirming", "negative_means": "stress", "description": "Chip sector equities reflect supply chain confidence"},
@@ -435,7 +425,7 @@ PRO_DOMAIN_CONFIG = {
         "watch_conditions_template": {
             "escalation": [
                 {"condition": "SMH falls while trade restriction headlines increase", "monitored_data": ["SMH", "related_news"]},
-                {"condition": "TWD or KRW weaken sharply (foundry revenue risk)", "monitored_data": ["USDTWD", "USDKRW"]},
+                {"condition": "KRW weakens sharply (Korean chipmaker revenue risk)", "monitored_data": ["USDKRW"]},
                 {"condition": "IC trade volumes decline in Comtrade data", "monitored_data": ["8542"]}
             ],
             "deescalation": [
@@ -477,7 +467,7 @@ PRO_DOMAIN_CONFIG = {
         },
         "market_data": {
             "alpha_vantage_symbols": ["ITA", "XAR", "PPA", "XLI"],
-            "frankfurter_fx_pairs": ["USDJPY", "EURUSD"],
+            "frankfurter_fx_pairs": ["USDJPY", "USDEUR"],
             "instrument_symbols": ["8802", "8906", "9301", "2805"]
         },
         "transmission_channels": ["Government budget cycles", "FMS (Foreign Military Sales) approvals", "Critical material availability"],
@@ -549,7 +539,7 @@ PRO_DOMAIN_CONFIG = {
             "PPA": "Invesco Aerospace & Defense — sub-tier exposure",
             "XLI": "Industrial sector — defense manufacturing base health",
             "USDJPY": "USD/JPY — security alliance FX proxy",
-            "EURUSD": "EUR/USD — NATO spending divergence"
+            "USDEUR": "USD/EUR — NATO spending divergence"
         },
         "market_group_map": {
             "ITA": {"group": "Defense Equities", "order": 1},
@@ -557,7 +547,7 @@ PRO_DOMAIN_CONFIG = {
             "PPA": {"group": "Defense Equities", "order": 1},
             "XLI": {"group": "Industrial Base", "order": 2},
             "USDJPY": {"group": "Alliance FX", "order": 3},
-            "EURUSD": {"group": "Alliance FX", "order": 3}
+            "USDEUR": {"group": "Alliance FX", "order": 3}
         },
         "market_group_interpretation": {
             "Defense Equities": {"positive_means": "confirming", "negative_means": "easing", "description": "Defense sector equities reflect procurement outlook"},
@@ -752,7 +742,7 @@ PRO_DOMAIN_CONFIG = {
         },
         "market_data": {
             "alpha_vantage_symbols": ["BTC", "ETH", "QQQ", "SPY", "TLT"],
-            "frankfurter_fx_pairs": ["USDJPY", "EURUSD", "USDCNY"],
+            "frankfurter_fx_pairs": ["USDJPY", "USDEUR", "USDCNY"],
             "instrument_symbols": ["DTWEXBGS", "M2SL"]
         },
         "transmission_channels": ["Global liquidity (M2)", "USD strength/weakness", "Capital control enforcement"],
@@ -832,7 +822,7 @@ PRO_DOMAIN_CONFIG = {
             "SPY": "S&P 500 — broad risk sentiment",
             "TLT": "Long-duration bonds — inverse risk proxy",
             "USDJPY": "USD/JPY — carry trade unwind proxy",
-            "EURUSD": "EUR/USD — transatlantic regulatory divergence",
+            "USDEUR": "USD/EUR — transatlantic regulatory divergence",
             "USDCNY": "USD/CNY — capital control and CBDC proxy"
         },
         "market_group_map": {
@@ -842,7 +832,7 @@ PRO_DOMAIN_CONFIG = {
             "SPY": {"group": "Correlated Risk Assets", "order": 2},
             "TLT": {"group": "Rate Sensitivity", "order": 3},
             "USDJPY": {"group": "FX / Liquidity", "order": 4},
-            "EURUSD": {"group": "FX / Liquidity", "order": 4},
+            "USDEUR": {"group": "FX / Liquidity", "order": 4},
             "USDCNY": {"group": "FX / Liquidity", "order": 4}
         },
         "market_group_interpretation": {

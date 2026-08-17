@@ -248,20 +248,10 @@ GLOBAL_RELEVANCE_MAP: Dict[str, Dict[str, str]] = {
         "down_meaning": "Global disinflation; easing cycle possible.",
     },
     # Tri-polar market instruments (Section 07)
-    "N225": {
-        "display_name": "Nikkei 225",
-        "up_meaning": "Japan risk-on; yen carry and export sentiment supportive.",
-        "down_meaning": "Japan risk-off; BoJ/Fx or global growth concerns.",
-    },
-    "DAX": {
-        "display_name": "DAX (Germany)",
-        "up_meaning": "European cyclical optimism; export/industrial bid.",
-        "down_meaning": "European growth fears; energy or China drag.",
-    },
-    "EURUSD": {
-        "display_name": "EUR/USD",
-        "up_meaning": "EUR strength vs USD; easier euro-area financial conditions abroad.",
-        "down_meaning": "EUR weakness; USD liquidity dominance.",
+    "USDEUR": {
+        "display_name": "USD/EUR",
+        "up_meaning": "USD strength vs EUR; tighter euro-area financial conditions abroad.",
+        "down_meaning": "USD weakness vs EUR; easier global dollar conditions.",
     },
     "USDJPY": {
         "display_name": "USD/JPY",
