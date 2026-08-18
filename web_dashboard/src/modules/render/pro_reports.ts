@@ -2163,6 +2163,17 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
         .sort((a: any, b: any) => (a.percent_change ?? 0) - (b.percent_change ?? 0));
     const hasPulseMvrs = sigPosMvrs.length > 0 || sigNegMvrs.length > 0;
     const limitedInstr = typeof market.limited_instruments === 'number' ? market.limited_instruments : 0;
+    // Freshness split. Matches _compute_market_status (pro_structural_report_builder.py:810)
+    // exactly: a row MISSING is_stale counts as FRESH, which preserves behaviour for payloads
+    // written before the field existed. Hence `!p.is_stale`, not `p.is_stale === false`.
+    const freshPrices  = latestPrices.filter((p: any) => !p.is_stale);
+    const staleInstr   = latestPrices.length - freshPrices.length;
+    // The ↑/↓ counts are taken over the fresh set so they rest on the same basis as the
+    // Status card, which arrives already filtered from the backend. The row lists below
+    // deliberately stay unfiltered — a stale instrument keeps its row and its date rather
+    // than disappearing.
+    const freshPosMvrs = sigPosMvrs.filter((p: any) => !p.is_stale);
+    const freshNegMvrs = sigNegMvrs.filter((p: any) => !p.is_stale);
 
     // Supply-driven badge (energy domain only; bool from backend)
     const supplyDrivenBadge = market.supply_driven
@@ -2194,15 +2205,16 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
                 Market Prices
                 ${supplyDrivenBadge}
                 ${limitedInstr > 0 ? `<span class="intel-pulse-limited">${limitedInstr} instruments awaiting price data</span>` : ''}
+                ${staleInstr > 0 ? `<span class="intel-pulse-limited">${staleInstr} of ${latestPrices.length} instruments not current — not counted as movers</span>` : ''}
             </div>
             ${sigPosMvrs.length > 0 ? `
                 <div class="intel-pulse-group">
-                    <div class="intel-pulse-group-label pos">Positive Movers — ${sigPosMvrs.length} instrument${sigPosMvrs.length > 1 ? 's' : ''} confirmed bid</div>
+                    <div class="intel-pulse-group-label pos">Positive Movers — ${freshPosMvrs.length} instrument${freshPosMvrs.length === 1 ? '' : 's'} confirmed bid${sigPosMvrs.length !== freshPosMvrs.length ? ` (${sigPosMvrs.length} listed, ${sigPosMvrs.length - freshPosMvrs.length} not current)` : ''}</div>
                     ${sigPosMvrs.map((p: any) => moverRow(p, 'pos')).join('')}
                 </div>` : ''}
             ${sigNegMvrs.length > 0 ? `
                 <div class="intel-pulse-group">
-                    <div class="intel-pulse-group-label neg">Negative Movers — ${sigNegMvrs.length} instrument${sigNegMvrs.length > 1 ? 's' : ''} under pressure</div>
+                    <div class="intel-pulse-group-label neg">Negative Movers — ${freshNegMvrs.length} instrument${freshNegMvrs.length === 1 ? '' : 's'} under pressure${sigNegMvrs.length !== freshNegMvrs.length ? ` (${sigNegMvrs.length} listed, ${sigNegMvrs.length - freshNegMvrs.length} not current)` : ''}</div>
                     ${sigNegMvrs.map((p: any) => moverRow(p, 'neg')).join('')}
                 </div>` : ''}
         </div>` : (latestPrices.length > 0
@@ -2216,12 +2228,12 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
     html += `<div class="intel-panel">${sh(nextSectionNum(),'Market Confirmation', '07')}
         <div class="intel-market-summary">
             <div class="intel-score-card"><div class="score-label">Status</div><div class="score-value" style="color:${sc(market.status)}">${market.status||'N/A'}</div></div>
-            <div class="intel-score-card"><div class="score-label">↑ Positive</div><div class="score-value" style="color:var(--success)">${sigPosMvrs.length}</div></div>
-            <div class="intel-score-card"><div class="score-label">↓ Negative</div><div class="score-value" style="color:var(--danger)">${sigNegMvrs.length}</div></div>
-            <div class="intel-score-card"><div class="score-label">Tracking</div><div class="score-value" style="color:var(--text-secondary)">${latestPrices.length}</div></div>
+            <div class="intel-score-card"><div class="score-label">↑ Positive</div><div class="score-value" style="color:var(--success)">${freshPosMvrs.length}</div></div>
+            <div class="intel-score-card"><div class="score-label">↓ Negative</div><div class="score-value" style="color:var(--danger)">${freshNegMvrs.length}</div></div>
+            <div class="intel-score-card"><div class="score-label">Tracking</div><div class="score-value" style="color:var(--text-secondary)">${latestPrices.length}</div><div style="font-size:0.65rem;color:var(--text-secondary);margin-top:0.15rem;">${freshPrices.length} current</div></div>
         </div>
         ${pulseSection}
-        ${breakdown.length?`<div class="intel-breakdown-grid">${breakdown.map((g:any)=>`<div class="intel-breakdown-card"><div class="intel-bd-head"><span class="intel-bd-group">${g.group}</span><span class="intel-bd-status" style="color:${sc(g.status)}">${(g.status||'').replace('_',' ')}</span></div>${g.description?`<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:0.4rem;">${g.description}</div>`:''}<div class="intel-chip-row">${(g.instrument_details||[]).map((d:any)=>pctChip(d.symbol,d.percent_change)).join('')}</div></div>`).join('')}</div>`:''}</div>`;
+        ${breakdown.length?`<div class="intel-breakdown-grid">${breakdown.map((g:any)=>`<div class="intel-breakdown-card"><div class="intel-bd-head"><span class="intel-bd-group">${g.group}</span><span style="font-size:0.65rem;color:var(--text-secondary);margin-left:0.4rem;">${(g.instrument_details||[]).length} instrument${(g.instrument_details||[]).length === 1 ? '' : 's'}</span><span class="intel-bd-status" style="color:${sc(g.status)}">${(g.status||'').replace('_',' ')}</span></div>${g.description?`<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:0.4rem;">${g.description}</div>`:''}<div class="intel-chip-row">${(g.instrument_details||[]).map((d:any)=>pctChip(d.symbol,d.percent_change)).join('')}</div></div>`).join('')}</div>`:''}</div>`;
 
     // 08 Systemic Fragility Engine
     if (p.systemic_fragility) {
