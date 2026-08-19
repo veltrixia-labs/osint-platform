@@ -875,8 +875,7 @@ async def build_pro_structural_context(
             )
         else:
             data_notes.append(
-                f"No alerts in the last {ALERT_CLUSTER_WINDOW_HOURS}h for this domain; "
-                "using macro predictive forecasting layer."
+                f"No anchor alert found in the last {ALERT_CLUSTER_WINDOW_HOURS}h for this domain."
             )
 
     signal_ctx = None

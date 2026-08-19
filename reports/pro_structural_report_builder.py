@@ -219,8 +219,9 @@ def _build_market_confirmation_section(ctx: dict) -> str:
     lines = ["## 4. Market Confirmation"]
     
     prices = m_ctx.get("latest_prices", [])
-    pos_movers = [p for p in prices if (p.get("percent_change") or 0) > 0.5]
-    neg_movers = [p for p in prices if (p.get("percent_change") or 0) < -0.5]
+    fresh_prices = [p for p in prices if not p.get("is_stale")]
+    pos_movers = [p for p in fresh_prices if (p.get("percent_change") or 0) > 0.5]
+    neg_movers = [p for p in fresh_prices if (p.get("percent_change") or 0) < -0.5]
     na_movers = [p for p in prices if p.get("percent_change") is None]
     
     status = m_ctx.get("status") or _compute_market_status(prices)
@@ -259,9 +260,9 @@ def _build_market_confirmation_section(ctx: dict) -> str:
         if na_movers:
             interp.append(f"Analysis is partially limited by {len(na_movers)} instruments showing N/A for 30D change (reference prices only).")
         
-        if len(pos_movers) > len(prices) * 0.6:
+        if len(pos_movers) > len(fresh_prices) * 0.6:
             interp.append("Current market price action shows broad upward momentum, which may confirm positive structural adjustments.")
-        elif len(neg_movers) > len(prices) * 0.6:
+        elif len(neg_movers) > len(fresh_prices) * 0.6:
             interp.append("Market pricing indicates broad downward pressure, aligning with identified structural risks.")
         elif len(pos_movers) > 0 and len(neg_movers) > 0:
             interp.append("Market confirmation is mixed; structural signals have not yet consolidated into a singular directional trend.")
@@ -885,8 +886,9 @@ def build_pro_structural_report_payload(context: dict) -> dict:
     m_ctx = context.get("market_confirmation", {})
     prices = m_ctx.get("latest_prices", [])
     
-    pos_movers = [p for p in prices if (p.get("percent_change") or 0) > 0.5]
-    neg_movers = [p for p in prices if (p.get("percent_change") or 0) < -0.5]
+    fresh_prices = [p for p in prices if not p.get("is_stale")]
+    pos_movers = [p for p in fresh_prices if (p.get("percent_change") or 0) > 0.5]
+    neg_movers = [p for p in fresh_prices if (p.get("percent_change") or 0) < -0.5]
     na_movers = [p for p in prices if p.get("percent_change") is None]
     
     status = m_ctx.get("status") or _compute_market_status(prices)

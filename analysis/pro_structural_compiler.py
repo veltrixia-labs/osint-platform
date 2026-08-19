@@ -295,8 +295,6 @@ def build_dynamic_structural_title(context: Dict[str, Any]) -> str:
     """
     domain = context.get("domain") or {}
     sig = context.get("signal") or {}
-    pf = context.get("predictive_forecast") or {}
-    s_ctx = context.get("structural_context") or {}
     timeline = context.get("event_timeline") or []
 
     trigger_title = sanitize_unicode_text(sig.get("title") or "")
@@ -311,37 +309,7 @@ def build_dynamic_structural_title(context: Dict[str, Any]) -> str:
             if t and len(t) >= 12:
                 return synthesize_structural_title(t, context)
 
-    macro = (s_ctx.get("macro_observations") or s_ctx.get("macro_display_cards") or [])
-    top = macro[0] if macro else {}
-    label = sanitize_unicode_text(top.get("display_name") or top.get("series_id") or "")
-    chg = top.get("change_pct")
     domain_name = sanitize_unicode_text(domain.get("display_name") or "Structural Risk")
-
-    vectors = pf.get("risk_vectors") or []
-    if vectors:
-        lead = sanitize_unicode_text(str(vectors[0]))
-        lead = re.sub(r"^[^:]+:\s*", "", lead).strip()
-        if lead and len(lead) >= 16:
-            return _title_clip(lead)
-
-    headline = sanitize_unicode_text(pf.get("headline") or "")
-    if headline:
-        part = headline.split(":", 1)[-1].strip()
-        if len(part) >= 16:
-            return _title_clip(part)
-
-    if label and chg is not None:
-        try:
-            c = float(chg)
-        except (TypeError, ValueError):
-            c = 0.0
-        if c > 0.75:
-            verb = "Escalating"
-        elif c < -0.75:
-            verb = "Easing"
-        else:
-            verb = "Repricing"
-        return _title_clip(f"{verb} {label} — {domain_name} Exposure")
 
     return _title_clip(f"{domain_name} Structural Risk Outlook")
 
