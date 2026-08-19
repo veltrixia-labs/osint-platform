@@ -165,9 +165,17 @@ def structural_correlation_score(
     return min(1.0, score)
 
 
-def _title_clip(text: str, max_len: int = 96) -> str:
+_TITLE_MAX_LEN = 96
+
+
+def _normalize_title_text(text: str) -> str:
+    """Normalisation shared by the clip and by the does-it-fit test below it."""
     clean = sanitize_unicode_text(text or "").strip()
-    clean = re.sub(r"\s+", " ", clean)
+    return re.sub(r"\s+", " ", clean)
+
+
+def _title_clip(text: str, max_len: int = _TITLE_MAX_LEN) -> str:
+    clean = _normalize_title_text(text)
     if len(clean) <= max_len:
         return clean
     return clean[: max_len - 1].rsplit(" ", 1)[0] + "…"
@@ -185,7 +193,7 @@ _FEED_PREFIX_RE = re.compile(
 _DOMAIN_THEME_PREFIX: Dict[str, str] = {
     "energy_resource_risk": "Strategic Energy Repricing",
     "global_market_intelligence": "Global Market Structural Shift",
-    "ai_semiconductor_intelligence": "Semiconductor Supply Structural Pressure",
+    "ai_semiconductor_intelligence": "Semiconductor Supply Pressure",
     "supply_chain_intelligence": "Supply Chain Structural Disruption",
     "crypto_geopolitics": "Digital Asset Geopolitical Repricing",
     "defense_technology": "Strategic Aerospace Escalation",
@@ -196,7 +204,7 @@ _DOMAIN_EXPOSURE_HOOK: Dict[str, str] = {
     "global_market_intelligence": "Assessing Cross-Asset Risk Transmission & Liquidity Exposure",
     "ai_semiconductor_intelligence": "Assessing Fab Capacity & Export-Control Exposure",
     "supply_chain_intelligence": "Assessing Logistics Bottleneck & Inventory Exposure",
-    "crypto_geopolitics": "Assessing Stablecoin Rails & Regulatory Transmission Exposure",
+    "crypto_geopolitics": "Assessing Stablecoin Rails & Regulatory Exposure",
     "defense_technology": "Assessing Aerospace Escalation & Defense Supply Exposure",
 }
 
@@ -248,16 +256,29 @@ def strip_feed_artifacts(text: str) -> str:
     return t
 
 
-def _exposure_hook_from_headline(headline: str, domain_id: str) -> str:
+def _exposure_hook_from_headline(headline: str, domain_id: str, *, title_prefix: str) -> str:
+    generic_hook = _DOMAIN_EXPOSURE_HOOK.get(
+        domain_id, "Cross-Sector Structural Exposure Assessment"
+    )
     if _RAW_FEED_VERB_RE.search(headline):
-        return _DOMAIN_EXPOSURE_HOOK.get(domain_id, "Cross-Sector Structural Exposure Assessment")
+        return generic_hook
 
     lower = headline.lower()
-    geo_hits = [tok for tok in _GEO_TOKENS if tok in lower]
+    # Ordered by first appearance in the headline. _GEO_TOKENS is a frozenset, so
+    # plain iteration order is PYTHONHASHSEED-dependent: the a/b pair below was not
+    # reproducible between processes, and the same headline published as both
+    # "Ukraine-Russia" and "Russia-Ukraine" depending on which worker generated it.
+    # The trailing `t` breaks ties, since a token that is a prefix of another
+    # ("europe" in "european") shares its index and would otherwise fall back to
+    # set order.
+    geo_hits = sorted(
+        (tok for tok in _GEO_TOKENS if tok in lower),
+        key=lambda t: (lower.index(t), t),
+    )
     if "europe" in lower and ("russia" in lower or "belarus" in lower):
         return "Assessing Russia-Europe Logistics & Security Exposure"
     if "hormuz" in lower or "strait" in lower:
-        return "Assessing Maritime Chokepoint & Energy Corridor Exposure"
+        return "Assessing Maritime Chokepoint & Energy Exposure"
     if len(geo_hits) >= 2:
         a, b = geo_hits[0].title(), geo_hits[1].title()
         return f"Assessing {a}-{b} Structural Exposure"
@@ -271,8 +292,13 @@ def _exposure_hook_from_headline(headline: str, domain_id: str) -> str:
         flags=re.I,
     ).strip(" ,:-")
     if len(hook) >= 20:
-        return f"Assessing {hook[:72]}"
-    return "Cross-Sector Structural Exposure Assessment"
+        # Either the whole cleaned headline fits the finished title, or we fall back
+        # to the domain hook. No truncation: a headline cut mid-sentence and passed
+        # off as an analytic title reads as a claim the source did not make.
+        candidate = f"Assessing {hook}"
+        if len(_normalize_title_text(f"{title_prefix}{candidate}")) <= _TITLE_MAX_LEN:
+            return candidate
+    return generic_hook
 
 
 def synthesize_structural_title(raw_headline: str, context: Dict[str, Any]) -> str:
@@ -285,7 +311,7 @@ def synthesize_structural_title(raw_headline: str, context: Dict[str, Any]) -> s
     core = strip_feed_artifacts(raw_headline)
     if not core or len(core) < 8:
         return _title_clip(f"{theme}: Cross-Sector Exposure Assessment")
-    hook = _exposure_hook_from_headline(core, domain_id)
+    hook = _exposure_hook_from_headline(core, domain_id, title_prefix=f"{theme}: ")
     return _title_clip(f"{theme}: {hook}")
 
 
