@@ -315,7 +315,28 @@ async def market_price_sync_wrapper():
     async with _heavy_db_lock:
         async with AsyncSessionLocal() as session:
             mf = MarketDataFetcher(session)
-            for domain_id in domains:
+            for idx, domain_id in enumerate(domains):
+                # Space the domain boundary the way market_data_fetcher.py:76 already
+                # spaces requests *within* a domain. That guard is `inst_requested > 1`
+                # and :49 resets the counter per domain, so every domain's FIRST request
+                # skips the sleep. Two per run therefore carry no spacing: the first
+                # domain's, preceded by 24h of idle, and the second domain's, issued
+                # 0.008-0.196s after the previous domain returned — the only request in
+                # the run with neither the 13s spacer nor idle ahead of it.
+                #
+                # Measured 2026-08-11..08-19, 83 requests over nine runs: 0 rate-limit
+                # rejections in 65 spaced requests, 0 in 9 first-domain requests, 5 in
+                # the 9 second-domain requests. That is positional correlation, NOT an
+                # established mechanism — 4 of those 9 boundary crossings succeeded, and
+                # the measured gap does not separate the two groups (the smallest clean
+                # gap, 0.018s, is smaller than two rejected ones).
+                #
+                # Placed before the try below, not inside it, so a domain that raises
+                # still leaves the next one spaced. `idx` keeps it off the first domain
+                # and off the Frankfurter call after the loop (different provider, no
+                # observed limit).
+                if idx:
+                    await asyncio.sleep(13.0)  # literal mirrors market_data_fetcher.py:77
                 # One domain raising must not abort the rest of the group, nor the
                 # Frankfurter call below (mirrors external_data_sync.py:203-211,
                 # which this wrapper cannot reuse — that function hardcodes all six).
