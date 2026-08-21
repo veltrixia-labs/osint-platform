@@ -1,6 +1,30 @@
 # Render Blueprint — API + static dashboard
 # Dashboard static site (osint-web): build web_dashboard, publish dist/
 # API service (osint-platform): MUST use the start command below (not a static site).
+#
+# THE envVars IN THIS FILE ARE NOT LIVE. The Render dashboard is authoritative for
+# environment. Render syncs a blueprint's envVars when a service is CREATED from it,
+# not on subsequent deploys of an existing service — so this file is a snapshot taken
+# at creation, not a control surface.
+#
+# Measured 2026-08-21: f275cb2 added DEV_MODE below and was deployed. The variable
+# never appeared in the dashboard and tier gating did not take effect. Adding
+# DEV_MODE=false by hand in the dashboard took effect immediately — confirmed against
+# the live endpoint: is_partial true on every row, description null, and a 4-item
+# evidence_list truncated to 3.
+#
+# Do not read the envVars below as production values, and never cite one as evidence
+# of what production is set to. They are kept because they record declared intent and
+# would apply if these services were ever recreated from this file.
+#
+# The divergence is not limited to envVars. Read from the dashboard on 2026-08-21, the
+# Build Command for osint-platform is `pip install -r requirements.txt && pip install
+# -e . --no-deps` — it does NOT contain the `alembic upgrade head` that :33 declares.
+# Only the Start Command was verified identical to this file (:37), and ENV is present
+# in the dashboard. Treat :33 as a declaration, not a description of production.
+#
+# osint-scheduler (Background Worker) is not described in this file at all — its start
+# command and entire environment are dashboard-only and invisible from disk.
 
 services:
   - type: web
@@ -17,9 +41,11 @@ services:
         value: production
       - key: PYTHON_VERSION
         value: "3.11.9"
-      # Tier payload gating. api/gating.py:294 defaults this to "true", which returns
-      # the FULL payload to every caller regardless of tier. Set explicitly here — not
-      # in the Render dashboard — so the production value is readable from disk.
+      # DEV_MODE gates tier payload shaping (api/gating.py:294 defaults it to "true",
+      # which returns the FULL payload to every caller regardless of tier). THIS
+      # DECLARATION DID NOT TAKE EFFECT: added in f275cb2 and deployed, it never
+      # reached the service. The value that actually gates production was set by hand
+      # in the Render dashboard on 2026-08-21. Declared intent only — see the header.
       - key: DEV_MODE
         value: "false"
       # Pro Structural automation (off by default; enable after data pipelines verified)
