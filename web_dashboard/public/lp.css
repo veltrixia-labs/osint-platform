@@ -1509,10 +1509,17 @@ body.lp > :not(.lp-backdrop) {
   background: linear-gradient(180deg, rgba(10, 14, 20, 0.55), rgba(6, 8, 12, 0.35));
 }
 
+/* The four framing properties below moved here from .lp-engine-split, which used to wrap
+   this panel and a sibling. The sibling (the Backend Live Stream) is gone, so the wrapper
+   was removed rather than kept as a one-column "split". margin-top/border/border-radius
+   were previously 0/none/0 DELIBERATELY — the wrapper supplied them — so these restore the
+   frame, they do not override an intent. overflow: hidden was already here and is not
+   duplicated. */
 .lp-preview-frame {
-  margin-top: 0;
-  border: none;
-  border-radius: 0;
+  margin-top: 2rem;
+  border: 1px solid var(--lp-border);
+  border-radius: 4px;
+  background: var(--lp-border);
   overflow: hidden;
   display: grid;
   grid-template-columns: 140px 1fr;

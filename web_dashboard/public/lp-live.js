@@ -5,10 +5,21 @@
   const ALERT_CARD_COUNT = 6;
   const HERO_STREAM_COUNT = 9;
   const ROTATE_MS = 4200;
-  const REFRESH_MS = 90000;
   const FRESHNESS_TICK_MS = 30000;
   const FETCH_LIMIT = 96;
-  const MIN_ALERT_POOL = Math.max(ALERT_CARD_COUNT + 2, HERO_STREAM_COUNT + 2);
+
+  // Copy for the two non-live states. They are different facts: 'error' is a transport
+  // failure, 'empty' is a measured absence of qualifying rows. Never collapse them.
+  const EMPTY_COPY = {
+    error: {
+      showcase: 'signal feed unreachable · retry on next load',
+      hero: 'feed unreachable',
+    },
+    empty: {
+      showcase: 'no signals cleared the stream threshold in the last 24h',
+      hero: 'no signals in the last 24h',
+    },
+  };
 
   const TOPIC_LABELS = {
     energy_resource_risk: { label: 'Energy & Resource Risk', color: '#d29922' },
@@ -21,87 +32,16 @@
     global: { label: 'Global Briefing', color: '#58a6ff' },
   };
 
-  const FALLBACK_LIVE = [
-    {
-      id: 'fl-001',
-      title: 'United States Ambivalent to Russian Oil Sanctions',
-      target_label: 'United States Ambivalent to Russian Oil Sanctions',
-      topic: 'energy_resource_risk',
-      severity: 'elevated',
-      triggered_at: '2026-05-03T08:40:56.000Z',
-      related_news_count: 3,
-      evidence_list: [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}],
-    },
-    {
-      id: 'fl-002',
-      title: 'Strait of Hormuz — commercial transit advisory',
-      target_label: 'Strait of Hormuz — commercial transit advisory',
-      topic: 'energy_resource_risk',
-      severity: 'critical',
-      triggered_at: '2026-05-03T07:12:00.000Z',
-      related_news_count: 3,
-      evidence_list: [{}, {}, {}],
-    },
-    {
-      id: 'fl-003',
-      title: 'Strategic AI Infrastructure Surge',
-      target_label: 'Strategic AI Infrastructure Surge',
-      topic: 'ai_semiconductor_intelligence',
-      severity: 'high',
-      triggered_at: '2026-05-03T06:30:00.000Z',
-      related_news_count: 4,
-      evidence_list: [{}, {}, {}, {}],
-    },
-    {
-      id: 'fl-004',
-      title: 'Taiwan Strait — elevated airspace notices',
-      target_label: 'Taiwan Strait — elevated airspace notices',
-      topic: 'defense_technology',
-      severity: 'elevated',
-      triggered_at: '2026-05-02T22:18:00.000Z',
-      related_news_count: 5,
-      evidence_list: [{}, {}, {}, {}, {}],
-    },
-    {
-      id: 'fl-005',
-      title: 'Ukraine border — energy infrastructure strike pattern',
-      target_label: 'Ukraine border — energy infrastructure strike pattern',
-      topic: 'energy_resource_risk',
-      severity: 'critical',
-      triggered_at: '2026-05-02T19:44:00.000Z',
-      related_news_count: 6,
-      evidence_list: [{}, {}, {}, {}, {}, {}],
-    },
-    {
-      id: 'fl-006',
-      title: 'Supply chain disruption — port congestion index',
-      target_label: 'Supply chain disruption — port congestion index',
-      topic: 'supply_chain_disruption',
-      severity: 'elevated',
-      triggered_at: '2026-05-02T16:02:00.000Z',
-      related_news_count: 9,
-      evidence_list: [{}, {}, {}, {}, {}, {}, {}, {}, {}],
-    },
-    {
-      id: 'fl-007',
-      title: 'Central bank corridor — FX intervention watch',
-      target_label: 'Central bank corridor — FX intervention watch',
-      topic: 'global_market_intelligence',
-      severity: 'watch',
-      triggered_at: '2026-05-02T12:20:00.000Z',
-      related_news_count: 4,
-      evidence_list: [{}, {}, {}, {}],
-    },
-  ];
-
+  // mode is one of 'live' | 'empty' | 'error'. There is no 'fallback' any more: the
+  // synthetic pool that used to back it was deleted, so an unsuccessful load now
+  // renders a stated condition rather than invented rows.
   const state = {
-    mode: 'fallback',
+    mode: 'error',
     alertPool: [],
     heroOffset: 0,
     lastFetchedAt: null,
     newestDataAt: null,
     rotateTimer: null,
-    refreshTimer: null,
     freshnessTimer: null,
   };
 
@@ -131,14 +71,6 @@
 
   function sortByTimestampDesc(pool) {
     return [...pool].sort((a, b) => timestampMs(b) - timestampMs(a));
-  }
-
-  function stampFreshFallbackRows(rows, spacingMinutes) {
-    const now = Date.now();
-    return rows.map((row, i) => ({
-      ...row,
-      triggered_at: new Date(now - i * spacingMinutes * 60000).toISOString(),
-    }));
   }
 
   function newestIsoFromPools(...pools) {
@@ -307,12 +239,15 @@
       });
     };
     pushUnique(primary);
-    if (out.length < minSize) pushUnique(supplement);
+    // The supplement branch is gone with FALLBACK_LIVE. `supplement` and `minSize` are
+    // now unread; the signature is kept so the dedupe contract is unchanged for any
+    // future second pool. A short pool stays short — it is never padded.
     return sortByTimestampDesc(out);
   }
 
   /**
-   * Quality-filter, de-duplicate, and backfill from fallback - never clone rows for density.
+   * Quality-filter and de-duplicate. Never clones rows and never pads: the pool is
+   * exactly what the endpoint returned, minus duplicates and sourceless rows.
    */
   function prepareShowcasePool(rawItems, fallbackItems, minPoolSize) {
     const primary = sortByTimestampDesc(
@@ -322,14 +257,7 @@
       ),
     );
 
-    const fallback = sortByTimestampDesc(
-      dedupeNewestFirst(
-        (fallbackItems || []).map(normalizeLiveAlert).filter(passesAlertQuality),
-        'alert',
-      ),
-    );
-
-    return mergeUniquePools(primary, fallback, 'alert', minPoolSize);
+    return mergeUniquePools(primary, [], 'alert', minPoolSize);
   }
 
   function normalizeLiveAlert(raw) {
@@ -373,51 +301,56 @@
   function updateFreshnessBadges() {
     const sectionEl = document.getElementById('lp-terminal-freshness');
     const live = state.mode === 'live';
-    const nowIso = new Date().toISOString();
+    if (!sectionEl) return;
 
-    if (sectionEl) {
-      if (live) {
-        sectionEl.hidden = false;
-        const dataLabel = state.newestDataAt
-          ? 'LAST UPDATED: ' + formatRelativeFromNow(state.newestDataAt)
-          : 'LIVE: ' + formatDisplayDateJa(nowIso);
-        sectionEl.textContent = dataLabel;
-        sectionEl.title = state.newestDataAt
-          ? 'Newest signal: ' + formatDisplayDateJa(state.newestDataAt)
-          : 'Synced with production API';
-      } else {
-        sectionEl.hidden = false;
-        sectionEl.textContent = 'SAMPLE DATA · ' + formatDisplayDateJa(nowIso);
-        sectionEl.title = 'Production API unavailable - showing canonical samples';
-      }
+    // A freshness badge reports freshness. With no rows there is none to report, and
+    // the panels already state the condition — one fact, one place. Hidden, not reworded.
+    if (!live) {
+      sectionEl.hidden = true;
+      sectionEl.textContent = '';
+      sectionEl.removeAttribute('title');
+      return;
     }
 
-    document.querySelectorAll('[data-lp-sync]').forEach((el) => {
-      if (!live) return;
-      const clock = formatDisplayDateJa(nowIso);
-      const timePart = clock.includes(' ') ? clock.split(' ').pop() : clock;
-      el.textContent = 'LIVE · ' + timePart;
-      el.title = state.newestDataAt
-        ? 'Newest: ' + formatDisplayDateJa(state.newestDataAt)
-        : 'Live production sync';
-    });
+    const nowIso = new Date().toISOString();
+    const dataLabel = state.newestDataAt
+      ? 'LAST UPDATED: ' + formatRelativeFromNow(state.newestDataAt)
+      : 'SYNCED: ' + formatDisplayDateJa(nowIso);
+    // Disclose a short pool rather than padding it. Renders only when it is true.
+    const shortfall =
+      state.alertPool.length < ALERT_CARD_COUNT
+        ? ' · ' + state.alertPool.length + ' SIGNALS'
+        : '';
+    sectionEl.hidden = false;
+    sectionEl.textContent = dataLabel + shortfall;
+    sectionEl.title = state.newestDataAt
+      ? 'Newest signal: ' + formatDisplayDateJa(state.newestDataAt)
+      : 'Synced with production API';
   }
 
   function setSyncBadge(mode) {
+    const live = mode === 'live';
+    // Sole writer of [data-lp-sync]. "LIVE" is dropped: the badge can only say that
+    // real rows arrived, and the newest of them may be hours old. Age is reported once,
+    // by #lp-terminal-freshness beside it.
     document.querySelectorAll('[data-lp-sync]').forEach((el) => {
-      const live = mode === 'live';
       if (live) {
         el.hidden = false;
         el.className = 'lp-live-indicator';
-        el.textContent = 'LIVE PRODUCTION DATA';
+        el.textContent = 'PRODUCTION DATA';
         el.setAttribute('data-lp-mode', 'live');
       } else {
         el.hidden = true;
         el.className = 'lp-live-indicator';
         el.textContent = '';
-        el.setAttribute('data-lp-mode', 'fallback');
+        el.setAttribute('data-lp-mode', mode);
         el.removeAttribute('title');
       }
+    });
+    // The hero status dot follows the same boolean. Without --live it renders
+    // var(--lp-dim) from the base class, so no new colour is introduced.
+    document.querySelectorAll('.lp-terminal-dot').forEach((el) => {
+      el.classList.toggle('lp-terminal-dot--live', live);
     });
     updateFreshnessBadges();
   }
@@ -462,8 +395,16 @@
       </div>`;
   }
 
+  function emptyCopy(slot) {
+    return (EMPTY_COPY[state.mode] || EMPTY_COPY.error)[slot];
+  }
+
   function renderAlerts(container, alerts, animate) {
     if (!container) return;
+    if (!alerts.length) {
+      container.innerHTML = `<p class="lp-panel-empty lp-mono">${escapeHtml(emptyCopy('showcase'))}</p>`;
+      return;
+    }
     const html = alerts.slice(0, ALERT_CARD_COUNT).map((a, i) => alertCardHtml(a, i)).join('');
     if (animate) container.classList.add('lp-panel-swapping');
     container.innerHTML = html;
@@ -494,8 +435,15 @@
 
   function renderHeroTerminal(container, alerts) {
     if (!container) return;
-    const rows = alerts.length ? alerts.slice(0, HERO_STREAM_COUNT) : [];
-    if (!rows.length) return;
+    const rows = alerts.slice(0, HERO_STREAM_COUNT);
+    if (!rows.length) {
+      // Must WRITE, not return. index.html's static placeholder reads "Loading signal
+      // stream…"; returning early here leaves that on screen permanently, which is a
+      // worse claim than the one this commit removes.
+      container.innerHTML =
+        `<span class="lp-terminal-line lp-panel-empty">${escapeHtml(emptyCopy('hero'))}</span>`;
+      return;
+    }
     container.innerHTML = rows
       .map((a) => {
         const tag = heroTopicTag(a.topic);
@@ -546,25 +494,32 @@
     const alertRoot = document.getElementById('lp-alert-stream');
     const heroRoot = document.querySelector('.lp-hero .lp-terminal-body');
 
-    const fallbackLive = stampFreshFallbackRows(FALLBACK_LIVE, 8).map(normalizeLiveAlert);
-    let liveItems = fallbackLive;
-    state.mode = 'fallback';
+    let liveItems = [];
+    // Anything that is not a successful array response is a transport failure until
+    // proven otherwise; the try below narrows it.
+    state.mode = 'error';
     state.heroOffset = 0;
 
     try {
-      const live = await fetchJson(`/api/alerts/live?limit=${FETCH_LIMIT}`);
-      if (Array.isArray(live) && live.length) {
+      const live = await fetchJson(`/api/alerts?limit=${FETCH_LIMIT}`);
+      if (Array.isArray(live)) {
         liveItems = sortByTimestampDesc(live.map(normalizeLiveAlert));
-        state.mode = 'live';
+        // 200 with [] is a measured absence of qualifying rows, not a failed fetch.
+        // They render different copy, so they must not collapse into one state here.
+        state.mode = liveItems.length ? 'live' : 'empty';
       }
-    } catch {
-      /* fallback with fresh timestamps */
+    } catch (err) {
+      // fetchJson throws Error(String(res.status)) on a non-2xx, so the status survives
+      // in the message. Surface it instead of swallowing it — a 429 (guest limit is
+      // 5/min per IP on this endpoint) is a different problem from a network drop.
+      state.mode = 'error';
+      console.warn('[lp-live] alert fetch failed:', (err && err.message) || err);
     }
 
     state.lastFetchedAt = new Date().toISOString();
     state.newestDataAt = newestIsoFromPools(liveItems);
 
-    state.alertPool = prepareShowcasePool(liveItems, fallbackLive, MIN_ALERT_POOL);
+    state.alertPool = prepareShowcasePool(liveItems);
 
     renderShowcasePanels(false);
     renderHeroTerminal(heroRoot, fillDisplaySlots(state.alertPool, HERO_STREAM_COUNT));
@@ -579,8 +534,10 @@
     if (state.rotateTimer) clearInterval(state.rotateTimer);
     state.rotateTimer = setInterval(tickRotate, ROTATE_MS);
 
-    if (state.refreshTimer) clearInterval(state.refreshTimer);
-    state.refreshTimer = setInterval(hydrate, REFRESH_MS);
+    // No refetch timer. /api/alerts allows a guest 5 requests per 60s per IP
+    // (api/rate_limit.py), a sixth of what /alerts/live allowed, and a shared egress IP
+    // pools visitors against it. One page load now costs exactly one request.
+    // rotateTimer and freshnessTimer stay: both are display-only and issue no requests.
 
     if (state.freshnessTimer) clearInterval(state.freshnessTimer);
     state.freshnessTimer = setInterval(updateFreshnessBadges, FRESHNESS_TICK_MS);
