@@ -229,9 +229,10 @@ async def _get_alerts_impl(
     ]
 
     # Payload tiering: $19 Basic gets evidence truncated to 3 + AI brief stripped;
-    # $99 Institutional ( >= EXPERTS) gets the full payload. DEV_MODE (default OFF)
-    # only elevates every caller to full during a deliberate audit pass; in
-    # production this actively shapes Free/Basic payloads. Feed cards stay
+    # $99 Institutional ( >= EXPERTS) gets the full payload. DEV_MODE defaults to
+    # ON (api/gating.py:294), which elevates every caller to full; render.yaml now
+    # sets it to "false" for production, so this actively shapes Free/Basic payloads
+    # there while a local run without the env var stays unlocked. Feed cards stay
     # clickable (is_locked False) — content is withheld via the payload, not a
     # card-level lock overlay.
     final_alerts = []
@@ -373,9 +374,10 @@ async def get_alert(
         "evidence_list": a.metadata_json.get("evidence_list", []) if a.metadata_json else [],
     }
 
-    # Payload tiering ($19 Basic vs $99 Institutional). DEV_MODE (default OFF)
-    # elevates to full only during audit passes; content withheld via payload,
-    # not a card-level lock (is_locked stays False).
+    # Payload tiering ($19 Basic vs $99 Institutional). DEV_MODE defaults to ON
+    # (api/gating.py:294) and elevates every caller to full; render.yaml sets it to
+    # "false" for production. Content withheld via payload, not a card-level lock
+    # (is_locked stays False).
     data["is_locked"] = False
     data = gate_alert_payload(data, tier)
 

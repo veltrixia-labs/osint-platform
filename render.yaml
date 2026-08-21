@@ -17,6 +17,11 @@ services:
         value: production
       - key: PYTHON_VERSION
         value: "3.11.9"
+      # Tier payload gating. api/gating.py:294 defaults this to "true", which returns
+      # the FULL payload to every caller regardless of tier. Set explicitly here — not
+      # in the Render dashboard — so the production value is readable from disk.
+      - key: DEV_MODE
+        value: "false"
       # Pro Structural automation (off by default; enable after data pipelines verified)
       - key: ENABLE_PRO_AUTOMATION
         value: "false"
