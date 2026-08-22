@@ -59,31 +59,39 @@ export function showEvidenceModal(title: string, evidenceList: any[]) {
     overlay.innerHTML = `
         <div class="modal-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
-                <h3 style="font-size:1.1rem; color:#58a6ff;">Evidence: ${title}</h3>
+                <h3 style="font-size:1.1rem; color:#58a6ff;">Evidence: ${chudEscape(String(title || ''))}</h3>
                 <button class="modal-close-btn" style="background:none; border:none; color:#8b949e; cursor:pointer; font-size:1.5rem;">&times;</button>
             </div>
             <div style="display:flex; flex-direction:column; gap:1.5rem;">
-                ${evidenceList.map((item, index) => `
+                ${evidenceList.map((item, index) => {
+                    // Every value below is external: titles and urls originate in the RSS
+                    // items behind alert_logs.metadata_json.evidence_list, and `domain` is
+                    // urlparse(...).netloc of an external url. Escape all three, and gate
+                    // the href on scheme — chudEscape blocks attribute breakout but leaves
+                    // `javascript:` intact, which is live on click.
+                    const safeUrl = chudSafeUrl(item.url || item.link);
+                    return `
                     <div class="evidence-item" style="border-left:2px solid var(--accent); padding-left:1rem;">
-        
+
                         ${index === 0 ? `<div class="primary-badge">PRIMARY</div>` : ''}
 
                         <div style="font-weight:600; color:#c9d1d9; font-size:0.9rem; margin-bottom:0.5rem;">
-                            ${item.title || 'Source Signal'}
+                            ${chudEscape(String(item.title || 'Source Signal'))}
                         </div>
 
                         <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.75rem;">
-                            <span class="evidence-domain">${item.domain || item.type || 'OSINT'}</span>
+                            <span class="evidence-domain">${chudEscape(String(item.domain || item.type || 'OSINT'))}</span>
                         </div>
 
-                        ${(item.url || item.link) ? `
-                            <a href="${item.url || item.link}" target="_blank"
+                        ${safeUrl ? `
+                            <a href="${chudEscape(safeUrl)}" target="_blank" rel="noopener noreferrer"
                             style="color:#58a6ff; text-decoration:none; font-size:0.8rem; font-weight:600;">
                             🔗 View Source &rarr;
                             </a>
                         ` : '<div style="font-size:0.8rem; color:#8b949e;">🔒 Restricted Source</div>'}
                     </div>
-                `).join('')}
+                `;
+                }).join('')}
                 ${evidenceList.length === 0 ? '<p style="text-align:center; opacity:0.6;">No supporting sources available.</p>' : ''}
             </div>
         </div>
@@ -244,6 +252,20 @@ function chudEscape(unsafe: string): string {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+/** http/https only. chudEscape stops attribute breakout but not `javascript:` as a
+ *  whole value, so a scheme allowlist is required in addition to escaping. Returns ''
+ *  for anything else, which the caller renders as "Restricted Source". */
+function chudSafeUrl(raw: unknown): string {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    try {
+        const proto = new URL(s, window.location.origin).protocol.toLowerCase();
+        return proto === 'http:' || proto === 'https:' ? s : '';
+    } catch {
+        return '';
+    }
 }
 
 function chudPick<T>(arr: T[]): T {
