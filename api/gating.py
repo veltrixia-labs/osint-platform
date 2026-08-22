@@ -293,21 +293,25 @@ async def get_watchlist_limit_for_user(user: AnalystProfile) -> int:
 # globally. Set env DEV_MODE=false to re-enable real tier gating for launch.
 DEV_MODE = os.environ.get("DEV_MODE", "true").lower() == "true"
 
-# Tier (and above) that receives the full, unrestricted payload = $99 Institutional.
-INSTITUTIONAL_MIN_TIER = PlanTier.EXPERTS.value
+# Tier (and above) that receives the full, unrestricted alert payload. Lowered from
+# EXPERTS to PRO: Expert is not sold (see stripe_service.ALLOWED_CHECKOUT_TIERS), so
+# leaving the threshold there meant a paying Pro subscriber received exactly the payload
+# a Free user did. Measured over the 30 rows GET /api/alerts returns: evidence entries
+# visible to Pro go from 51 to 209.
+INSTITUTIONAL_MIN_TIER = PlanTier.PRO.value
 
-# Secondary sources a Basic ($19) caller may see before truncation.
+# Secondary sources a caller below INSTITUTIONAL_MIN_TIER may see before truncation.
 BASIC_MAX_EVIDENCE = 3
 
 
 def gate_alert_payload(alert: Dict[str, Any], tier: str) -> Dict[str, Any]:
     """Shape a serialized alert for the caller's tier.
 
-    Returns the FULL payload untouched when DEV_MODE is on OR the caller is
-    institutional-grade ($99 / >= EXPERTS). Otherwise — Basic ($19 / pro and
-    below) — truncates evidence_list to BASIC_MAX_EVIDENCE and strips the AI
-    analytical brief (description). No mosaic / locked flags are set; this is a
-    pure payload-shape decision, not a visible lock.
+    Returns the FULL payload untouched when DEV_MODE is on OR the caller is at or
+    above INSTITUTIONAL_MIN_TIER (currently PRO). Below that — guest and free —
+    evidence_list is truncated to BASIC_MAX_EVIDENCE and `description` is dropped.
+    No mosaic / locked flags are set; this is a pure payload-shape decision, not a
+    visible lock.
     """
     if DEV_MODE or is_tier_sufficient(tier, INSTITUTIONAL_MIN_TIER):
         return alert
@@ -315,7 +319,13 @@ def gate_alert_payload(alert: Dict[str, Any], tier: str) -> Dict[str, Any]:
     ev = gated.get("evidence_list")
     if isinstance(ev, list) and len(ev) > BASIC_MAX_EVIDENCE:
         gated["evidence_list"] = ev[:BASIC_MAX_EVIDENCE]
-    gated["description"] = None      # AI analytical brief withheld on Basic
+    # NOT an AI brief. `description` is written at jobs/alert_manager.py:668 from
+    # TrendSignal.description, whose five assignment sites in analysis/trend_engine.py
+    # are three string literals (:332, :395, :434) and three copies of
+    # rc.representative_title (:476, :513, :536). No LLM is in that chain. Measured:
+    # 58 of 58 rows carry the key, 14 are non-empty, 12 of those are byte-identical to
+    # target_label, and none contains prose.
+    gated["description"] = None
     gated["is_partial"] = True
     return gated
 

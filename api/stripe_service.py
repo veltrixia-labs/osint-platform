@@ -25,7 +25,14 @@ stripe.api_key = settings.stripe_secret_key
 
 BillingInterval = Literal["monthly", "annual"]
 CHECKOUT_TRIAL_DAYS = 7
-ALLOWED_CHECKOUT_TIERS = frozenset({"pro", "experts"})
+# "experts" is deliberately NOT sold. The tier still exists in PlanTier and in
+# TIER_ORDER — removing it there would re-index the hierarchy and orphan stored rows —
+# but it is not buildable and must not be purchasable. The in-app plans table was
+# rendering a live "Upgrade to Expert" CTA against a configured price id while the
+# landing page said "coming soon"; this closes the server side of that.
+# To re-enable Expert: add "experts" back to this frozenset. resolve_price_id and
+# build_price_to_tier_map still carry both Expert price ids, so nothing else is needed.
+ALLOWED_CHECKOUT_TIERS = frozenset({"pro"})
 
 
 def _legacy_pro_monthly() -> str:
@@ -63,9 +70,26 @@ def normalize_billing_interval(billing: Optional[str]) -> BillingInterval:
 
 
 def resolve_price_id(tier: str, billing: Optional[str] = "monthly") -> str:
-    """Select Stripe Price ID for tier + billing interval."""
+    """Select Stripe Price ID for tier + billing interval.
+
+    Guarded HERE and not only at the callers. Two of the three call sites
+    (:260, :297) sit behind their own ALLOWED_CHECKOUT_TIERS checks, but
+    api/payments.py:47 reached past them on the `return_url` branch of the legacy
+    GET /api/payments/checkout-session and resolved an Expert price id. Guarding the
+    function closes that and any future caller; the two caller-level checks stay so
+    the rejection still happens at the boundary, with the same status and detail.
+    Inbound webhooks are unaffected — they resolve price -> tier through
+    PRICE_TO_TIER, which deliberately still knows Expert so an existing
+    subscriber's events keep working.
+    """
     tier_norm = (tier or "").strip().lower()
     interval = normalize_billing_interval(billing)
+
+    if tier_norm not in ALLOWED_CHECKOUT_TIERS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid tier. Allowed: {sorted(ALLOWED_CHECKOUT_TIERS)}",
+        )
 
     table: dict[tuple[str, BillingInterval], str] = {
         ("pro", "monthly"): _legacy_pro_monthly(),
