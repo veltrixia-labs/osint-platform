@@ -242,6 +242,18 @@ CLUSTER_MIN_SHARED = 4                              # min shared CORE tokens bef
 CLUSTER_ESCALATION_FACTOR = REIGNITE_INTENSITY_FACTOR  # ≥1.5× master intensity breaks through as new alert
 CLUSTER_MAX_EVIDENCE = 40                           # cap merged corroborating sources on a master
 
+# Minimum CONTENT tokens an evidence title must share with the alert headline before
+# it is bound as a source. Chosen as a judgement on a continuum, NOT read off a clean
+# separation: measured over 9,505 url-backed entries (2026-08-23), the shared-count
+# distribution is 1.8% at C=0, 31.3% at C=1, 19.3% at C=2, 7.5% at C=3, then a long
+# tail to C>=8. There is no empty band — a hand-labelled sample showed one, the
+# population does not. C=2 over C=3 keeps same-crisis/different-event corroboration
+# ("Two Tankers Attacked as UAE Expands Hormuz Oil Shuttle" against a Hormuz-closure
+# headline), which C=3 would discard along with 1,837 further entries. Its known cost
+# is admitting two-generic-token topic matches; ordering sinks those, it does not
+# pretend they are absent.
+EVIDENCE_MIN_SHARED = 2
+
 _EVENT_STOPWORDS = frozenset({
     # >=4-char fillers
     "the", "and", "for", "with", "from", "into", "over", "under", "after", "before",
@@ -318,6 +330,79 @@ def _event_similarity(a: set[str], b: set[str]) -> float:
     if inter >= CLUSTER_MIN_SHARED and overlap >= CLUSTER_OVERLAP_THRESHOLD:
         return max(jaccard, overlap)
     return jaccard
+
+
+def _shared_token_count(headline_tokens: set[str], title) -> int:
+    """Raw COUNT of shared content tokens — not Jaccard. Jaccard collapses the
+    corroboration signal here because evidence titles vary wildly in length: a
+    4-token match against a 20-token headline scores lower than a 2-token match
+    against a 4-token one, though the first is the better corroboration."""
+    return len(headline_tokens & _event_tokens(str(title or "")))
+
+
+def _rank_evidence(evidence_list: List[Dict[str, str]], headline: str | None):
+    """Drop evidence below EVIDENCE_MIN_SHARED shared tokens, mark the single entry
+    whose title IS the headline, and order it first, then by descending shared count.
+
+    Returns ``(kept, dropped_count)``.
+
+    ``headline`` MUST be sig.target_label. The composed display label does not exist
+    at the only call site — _resolve_display_label runs at :575, one line AFTER
+    _get_evidence_metrics returns at :574, and composes that label FROM this list.
+
+    THE MARK IS A TITLE COMPARISON, NOT AN IDENTITY, and is named accordingly.
+    analysis/trend_engine.py:51-82 merges signals under a cluster_id key while keeping
+    the FIRST arrival's target_label (there is no `existing.target_label = ...` in that
+    block) and overwriting metrics_json at :76/:80 — so a signal's label and the cluster
+    its evidence is drawn from can belong to different events. Measured 2026-08-23:
+    2,051 of 3,420 cluster-bearing signals carry a target_label that is not their own
+    cluster's representative_title. Replaying the real selection, the label matched
+    exactly one cluster item 85.2% of the time, none 14.8%, several once in 2,308.
+
+    So `headline_match` is written ONLY when exactly one title matches, and the key is
+    OMITTED ENTIRELY — never False — when the match is zero or ambiguous. Absent means
+    "no match could be identified". False would assert "checked, and this is not it",
+    which is a different and unmeasured claim; it would also silently re-elect position
+    0 in any consumer that falls back on it.
+
+    Comparison is EXACT string equality under _normalize_alert_title (lowercase,
+    collapsed whitespace) — the same normaliser the dedupe path already uses. Token-set
+    identity was rejected: _event_tokens is order-free and stems, so "Iran Attacks Ship"
+    and "Ship Attacks Iran" share one token set while naming opposite events.
+    """
+    htok = _event_tokens(headline or "")
+    norm_head = _normalize_alert_title(headline)
+
+    scored = [
+        (
+            _shared_token_count(htok, ev.get("title")),
+            bool(norm_head) and _normalize_alert_title(str(ev.get("title") or "")) == norm_head,
+            ev,
+        )
+        for ev in evidence_list
+    ]
+    matches = [i for i, (_, is_match, _) in enumerate(scored) if is_match]
+    exact = matches[0] if len(matches) == 1 else None
+
+    # The matched entry is exempt from the cutoff: it is the headline itself, so a low
+    # shared count means the headline is short, not that the source is unrelated.
+    kept = [
+        (count, idx, ev)
+        for idx, (count, _, ev) in enumerate(scored)
+        if count >= EVIDENCE_MIN_SHARED or idx == exact
+    ]
+    # list.sort is guaranteed stable (CPython and the language spec), so entries with an
+    # equal shared count keep their incoming relative order. That stability is the tie
+    # rule — deliberately no secondary key.
+    kept.sort(key=lambda t: (0 if t[1] == exact else 1, -t[0]))
+
+    out = []
+    for _count, idx, ev in kept:
+        entry = dict(ev)
+        if idx == exact:
+            entry["headline_match"] = True
+        out.append(entry)
+    return out, len(evidence_list) - len(out)
 
 
 # ── URL-overlap clustering primitives (deterministic, NLP-independent) ────────
@@ -936,6 +1021,27 @@ class AlertManager:
             })
             
         domain_count = len({e["domain"] for e in evidence_list})
+
+        # RELEVANCE CUTOFF — deliberately AFTER domain_count above. domain_count is the
+        # sole evidence-derived input to _determine_severity (:595), calculate_alert_score
+        # (:659) and fidelity_score/is_high_fidelity (:672-673, where severity is the
+        # second input). Computing it on the UNFILTERED list keeps all four byte-identical
+        # and holds fidelity flips at zero; only the STORED list is filtered. Verified
+        # against the 43 reconstructible stored alerts: 4 high-fidelity before, 4 after.
+        #
+        # Cluster membership is the only binding today, and analysis/clustering.py:307-311
+        # compares each candidate against the cluster SEED alone ("FROZEN FOOTPRINT"), so
+        # members need share nothing with each other or with this signal's headline.
+        evidence_list, dropped = _rank_evidence(evidence_list, sig.target_label)
+        if dropped and not evidence_list:
+            # Countable cause. The caller's guard at :579 logs the SYMPTOM
+            # ("Alert suppressed: no evidence URLs"); this names WHY, and greps apart
+            # from the case where the cluster yielded no url-backed item at all.
+            logger.info(
+                "[evidence-cutoff] suppressing: all %d source(s) below %d shared tokens "
+                "target=%r trend_type=%r",
+                dropped, EVIDENCE_MIN_SHARED, (sig.target_label or "")[:90], sig.trend_type,
+            )
         return domain_count, evidence_list, related_item_ids
 
     @classmethod
@@ -1085,21 +1191,27 @@ class AlertManager:
         only ever RAISES the master's confidence (intensity is never lowered).
 
         ``by_url`` = True when the merge was decided by deterministic URL
-        intersection (_find_event_cluster L3). In that case the shared permalink has
-        already proven same-event, so the lexical gate below is BYPASSED and the
-        incoming sources are bound unconditionally. For NLP-matched merges
-        (by_url=False) the strict lexical gate stays in force as the snowball guard."""
+        intersection (_find_event_cluster L3). It NO LONGER gates the relevance test
+        below — it is now carried for the log line only. Previously it bypassed that
+        test entirely, which meant the test never ran in production: every observed
+        merge line reads ``by=url … 0 rejected``."""
         from sqlalchemy.orm.attributes import flag_modified
 
         meta = dict(master.metadata_json) if isinstance(master.metadata_json, dict) else {}
         existing = list(meta.get("evidence_list") or [])
         seen = {_evidence_dedup_key(e) for e in existing if isinstance(e, dict)}
         seen.discard("")
-        # Phase 1 STRICT LEXICAL GATE (NLP merges only): a source is bound as
-        # corroboration only if its title coheres with the master headline at the
-        # same bar used to cluster events (CLUSTER_SIM_THRESHOLD = 0.6), so a lone
-        # shared anchor ("china"/"iran") can't fuse unrelated events. SKIPPED for
-        # by_url merges — the shared article permalink is stronger proof than text.
+        # RELEVANCE GATE — same rule and same threshold as the creation path, applied on
+        # EVERY merge. It replaces a CLUSTER_SIM_THRESHOLD=0.6 Jaccard test that was
+        # ineffective twice over: it was skipped whenever by_url was True, which is the
+        # only path production takes, and on the entries it did admit it behaved as an
+        # identity test — 51 of 52 survivors scored exactly 1.00, i.e. it kept titles
+        # byte-identical to the master headline and essentially nothing else.
+        #
+        # master_tokens reads target_label + display_title ONLY, never evidence_list, so
+        # the bar does not drift as the list grows — the 500th absorbed source is judged
+        # against the same headline as the first. The `master_tokens and ...` guard is
+        # kept from the previous gate: an empty headline must admit, not reject all.
         master_tokens = _event_tokens(f"{master.target_label or ''} {meta.get('display_title', '')}")
         added = 0
         rejected = 0
@@ -1109,11 +1221,9 @@ class AlertManager:
             key = _evidence_dedup_key(ev)
             if key and key in seen:
                 continue
-            if not by_url:
-                ev_tokens = _event_tokens(str(ev.get("title") or ""))
-                if master_tokens and _event_similarity(master_tokens, ev_tokens) < CLUSTER_SIM_THRESHOLD:
-                    rejected += 1
-                    continue
+            if master_tokens and _shared_token_count(master_tokens, ev.get("title")) < EVIDENCE_MIN_SHARED:
+                rejected += 1
+                continue
             existing.append(ev)
             if key:
                 seen.add(key)
