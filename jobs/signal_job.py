@@ -3,6 +3,7 @@ import gc
 import logging
 import json
 import os
+import re
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,6 +25,36 @@ MAX_CLUSTERING_ITEMS = int(os.getenv("SIGNAL_MAX_CLUSTERING_ITEMS", "400"))
 BATCH_SIZE = 5
 PROMPT_VERSION = "v2_batch_signal"
 CACHE_TTL_DAYS = 3
+
+# Every TrendSignal this module emits carries this type. Named so the guard key and
+# the row itself cannot drift apart — they are built from the same constant.
+_SIGNAL_TREND_TYPE = "risk_acceleration"
+
+# Duplicate-suppression window. Must match analysis/trend_engine.py:27
+# (`recent_start = now - timedelta(hours=24)`), the window that engine's own guard
+# pre-fetches, so the two writers agree on what "already exists" means.
+_GUARD_WINDOW_HOURS = 24
+
+
+def _signal_guard_key(trend_type: str, target_label: str | None) -> tuple:
+    """Duplicate key for a TrendSignal row: (trend_type, normalised label).
+
+    DELIBERATE DUPLICATE of get_guard_key in analysis/trend_engine.py:109-114. That
+    one is function-local inside detect_trends, so importing it would mean editing a
+    working path; the copy is the accepted cost and is recorded here so a reader finds
+    both. THE TWO MUST STAY IDENTICAL — change one, change the other.
+
+        analysis/trend_engine.py:112-114          this function
+        ----------------------------------------  ----------------------------------
+        l = (s.target_label or "")                l = (target_label or "")
+              .lower().strip()                          .lower().strip()
+        l = re.sub(r'\\s+', ' ', l)               l = re.sub(r"\\s+", " ", l)
+              .rstrip('.!?:;,')                         .rstrip(".!?:;,")
+        return (s.trend_type, l)                  return (trend_type, l)
+    """
+    l = (target_label or "").lower().strip()
+    l = re.sub(r"\s+", " ", l).rstrip(".!?:;,")
+    return (trend_type, l)
 
 TOPIC_SIGNAL_TYPES = [
     ("Top 10 Global Risk Signals", None),
@@ -121,7 +152,12 @@ from analysis.clustering import cluster_items
 from analysis.signal_engine import run_signal_engine
 from sqlalchemy import delete
 
-async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_topic: str | None = None):
+async def generate_rankings_for_type(
+    db: AsyncSession,
+    signal_type: str,
+    filter_topic: str | None = None,
+    guard_keys: set | None = None,
+):
     now = datetime.now(timezone.utc)
     start_time = now - timedelta(hours=SIGNAL_LOOKBACK_HOURS)
     
@@ -240,11 +276,33 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
         await db.commit()
         return
 
+    # INSERTION GUARD. Until now this loop called db.add unconditionally, so the same
+    # headline was re-inserted on every run and by every topic list that ranked it:
+    # 88% of trend_signals rows came from here, and one headline reached 980 rows over
+    # 71.2h. SKIP, never merge — a duplicate carries nothing new. Corroboration comes
+    # from the CLUSTER growing (alert_manager._get_evidence_metrics selects
+    # Item.cluster_id with no time bound), not from the same signal arriving again.
+    #
+    # `guard_keys` is seeded in run_signal from the last _GUARD_WINDOW_HOURS and is
+    # mutated in place below, so a key inserted by an earlier topic loop blocks the
+    # later ones too. That matters: the seven loops commit separately, and 3,438 of
+    # 4,079 same-headline gaps measured 1-15s — i.e. within one run, not across runs.
+    #
+    # None => no cross-run history (direct callers outside run_signal); intra-call
+    # de-duplication still applies.
+    if guard_keys is None:
+        guard_keys = set()
+    skipped = 0
+
     for score, items, topic, representative in resolved:
+        guard_key = _signal_guard_key(_SIGNAL_TREND_TYPE, representative.title)
+        if guard_key in guard_keys:
+            skipped += 1
+            continue
         sig = TrendSignal(
             created_at=datetime.now(timezone.utc),
             topic=topic,
-            trend_type="risk_acceleration",
+            trend_type=_SIGNAL_TREND_TYPE,
             target_label=representative.title,
             intensity_score=float(score),
             metrics_json={
@@ -257,7 +315,20 @@ async def generate_rankings_for_type(db: AsyncSession, signal_type: str, filter_
             }
         )
         db.add(sig)
+        # Seed immediately, before the commit at the end of this function, so a
+        # duplicate later in THIS loop or in a later topic loop is caught.
+        guard_keys.add(guard_key)
 
+    if skipped:
+        logger.info(
+            f"[SIGNAL] {signal_type}: guard skipped {skipped} duplicate signal(s), "
+            f"{len(resolved) - skipped} new of {len(resolved)} ranked"
+        )
+
+    # SignalRanking is deliberately NOT guarded: it is a different table, it is wiped
+    # and rebuilt per signal_type by the delete above, and the ranking must stay
+    # complete — rank N must exist even when its TrendSignal already did. This loop
+    # iterates `resolved`, not the inserted signals, so it is unaffected by the skip.
     for rank, (score, items, topic, representative) in enumerate(resolved, 1):
         db.add(SignalRanking(
             signal_type=signal_type,
@@ -338,8 +409,35 @@ async def generate_singleton_rescue_signals(db: AsyncSession):
 
 async def run_signal(db: AsyncSession):
     logger.info("Starting High-Efficiency Signal Job")
+
+    # Duplicate guard, built ONCE for the whole run and threaded through all seven
+    # topic loops. Not per call: generate_rankings_for_type runs 7x, and the guard
+    # window held 4,045 rows when this was measured (2026-08-23), so a per-call
+    # pre-fetch would be ~28,315 row-loads per run — on the worker that calls
+    # db.expire_all() + gc.collect() between topics precisely to keep the working
+    # set flat under 512MB.
+    #
+    # Two COLUMNS, not ORM entities: only the key is needed, so this never
+    # materialises a TrendSignal, never populates the identity map, and is not
+    # touched by the db.expire_all() below.
+    guard_cutoff = datetime.now(timezone.utc) - timedelta(hours=_GUARD_WINDOW_HOURS)
+    guard_rows = (
+        await db.execute(
+            select(TrendSignal.trend_type, TrendSignal.target_label).where(
+                TrendSignal.created_at >= guard_cutoff
+            )
+        )
+    ).all()
+    guard_keys = {_signal_guard_key(tt, tl) for tt, tl in guard_rows}
+    logger.info(
+        f"[SIGNAL] duplicate guard armed: {len(guard_keys)} distinct key(s) "
+        f"from {len(guard_rows)} signal(s) in the last {_GUARD_WINDOW_HOURS}h"
+    )
+
     for signal_type, topic_code in TOPIC_SIGNAL_TYPES:
-        await generate_rankings_for_type(db, signal_type, filter_topic=topic_code)
+        await generate_rankings_for_type(
+            db, signal_type, filter_topic=topic_code, guard_keys=guard_keys
+        )
         # Release the per-topic working set (up to MAX_CLUSTERING_ITEMS ORM rows
         # in the identity map + the O(n^2) clustering buffers) before the next
         # topic, so peak RSS stays flat across all 7 topics instead of
