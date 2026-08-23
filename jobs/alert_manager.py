@@ -340,15 +340,35 @@ def _shared_token_count(headline_tokens: set[str], title) -> int:
     return len(headline_tokens & _event_tokens(str(title or "")))
 
 
-def _rank_evidence(evidence_list: List[Dict[str, str]], headline: str | None):
+def _rank_evidence(
+    evidence_list: List[Dict[str, str]],
+    headline: str | None,
+    *,
+    apply_cutoff: bool = True,
+):
     """Drop evidence below EVIDENCE_MIN_SHARED shared tokens, mark the single entry
     whose title IS the headline, and order it first, then by descending shared count.
 
     Returns ``(kept, dropped_count)``.
 
+    ``apply_cutoff=False`` keeps every entry and does ordering + flag assignment only.
+    The merge path uses it: entries already stored on a master are its by_url match
+    handles (_find_event_cluster:1192 intersects incoming urls with the master's STORED
+    evidence_list), so deleting one deletes a handle and a later signal that then misses
+    the 0.6 Jaccard fallback mints a duplicate alert instead of merging. Re-filtering
+    there was also measured to be a no-op on anything created since the cutoff shipped —
+    an entry can only be appended if it already passes, so such a list is all-passing by
+    construction.
+
+    THE FLAG IS REPLACED, NOT PRESERVED. Every entry is copied WITHOUT headline_match and
+    the key is re-assigned from scratch below. This matters on the merge path: an incoming
+    entry arrives already ranked against ITS OWN signal's headline and carrying that
+    signal's flag, which refers to a different alert's headline. Copying it through would
+    leave two flags on one list — measured on 2 of 17 alerts after the cutoff shipped.
+
     ``headline`` MUST be sig.target_label. The composed display label does not exist
-    at the only call site — _resolve_display_label runs at :575, one line AFTER
-    _get_evidence_metrics returns at :574, and composes that label FROM this list.
+    at the only call site — _resolve_display_label runs at :598, one line AFTER
+    _get_evidence_metrics returns at :597, and composes that label FROM this list.
 
     THE MARK IS A TITLE COMPARISON, NOT AN IDENTITY, and is named accordingly.
     analysis/trend_engine.py:51-82 merges signals under a cluster_id key while keeping
@@ -389,7 +409,7 @@ def _rank_evidence(evidence_list: List[Dict[str, str]], headline: str | None):
     kept = [
         (count, idx, ev)
         for idx, (count, _, ev) in enumerate(scored)
-        if count >= EVIDENCE_MIN_SHARED or idx == exact
+        if (not apply_cutoff) or count >= EVIDENCE_MIN_SHARED or idx == exact
     ]
     # list.sort is guaranteed stable (CPython and the language spec), so entries with an
     # equal shared count keep their incoming relative order. That stability is the tie
@@ -398,7 +418,10 @@ def _rank_evidence(evidence_list: List[Dict[str, str]], headline: str | None):
 
     out = []
     for _count, idx, ev in kept:
-        entry = dict(ev)
+        # Strip before assigning, never dict(ev) — see the docstring. A plain copy
+        # PRESERVES an incoming flag instead of replacing it, which is how two entries
+        # on one list both ended up flagged.
+        entry = {k: v for k, v in ev.items() if k != "headline_match"}
         if idx == exact:
             entry["headline_match"] = True
         out.append(entry)
@@ -1229,6 +1252,29 @@ class AlertManager:
                 seen.add(key)
             added += 1
 
+        # Re-rank the MERGED list before truncating. Three things depend on this running
+        # here rather than after, or not at all:
+        #
+        #  1. Flag uniqueness. Incoming entries arrive already ranked against their own
+        #     signal and carrying that signal's headline_match. _rank_evidence strips every
+        #     flag and re-assigns at most one, against THIS master's headline — which is
+        #     what the key means.
+        #  2. Order. The append loop above adds to the tail, so without this the list is
+        #     [ranked creation block] + [append-ordered absorptions] and stops being
+        #     monotonic the moment anything merges.
+        #  3. Truncation. Sorting FIRST makes [:CLUSTER_MAX_EVIDENCE] keep the best 40
+        #     rather than the first 40. This is the durable win and it needs no deletion.
+        #
+        # apply_cutoff=False: nothing already stored is removed. See _rank_evidence's
+        # docstring for the by_url handle reasoning and the measured no-op.
+        #
+        # target_label ALONE, not the master_tokens concatenation at :1238. _event_tokens is
+        # idempotent under duplication so the cutoff basis is unaffected either way, but
+        # _normalize_alert_title is not: it would yield the title doubled, which no entry
+        # title can equal, so the flag would silently never be assigned. target_label ==
+        # display_title on 50/50 stored alerts, but that is a consequence of :777 and :803
+        # both writing display_label — not a guarantee. Do not depend on it.
+        existing, _ = _rank_evidence(existing, master.target_label, apply_cutoff=False)
         meta["evidence_list"] = existing[:CLUSTER_MAX_EVIDENCE]
         # Only record corroboration when a coherent source was actually bound — a
         # fully-rejected (all-loose) absorption is a no-op on the master's confidence.
