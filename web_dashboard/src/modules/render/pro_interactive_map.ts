@@ -1217,7 +1217,14 @@ export async function mountSpatialContagionMap(
                 enableHistoryPolling: opts?.staticScenario !== true,
                 staticScenario: opts?.staticScenario === true,
                 // Placeless fields for the OFF-MAP panel — verbatim, no coercion.
-                offMap: { conduits: payload?.conduits, no_map: payload?.no_map, honest_gaps: payload?.honest_gaps },
+                // credit_gaps rides here too: it is top-level like the other three, and the company
+                // panel needs it to explain a node that has no credit figure.
+                offMap: {
+                    conduits: payload?.conduits,
+                    no_map: payload?.no_map,
+                    honest_gaps: payload?.honest_gaps,
+                    credit_gaps: payload?.credit_gaps,
+                },
                 graphEdges: payload?.edges,   // raw edges (source_id/target_id) for the GRAPH view
                 mapRef: map,   // ← triggerRepaint() keeps interleaved animation alive
             });
@@ -1532,9 +1539,17 @@ type SurveillanceMapCtorArgs = {
     /** A vault scenario cascade: one snapshot, no time axis. Disables the scrubber
      *  and relabels the panel instead of leaving a dead control that looks broken. */
     staticScenario?: boolean;
-    /** Placeless payload fields (conduits / no_map / honest_gaps) — for the static OFF-MAP panel.
-     *  Verbatim from the payload; absent for non-scenario domains. */
-    offMap?: { conduits?: Conduit[]; no_map?: OffMapNode[]; honest_gaps?: HonestGaps };
+    /** Placeless payload fields (conduits / no_map / honest_gaps / credit_gaps) — for the static
+     *  OFF-MAP panel and the company panel's Credit section.
+     *  Verbatim from the payload; absent for non-scenario domains.
+     *  credit_gaps is inlined rather than given an exported type: Conduit/OffMapNode/HonestGaps are
+     *  exported because they appear in the exported SpatialContagion; this one is read only here. */
+    offMap?: {
+        conduits?: Conduit[];
+        no_map?: OffMapNode[];
+        honest_gaps?: HonestGaps;
+        credit_gaps?: Array<{ id: string; kind?: string; reason?: string; slice?: string }>;
+    };
     /** RAW payload edges (with source_id/target_id) — the adjacency the map-free GRAPH view needs.
      *  edgesFlat is coordinate-only, so it cannot supply the id join. */
     graphEdges?: SpatialEdge[];
@@ -2199,6 +2214,7 @@ class SurveillanceMapController {
             : '';
 
         const finSec = this.buildFinancialsHtml(node.financials);
+        const creditSec = this.buildCreditHtml(node);
         const nbSec = this.buildNeighbourhoodHtml(node.neighbourhood);
 
         return `
@@ -2217,6 +2233,7 @@ class SurveillanceMapController {
                 ${impactSec}
                 ${idSec}
                 ${finSec}
+                ${creditSec}
                 ${nbSec}
             </div>`;
     }
@@ -2260,6 +2277,59 @@ class SurveillanceMapController {
         }
         if (!rows.length) return '';
         return `<section class="pm-co-sec"><div class="pm-co-sec-h">Financials</div>${rows.join('')}</section>`;
+    }
+
+    /** Credit — the vault's Merton distance-to-default, and nothing derived from it.
+     *
+     *  d2, NOT pd. pd = Phi(-d2) underflows to exactly 0.0 in float64 once d2 clears ~8.3, so
+     *  Saudi_Aramco (20.38) and NVIDIA (16.69) would emit an identical 0.0 — an arithmetic limit,
+     *  not a claim about either firm. No tier word ships either: the tiers are thresholds over that
+     *  same withheld pd. Shading without a verdict, as impact_score already does.
+     *
+     *  `bucket` rides as a .pm-co-unit ON the number rather than as its own row. It answers "which
+     *  scale is this 2.9 on", which is what basis's "per-bucket only" is about — banks use
+     *  D = total_liabilities and sit at 0.08-0.94, industrials use D = total_debt and run
+     *  0.45-20.4. A Bucket row would read 'industrial' on every panel that can open today, and a
+     *  value that cannot vary is a constant wearing the shape of a measurement.
+     *
+     *  sigma and provenance are deliberately NOT repeated: sigma IS
+     *  financials.equity_volatility.value (43/43) and provenance is a copy of the three
+     *  financials[*].source values, both already on screen above with unit, badge and per-field
+     *  as_of. Repeating them stripped is a worse presentation of numbers already presented well.
+     *
+     *  oldest_as_of goes through VERBATIM — it is the min across the three inputs, computed in the
+     *  vault, and nothing else in the payload carries it. Tokens are 2025 / 2025-FY / 2026-Q1 /
+     *  2026-Q2; it is never parsed or reformatted into a date. It sits in .pm-co-prov, the same
+     *  block wrapper .pm-co-asof already has in Financials — a bare span would rely on anonymous
+     *  block-box generation and carry no margin.
+     *
+     *  A company with no credit figure but an entry in credit_gaps shows that entry's `reason`
+     *  instead — the human-readable half; `kind` is the machine token and the two are 1:1. The two
+     *  states partition the openable panels exactly (40 + 21 = 61), so this section is never empty
+     *  and never absent. */
+    private buildCreditHtml(node: any): string {
+        const c = node.credit;
+        if (c && c.distance_to_default != null) {
+            const d2 = Number(c.distance_to_default).toFixed(1);
+            const bucket = c.bucket ? ` <span class="pm-co-unit">${esc(String(c.bucket))}</span>` : '';
+            const asOf = c.oldest_as_of
+                ? `<div class="pm-co-prov"><span class="pm-co-asof">as of ${esc(String(c.oldest_as_of))}</span></div>`
+                : '';
+            return `
+            <section class="pm-co-sec">
+                <div class="pm-co-sec-h">Credit</div>
+                <div class="pm-co-kv"><span class="pm-co-k">Distance to default</span><span class="pm-co-v">${esc(d2)}${bucket}</span></div>
+                ${asOf}
+                ${c.basis ? `<div class="pm-co-why">${esc(String(c.basis))}</div>` : ''}
+            </section>`;
+        }
+        const gap = (this.args.offMap?.credit_gaps ?? []).find((g) => String(g.id) === String(node.id));
+        if (!gap?.reason) return '';
+        return `
+            <section class="pm-co-sec">
+                <div class="pm-co-sec-h">Credit</div>
+                <div class="pm-co-why">No credit figure — ${esc(String(gap.reason))}</div>
+            </section>`;
     }
 
     /** Neighbourhood — the company's own edges. Weighted relations sort first (desc) so 19 rows stay
