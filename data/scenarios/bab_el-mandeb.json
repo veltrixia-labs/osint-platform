@@ -102,6 +102,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 20.383619039968547,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.1503,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
    }
   },
   {
@@ -223,5 +236,6 @@
     "reason": "no company node with country=IN & domain∩['energy', 'supply_chain']"
    }
   ]
- }
+ },
+ "credit_gaps": []
 }

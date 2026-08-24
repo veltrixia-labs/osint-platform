@@ -310,6 +310,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 2.652437250076322,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.2869,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
    }
   },
   {
@@ -393,6 +406,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 4.9127889070278545,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.2916,
+    "provenance": {
+     "market_cap": "estimated",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025",
+    "slice": "v29"
    }
   },
   {
@@ -544,6 +570,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 2.9265527957753275,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.3761,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025",
+    "slice": "v29"
    }
   },
   {
@@ -787,6 +826,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 5.828154541951809,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.463,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q1",
+    "slice": "v29"
    }
   },
   {
@@ -975,6 +1027,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 5.3674339967390585,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.3608,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025",
+    "slice": "v29"
    }
   },
   {
@@ -1128,6 +1193,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 5.239841190677783,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.3245,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025",
+    "slice": "v29"
    }
   },
   {
@@ -1192,6 +1270,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 4.085308631090103,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.2698,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025",
+    "slice": "v29"
    }
   },
   {
@@ -1308,6 +1399,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 7.366849204753794,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.5872,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
    }
   },
   {
@@ -1370,6 +1474,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 2.629158038308571,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.6395,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
    }
   },
   {
@@ -1507,6 +1624,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 2.934653910185839,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.4322,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025",
+    "slice": "v29"
    }
   },
   {
@@ -1569,6 +1699,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 2.7931384519383897,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.5321,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
    }
   },
   {
@@ -1645,6 +1788,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 5.085650807612415,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.426,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q1",
+    "slice": "v29"
    }
   },
   {
@@ -1797,6 +1953,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 1.543154220206247,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.7753,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
    }
   },
   {
@@ -1887,6 +2056,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 15.639843866950498,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.3842,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
    }
   },
   {
@@ -1970,6 +2152,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 5.279908423088907,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.5187,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
    }
   },
   {
@@ -2033,6 +2228,19 @@
      "as_of": "2026-07"
     }
    },
+   "credit": {
+    "distance_to_default": 2.8078770245142017,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.4,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "estimated"
+    },
+    "oldest_as_of": "2025-FY",
+    "slice": "v29"
+   },
    "has_unquantified_direct_edge": true
   },
   {
@@ -2088,6 +2296,19 @@
      "source": "estimated",
      "as_of": "2026-07"
     }
+   },
+   "credit": {
+    "distance_to_default": 3.4787667598535967,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.4,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "estimated"
+    },
+    "oldest_as_of": "2025-FY",
+    "slice": "v29"
    },
    "has_unquantified_direct_edge": true
   },
@@ -2228,6 +2449,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 3.213073866022042,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.5964,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025",
+    "slice": "v29"
    }
   },
   {
@@ -2393,6 +2627,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 1.7700934754174287,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.6765,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025",
+    "slice": "v29"
    }
   },
   {
@@ -2933,5 +3180,67 @@
     "reason": "no company node with country=IN & domain∩['energy', 'supply_chain']"
    }
   ]
- }
+ },
+ "credit_gaps": [
+  {
+   "id": "CMA_CGM",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  },
+  {
+   "id": "OOCL",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  },
+  {
+   "id": "CSSC",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  },
+  {
+   "id": "CNNC",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  },
+  {
+   "id": "CGN",
+   "kind": "net_cash_no_debt",
+   "reason": "PD~0 FLAG: no/net-cash debt",
+   "slice": "v29"
+  },
+  {
+   "id": "CNPC",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  },
+  {
+   "id": "HMN_Tech",
+   "kind": "absent_from_slice",
+   "reason": "no entry in _slice_pd_v29.json",
+   "slice": "v29"
+  },
+  {
+   "id": "Tsingshan",
+   "kind": "honest_null_unsourced",
+   "reason": "EXCLUDE: market_cap null",
+   "slice": "v29"
+  },
+  {
+   "id": "JSR",
+   "kind": "private_valuation",
+   "reason": "EXCLUDE: private/unlisted valuation (mc not a traded market cap)",
+   "slice": "v29"
+  },
+  {
+   "id": "SK_On",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  }
+ ]
 }

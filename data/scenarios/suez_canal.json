@@ -176,6 +176,19 @@
      "source": "observed",
      "as_of": "2026-07-03"
     }
+   },
+   "credit": {
+    "distance_to_default": 2.975538992158241,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.3666,
+    "provenance": {
+     "market_cap": "estimated",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
    }
   },
   {
@@ -239,6 +252,19 @@
      "source": "estimated",
      "as_of": "2026-07"
     }
+   },
+   "credit": {
+    "distance_to_default": 2.2698168549429862,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.48,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "estimated"
+    },
+    "oldest_as_of": "2025-FY",
+    "slice": "v29"
    }
   },
   {
@@ -302,6 +328,19 @@
      "source": "observed",
      "as_of": "2026-07-07"
     }
+   },
+   "credit": {
+    "distance_to_default": 2.6698942932606275,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.4888,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025-FY",
+    "slice": "v29"
    }
   },
   {
@@ -364,6 +403,19 @@
      "source": "estimated",
      "as_of": "2026-07"
     }
+   },
+   "credit": {
+    "distance_to_default": 4.9922048181526,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.4,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "estimated"
+    },
+    "oldest_as_of": "2025-FY",
+    "slice": "v29"
    }
   }
  ],
@@ -445,5 +497,6 @@
    }
   ],
   "node_gaps": []
- }
+ },
+ "credit_gaps": []
 }

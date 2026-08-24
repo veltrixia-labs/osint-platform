@@ -294,7 +294,7 @@ def _load_scenario_offmap() -> Dict[str, Dict[str, Any]]:
                 continue
             fields: Dict[str, Any] = {
                 key: payload[key]
-                for key in ("conduits", "no_map", "honest_gaps")
+                for key in ("conduits", "no_map", "honest_gaps", "credit_gaps")
                 if key in payload
             }
             out[_slugify_hub(hub)] = fields
@@ -307,10 +307,10 @@ def _load_scenario_offmap() -> Dict[str, Dict[str, Any]]:
 _scenario_node_fields_cache: Optional[Dict[str, Dict[str, Dict[str, Any]]]] = None
 
 # Per-node detail the DB has NO column for. WHITELISTED (not blacklisted) so a future JSON field can
-# never silently override a DB-derived value: only these four are ever merged onto a node. Everything
+# never silently override a DB-derived value: only these five are ever merged onto a node. Everything
 # else the JSON node carries (impact_score/order/country/why/role/tickers/raw_impact) stays whatever
 # the loader wrote to the DB — the map's source of truth. If the two ever drift, the DB wins.
-_NODE_DETAIL_FIELDS = ("title", "role_blurb", "financials", "neighbourhood")
+_NODE_DETAIL_FIELDS = ("title", "role_blurb", "financials", "neighbourhood", "credit")
 
 
 def _load_scenario_node_fields() -> Dict[str, Dict[str, Dict[str, Any]]]:
