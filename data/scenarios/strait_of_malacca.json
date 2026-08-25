@@ -290,7 +290,7 @@
     }
    ],
    "title": "COSCO",
-   "role_blurb": "中国国有の大手コンテナ船社（第3〜4位。Ocean Alliance。中国サプライチェーンの戦略手段）",
+   "role_blurb": "Chinese state-owned major container carrier (rank 3-4. Ocean Alliance. A strategic instrument of China's supply chain)",
    "financials": {
     "market_cap": {
      "value": 32.0,
@@ -1678,8 +1678,8 @@
     }
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
-   "title": "川崎重工業",
-   "role_blurb": "日本の多角化重工コングロマリット（SIPRI Top 100・日本の防衛 #2／防衛は売上の約15% MINORITY・大半は民生の民間航空/鉄道車両/エネルギー水素/船舶/モーターサイクル）／日本防衛需要から降りる供給側＋民生 multi-domain",
+   "title": "Kawasaki Heavy Industries",
+   "role_blurb": "Japanese diversified heavy-industry conglomerate (SIPRI Top 100; Japan defence #2 / defence is approx. 15% of revenue, MINORITY; the majority is civil — commercial aviation/rolling stock/energy-hydrogen/ships/motorcycles) / supply side descending from Japanese defence demand + civil multi-domain",
    "financials": {
     "market_cap": {
      "value": 16.0,
@@ -1768,7 +1768,7 @@
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
    "title": "Mitsubishi Heavy Industries, Ltd.",
-   "role_blurb": "日本最大の多角化重工コングロマリット（SIPRI Top 100 #32＝日本最大の防衛企業だが防衛は売上の約15%・大半は民生のエナジー/プラント/航空）／米国防需要ならぬ日本防衛需要から降りる供給側＋民生 multi-domain",
+   "role_blurb": "Japan's largest diversified heavy-industry conglomerate (SIPRI Top 100 #32 = Japan's largest defence company, but defence is approx. 15% of revenue; the majority is civil — energy/plant/aerospace) / supply side descending from Japanese, not US, defence demand + civil multi-domain",
    "financials": {
     "market_cap": {
      "value": 90.0,
@@ -2036,7 +2036,7 @@
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
    "title": "Shin-Etsu Chemical",
-   "role_blurb": "素材のチョークポイント（世界最大のシリコンウェハ生産者＋フォトレジスト寡占の一角）／非中国の希土類磁石供給源",
+   "role_blurb": "Materials chokepoint (world's largest silicon-wafer producer + one of the photoresist oligopoly) / non-China rare-earth magnet supply source",
    "financials": {
     "market_cap": {
      "value": 84.0,
