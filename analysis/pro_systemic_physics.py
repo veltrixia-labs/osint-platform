@@ -207,8 +207,7 @@ class SystemicFragilityEngine:
             rationale = (
                 f"Disorder index H={e:.3f} exceeds critical {e_thr:.2f} "
                 f"AND kinematic viscosity ν={v:.3f} exceeds {v_thr:.2f} — "
-                "the system is simultaneously dispersed and choking. "
-                "Historical precedent: this conjunction precedes regime breaks."
+                "the system is simultaneously dispersed and choking."
             )
         elif entropy_critical:
             label = "ENTROPY ELEVATED"
