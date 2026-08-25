@@ -1379,7 +1379,7 @@
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
    "title": "CMOC",
-   "role_blurb": "World's",
+   "role_blurb": "World's #1 cobalt miner (~31%, DRC TFM/KFM); Chinese-owned, copper-focused; the concrete China-DRC-cobalt giant",
    "financials": {
     "market_cap": {
      "value": 64.0,
@@ -1679,7 +1679,7 @@
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
    "title": "川崎重工業",
-   "role_blurb": "日本の多角化重工コングロマリット（SIPRI Top 100・日本の防衛",
+   "role_blurb": "日本の多角化重工コングロマリット（SIPRI Top 100・日本の防衛 #2／防衛は売上の約15% MINORITY・大半は民生の民間航空/鉄道車両/エネルギー水素/船舶/モーターサイクル）／日本防衛需要から降りる供給側＋民生 multi-domain",
    "financials": {
     "market_cap": {
      "value": 16.0,
@@ -1768,7 +1768,7 @@
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
    "title": "Mitsubishi Heavy Industries, Ltd.",
-   "role_blurb": "日本最大の多角化重工コングロマリット（SIPRI Top 100",
+   "role_blurb": "日本最大の多角化重工コングロマリット（SIPRI Top 100 #32＝日本最大の防衛企業だが防衛は売上の約15%・大半は民生のエナジー/プラント/航空）／米国防需要ならぬ日本防衛需要から降りる供給側＋民生 multi-domain",
    "financials": {
     "market_cap": {
      "value": 90.0,
@@ -1869,7 +1869,7 @@
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
    "title": "JSR",
-   "role_blurb": "World's",
+   "role_blurb": "World's #1 photoresist maker (~27%, incl. EUV); taken private by JIC (2024); EUV chemistry partner of Intel/Samsung/TSMC",
    "financials": {
     "market_cap": {
      "value": 6.4,
@@ -1933,7 +1933,7 @@
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
    "title": "SUMCO",
-   "role_blurb": "Japanese silicon-wafer maker (world",
+   "role_blurb": "Japanese silicon-wafer maker (world #2; with Shin-Etsu ~53% global); fab materials supplier",
    "financials": {
     "market_cap": {
      "value": 9.22,
@@ -2429,7 +2429,7 @@
    ],
    "why": "South_Korea (demand 0.70) x DECAY 0.7",
    "title": "LG Energy Solution",
-   "role_blurb": "Korean EV-battery maker —",
+   "role_blurb": "Korean EV-battery maker — #3 global (~11% share); spun off from LG Chem (2020); LISTED (KRX:373220) → Merton-computable; supplies Tesla/GM/Hyundai/VW",
    "financials": {
     "market_cap": {
      "value": 68.0,
