@@ -154,7 +154,8 @@ type ComparisonItem = ComparisonSection | ComparisonRow;
 
 const FEATURE_COMPARISON: ComparisonItem[] = [
     { type: 'section', label: 'SIGNAL', subtitle: 'What is happening' },
-    { type: 'row', feat: 'Alerts per day', vals: ['5', '100', 'Unlimited', 'Unlimited'] },
+    // vals[0] was '5'; PLAN_LIMITS[FREE]["alerts_per_day"] is 3 (gating.py:42), same as guest.
+    { type: 'row', feat: 'Alerts per day', vals: ['3', '100', 'Unlimited', 'Unlimited'] },
     { type: 'row', feat: 'Daily reports', vals: [
         ENTITLEMENT_MATRIX.free.reports.includes('daily') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.pro.reports.includes('daily') ? '✓' : '✗',
@@ -167,7 +168,10 @@ const FEATURE_COMPARISON: ComparisonItem[] = [
         ENTITLEMENT_MATRIX.experts.reports.includes('weekly') ? '✓' : '✗',
         ENTITLEMENT_MATRIX.enterprise.reports.includes('weekly') ? '✓' : '✗'
     ]},
-    { type: 'row', feat: 'Watchlist keywords', vals: ['3', '20', '100', 'Unlimited'] },
+    // vals[0] was '3'; PLAN_LIMITS[FREE]["watchlist_keywords"] is 0 (gating.py:43) and is
+    // enforced — analysts.py:68 rejects the first keyword with a 403 whose own text reads
+    // "allows 0 keywords". A numeral, not a ✗, so the table shows the number the error quotes.
+    { type: 'row', feat: 'Watchlist keywords', vals: ['0', '20', '100', 'Unlimited'] },
 
     { type: 'section', label: 'ANALYSIS', subtitle: 'Why it matters' },
     { type: 'row', feat: 'Report Depth', isHighlight: true, vals: ['Baseline', 'AI-Enhanced', 'Strategic', 'Strategic'] },

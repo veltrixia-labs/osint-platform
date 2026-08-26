@@ -1,7 +1,19 @@
 /**
  * topics.ts — Canonical mapping layer
  *
- * Single source of truth for topic_code → label, icon, and min tier.
+ * What actually reaches a caller: getTopicDef() resolves a topic_code to a label
+ * and a colour, and every one of its 11 call sites reads only those two. It takes
+ * both from STRATEGIC_TOPIC_LABELS and getTopicColor at the return (:361-362),
+ * overwriting whatever the matched ACCESS_MAP entry carried — so ACCESS_MAP's own
+ * `label` and `color` fields never reach a caller, and neither do `icon`,
+ * `description` or `valueProposition`.
+ *
+ * `minTier` is NOT enforced here or anywhere else. Its only two readers are in
+ * renderLockedTopicOverlay (subscription.ts), which has no callers, and no backend
+ * path consults it — is_topic_allowed (gating.py:182) requires PRO for every topic
+ * alike. It is kept as the record of which topics are meant to be gated when Expert
+ * ships; the union type on it is enforced by tsc, so it costs nothing to hold.
+ *
  * All UI modules must import from here. No inline label strings allowed.
  */
 
@@ -108,8 +120,13 @@ export const TIER_ORDER: Record<string, number> = {
 };
 
 /**
- * ENTITLEMENT_MATRIX — The single source of truth for tier capabilities.
- * All UI gating MUST derive from this mapping.
+ * ENTITLEMENT_MATRIX — a DISPLAY table, not a gate.
+ *
+ * It has one importer, subscription.ts, which reads it only to compute the ✓/✗
+ * glyphs in the plan comparison table. No gate derives from it: the frontend's two
+ * gate functions below are short-circuited, and the backend never sees it. Treat a
+ * change here as a change to what the pricing page claims, and verify the claim
+ * against api/gating.py separately.
  */
 export const ENTITLEMENT_MATRIX = {
     free: {
@@ -132,8 +149,19 @@ export const ENTITLEMENT_MATRIX = {
 };
 
 /**
- * Returns true if `userTier` meets or exceeds the topic's `minTier`.
- * Note: Uses TIER_ORDER for hierarchy.
+ * Returns true. Both parameters are ignored — the underscores are the signature
+ * saying so. It does NOT use TIER_ORDER, and has not since 2026-04-09.
+ *
+ * ba0d77c de-gated this and canAccessReport below, calling it "temporary de-gating
+ * for development phase" in a subject-only commit message that states no duration
+ * and no condition for restoring it. dabe19d, 24 minutes later, renamed the now-dead
+ * parameters to silence noUnusedParameters — answering the one check that noticed,
+ * rather than restoring the reads.
+ *
+ * Restoring the pre-ba0d77c body is NOT a drop-in: getTopicDef(null) resolves to
+ * global_market_intelligence (minTier 'pro'), not the global entry, so a free user
+ * would lose the daily global briefing — their whole declared entitlement. Fix
+ * getTopicDef's null path first.
  */
 export function canAccessTopic(_userTier: string, _topic: TopicDef): boolean {
     // [Dev Phase Override] Always allow access to verify system completion
