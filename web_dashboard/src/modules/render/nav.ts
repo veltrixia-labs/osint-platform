@@ -9,7 +9,15 @@ import { closeMobileSidebar } from '../mobile_nav';
  * Renders the full sidebar navigation shell based on the current user's tier.
  * Replaces the static HTML nav block previously in renderBaseUI / main.ts.
  *
- * Tier hierarchy: free < pro < experts
+ * Tier hierarchy: free < pro < experts < enterprise.
+ *
+ * TIER_ORDER below is one of fourteen independent restatements of that ladder in
+ * TypeScript; thirteen of the others include enterprise. There is no canonical
+ * source to import: db/enums.py:16 is Python with no codegen step, neither
+ * /api/auth/me nor /api/system returns an ordering, and topics.ts:103 exports a
+ * complete correct one that nothing imports. Keep this list in step with
+ * db/enums.py:16 by hand — omitting a tier here does not deny it, it silently
+ * grants it free-level access (see tierRank).
  */
 
 type NavItem = {
@@ -37,7 +45,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const FREE_LOCKED_TABS = new Set(['market-pulse', 'pro-insights', 'pro-map', 'impact-roster']);
 
-const TIER_ORDER = ['free', 'pro', 'experts'];
+const TIER_ORDER = ['free', 'pro', 'experts', 'enterprise'];
 
 function tierRank(tier: string): number {
     const idx = TIER_ORDER.indexOf(tier);
@@ -53,12 +61,19 @@ const TIER_LABELS: Record<string, string> = {
     free:    'Free Access',
     pro:     'Pro',
     experts: 'Expert',
+    // Title case, not upper: :256 uppercases for display, but the dev-override
+    // path at :106 reads this value raw.
+    enterprise: 'Enterprise',
 };
 
 const TIER_COLORS: Record<string, string> = {
     free:    '#8b949e',
     pro:     '#58a6ff',
-    experts: '#bc8cff',
+    // experts was #bc8cff — theme.css:37's --tier-enterprise. Corrected to
+    // theme.css:36's --tier-experts so all four tiers render distinctly and this
+    // map agrees with theme.css:34-37 and subscription.ts:255-258.
+    experts: '#3fb950',
+    enterprise: '#bc8cff',
 };
 
 /**
