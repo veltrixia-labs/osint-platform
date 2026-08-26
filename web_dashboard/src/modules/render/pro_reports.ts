@@ -1,5 +1,8 @@
 import type { ProStructuralReportItem } from '../api';
-import { fetchProStructuralReports, fetchProStructuralReport, fetchAlert, fetchFragilityHistory } from '../api';
+// fetchFragilityHistory dropped from this import 2026-08-26 with the Systemic Fragility
+// section — it was the only caller. api.ts keeps the export and its two types, dead but
+// green, so the section returns as one revert.
+import { fetchProStructuralReports, fetchProStructuralReport, fetchAlert } from '../api';
 import { renderSpatialContagionShell, mountSpatialContagionMap } from './pro_interactive_map';
 import {
     simpleMarkdown,
@@ -161,8 +164,7 @@ function ensureProV3Styles(): void {
         .intel-panel.intel-tail-risk,
         .intel-panel.intel-quant-matrix,
         .intel-panel.intel-wargaming-panel,
-        .intel-panel.intel-psyops-panel,
-        .intel-panel.intel-sf-panel {
+        .intel-panel.intel-psyops-panel {
             background: linear-gradient(165deg, rgba(15,23,42,0.62), rgba(15,23,42,0.30));
             border: 1px solid rgba(125,211,252,0.18);
             backdrop-filter: blur(18px) saturate(140%);
@@ -229,204 +231,6 @@ function ensureProV3Styles(): void {
             color: #cbd5e1;
         }
 
-        /* === Systemic Fragility Engine ====================================== */
-        @keyframes sf-bar-pulse {
-            0%,100% { opacity:1; }
-            50%      { opacity:0.55; }
-        }
-        @keyframes sf-critical-pulse {
-            0%,100% { border-color:rgba(239,68,68,0.45); box-shadow:0 0 0 1px rgba(239,68,68,0.18), inset 0 0 40px rgba(239,68,68,0.05); }
-            50%      { border-color:rgba(239,68,68,0.85); box-shadow:0 0 22px rgba(239,68,68,0.4), inset 0 0 40px rgba(239,68,68,0.10); }
-        }
-        @keyframes sf-dot-outer-pulse {
-            0%,100% { r:14; opacity:0.12; }
-            50%      { r:22; opacity:0.06; }
-        }
-        .intel-sf-panel--critical {
-            border-color: rgba(239,68,68,0.45) !important;
-            animation: sf-critical-pulse 2.5s ease-in-out infinite;
-        }
-        .intel-sf-panel--warning {
-            border-color: rgba(245,158,11,0.38) !important;
-        }
-        .sf-dot-pulse-outer {
-            animation: sf-dot-outer-pulse 2s ease-in-out infinite;
-        }
-        .sf-status-row {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin: 0.5rem 0 1rem;
-            flex-wrap: wrap;
-        }
-        .sf-label-badge {
-            display: inline-block;
-            padding: 4px 14px;
-            border-radius: 20px;
-            border: 1px solid;
-            font-size: 0.72rem;
-            font-weight: 900;
-            letter-spacing: 0.10em;
-            text-transform: uppercase;
-        }
-        .sf-conjunction-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .sf-main-layout {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 20px;
-            align-items: start;
-            margin-top: 0.25rem;
-        }
-        @media (max-width: 700px) {
-            .sf-main-layout { grid-template-columns: 1fr; }
-        }
-        .sf-gauges-col {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-        }
-        .sf-dual-gauge {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .sf-gauge {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .sf-gauge-header {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-        }
-        .sf-gauge-symbol {
-            font-size: 1.1rem;
-            font-style: italic;
-            font-weight: 700;
-            color: #94a3b8;
-            min-width: 20px;
-        }
-        .sf-gauge-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #64748b;
-            flex: 1;
-        }
-        .sf-gauge-value {
-            font-size: 1.5rem;
-            font-weight: 900;
-            font-variant-numeric: tabular-nums;
-            line-height: 1;
-        }
-        .sf-gauge-unit {
-            font-size: 0.75rem;
-            font-weight: 500;
-            opacity: 0.6;
-            margin-left: 2px;
-        }
-        .sf-bar-track {
-            position: relative;
-            height: 10px;
-            border-radius: 99px;
-            background: rgba(255,255,255,0.07);
-            overflow: visible;
-        }
-        .sf-bar-fill {
-            height: 100%;
-            border-radius: 99px;
-            transition: width 0.8s cubic-bezier(0.22,1,0.36,1);
-            position: relative;
-            z-index: 1;
-        }
-        .sf-bar-threshold {
-            position: absolute;
-            top: -5px;
-            width: 2px;
-            height: 20px;
-            background: #ef4444;
-            border-radius: 2px;
-            z-index: 2;
-            transform: translateX(-50%);
-        }
-        .sf-thr-label {
-            position: absolute;
-            top: -16px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.55rem;
-            font-weight: 800;
-            letter-spacing: 0.06em;
-            color: #ef4444;
-            white-space: nowrap;
-        }
-        .sf-gauge-sublabel {
-            font-size: 0.68rem;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-        /* Phase-space SVG */
-        .sf-phase-col {
-            flex-shrink: 0;
-        }
-        .sf-phase-space {
-            width: 280px;
-            height: 200px;
-            display: block;
-            border-radius: 8px;
-            background: rgba(10,15,30,0.7);
-            border: 1px solid rgba(148,163,184,0.12);
-        }
-        /* Rationale terminal */
-        .sf-terminal {
-            margin-top: 14px;
-            border-radius: 8px;
-            background: #070c18;
-            border: 1px solid rgba(148,163,184,0.12);
-            overflow: hidden;
-            font-family: "Courier New", Courier, monospace;
-        }
-        .sf-terminal-header {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: rgba(15,23,42,0.9);
-            border-bottom: 1px solid rgba(148,163,184,0.10);
-        }
-        .sf-terminal-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.12);
-        }
-        .sf-terminal-title {
-            margin-left: 6px;
-            font-size: 0.60rem;
-            color: #475569;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-        }
-        .sf-terminal-body {
-            padding: 11px 15px;
-            font-size: 0.82rem;
-            line-height: 1.65;
-            color: #94a3b8;
-        }
-        .sf-terminal-prompt {
-            color: var(--sf-accent, #22d3ee);
-            font-weight: 700;
-            user-select: none;
-        }
-        .sf-terminal-out {
-            color: #cbd5e1;
-        }
         /* === Information Integrity & PsyOps Assessment ====================== */
         @keyframes scanlines {
             0%   { background-position: 0 0; }
@@ -1168,7 +972,9 @@ function escAttr(s: string): string {
 // guideKey is optional with NO default. It used to default to `num`, but `num` is a
 // display number produced by a runtime counter, not a panel identity — so a panel that
 // omitted its key inherited whichever guide happened to sit at its position. Systemic
-// Fragility (:1666) rendered under Market Confirmation's explanation on all six briefs.
+// Fragility rendered under Market Confirmation's explanation on all six briefs. (That
+// section was removed 2026-08-26; the rule stands — Wargaming and PsyOps still omit a
+// key, and the counter and the keys have deliberately diverged ever since.)
 // An omitted key now yields no guide at all, which is what the Appendix ('APP', not a
 // key in the map) has always done. The `guideKey ?` guard is required: strict mode
 // rejects indexing Record<string, string> with string | undefined (TS2538), so do not
@@ -1259,107 +1065,6 @@ async function openTimelineEvidence(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Systemic Fragility: async comet-tail painter
-// ─────────────────────────────────────────────────────────────────────────────
-function paintSFCometTail(
-    svgEl: SVGSVGElement,
-    series: Array<{ timestamp: string; entropy_index: number; viscosity_coefficient: number; label?: string }>,
-): void {
-    const layerSelector = svgEl.querySelector('.sf-comet-layer');
-    if (!layerSelector) return;
-
-    const NS = 'http://www.w3.org/2000/svg';
-    const pts = series
-        .filter(p => typeof p.entropy_index === 'number' && typeof p.viscosity_coefficient === 'number')
-        .map(p => ({
-            x: sfToX(p.entropy_index),
-            y: sfToY(p.viscosity_coefficient),
-            ts: p.timestamp,
-            e: p.entropy_index,
-            v: p.viscosity_coefficient,
-            label: p.label || '',
-        }));
-
-    if (pts.length === 0) return;
-
-    const n = pts.length;
-    const frag = document.createDocumentFragment();
-
-    // ── Line segments: oldest→newest, opacity ramps from 0.08 → 0.75 ──────
-    for (let i = 0; i < n - 1; i++) {
-        const t1 = n === 1 ? 1 : (i + 1) / (n - 1);
-        const opacity = 0.08 + t1 * 0.67;           // trailing opacity of the segment end
-        // Width also ramps: 0.8px → 2px
-        const strokeW = (0.8 + t1 * 1.2).toFixed(2);
-
-        const line = document.createElementNS(NS, 'line');
-        line.setAttribute('x1', pts[i].x.toFixed(2));
-        line.setAttribute('y1', pts[i].y.toFixed(2));
-        line.setAttribute('x2', pts[i + 1].x.toFixed(2));
-        line.setAttribute('y2', pts[i + 1].y.toFixed(2));
-        line.setAttribute('stroke', '#7dd3fc');
-        line.setAttribute('stroke-width', strokeW);
-        line.setAttribute('stroke-opacity', opacity.toFixed(3));
-        line.setAttribute('stroke-linecap', 'round');
-        frag.appendChild(line);
-    }
-
-    // ── Historical point dots with SVG title tooltips ─────────────────────
-    for (let i = 0; i < n; i++) {
-        const t = n === 1 ? 0.5 : i / (n - 1);
-        const dotOpacity = (0.06 + t * 0.44).toFixed(3);
-        const r = (1.5 + t * 1.5).toFixed(2);
-        const p = pts[i];
-
-        const circle = document.createElementNS(NS, 'circle');
-        circle.setAttribute('cx', p.x.toFixed(2));
-        circle.setAttribute('cy', p.y.toFixed(2));
-        circle.setAttribute('r', r);
-        circle.setAttribute('fill', '#7dd3fc');
-        circle.setAttribute('fill-opacity', dotOpacity);
-        circle.setAttribute('stroke', '#7dd3fc');
-        circle.setAttribute('stroke-width', '0.5');
-        circle.setAttribute('stroke-opacity', (parseFloat(dotOpacity) * 1.5).toFixed(3));
-
-        // Native SVG tooltip — auditable by hovering
-        const title = document.createElementNS(NS, 'title');
-        const tsLabel = (() => {
-            try {
-                return new Date(p.ts).toLocaleString(undefined, {
-                    month: 'short', day: 'numeric',
-                    hour: '2-digit', minute: '2-digit',
-                });
-            } catch { return p.ts; }
-        })();
-        title.textContent = `${tsLabel}\nH=${p.e.toFixed(4)}  ν=${p.v.toFixed(4)}${p.label ? '\n' + p.label : ''}`;
-        circle.appendChild(title);
-
-        frag.appendChild(circle);
-    }
-
-    layerSelector.appendChild(frag);
-}
-
-function injectFragilityHistory(
-    container: HTMLElement,
-    domainId: string,
-): void {
-    const safeId = domainId.replace(/[^a-z0-9]/gi, '_');
-    const svgEl = container.querySelector(`#sf-phase-svg-${safeId}`) as SVGSVGElement | null;
-    if (!svgEl) return;
-
-    fetchFragilityHistory(domainId, 7).then(history => {
-        if (!history || !Array.isArray(history.series) || history.series.length === 0) return;
-
-        // Save history to state/variable for the Time Machine later
-        (window as any).__fragilityHistory = history;
-
-        // Sort chronologically (oldest first) so the tail builds left-to-right
-        const sorted = [...history.series].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-        paintSFCometTail(svgEl, sorted);
-    }).catch(err => console.error("[SpatialContagion] History fetch failed:", err));
-}
 function wireProBriefInteractions(root: HTMLElement): void {
     root.querySelectorAll('.intel-section-guide').forEach((btn) => {
         btn.addEventListener('click', (e) => {
@@ -1486,201 +1191,6 @@ function renderQuantNarrativeSection(raw: any, fallbackSummary: string, keyFindi
     </div>`;
 }
 
-// ── Systemic Fragility SVG layout constants (shared between render + async tail painter)
-const SF_SVG_W = 280;
-const SF_SVG_H = 200;
-const SF_SVG_PAD = { t: 18, r: 18, b: 38, l: 48 };
-function sfPlotW() { return SF_SVG_W - SF_SVG_PAD.l - SF_SVG_PAD.r; }
-function sfPlotH() { return SF_SVG_H - SF_SVG_PAD.t - SF_SVG_PAD.b; }
-function sfToX(e: number): number { return SF_SVG_PAD.l + (Math.min(Math.max(e, 0), 1)) * sfPlotW(); }
-function sfToY(v: number): number { return SF_SVG_PAD.t + sfPlotH() - (Math.min(v, SF_VISCOSITY_MAX) / SF_VISCOSITY_MAX) * sfPlotH(); }
-// ----------------------------------------------------------------
-// Systemic Fragility Gauge / Phase Space
-// ----------------------------------------------------------------
-type SystemicFragilityPayload = {
-    entropy_index: number;
-    viscosity_coefficient: number;
-    entropy_critical?: boolean;
-    viscosity_critical?: boolean;
-    phase_transition_warning: boolean;
-    entropy_threshold?: number;
-    viscosity_threshold?: number;
-    label: string;
-    rationale?: string;
-};
-
-const SF_ENTROPY_THRESHOLD = 0.85;
-const SF_VISCOSITY_THRESHOLD = 0.10;
-const SF_VISCOSITY_MAX = 0.50; // display ceiling for the gauge
-
-function normalizeSystemicFragility(raw: any): SystemicFragilityPayload | null {
-    if (!raw || typeof raw !== 'object') return null;
-    if (raw.label === 'INSUFFICIENT DATA') return null;
-    const e = typeof raw.entropy_index === 'number' ? raw.entropy_index : null;
-    const v = typeof raw.viscosity_coefficient === 'number' ? raw.viscosity_coefficient : null;
-    if (e === null || v === null) return null;
-    return {
-        entropy_index: e,
-        viscosity_coefficient: v,
-        entropy_critical: !!raw.entropy_critical,
-        viscosity_critical: !!raw.viscosity_critical,
-        phase_transition_warning: !!raw.phase_transition_warning,
-        entropy_threshold: typeof raw.entropy_threshold === 'number' ? raw.entropy_threshold : SF_ENTROPY_THRESHOLD,
-        viscosity_threshold: typeof raw.viscosity_threshold === 'number' ? raw.viscosity_threshold : SF_VISCOSITY_THRESHOLD,
-        label: typeof raw.label === 'string' ? raw.label : 'STABLE',
-        rationale: typeof raw.rationale === 'string' ? raw.rationale : '',
-    };
-}
-
-function renderSystemicFragilitySection(raw: any, sectionNum: string, domainId = 'unknown'): string {
-    const sf = normalizeSystemicFragility(raw);
-    if (!sf) return '';
-
-    const label = sf.label.toUpperCase();
-    const isPhaseTransition = sf.phase_transition_warning || label.includes('PHASE TRANSITION');
-    const isWarning = label.includes('CHOKING') || label.includes('ELEVATED');
-
-    // Accent palette
-    const accent = isPhaseTransition ? '#ef4444'
-        : isWarning            ? '#f59e0b'
-        : '#22d3ee';
-    const accentGlow = isPhaseTransition ? 'rgba(239,68,68,0.35)'
-        : isWarning            ? 'rgba(245,158,11,0.28)'
-        : 'rgba(34,211,238,0.22)';
-    const accentBg = isPhaseTransition ? 'rgba(239,68,68,0.12)'
-        : isWarning            ? 'rgba(245,158,11,0.10)'
-        : 'rgba(34,211,238,0.08)';
-
-    const panelClass = isPhaseTransition
-        ? 'intel-panel intel-sf-panel intel-sf-panel--critical'
-        : isWarning
-            ? 'intel-panel intel-sf-panel intel-sf-panel--warning'
-            : 'intel-panel intel-sf-panel';
-
-    // Label badge
-    const labelBadge = `<span class="sf-label-badge" style="color:${accent};background:${accentBg};border-color:${accent};box-shadow:0 0 10px ${accentGlow};">${isPhaseTransition ? '&#x26A0;&#xFE0F; ' : ''}${escHtml(label)}</span>`;
-
-    // ── Dual Gauge ──────────────────────────────────────────────────
-    // Entropy gauge: 0→1, threshold at SF_ENTROPY_THRESHOLD
-    const eThr = sf.entropy_threshold ?? SF_ENTROPY_THRESHOLD;
-    const vThr = sf.viscosity_threshold ?? SF_VISCOSITY_THRESHOLD;
-    const ePct = Math.min(sf.entropy_index * 100, 100);
-    const eThrPct = eThr * 100;
-    const vRaw = sf.viscosity_coefficient;
-    const vPct = Math.min(vRaw / SF_VISCOSITY_MAX * 100, 100);
-    const vThrPct = vThr / SF_VISCOSITY_MAX * 100;
-
-    const eColor = sf.entropy_critical ? '#ef4444' : sf.entropy_index > eThr * 0.7 ? '#f59e0b' : '#22d3ee';
-    const vColor = sf.viscosity_critical ? '#ef4444' : sf.viscosity_coefficient > vThr * 0.7 ? '#f59e0b' : '#22d3ee';
-
-    const gauge = (label: string, symbol: string, value: number, pct: number, thrPct: number, color: string, isCritical: boolean, unit: string) =>
-        `<div class="sf-gauge">
-            <div class="sf-gauge-header">
-                <span class="sf-gauge-symbol">${symbol}</span>
-                <span class="sf-gauge-label">${escHtml(label)}</span>
-                <span class="sf-gauge-value" style="color:${color};${isCritical ? `text-shadow:0 0 10px ${color};` : ''}">${value.toFixed(3)}<span class="sf-gauge-unit">${unit}</span></span>
-            </div>
-            <div class="sf-bar-track">
-                <div class="sf-bar-fill" style="width:${pct}%;background:${color};box-shadow:0 0 8px ${color}40;${isCritical ? `animation:sf-bar-pulse 1.8s ease-in-out infinite;` : ''}"></div>
-                <div class="sf-bar-threshold" style="left:${thrPct}%;" title="Critical threshold: ${thrPct.toFixed(0)}%">
-                    <span class="sf-thr-label">CRIT</span>
-                </div>
-            </div>
-            <div class="sf-gauge-sublabel">${isCritical ? '<span style="color:#ef4444;font-weight:700;">&#x25CF; CRITICAL</span>' : '<span style="color:#475569;">Within bounds</span>'}</div>
-        </div>`;
-
-    const dualGauge = `<div class="sf-dual-gauge">
-        ${gauge('Network Entropy', 'H', sf.entropy_index, ePct, eThrPct, eColor, !!sf.entropy_critical, '')}
-        ${gauge('Kinematic Viscosity', '\u03BD', vRaw, vPct, vThrPct, vColor, !!sf.viscosity_critical, '')}
-    </div>`;
-
-    // ── 2-D Phase Space SVG ─────────────────────────────────────────
-    // X = entropy (0→1), Y = viscosity (0→SF_VISCOSITY_MAX, inverted so high = top)
-    const svgW = 280; const svgH = 200;
-    const pad = { t: 18, r: 18, b: 38, l: 48 };
-    const plotW = svgW - pad.l - pad.r;
-    const plotH = svgH - pad.t - pad.b;
-
-    const toX = (e: number) => pad.l + (e / 1) * plotW;
-    const toY = (v: number) => pad.t + plotH - (Math.min(v, SF_VISCOSITY_MAX) / SF_VISCOSITY_MAX) * plotH;
-
-    const dotX = toX(sf.entropy_index);
-    const dotY = toY(sf.viscosity_coefficient);
-    const thrX = toX(eThr);
-    const thrY = toY(vThr);
-
-    // Critical zone (top-right quadrant above both thresholds)
-    const czX = thrX; const czY = pad.t;
-    const czW = pad.l + plotW - czX; const czH = thrY - czY;
-
-    // Axis labels: entropy X (0, 0.5, 1.0), viscosity Y (0, 0.1, 0.25, 0.5)
-    const xTicks = [0, 0.25, 0.5, 0.75, 1.0];
-    const yTicks = [0, 0.10, 0.25, 0.50];
-
-    const sfSvgId = `sf-phase-svg-${domainId.replace(/[^a-z0-9]/gi, '_')}`;
-    const svg = `<svg id="${sfSvgId}" class="sf-phase-space" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" aria-label="Phase Space: Entropy vs Viscosity">
-        <defs>
-            <radialGradient id="sfDotGrad" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="${accent}" stop-opacity="1"/>
-                <stop offset="100%" stop-color="${accent}" stop-opacity="0.2"/>
-            </radialGradient>
-        </defs>
-        <!-- Grid -->
-        <rect x="${pad.l}" y="${pad.t}" width="${plotW}" height="${plotH}" fill="rgba(15,23,42,0.6)" rx="4"/>
-        <!-- Critical zone highlight -->
-        ${czW > 0 && czH > 0 ? `<rect x="${czX}" y="${czY}" width="${czW}" height="${czH}" fill="rgba(239,68,68,0.08)" stroke="rgba(239,68,68,0.25)" stroke-width="0.5"/>` : ''}
-        <!-- Grid lines -->
-        ${xTicks.slice(1,-1).map(t => `<line x1="${toX(t)}" y1="${pad.t}" x2="${toX(t)}" y2="${pad.t+plotH}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join('')}
-        ${yTicks.slice(1).map(t => `<line x1="${pad.l}" y1="${toY(t)}" x2="${pad.l+plotW}" y2="${toY(t)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`).join('')}
-        <!-- Threshold lines -->
-        <line x1="${thrX}" y1="${pad.t}" x2="${thrX}" y2="${pad.t+plotH}" stroke="#ef4444" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>
-        <line x1="${pad.l}" y1="${thrY}" x2="${pad.l+plotW}" y2="${thrY}" stroke="#ef4444" stroke-width="1" stroke-dasharray="4 3" opacity="0.6"/>
-        <!-- Threshold labels -->
-        <text x="${thrX+3}" y="${pad.t+10}" fill="#ef4444" font-size="7" opacity="0.8">H=${eThr}</text>
-        <text x="${pad.l+3}" y="${thrY-3}" fill="#ef4444" font-size="7" opacity="0.8">\u03BD=${vThr}</text>
-        <!-- Axes -->
-        <line x1="${pad.l}" y1="${pad.t+plotH}" x2="${pad.l+plotW}" y2="${pad.t+plotH}" stroke="rgba(148,163,184,0.3)" stroke-width="1"/>
-        <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${pad.t+plotH}" stroke="rgba(148,163,184,0.3)" stroke-width="1"/>
-        <!-- X axis ticks & labels -->
-        ${xTicks.map(t => `<text x="${toX(t)}" y="${pad.t+plotH+12}" fill="#64748b" font-size="8" text-anchor="middle">${t}</text>`).join('')}
-        <!-- Y axis ticks & labels -->
-        ${yTicks.map(t => `<text x="${pad.l-5}" y="${toY(t)+3}" fill="#64748b" font-size="8" text-anchor="end">${t}</text>`).join('')}
-        <!-- Axis titles -->
-        <text x="${pad.l+plotW/2}" y="${svgH-2}" fill="#94a3b8" font-size="9" text-anchor="middle">Entropy H</text>
-        <text x="10" y="${pad.t+plotH/2}" fill="#94a3b8" font-size="9" text-anchor="middle" transform="rotate(-90,10,${pad.t+plotH/2})">\u03BD</text>
-        <!-- Comet tail layer (populated asynchronously) -->
-        <g id="sf-comet-${sfSvgId}" class="sf-comet-layer"></g>
-        <!-- Current state dot glow -->
-        ${isPhaseTransition ? `<circle cx="${dotX}" cy="${dotY}" r="14" fill="${accent}" opacity="0.12" class="sf-dot-pulse-outer"/>` : ''}
-        <circle cx="${dotX}" cy="${dotY}" r="8" fill="${accent}" opacity="0.22"/>
-        <circle cx="${dotX}" cy="${dotY}" r="5" fill="url(#sfDotGrad)"/>
-        <circle cx="${dotX}" cy="${dotY}" r="5" fill="none" stroke="${accent}" stroke-width="1.2" opacity="0.9"/>
-    </svg>`;
-
-    // ── Rationale terminal ───────────────────────────────────────────
-    const rationale = sf.rationale
-        ? `<div class="sf-terminal">
-            <div class="sf-terminal-header">
-                <span class="sf-terminal-dot"></span><span class="sf-terminal-dot"></span><span class="sf-terminal-dot"></span>
-                <span class="sf-terminal-title">FRAGILITY_ENGINE // PHYSICS RATIONALE</span>
-            </div>
-            <div class="sf-terminal-body">
-                <span class="sf-terminal-prompt">&#x276F;&#x276F; </span><span class="sf-terminal-out">${escHtml(sf.rationale)}</span>
-            </div>
-          </div>`
-        : '';
-
-    return `<div class="${panelClass}" style="--sf-accent:${accent};--sf-glow:${accentGlow};">
-        ${sh(sectionNum, 'Systemic Fragility Engine')}
-        <p class="intel-panel-intro">Real-time Shannon network entropy (H) and kinematic viscosity (\u03BD) computed over cross-asset volatility distribution. Phase-transition warning fires when both components simultaneously breach critical thresholds.</p>
-        <div class="sf-status-row">${labelBadge}<span class="sf-conjunction-label">${sf.entropy_critical && sf.viscosity_critical ? '<span style="color:#ef4444;font-weight:700;">&#x26A0; BOTH COMPONENTS CRITICAL</span>' : sf.entropy_critical ? '<span style="color:#f59e0b;">H Critical</span>' : sf.viscosity_critical ? '<span style="color:#f59e0b;">\u03BD Critical</span>' : '<span style="color:#22d3ee;">System Nominal</span>'}</span></div>
-        <div class="sf-main-layout">
-            <div class="sf-gauges-col">${dualGauge}</div>
-            <div class="sf-phase-col">${svg}</div>
-        </div>
-        ${rationale}
-    </div>`;
-}
 // ----------------------------------------------------------------
 // Wargaming & Probability Matrix
 // ----------------------------------------------------------------
@@ -1860,34 +1370,30 @@ function renderEventTimelineAppendix(timeline: any[]): string {
 // overallCoverage is now computed in the payload (divergence_check.overall_coverage)
 
 /**
- * Systemic Fragility HUD.
+ * Spatial Tier HUD.
  *
  * Renders a single Luminous Cryo-Glass plate directly under Section 01 with the
- * metrics we can actually measure:
- *   • Systemic Entropy (Shannon, 0..1)
- *   • Viscosity Coefficient (kinematic, 0..0.5 typical)
- *   • Phase Transition Warning (flashing when true)
- * plus the tier-by-tier edge counts from `spatial_contagion.edges[].order_level`.
+ * tier-by-tier edge counts from `spatial_contagion.edges[].order_level`.
  *
  * The former "Composite Multiplier / propagation path" was removed: it came from
  * the fake spatial engine's entropy and only ever rendered a hardcoded "Stable".
  *
- * Returns `''` if the payload has neither systemic_fragility nor spatial_contagion
- * — so old briefs don't render an empty plate.
+ * The Systemic Entropy / Viscosity / Phase Transition cells were removed
+ * 2026-08-26 with the Systemic Fragility section. They are DELETED, not defaulted:
+ * they read `Number(fragility?.entropy_index ?? 0)`, so a payload without the key
+ * would have printed 0.000 for two measured quantities and "STABLE" for an
+ * unevaluated flag. An absent measurement is not a zero.
+ *
+ * Returns `''` if the payload has no spatial_contagion — so old briefs don't
+ * render an empty plate.
  */
 function renderCompositeRiskHud(p: any): string {
     // The cross-domain "composite multiplier" was removed — it was derived from the
     // fake spatial engine's entropy and only ever reported a hardcoded "Stable".
-    // This plate now shows only what it can actually measure: systemic fragility and
-    // the spatial-tier edge counts. It renders NOTHING for the composite metric
-    // rather than a fabricated 1.00x.
-    const fragility = p?.systemic_fragility;
+    // This plate now shows only the spatial-tier edge counts. It renders NOTHING
+    // for the composite metric rather than a fabricated 1.00x.
     const spatial = p?.spatial_contagion;
-    if (!fragility && !spatial) return '';
-
-    const entropy = Number(fragility?.entropy_index ?? 0);
-    const viscosity = Number(fragility?.viscosity_coefficient ?? 0);
-    const phaseWarn = Boolean(fragility?.phase_transition_warning);
+    if (!spatial) return '';
 
     // Tier breakdown from spatial edges by order_level.
     const edges: any[] = Array.isArray(spatial?.edges) ? spatial.edges : [];
@@ -1897,9 +1403,6 @@ function renderCompositeRiskHud(p: any): string {
         if (o === 1 || o === 2 || o === 3) tierCounts[o] += 1;
     }
     const hasTiers = (tierCounts[1] + tierCounts[2] + tierCounts[3]) > 0;
-
-    const warnColor = phaseWarn ? '#fca5a5' : '#94a3b8';
-    const warnGlow = phaseWarn ? 'rgba(248,113,113,0.55)' : 'transparent';
 
     // Tier propagation chip row — count of edges per order so the reader
     // can scan T1/T2/T3 distribution without opening the Omni-Monitor.
@@ -2017,31 +1520,9 @@ function renderCompositeRiskHud(p: any): string {
             font-style: italic; letter-spacing: 0.04em;
         }
     </style>
-    <section class="composite-risk-hud" aria-label="Systemic Fragility">
+    <section class="composite-risk-hud" aria-label="Spatial Tiers">
         <div class="crh-head">
-            <span>◷ Systemic Fragility &amp; Spatial Tiers</span>
-        </div>
-        <div class="crh-grid">
-            <div class="crh-cell">
-                <span class="crh-k">Systemic Entropy</span>
-                <span class="crh-v crh-v--sub" style="color:#e2e8f0;">
-                    ${entropy.toFixed(3)}
-                </span>
-            </div>
-            <div class="crh-cell">
-                <span class="crh-k">Viscosity ν</span>
-                <span class="crh-v crh-v--sub" style="color:#e2e8f0;">
-                    ${viscosity.toFixed(3)}
-                </span>
-            </div>
-            <div class="crh-cell">
-                <span class="crh-k">Phase Transition</span>
-                ${phaseWarn
-                    ? `<span class="crh-v crh-v--sub crh-v--phase-on"
-                            style="color:${warnColor}; text-shadow: 0 0 10px ${warnGlow};">⚡ WARNING</span>`
-                    : `<span class="crh-v crh-v--sub" style="color:${warnColor};">STABLE</span>`
-                }
-            </div>
+            <span>◷ Spatial Tiers</span>
         </div>
         ${tierChips}
     </section>
@@ -2095,9 +1576,10 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
     const keyFindings: string[] = p.key_findings || [];
     html += renderQuantNarrativeSection(p.llm_narrative, execSummary, keyFindings, nextSectionNum());
 
-    // 01b Composite Risk HUD (Phase 7.4) — closes the Information Reflection
-    // Gap by surfacing the cross-domain multiplier, systemic fragility, and
-    // tier-by-tier spillover path immediately under the Hero/Narrative.
+    // 01b Spatial Tier HUD (Phase 7.4) — surfaces the tier-by-tier spillover path
+    // immediately under the Hero/Narrative. The cross-domain multiplier and the
+    // systemic-fragility cells were removed; this now renders nothing at all when
+    // there is no spatial_contagion payload.
     html += renderCompositeRiskHud(p);
 
     // 02 Signal Classification
@@ -2235,11 +1717,9 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
         ${pulseSection}
         ${breakdown.length?`<div class="intel-breakdown-grid">${breakdown.map((g:any)=>`<div class="intel-breakdown-card"><div class="intel-bd-head"><span class="intel-bd-group">${g.group}</span><span style="font-size:0.65rem;color:var(--text-secondary);margin-left:0.4rem;">${(g.instrument_details||[]).length} instrument${(g.instrument_details||[]).length === 1 ? '' : 's'}</span><span class="intel-bd-status" style="color:${sc(g.status)}">${(g.status||'').replace('_',' ')}</span></div>${g.description?`<div style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:0.4rem;">${g.description}</div>`:''}<div class="intel-chip-row">${(g.instrument_details||[]).map((d:any)=>pctChip(d.symbol,d.percent_change)).join('')}</div></div>`).join('')}</div>`:''}</div>`;
 
-    // 08 Systemic Fragility Engine
-    if (p.systemic_fragility) {
-        html += renderSystemicFragilitySection(p.systemic_fragility, nextSectionNum(), p.domain?.domain_id || 'unknown');
-    }
-
+    // The Systemic Fragility Engine section was removed 2026-08-26. The engine, the
+    // systemic_fragility_log table and structured_payload.systemic_fragility all keep
+    // running — only this renderer stopped reading them.
     // 09 Divergence Check
     if (divCheck.interpretation) {
         html += `<div class="intel-panel intel-divergence-banner">${sh(nextSectionNum(),'Divergence Check', '08')}
@@ -2309,11 +1789,6 @@ function renderStructuredProBrief(report: ProStructuralReportItem, contentContai
     html += `</div>`;
     contentContainer.innerHTML = html;
     wireProBriefInteractions(contentContainer);
-
-    // Systemic Fragility comet tail (async, non-blocking)
-    if (p.systemic_fragility && p.domain?.domain_id) {
-        injectFragilityHistory(contentContainer, p.domain.domain_id);
-    }
 
     // Spatial Contagion interactive map (async, non-blocking)
     if (p.spatial_contagion && p.domain?.domain_id) {
