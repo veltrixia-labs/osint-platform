@@ -101,29 +101,10 @@ const PLANS: PlanConfig[] = [
         ctaText: 'Start 7-day Free Trial',
         highlight: 'MOST POPULAR',
     },
-    {
-        id: 'experts',
-        name: PLAN_NAME_MAP.experts,
-        subtitle: 'Predictive Intelligence',
-        explanation: 'Autonomous foresight layer — LLM vectoring over 24h clustering windows',
-        bestFor: TIER_BEST_FOR.experts,
-        priceNote: 'month',
-        color: '#bc8cff',
-        directCheckout: true,
-        contactUrl: '',
-        tierBadges: ['NEURAL PREDICTIVE MODE UNLOCKED', 'FOR ENTERPRISE & ARCHITECTS'],
-        features: [
-            'Everything in Founding Pro',
-            'LLM Predictive Vectoring',
-            'Cross-Border Scenario Modeling',
-            'Suppression Override Protocol (1.5× Intensity Alert)',
-            'Deep Network Visualization Suite',
-            '24h Clustering Window — Automated Trend Projections',
-            'Expert specialty topics & unlimited strategic alerts',
-        ],
-        ctaText: 'Upgrade to Expert',
-        highlight: 'APEX INTELLIGENCE',
-    },
+    // The Expert plan card was removed 2026-08-26. Expert is deferred, not cancelled:
+    // it is not sold (stripe_service.ALLOWED_CHECKOUT_TIERS), so the card's enabled CTA
+    // asked a guest for their email and then took a 400 from the API. The tier still
+    // exists in PlanTier, and the landing page still shows it as Coming Soon.
 ];
 
 const DISPLAY_PLANS = PLANS;
@@ -466,7 +447,7 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         if (item.type === 'section') {
             return `
             <tr class="comparison-section-header">
-                <td colspan="4">
+                <td colspan="3">
                     <div class="section-label">${item.label}</div>
                     <div class="comparison-section-subtitle">${item.subtitle}</div>
                 </td>
@@ -474,7 +455,12 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
         }
         
         const { feat, vals, isHighlight } = item;
-        const [free, pro, exp] = vals;
+        // vals stays a 4-tuple. Positions 2 (Expert) and 3 (Enterprise) are DELIBERATELY
+        // retained and unrendered: Expert ships later, and restoring its column is four
+        // render edits rather than fifteen re-authored strings. Position 3 has never
+        // rendered — a 4-tuple destructured to 3 is exactly how the Enterprise column
+        // became invisible, so do not read this shortfall as an accident.
+        const [free, pro] = vals;
         
         const highlightCell = (val: string, tier: string) => {
             const isExpertCol = tier === 'experts';
@@ -489,7 +475,6 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
             <td class="cmp-feature">${feat}</td>
             ${highlightCell(free, 'free')}
             ${highlightCell(pro, 'pro')}
-            ${highlightCell(exp, 'experts')}
         </tr>`;
     }).join('');
 
@@ -551,7 +536,6 @@ export function renderSubscriptionTab(user: UserMe, container: HTMLElement, onNa
                             <th>Feature</th>
                             <th class="${user.tier === 'free' ? 'cmp-current' : ''}">${getTierDisplayName('free')}</th>
                             <th class="${user.tier === 'pro' ? 'cmp-current' : ''}">${getTierDisplayName('pro')}</th>
-                            <th class="${user.tier === 'experts' ? 'cmp-current' : ''}">${getTierDisplayName('experts')}</th>
                         </tr>
                     </thead>
                     <tbody>${tableRows}</tbody>

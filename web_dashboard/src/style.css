@@ -1343,8 +1343,11 @@ p {
   align-items: stretch;
 }
 
+/* 2 tracks, not 3: the Expert plan card was removed from PLANS in subscription.ts on
+   2026-08-26, leaving Free and Pro. A third track here would render an empty full-width
+   column — the orphaned-column pattern fixed in 51debfa. Restore to 3 when Expert ships. */
 .plans-grid--pricing {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   max-width: 1120px;
   gap: 1.15rem;
 }

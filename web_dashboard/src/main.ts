@@ -415,7 +415,9 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
         title: 'Pro Insight',
         subtitle:
             'In-depth structural intelligence briefs — qualitative transmission analysis, exposure matrices, and domain-filtered long-form reports.',
-        showExpertUpsell: true,
+        // showExpertUpsell dropped 2026-08-26 with the in-app Expert card: the button it
+        // revealed (:670) routed to a Plans tab that no longer names the tier. The flag
+        // itself is kept on PageHeaderMeta so the header CTA returns when Expert ships.
     },
     'expert-intel': { title: 'Expert Intelligence' },
     plans: { title: 'Plans & Access' },
@@ -790,15 +792,11 @@ async function initDashboard() {
     renderNavigation(user, document.querySelector('#sidebar-nav-container')!, (tabId) => handleTabSwitch(tabId as TabId));
 
     const routeToExpertPricing = () => {
+        // The upsell banner written here was removed 2026-08-26 along with the in-app
+        // Expert card: it named LLM predictive vectoring, cross-border scenario modeling
+        // and elevated alert intensity, none of which is implemented, and it would have
+        // rendered above a comparison table that no longer has an Expert column.
         sessionStorage.setItem('plansFocusTier', 'experts');
-        sessionStorage.setItem(
-            'plansUpsellBanner',
-            JSON.stringify({
-                message:
-                    'Expert tier unlocks LLM predictive vectoring, cross-border scenario modeling, and elevated alert intensity protocols.',
-                ts: Date.now(),
-            }),
-        );
         document.querySelector<HTMLElement>('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
         handleTabSwitch('plans');
     };
