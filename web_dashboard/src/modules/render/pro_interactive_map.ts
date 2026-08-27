@@ -97,13 +97,13 @@ function toSpatialDomainId(domainId: string): string {
 //   occurs, so the copy below is accurate; if the others ever reach a panel the split belongs
 //   at the emitter, not here — this file must not become the arbiter of provenance.
 const CREDIT_GAP_COPY: Record<string, string> = {
-    severed_no_traded_equity: '上場株式なし — 信用モデル適用外',
-    private_valuation:        '非上場 — 市場評価額が存在しない',
-    net_cash_no_debt:         '実質無借金 — 信用モデルの前提が成立しない',
-    honest_null_unsourced:    '時価総額を取得できていない',
-    absent_from_slice:        '財務データ未登録',
+    severed_no_traded_equity: 'No traded equity — Merton not applicable',
+    private_valuation:        'Unlisted — no traded market capitalisation',
+    net_cash_no_debt:         'Net cash — Merton premise does not hold',
+    honest_null_unsourced:    'Market capitalisation not sourced',
+    absent_from_slice:        'No financial data on file',
 };
-const CREDIT_GAP_COPY_FALLBACK = '信用指標を算出できていない';
+const CREDIT_GAP_COPY_FALLBACK = 'No credit figure available';
 function creditGapCopy(kind?: string): string {
     return (kind ? CREDIT_GAP_COPY[kind] : undefined) ?? CREDIT_GAP_COPY_FALLBACK;
 }
