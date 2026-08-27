@@ -948,7 +948,7 @@
     "total_debt": {
      "value": 5.0,
      "unit": "usd_bn",
-     "source": "observed",
+     "source": "estimated",
      "as_of": "2025-FY"
     },
     "equity_volatility": {
@@ -965,7 +965,7 @@
     "sigma": 0.4,
     "provenance": {
      "market_cap": "observed",
-     "total_debt": "observed",
+     "total_debt": "estimated",
      "equity_volatility": "estimated"
     },
     "oldest_as_of": "2025-FY",
@@ -1016,7 +1016,7 @@
     "total_debt": {
      "value": 4.0,
      "unit": "usd_bn",
-     "source": "observed",
+     "source": "estimated",
      "as_of": "2025-FY"
     },
     "equity_volatility": {
@@ -1033,7 +1033,7 @@
     "sigma": 0.4,
     "provenance": {
      "market_cap": "observed",
-     "total_debt": "observed",
+     "total_debt": "estimated",
      "equity_volatility": "estimated"
     },
     "oldest_as_of": "2025-FY",
