@@ -18,7 +18,7 @@
  "generated_at": "2026-07-13",
  "graph": {
   "nodes": 300,
-  "edges": 1497,
+  "edges": 1498,
   "gate": "PASS"
  },
  "scaling": {
@@ -1928,6 +1928,13 @@
      "type": "context_link",
      "role": "supply",
      "weight": 0.26,
+     "unit": "share"
+    },
+    {
+     "target": "China",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.127,
      "unit": "share"
     }
    ],
