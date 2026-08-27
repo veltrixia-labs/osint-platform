@@ -86,6 +86,28 @@ function toSpatialDomainId(domainId: string): string {
     return SPATIAL_DOMAIN_ALIAS[domainId] ?? domainId;
 }
 
+// credit_gaps[].kind -> customer-facing copy. The payload's `reason` is the PD slice's own
+// text and is NOT rendered: it is pipeline vocabulary ("EXCLUDE:", "BY-DESIGN", "PD~0 FLAG",
+// and an internal filename) written for the vault's own filter, not for a reader. `kind` is
+// the stable key — a closed set of five, enforced at the emitter, which exits rather than
+// invent a sixth (export_scenarios.py:304-329). Wording follows credit.basis: state the
+// condition, pass no verdict.
+// ★ kind is COARSER than reason: three slice reasons (market_cap null / equity_volatility
+//   null / no total_liabilities) collapse onto honest_null_unsourced. Today only the first
+//   occurs, so the copy below is accurate; if the others ever reach a panel the split belongs
+//   at the emitter, not here — this file must not become the arbiter of provenance.
+const CREDIT_GAP_COPY: Record<string, string> = {
+    severed_no_traded_equity: '上場株式なし — 信用モデル適用外',
+    private_valuation:        '非上場 — 市場評価額が存在しない',
+    net_cash_no_debt:         '実質無借金 — 信用モデルの前提が成立しない',
+    honest_null_unsourced:    '時価総額を取得できていない',
+    absent_from_slice:        '財務データ未登録',
+};
+const CREDIT_GAP_COPY_FALLBACK = '信用指標を算出できていない';
+function creditGapCopy(kind?: string): string {
+    return (kind ? CREDIT_GAP_COPY[kind] : undefined) ?? CREDIT_GAP_COPY_FALLBACK;
+}
+
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 /** Network-theoretic depth of a contagion node (1 = epicenter, 3 = 2-hop downstream). */
@@ -2324,11 +2346,11 @@ class SurveillanceMapController {
             </section>`;
         }
         const gap = (this.args.offMap?.credit_gaps ?? []).find((g) => String(g.id) === String(node.id));
-        if (!gap?.reason) return '';
+        if (!gap) return '';
         return `
             <section class="pm-co-sec">
                 <div class="pm-co-sec-h">Credit</div>
-                <div class="pm-co-why">No credit figure — ${esc(String(gap.reason))}</div>
+                <div class="pm-co-why">${esc(creditGapCopy(gap.kind))}</div>
             </section>`;
     }
 
