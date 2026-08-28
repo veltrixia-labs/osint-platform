@@ -3194,8 +3194,8 @@
   },
   {
    "id": "HMN_Tech",
-   "kind": "absent_from_slice",
-   "reason": "no entry in _slice_pd_v29.json",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
    "slice": "v29"
   },
   {
