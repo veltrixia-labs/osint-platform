@@ -159,16 +159,16 @@
    "role_blurb": "World #2 container carrier (Gemini Cooperation). Began a structural return to Suez in Jan-Feb 2026 but reversed after Red Sea shipping risk rose in 2026; mid-2026 routing via the Cape of Good Hope ('Suez preferred if safety permits')",
    "financials": {
     "market_cap": {
-     "value": 35.0,
+     "value": 33.817,
      "unit": "usd_bn",
-     "source": "estimated",
-     "as_of": "2026-Q2"
+     "source": "observed",
+     "as_of": "2025-FY"
     },
     "total_debt": {
-     "value": 17.0,
+     "value": 18.92,
      "unit": "usd_bn",
-     "source": "estimated",
-     "as_of": "2026-Q2"
+     "source": "observed",
+     "as_of": "2025-FY"
     },
     "equity_volatility": {
      "value": 0.3666,
@@ -178,16 +178,16 @@
     }
    },
    "credit": {
-    "distance_to_default": 2.975538992158241,
+    "distance_to_default": 2.7220402423953396,
     "bucket": "industrial",
     "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
     "sigma": 0.3666,
     "provenance": {
-     "market_cap": "estimated",
-     "total_debt": "estimated",
+     "market_cap": "observed",
+     "total_debt": "observed",
      "equity_volatility": "observed"
     },
-    "oldest_as_of": "2026-Q2",
+    "oldest_as_of": "2025-FY",
     "slice": "v29"
    }
   },
