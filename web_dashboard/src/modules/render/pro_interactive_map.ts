@@ -2368,10 +2368,21 @@ class SurveillanceMapController {
             const role = e.role ? ` · ${esc(String(e.role))}` : '';
             const w = e.weight == null ? '--' : String(e.weight);
             const unit = (e.weight != null && e.unit) ? ` <span class="pm-co-unit">${esc(String(e.unit))}</span>` : '';
+            // Edge-weight provenance — the Financials vocabulary (.pm-co-src), same token verbatim,
+            // uppercased by CSS. NOT gated on weight: HMN_Tech -> Subsea_Cables carries weight null
+            // with source 'estimated', and dropping its badge would hide a stated provenance. A
+            // weighted edge whose source is null is 'unlabelled' — a gap in the record. A structural
+            // edge (located_in/owns/competitor) has neither, and gets no badge: provenance was never
+            // applicable there, which is a different fact from a missing one.
+            const ws = e.weight_source == null
+                ? (e.weight != null ? 'unlabelled' : '')
+                : String(e.weight_source);
+            const wsCls = ws === 'observed' ? 'obs' : ws === 'estimated' ? 'est' : 'unk';
+            const prov = ws ? ` <span class="pm-co-src pm-co-src--${wsCls}">${esc(ws)}</span>` : '';
             return `
                 <div class="pm-co-nb">
                     <span class="pm-co-nb-t">${target}</span>
-                    <span class="pm-co-nb-rel">${rel}${role}</span>
+                    <span class="pm-co-nb-rel">${rel}${role}${prov}</span>
                     <span class="pm-co-nb-w">${w}${unit}</span>
                 </div>`;
         }).join('');
