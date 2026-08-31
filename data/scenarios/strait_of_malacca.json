@@ -152,42 +152,48 @@
      "type": "context_link",
      "role": "demand",
      "weight": 0.5,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "France",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "European_Union",
      "type": "context_link",
      "role": "demand",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Maersk",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "MSC",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "COSCO",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "title": "CMA CGM",
@@ -216,77 +222,88 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "China",
      "type": "context_link",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "MSC",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Maersk",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "CMA_CGM",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Hapag-Lloyd",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Evergreen",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Strait_of_Malacca",
      "type": "context_link",
      "role": "demand",
      "weight": 0.5,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Port_of_Shanghai",
      "type": "context_link",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Panama_Canal",
      "type": "context_link",
      "role": "demand",
      "weight": 0.5,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "OOIL",
      "type": "owns",
      "role": "supply",
      "weight": 0.75,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "observed"
     }
    ],
    "title": "COSCO",
@@ -347,42 +364,48 @@
      "type": "context_link",
      "role": "demand",
      "weight": 0.5,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Taiwan",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "PTP",
      "type": "context_link",
      "role": "demand",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Maersk",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "MSC",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "COSCO",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "title": "Evergreen",
@@ -441,35 +464,40 @@
      "type": "context_link",
      "role": "demand",
      "weight": 0.5,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "China",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "COSCO",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Maersk",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "MSC",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "title": "OOCL",
@@ -511,42 +539,48 @@
      "type": "context_link",
      "role": "demand",
      "weight": 0.45,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Germany",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "European_Union",
      "type": "context_link",
      "role": "demand",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Maersk",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "MSC",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "COSCO",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "title": "Hapag-Lloyd",
@@ -605,35 +639,40 @@
      "type": "customer",
      "role": null,
      "weight": 0.7,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "COSCO",
      "type": "context_link",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Port_of_Shanghai",
      "type": "context_link",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Strait_of_Malacca",
      "type": "context_link",
      "role": "demand",
      "weight": 0.3,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Export_Controls",
      "type": "regulated_by",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "title": "CSSC",
@@ -675,133 +714,152 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "EV_Battery",
      "type": "context_link",
      "role": "supply",
      "weight": 0.8,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Tesla",
      "type": "customer",
      "role": "demand",
      "weight": 0.15,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Volkswagen",
      "type": "customer",
      "role": "demand",
      "weight": 0.08,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Toyota",
      "type": "customer",
      "role": "demand",
      "weight": 0.04,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Export_Controls",
      "type": "regulated_by",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Renewable_Energy",
      "type": "context_link",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Lithium",
      "type": "context_link",
      "role": "demand",
      "weight": 0.65,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Cobalt",
      "type": "context_link",
      "role": "demand",
      "weight": 0.45,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Nickel",
      "type": "context_link",
      "role": "demand",
      "weight": 0.45,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Indonesia",
      "type": "context_link",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "CMOC",
      "type": "shareholder",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "LG_Energy_Solution",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Panasonic",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Samsung_SDI",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "SK_On",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "BMW",
      "type": "customer",
      "role": "demand",
      "weight": 0.06,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Mercedes_Benz",
      "type": "customer",
      "role": "demand",
      "weight": 0.05,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Renault",
      "type": "customer",
      "role": "demand",
      "weight": 0.05,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -860,28 +918,32 @@
      "type": "context_link",
      "role": "supply",
      "weight": 0.55,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Uranium_Enrichment",
      "type": "context_link",
      "role": "supply",
      "weight": 0.4,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "China",
      "type": "customer",
      "role": null,
      "weight": 0.8,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Rosatom",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -909,28 +971,32 @@
      "type": "context_link",
      "role": "supply",
      "weight": 0.6,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Export_Controls",
      "type": "regulated_by",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "CNNC",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Rosatom",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -974,35 +1040,40 @@
      "type": "context_link",
      "role": "supply",
      "weight": 1.1,
-     "unit": "mb_per_d"
+     "unit": "mb_per_d",
+     "weight_source": "estimated"
     },
     {
      "target": "Natural_Gas",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "China",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "PetroChina",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Sinopec",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -1061,56 +1132,64 @@
      "type": "context_link",
      "role": "supply",
      "weight": 2.6,
-     "unit": "mb_per_d"
+     "unit": "mb_per_d",
+     "weight_source": "observed"
     },
     {
      "target": "Gazprom",
      "type": "joint_venture",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Power_of_Siberia",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "PDVSA",
      "type": "joint_venture",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Rosneft",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "China",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Iran",
      "type": "context_link",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "PetroChina",
      "type": "owns",
      "role": null,
      "weight": 0.82,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "observed"
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -1140,35 +1219,40 @@
      "type": "context_link",
      "role": "supply",
      "weight": 2.5,
-     "unit": "mb_per_d"
+     "unit": "mb_per_d",
+     "weight_source": "observed"
     },
     {
      "target": "Natural_Gas",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "China",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "CNPC",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Sinopec",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -1231,21 +1315,24 @@
      "type": "context_link",
      "role": "demand",
      "weight": 5.0,
-     "unit": "mb_per_d"
+     "unit": "mb_per_d",
+     "weight_source": "observed"
     },
     {
      "target": "Natural_Gas",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "China",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -1304,21 +1391,24 @@
      "type": "manufactures",
      "role": "supply",
      "weight": null,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Export_Controls",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": null
     },
     {
      "target": "China",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -1346,35 +1436,40 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Cobalt",
      "type": "context_link",
      "role": "supply",
      "weight": 0.31,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "DRC",
      "type": "context_link",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Glencore",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Copper",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -1435,21 +1530,24 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Rare_Earths",
      "type": "context_link",
      "role": "supply",
      "weight": 0.1,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "MP_Materials",
      "type": "shareholder",
      "role": null,
      "weight": 0.077,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": null
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -1508,21 +1606,24 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Nickel",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Indonesia",
      "type": "context_link",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "why": "China (demand 0.80) x DECAY 0.7",
@@ -1550,56 +1651,64 @@
      "type": "context_link",
      "role": "supply",
      "weight": 0.037,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Tesla",
      "type": "customer",
      "role": "demand",
      "weight": 0.3,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Lithium",
      "type": "context_link",
      "role": "demand",
      "weight": 0.08,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Nickel",
      "type": "context_link",
      "role": "demand",
      "weight": 0.08,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Cobalt",
      "type": "context_link",
      "role": "demand",
      "weight": 0.06,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Japan",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Samsung_SDI",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "SK_On",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
@@ -1660,21 +1769,24 @@
      "type": "customer",
      "role": null,
      "weight": 0.2,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Export_Controls",
      "type": "regulated_by",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Rare_Earths",
      "type": "context_link",
      "role": "demand",
      "weight": 0.4,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     }
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
@@ -1735,35 +1847,40 @@
      "type": "customer",
      "role": null,
      "weight": 0.2,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Nuclear_Power",
      "type": "context_link",
      "role": "supply",
      "weight": 0.35,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Export_Controls",
      "type": "regulated_by",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Rare_Earths",
      "type": "context_link",
      "role": "demand",
      "weight": 0.4,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Orano",
      "type": "shareholder",
      "role": null,
      "weight": 0.05,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "observed"
     }
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
@@ -1822,49 +1939,56 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "TSMC",
      "type": "customer",
      "role": null,
      "weight": 0.35,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Samsung",
      "type": "customer",
      "role": null,
      "weight": 0.25,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Intel",
      "type": "customer",
      "role": null,
      "weight": 0.15,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Tokyo_Ohka",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Export_Controls",
      "type": "regulated_by",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Semiconductor_Materials",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": null
     }
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
@@ -1900,42 +2024,48 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "TSMC",
      "type": "customer",
      "role": null,
      "weight": 0.35,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Samsung",
      "type": "customer",
      "role": null,
      "weight": 0.25,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Intel",
      "type": "customer",
      "role": null,
      "weight": 0.15,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Semiconductor_Materials",
      "type": "context_link",
      "role": "supply",
      "weight": 0.26,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "China",
      "type": "context_link",
      "role": "demand",
      "weight": 0.127,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "observed"
     }
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
@@ -1996,49 +2126,56 @@
      "type": "customer",
      "role": null,
      "weight": 0.3,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Samsung",
      "type": "customer",
      "role": null,
      "weight": 0.22,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Tokyo_Electron",
      "type": "complementary",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Rare_Earths",
      "type": "context_link",
      "role": "demand",
      "weight": 0.5,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Japan",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "SUMCO",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Semiconductor_Materials",
      "type": "context_link",
      "role": "supply",
      "weight": 0.28,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     }
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
@@ -2099,42 +2236,48 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "TSMC",
      "type": "customer",
      "role": null,
      "weight": 0.35,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Samsung",
      "type": "customer",
      "role": null,
      "weight": 0.25,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Intel",
      "type": "customer",
      "role": null,
      "weight": 0.15,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Export_Controls",
      "type": "regulated_by",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Semiconductor_Materials",
      "type": "context_link",
      "role": "supply",
      "weight": null,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": null
     }
    ],
    "why": "Japan (demand 0.70) x DECAY 0.7",
@@ -2195,21 +2338,24 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "NYK",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Strait_of_Malacca",
      "type": "context_link",
      "role": "demand",
      "weight": null,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": null
     }
    ],
    "why": "indirect via Japan (demand 0.70) x DECAY 0.7 = 0.49; ALSO holds a DIRECT edge to Strait_of_Malacca whose weight is unmeasured (null) -- true exposure may be higher",
@@ -2271,14 +2417,16 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Strait_of_Malacca",
      "type": "context_link",
      "role": "demand",
      "weight": null,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": null
     }
    ],
    "why": "indirect via Japan (demand 0.70) x DECAY 0.7 = 0.49; ALSO holds a DIRECT edge to Strait_of_Malacca whose weight is unmeasured (null) -- true exposure may be higher",
@@ -2340,98 +2488,112 @@
      "type": "context_link",
      "role": "supply",
      "weight": 0.11,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Tesla",
      "type": "customer",
      "role": "demand",
      "weight": 0.12,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "GM",
      "type": "customer",
      "role": "demand",
      "weight": 0.2,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Hyundai",
      "type": "customer",
      "role": "demand",
      "weight": 0.1,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Volkswagen",
      "type": "customer",
      "role": "demand",
      "weight": 0.08,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Lithium",
      "type": "context_link",
      "role": "demand",
      "weight": 0.15,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Cobalt",
      "type": "context_link",
      "role": "demand",
      "weight": 0.12,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Nickel",
      "type": "context_link",
      "role": "demand",
      "weight": 0.15,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "South_Korea",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Panasonic",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Samsung_SDI",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "SK_On",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Honda",
      "type": "customer",
      "role": "demand",
      "weight": 0.08,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Renault",
      "type": "customer",
      "role": "demand",
      "weight": 0.06,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     }
    ],
    "why": "South_Korea (demand 0.70) x DECAY 0.7",
@@ -2490,56 +2652,64 @@
      "type": "context_link",
      "role": "supply",
      "weight": 0.05,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Hyundai",
      "type": "customer",
      "role": "demand",
      "weight": 0.12,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Ford",
      "type": "customer",
      "role": "demand",
      "weight": 0.2,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Volkswagen",
      "type": "customer",
      "role": "demand",
      "weight": 0.06,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Nickel",
      "type": "context_link",
      "role": "demand",
      "weight": 0.07,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Cobalt",
      "type": "context_link",
      "role": "demand",
      "weight": 0.05,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "South_Korea",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Nissan",
      "type": "customer",
      "role": "demand",
      "weight": 0.1,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     }
    ],
    "why": "South_Korea (demand 0.70) x DECAY 0.7",
@@ -2567,49 +2737,56 @@
      "type": "context_link",
      "role": "supply",
      "weight": 0.027,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Stellantis",
      "type": "customer",
      "role": "demand",
      "weight": 0.1,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Nickel",
      "type": "context_link",
      "role": "demand",
      "weight": 0.06,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Cobalt",
      "type": "context_link",
      "role": "demand",
      "weight": 0.05,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "South_Korea",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "SK_On",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "BMW",
      "type": "customer",
      "role": "demand",
      "weight": 0.12,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     }
    ],
    "why": "South_Korea (demand 0.70) x DECAY 0.7",

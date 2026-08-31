@@ -71,14 +71,16 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Bab_el-Mandeb",
      "type": "context_link",
      "role": "supply",
      "weight": 0.4,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     }
    ],
    "title": "Saudi Aramco",

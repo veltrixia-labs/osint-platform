@@ -82,77 +82,88 @@
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "COSCO",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "CMA_CGM",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Hapag-Lloyd",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Evergreen",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "OOCL",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "PTP",
      "type": "shareholder",
      "role": null,
      "weight": 0.3,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "observed"
     },
     {
      "target": "Suez_Canal",
      "type": "context_link",
      "role": "demand",
      "weight": 0.6,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Port_of_Rotterdam",
      "type": "context_link",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Panama_Canal",
      "type": "context_link",
      "role": "demand",
      "weight": 0.6,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": "estimated"
     },
     {
      "target": "Denmark",
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     }
    ],
    "title": "Maersk",
@@ -214,21 +225,24 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Frontline",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Suez_Canal",
      "type": "context_link",
      "role": "demand",
      "weight": null,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": null
     }
    ],
    "title": "CMB.TECH",
@@ -290,21 +304,24 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "CMB.TECH",
      "type": "competitor",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Suez_Canal",
      "type": "context_link",
      "role": "demand",
      "weight": null,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": null
     }
    ],
    "title": "Frontline",
@@ -365,21 +382,24 @@
      "type": "located_in",
      "role": null,
      "weight": null,
-     "unit": null
+     "unit": null,
+     "weight_source": null
     },
     {
      "target": "Suez_Canal",
      "type": "context_link",
      "role": "demand",
      "weight": null,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": null
     },
     {
      "target": "Panama_Canal",
      "type": "context_link",
      "role": "demand",
      "weight": null,
-     "unit": "share"
+     "unit": "share",
+     "weight_source": null
     }
    ],
    "title": "OOIL",
