@@ -1688,10 +1688,10 @@
      "as_of": "2026-Q2"
     },
     "total_debt": {
-     "value": 4.11,
+     "value": 3.766,
      "unit": "usd_bn",
      "source": "observed",
-     "as_of": "2026-Q2"
+     "as_of": "2025-FY"
     },
     "equity_volatility": {
      "value": 0.5321,
@@ -1701,7 +1701,7 @@
     }
    },
    "credit": {
-    "distance_to_default": 2.7931384519383897,
+    "distance_to_default": 2.92498525600269,
     "bucket": "industrial",
     "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
     "sigma": 0.5321,
@@ -1710,7 +1710,7 @@
      "total_debt": "observed",
      "equity_volatility": "observed"
     },
-    "oldest_as_of": "2026-Q2",
+    "oldest_as_of": "2025-FY",
     "slice": "v29"
    }
   },
