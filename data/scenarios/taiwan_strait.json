@@ -340,11 +340,11 @@
    "country": "KR",
    "type": "affected",
    "order": 2,
-   "impact_score": 45,
+   "impact_score": 40,
    "confidence": 1.0,
    "role": "demand",
-   "raw_impact": 0.45,
-   "why": "route:demand weight 0.45"
+   "raw_impact": 0.4,
+   "why": "route:demand weight 0.40"
   },
   {
    "id": "United_States",
@@ -2332,7 +2332,7 @@
    "source_lon": 119.9,
    "target_lat": 35.91,
    "target_lon": 127.77,
-   "intensity": 0.45,
+   "intensity": 0.4,
    "target_order": 2,
    "role": "demand"
   },
@@ -2619,7 +2619,7 @@
   "node_gaps": [
    {
     "id": "South_Korea",
-    "impact": 0.45,
+    "impact": 0.4,
     "reason": "no company node with country=KR & domain∩['supply_chain']"
    }
   ]
