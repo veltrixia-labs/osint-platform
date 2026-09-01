@@ -1,0 +1,2671 @@
+{
+ "schema_version": "vault_cascade_v1",
+ "scenario": {
+  "hub": "Taiwan_Strait",
+  "hub_type": "route",
+  "aliases": [
+   "Taiwan Strait",
+   "Taiwan_Strait",
+   "台湾海峡"
+  ],
+  "domain": [
+   "supply_chain"
+  ]
+ },
+ "generated_at": "2026-07-13",
+ "graph": {
+  "nodes": 300,
+  "edges": 1498,
+  "gate": "PASS"
+ },
+ "scaling": {
+  "impact_score": "round(100*|raw_impact|), clamp[0,100], epicenter=100 (linear)",
+  "intensity": "|raw_impact| clamp[0,1]",
+  "confidence": {
+   "order1": 1.0,
+   "order2": 1.0,
+   "order3": 0.7
+  },
+  "node_types": {
+   "epicenter": "the hub",
+   "affected": "quantified impact (impact_score 0-100)",
+   "exposed_unquantified": "real edge, weight:null -> impact_score null (NOT 0; 0 would mean no impact)"
+  },
+  "render_hint": "Colour by TYPE, shade by SCORE. Do not colour by score alone: a fully-routed order-2 node (Qatar 1.00 -> 100) legitimately ties the epicenter score. Edges with \"unquantified\": true have intensity null -> draw dashed/hollow."
+ },
+ "nodes": [
+  {
+   "id": "Taiwan_Strait",
+   "name": "Taiwan Strait",
+   "lat": 24.8,
+   "lon": 119.9,
+   "country": null,
+   "type": "epicenter",
+   "order": 1,
+   "impact_score": 100,
+   "confidence": 1.0
+  },
+  {
+   "id": "Taiwan",
+   "name": "Taiwan",
+   "lat": 24.1,
+   "lon": 121.0,
+   "country": "TW",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 70,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.7,
+   "why": "route:demand weight 0.70"
+  },
+  {
+   "id": "TSMC",
+   "name": "TSMC",
+   "lat": 24.7828,
+   "lon": 121.005,
+   "country": "TW",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 65,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.65,
+   "why": "route:demand weight 0.65",
+   "tickers": [
+    "TSM",
+    "2330"
+   ],
+   "neighbourhood": [
+    {
+     "target": "NVIDIA",
+     "type": "manufactures",
+     "role": null,
+     "weight": 0.2,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "AMD",
+     "type": "manufactures",
+     "role": null,
+     "weight": 0.08,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Broadcom",
+     "type": "manufactures",
+     "role": null,
+     "weight": 0.07,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Apple",
+     "type": "manufactures",
+     "role": null,
+     "weight": 0.17,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "Samsung",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "ASML",
+     "type": "supplier",
+     "role": null,
+     "weight": 0.9,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Tokyo_Electron",
+     "type": "supplier",
+     "role": null,
+     "weight": 0.3,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Shin-Etsu_Chemical",
+     "type": "supplier",
+     "role": null,
+     "weight": 0.35,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Taiwan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "SUMCO",
+     "type": "supplier",
+     "role": null,
+     "weight": 0.25,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "JSR",
+     "type": "supplier",
+     "role": null,
+     "weight": 0.2,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Tokyo_Ohka",
+     "type": "supplier",
+     "role": null,
+     "weight": 0.2,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Applied_Materials",
+     "type": "supplier",
+     "role": null,
+     "weight": 0.3,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Qualcomm",
+     "type": "manufactures",
+     "role": null,
+     "weight": 0.06,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Cerebras",
+     "type": "manufactures",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Rapidus",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Taiwan_Strait",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.65,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Critical_Minerals",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.4,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "MediaTek",
+     "type": "manufactures",
+     "role": null,
+     "weight": 0.05,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "EDA_Tools",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.85,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Semiconductor_Materials",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.7,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "EUV_Lithography",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.9,
+     "unit": "share",
+     "weight_source": "estimated"
+    }
+   ],
+   "title": "TSMC",
+   "role_blurb": "World's largest pure-play foundry (the core of advanced-logic volume production)",
+   "financials": {
+    "market_cap": {
+     "value": 2242.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 34.07,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q1"
+    },
+    "equity_volatility": {
+     "value": 0.3913,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 10.644596150810568,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.3913,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q1",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "South_China_Sea",
+   "name": "South China Sea",
+   "lat": 13.5,
+   "lon": 114.5,
+   "country": null,
+   "type": "affected",
+   "order": 2,
+   "impact_score": 60,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.6,
+   "why": "route:demand weight 0.60"
+  },
+  {
+   "id": "China",
+   "name": "China",
+   "lat": 35.8617,
+   "lon": 104.1954,
+   "country": "CN",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 50,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.5,
+   "why": "route:demand weight 0.50"
+  },
+  {
+   "id": "Japan",
+   "name": "Japan",
+   "lat": 36.2048,
+   "lon": 138.2529,
+   "country": "JP",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 45,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.45,
+   "why": "route:demand weight 0.45"
+  },
+  {
+   "id": "South_Korea",
+   "name": "South Korea",
+   "lat": 35.91,
+   "lon": 127.77,
+   "country": "KR",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 45,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.45,
+   "why": "route:demand weight 0.45"
+  },
+  {
+   "id": "United_States",
+   "name": "United States",
+   "lat": 37.09,
+   "lon": -95.71,
+   "country": "US",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 20,
+   "confidence": 1.0,
+   "role": "demand",
+   "raw_impact": 0.2,
+   "why": "route:demand weight 0.20"
+  },
+  {
+   "id": "Evergreen",
+   "name": "Evergreen",
+   "lat": 25.033,
+   "lon": 121.5654,
+   "country": "TW",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 49,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.49,
+   "tickers": [
+    "2603"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.5,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Taiwan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "PTP",
+     "type": "context_link",
+     "role": "demand",
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Maersk",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "MSC",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "COSCO",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "Taiwan (demand 0.70) x DECAY 0.7",
+   "title": "Evergreen",
+   "role_blurb": "Taiwanese container carrier — Ocean Alliance member; LISTED (TWSE:2603) → Merton-computable; ~1.7M TEU",
+   "financials": {
+    "market_cap": {
+     "value": 16.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 5.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2025"
+    },
+    "equity_volatility": {
+     "value": 0.2916,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 4.9127889070278545,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.2916,
+    "provenance": {
+     "market_cap": "estimated",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "CSSC",
+   "name": "CSSC",
+   "lat": 39.904,
+   "lon": 116.407,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 35,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.35,
+   "tickers": [],
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "customer",
+     "role": null,
+     "weight": 0.7,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "COSCO",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Port_of_Shanghai",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.3,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "China (demand 0.50) x DECAY 0.7",
+   "title": "CSSC",
+   "role_blurb": "state-owned shipbuilding conglomerate; world's largest shipbuilder"
+  },
+  {
+   "id": "HMN_Tech",
+   "name": "HMN Tech",
+   "lat": 39.084,
+   "lon": 117.201,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 35,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.35,
+   "tickers": [],
+   "neighbourhood": [
+    {
+     "target": "Subsea_Cables",
+     "type": "manufactures",
+     "role": "supply",
+     "weight": null,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "China (demand 0.50) x DECAY 0.7",
+   "title": "HMN Technologies Co., Ltd.",
+   "role_blurb": "Chinese submarine-cable manufacturer & cable-laying operator (~10% of new systems, ~4% planned through 2026); Hengtong-owned (rebranded from Huawei Marine 2020)"
+  },
+  {
+   "id": "CMOC",
+   "name": "CMOC",
+   "lat": 34.618,
+   "lon": 112.454,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 35,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.35,
+   "tickers": [
+    "3993"
+   ],
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Cobalt",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.31,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "DRC",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Glencore",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Copper",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "China (demand 0.50) x DECAY 0.7",
+   "title": "CMOC",
+   "role_blurb": "World's #1 cobalt miner (~31%, DRC TFM/KFM); Chinese-owned, copper-focused; the concrete China-DRC-cobalt giant",
+   "financials": {
+    "market_cap": {
+     "value": 64.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 0.75,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.5872,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 7.366849204753794,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.5872,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "COSCO",
+   "name": "COSCO",
+   "lat": 31.2304,
+   "lon": 121.4737,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 35,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.35,
+   "tickers": [
+    "1919",
+    "601919"
+   ],
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "China",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "MSC",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Maersk",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "CMA_CGM",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Hapag-Lloyd",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Evergreen",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.5,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Port_of_Shanghai",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Panama_Canal",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.5,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "OOIL",
+     "type": "owns",
+     "role": "supply",
+     "weight": 0.75,
+     "unit": "share",
+     "weight_source": "observed"
+    }
+   ],
+   "why": "China (demand 0.50) x DECAY 0.7",
+   "title": "COSCO",
+   "role_blurb": "COSCO SHIPPING Holdings (HKEX:1919) — listed container-shipping arm of the Chinese state-owned COSCO SHIPPING group; rank 3-4 carrier, Ocean Alliance member",
+   "financials": {
+    "market_cap": {
+     "value": 32.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 10.668,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2025-FY"
+    },
+    "equity_volatility": {
+     "value": 0.2869,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 4.827622214860469,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.2869,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025-FY",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "OOCL",
+   "name": "OOCL",
+   "lat": 22.302,
+   "lon": 114.177,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 35,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.35,
+   "tickers": [],
+   "neighbourhood": [
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.5,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "COSCO",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Maersk",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "MSC",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "China (demand 0.50) x DECAY 0.7",
+   "title": "OOCL",
+   "role_blurb": "Hong Kong container carrier — Ocean Alliance member; subsidiary of listed OOIL, COSCO-controlled; standalone unlisted → mc-null (Merton-excluded)"
+  },
+  {
+   "id": "Shenghe",
+   "name": "Shenghe",
+   "lat": 30.573,
+   "lon": 104.066,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 35,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.35,
+   "tickers": [
+    "600392"
+   ],
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.1,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "MP_Materials",
+     "type": "shareholder",
+     "role": null,
+     "weight": 0.077,
+     "unit": "share",
+     "weight_source": null
+    }
+   ],
+   "why": "China (demand 0.50) x DECAY 0.7",
+   "title": "Shenghe",
+   "role_blurb": "Chinese rare-earth trader/refiner; 7.7% shareholder of MP_Materials (offtake severed 2026-01); the concrete MP-China link",
+   "financials": {
+    "market_cap": {
+     "value": 8.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 1.5,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.6395,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 2.629158038308571,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.6395,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "Tsingshan",
+   "name": "Tsingshan",
+   "lat": 27.994,
+   "lon": 120.699,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 35,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.35,
+   "tickers": [],
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Nickel",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Indonesia",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "China (demand 0.50) x DECAY 0.7",
+   "title": "Tsingshan",
+   "role_blurb": "Chinese group; world's largest nickel producer; dominant in Indonesia nickel/HPAL (IMIP Morowali); privately-held/unlisted"
+  },
+  {
+   "id": "Kawasaki_Heavy_Industries",
+   "name": "Kawasaki Heavy Industries",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 32,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.315,
+   "tickers": [
+    "7012"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "customer",
+     "role": null,
+     "weight": 0.2,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.4,
+     "unit": "share",
+     "weight_source": "estimated"
+    }
+   ],
+   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "title": "Kawasaki Heavy Industries",
+   "role_blurb": "Japanese diversified heavy-industry conglomerate (SIPRI Top 100; Japan defence #2 / defence is approx. 15% of revenue, MINORITY; the majority is civil — commercial aviation/rolling stock/energy-hydrogen/ships/motorcycles) / supply side descending from Japanese defence demand + civil multi-domain",
+   "financials": {
+    "market_cap": {
+     "value": 16.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 3.766,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2025-FY"
+    },
+    "equity_volatility": {
+     "value": 0.5321,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 2.92498525600269,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.5321,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025-FY",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "Mitsubishi_Heavy_Industries",
+   "name": "Mitsubishi Heavy Industries",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 32,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.315,
+   "tickers": [
+    "7011"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "customer",
+     "role": null,
+     "weight": 0.2,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Nuclear_Power",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.35,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.4,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Orano",
+     "type": "shareholder",
+     "role": null,
+     "weight": 0.05,
+     "unit": "share",
+     "weight_source": "observed"
+    }
+   ],
+   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "title": "Mitsubishi Heavy Industries, Ltd.",
+   "role_blurb": "Japan's largest diversified heavy-industry conglomerate (SIPRI Top 100 #32 = Japan's largest defence company, but defence is approx. 15% of revenue; the majority is civil — energy/plant/aerospace) / supply side descending from Japanese, not US, defence demand + civil multi-domain",
+   "financials": {
+    "market_cap": {
+     "value": 90.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 11.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q1"
+    },
+    "equity_volatility": {
+     "value": 0.426,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 5.085650807612415,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.426,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q1",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "JSR",
+   "name": "JSR",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 32,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.315,
+   "tickers": [],
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "TSMC",
+     "type": "customer",
+     "role": null,
+     "weight": 0.35,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Samsung",
+     "type": "customer",
+     "role": null,
+     "weight": 0.25,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Intel",
+     "type": "customer",
+     "role": null,
+     "weight": 0.15,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Tokyo_Ohka",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Semiconductor_Materials",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    }
+   ],
+   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "title": "JSR",
+   "role_blurb": "World's #1 photoresist maker (~27%, incl. EUV); taken private by JIC (2024); EUV chemistry partner of Intel/Samsung/TSMC",
+   "financials": {
+    "market_cap": {
+     "value": 6.4,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    }
+   }
+  },
+  {
+   "id": "SUMCO",
+   "name": "SUMCO",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 32,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.315,
+   "tickers": [
+    "3436"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "TSMC",
+     "type": "customer",
+     "role": null,
+     "weight": 0.35,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Samsung",
+     "type": "customer",
+     "role": null,
+     "weight": 0.25,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Intel",
+     "type": "customer",
+     "role": null,
+     "weight": 0.15,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Semiconductor_Materials",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.26,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "China",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.127,
+     "unit": "share",
+     "weight_source": "observed"
+    }
+   ],
+   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "title": "SUMCO",
+   "role_blurb": "Japanese silicon-wafer maker (world #2; with Shin-Etsu ~53% global); fab materials supplier",
+   "financials": {
+    "market_cap": {
+     "value": 9.22,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 2.259,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2025-FY"
+    },
+    "equity_volatility": {
+     "value": 0.7753,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 1.7606758630175334,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.7753,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025-FY",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "Shin-Etsu_Chemical",
+   "name": "Shin-Etsu Chemical",
+   "lat": 35.6895,
+   "lon": 139.6917,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 32,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.315,
+   "tickers": [
+    "4063"
+   ],
+   "neighbourhood": [
+    {
+     "target": "TSMC",
+     "type": "customer",
+     "role": null,
+     "weight": 0.3,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Samsung",
+     "type": "customer",
+     "role": null,
+     "weight": 0.22,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Tokyo_Electron",
+     "type": "complementary",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.5,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "SUMCO",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Semiconductor_Materials",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.28,
+     "unit": "share",
+     "weight_source": "estimated"
+    }
+   ],
+   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "title": "Shin-Etsu Chemical",
+   "role_blurb": "Materials chokepoint (world's largest silicon-wafer producer + one of the photoresist oligopoly) / non-China rare-earth magnet supply source",
+   "financials": {
+    "market_cap": {
+     "value": 84.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 0.2,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.3842,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 15.639843866950498,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.3842,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "Tokyo_Ohka",
+   "name": "Tokyo Ohka",
+   "lat": 35.531,
+   "lon": 139.703,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 32,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.315,
+   "tickers": [
+    "4186"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "TSMC",
+     "type": "customer",
+     "role": null,
+     "weight": 0.35,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Samsung",
+     "type": "customer",
+     "role": null,
+     "weight": 0.25,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Intel",
+     "type": "customer",
+     "role": null,
+     "weight": 0.15,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Semiconductor_Materials",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    }
+   ],
+   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "title": "Tokyo_Ohka",
+   "role_blurb": "Japanese photoresist leader (TOK); JSR's EUV-photoresist twin; the listed pure-play after JSR went private",
+   "financials": {
+    "market_cap": {
+     "value": 8.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 0.5,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "equity_volatility": {
+     "value": 0.5187,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 5.279908423088907,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.5187,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q2",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "Mitsui_OSK",
+   "name": "Mitsui OSK",
+   "lat": 35.69,
+   "lon": 139.7,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 32,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.315,
+   "tickers": [
+    "9104"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "NYK",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    }
+   ],
+   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "title": "Mitsui OSK",
+   "role_blurb": "Diversified maritime major (tanker + dry-bulk + LNG + car-carrier + container via ONE) — market position + transit-route economics",
+   "financials": {
+    "market_cap": {
+     "value": 11.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-06"
+    },
+    "total_debt": {
+     "value": 5.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2025-FY"
+    },
+    "equity_volatility": {
+     "value": 0.4,
+     "unit": "annualized",
+     "source": "estimated",
+     "as_of": "2026-07"
+    }
+   },
+   "credit": {
+    "distance_to_default": 2.8078770245142017,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.4,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "estimated"
+    },
+    "oldest_as_of": "2025-FY",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "NYK",
+   "name": "NYK",
+   "lat": 35.69,
+   "lon": 139.7,
+   "country": "JP",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 32,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.315,
+   "tickers": [
+    "9101"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Japan",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Strait_of_Malacca",
+     "type": "context_link",
+     "role": "demand",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    }
+   ],
+   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "title": "NYK",
+   "role_blurb": "Japan's largest diversified maritime group (dry-bulk + LNG + car-carrier + container via ONE + logistics) — market position + transit-route economics",
+   "financials": {
+    "market_cap": {
+     "value": 12.74,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-07"
+    },
+    "total_debt": {
+     "value": 4.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2025-FY"
+    },
+    "equity_volatility": {
+     "value": 0.4,
+     "unit": "annualized",
+     "source": "estimated",
+     "as_of": "2026-07"
+    }
+   },
+   "credit": {
+    "distance_to_default": 3.4787667598535967,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.4,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "estimated"
+    },
+    "oldest_as_of": "2025-FY",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "ADM",
+   "name": "ADM",
+   "lat": 41.878,
+   "lon": -87.63,
+   "country": "US",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 14,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.14,
+   "tickers": [
+    "ADM"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Grain",
+     "type": "customer",
+     "role": "trade",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "Soybean",
+     "type": "customer",
+     "role": "trade",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "United_States",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "title": "Archer Daniels Midland Company",
+   "role_blurb": "Major global grain & oilseed trader/handler (one of the 'ABCD' agri-merchants) — origination, oilseed crushing/processing, merchandising of grains & oilseeds",
+   "financials": {
+    "market_cap": {
+     "value": 37.3,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-07-06"
+    },
+    "total_debt": {
+     "value": 9.2,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2025-Q3"
+    },
+    "equity_volatility": {
+     "value": 0.2824,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-02"
+    }
+   },
+   "credit": {
+    "distance_to_default": 5.737868089724916,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.2824,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025-Q3",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "Bunge",
+   "name": "Bunge",
+   "lat": 38.663,
+   "lon": -90.577,
+   "country": "US",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 14,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.14,
+   "tickers": [
+    "BG"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Grain",
+     "type": "customer",
+     "role": "trade",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "Soybean",
+     "type": "customer",
+     "role": "trade",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "United_States",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "title": "Bunge Global SA",
+   "role_blurb": "Major global oilseed processor & grain trader/handler (one of the 'ABCD' agri-merchants); world's largest oilseed crusher post-Viterra — origination, crush/processing, merchandising",
+   "financials": {
+    "market_cap": {
+     "value": 20.85,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-07-06"
+    },
+    "total_debt": {
+     "value": 14.05,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2025-12-31"
+    },
+    "equity_volatility": {
+     "value": 0.2978,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-02"
+    }
+   },
+   "credit": {
+    "distance_to_default": 3.040705216348646,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.2978,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025-12-31",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "CF_Industries",
+   "name": "CF Industries",
+   "lat": 42.171,
+   "lon": -87.845,
+   "country": "US",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 14,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.14,
+   "tickers": [
+    "CF"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Nitrogen",
+     "type": "manufactures",
+     "role": "supply",
+     "weight": 0.12,
+     "unit": "share",
+     "weight_source": "observed"
+    },
+    {
+     "target": "Natural_Gas",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.75,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "United_States",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "title": "CF Industries Holdings, Inc.",
+   "role_blurb": "World's largest anhydrous ammonia producer / N. America's largest pure-play nitrogen — ~40% NA ammonia capacity; US-listed",
+   "financials": {
+    "market_cap": {
+     "value": 15.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 3.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2025"
+    },
+    "equity_volatility": {
+     "value": 0.4153,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 4.2030397886541175,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.4153,
+    "provenance": {
+     "market_cap": "estimated",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2025",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "Cargill",
+   "name": "Cargill",
+   "lat": 44.978,
+   "lon": -93.265,
+   "country": "US",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 14,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.14,
+   "tickers": [],
+   "neighbourhood": [
+    {
+     "target": "Grain",
+     "type": "customer",
+     "role": "trade",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "Soybean",
+     "type": "customer",
+     "role": "trade",
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "United_States",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "title": "Cargill, Incorporated",
+   "role_blurb": "Major global grain & oilseed trader/handler (one of the 'ABCD' agri-merchants), privately held — origination, processing & distribution of grains, oilseeds, and food/animal-nutrition; largest private US company by revenue"
+  },
+  {
+   "id": "Mosaic",
+   "name": "Mosaic",
+   "lat": 27.951,
+   "lon": -82.457,
+   "country": "US",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 14,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.14,
+   "tickers": [
+    "MOS"
+   ],
+   "neighbourhood": [
+    {
+     "target": "Phosphate",
+     "type": "manufactures",
+     "role": "supply",
+     "weight": 0.1,
+     "unit": "share",
+     "weight_source": "observed"
+    },
+    {
+     "target": "Potash",
+     "type": "manufactures",
+     "role": "supply",
+     "weight": 0.12,
+     "unit": "share",
+     "weight_source": "observed"
+    },
+    {
+     "target": "United_States",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Sulfur",
+     "type": "context_link",
+     "role": "demand",
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "title": "The Mosaic Company",
+   "role_blurb": "US listed phosphate + potash producer — ~10% global phosphate, ~12% global potash production",
+   "financials": {
+    "market_cap": {
+     "value": 7.1,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-06-26"
+    },
+    "total_debt": {
+     "value": 4.25,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q1"
+    },
+    "equity_volatility": {
+     "value": 0.4549,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 2.0198543767665114,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.4549,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q1",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "SubCom",
+   "name": "SubCom",
+   "lat": 40.518,
+   "lon": -74.412,
+   "country": "US",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 14,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.14,
+   "tickers": [],
+   "neighbourhood": [
+    {
+     "target": "Subsea_Cables",
+     "type": "manufactures",
+     "role": "supply",
+     "weight": null,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "United_States",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "title": "SubCom, LLC",
+   "role_blurb": "US submarine-cable manufacturer & cable-laying operator (wet-plant + cable-ships); ~19% of new subsea systems 2020-24 — privately held (Cerberus Capital)"
+  },
+  {
+   "id": "Albemarle",
+   "name": "Albemarle",
+   "lat": 35.227,
+   "lon": -80.843,
+   "country": "US",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 14,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.14,
+   "tickers": [
+    "ALB"
+   ],
+   "neighbourhood": [
+    {
+     "target": "United_States",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Lithium",
+     "type": "context_link",
+     "role": "supply",
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "China",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Chile",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "title": "Albemarle",
+   "role_blurb": "World's largest lithium producer (Chile/Australia ops); US-listed; the lithium supply anchor vs China refining",
+   "financials": {
+    "market_cap": {
+     "value": 18.8,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 1.9,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q1"
+    },
+    "equity_volatility": {
+     "value": 0.6244,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 3.5767811244377468,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.6244,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q1",
+    "slice": "v29"
+   }
+  },
+  {
+   "id": "MP_Materials",
+   "name": "MP Materials",
+   "lat": 36.17,
+   "lon": -115.14,
+   "country": "US",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 14,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.14,
+   "tickers": [
+    "MP"
+   ],
+   "neighbourhood": [
+    {
+     "target": "United_States",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.15,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "China",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Export_Controls",
+     "type": "context_link",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "title": "MP_Materials",
+   "role_blurb": "Only major US rare-earth miner/refiner (Mountain Pass, CA); Pentagon ~15% stake (2025); US counter to China RE dominance",
+   "financials": {
+    "market_cap": {
+     "value": 9.6,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 1.0,
+     "unit": "usd_bn",
+     "source": "estimated",
+     "as_of": "2026-Q1"
+    },
+    "equity_volatility": {
+     "value": 0.8583,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 2.3680700875195404,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.8583,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "estimated",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q1",
+    "slice": "v29"
+   }
+  }
+ ],
+ "edges": [
+  {
+   "source_id": "Taiwan_Strait",
+   "target_id": "Taiwan",
+   "source_lat": 24.8,
+   "source_lon": 119.9,
+   "target_lat": 24.1,
+   "target_lon": 121.0,
+   "intensity": 0.7,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Taiwan_Strait",
+   "target_id": "TSMC",
+   "source_lat": 24.8,
+   "source_lon": 119.9,
+   "target_lat": 24.7828,
+   "target_lon": 121.005,
+   "intensity": 0.65,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Taiwan_Strait",
+   "target_id": "South_China_Sea",
+   "source_lat": 24.8,
+   "source_lon": 119.9,
+   "target_lat": 13.5,
+   "target_lon": 114.5,
+   "intensity": 0.6,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Taiwan_Strait",
+   "target_id": "China",
+   "source_lat": 24.8,
+   "source_lon": 119.9,
+   "target_lat": 35.8617,
+   "target_lon": 104.1954,
+   "intensity": 0.5,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Taiwan_Strait",
+   "target_id": "Japan",
+   "source_lat": 24.8,
+   "source_lon": 119.9,
+   "target_lat": 36.2048,
+   "target_lon": 138.2529,
+   "intensity": 0.45,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Taiwan_Strait",
+   "target_id": "South_Korea",
+   "source_lat": 24.8,
+   "source_lon": 119.9,
+   "target_lat": 35.91,
+   "target_lon": 127.77,
+   "intensity": 0.45,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Taiwan_Strait",
+   "target_id": "United_States",
+   "source_lat": 24.8,
+   "source_lon": 119.9,
+   "target_lat": 37.09,
+   "target_lon": -95.71,
+   "intensity": 0.2,
+   "target_order": 2,
+   "role": "demand"
+  },
+  {
+   "source_id": "Taiwan",
+   "target_id": "Evergreen",
+   "source_lat": 24.1,
+   "source_lon": 121.0,
+   "target_lat": 25.033,
+   "target_lon": 121.5654,
+   "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CSSC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.904,
+   "target_lon": 116.407,
+   "intensity": 0.35,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "HMN_Tech",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 39.084,
+   "target_lon": 117.201,
+   "intensity": 0.35,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "CMOC",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 34.618,
+   "target_lon": 112.454,
+   "intensity": 0.35,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "COSCO",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 31.2304,
+   "target_lon": 121.4737,
+   "intensity": 0.35,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "OOCL",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 22.302,
+   "target_lon": 114.177,
+   "intensity": 0.35,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "Shenghe",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 30.573,
+   "target_lon": 104.066,
+   "intensity": 0.35,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "Tsingshan",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 27.994,
+   "target_lon": 120.699,
+   "intensity": 0.35,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Kawasaki_Heavy_Industries",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.315,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Mitsubishi_Heavy_Industries",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.315,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "JSR",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.315,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "SUMCO",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.315,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Shin-Etsu_Chemical",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.6895,
+   "target_lon": 139.6917,
+   "intensity": 0.315,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Tokyo_Ohka",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.531,
+   "target_lon": 139.703,
+   "intensity": 0.315,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "Mitsui_OSK",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.69,
+   "target_lon": 139.7,
+   "intensity": 0.315,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "Japan",
+   "target_id": "NYK",
+   "source_lat": 36.2048,
+   "source_lon": 138.2529,
+   "target_lat": 35.69,
+   "target_lon": 139.7,
+   "intensity": 0.315,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "United_States",
+   "target_id": "ADM",
+   "source_lat": 37.09,
+   "source_lon": -95.71,
+   "target_lat": 41.878,
+   "target_lon": -87.63,
+   "intensity": 0.14,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "United_States",
+   "target_id": "Bunge",
+   "source_lat": 37.09,
+   "source_lon": -95.71,
+   "target_lat": 38.663,
+   "target_lon": -90.577,
+   "intensity": 0.14,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "United_States",
+   "target_id": "CF_Industries",
+   "source_lat": 37.09,
+   "source_lon": -95.71,
+   "target_lat": 42.171,
+   "target_lon": -87.845,
+   "intensity": 0.14,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "United_States",
+   "target_id": "Cargill",
+   "source_lat": 37.09,
+   "source_lon": -95.71,
+   "target_lat": 44.978,
+   "target_lon": -93.265,
+   "intensity": 0.14,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "United_States",
+   "target_id": "Mosaic",
+   "source_lat": 37.09,
+   "source_lon": -95.71,
+   "target_lat": 27.951,
+   "target_lon": -82.457,
+   "intensity": 0.14,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "United_States",
+   "target_id": "SubCom",
+   "source_lat": 37.09,
+   "source_lon": -95.71,
+   "target_lat": 40.518,
+   "target_lon": -74.412,
+   "intensity": 0.14,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "United_States",
+   "target_id": "Albemarle",
+   "source_lat": 37.09,
+   "source_lon": -95.71,
+   "target_lat": 35.227,
+   "target_lon": -80.843,
+   "intensity": 0.14,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "United_States",
+   "target_id": "MP_Materials",
+   "source_lat": 37.09,
+   "source_lon": -95.71,
+   "target_lat": 36.17,
+   "target_lon": -115.14,
+   "intensity": 0.14,
+   "target_order": 3,
+   "role": "demand"
+  }
+ ],
+ "conduits": [],
+ "no_map": [],
+ "honest_gaps": {
+  "exposed_null": [],
+  "node_gaps": [
+   {
+    "id": "South_Korea",
+    "impact": 0.45,
+    "reason": "no company node with country=KR & domain∩['supply_chain']"
+   }
+  ]
+ },
+ "credit_gaps": [
+  {
+   "id": "CSSC",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  },
+  {
+   "id": "HMN_Tech",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  },
+  {
+   "id": "OOCL",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  },
+  {
+   "id": "Tsingshan",
+   "kind": "honest_null_unsourced",
+   "reason": "EXCLUDE: market_cap null",
+   "slice": "v29"
+  },
+  {
+   "id": "JSR",
+   "kind": "private_valuation",
+   "reason": "EXCLUDE: private/unlisted valuation (mc not a traded market cap)",
+   "slice": "v29"
+  },
+  {
+   "id": "Cargill",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  },
+  {
+   "id": "SubCom",
+   "kind": "severed_no_traded_equity",
+   "reason": "EXCLUDE: market_cap null — BY-DESIGN SOE/segment/unlisted-null (not a gap)",
+   "slice": "v29"
+  }
+ ]
+}
