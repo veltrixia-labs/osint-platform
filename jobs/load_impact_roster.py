@@ -1,6 +1,6 @@
 """
 Impact-roster loader — reads the vault's cascade output (`_shock_impacts.json`)
-joined to the Merton PD slice (`_slice_pd_v15.json`) and loads a (scenario,
+joined to the Merton PD slice (`_slice_pd_v29.json`) and loads a (scenario,
 entity) impact roster into ``impact_roster_rows``.
 
 Both artifacts live OUTSIDE this repo (the 300-node graph, its weights and its
@@ -37,7 +37,41 @@ from db.models import ImpactRosterLoad, ImpactRosterRow
 logger = logging.getLogger(__name__)
 
 IMPACTS_FILE = "_shock_impacts.json"
-PD_FILE = "_slice_pd_v15.json"
+# PD slice pin: v15 -> v29 on 2026-09-04.
+#
+# WHY IT MOVED. The v15 pin was set at 1f776b9 (2026-07-29) with no reason
+# recorded — not here, not in that commit. v29 already existed when it was set:
+# it is present in the vault tree at fee4779, the vault's HEAD on that date. How
+# much older it was is not recoverable, so no age is claimed here — every slice
+# entered the vault's history in its initial commit (bfb1f08, 2026-07-10) and
+# v29's mtime has since been overwritten by regeneration. Note also that v25 has
+# never existed: the sequence is v12..v24, v26..v29.
+#
+# On 2026-08-29 six firms' total_debt was corrected against primary filings —
+# Maersk, Hapag-Lloyd, COSCO, Sinopec, SUMCO, Kawasaki_Heavy (vault 17e5d6d,
+# 9df966f, e2a447d, 127e04f, 4fc1db9, aab981b). Those corrections cannot reach
+# v15: its generator, _validation/model_slice_v15.py:70, is gated
+# `GATE_OK=(ENT==239)` and hard-exits at :76, against a vault now at 302 nodes.
+# v15 is frozen by construction, so the product has been serving a
+# pre-correction pd.
+#
+# WHAT MOVING THE PIN ACTUALLY CHANGES — measured by running build_rows()
+# read-only against both slices, not argued:
+#   - 100 rows either way. No row appears, none disappears; base_seen and the
+#     skipped-variant list are identical.
+#   - Exactly ONE row differs: china_re / Kawasaki_Heavy_Industries.
+#       debt         4.11    -> 3.766
+#       asset_value  20.11   -> 19.766
+#       d2           2.79314 -> 2.92499
+#       pd           0.00261 -> 0.00172
+#     All four move together; the Merton inputs are why pd moves.
+#   - No pd_category changes anywhere. as_of is "2026-07-03" in both slices, so
+#     pd_source_as_of is unchanged.
+#   - v15 is a strict subset of v29 (156 of 199 entities; nothing in v15 is
+#     absent from v29).
+# The other five corrected firms move in the slice but not in the roster: none
+# appears in any of the 13 base scenarios, so no loaded row carries them.
+PD_FILE = "_slice_pd_v29.json"
 
 # The 13 base scenarios. The 11 variant keys (*_revenue, *_revenue_roster,
 # *_2hop) are supply-side / routing detail, NOT top-level scenarios, and are
