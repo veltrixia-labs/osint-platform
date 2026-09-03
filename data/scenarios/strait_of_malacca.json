@@ -15,10 +15,9 @@
    "energy"
   ]
  },
- "generated_at": "2026-07-13",
  "graph": {
-  "nodes": 300,
-  "edges": 1498,
+  "nodes": 302,
+  "edges": 1526,
   "gate": "PASS"
  },
  "scaling": {
