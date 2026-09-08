@@ -25,6 +25,7 @@ import {
 } from '../api';
 import { chudDetailHtml, openSysLogicOverlay, sysLogicFlowSvg } from './alerts';
 import { wirePanelGuideTooltips } from './pro_dashboard_primitives';
+import { formatIntelPreciseTimestamp } from './utils';
 
 const DAY_MS = 86_400_000;
 
@@ -93,17 +94,45 @@ export function disposeTrendFlow(): void {
 }
 
 // ── Top statbar (global month summary) ───────────────────────────────────────
+// The two counts cover DIFFERENT WINDOWS, so each states its own. alerts_spiked
+// accumulates across hourly rebuilds (jobs/monthly_trend_worker.py:185 unions the
+// freshly-built signals with those already frozen), while alerts_total is rebuilt
+// from live AlertLog rows, which are purged at ~24h retention. Rendered bare and
+// side by side they asserted a subset relation that does not hold.
+//
+// NODES / EDGES / H are gone. node_count and edge_count are the summed lengths of
+// the fixed per-domain site-key rosters, not counts of anywhere something happened;
+// entropy_index is a mean of per-site intensity entropies blended with an hour term
+// and a density term, not the sector dispersion the "H" label implied.
 function _renderSummary(statsEl: HTMLElement, snapshot: MonthlyTrendSnapshot): void {
     const s = snapshot.summary || {};
     const top = Array.isArray(s.top_sectors) ? s.top_sectors : [];
-    const entropy = typeof s.entropy_index === 'number' ? s.entropy_index.toFixed(3) : (s.entropy_index ?? '—');
+    // A missing aggregate is not a zero. Omit the whole stat rather than render one.
+    // The scope qualifier is a slot, not a constant: refresh() rewrites it whenever
+    // a chart day is selected, because the count beside it becomes day-scoped there.
+    const spiked = typeof s.alerts_spiked === 'number'
+        ? `<span class="tf-stat"><b data-tf-spiked>${s.alerts_spiked}</b> HIGH-IMPACT `
+          + `<span data-tf-spiked-scope>· month to date</span></span>`
+        : '';
+    const total = typeof s.alerts_total === 'number'
+        ? `<span class="tf-stat tf-stat--dim"><b>${s.alerts_total}</b> TOTAL · last 24h</span>`
+        : '';
     statsEl.innerHTML =
-        `<span class="tf-stat"><b data-tf-spiked>${s.alerts_spiked ?? 0}</b> HIGH-IMPACT</span>` +
-        `<span class="tf-stat tf-stat--dim"><b>${s.alerts_total ?? 0}</b> TOTAL</span>` +
-        `<span class="tf-stat"><b>${entropy}</b> H</span>` +
-        `<span class="tf-stat"><b>${s.node_count ?? 0}</b> NODES</span>` +
-        `<span class="tf-stat"><b>${s.edge_count ?? 0}</b> EDGES</span>` +
+        spiked +
+        total +
         (top.length ? `<span class="tf-stat tf-stat--sectors">${top.map((d: string) => _esc(_domainLabel(d))).join(' · ')}</span>` : '');
+}
+
+/**
+ * True while the DISPLAYED period is still in progress. `period.end` is the
+ * exclusive month boundary the API already ships, so "now < end" is the whole
+ * predicate — no clock arithmetic, no hardcoded month. An open month is being
+ * force-rebuilt hourly by jobs/main_scheduler.py:176, so nothing about it is
+ * immutable yet; a completed month is never rebuilt again.
+ */
+function _isPeriodOpen(snap: MonthlyTrendSnapshot | null): boolean {
+    const end = snap?.period?.end ? new Date(snap.period.end).getTime() : NaN;
+    return Number.isFinite(end) && Date.now() < end;
 }
 
 // ── Top-Right quadrant: interactive 6-node Cyber-Orbit sector selector ───────
@@ -145,7 +174,11 @@ function _buildOrbit(counts: Record<string, number>): string {
         `</svg>` +
         `<button type="button" class="tf-orbit-core" data-tf-core title="Show all sectors (reset filter)">` +
         `<span class="tf-orbit-core-val">${String(totalSpiked).padStart(2, '0')}</span>` +
-        `<span class="tf-orbit-core-lbl" data-tf-core-state>TOTAL</span>` +
+        // "HIGH-IMPACT", not "TOTAL": this sum is the admitted signals month to
+        // date, the same quantity the statbar's HIGH-IMPACT stat reports. The
+        // statbar's TOTAL is alerts_total, a 24h count — one word for both was a
+        // collision, not a synonym. Mirrored by the refresh() writer.
+        `<span class="tf-orbit-core-lbl" data-tf-core-state>HIGH-IMPACT</span>` +
         `</button>` +
         nodes +
         `</div>`
@@ -429,7 +462,7 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         `<div class="tf-panel tf-quad tf-quad--news">` +
         `<div class="tf-panel-head"><div class="tf-panel-headcol">` +
         `<span class="tf-panel-title">HIGH-IMPACT SIGNALS</span>` +
-        `<span class="tf-panel-subnote">High-impact signals — importance ≥50, plus high-anomaly (≥60%) signals not yet scored</span>` +
+        `<span class="tf-panel-subnote">High-impact signals — importance ≥50, or anomaly ≥60%</span>` +
         `</div>` +
         `<span class="tf-panel-tag"><b data-tf-newscount>0</b> stories</span>` +
         `<button type="button" class="tf-day-reset" data-tf-day-reset hidden></button></div>` +
@@ -520,11 +553,18 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
         if (stateEl) {
             stateEl.textContent = tfActiveDay != null
                 ? _dayLabel(tfActiveDay).toUpperCase()
-                : (tfActiveDomain ? `${_domainLabel(tfActiveDomain).toUpperCase()}` : 'TOTAL');
+                : (tfActiveDomain ? `${_domainLabel(tfActiveDomain).toUpperCase()}` : 'HIGH-IMPACT');
         }
-        // Header SPIKED count follows the same scope.
+        // Header SPIKED count follows the same scope — and so must its qualifier,
+        // or "month to date" would sit beside a single day's count.
         const spikedEl = statsEl.querySelector<HTMLElement>('[data-tf-spiked]');
         if (spikedEl) spikedEl.textContent = String(scopedTotal);
+        const spikedScopeEl = statsEl.querySelector<HTMLElement>('[data-tf-spiked-scope]');
+        if (spikedScopeEl) {
+            spikedScopeEl.textContent = tfActiveDay != null
+                ? `· ${_dayLabel(tfActiveDay)}`
+                : '· month to date';
+        }
 
         renderResetChip();
         renderChart();
@@ -614,7 +654,13 @@ export async function renderTrendFlow(container: HTMLElement, _userTier: string 
             tfSortedAlerts = [];
             return;
         }
-        subEl.textContent = `${snap.period.label} · high-impact signals across the 6 strategic sectors`;
+        // Disclose WHEN this snapshot was built. Without it the panel is captioned
+        // with a month label alone, which reads as "now" regardless of how long ago
+        // the hourly rebuild last ran. Absent generated_at → no suffix at all; the
+        // current time would be a fabricated stand-in for a value we do not have.
+        const builtAt = snap.generated_at ? formatIntelPreciseTimestamp(snap.generated_at) : '';
+        subEl.textContent = `${snap.period.label} · high-impact signals across the 6 strategic sectors`
+            + (builtAt ? ` · snapshot ${builtAt.slice(0, 16)} UTC` : '');
         _renderSummary(statsEl, snap);
         _hydrate(snap, chartEl, newsEl, newsCountEl);   // populates tfSortedAlerts + tfAlertDomain
         // Build the radar from the SAME scoped source as the list (whole month on
@@ -673,8 +719,8 @@ const TF_SYS_LOGIC_STAGES: ReadonlyArray<{
 }> = [
     {
         idx: '01', glyph: '📚', title: 'Monthly Archive Read', tag: '[AlertLog window]',
-        desc: 'Pulls every non-suppressed alert in the calendar month; alerts are already 24h-cluster-deduped at creation.',
-        tick: '<b data-tfsl="total">—</b> alerts in month',
+        desc: 'Reads the non-suppressed alerts still held in the 24-hour AlertLog window; signals admitted by earlier rebuilds this month are carried forward from the stored snapshot. Alerts are already 24h-cluster-deduped at creation.',
+        tick: '<b data-tfsl="total">—</b> alerts in the last 24h',
     },
     {
         idx: '02', glyph: '⚖', title: 'Importance-Primary Admission', tag: '[two-gate filter]',
@@ -683,8 +729,8 @@ const TF_SYS_LOGIC_STAGES: ReadonlyArray<{
     },
     {
         idx: '03', glyph: '🧭', title: 'Sector & Geographic Mapping', tag: '[6-sector grouping]',
-        desc: 'Groups admitted alerts into the 6 strategic sectors and pins those with resolvable locations on the map; how evenly activity spreads across sectors is summarised with Shannon entropy.',
-        tick: 'H <b data-tfsl="entropy">—</b> · <b data-tfsl="nodes">—</b> nodes / <b data-tfsl="edges">—</b> edges',
+        desc: 'Groups admitted alerts into the 6 strategic sectors and pins those with resolvable locations on the map.',
+        tick: 'across <b data-tfsl="sectors">—</b> sectors',
     },
     {
         idx: '04', glyph: '🧊', title: 'Monthly Archive Record', tag: '[immutable snapshot]',
@@ -694,7 +740,19 @@ const TF_SYS_LOGIC_STAGES: ReadonlyArray<{
 ];
 
 function tfStageHtml(): string {
-    return TF_SYS_LOGIC_STAGES.map((s, i) => `
+    // Stage 04's wording is conditional: the current month is force-rebuilt every
+    // hour, so "immutable" is true only once the month has closed. The array below
+    // carries the completed-month wording; an open month overrides it here.
+    const open = _isPeriodOpen(tfLastSnapshot);
+    return TF_SYS_LOGIC_STAGES.map((s0, i) => {
+        const s = open && s0.idx === '04'
+            ? {
+                ...s0,
+                tag: '[live · rebuilt hourly]',
+                desc: 'Saves the month as one complete record, rebuilt each hour while the month is in progress — every admitted signal with up to 6 sources embedded — so browsing past months replays instantly with no refetching.',
+            }
+            : s0;
+        return `
         <article class="sl-card" style="--sl-i:${i}">
             <div class="sl-card-rail" aria-hidden="true"></div>
             <header class="sl-card-head">
@@ -705,35 +763,33 @@ function tfStageHtml(): string {
             <h3 class="sl-card-title">${_esc(s.title)}</h3>
             <p class="sl-card-desc">${_esc(s.desc)}</p>
             <div class="sl-card-tick">${s.tick}</div>
-        </article>`).join('<div class="sl-arrow" aria-hidden="true">▶</div>');
+        </article>`;
+    }).join('<div class="sl-arrow" aria-hidden="true">▶</div>');
 }
 
 function tfStatePanelsHtml(): string {
-    // Left (top) — Shannon entropy: H = −∑ᵢ P(xᵢ) log P(xᵢ) (same markup as the Alert Stream).
-    const entropy = `
-        <div class="sl-eq">
-            <span class="sl-var">H</span>
-            <span class="sl-op">=</span>
-            <span class="sl-neg">−</span>
-            <span class="sl-sum">∑<span class="sl-sub">i</span></span>
-            <span class="sl-term">P(x<span class="sl-sub">i</span>)</span>
-            <span class="sl-op">log</span>
-            <span class="sl-term">P(x<span class="sl-sub">i</span>)</span>
-        </div>`;
+    // The SECTOR DISPERSION panel is gone: it printed H = −∑ P log P above a number
+    // that is not that quantity. entropy_index averages per-site intensity entropies
+    // (already blended with an hour term and a density term) over only those domains
+    // that produced spatial nodes — the three quiet sectors are absent from it
+    // entirely, so it never measured dispersion across sectors.
 
     const admission = `
         <pre class="sl-code"><span class="sl-code-head">[Admission Gate]</span>
 <span class="sl-kw">for</span> (alert <span class="sl-kw">of</span> month_alerts) {
   imp = alert.importance_score
   pct = alert.intensity_pct
-  keep = (imp &gt;= 50) || (imp == <span class="sl-kw">null</span> &amp;&amp; pct &gt;= 60)
+  keep = (imp &gt;= 50) || (pct &gt;= 60)
 }</pre>`;
 
+    const replayNote = _isPeriodOpen(tfLastSnapshot)
+        ? '// rebuilt hourly while the month is open'
+        : '// no polling: the archive is immutable';
     const replay = `
         <pre class="sl-code"><span class="sl-code-head">[Archive Replay Loop]</span>
 snap = <span class="sl-fn">fetch</span>(<span class="sl-str">'/api/monthly-trends/'</span> + selected_month)
 <span class="sl-fn">hydrate</span>(chart, orbit, list, detail)   <span class="sl-cmt">// 4 quadrants</span>
-<span class="sl-cmt">// no polling: the archive is immutable</span></pre>`;
+<span class="sl-cmt">${_esc(replayNote)}</span></pre>`;
 
     const telemetry = `
         <div class="sl-telemetry">
@@ -745,12 +801,10 @@ snap = <span class="sl-fn">fetch</span>(<span class="sl-str">'/api/monthly-trend
     return `
         <div class="sl-math">
             <section class="sl-math-block">
-                <div class="sl-math-label">SECTOR DISPERSION · Shannon entropy of the month's activity</div>
-                ${entropy}
-                <div class="sl-math-live">Snapshot entropy <b data-tfsl="entropy2">—</b> · <b data-tfsl="total2">—</b> alerts · <b data-tfsl="spiked2">—</b> admitted</div>
-                <div class="sl-divider" aria-hidden="true"></div>
+                <div class="sl-math-label">ADMISSION GATE · importance-primary selection</div>
                 ${admission}
-                <div class="sl-math-live">importance-primary · anomaly fallback for unscored rows</div>
+                <div class="sl-math-live"><b data-tfsl="total2">—</b> in the last 24h · <b data-tfsl="spiked2">—</b> admitted month to date</div>
+                <div class="sl-math-live">importance-primary · anomaly fallback for unscored or low-importance rows</div>
             </section>
             <section class="sl-math-block">
                 <div class="sl-math-label">SNAPSHOT REPLAY · frozen-archive hydration</div>
@@ -769,23 +823,24 @@ function tfSysLogicLoadReal(root: HTMLElement): void {
     };
     const snap = tfLastSnapshot;
     if (!snap) {
-        ['total', 'total2', 'spiked', 'spiked2', 'entropy', 'entropy2', 'nodes', 'edges', 'period']
+        ['total', 'total2', 'spiked', 'spiked2', 'sectors', 'period']
             .forEach((k) => set(k, 'n/a'));
         return;
     }
     const s = snap.summary || {};
     const numStr = (v: unknown) => (typeof v === 'number' ? String(v) : 'n/a');
-    const entStr = typeof s.entropy_index === 'number' ? s.entropy_index.toFixed(3) : 'n/a';
     const totalStr = numStr(s.alerts_total);
     const spikedStr = numStr(s.alerts_spiked);
     set('total', totalStr);
     set('total2', totalStr);
     set('spiked', spikedStr);
     set('spiked2', spikedStr);
-    set('entropy', entStr);
-    set('entropy2', entStr);
-    set('nodes', numStr(s.node_count));
-    set('edges', numStr(s.edge_count));
+    // Distinct sectors actually carrying an admitted signal — counted from the
+    // signals themselves, so it cannot drift from the list and the orbit.
+    const sigs = Array.isArray((s as any).signals) ? (s as any).signals as Array<{ domain_id?: string }> : null;
+    set('sectors', sigs
+        ? String(new Set(sigs.map((x) => x.domain_id).filter(Boolean)).size)
+        : 'n/a');
     set('period', snap.period && snap.period.label ? snap.period.label : 'n/a');
 }
 
