@@ -722,7 +722,6 @@ export function renderSpatialContagionShell(sc: any, sectionNum: string, domainI
             <div class="sc-stat"><span class="sc-stat-label">Epicenter</span><span class="sc-stat-val">${esc(epicenter.name)}</span></div>
             <div class="sc-stat"><span class="sc-stat-label">Impact Score</span><span class="sc-stat-val sc-stat-val--critical">${impactBand(effectiveSc.epicenter_impact_score)}</span></div>
             <div class="sc-stat"><span class="sc-stat-label">Affected Nodes</span><span class="sc-stat-val">${Math.max(0, (effectiveSc.node_count ?? nodes.length) - 1)}</span></div>
-            <div class="sc-stat"><span class="sc-stat-label">Edge Intensity</span><span class="sc-stat-val">${(effectiveSc.edge_intensity ?? 0).toFixed(3)}</span></div>
            </div>`
         : '';
 
@@ -813,7 +812,6 @@ export function renderStaticCascadeShell(sc: any, domainId: string): string {
             <div class="sc-stat"><span class="sc-stat-label">Epicenter</span><span class="sc-stat-val">${esc(epicenter.name)}</span></div>
             <div class="sc-stat"><span class="sc-stat-label">Impact Score</span><span class="sc-stat-val sc-stat-val--critical">${impactBand(sc.epicenter_impact_score)}</span></div>
             <div class="sc-stat"><span class="sc-stat-label">Affected Nodes</span><span class="sc-stat-val">${Math.max(0, (sc.node_count ?? nodes.length) - 1)}</span></div>
-            <div class="sc-stat"><span class="sc-stat-label">Edge Intensity</span><span class="sc-stat-val">${(sc.edge_intensity ?? 0).toFixed(3)}</span></div>
            </div>`
         : '';
 
