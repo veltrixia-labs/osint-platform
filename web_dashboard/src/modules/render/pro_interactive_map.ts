@@ -838,13 +838,13 @@ function renderStatsHudBody(sc: SpatialContagion | null | undefined): string {
     const epiName = epicenter?.name ?? (nodes.length > 0 ? 'Live cluster' : '—');
     // UNKNOWN IS NOT ZERO. The old `?? 0` chain printed "0.0" whether the value was a
     // genuine zero or simply absent — the same lie we removed from the map itself.
-    // A real 0 still renders as 0.0; only a null/undefined becomes "--".
+    // impactBand keeps that distinction: a real 0 bands to LOW, a null/undefined
+    // stays "--". Banded here for the same reason as the stat bar and the panels —
+    // one decimal asserted a precision a rescaled edge weight does not have.
     const impactRaw: number | null | undefined =
         (sc?.epicenter_impact_score as number | null | undefined) ?? epicenter?.impact_score;
-    const impact = impactRaw == null ? '--' : impactRaw.toFixed(1);
+    const impact = impactBand(impactRaw);
     const affectedN = Math.max(0, (sc?.node_count ?? nodes.length) - 1);
-    const edgeRaw = sc?.edge_intensity as number | null | undefined;
-    const edgeI = edgeRaw == null ? '--' : edgeRaw.toFixed(3);
     return `
         <div class="sc-hud-stat">
             <span class="sc-hud-stat-label">Epicenter</span>
@@ -857,10 +857,6 @@ function renderStatsHudBody(sc: SpatialContagion | null | undefined): string {
         <div class="sc-hud-stat">
             <span class="sc-hud-stat-label">Affected</span>
             <span class="sc-hud-stat-val">${affectedN}</span>
-        </div>
-        <div class="sc-hud-stat">
-            <span class="sc-hud-stat-label">Edge ν</span>
-            <span class="sc-hud-stat-val">${edgeI}</span>
         </div>
     `;
 }
