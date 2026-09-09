@@ -2352,12 +2352,22 @@ class SurveillanceMapController {
             </section>`;
     }
 
-    /** Neighbourhood — the company's own edges. Weighted relations sort first (desc) so 19 rows stay
-     *  scannable; unweighted structural rows (located_in, weight null) follow, rendered "--" — never
-     *  0 or blank, which would read as a real zero-weight relation. */
+    /** Neighbourhood — the company's own edges, in PAYLOAD ORDER within two groups: entries that
+     *  carry a number first, entries that do not after. That split is has-a-number / has-no-number,
+     *  not a ranking; unweighted structural rows (located_in, weight null) render "--" — never 0 or
+     *  blank, which would read as a real zero-weight relation.
+     *
+     *  ★ THE DESCENDING SORT BY WEIGHT WAS REMOVED. These are edge weights of MIXED UNITS and MIXED
+     *    DENOMINATORS, so ordering them by magnitude asserted a comparison the data does not support.
+     *    Measured on the shipped payloads: SOMO's panel sorted `Crude_Oil 3.4 mb_per_d` above
+     *    `Strait_of_Hormuz 0.85 share` — a volume ranked above a proportion purely as a number.
+     *    Same shape on CNPC in two payloads (2.6 mb_per_d above a 0.82 equity share). And even
+     *    within one unit the denominators differ: TSMC's 18 `share` rows mix input-dependence,
+     *    revenue-allocation and chokepoint-transit shares, which the vault holds as separate axes
+     *    and forbids comparing across hubs. Payload order asserts nothing. */
     private buildNeighbourhoodHtml(nb: any): string {
         if (!Array.isArray(nb) || !nb.length) return '';
-        const weighted = nb.filter((e) => e && e.weight != null).sort((a, b) => Number(b.weight) - Number(a.weight));
+        const weighted = nb.filter((e) => e && e.weight != null);
         const unweighted = nb.filter((e) => e && e.weight == null);
         const ordered = [...weighted, ...unweighted];
         const rows = ordered.map((e) => {
