@@ -138,12 +138,6 @@ export type SpatialNode = {
     trueLon?: number;
     /** Phase 2 — N-th Order Impact. Optional on payloads older than spatial_contagion_v2. */
     order?: ContagionOrder;
-    /**
-     * 0.0–1.0. DATA, not presentation — the producer emits a number and the badge
-     * formats it. (Was typed `string`, which forced producers to pre-render "100%"
-     * and made a real 0.0 indistinguishable from "absent" under a truthiness check.)
-     */
-    confidence?: number;
     geonameid?: number;
     /** Per-company detail merged onto the node by the API from the scenario JSON (whitelist-only:
      *  the DB has no column for these). Present ONLY on affected company nodes; absent on the
@@ -893,14 +887,6 @@ function buildTooltipHtml(node: SpatialNode): string {
         order === 2 ? '#f59e0b' :
                       '#fbbf24';
     const tierLabel = isUnq ? 'EXPOSED · UNQUANTIFIED' : (isEpi ? 'EPICENTER' : `ORDER ${order}`);
-    // confidence is a NUMBER (0..1); formatting is presentation, done here.
-    // NB: a `node.confidence ? …` truthiness check would render a genuine 0.0
-    // as "UNVERIFIED" — an explicit typeof test is required.
-    const confidence = isUnq
-        ? 'MAGNITUDE UNKNOWN'
-        : (typeof node.confidence === 'number'
-            ? `${Math.round(node.confidence * 100)}% CONF`
-            : 'UNVERIFIED');
     const country = node.country ? esc(node.country) : 'Global';
     // Decorative classification chip: chokepoints (negative geonameid) get
     // a MARITIME tag, real cities get TACTICAL.
@@ -908,7 +894,6 @@ function buildTooltipHtml(node: SpatialNode): string {
     return `<div class="sc-entity-badge" style="--badge-accent:${accent};">
         <div class="sc-badge-header">
             <span class="sc-badge-tier">${tierLabel}</span>
-            <span class="sc-badge-conf">${confidence}</span>
         </div>
         <div class="sc-badge-name">${esc(node.name)}</div>
         <div class="sc-badge-meta">
