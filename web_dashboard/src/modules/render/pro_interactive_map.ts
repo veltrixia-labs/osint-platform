@@ -720,7 +720,7 @@ export function renderSpatialContagionShell(sc: any, sectionNum: string, domainI
     const statsBar = epicenter
         ? `<div class="sc-stats-bar">
             <div class="sc-stat"><span class="sc-stat-label">Epicenter</span><span class="sc-stat-val">${esc(epicenter.name)}</span></div>
-            <div class="sc-stat"><span class="sc-stat-label">Impact Score</span><span class="sc-stat-val sc-stat-val--critical">${(effectiveSc.epicenter_impact_score ?? 0).toFixed(1)}</span></div>
+            <div class="sc-stat"><span class="sc-stat-label">Impact Score</span><span class="sc-stat-val sc-stat-val--critical">${impactBand(effectiveSc.epicenter_impact_score)}</span></div>
             <div class="sc-stat"><span class="sc-stat-label">Affected Nodes</span><span class="sc-stat-val">${Math.max(0, (effectiveSc.node_count ?? nodes.length) - 1)}</span></div>
             <div class="sc-stat"><span class="sc-stat-label">Edge Intensity</span><span class="sc-stat-val">${(effectiveSc.edge_intensity ?? 0).toFixed(3)}</span></div>
            </div>`
@@ -811,7 +811,7 @@ export function renderStaticCascadeShell(sc: any, domainId: string): string {
     const statsBar = epicenter
         ? `<div class="sc-stats-bar">
             <div class="sc-stat"><span class="sc-stat-label">Epicenter</span><span class="sc-stat-val">${esc(epicenter.name)}</span></div>
-            <div class="sc-stat"><span class="sc-stat-label">Impact Score</span><span class="sc-stat-val sc-stat-val--critical">${(sc.epicenter_impact_score ?? 0).toFixed(1)}</span></div>
+            <div class="sc-stat"><span class="sc-stat-label">Impact Score</span><span class="sc-stat-val sc-stat-val--critical">${impactBand(sc.epicenter_impact_score)}</span></div>
             <div class="sc-stat"><span class="sc-stat-label">Affected Nodes</span><span class="sc-stat-val">${Math.max(0, (sc.node_count ?? nodes.length) - 1)}</span></div>
             <div class="sc-stat"><span class="sc-stat-label">Edge Intensity</span><span class="sc-stat-val">${(sc.edge_intensity ?? 0).toFixed(3)}</span></div>
            </div>`
@@ -904,7 +904,7 @@ function buildTooltipHtml(node: SpatialNode): string {
         <div class="sc-badge-metrics">
             <div class="sc-badge-metric">
                 <span class="k">Impact</span>
-                <span class="v">${isUnq ? 'unknown' : node.impact_score.toFixed(1)}</span>
+                <span class="v">${isUnq ? 'unknown' : impactBand(node.impact_score)}</span>
             </div>
             <div class="sc-badge-metric">
                 <span class="k">Coords</span>
@@ -1309,6 +1309,26 @@ const TM_POLL_INTERVAL_MS = 3_000;             // 3s incremental poll (Polling, 
 const TM_ANIMATION_FPS = 60;                    // particle / pulse refresh rate
 const TM_TRIGGER_IMPACT_THRESHOLD = 75;        // viscosity-derived score that counts as a >1.5x trigger
 const TM_PLAYBACK_STEP_MS = 800;               // time between auto-advance ticks
+
+// ── Impact band ──────────────────────────────────────────────────────────────
+// impact_score is round(100 * |raw_impact|) — a rescaled edge weight, and for an
+// order-3 node a parent weight multiplied by DECAY. Printed to one decimal it read
+// as a measurement to that precision, which it is not. These three bands are what
+// the map shows instead.
+//
+// ★ THE BOUNDARIES ARE A DISPLAY CHOICE, NOT A MEASURED THRESHOLD. Nothing in the
+//   vault says 75 or 40 divides anything; they are the values this file already
+//   used to pick a reticle icon, reused here so the icon and the label cannot
+//   disagree on screen.
+// ★ THEY ARE DUPLICATED. `affDetail` still carries the same two literals inline
+//   (search: "impact >= 75 ? 'full'"). It was left untouched as a computation
+//   site; if either pair moves, both must.
+// A null score is NOT a band — it stays '--', the same claim the
+// exposed_unquantified tier makes everywhere else: unmeasured, not low.
+const IMPACT_BAND_HIGH = 75;
+const IMPACT_BAND_MODERATE = 40;
+const impactBand = (v: number | null | undefined): string =>
+    v == null ? '--' : v >= IMPACT_BAND_HIGH ? 'HIGH' : v >= IMPACT_BAND_MODERATE ? 'MODERATE' : 'LOW';
 
 /**
  * Per-order visual scaling — drives the N-th Order Impact Graph (Phase 2).
@@ -1941,7 +1961,6 @@ class SurveillanceMapController {
             parts.push(`<line class="pm-g-edge pm-g-edge--derived" x1="${hub.x.toFixed(1)}" y1="${hub.y.toFixed(1)}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}"/>`);
         });
 
-        const num = (v: number | null | undefined): string => (v == null ? '--' : String(Math.round(v)));
         const geoR = (n: any): number =>
             (n.type === 'exposed_unquantified' || n.impact_score == null)
                 ? 9                                                              // fixed small — never zero-sized
@@ -1961,7 +1980,7 @@ class SurveillanceMapController {
             const la = labelAttrs(p.ang, r, n.type === 'epicenter');
             parts.push(`<g class="pm-g-node pm-g-node--${role}" data-nid="${esc(idOf(n))}" transform="translate(${p.x.toFixed(1)},${p.y.toFixed(1)})">`
                 + `<circle r="${r.toFixed(1)}"/>`
-                + `<text class="pm-g-label" text-anchor="${la.anchor}" x="${la.x}" y="${la.y}">${esc(String(n.name ?? n.id ?? ''))} ${num(n.impact_score)}</text></g>`);
+                + `<text class="pm-g-label" text-anchor="${la.anchor}" x="${la.x}" y="${la.y}">${esc(String(n.name ?? n.id ?? ''))} ${impactBand(n.impact_score)}</text></g>`);
         }
         // Off-map nodes: DIAMONDS (different shape) in a distinct hue — a different kind of thing.
         noMap.forEach((n) => {
@@ -2081,7 +2100,7 @@ class SurveillanceMapController {
         const roleLabel = node.type === 'epicenter' ? 'Epicenter'
             : node.type === 'affected' ? 'Affected · measured'
             : 'Exposed · magnitude unknown';
-        const impact = isExposed || node.impact_score == null ? '--' : Number(node.impact_score).toFixed(1);
+        const impact = isExposed || node.impact_score == null ? '--' : impactBand(node.impact_score);
         const rows: string[] = [
             `<div class="sc-card-row"><span class="sc-card-k">Impact</span><span class="sc-card-v">${impact}</span></div>`,
         ];
@@ -2197,7 +2216,7 @@ class SurveillanceMapController {
     private buildCompanyPanelHtml(node: any): string {
         const name = String(node.title ?? node.name ?? node.id ?? '—');
         const order = node.order != null ? `ORDER 0${esc(String(node.order))}` : 'ORDER —';
-        const impact = node.impact_score == null ? '--' : Number(node.impact_score).toFixed(1);
+        const impact = node.impact_score == null ? '--' : impactBand(node.impact_score);
 
         // Blurb — verbatim (EN for some, JP for COSCO/Saudi_Aramco). Never truncated or hidden.
         const blurb = node.role_blurb
@@ -2655,7 +2674,7 @@ class SurveillanceMapController {
             out.push({
                 epoch_ms: startMs + t * windowMs,
                 severity: 'warn',
-                text: `${n.name} · IMPACT ${Math.round(n.impact_score)}`,
+                text: `${n.name} · IMPACT ${impactBand(n.impact_score)}`,
             });
         });
 
