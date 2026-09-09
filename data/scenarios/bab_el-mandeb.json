@@ -18,7 +18,7 @@
  },
  "graph": {
   "nodes": 302,
-  "edges": 1526,
+  "edges": 1529,
   "gate": "PASS"
  },
  "scaling": {
@@ -60,7 +60,7 @@
    "confidence": 1.0,
    "role": "supply",
    "raw_impact": 0.4,
-   "why": "route:supply weight 0.40",
+   "why": "route:supply",
    "tickers": [
     "2222"
    ],
@@ -130,7 +130,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.4,
-   "why": "route:demand weight 0.40"
+   "why": "route:demand"
   },
   {
    "id": "Strait_of_Hormuz",
@@ -144,7 +144,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.3,
-   "why": "route:demand weight 0.30"
+   "why": "route:demand"
   },
   {
    "id": "Iran",

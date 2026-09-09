@@ -14,7 +14,7 @@
  },
  "graph": {
   "nodes": 302,
-  "edges": 1526,
+  "edges": 1529,
   "gate": "PASS"
  },
  "scaling": {
@@ -56,7 +56,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.7,
-   "why": "route:demand weight 0.70"
+   "why": "route:demand"
   },
   {
    "id": "TSMC",
@@ -70,7 +70,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.65,
-   "why": "route:demand weight 0.65",
+   "why": "route:demand",
    "tickers": [
     "TSM",
     "2330"
@@ -317,7 +317,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.6,
-   "why": "route:demand weight 0.60"
+   "why": "route:demand"
   },
   {
    "id": "China",
@@ -331,7 +331,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.5,
-   "why": "route:demand weight 0.50"
+   "why": "route:demand"
   },
   {
    "id": "Japan",
@@ -345,7 +345,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.45,
-   "why": "route:demand weight 0.45"
+   "why": "route:demand"
   },
   {
    "id": "South_Korea",
@@ -359,7 +359,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.4,
-   "why": "route:demand weight 0.40"
+   "why": "route:demand"
   },
   {
    "id": "United_States",
@@ -373,7 +373,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.2,
-   "why": "route:demand weight 0.20"
+   "why": "route:demand"
   },
   {
    "id": "Evergreen",
@@ -440,7 +440,7 @@
      "weight_source": null
     }
    ],
-   "why": "Taiwan (demand 0.70) x DECAY 0.7",
+   "why": "indirect via Taiwan (demand)",
    "title": "Evergreen",
    "role_blurb": "Taiwanese container carrier — Ocean Alliance member; LISTED (TWSE:2603) → Merton-computable; ~1.7M TEU",
    "financials": {
@@ -532,7 +532,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.50) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "CSSC",
    "role_blurb": "state-owned shipbuilding conglomerate; world's largest shipbuilder"
   },
@@ -575,7 +575,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.50) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "HMN Technologies Co., Ltd.",
    "role_blurb": "Chinese submarine-cable manufacturer & cable-laying operator (~10% of new systems, ~4% planned through 2026); Hengtong-owned (rebranded from Huawei Marine 2020)"
   },
@@ -636,7 +636,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.50) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "CMOC",
    "role_blurb": "World's #1 cobalt miner (~31%, DRC TFM/KFM); Chinese-owned, copper-focused; the concrete China-DRC-cobalt giant",
    "financials": {
@@ -779,7 +779,7 @@
      "weight_source": "observed"
     }
    ],
-   "why": "China (demand 0.50) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "COSCO",
    "role_blurb": "COSCO SHIPPING Holdings (HKEX:1919) — listed container-shipping arm of the Chinese state-owned COSCO SHIPPING group; rank 3-4 carrier, Ocean Alliance member",
    "financials": {
@@ -871,7 +871,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.50) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "OOCL",
    "role_blurb": "Hong Kong container carrier — Ocean Alliance member; subsidiary of listed OOIL, COSCO-controlled; standalone unlisted → mc-null (Merton-excluded)"
   },
@@ -916,7 +916,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.50) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "Shenghe",
    "role_blurb": "Chinese rare-earth trader/refiner; 7.7% shareholder of MP_Materials (offtake severed 2026-01); the concrete MP-China link",
    "financials": {
@@ -992,7 +992,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.50) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "Tsingshan",
    "role_blurb": "Chinese group; world's largest nickel producer; dominant in Indonesia nickel/HPAL (IMIP Morowali); privately-held/unlisted"
   },
@@ -1037,7 +1037,7 @@
      "weight_source": "estimated"
     }
    ],
-   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "Kawasaki Heavy Industries",
    "role_blurb": "Japanese diversified heavy-industry conglomerate (SIPRI Top 100; Japan defence #2 / defence is approx. 15% of revenue, MINORITY; the majority is civil — commercial aviation/rolling stock/energy-hydrogen/ships/motorcycles) / supply side descending from Japanese defence demand + civil multi-domain",
    "financials": {
@@ -1131,7 +1131,7 @@
      "weight_source": "observed"
     }
    ],
-   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "Mitsubishi Heavy Industries, Ltd.",
    "role_blurb": "Japan's largest diversified heavy-industry conglomerate (SIPRI Top 100 #32 = Japan's largest defence company, but defence is approx. 15% of revenue; the majority is civil — energy/plant/aerospace) / supply side descending from Japanese, not US, defence demand + civil multi-domain",
    "financials": {
@@ -1239,7 +1239,7 @@
      "weight_source": null
     }
    ],
-   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "JSR",
    "role_blurb": "World's #1 photoresist maker (~27%, incl. EUV); taken private by JIC (2024); EUV chemistry partner of Intel/Samsung/TSMC",
    "financials": {
@@ -1316,7 +1316,7 @@
      "weight_source": "observed"
     }
    ],
-   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "SUMCO",
    "role_blurb": "Japanese silicon-wafer maker (world #2; with Shin-Etsu ~53% global); fab materials supplier",
    "financials": {
@@ -1397,9 +1397,9 @@
      "target": "Rare_Earths",
      "type": "context_link",
      "role": "demand",
-     "weight": 0.5,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Japan",
@@ -1426,7 +1426,7 @@
      "weight_source": "estimated"
     }
    ],
-   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "Shin-Etsu Chemical",
    "role_blurb": "Materials chokepoint (world's largest silicon-wafer producer + one of the photoresist oligopoly) / non-China rare-earth magnet supply source",
    "financials": {
@@ -1528,7 +1528,7 @@
      "weight_source": null
     }
    ],
-   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "Tokyo_Ohka",
    "role_blurb": "Japanese photoresist leader (TOK); JSR's EUV-photoresist twin; the listed pure-play after JSR went private",
    "financials": {
@@ -1606,7 +1606,7 @@
      "weight_source": null
     }
    ],
-   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "Mitsui OSK",
    "role_blurb": "Diversified maritime major (tanker + dry-bulk + LNG + car-carrier + container via ONE) — market position + transit-route economics",
    "financials": {
@@ -1676,7 +1676,7 @@
      "weight_source": null
     }
    ],
-   "why": "Japan (demand 0.45) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "NYK",
    "role_blurb": "Japan's largest diversified maritime group (dry-bulk + LNG + car-carrier + container via ONE + logistics) — market position + transit-route economics",
    "financials": {
@@ -1754,7 +1754,7 @@
      "weight_source": null
     }
    ],
-   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "why": "indirect via United_States (demand)",
    "title": "Archer Daniels Midland Company",
    "role_blurb": "Major global grain & oilseed trader/handler (one of the 'ABCD' agri-merchants) — origination, oilseed crushing/processing, merchandising of grains & oilseeds",
    "financials": {
@@ -1832,7 +1832,7 @@
      "weight_source": null
     }
    ],
-   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "why": "indirect via United_States (demand)",
    "title": "Bunge Global SA",
    "role_blurb": "Major global oilseed processor & grain trader/handler (one of the 'ABCD' agri-merchants); world's largest oilseed crusher post-Viterra — origination, crush/processing, merchandising",
    "financials": {
@@ -1910,7 +1910,7 @@
      "weight_source": null
     }
    ],
-   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "why": "indirect via United_States (demand)",
    "title": "CF Industries Holdings, Inc.",
    "role_blurb": "World's largest anhydrous ammonia producer / N. America's largest pure-play nitrogen — ~40% NA ammonia capacity; US-listed",
    "financials": {
@@ -1986,7 +1986,7 @@
      "weight_source": null
     }
    ],
-   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "why": "indirect via United_States (demand)",
    "title": "Cargill, Incorporated",
    "role_blurb": "Major global grain & oilseed trader/handler (one of the 'ABCD' agri-merchants), privately held — origination, processing & distribution of grains, oilseeds, and food/animal-nutrition; largest private US company by revenue"
   },
@@ -2039,7 +2039,7 @@
      "weight_source": null
     }
    ],
-   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "why": "indirect via United_States (demand)",
    "title": "The Mosaic Company",
    "role_blurb": "US listed phosphate + potash producer — ~10% global phosphate, ~12% global potash production",
    "financials": {
@@ -2107,7 +2107,7 @@
      "weight_source": null
     }
    ],
-   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "why": "indirect via United_States (demand)",
    "title": "SubCom, LLC",
    "role_blurb": "US submarine-cable manufacturer & cable-laying operator (wet-plant + cable-ships); ~19% of new subsea systems 2020-24 — privately held (Cerberus Capital)"
   },
@@ -2160,7 +2160,7 @@
      "weight_source": null
     }
    ],
-   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "why": "indirect via United_States (demand)",
    "title": "Albemarle",
    "role_blurb": "World's largest lithium producer (Chile/Australia ops); US-listed; the lithium supply anchor vs China refining",
    "financials": {
@@ -2246,7 +2246,7 @@
      "weight_source": null
     }
    ],
-   "why": "United_States (demand 0.20) x DECAY 0.7",
+   "why": "indirect via United_States (demand)",
    "title": "MP_Materials",
    "role_blurb": "Only major US rare-earth miner/refiner (Mountain Pass, CA); Pentagon ~15% stake (2025); US counter to China RE dominance",
    "financials": {

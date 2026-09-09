@@ -17,7 +17,7 @@
  },
  "graph": {
   "nodes": 302,
-  "edges": 1526,
+  "edges": 1529,
   "gate": "PASS"
  },
  "scaling": {
@@ -59,7 +59,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.8,
-   "why": "route:demand weight 0.80"
+   "why": "route:demand"
   },
   {
    "id": "Port_of_Singapore",
@@ -73,7 +73,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.8,
-   "why": "route:demand weight 0.80"
+   "why": "route:demand"
   },
   {
    "id": "Strait_of_Hormuz",
@@ -87,7 +87,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.72,
-   "why": "route:demand weight 0.72"
+   "why": "route:demand"
   },
   {
    "id": "Japan",
@@ -101,7 +101,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.7,
-   "why": "route:demand weight 0.70"
+   "why": "route:demand"
   },
   {
    "id": "South_Korea",
@@ -115,7 +115,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.7,
-   "why": "route:demand weight 0.70"
+   "why": "route:demand"
   },
   {
    "id": "South_China_Sea",
@@ -129,7 +129,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.7,
-   "why": "route:demand weight 0.70"
+   "why": "route:demand"
   },
   {
    "id": "CMA_CGM",
@@ -143,7 +143,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.5,
-   "why": "route:demand weight 0.50",
+   "why": "route:demand",
    "tickers": [],
    "neighbourhood": [
     {
@@ -210,7 +210,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.5,
-   "why": "route:demand weight 0.50",
+   "why": "route:demand",
    "tickers": [
     "1919",
     "601919"
@@ -353,7 +353,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.5,
-   "why": "route:demand weight 0.50",
+   "why": "route:demand",
    "tickers": [
     "2603"
    ],
@@ -455,7 +455,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.5,
-   "why": "route:demand weight 0.50",
+   "why": "route:demand",
    "tickers": [],
    "neighbourhood": [
     {
@@ -514,7 +514,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.5,
-   "why": "route:demand weight 0.50"
+   "why": "route:demand"
   },
   {
    "id": "Hapag-Lloyd",
@@ -528,7 +528,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.45,
-   "why": "route:demand weight 0.45",
+   "why": "route:demand",
    "tickers": [
     "HLAG"
    ],
@@ -630,7 +630,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.3,
-   "why": "route:demand weight 0.30",
+   "why": "route:demand",
    "tickers": [],
    "neighbourhood": [
     {
@@ -689,7 +689,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.3,
-   "why": "route:demand weight 0.30"
+   "why": "route:demand"
   },
   {
    "id": "CATL",
@@ -861,7 +861,7 @@
      "weight_source": "estimated"
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "CATL",
    "role_blurb": "World's largest EV-battery + ESS maker; anchors the EV_Battery hub; supplies Tesla/VW/Toyota; BYD's battery rival",
    "financials": {
@@ -945,7 +945,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "CNNC",
    "role_blurb": "state-owned nuclear power, construction & fuel-cycle conglomerate"
   },
@@ -998,7 +998,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "CGN",
    "role_blurb": "China's largest nuclear power generator",
    "financials": {
@@ -1075,7 +1075,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "CNOOC",
    "role_blurb": "China's offshore oil & gas producer — LISTED (HK/Shanghai) PURE UPSTREAM E&P (no refining); highest oil-price sensitivity of the 3 majors. Parent CNOOC Group (SASAC ~65%)",
    "financials": {
@@ -1191,7 +1191,7 @@
      "weight_source": "observed"
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "CNPC",
    "role_blurb": "China's largest state-owned oil & gas PARENT (SOE, unlisted) — ~2/3 of China's domestic crude production; parent of the listed PetroChina (a separate entity). Distinct from peers Sinopec/CNOOC."
   },
@@ -1254,7 +1254,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "PetroChina",
    "role_blurb": "China's largest oil & gas producer — LISTED (NYSE/HK/Shanghai) integrated major; 82% held by parent CNPC (a separate SOE). Merton-computable (unlike unlisted CNPC)",
    "financials": {
@@ -1334,7 +1334,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "Sinopec",
    "role_blurb": "China's largest refiner — LISTED (HK/Shanghai) downstream major (refining/chemicals/~30k stations); a crude BUYER (opposite oil-price exposure to producers). Parent China Petrochemical Corp (SASAC ~68%)",
    "financials": {
@@ -1410,7 +1410,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "HMN Technologies Co., Ltd.",
    "role_blurb": "Chinese submarine-cable manufacturer & cable-laying operator (~10% of new systems, ~4% planned through 2026); Hengtong-owned (rebranded from Huawei Marine 2020)"
   },
@@ -1471,7 +1471,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "CMOC",
    "role_blurb": "World's #1 cobalt miner (~31%, DRC TFM/KFM); Chinese-owned, copper-focused; the concrete China-DRC-cobalt giant",
    "financials": {
@@ -1549,7 +1549,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "Shenghe",
    "role_blurb": "Chinese rare-earth trader/refiner; 7.7% shareholder of MP_Materials (offtake severed 2026-01); the concrete MP-China link",
    "financials": {
@@ -1625,7 +1625,7 @@
      "weight_source": null
     }
    ],
-   "why": "China (demand 0.80) x DECAY 0.7",
+   "why": "indirect via China (demand)",
    "title": "Tsingshan",
    "role_blurb": "Chinese group; world's largest nickel producer; dominant in Indonesia nickel/HPAL (IMIP Morowali); privately-held/unlisted"
   },
@@ -1710,7 +1710,7 @@
      "weight_source": null
     }
    ],
-   "why": "Japan (demand 0.70) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "Panasonic",
    "role_blurb": "Japanese diversified-electronics major; EV battery is ONE segment (Tesla's historical primary cell supplier, ~3.7% global battery share); LISTED (TSE:6752) → Merton-computable",
    "financials": {
@@ -1788,7 +1788,7 @@
      "weight_source": "estimated"
     }
    ],
-   "why": "Japan (demand 0.70) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "Kawasaki Heavy Industries",
    "role_blurb": "Japanese diversified heavy-industry conglomerate (SIPRI Top 100; Japan defence #2 / defence is approx. 15% of revenue, MINORITY; the majority is civil — commercial aviation/rolling stock/energy-hydrogen/ships/motorcycles) / supply side descending from Japanese defence demand + civil multi-domain",
    "financials": {
@@ -1882,7 +1882,7 @@
      "weight_source": "observed"
     }
    ],
-   "why": "Japan (demand 0.70) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "Mitsubishi Heavy Industries, Ltd.",
    "role_blurb": "Japan's largest diversified heavy-industry conglomerate (SIPRI Top 100 #32 = Japan's largest defence company, but defence is approx. 15% of revenue; the majority is civil — energy/plant/aerospace) / supply side descending from Japanese, not US, defence demand + civil multi-domain",
    "financials": {
@@ -1990,7 +1990,7 @@
      "weight_source": null
     }
    ],
-   "why": "Japan (demand 0.70) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "JSR",
    "role_blurb": "World's #1 photoresist maker (~27%, incl. EUV); taken private by JIC (2024); EUV chemistry partner of Intel/Samsung/TSMC",
    "financials": {
@@ -2067,7 +2067,7 @@
      "weight_source": "observed"
     }
    ],
-   "why": "Japan (demand 0.70) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "SUMCO",
    "role_blurb": "Japanese silicon-wafer maker (world #2; with Shin-Etsu ~53% global); fab materials supplier",
    "financials": {
@@ -2148,9 +2148,9 @@
      "target": "Rare_Earths",
      "type": "context_link",
      "role": "demand",
-     "weight": 0.5,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Japan",
@@ -2177,7 +2177,7 @@
      "weight_source": "estimated"
     }
    ],
-   "why": "Japan (demand 0.70) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "Shin-Etsu Chemical",
    "role_blurb": "Materials chokepoint (world's largest silicon-wafer producer + one of the photoresist oligopoly) / non-China rare-earth magnet supply source",
    "financials": {
@@ -2279,7 +2279,7 @@
      "weight_source": null
     }
    ],
-   "why": "Japan (demand 0.70) x DECAY 0.7",
+   "why": "indirect via Japan (demand)",
    "title": "Tokyo_Ohka",
    "role_blurb": "Japanese photoresist leader (TOK); JSR's EUV-photoresist twin; the listed pure-play after JSR went private",
    "financials": {
@@ -2357,7 +2357,7 @@
      "weight_source": null
     }
    ],
-   "why": "indirect via Japan (demand 0.70) x DECAY 0.7 = 0.49; ALSO holds a DIRECT edge to Strait_of_Malacca whose weight is unmeasured (null) -- true exposure may be higher",
+   "why": "indirect via Japan (demand); ALSO holds a DIRECT edge to Strait_of_Malacca whose weight is unmeasured (null) -- true exposure may be higher",
    "title": "Mitsui OSK",
    "role_blurb": "Diversified maritime major (tanker + dry-bulk + LNG + car-carrier + container via ONE) — market position + transit-route economics",
    "financials": {
@@ -2428,7 +2428,7 @@
      "weight_source": null
     }
    ],
-   "why": "indirect via Japan (demand 0.70) x DECAY 0.7 = 0.49; ALSO holds a DIRECT edge to Strait_of_Malacca whose weight is unmeasured (null) -- true exposure may be higher",
+   "why": "indirect via Japan (demand); ALSO holds a DIRECT edge to Strait_of_Malacca whose weight is unmeasured (null) -- true exposure may be higher",
    "title": "NYK",
    "role_blurb": "Japan's largest diversified maritime group (dry-bulk + LNG + car-carrier + container via ONE + logistics) — market position + transit-route economics",
    "financials": {
@@ -2595,7 +2595,7 @@
      "weight_source": "estimated"
     }
    ],
-   "why": "South_Korea (demand 0.70) x DECAY 0.7",
+   "why": "indirect via South_Korea (demand)",
    "title": "LG Energy Solution",
    "role_blurb": "Korean EV-battery maker — #3 global (~11% share); spun off from LG Chem (2020); LISTED (KRX:373220) → Merton-computable; supplies Tesla/GM/Hyundai/VW",
    "financials": {
@@ -2711,7 +2711,7 @@
      "weight_source": "estimated"
     }
    ],
-   "why": "South_Korea (demand 0.70) x DECAY 0.7",
+   "why": "indirect via South_Korea (demand)",
    "title": "SK On",
    "role_blurb": "Korean EV-battery maker (~4-7% global share; high-nickel NCM) — subsidiary of SK Innovation (NOT independently listed) → mc-null (Merton-excluded); supplies Hyundai/Ford/VW"
   },
@@ -2788,7 +2788,7 @@
      "weight_source": "estimated"
     }
    ],
-   "why": "South_Korea (demand 0.70) x DECAY 0.7",
+   "why": "indirect via South_Korea (demand)",
    "title": "Samsung SDI",
    "role_blurb": "Korean EV-battery maker (~2.7% global share; high-nickel NCM prismatic); LISTED (KRX:006400) → Merton-computable; ★ SEPARATE from Samsung Electronics (semiconductors); supplies BMW/Audi/Rivian + Stellantis (StarPlus JV)",
    "financials": {

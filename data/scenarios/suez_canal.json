@@ -15,7 +15,7 @@
  },
  "graph": {
   "nodes": 302,
-  "edges": 1526,
+  "edges": 1529,
   "gate": "PASS"
  },
  "scaling": {
@@ -57,7 +57,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.6,
-   "why": "route:demand weight 0.60"
+   "why": "route:demand"
   },
   {
    "id": "Maersk",
@@ -71,7 +71,7 @@
    "confidence": 1.0,
    "role": "demand",
    "raw_impact": 0.6,
-   "why": "route:demand weight 0.60",
+   "why": "route:demand",
    "tickers": [
     "MAERSK B"
    ],
