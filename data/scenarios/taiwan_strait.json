@@ -120,25 +120,25 @@
      "target": "ASML",
      "type": "supplier",
      "role": null,
-     "weight": 0.9,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Tokyo_Electron",
      "type": "supplier",
      "role": null,
-     "weight": 0.3,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Shin-Etsu_Chemical",
      "type": "supplier",
      "role": null,
-     "weight": 0.35,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Taiwan",
