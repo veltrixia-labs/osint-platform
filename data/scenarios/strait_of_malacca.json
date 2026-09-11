@@ -1132,7 +1132,7 @@
      "role": "supply",
      "weight": 2.6,
      "unit": "mb_per_d",
-     "weight_source": "observed"
+     "weight_source": "estimated"
     },
     {
      "target": "Gazprom",

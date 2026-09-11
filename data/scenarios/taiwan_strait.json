@@ -1891,7 +1891,7 @@
      "role": "supply",
      "weight": 0.12,
      "unit": "share",
-     "weight_source": "observed"
+     "weight_source": "estimated"
     },
     {
      "target": "Natural_Gas",
