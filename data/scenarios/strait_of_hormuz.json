@@ -880,9 +880,9 @@
      "target": "Samsung",
      "type": "customer",
      "role": null,
-     "weight": 0.25,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Intel",
