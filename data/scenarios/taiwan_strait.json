@@ -80,7 +80,7 @@
      "target": "NVIDIA",
      "type": "manufactures",
      "role": null,
-     "weight": 0.2,
+     "weight": 0.22,
      "unit": "share",
      "weight_source": "estimated"
     },
@@ -152,9 +152,9 @@
      "target": "SUMCO",
      "type": "supplier",
      "role": null,
-     "weight": 0.25,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "JSR",
@@ -168,9 +168,9 @@
      "target": "Tokyo_Ohka",
      "type": "supplier",
      "role": null,
-     "weight": 0.2,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Applied_Materials",
@@ -774,7 +774,7 @@
      "target": "OOIL",
      "type": "owns",
      "role": "supply",
-     "weight": 0.75,
+     "weight": 0.7107,
      "unit": "share",
      "weight_source": "observed"
     }
@@ -1126,7 +1126,7 @@
      "target": "Orano",
      "type": "shareholder",
      "role": null,
-     "weight": 0.05,
+     "weight": 0.0483,
      "unit": "share",
      "weight_source": "observed"
     }
@@ -1194,9 +1194,9 @@
      "target": "TSMC",
      "type": "customer",
      "role": null,
-     "weight": 0.35,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Samsung",
@@ -1279,25 +1279,25 @@
      "target": "TSMC",
      "type": "customer",
      "role": null,
-     "weight": 0.35,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Samsung",
      "type": "customer",
      "role": null,
-     "weight": 0.25,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Intel",
      "type": "customer",
      "role": null,
-     "weight": 0.15,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Semiconductor_Materials",
@@ -1491,9 +1491,9 @@
      "target": "TSMC",
      "type": "customer",
      "role": null,
-     "weight": 0.35,
+     "weight": 0.336,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "Samsung",

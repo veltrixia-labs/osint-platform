@@ -507,7 +507,7 @@
      "target": "Orano",
      "type": "shareholder",
      "role": null,
-     "weight": 0.05,
+     "weight": 0.0483,
      "unit": "share",
      "weight_source": "observed"
     }
@@ -575,9 +575,9 @@
      "target": "TSMC",
      "type": "customer",
      "role": null,
-     "weight": 0.35,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Samsung",
@@ -660,25 +660,25 @@
      "target": "TSMC",
      "type": "customer",
      "role": null,
-     "weight": 0.35,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Samsung",
      "type": "customer",
      "role": null,
-     "weight": 0.25,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Intel",
      "type": "customer",
      "role": null,
-     "weight": 0.15,
+     "weight": null,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": null
     },
     {
      "target": "Semiconductor_Materials",
@@ -872,9 +872,9 @@
      "target": "TSMC",
      "type": "customer",
      "role": null,
-     "weight": 0.35,
+     "weight": 0.336,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "Samsung",
@@ -2186,7 +2186,7 @@
      "target": "Crude_Oil",
      "type": "context_link",
      "role": "supply",
-     "weight": 2.5,
+     "weight": 2.6,
      "unit": "mb_per_d",
      "weight_source": "observed"
     },
@@ -2578,7 +2578,7 @@
      "target": "OOIL",
      "type": "owns",
      "role": "supply",
-     "weight": 0.75,
+     "weight": 0.7107,
      "unit": "share",
      "weight_source": "observed"
     }
