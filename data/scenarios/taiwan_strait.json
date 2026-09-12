@@ -1016,9 +1016,9 @@
      "target": "Japan",
      "type": "customer",
      "role": null,
-     "weight": 0.2,
+     "weight": 0.186,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "Export_Controls",
@@ -1094,9 +1094,9 @@
      "target": "Japan",
      "type": "customer",
      "role": null,
-     "weight": 0.2,
+     "weight": 0.202,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "Nuclear_Power",
