@@ -106,7 +106,7 @@
      "role": null,
      "weight": 0.17,
      "unit": "share",
-     "weight_source": null
+     "weight_source": "estimated"
     },
     {
      "target": "Samsung",
@@ -913,7 +913,7 @@
      "role": null,
      "weight": 0.077,
      "unit": "share",
-     "weight_source": null
+     "weight_source": "observed"
     }
    ],
    "why": "indirect via China (demand)",
