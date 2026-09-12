@@ -607,9 +607,9 @@
      "target": "Cobalt",
      "type": "context_link",
      "role": "supply",
-     "weight": 0.31,
+     "weight": 0.378,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "DRC",
@@ -1897,9 +1897,9 @@
      "target": "Natural_Gas",
      "type": "context_link",
      "role": "demand",
-     "weight": 0.75,
+     "weight": 0.34,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "United_States",

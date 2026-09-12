@@ -2009,7 +2009,7 @@
      "role": "supply",
      "weight": 1.1,
      "unit": "mb_per_d",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "Natural_Gas",
@@ -2411,9 +2411,9 @@
      "target": "Cobalt",
      "type": "context_link",
      "role": "supply",
-     "weight": 0.31,
+     "weight": 0.378,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "DRC",
