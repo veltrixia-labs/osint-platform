@@ -167,7 +167,9 @@ export function renderTopicFilterBar(
 const CHUD_LOG_MAX = 64;          // raw-log lines retained in the DOM
 const CHUD_LOG_TICK_MS = 820;     // base cadence of the synthetic process log
 
-let chudLogBuffer: string[] = []; // persists across re-renders → seamless stream
+/** One rendered log line plus the timestamp of the event it describes. */
+type ChudLogEntry = { text: string; ts: string };
+let chudLogBuffer: ChudLogEntry[] = []; // persists across re-renders → seamless stream
 let chudLogTimer: number | null = null;
 let chudSelectedId: string | null = null;
 // Secondary-sources accordion open-state. Lives at module scope so the ~10s poll
@@ -240,16 +242,26 @@ function chudToken(alert: Alert): string {
     return `${prefix}-${hex}`;
 }
 
-function chudClock(): string {
-    const d = new Date();
+/** HH:MM:SS for a given instant; defaults to now. */
+function chudClock(d: Date = new Date()): string {
     const p = (n: number) => String(n).padStart(2, '0');
     return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
+/** The alert's OWN trigger time — never the viewer's clock. Em dash when absent
+ *  or unparseable, so a line never borrows a freshness it does not have. */
+function chudAlertClock(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? '—' : chudClock(d);
+}
+
 // ─── Raw process-log engine ──────────────────────────────────────────────
 
-/** Synthesise one plausible system-process line, biased toward live alerts. */
-function chudGenerateLogLine(pool: Alert[]): string {
+/** Synthesise one plausible system-process line, biased toward live alerts.
+ *  The returned `ts` is the described ALERT's trigger time; only the idle line
+ *  (empty pool) carries the current clock, because it describes now. */
+function chudGenerateLogLine(pool: Alert[]): ChudLogEntry {
     const a = pool.length ? chudPick(pool) : null;
     const topic = a ? getTopicDisplayLabel(normalizeTopicCode(a.topic)) : 'GLOBAL';
     const tok = a ? chudToken(a) : `SYS-${chudPick(['00A1', '7F2C', '4E90', 'BB13'])}`;
@@ -259,7 +271,7 @@ function chudGenerateLogLine(pool: Alert[]): string {
     // (token from id, topic, country, severity, intensity, backbone status).
     // When no alert is in the pool yet, emit a neutral idle line (no fabricated metrics).
     if (!a) {
-        return `[STREAM] awaiting signals :: ${topic}`;
+        return { text: `[STREAM] awaiting signals :: ${topic}`, ts: chudClock() };
     }
     const templates = [
         `[GEO-RESOLVER] mapping coordinates for ${tok} → ${country}`,
@@ -267,16 +279,16 @@ function chudGenerateLogLine(pool: Alert[]): string {
         `[SIGNAL] ${sev} intensity=${a.intensity_display ?? '—'} topic=${topic}`,
         `[CLUSTER] ${tok} :: ${topic} (${country})`,
     ];
-    return chudPick(templates);
+    return { text: chudPick(templates), ts: chudAlertClock(a.triggered_at) };
 }
 
-function chudLogLineHtml(line: string): string {
-    const m = line.match(/^\[([A-Z-]+)\]/);
+function chudLogLineHtml(entry: ChudLogEntry): string {
+    const m = entry.text.match(/^\[([A-Z-]+)\]/);
     const tag = m ? m[1] : 'SYS';
-    const body = line.replace(/^\[[A-Z-]+\]\s*/, '');
+    const body = entry.text.replace(/^\[[A-Z-]+\]\s*/, '');
     return (
         `<div class="chud-log-line">` +
-        `<span class="chud-log-ts">${chudClock()}</span>` +
+        `<span class="chud-log-ts">${chudEscape(entry.ts)}</span>` +
         `<span class="chud-log-tag chud-tag--${tag}">[${tag}]</span>` +
         `<span class="chud-log-body">${chudEscape(body)}</span>` +
         `</div>`
@@ -336,7 +348,7 @@ function chudRowHtml(alert: Alert): string {
     const topicColor = getTopicColor(canonicalTopic);
     const headline = resolveAlertHeadline(alert);
     const sev = alertThreatTier(alert);
-    const time = alert.triggered_at ? formatIntelTime(alert.triggered_at) : 'LIVE';
+    const time = alert.triggered_at ? formatIntelTime(alert.triggered_at) : '—';
     const token = chudToken(alert);
     const locked = alert.is_locked && !DEV_MODE_AUDIT;
     const active = alert.id === chudSelectedId ? ' is-active' : '';
@@ -393,7 +405,7 @@ function chudTagChip(label: string, kind: string): string {
 // pane (anomaly ring + importance bar). Wired as a click ⓘ popover.
 const AXES_GUIDE_HTML = `
     <strong>Two independent axes</strong><br>
-    <b>ANOMALY</b> — how sharply this story's source-domain deviated from its own recent baseline (a self-normalizing "unusualness" ratio, not importance; usually 20–60%).<br>
+    <b>ANOMALY</b> — how sharply this story's source-domain deviated from its own recent baseline (a self-normalizing "unusualness" ratio, not importance).<br>
     <b>IMPORTANCE</b> — how widely the event affects the world (energy, markets, shipping, defense, AI/semiconductors, crypto), scored 0–100 by an LLM from the headline.<br>
     They're independent: a globally important story can show low anomaly, and a high-anomaly blip can be globally trivial.`;
 
@@ -413,14 +425,19 @@ export function chudDetailHtml(alert: Alert | null): string {
     const sev = alertThreatTier(alert);
     // The ring is driven STRICTLY by the backend's calibrated intensity_pct
     // (distributed ratio-%: 1.5x gate = 50%, >=3.0x = 100%). No client-side tanh
-    // math — text and arc both read the same server-supplied value. When the
-    // field is absent (rare cold-start rows) the gauge reads 0%.
-    const pctVal = Math.max(0, Math.min(100, typeof alert.intensity_pct === 'number' ? alert.intensity_pct : 0));
-    const threatOffset = Math.round(THREAT_CIRCUMFERENCE * (1 - pctVal / 100));
-    const displayPercentage = Math.round(pctVal) + '%';
+    // math — text and arc both read the same server-supplied value.
+    //
+    // An ABSENT intensity_pct is NOT a zero. It renders the same em dash the
+    // IMPORTANCE readout below uses and draws no arc at all, while a measured
+    // 0.0 still reads "0%" with a fully unwound arc — the two are different
+    // claims and must stay distinguishable on screen.
+    const pctRaw = typeof alert.intensity_pct === 'number' ? alert.intensity_pct : null;
+    const pctVal = pctRaw === null ? null : Math.max(0, Math.min(100, pctRaw));
+    const threatOffset = pctVal === null ? null : Math.round(THREAT_CIRCUMFERENCE * (1 - pctVal / 100));
+    const displayPercentage = pctVal === null ? '—' : Math.round(pctVal) + '%';
     const headline = resolveAlertHeadline(alert);
     const token = chudToken(alert);
-    const time = alert.triggered_at ? formatIntelFeedTimestamp(alert.triggered_at) : 'Live';
+    const time = alert.triggered_at ? formatIntelFeedTimestamp(alert.triggered_at) : '—';
     const locked = alert.is_locked && !DEV_MODE_AUDIT;
 
     const status = alert.backbone_discovery_status || 'idle';
@@ -521,8 +538,8 @@ export function chudDetailHtml(alert: Alert | null): string {
                 <div class="chud-threat-ring chud-threat-ring--${sev}">
                     <svg class="chud-threat-svg" viewBox="0 0 100 100" aria-hidden="true">
                         <circle class="chud-threat-track" cx="50" cy="50" r="45"></circle>
-                        <circle class="chud-threat-meter" cx="50" cy="50" r="45"
-                            style="stroke-dasharray:${THREAT_CIRCUMFERENCE.toFixed(2)};stroke-dashoffset:${threatOffset}"></circle>
+                        ${threatOffset === null ? '' : `<circle class="chud-threat-meter" cx="50" cy="50" r="45"
+                            style="stroke-dasharray:${THREAT_CIRCUMFERENCE.toFixed(2)};stroke-dashoffset:${threatOffset}"></circle>`}
                     </svg>
                     <div class="chud-threat-core">
                         <span class="chud-threat-val">${displayPercentage}</span>
@@ -836,8 +853,8 @@ export function renderAlerts(
                     <div class="chud-monitor">
                         <div class="chud-console-head">
                             <span class="chud-console-dot" aria-hidden="true"></span>
-                            <span class="chud-console-title">RAW INGESTION STREAM</span>
-                            <span class="chud-console-meta">PID//OSINT-CORE · <span class="chud-console-live">LIVE</span></span>
+                            <span class="chud-console-title">ALERT ACTIVITY</span>
+                            <span class="chud-console-meta">PID//OSINT-CORE</span>
                         </div>
                         <div class="chud-console-body">
                             <div class="chud-log-track"></div>
@@ -947,14 +964,14 @@ const SYS_LOGIC_STAGES: ReadonlyArray<{
     idx: string; glyph: string; title: string; tag: string; desc: string; tick: string;
 }> = [
     {
-        idx: '01', glyph: '📡', title: 'Ingestion & Normalization', tag: '[Delta Polling / Cache]',
-        desc: 'Fetches the active data window using the since cursor against the alerts API.',
-        tick: 'window <b data-sl="win">—</b>h · <b data-sl="nalerts">—</b> alerts',
+        idx: '01', glyph: '📡', title: 'Ingestion & Normalization', tag: '[Alert Window]',
+        desc: 'Fetches the most recent alerts from the API on each poll and replaces the working set.',
+        tick: 'window <b data-sl="win">—</b>h · <b data-sl="nalerts">—</b> alerts in window',
     },
     {
-        idx: '02', glyph: '🛰', title: 'NLP Entity Tracking & Geocoding', tag: '[Geospatial Resolver]',
-        desc: 'Identifies company contexts and assigns physical coordinates (lat, lon).',
-        tick: 'offline geocoder · lat/lon when resolvable',
+        idx: '02', glyph: '🛰', title: 'Map Placement', tag: '[Row Coordinates]',
+        desc: 'Places signals on the map when the alert row already carries coordinates.',
+        tick: 'coordinates when present on the row',
     },
     {
         idx: '03', glyph: '🧮', title: 'Multi-Domain Classification', tag: '[Domain Matrix]',
@@ -962,9 +979,9 @@ const SYS_LOGIC_STAGES: ReadonlyArray<{
         tick: '6 strategic domains · keyword + LLM fallback',
     },
     {
-        idx: '04', glyph: '🖥', title: 'UI State Engine & Repaint', tag: '[Stateful Hydration]',
-        desc: 'Pipes the fresh delta payloads into the modular rendering queue to drive the Cyber-HUD layout.',
-        tick: 'incremental DOM upsert · selection preserved',
+        idx: '04', glyph: '🖥', title: 'UI State Engine & Repaint', tag: '[UI Repaint]',
+        desc: 'Rewrites the stream rows from the new set, keeping the selected signal open if it is still present.',
+        tick: 'rows rewritten · selection preserved',
     },
 ];
 
@@ -1037,13 +1054,12 @@ function sysLogicStatePanelsHtml(): string {
             <span class="sl-term">P(x<span class="sl-sub">i</span>)</span>
         </div>`;
 
-    // Left (bottom) — concrete fact interception + dedupe loop, paired with the
-    // entropy math above to form one complete intelligence ledger.
+    // Left (bottom) — the ordering step, paired with the entropy math above.
+    // No dedupe stage is shown because none exists: renderAlerts filters and
+    // sorts, and the poll replaces the array wholesale rather than merging.
     const interceptor = `
         <pre class="sl-code"><span class="sl-code-head">[Fact Interception]</span>
-<span class="sl-kw">const</span> seen = <span class="sl-kw">new</span> <span class="sl-fn">Set</span>()
-<span class="sl-kw">for</span> (sig <span class="sl-kw">of</span> Δ_payload) {
-  <span class="sl-kw">if</span> (seen.<span class="sl-fn">has</span>(sig.id)) <span class="sl-kw">continue</span> <span class="sl-cmt">// dedupe</span>
+<span class="sl-kw">for</span> (sig <span class="sl-kw">of</span> payload) {
   key = sig.importance_score ?? -1 <span class="sl-cmt">// unscored last</span>
 }
 sorted = <span class="sl-fn">stableSort</span>(key ↓, recency ↓)</pre>`;
@@ -1051,17 +1067,14 @@ sorted = <span class="sl-fn">stableSort</span>(key ↓, recency ↓)</pre>`;
     // Right — the actual incremental UI rendering / state-hydration loop.
     const hydration = `
         <pre class="sl-code"><span class="sl-code-head">[State Validation Loop]</span>
-Δ_payload = <span class="sl-fn">fetch</span>(<span class="sl-str">'/api/alerts?since='</span> + last_tick)
-<span class="sl-kw">if</span> (Δ_payload.length &gt; 0) {
-  <span class="sl-fn">DOM_Upsert</span>(stream_container, Δ_payload)
-  <span class="sl-fn">Maintain_Active_Selection</span>(module_state.selected_id)
-}</pre>`;
+params = { limit }; <span class="sl-kw">if</span> (topic) params.topic = topic
+payload = <span class="sl-fn">fetch</span>(<span class="sl-str">'/api/alerts?'</span> + <span class="sl-fn">qs</span>(params))
+stream_container.innerHTML = <span class="sl-fn">rows</span>(payload)   <span class="sl-cmt">// empty &rArr; "no active signals"</span>
+<span class="sl-fn">Maintain_Active_Selection</span>(module_state.selected_id)</pre>`;
 
     const telemetry = `
         <div class="sl-telemetry">
             <div class="sl-telem-row"><span class="sl-telem-k">Polling Interval</span><span class="sl-telem-v">10,000 ms</span></div>
-            <div class="sl-telem-row"><span class="sl-telem-k">State Persistence</span><span class="sl-telem-v sl-telem-v--ok">Active</span></div>
-            <div class="sl-telem-row"><span class="sl-telem-k">Event Delegation</span><span class="sl-telem-v sl-telem-v--ok">Enabled · Stable Parents</span></div>
         </div>`;
 
     return `
@@ -1072,13 +1085,13 @@ sorted = <span class="sl-fn">stableSort</span>(key ↓, recency ↓)</pre>`;
                 <div class="sl-math-live">Normalised entropy <b data-sl="entropy">—</b> · regime <b data-sl="regime">—</b> · <b data-sl="nalerts2">—</b> alerts (<b data-sl="win2">—</b>h)</div>
                 <div class="sl-divider" aria-hidden="true"></div>
                 ${interceptor}
-                <div class="sl-math-live">dedupe by id · stable sort by importance, then recency</div>
+                <div class="sl-math-live">stable sort by importance, then recency</div>
             </section>
             <section class="sl-math-block">
-                <div class="sl-math-label">INCREMENTAL TICKER ENGINE · delta state hydration</div>
+                <div class="sl-math-label">POLL LOOP · state refresh</div>
                 ${hydration}
                 ${telemetry}
-                <div class="sl-math-live">downstream: spatial worker (monthly trend flow) · cyc <b data-sl="iter">0</b></div>
+                <div class="sl-math-live">downstream: monthly trend flow · cyc <b data-sl="iter">0</b></div>
             </section>
         </div>`;
 }
@@ -1192,12 +1205,12 @@ export function openSysLogicOverlay(opts: { subtitle: string; bodyHtml: string; 
 
 function openSystemLogic(): void {
     openSysLogicOverlay({
-        subtitle: 'REAL-TIME COMPUTATIONAL SCHEMATIC · OSINT-CORE',
+        subtitle: 'COMPUTATIONAL SCHEMATIC · OSINT-CORE',
         bodyHtml:
             sysLogicFlowSvg() +
             `<div class="sl-stages">${sysLogicStageHtml()}</div>` +
             sysLogicStatePanelsHtml(),
-        footNote: 'ENGINE NOMINAL · pipeline executing · press <kbd>ESC</kbd> to return to stream',
+        footNote: 'Press <kbd>ESC</kbd> to return to stream',
         onOpen: (root) => { void sysLogicLoadReal(root); },
     });
 }
@@ -1219,8 +1232,9 @@ const DOMAIN_LIST_GUIDE_HTML = `
     <span class="intel-guide-p"><b>Alert Stream</b> (above) is the <em>curated</em> view -
     world events ranked by importance, the same global lens as "All".</span>
     <span class="intel-guide-p"><b>Full sector feed</b> (below) is the <em>comprehensive</em>
-    view - every raw item collected for this sector, newest first. No ranking, no impact
-    filter: the full net, so nothing in the sector is hidden.</span>
+    view - up to the 100 most recently collected items for this sector, in the order they
+    were collected. No ranking and no impact filter, but it is capped: on a busy sector
+    older items fall outside it.</span>
     <span class="intel-guide-p">A story can be important yet appear only in the list, or be
     routine yet still listed. That is expected - the list is breadth, the stream is selection.</span>`;
 
