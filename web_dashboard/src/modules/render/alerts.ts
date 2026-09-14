@@ -748,9 +748,10 @@ function chudUnmountSystemLogicButton(): void {
 }
 
 /** Default category labels — last-resort fallback so the pad is NEVER blank. */
+/** Kept in sync by hand with STRATEGIC_TOPIC_LABELS (topics.ts) — change both. */
 const CHUD_FALLBACK_FILTERS = [
-    'All', 'Energy & Resources', 'Global Market Intel', 'AI & Semiconductors',
-    'Crypto & Geopolitics', 'Defense Technology', 'Supply Chain Intelligence',
+    'All', 'Energy', 'Markets', 'AI / Semi',
+    'Crypto', 'Defense', 'Supply Chain',
 ];
 
 /**

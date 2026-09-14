@@ -1999,9 +1999,9 @@ p {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  padding: 10px 20px;
+  padding: 8px 14px;
   border-radius: 20px;
-  font-size: var(--font-s);
+  font-size: var(--font-xs);
   cursor: pointer;
   white-space: nowrap;
   min-height: 44px;

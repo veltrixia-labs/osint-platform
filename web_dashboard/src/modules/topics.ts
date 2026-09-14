@@ -202,12 +202,12 @@ export const TOPIC_COLORS: Record<StrategicTopicCode, string> = {
 };
 
 export const STRATEGIC_TOPIC_LABELS: Record<StrategicTopicCode, string> = {
-    ENERGY: 'Energy & Resources',
-    MARKET: 'Global Market Intel',
-    AI_TECH: 'AI & Semiconductors',
-    CRYPTO: 'Crypto & Geopolitics',
-    DEFENSE: 'Defense Technology',
-    SUPPLY_CHAIN: 'Supply Chain Intelligence',
+    ENERGY: 'Energy',
+    MARKET: 'Markets',
+    AI_TECH: 'AI / Semi',
+    CRYPTO: 'Crypto',
+    DEFENSE: 'Defense',
+    SUPPLY_CHAIN: 'Supply Chain',
 };
 
 /** Alert Stream / map filter chips — all 6 strategic sectors (CRYPTO is top-level, not under MARKET). */
