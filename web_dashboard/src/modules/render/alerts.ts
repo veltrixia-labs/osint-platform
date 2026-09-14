@@ -153,49 +153,6 @@ export function renderTopicFilterBar(
     });
 }
 
-export function renderLiveFeed(alerts: Alert[], container: HTMLElement) {
-    // [v16.0] Compact Pulse Bar: Single most critical/recent signal
-    const latest = [...alerts].sort((a, b) => {
-        const impA = typeof a.importance_score === 'number' ? a.importance_score : -1;
-        const impB = typeof b.importance_score === 'number' ? b.importance_score : -1;
-        if (impA !== impB) return impB - impA;
-        return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
-    })[0];
-
-    if (!latest) {
-        container.innerHTML = `
-            <div class="pulse-content" style="opacity:0.6; font-size: 0.75rem; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;">
-                <span class="severity-dot" style="background: rgba(88, 166, 255, 0.4); box-shadow: 0 0 8px rgba(88, 166, 255, 0.2);"></span>
-                <span style="font-weight: 500;">PULSE: Monitoring global signal backbone...</span>
-            </div>
-        `;
-        return;
-    }
-
-    const severityClass = latest.severity.toLowerCase();
-    const timeStr = formatIntelTime(latest.triggered_at);
-    const canonicalTopic = normalizeTopicCode(latest.topic);
-    const topicColor = getTopicColor(canonicalTopic);
-    const topicLabel = getTopicDisplayLabel(canonicalTopic);
-    const pulseHeadline = resolveAlertHeadline(latest);
-
-    // Apply temporary fade class if container already had content (simulating update)
-    const isUpdate = container.innerHTML.length > 0;
-
-    const headlineHtml = pulseHeadline.pending
-        ? '<span class="alert-headline-skeleton alert-headline-skeleton--inline" aria-hidden="true"></span>'
-        : `<span style="flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.75rem; font-weight: 600; color: #fff;">${pulseHeadline.text}</span>`;
-
-    container.innerHTML = `
-        <div class="pulse-content ${isUpdate ? 'pulse-fade-update' : ''}" style="display: flex; align-items: center; gap: 10px; width: 100%; overflow: hidden;">
-            <span class="severity-dot ${severityClass}"></span>
-            <span style="font-weight:900; color:${topicColor}; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px;">${topicLabel}</span>
-            ${headlineHtml}
-            <span style="opacity:0.5; font-size: 0.65rem; font-family: monospace;">[${timeStr}]</span>
-        </div>
-    `;
-}
-
 // ════════════════════════════════════════════════════════════════════════
 // Phase 8.4 — "Cyber-HUD Terminal" Master-Detail intelligence console.
 //
@@ -326,13 +283,6 @@ function chudLogLineHtml(line: string): string {
     );
 }
 
-/** Lightly fluctuate the pipeline telemetry cluster (hyper-real, not jumpy). */
-function chudUpdateTelemetry(): void {
-    // Real value only: the count of signals currently tracked in the stream.
-    const el = document.querySelector<HTMLElement>('[data-ptl="tracked"]');
-    if (el) el.textContent = String(chudAlerts.length);
-}
-
 /** Start (or restart) the single self-cleaning raw-log interval. */
 function chudStartLogStream(container: HTMLElement): void {
     const track = container.querySelector<HTMLElement>('.chud-log-track');
@@ -343,7 +293,6 @@ function chudStartLogStream(container: HTMLElement): void {
     }
     track.innerHTML = chudLogBuffer.map(chudLogLineHtml).join('');
     track.scrollTop = track.scrollHeight;
-    chudUpdateTelemetry();
 
     if (chudLogTimer !== null) {
         clearInterval(chudLogTimer);
@@ -376,7 +325,6 @@ function chudStartLogStream(container: HTMLElement): void {
             liveTrack.removeChild(liveTrack.firstElementChild);
         }
         liveTrack.scrollTop = liveTrack.scrollHeight;
-        chudUpdateTelemetry();
     }, CHUD_LOG_TICK_MS);
 }
 
@@ -893,20 +841,6 @@ export function renderAlerts(
                         </div>
                         <div class="chud-console-body">
                             <div class="chud-log-track"></div>
-                            <div class="pipeline-telemetry" aria-label="Pipeline telemetry">
-                                <div class="ptl-item">
-                                    <span class="ptl-k">TRACKED</span>
-                                    <span class="ptl-v"><b data-ptl="tracked">—</b> <span class="ptl-u">signals</span></span>
-                                </div>
-                                <div class="ptl-item">
-                                    <span class="ptl-k">POLL</span>
-                                    <span class="ptl-v"><b data-ptl="poll">10</b> <span class="ptl-u">s</span></span>
-                                </div>
-                                <div class="ptl-item ptl-item--ok">
-                                    <span class="ptl-k">FEED</span>
-                                    <span class="ptl-v ptl-v--ok"><b data-ptl="feed">LIVE</b></span>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

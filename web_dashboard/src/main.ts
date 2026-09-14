@@ -9,8 +9,8 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderLiveFeed, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderImpactRoster, renderTopicFilterBar, renderDomainItems, renderDomainItemsHint, clearDomainItems, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
-import { normalizeTopicCode, STRATEGIC_TOPIC_FILTERS, type StrategicTopicCode } from './modules/topics'
+import { renderAlerts, renderReportDetail, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderImpactRoster, renderTopicFilterBar, renderDomainItems, renderDomainItemsHint, clearDomainItems, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
+import { STRATEGIC_TOPIC_FILTERS, type StrategicTopicCode } from './modules/topics'
 import { formatIntelTime } from './modules/render/utils'
 // (Pro reports now handled within Pro Insights hub)
 import { login, signup, fetchMe, logout, fetchReports, fetchReport, confirmCheckoutSession, completeStripeSignup, getResolvedApiBase, initApiBase, fetchItems } from './modules/api'
@@ -677,7 +677,6 @@ async function initDashboard() {
             </div>
           </div>
           <div class="main-feed" id="alerts-container">
-            <div id="pulse-bar" class="pulse-bar"></div>
             <div id="topic-filter-bar" class="topic-filter-bar"></div>
             <div id="domain-items-hint"></div>
             <div id="alerts-list"></div>
@@ -704,7 +703,6 @@ async function initDashboard() {
 
     renderBaseUI();
     const alertsContainer = document.querySelector<HTMLElement>('#alerts-list')!
-    const pulseBar = document.querySelector<HTMLElement>('#pulse-bar')!
     const topicFilterBar = document.querySelector<HTMLElement>('#topic-filter-bar')!
     const domainItemsHost = document.querySelector<HTMLElement>('#domain-items')!
     const domainItemsHint = document.querySelector<HTMLElement>('#domain-items-hint')!
@@ -829,15 +827,6 @@ async function initDashboard() {
         applyPageHeader(tab);
         mainContent?.classList.toggle('main-content--global-map', tab === 'map');
 
-        const pulseBarEl = document.querySelector<HTMLElement>('#pulse-bar');
-        if (pulseBarEl) {
-            if (tab === 'feed') {
-                pulseBarEl.style.display = 'block';
-            } else {
-                pulseBarEl.style.display = 'none';
-                pulseBarEl.innerHTML = '';
-            }
-        }
         if (topicFilterBar) {
             topicFilterBar.style.display = tab === 'feed' ? 'flex' : 'none';
         }
@@ -988,13 +977,10 @@ async function initDashboard() {
             }
 
             if (data.alerts) {
-                pulseBar.style.display = 'block';
                 topicFilterBar.style.display = 'flex';
-                const filtered = activeTopicFilter
-                    ? data.alerts.filter(a => normalizeTopicCode(a.topic) === activeTopicFilter)
-                    : data.alerts;
+                // renderAlerts filters by activeTopicFilter itself; the separate
+                // pre-filtered copy existed only for the retired pulse bar.
                 renderAlerts(data.alerts, alertsContainer, user!.tier, activeTopicFilter);
-                renderLiveFeed(filtered, pulseBar);
             }
         });
         (window as any).stopPolling = () => state.stopPolling();

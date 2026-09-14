@@ -5659,40 +5659,6 @@ p {
   margin-bottom: 1rem !important;
 }
 
-/* 2. Pulse Bar (Single Line, Non-Scroll) */
-.pulse-bar {
-  background: rgba(88, 166, 255, 0.05);
-  border: 1px solid rgba(88, 166, 255, 0.1);
-  border-bottom: 2px solid var(--accent);
-  padding: 6px 12px;
-  margin-bottom: 0.65rem;
-  border-radius: 4px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(8px);
-}
-
-.pulse-fade-update {
-  animation: pulse-bar-update 0.8s ease-out;
-}
-
-@keyframes pulse-bar-update {
-  0% {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* 3. Pro Dashboard (Deltas & Spikes) */
 .bluf-delta.rising {
   color: var(--danger);
@@ -10421,32 +10387,6 @@ body.checkout-email-modal-scroll-lock {
   max-height: 100%;
   padding: 0;
 }
-
-.pipeline-telemetry {
-  flex: none;
-  width: clamp(140px, 38%, 184px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  padding: 0 0 0 14px;
-  border-left: 1px solid var(--chud-edge-soft);
-  font-family: ui-monospace, Consolas, monospace;
-}
-.ptl-item {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  line-height: 1.4;
-}
-.ptl-k { color: var(--chud-dim); }
-.ptl-v { color: var(--chud-cyan); font-weight: 700; font-variant-numeric: tabular-nums; text-shadow: 0 0 2px rgba(0, 240, 255, 0.5); }
-.ptl-u { color: var(--chud-dim); font-weight: 400; font-size: 9px; }
-.ptl-item--ok .ptl-v { color: #57f5a3; text-shadow: 0 0 2px rgba(87, 245, 163, 0.55); }
-@media (max-width: 640px) { .pipeline-telemetry { display: none; } }
 
 .chud-log-line {
   display: grid;
