@@ -1651,7 +1651,7 @@
      "role": "supply",
      "weight": 0.037,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "Tesla",
@@ -2488,7 +2488,7 @@
      "role": "supply",
      "weight": 0.092,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "Tesla",
@@ -2650,9 +2650,9 @@
      "target": "EV_Battery",
      "type": "context_link",
      "role": "supply",
-     "weight": 0.038,
+     "weight": 0.037,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "Hyundai",
@@ -2737,7 +2737,7 @@
      "role": "supply",
      "weight": 0.024,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "Stellantis",
