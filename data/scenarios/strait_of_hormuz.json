@@ -1262,7 +1262,7 @@
      "target": "EV_Battery",
      "type": "context_link",
      "role": "supply",
-     "weight": 0.11,
+     "weight": 0.092,
      "unit": "share",
      "weight_source": "estimated"
     },
@@ -1426,7 +1426,7 @@
      "target": "EV_Battery",
      "type": "context_link",
      "role": "supply",
-     "weight": 0.05,
+     "weight": 0.038,
      "unit": "share",
      "weight_source": "estimated"
     },
@@ -1511,7 +1511,7 @@
      "target": "EV_Battery",
      "type": "context_link",
      "role": "supply",
-     "weight": 0.027,
+     "weight": 0.024,
      "unit": "share",
      "weight_source": "estimated"
     },
