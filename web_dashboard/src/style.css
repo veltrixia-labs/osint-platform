@@ -10431,8 +10431,8 @@ body.checkout-email-modal-scroll-lock {
 .chud-row {
   --topic-color: var(--chud-cyan);
   display: grid;
-  grid-template-columns: 4px 58px 78px 42px minmax(74px, auto) 1fr auto 14px;
-  grid-template-areas: "rail ts token sev topic headline badge caret";
+  grid-template-columns: 4px 58px 60px 42px 26px 1fr auto 14px;
+  grid-template-areas: "rail ts token sev abbr headline badge caret";
   align-items: center;
   gap: 9px;
   width: 100%;
@@ -10452,13 +10452,17 @@ body.checkout-email-modal-scroll-lock {
 .chud-row-token { grid-area: token; }
 .chud-row-sev { grid-area: sev; }
 .chud-row-topic { grid-area: topic; }
+.chud-row-topic { display: none; }
 .chud-row-headline { grid-area: headline; }
 .chud-source-badge { grid-area: badge; }
 .chud-row-caret { grid-area: caret; }
-/* Abbreviated category tag — mobile-only (the desktop row shows the full topic). */
+/* Abbreviated category tag — shown at every width. It replaces the full topic
+   label in the row (.chud-row-topic is hidden above), buying that column's
+   width back for the headline. The full label still appears in the detail
+   panel. Colour arrives as an inline style from the renderer, not from here. */
 .chud-row-abbr {
   grid-area: abbr;
-  display: none;
+  display: block;
   font-weight: 800;
   font-size: 0.58rem;
   letter-spacing: 0.06em;
@@ -10476,7 +10480,7 @@ body.checkout-email-modal-scroll-lock {
   box-shadow: 0 0 8px color-mix(in srgb, var(--topic-color) 60%, transparent);
 }
 .chud-row-ts { color: var(--chud-dim); font-variant-numeric: tabular-nums; }
-.chud-row-token { color: var(--chud-cyan); font-weight: 700; letter-spacing: 0.04em; }
+.chud-row-token { color: var(--chud-cyan); font-weight: 700; letter-spacing: 0.04em; font-size: 0.66rem; }
 .chud-row-sev {
   font-weight: 800;
   font-size: 0.6rem;
@@ -10970,7 +10974,11 @@ body.checkout-email-modal-scroll-lock {
     grid-template-columns: 4px 52px 70px 40px 1fr auto 14px;
     grid-template-areas: "rail ts token sev headline badge caret";
   }
-  .chud-row-topic { display: none; }
+  /* This template defines no `abbr` area, so a visible .chud-row-abbr would be
+     auto-placed into an implicit track and break the row. Keep it hidden here;
+     769-900px keeps the layout it has always had. */
+  .chud-row-topic,
+  .chud-row-abbr { display: none; }
 }
 
 /* ── Desktop defaults for mobile-only controls (hidden until <=768px) ───── */
