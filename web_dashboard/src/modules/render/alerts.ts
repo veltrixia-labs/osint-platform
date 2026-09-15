@@ -164,13 +164,6 @@ export function renderTopicFilterBar(
 // incremental path that only swaps the stream rows.
 // ════════════════════════════════════════════════════════════════════════
 
-const CHUD_LOG_MAX = 64;          // raw-log lines retained in the DOM
-const CHUD_LOG_TICK_MS = 820;     // base cadence of the synthetic process log
-
-/** One rendered log line plus the timestamp of the event it describes. */
-type ChudLogEntry = { text: string; ts: string };
-let chudLogBuffer: ChudLogEntry[] = []; // persists across re-renders → seamless stream
-let chudLogTimer: number | null = null;
 let chudSelectedId: string | null = null;
 // Secondary-sources accordion open-state. Lives at module scope so the ~10s poll
 // (which rebuilds the detail panel's innerHTML) can RE-EMIT the expanded markup
@@ -178,7 +171,6 @@ let chudSelectedId: string | null = null;
 // changes (a freshly-opened signal always starts collapsed).
 let chudSrcExpanded = false;
 let chudAlerts: Alert[] = [];       // current (filtered+sorted) set, by render
-let chudLatestAlerts: Alert[] = []; // pool the log generator samples from
 let chudFilterGuardian: MutationObserver | null = null; // re-homes the shared filter bar on tab exit
 let chudFilterBarEl: HTMLElement | null = null;          // direct ref so a DETACHED bar can still be re-homed
 
@@ -227,10 +219,6 @@ function chudSafeUrl(raw: unknown): string {
     }
 }
 
-function chudPick<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)];
-}
-
 /** Deterministic terminal token for an alert — stable across re-renders. */
 function chudToken(alert: Alert): string {
     const prefix = CHUD_TOPIC_PREFIX[normalizeTopicCode(alert.topic)] || 'SIG';
@@ -240,104 +228,6 @@ function chudToken(alert: Alert): string {
         .toUpperCase()
         .padStart(4, '0');
     return `${prefix}-${hex}`;
-}
-
-/** HH:MM:SS for a given instant; defaults to now. */
-function chudClock(d: Date = new Date()): string {
-    const p = (n: number) => String(n).padStart(2, '0');
-    return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-}
-
-/** The alert's OWN trigger time — never the viewer's clock. Em dash when absent
- *  or unparseable, so a line never borrows a freshness it does not have. */
-function chudAlertClock(iso: string | null | undefined): string {
-    if (!iso) return '—';
-    const d = new Date(iso);
-    return Number.isNaN(d.getTime()) ? '—' : chudClock(d);
-}
-
-// ─── Raw process-log engine ──────────────────────────────────────────────
-
-/** Synthesise one plausible system-process line, biased toward live alerts.
- *  The returned `ts` is the described ALERT's trigger time; only the idle line
- *  (empty pool) carries the current clock, because it describes now. */
-function chudGenerateLogLine(pool: Alert[]): ChudLogEntry {
-    const a = pool.length ? chudPick(pool) : null;
-    const topic = a ? getTopicDisplayLabel(normalizeTopicCode(a.topic)) : 'GLOBAL';
-    const tok = a ? chudToken(a) : `SYS-${chudPick(['00A1', '7F2C', '4E90', 'BB13'])}`;
-    const country = (a?.country || chudPick(['US', 'CN', 'RU', 'IR', 'UA', 'SA', 'TW', 'EU', 'IL'])).toUpperCase();
-    const sev = (a?.severity || 'WATCH').toUpperCase();
-    // Honest log lines only — every field below is a real alert property
-    // (token from id, topic, country, severity, intensity, backbone status).
-    // When no alert is in the pool yet, emit a neutral idle line (no fabricated metrics).
-    if (!a) {
-        return { text: `[STREAM] awaiting signals :: ${topic}`, ts: chudClock() };
-    }
-    const templates = [
-        `[GEO-RESOLVER] mapping coordinates for ${tok} → ${country}`,
-        `[BACKBONE] discovery ${tok} status=${a.backbone_discovery_status || 'idle'}`,
-        `[SIGNAL] ${sev} intensity=${a.intensity_display ?? '—'} topic=${topic}`,
-        `[CLUSTER] ${tok} :: ${topic} (${country})`,
-    ];
-    return { text: chudPick(templates), ts: chudAlertClock(a.triggered_at) };
-}
-
-function chudLogLineHtml(entry: ChudLogEntry): string {
-    const m = entry.text.match(/^\[([A-Z-]+)\]/);
-    const tag = m ? m[1] : 'SYS';
-    const body = entry.text.replace(/^\[[A-Z-]+\]\s*/, '');
-    return (
-        `<div class="chud-log-line">` +
-        `<span class="chud-log-ts">${chudEscape(entry.ts)}</span>` +
-        `<span class="chud-log-tag chud-tag--${tag}">[${tag}]</span>` +
-        `<span class="chud-log-body">${chudEscape(body)}</span>` +
-        `</div>`
-    );
-}
-
-/** Start (or restart) the single self-cleaning raw-log interval. */
-function chudStartLogStream(container: HTMLElement): void {
-    const track = container.querySelector<HTMLElement>('.chud-log-track');
-    if (!track) return;
-
-    if (chudLogBuffer.length === 0) {
-        for (let i = 0; i < 14; i++) chudLogBuffer.push(chudGenerateLogLine(chudLatestAlerts));
-    }
-    track.innerHTML = chudLogBuffer.map(chudLogLineHtml).join('');
-    track.scrollTop = track.scrollHeight;
-
-    if (chudLogTimer !== null) {
-        clearInterval(chudLogTimer);
-        chudLogTimer = null;
-    }
-
-    chudLogTimer = window.setInterval(() => {
-        const liveTrack = document.querySelector<HTMLElement>('.chud-log-track');
-        // Self-clean: if the console left the DOM (tab switch / re-render race)
-        // kill the interval so we never write to a detached node.
-        if (!liveTrack || !document.body.contains(liveTrack)) {
-            if (chudLogTimer !== null) clearInterval(chudLogTimer);
-            chudLogTimer = null;
-            return;
-        }
-        const burst = 1 + (Math.random() < 0.32 ? 1 : 0);
-        for (let i = 0; i < burst; i++) {
-            const line = chudGenerateLogLine(chudLatestAlerts);
-            chudLogBuffer.push(line);
-            if (chudLogBuffer.length > CHUD_LOG_MAX) chudLogBuffer.shift();
-            const holder = document.createElement('div');
-            holder.innerHTML = chudLogLineHtml(line);
-            const node = holder.firstElementChild as HTMLElement | null;
-            if (node) {
-                node.classList.add('chud-log-line--new');
-                liveTrack.appendChild(node);
-            }
-        }
-        while (liveTrack.childElementCount > CHUD_LOG_MAX && liveTrack.firstElementChild) {
-            liveTrack.removeChild(liveTrack.firstElementChild);
-        }
-        liveTrack.scrollTop = liveTrack.scrollHeight;
-    }, CHUD_LOG_TICK_MS);
 }
 
 // ─── Stream rows (left pane) ─────────────────────────────────────────────
@@ -778,8 +668,8 @@ function chudRelocateFilterBar(root: HTMLElement): void {
                 chudUnmountSystemLogicButton();
             }
         });
-        // Observe direct children only — fires on tab-render swaps, NOT on the
-        // per-second log appends (those mutate deep inside .chud-log-track).
+        // Observe direct children only — fires on tab-render swaps, not on the
+        // deep mutations of an ordinary in-place re-render.
         chudFilterGuardian.observe(list, { childList: true });
     }
 }
@@ -811,9 +701,8 @@ export function renderAlerts(
             return new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime();
         });
 
-    // Refresh module state consumed by the row/detail/log helpers.
+    // Refresh module state consumed by the row/detail helpers.
     chudAlerts = sortedAlerts;
-    chudLatestAlerts = sortedAlerts;
 
     const SPARSE_MAX = 2;  // 0–2 alerts = sparse → shrink panel so the
                            // off-screen domain-items hint chip is reachable
@@ -847,19 +736,9 @@ export function renderAlerts(
 
     container.innerHTML = `
         <div class="chud-root">
-            <div class="chud-console" role="log" aria-label="Live ingestion process log">
+            <div class="chud-console" aria-label="Filters">
                 <div class="chud-console-grid">
                     <div class="chud-control-pad" data-role="control-pad"></div>
-                    <div class="chud-monitor">
-                        <div class="chud-console-head">
-                            <span class="chud-console-dot" aria-hidden="true"></span>
-                            <span class="chud-console-title">ALERT ACTIVITY</span>
-                            <span class="chud-console-meta">PID//OSINT-CORE</span>
-                        </div>
-                        <div class="chud-console-body">
-                            <div class="chud-log-track"></div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -938,8 +817,7 @@ export function renderAlerts(
         }
     });
 
-    // Boot the perpetual raw-log engine + project an initial selection.
-    chudStartLogStream(root);
+    // Project an initial selection.
     const initial = (chudSelectedId && sortedAlerts.some(a => a.id === chudSelectedId))
         ? chudSelectedId
         : (sortedAlerts[0]?.id ?? null);
