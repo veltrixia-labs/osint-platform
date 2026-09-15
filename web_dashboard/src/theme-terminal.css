@@ -178,16 +178,6 @@ body {
   margin-bottom: 0;
 }
 
-.pulse-bar {
-  border: var(--glass-border);
-  border-bottom: 2px solid var(--accent);
-  background: rgba(0, 209, 255, 0.04);
-  backdrop-filter: var(--glass-blur);
-  border-radius: 8px;
-  margin-bottom: 0;
-  box-shadow: var(--inner-glow);
-}
-
 /* ── Modals ── */
 .evidence-modal-overlay {
   background: rgba(10, 12, 16, 0.82) !important;

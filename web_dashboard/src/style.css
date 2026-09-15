@@ -10198,10 +10198,8 @@ body.checkout-email-modal-scroll-lock {
 
 /* ── Raw ingestion console ──────────────────────────────────────────── */
 .chud-console {
-  /* Frozen height: the box is sized by the filter pad (left column) and HARD-
-     capped at 132px. It is never inflated by the live log — `.chud-monitor`
-     sets min-height:0 so appended log lines scroll internally instead of
-     growing the grid row and shoving SIGNAL STREAM off-screen. */
+  /* Frozen height: the box is sized by the filter pad and HARD-capped at 132px,
+     so it can never grow and shove SIGNAL STREAM off-screen. */
   max-height: 132px;
   display: flex;
   flex-direction: column;
@@ -10216,72 +10214,15 @@ body.checkout-email-modal-scroll-lock {
     0 18px 40px -22px rgba(0, 240, 255, 0.4);
   overflow: hidden;
 }
-.chud-console-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 12px;
-  border-bottom: 1px solid var(--chud-edge-soft);
-  background: rgba(0, 240, 255, 0.04);
-  font-size: 0.62rem;
-  letter-spacing: 0.16em;
-}
-.chud-console-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--chud-cyan);
-  box-shadow: 0 0 10px var(--chud-cyan), 0 0 4px #fff inset;
-  animation: chud-pulse-dot 1.5s ease-in-out infinite;
-}
 @keyframes chud-pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.35; transform: scale(0.7); }
 }
-.chud-console-title { color: var(--chud-cyan); font-weight: 700; }
-.chud-console-meta { margin-left: auto; color: var(--chud-dim); }
-.chud-console-live {
-  color: #051018;
-  background: var(--chud-cyan);
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-weight: 800;
-  box-shadow: 0 0 10px var(--chud-glow);
-  animation: chud-flicker 3.2s steps(40) infinite;
-}
-@keyframes chud-flicker {
-  0%, 96%, 100% { opacity: 1; }
-  97% { opacity: 0.4; }
-  98% { opacity: 1; }
-  99% { opacity: 0.6; }
-}
-
-.chud-log-track {
-  flex: 2 1 0;
-  min-width: 0;
-  /* Internal scroll: lines append top-to-bottom and, once they exceed the
-     frozen box, scroll inside it (scrollbar hidden below). JS pins scrollTop to
-     the bottom so the freshest line stays visible without resizing the layout. */
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
-  max-height: 100%;
-  padding: 6px 12px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  font-size: 0.7rem;
-  line-height: 1.45;
-  scrollbar-width: none;
-  mask-image: linear-gradient(180deg, transparent 0, #000 18px, #000 100%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18px, #000 100%);
-}
-.chud-log-track::-webkit-scrollbar { display: none; }
 
 /* Phase 8.40 — isolate text-bearing layers onto their own compositing layer so
    the parent's backdrop-filter blur never bleeds into the inner font pixels. */
-.chud-log-track,
 .pipeline-telemetry,
 .chud-stream-list,
-.chud-console-head,
 .chud-detail-inner,
 .sl-code,
 .sl-telemetry {
@@ -10290,12 +10231,10 @@ body.checkout-email-modal-scroll-lock {
   transform: translateZ(0);
 }
 
-/* Phase 8.41 — pin every continuously-animated asset (LIVE badge, pulse dots,
-   scanline, floating detail panel, new-log flash, ticker blink) onto its OWN
-   GPU layer. Without this, their per-frame repaint forces the compositor to
-   re-rasterise the surrounding text, producing the periodic blur↔sharp loop. */
-.chud-console-live,
-.chud-console-dot,
+/* Phase 8.41 — pin every continuously-animated asset (scanline, floating detail
+   panel, ticker blink) onto its OWN GPU layer. Without this, their per-frame
+   repaint forces the compositor to re-rasterise the surrounding text, producing
+   the periodic blur↔sharp loop. */
 .syslogic-foot-dot,
 .chud-detail-scan,
 .sl-math-live b {
@@ -10305,13 +10244,10 @@ body.checkout-email-modal-scroll-lock {
 }
 
 /* Phase 8.41 — freeze the subpixel matrix of text containers so no neighbouring
-   animation can shift their letters off the pixel grid. (Log lines are NOT
-   promoted individually — the .chud-log-track layer above already isolates them,
-   and per-line promotion would spawn dozens of redundant GPU layers.) */
+   animation can shift their letters off the pixel grid. */
 .chud-row,
 .chud-detail-inner,
 .pipeline-telemetry,
-.chud-console-head,
 .chud-stream-list,
 .alert-card-compact,
 .sl-code,
@@ -10320,23 +10256,18 @@ body.checkout-email-modal-scroll-lock {
   transform: translate3d(0, 0, 0);
 }
 
-/* Phase 8.25 — functional split header:
-   [ Control Pad (filters) 1fr ] | [ System Monitor (logs + telemetry) 1.5fr ]. */
+/* Phase 8.25 — filter header: a single full-width Control Pad column. */
 .chud-console-grid {
   flex: 1;
   display: grid;
-  /* Compact-laptop fix: give the filter pad a real width floor (so long labels
-     like "Supply Chain Intelligence" stay within ~2 rows instead of wrapping to
-     an ugly 3rd), and let the monitor column take the remainder — which shifts
-     RAW INGESTION STREAM rightward into the previously dead right-hand space. */
-  grid-template-columns: minmax(330px, 1.45fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: stretch;
   min-height: 0;
   padding: 10px 12px;
 }
 
-/* Left: filter "control pad" — pills wrap into a compact block. */
+/* Filter "control pad" — pills wrap into a compact block. */
 .chud-control-pad {
   display: flex;
   align-items: flex-start;
@@ -10353,64 +10284,6 @@ body.checkout-email-modal-scroll-lock {
   padding: 0;
   overflow: visible;
 }
-/* Right: system monitor — logs grow, telemetry docks far right. */
-.chud-monitor {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  /* min-height:0 + overflow:hidden = the monitor (with its ever-appending log)
-     contributes 0 to the grid row's intrinsic height, so the row is sized by the
-     filter pad alone and the log is forced to scroll internally, never grow. */
-  min-height: 0;
-  overflow: hidden;
-  border-left: 1px solid var(--chud-edge-soft);
-  padding-left: 20px;
-}
-.chud-monitor .chud-console-head {
-  padding: 0 0 7px;
-  border-bottom: 1px solid var(--chud-edge-soft);
-  background: none;
-}
-.chud-console-body {
-  flex: 1;
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 0;
-  padding-top: 6px;
-}
-.chud-monitor .chud-log-track {
-  /* No auto-grow basis: the track fills the monitor's frozen height and scrolls
-     within it — it can never dictate the grid's vertical dimension. */
-  flex: 1 1 0;
-  min-height: 0;
-  max-height: 100%;
-  padding: 0;
-}
-
-.chud-log-line {
-  display: grid;
-  grid-template-columns: 62px 116px 1fr;
-  gap: 8px;
-  white-space: nowrap;
-  color: var(--chud-ink);
-  opacity: 0.92;
-}
-.chud-log-line--new { animation: chud-log-in 0.4s ease-out; }
-@keyframes chud-log-in {
-  from { opacity: 0; transform: translateX(-8px); filter: brightness(2.4); }
-  to   { opacity: 0.92; transform: none; filter: none; }
-}
-.chud-log-ts { color: var(--chud-dim); }
-.chud-log-tag { font-weight: 700; color: var(--chud-cyan); }
-.chud-log-body { color: #9fd6e6; overflow: hidden; text-overflow: ellipsis; }
-.chud-tag--RSS, .chud-tag--INGEST { color: #57f5a3; }
-.chud-tag--GEO-RESOLVER, .chud-tag--XFEED { color: #ffb020; }
-.chud-tag--PHYSICS, .chud-tag--ENTROPY, .chud-tag--VECTOR { color: #c08bff; }
-.chud-tag--NLP, .chud-tag--CACHE { color: #38d9ff; }
-.chud-tag--BACKBONE { color: #ff77c4; }
-.chud-tag--SIGNAL { color: #ff5c78; }
-
 /* ── Split master-detail layout ─────────────────────────────────────── */
 .chud-split {
   display: grid;
@@ -11115,16 +10988,14 @@ body.checkout-email-modal-scroll-lock {
   /* The category dropdown is absolutely positioned, but its ancestors clip it
      (control pad: overflow hidden; console: max-height 132px) — so toggling it
      appeared to "do nothing". Let it escape so the menu is actually visible. */
-  /* The filter bar is docked in the console's 2-column control pad. On phones,
-     collapse that desktop HUD grid: drop the raw-ingestion monitor (the empty
-     dark gap below the tabs), unfreeze the 132px height, and give the control
-     pad a single full-width row that scrolls horizontally. The control-pad-
-     scoped overflow override is REQUIRED — `.chud-control-pad .topic-filter-bar
+  /* The filter bar is docked in the console's control pad. On phones, collapse
+     that desktop HUD grid: unfreeze the 132px height and give the control pad a
+     single full-width row that scrolls horizontally. The control-pad-scoped
+     overflow override is REQUIRED — `.chud-control-pad .topic-filter-bar
      { overflow: visible }` (higher specificity, no media query) otherwise wins
      and suppresses the scroll. */
   .chud-console { overflow: visible; max-height: none; }
   .chud-console-grid { display: block; padding: 8px 10px; }
-  .chud-monitor { display: none; }
   .chud-control-pad { overflow: visible; width: 100%; }
   .chud-control-pad .topic-filter-bar {
     flex-wrap: nowrap;
@@ -11290,11 +11161,9 @@ body.chud-detail-modal-open { overflow: hidden; }
   .chud-root::before,
   .chud-detail,
   .chud-detail-scan,
-  .chud-console-live,
   .chud-detail-idle-ring,
   .chud-threat-ring,
-  .chud-topo-edge,
-  .chud-console-dot { animation: none; }
+  .chud-topo-edge { animation: none; }
   /* Keep the active-row arrow clearly visible (static) when motion is reduced. */
   .chud-row.is-active .chud-row-caret { animation: none; opacity: 1; transform: translateX(2px); }
 }
