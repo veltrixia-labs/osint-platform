@@ -10778,20 +10778,6 @@ body.checkout-email-modal-scroll-lock {
   color: var(--chud-cyan); border: 1px solid var(--chud-edge); border-radius: 3px;
   padding: 0 5px; font-size: 0.56rem;
 }
-.chud-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chud-chip {
-  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
-  padding: 3px 9px; border-radius: 999px;
-  border: 1px solid var(--chud-edge-soft);
-  background: rgba(0, 240, 255, 0.05);
-  color: var(--chud-ink);
-}
-.chud-chip--topic { color: var(--chud-cyan); border-color: var(--chud-edge); }
-.chud-chip--geo { color: #ffd479; border-color: rgba(255, 176, 32, 0.35); }
-.chud-chip--coord { color: var(--chud-dim); font-variant-numeric: tabular-nums; }
-.chud-chip--sev-critical { color: var(--chud-crit); border-color: color-mix(in srgb, var(--chud-crit) 45%, transparent); }
-.chud-chip--sev-elevated { color: var(--chud-elev); border-color: color-mix(in srgb, var(--chud-elev) 45%, transparent); }
-.chud-chip--sev-watch { color: var(--chud-watch); border-color: color-mix(in srgb, var(--chud-watch) 45%, transparent); }
 
 .chud-src-list { display: flex; flex-direction: column; gap: 6px; }
 .chud-src-row {
