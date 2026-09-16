@@ -287,10 +287,6 @@ function chudStreamRowsHtml(alerts: Alert[]): string {
 
 // ─── Detail panel (right pane) ───────────────────────────────────────────
 
-function chudTagChip(label: string, kind: string): string {
-    return `<span class="chud-chip chud-chip--${kind}">${chudEscape(label)}</span>`;
-}
-
 // Plain-language explainer for the two orthogonal axes shown in the detail
 // pane (anomaly ring + importance bar). Wired as a click ⓘ popover.
 const AXES_GUIDE_HTML = `
@@ -337,13 +333,6 @@ export function chudDetailHtml(alert: Alert | null): string {
         : status === 'failed' ? 'RAW SIGNAL'
         : status === 'processing' ? ''
         : 'PENDING';
-
-    // Signal tags — all from real alert fields (no fabricated entities).
-    const tags: string[] = [chudTagChip(topicLabel, 'topic')];
-    if (alert.country) tags.push(chudTagChip(alert.country, 'geo'));
-    tags.push(chudTagChip(TIER_LABEL[sev], `sev-${sev}`));
-    if (statusLabel) tags.push(chudTagChip(statusLabel, 'status'));
-    // Raw float coordinates intentionally omitted — they are debug noise, not a signal tag.
 
     const sources = Array.isArray(alert.evidence_list) ? alert.evidence_list : [];
     const sourceCount = sources.length;
@@ -446,11 +435,6 @@ export function chudDetailHtml(alert: Alert | null): string {
 
             <h2 class="chud-detail-headline">${locked ? '🔒 ' : ''}${chudEscape(headline.text || alert.target_label || 'Signal')}</h2>
             ${description}
-
-            <section class="chud-block">
-                <div class="chud-block-label">SIGNAL TAGS</div>
-                <div class="chud-chips">${tags.join('')}</div>
-            </section>
 
             <section class="chud-block">
                 <div class="chud-block-label">PRIMARY SOURCES <span class="chud-block-count">${primaryCount}</span></div>
