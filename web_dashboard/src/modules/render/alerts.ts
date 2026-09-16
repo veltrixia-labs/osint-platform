@@ -295,6 +295,13 @@ const AXES_GUIDE_HTML = `
     <b>IMPORTANCE</b> — how widely the event affects the world (energy, markets, shipping, defense, AI/semiconductors, crypto), scored 0–100 by an LLM from the headline.<br>
     They're independent: a globally important story can show low anomaly, and a high-anomaly blip can be globally trivial.`;
 
+/** Comparison form for duplicate detection: trimmed, internal whitespace runs
+ *  collapsed to one space, case-folded. Two strings that differ only in spacing
+ *  or capitalisation are the same sentence to a reader. */
+function chudNormaliseText(s: string): string {
+    return s.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
 export function chudDetailHtml(alert: Alert | null): string {
     if (!alert) {
         return `
@@ -380,7 +387,21 @@ export function chudDetailHtml(alert: Alert | null): string {
         + items.map((s: any) => renderSrcRow(s, false)).join('')
     ).join('');
 
+    // The h2 below already shows the headline, so a description that only repeats
+    // it renders the same sentence twice. Measured over alert_logs: of the 36
+    // non-empty descriptions, 34 are byte-identical to the label. The other 2 are
+    // the SOURCE's own headline sitting under a COMPOSED one (alert_manager's
+    // _resolve_display_label rewrites a generic label via compose_headline) — a
+    // second, different sentence, which still renders.
+    //
+    // Compared against the whole fallback chain, not headline.text alone: when
+    // resolveAlertHeadline returns pending ('' text) the headline falls back to
+    // target_label, and that is the case where the duplicate is most likely.
+    // The h2 below renders this same variable, so there is one writer: whatever
+    // the heading shows is exactly what the description is tested against.
+    const renderedHeadline = headline.text || alert.target_label || 'Signal';
     const description = alert.description
+        && chudNormaliseText(alert.description) !== chudNormaliseText(renderedHeadline)
         ? `<p class="chud-detail-desc">${chudEscape(alert.description)}</p>`
         : '';
 
@@ -433,7 +454,7 @@ export function chudDetailHtml(alert: Alert | null): string {
                 </div>
             </div>
 
-            <h2 class="chud-detail-headline">${locked ? '🔒 ' : ''}${chudEscape(headline.text || alert.target_label || 'Signal')}</h2>
+            <h2 class="chud-detail-headline">${locked ? '🔒 ' : ''}${chudEscape(renderedHeadline)}</h2>
             ${description}
 
             <section class="chud-block">
