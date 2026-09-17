@@ -26,7 +26,6 @@ from jobs.cleanup_job import (
     run_pro_structural_retention_wrapper,
 )
 from jobs.entity_lifecycle import run_entity_lifecycle  # [v10.21]
-from processor.impact_discovery import ImpactDiscoveryEngine # [v12.0]
 from jobs.external_data_sync import run_daily_external_data_sync_pipeline
 
 logging.basicConfig(level=logging.INFO)
@@ -182,11 +181,6 @@ async def monthly_trend_wrapper():
 async def run_threads_publisher_wrapper():
     async with AsyncSessionLocal() as session:
         await run_threads_publisher(session)
-
-async def run_discovery_scout_wrapper():
-    """Autonomous scout for AI discovery."""
-    async with _heavy_work_lock:
-        await ImpactDiscoveryEngine.run_discovery_scout()
 
 async def run_cleanup_bundle():
     """Bundle of hourly/daily cleanups under the shared heavy-DB mutex so they
@@ -360,9 +354,6 @@ def register_jobs():
     
     # Core Pipeline
     schedule.every(5).minutes.do(schedule_async, "pipeline", pipeline_full_processing)
-
-    # [v12.0] Autonomous Discovery Scout (High Frequency)
-    schedule.every(1).minutes.do(schedule_async, "discovery_scout", run_discovery_scout_wrapper)
 
     # Threads publisher (Polling)
     schedule.every(10).minutes.do(schedule_async, "threads_publisher", run_threads_publisher_wrapper)
