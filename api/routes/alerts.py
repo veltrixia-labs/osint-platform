@@ -9,14 +9,13 @@ import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict, Any
 
-from fastapi import APIRouter, Query, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.future import select
 from sqlalchemy import desc, Float
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import AlertLog, AlertDelivery, AnalystProfile
-from db.database import get_db, AsyncSessionLocal
-from processor.impact_discovery import ImpactDiscoveryEngine
+from db.database import get_db
 from api.gating import get_effective_tier, is_topic_allowed, _gate_cascading_impacts, is_tier_sufficient, PlanTier, gate_alert_payload
 from api.auth import blacklist_manager
 from api.rate_limit import rate_limit
@@ -404,81 +403,43 @@ async def submit_feedback(
     await db.commit()
     return {"status": "success"}
 
-async def run_background_discovery(alert_id: uuid.UUID, title: str, summary: str):
-    """Internal worker to execute LLM analysis out-of-band."""
-    async with AsyncSessionLocal() as session:
-        try:
-            from processor.impact_discovery import ImpactDiscoveryEngine
-            engine = ImpactDiscoveryEngine(session)
-            logging.getLogger(__name__).info(f"[Antigravity] Spawning Background Discovery Engine for Alert: {alert_id}")
-            # Use specific alert_id to enable internal persistence
-            await engine.run_discovery(
-                trigger_item_id=uuid.uuid4(),
-                title=title,
-                summary=summary,
-                alert_id=alert_id
-            )
-            logging.getLogger(__name__).info(f"[Antigravity] Background Discovery Engine SUCCESS for Alert: {alert_id}")
-        except Exception as e:
-            logging.getLogger(__name__).error(f"[Antigravity] Background analysis failed for {alert_id}: {e}")
-            # Mark as failed in DB
-            stmt = select(AlertLog).where(AlertLog.id == alert_id)
-            res = await session.execute(stmt)
-            alert = res.scalar_one_or_none()
-            if alert:
-                meta = dict(alert.metadata_json) if alert.metadata_json else {}
-                meta["backbone_discovery_status"] = "failed"
-                alert.metadata_json = meta
-                await session.commit()
-
 @router.post("/alerts/{alert_id}/analyze")
 async def upgrade_to_ai_analysis(
     alert_id: uuid.UUID,
-    background_tasks: BackgroundTasks,
     current_user: Optional[AnalystProfile] = Depends(rate_limit("/api/alerts/analyze")),
-    db: AsyncSession = Depends(get_db)
 ):
-    """Triggers real-time AI impact discovery for an alert (Asynchronous Background Job)."""
-    stmt = select(AlertLog).where(AlertLog.id == alert_id)
-    alert = (await db.execute(stmt)).scalar_one_or_none()
-    
-    if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
+    """
+    CLOSED (410). Previously triggered on-demand LLM impact discovery.
 
-    # [v10.29] Efficiency Check: Only run if not already processing or complete
-    meta = dict(alert.metadata_json) if alert.metadata_json else {}
-    status = meta.get("backbone_discovery_status", "idle")
-    existing_impacts = meta.get("cascading_impacts", [])
+    The route stays registered so the path answers deliberately instead of
+    returning a 404 that reads like a typo.
 
-    if any(i.get("source") == "ai_reasoning" for i in existing_impacts) or status == "complete":
-        return {"status": "success", "message": "Retrieving cached deep analysis", "cascading_impacts": existing_impacts}
+    Measured 2026-09-17, the pipeline behind it was broken in three independent
+    ways, any one of which alone voided the analysis:
 
-    if status == "processing":
-        # [v10.30] Stale analysis check: if stuck in processing for > 5 mins, allow manual retry
-        last_ts_str = meta.get("backbone_discovery_ts")
-        if last_ts_str:
-            try:
-                last_ts = datetime.fromisoformat(last_ts_str)
-                if last_ts.tzinfo is None: last_ts = last_ts.replace(tzinfo=timezone.utc)
-                if datetime.now(timezone.utc) - last_ts < timedelta(minutes=5):
-                    return {"status": "processing", "message": "Analysis is already in progress"}
-                else:
-                    logger.warning(f"[Antigravity] Alert {alert_id} analysis STALE — Restarting.")
-            except:
-                pass # Default to blocking if parse fails
-        else:
-            return {"status": "processing", "message": "Analysis is already in progress"}
+      - ``topic_to_domain`` is keyed on long topic names, while ``alert_logs.topic``
+        holds short codes (ENERGY, CRYPTO, ...). The lookup missed on 75/75 rows,
+        so ``target_domain`` was always the "global" default, never a real result.
+      - ``STRATEGIC_DOMAINS`` shares no vocabulary with ``stakeholders.domain``,
+        which holds only 'global_market_intelligence' and 'defense_technology'.
+        The anchor query returned 0 rows.
+      - ``stakeholders.strategic_score`` is 0.0 across all 54,050 rows, so the
+        ORDER BY that selects the context ranks nothing — it takes an arbitrary
+        slice of tied rows.
 
-    # Set status to processing and trigger background task
-    meta["backbone_discovery_status"] = "processing"
-    meta["backbone_discovery_ts"] = datetime.now(timezone.utc).isoformat()
-    alert.metadata_json = meta
-    await db.commit()
+    The CONTEXT block the model actually received was seven arbitrary
+    sanctions-registry individuals with ``quantum_indices: null``, and the prompt
+    asked it to invent ``entity_lat`` / ``entity_lng`` with no geocoder anywhere
+    in the path. No row in alert_logs ever carried the resulting
+    ``cascading_impacts``.
 
-    summary = (meta.get("description") if meta else None) or f"Triggered on {alert.topic}"
-    background_tasks.add_task(run_background_discovery, alert.id, alert.target_label, summary)
-
-    return {
-        "status": "processing",
-        "message": "AI backbone discovery initiated in background"
-    }
+    Closed for every caller rather than gated to Pro: gating would assert that a
+    paying tier may run an analysis we know produces nothing usable.
+    """
+    raise HTTPException(
+        status_code=410,
+        detail=(
+            "AI impact discovery is disabled. The analysis pipeline it drove "
+            "produced no usable output and is not currently maintained."
+        ),
+    )
