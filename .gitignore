@@ -53,6 +53,9 @@ Thumbs.db
 # playwright map screenshots (visual verification)
 .map-shots/
 web_dashboard/.map-shots/
+# local preview harness for style.css (spatial_preview / trigger_preview) —
+# never built, never served; recorded as unidentified twice before this
+web_dashboard/preview/
 
 # operating rules — contains unpatched hazard detail
 CLAUDE.md
