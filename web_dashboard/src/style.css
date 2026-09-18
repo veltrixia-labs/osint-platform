@@ -10476,9 +10476,22 @@ body.checkout-email-modal-scroll-lock {
   height: 100%;
   min-height: 22px;
   border-radius: 3px;
-  background: var(--topic-color);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--topic-color) 60%, transparent);
+  background: var(--rail-color, var(--topic-color));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--rail-color, var(--topic-color)) 60%, transparent);
 }
+
+/* The rail encodes SEVERITY, not topic. A 4px bar at the row's left edge is the
+   only fast-scan channel the row has, and the convention it reads as is tier —
+   a CRITICAL row rendering in its topic colour read as a contradiction to an
+   external reviewer. Topic has not been dropped: it is carried in text by
+   .chud-row-abbr (ENR/SHP/DEF/...), coloured inline by the renderer.
+   The fallback above keeps the old topic-coloured rail if a row ever arrives
+   without a tier class, so the bar is never unpainted.
+   Bound to the same --chud-crit/--chud-elev/--chud-watch the badge reads at
+   :10492-10494 — one definition, so rail and badge cannot drift apart. */
+.chud-row.severity-critical { --rail-color: var(--chud-crit); }
+.chud-row.severity-elevated { --rail-color: var(--chud-elev); }
+.chud-row.severity-watch    { --rail-color: var(--chud-watch); }
 .chud-row-ts { color: var(--chud-dim); font-variant-numeric: tabular-nums; }
 .chud-row-token { color: var(--chud-cyan); font-weight: 700; letter-spacing: 0.04em; font-size: 0.66rem; }
 .chud-row-sev {
