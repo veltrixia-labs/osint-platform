@@ -8,7 +8,7 @@ import {
     type StrategicTopicCode,
 } from '../topics';
 import { resolveAlertHeadline } from '../alert_display';
-import { formatIntelFeedTimestamp, formatIntelTime } from './utils';
+import { formatIntelFeedTimestamp, formatIntelRelativeTimestamp, formatIntelTime } from './utils';
 import { DEV_MODE_AUDIT } from '../dev_mode';
 import { renderPanelGuide, wirePanelGuideTooltips } from './pro_dashboard_primitives';
 
@@ -238,7 +238,7 @@ function chudRowHtml(alert: Alert): string {
     const topicColor = getTopicColor(canonicalTopic);
     const headline = resolveAlertHeadline(alert);
     const sev = alertThreatTier(alert);
-    const time = alert.triggered_at ? formatIntelTime(alert.triggered_at) : '—';
+    const time = alert.triggered_at ? formatIntelRelativeTimestamp(alert.triggered_at) : '—';
     const token = chudToken(alert);
     const locked = alert.is_locked && !DEV_MODE_AUDIT;
     const active = alert.id === chudSelectedId ? ' is-active' : '';

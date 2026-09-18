@@ -10431,7 +10431,7 @@ body.checkout-email-modal-scroll-lock {
 .chud-row {
   --topic-color: var(--chud-cyan);
   display: grid;
-  grid-template-columns: 4px 58px 60px 42px 26px 1fr auto 14px;
+  grid-template-columns: 4px 64px 60px 42px 26px 1fr auto 14px;
   grid-template-areas: "rail ts token sev abbr headline badge caret";
   align-items: center;
   gap: 9px;
