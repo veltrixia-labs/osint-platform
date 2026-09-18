@@ -3,7 +3,6 @@ import logging
 import os
 import time
 import json
-from enum import Enum
 from typing import Dict, Any, Optional, List
 from openai import APIConnectionError, APIStatusError, AsyncOpenAI, RateLimitError
 from anthropic import AsyncAnthropic
@@ -13,6 +12,11 @@ logger = logging.getLogger(__name__)
 
 # Strict Global Throttle to prevent Thundering Herd
 _global_llm_semaphore = asyncio.Semaphore(1)
+
+# DeepSeek documents 400/401/402/422 as MUST-NOT-retry: the cause is entirely
+# request- or account-side, so a second attempt only reconfirms it. 429 and 5xx
+# are the retryable ones.
+_DEEPSEEK_NO_RETRY_STATUSES = frozenset({400, 401, 402, 422})
 
 _deepseek_client: Optional[AsyncOpenAI] = None
 if settings.deepseek_api_key:
@@ -58,10 +62,23 @@ def _retry_after(exc: Any) -> Optional[str]:
     return headers.get("retry-after") if headers is not None else None
 
 
-async def _deepseek_attempt(system_prompt: str, user_prompt: str, is_batch: bool, temperature: float) -> str | List[Dict] | None:
-    """One DeepSeek call under the strict 15s timeout. Returns the parsed
-    result/text on success, or None on timeout / API error / batch-parse failure.
-    Never raises — a None return is the signal to retry or fall back.
+async def _deepseek_attempt(system_prompt: str, user_prompt: str, is_batch: bool, temperature: float) -> tuple[str | List[Dict] | None, bool]:
+    """One DeepSeek call under the strict 15s timeout.
+
+    Returns ``(result, retryable)``:
+      * ``result``    — the parsed result/text on success, else None on timeout /
+                        API error / batch-parse failure.
+      * ``retryable`` — whether a second attempt could plausibly succeed. False
+                        only for the statuses DeepSeek documents as MUST-NOT-retry
+                        (see ``_DEEPSEEK_NO_RETRY_STATUSES``); True everywhere
+                        else, including unknown statuses, so an unrecognised
+                        condition still gets its retry.
+
+    A tuple rather than a sentinel on purpose: the caller's success test is
+    ``if result is not None``, so any non-None sentinel would be mistaken for a
+    successful result. The tuple makes that class of bug unrepresentable.
+
+    Never raises — a None result is the signal to retry or fall back.
 
     Every failure path logs elapsed seconds: a 15.0s exhausted budget and a 2.1s
     fast rejection are different conditions and must not read the same."""
@@ -82,10 +99,10 @@ async def _deepseek_attempt(system_prompt: str, user_prompt: str, is_batch: bool
             timeout=15.0
         )
         text = response.choices[0].message.content
-        return _parse_batch_or_text(text, is_batch, "DeepSeek")
+        return _parse_batch_or_text(text, is_batch, "DeepSeek"), True
     except (asyncio.TimeoutError, TimeoutError):
         logger.error("[LLM] DeepSeek API timeout (15s). elapsed=%.2fs", time.monotonic() - started)
-        return None
+        return None, True
     except RateLimitError as e:
         logger.error(
             "[LLM] DeepSeek rate limited: HTTP %s retry_after=%s elapsed=%.2fs: %s",
@@ -94,16 +111,19 @@ async def _deepseek_attempt(system_prompt: str, user_prompt: str, is_batch: bool
             time.monotonic() - started,
             e,
         )
-        return None
+        return None, True
     except APIStatusError as e:
+        status = getattr(e, "status_code", None)
+        retryable = status not in _DEEPSEEK_NO_RETRY_STATUSES
         logger.error(
-            "[LLM] DeepSeek API status error: HTTP %s retry_after=%s elapsed=%.2fs: %s",
-            getattr(e, "status_code", None),
+            "[LLM] DeepSeek API status error: HTTP %s retry_after=%s elapsed=%.2fs retry=%s: %s",
+            status,
             _retry_after(e),
             time.monotonic() - started,
+            "yes" if retryable else "no",
             e,
         )
-        return None
+        return None, retryable
     except APIConnectionError as e:
         logger.error(
             "[LLM] DeepSeek connection error: type=%s elapsed=%.2fs: %s",
@@ -111,7 +131,7 @@ async def _deepseek_attempt(system_prompt: str, user_prompt: str, is_batch: bool
             time.monotonic() - started,
             e,
         )
-        return None
+        return None, True
     except Exception as e:
         logger.error(
             "[LLM] DeepSeek API Error: %s. type=%s elapsed=%.2fs",
@@ -119,7 +139,7 @@ async def _deepseek_attempt(system_prompt: str, user_prompt: str, is_batch: bool
             type(e).__name__,
             time.monotonic() - started,
         )
-        return None
+        return None, True
 
 
 async def generate_analysis(system_prompt: str, user_prompt: str, is_batch: bool = False, temperature: float = 0.7, enable_fallback: bool = False, **kwargs) -> str | List[Dict] | None:
@@ -150,11 +170,18 @@ async def generate_analysis(system_prompt: str, user_prompt: str, is_batch: bool
             else:
                 logger.info("[LLM] DeepSeek retry (attempt %d/2) after transient failure.", attempt + 1)
                 await asyncio.sleep(1.0)  # short backoff between attempts
-            result = await _deepseek_attempt(system_prompt, user_prompt, is_batch, temperature)
+            result, retryable = await _deepseek_attempt(system_prompt, user_prompt, is_batch, temperature)
             if result is not None:
                 logger.info("[LLM] DeepSeek Analysis successful. Pacing pipeline with 2.0s cooldown.")
                 await asyncio.sleep(2.0)
                 return result
+            if not retryable:
+                # The status line above carries the HTTP code and retry=no. Breaking
+                # here skips only the second DeepSeek attempt (and its 1.0s backoff,
+                # which runs at the top of the next iteration) — control still
+                # reaches the fallback block below unchanged.
+                logger.error("[LLM] DeepSeek failure is not retryable; skipping the second attempt.")
+                break
 
         # --- DeepSeek exhausted. Optional Claude fallback (opt-in only). ---
         if not enable_fallback or _anthropic_client is None:
