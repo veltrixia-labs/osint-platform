@@ -12332,7 +12332,12 @@ body.syslogic-open { overflow: hidden; }
 .domain-items-title { font-weight: 600; font-size: var(--font-sm); }
 .domain-items-count { font-size: var(--font-xs); opacity: 0.7; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 0 0.5rem; }
 .domain-item-list { list-style: none; margin: 0; padding: 0; }
-.domain-item { padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+/* font-size here, not only on the title: the li is a list-item, so its own
+   strut sizes the anonymous line box wrapping the inline <a>. Left at the
+   inherited 16px it contributed a 25.6px strut against the anchor's 19.968px
+   line box — 5.63px per row of height no glyph occupies, since nothing in the
+   row renders at 16px (title 12.48px, meta 11.52px). Measured 60.19px -> 54.56px. */
+.domain-item { padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.78rem; }
 /* 0.78rem = 12.48px at the 16px root — the same rendered size as
    .chud-row-headline-text. Without it the title inherited 16px, so the breadth
    list rendered LARGER than the scored stream and inverted the hierarchy the
