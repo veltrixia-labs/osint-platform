@@ -8,7 +8,7 @@ import {
     type StrategicTopicCode,
 } from '../topics';
 import { resolveAlertHeadline } from '../alert_display';
-import { formatIntelFeedTimestamp, formatIntelRelativeTimestamp, formatIntelTime } from './utils';
+import { formatIntelDate, formatIntelFeedTimestamp, formatIntelRelativeTimestamp, formatIntelTime } from './utils';
 import { DEV_MODE_AUDIT } from '../dev_mode';
 import { renderPanelGuide, wirePanelGuideTooltips } from './pro_dashboard_primitives';
 
@@ -1156,6 +1156,45 @@ function domainItemRowHtml(it: DomainItem): string {
 
 /** Render the comprehensive item list into its own host (sibling of #alerts-list).
  *  Owned entirely by this fn - the 10s Alert Stream poll never touches it. */
+/** Local calendar-day key for an item, or null when it has no usable date.
+ *  Keyed on LOCAL year/month/date, never the raw ISO string: created_at is UTC
+ *  and a string comparison would put the day boundary 9 hours off (handover
+ *  8-4). The year is in the KEY so two Septembers can never collide, even
+ *  though the visible label omits it. */
+function domainItemDayKey(it: DomainItem): string | null {
+    const raw = it.created_at ?? it.published_at ?? '';
+    if (!raw) return null;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return null;
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+/** Rows with a date separator emitted whenever the local calendar day changes,
+ *  including before the first row. Unlike the curated stream — sorted by
+ *  importance, where a separator would assert an order that does not exist —
+ *  this list IS ordered by time (api/routes/items.py:83, created_at DESC), so
+ *  the grouping states something true. An item with no usable date emits NO
+ *  separator and stays in whatever group is current; it never opens one. */
+function domainItemsWithDayBreaks(items: DomainItem[]): string {
+    let currentKey: string | null = null;
+    const out: string[] = [];
+    for (const it of items) {
+        const key = domainItemDayKey(it);
+        if (key !== null && key !== currentKey) {
+            currentKey = key;
+            const label = formatIntelDate(it.created_at ?? it.published_at, {
+                month: 'short',
+                day: 'numeric',
+            });
+            // aria-hidden: a visual grouping cue only. Each row already carries
+            // its own time in .domain-item-meta, so nothing is lost to a reader.
+            out.push(`<li class="domain-day" aria-hidden="true">${diEscHtml(label)}</li>`);
+        }
+        out.push(domainItemRowHtml(it));
+    }
+    return out.join('');
+}
+
 export function renderDomainItems(
     host: HTMLElement,
     items: DomainItem[],
@@ -1164,7 +1203,7 @@ export function renderDomainItems(
 ): void {
     const guide = renderPanelGuide('Curated stream vs comprehensive list', DOMAIN_LIST_GUIDE_HTML);
     const body = items.length
-        ? `<ul class="domain-item-list">${items.map(domainItemRowHtml).join('')}</ul>`
+        ? `<ul class="domain-item-list">${domainItemsWithDayBreaks(items)}</ul>`
         : `<div class="domain-empty">No items collected for this sector yet.</div>`;
     host.innerHTML = `
         <section class="domain-items" style="--domain-color:${diEscAttr(color)};" aria-label="${diEscAttr(label)} comprehensive news list">

@@ -12345,6 +12345,22 @@ body.syslogic-open { overflow: hidden; }
 .domain-item-title { text-decoration: none; color: inherit; font-size: 0.78rem; }
 .domain-item-title:hover { text-decoration: underline; color: var(--domain-color, #58a6ff); }
 .domain-item-meta { display: block; font-size: var(--font-xs); opacity: 0.6; margin-top: 0.15rem; }
+/* Day separator for the time-ordered list. Reads as a divider, not a row: it
+   carries none of .domain-item's padding or border (different class), sits
+   quieter than a title, and its top margin exceeds the ~15.8px gap between
+   rows so a new day separates more than a new row does. Deliberately NOT
+   sticky — .domain-items-head already is, and a second sticky element would
+   fight it. --text-secondary is :root-scoped (theme.css:19); --chud-dim is
+   scoped to .chud-root and would not resolve out here. */
+.domain-day {
+  margin: 1.1rem 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.domain-day:first-child { margin-top: 0; }
 .domain-empty { font-size: var(--font-xs); opacity: 0.6; padding: 0.5rem 0; }
 /* discoverability chip (above the fold, outside .chud-root, poll-safe) */
 #domain-items-hint { margin-top: 0.5rem; }
