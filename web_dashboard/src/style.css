@@ -12332,8 +12332,12 @@ body.syslogic-open { overflow: hidden; }
 .domain-items-title { font-weight: 600; font-size: var(--font-sm); }
 .domain-items-count { font-size: var(--font-xs); opacity: 0.7; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 0 0.5rem; }
 .domain-item-list { list-style: none; margin: 0; padding: 0; }
-.domain-item { padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.domain-item-title { text-decoration: none; color: inherit; }
+.domain-item { padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+/* 0.78rem = 12.48px at the 16px root — the same rendered size as
+   .chud-row-headline-text. Without it the title inherited 16px, so the breadth
+   list rendered LARGER than the scored stream and inverted the hierarchy the
+   panel's own guide text describes. */
+.domain-item-title { text-decoration: none; color: inherit; font-size: 0.78rem; }
 .domain-item-title:hover { text-decoration: underline; color: var(--domain-color, #58a6ff); }
 .domain-item-meta { display: block; font-size: var(--font-xs); opacity: 0.6; margin-top: 0.15rem; }
 .domain-empty { font-size: var(--font-xs); opacity: 0.6; padding: 0.5rem 0; }

@@ -1121,10 +1121,28 @@ const DOMAIN_LIST_GUIDE_HTML = `
     <span class="intel-guide-p">A story can be important yet appear only in the list, or be
     routine yet still listed. That is expected - the list is breadth, the stream is selection.</span>`;
 
+/** Publisher hostname from the item's own URL: lowercased, "www." stripped.
+ *  Falls back to the raw source_name on ANY failure (absent or unparseable
+ *  URL) — never an empty string, never a guess. source_name is the internal
+ *  feed key (Item.source_system, processor/normalize.py:255), so it reads as a
+ *  slug; the hostname is what the detail panel already shows for the same
+ *  story, and deriving it here makes the two panes agree. */
+function domainItemHost(url: string, sourceName: string): string {
+    if (!url) return sourceName;
+    try {
+        return new URL(url).hostname.toLowerCase().replace(/^www\./, '') || sourceName;
+    } catch {
+        return sourceName;
+    }
+}
+
 function domainItemRowHtml(it: DomainItem): string {
-    const when = it.published_at ?? it.created_at ?? '';
+    // Display the field the list is ORDERED by. api/routes/items.py:83 sorts on
+    // Item.created_at.desc().nullslast(), so showing published_at made the
+    // rendered clock non-monotonic (02:57 AM above 03:00 AM, measured).
+    const when = it.created_at ?? it.published_at ?? '';
     const ts = when ? formatIntelTime(when) : '';
-    const src = it.source_name ?? '';
+    const src = domainItemHost(it.source_url ?? '', it.source_name ?? '');
     const title = it.title ?? '(untitled)';
     const href = it.source_url ?? '';
     const titleHtml = href
