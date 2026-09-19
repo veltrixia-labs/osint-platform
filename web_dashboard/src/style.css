@@ -12337,7 +12337,12 @@ body.syslogic-open { overflow: hidden; }
    inherited 16px it contributed a 25.6px strut against the anchor's 19.968px
    line box — 5.63px per row of height no glyph occupies, since nothing in the
    row renders at 16px (title 12.48px, meta 11.52px). Measured 60.19px -> 54.56px. */
-.domain-item { padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.78rem; }
+/* Separator in the SECTOR's colour, not white. --domain-color is set inline on
+   the .domain-items section by the renderer, so it resolves out here where the
+   --chud-* tokens do not (.domain-items sits outside .chud-root). Same idiom as
+   the hint chip above the list. Deliberately NO border/radius/background on the
+   row itself: 100 cards would restore the weight this list just shed. */
+.domain-item { padding: 0.4rem 0; border-bottom: 1px solid color-mix(in srgb, var(--domain-color, #58a6ff) 18%, transparent); font-size: 0.78rem; }
 /* 0.78rem = 12.48px at the 16px root — the same rendered size as
    .chud-row-headline-text. Without it the title inherited 16px, so the breadth
    list rendered LARGER than the scored stream and inverted the hierarchy the
@@ -12358,7 +12363,14 @@ body.syslogic-open { overflow: hidden; }
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  /* A day break is a division, so it gets a rule of its own — brighter than the
+     row hairline (55% vs 18%) with a soft downward glow. Colour is mixed toward
+     --text-secondary rather than set to the raw sector hue, so the label stays
+     a label and does not compete with the titles. */
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--domain-color, #58a6ff) 55%, transparent);
+  box-shadow: 0 1px 6px -2px color-mix(in srgb, var(--domain-color, #58a6ff) 45%, transparent);
+  color: color-mix(in srgb, var(--domain-color, #58a6ff) 75%, var(--text-secondary));
 }
 .domain-day:first-child { margin-top: 0; }
 .domain-empty { font-size: var(--font-xs); opacity: 0.6; padding: 0.5rem 0; }
