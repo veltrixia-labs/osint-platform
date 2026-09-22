@@ -1303,7 +1303,7 @@
      "target": "Semiconductor_Materials",
      "type": "context_link",
      "role": "supply",
-     "weight": 0.26,
+     "weight": 0.178,
      "unit": "share",
      "weight_source": "estimated"
     },
@@ -1318,7 +1318,7 @@
    ],
    "why": "indirect via Japan (demand)",
    "title": "SUMCO",
-   "role_blurb": "Japanese silicon-wafer maker (world #2; with Shin-Etsu ~53% global); fab materials supplier",
+   "role_blurb": "Japanese silicon-wafer maker (world #2; with Shin-Etsu ~53%〔AMRO 2025-03〕〔日経シェア調査 2025 では 26.3+17.8=44.1%・調査基準が異なる〕 global); fab materials supplier",
    "financials": {
     "market_cap": {
      "value": 9.22,
@@ -1421,7 +1421,7 @@
      "target": "Semiconductor_Materials",
      "type": "context_link",
      "role": "supply",
-     "weight": 0.28,
+     "weight": 0.263,
      "unit": "share",
      "weight_source": "estimated"
     }
