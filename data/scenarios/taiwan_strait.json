@@ -13,8 +13,8 @@
   ]
  },
  "graph": {
-  "nodes": 302,
-  "edges": 1529,
+  "nodes": 303,
+  "edges": 1534,
   "gate": "PASS"
  },
  "scaling": {
@@ -777,6 +777,14 @@
      "weight": 0.7107,
      "unit": "share",
      "weight_source": "observed"
+    },
+    {
+     "target": "Container_Shipping",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.106,
+     "unit": "share",
+     "weight_source": "estimated"
     }
    ],
    "why": "indirect via China (demand)",

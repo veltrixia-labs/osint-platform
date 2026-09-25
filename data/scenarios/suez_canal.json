@@ -14,8 +14,8 @@
   ]
  },
  "graph": {
-  "nodes": 302,
-  "edges": 1529,
+  "nodes": 303,
+  "edges": 1534,
   "gate": "PASS"
  },
  "scaling": {
@@ -163,6 +163,14 @@
      "weight": null,
      "unit": null,
      "weight_source": null
+    },
+    {
+     "target": "Container_Shipping",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.138,
+     "unit": "share",
+     "weight_source": "estimated"
     }
    ],
    "title": "Maersk",
