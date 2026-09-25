@@ -1985,9 +1985,9 @@
      "target": "Semiconductor_Materials",
      "type": "context_link",
      "role": "supply",
-     "weight": null,
+     "weight": 0.19,
      "unit": "share",
-     "weight_source": null
+     "weight_source": "estimated"
     }
    ],
    "why": "indirect via Japan (demand)",
@@ -2274,9 +2274,9 @@
      "target": "Semiconductor_Materials",
      "type": "context_link",
      "role": "supply",
-     "weight": null,
+     "weight": 0.226,
      "unit": "share",
-     "weight_source": null
+     "weight_source": "estimated"
     }
    ],
    "why": "indirect via Japan (demand)",
