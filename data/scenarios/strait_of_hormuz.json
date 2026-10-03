@@ -15,7 +15,7 @@
  },
  "graph": {
   "nodes": 303,
-  "edges": 1534,
+  "edges": 1535,
   "gate": "PASS"
  },
  "scaling": {
@@ -1602,6 +1602,245 @@
    }
   },
   {
+   "id": "BYD",
+   "name": "BYD",
+   "lat": 22.543,
+   "lon": 114.058,
+   "country": "CN",
+   "type": "affected",
+   "order": 3,
+   "impact_score": 34,
+   "confidence": 0.7,
+   "role": "demand",
+   "raw_impact": -0.336,
+   "tickers": [
+    "1211",
+    "002594"
+   ],
+   "neighbourhood": [
+    {
+     "target": "China",
+     "type": "located_in",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "EV_Battery",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.7,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "EV_Battery",
+     "type": "context_link",
+     "role": "supply",
+     "weight": 0.164,
+     "unit": "share",
+     "weight_source": "observed"
+    },
+    {
+     "target": "Power_Demand",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.35,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Rare_Earths",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.4,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Export_Controls",
+     "type": "regulated_by",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Tesla",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Toyota",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Volkswagen",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "CATL",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Lithium",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.6,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Cobalt",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.2,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Nickel",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.2,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Copper",
+     "type": "context_link",
+     "role": "demand",
+     "weight": 0.55,
+     "unit": "share",
+     "weight_source": "estimated"
+    },
+    {
+     "target": "Ford",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "GM",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Hyundai",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Nio",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Stellantis",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Honda",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Mercedes_Benz",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Nissan",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    },
+    {
+     "target": "Renault",
+     "type": "competitor",
+     "role": null,
+     "weight": null,
+     "unit": null,
+     "weight_source": null
+    }
+   ],
+   "why": "indirect via China (demand)",
+   "title": "BYD",
+   "role_blurb": "Chinese EV/NEV maker; world's largest BEV seller (2025); battery vertical integration (Blade); EU-tariff-exposed",
+   "financials": {
+    "market_cap": {
+     "value": 112.0,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q2"
+    },
+    "total_debt": {
+     "value": 19.5,
+     "unit": "usd_bn",
+     "source": "observed",
+     "as_of": "2026-Q1"
+    },
+    "equity_volatility": {
+     "value": 0.3783,
+     "unit": "annualized",
+     "source": "observed",
+     "as_of": "2026-07-03"
+    }
+   },
+   "credit": {
+    "distance_to_default": 4.9617682819141375,
+    "bucket": "industrial",
+    "basis": "Merton d2, T=1y; sigma = equity_volatility used directly as asset volatility (overstates fragility with leverage; per-bucket only); r=0.04 ASSUMED (no source); static point-in-time, not a forecast",
+    "sigma": 0.3783,
+    "provenance": {
+     "market_cap": "observed",
+     "total_debt": "observed",
+     "equity_volatility": "observed"
+    },
+    "oldest_as_of": "2026-Q1",
+    "slice": "v29"
+   }
+  },
+  {
    "id": "CATL",
    "name": "CATL",
    "lat": 26.665,
@@ -3097,6 +3336,17 @@
    "target_lat": 37.241,
    "target_lon": 127.178,
    "intensity": 0.49,
+   "target_order": 3,
+   "role": "demand"
+  },
+  {
+   "source_id": "China",
+   "target_id": "BYD",
+   "source_lat": 35.8617,
+   "source_lon": 104.1954,
+   "target_lat": 22.543,
+   "target_lon": 114.058,
+   "intensity": 0.336,
    "target_order": 3,
    "role": "demand"
   },
