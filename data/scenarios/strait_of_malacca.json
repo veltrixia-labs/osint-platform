@@ -744,9 +744,9 @@
      "target": "EV_Battery",
      "type": "context_link",
      "role": "supply",
-     "weight": 0.8,
+     "weight": 0.391,
      "unit": "share",
-     "weight_source": "estimated"
+     "weight_source": "observed"
     },
     {
      "target": "Tesla",
