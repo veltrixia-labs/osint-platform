@@ -46,6 +46,20 @@
    "confidence": 1.0
   },
   {
+   "id": "Iran",
+   "name": "Iran",
+   "lat": 32.4279,
+   "lon": 53.688,
+   "country": "IR",
+   "type": "affected",
+   "order": 2,
+   "impact_score": 100,
+   "confidence": 1.0,
+   "role": "supply",
+   "raw_impact": 1.0,
+   "why": "route:supply"
+  },
+  {
    "id": "Qatar",
    "name": "Qatar",
    "lat": 25.35,
@@ -57,20 +71,6 @@
    "confidence": 1.0,
    "role": "supply",
    "raw_impact": 1.0,
-   "why": "route:supply"
-  },
-  {
-   "id": "Iran",
-   "name": "Iran",
-   "lat": 32.4279,
-   "lon": 53.688,
-   "country": "IR",
-   "type": "affected",
-   "order": 2,
-   "impact_score": 95,
-   "confidence": 1.0,
-   "role": "supply",
-   "raw_impact": 0.95,
    "why": "route:supply"
   },
   {
@@ -3065,23 +3065,23 @@
  "edges": [
   {
    "source_id": "Strait_of_Hormuz",
-   "target_id": "Qatar",
+   "target_id": "Iran",
    "source_lat": 26.5667,
    "source_lon": 56.25,
-   "target_lat": 25.35,
-   "target_lon": 51.18,
+   "target_lat": 32.4279,
+   "target_lon": 53.688,
    "intensity": 1.0,
    "target_order": 2,
    "role": "supply"
   },
   {
    "source_id": "Strait_of_Hormuz",
-   "target_id": "Iran",
+   "target_id": "Qatar",
    "source_lat": 26.5667,
    "source_lon": 56.25,
-   "target_lat": 32.4279,
-   "target_lon": 53.688,
-   "intensity": 0.95,
+   "target_lat": 25.35,
+   "target_lon": 51.18,
+   "intensity": 1.0,
    "target_order": 2,
    "role": "supply"
   },
@@ -3557,7 +3557,7 @@
   "node_gaps": [
    {
     "id": "Iran",
-    "impact": 0.95,
+    "impact": 1.0,
     "reason": "no company node with country=IR & domain∩['energy', 'supply_chain']"
    },
    {
