@@ -40,6 +40,12 @@ type RGraph = { meta: any; nodes: RNode[]; edges: REdge[] };
 const esc = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/** Display label from the node id. Underscores to spaces, nothing else — the id IS the vault's
+ *  identifier and an acronym must survive unchanged (TSMC, SMIC, OPEC, CATL, SOMO, PIF, DRC).
+ *  No title-casing: that would turn TSMC into Tsmc. The server drops any CJK `title`, so this is
+ *  the label for those nodes, and it asserts nothing the id does not already say. */
+const humanize = (id: string): string => id.replace(/_/g, ' ');
+
 let GRAPH: RGraph | null = null;
 let BY_ID = new Map<string, RNode>();
 let OUT = new Map<string, REdge[]>();
@@ -71,28 +77,31 @@ function index(g: RGraph) {
 /** Search id ∪ aliases ∪ title ∪ listing. Case-insensitive substring; CJK needs no folding
  *  (toLowerCase is a no-op on it and substring works directly). A ticker matches on the bare
  *  symbol or the full EXCHANGE:SYMBOL. */
-function search(q: string): RNode[] {
+function search(q: string): Array<{ n: RNode; rank: number; tickerHit?: string | null }> {
     const needle = q.trim().toLowerCase();
     if (!needle) return [];
-    const scored: Array<{ n: RNode; rank: number }> = [];
+    const scored: Array<{ n: RNode; rank: number; tickerHit?: string | null }> = [];
     for (const n of BY_ID.values()) {
         const id = n.id.toLowerCase();
         let rank = -1;
         if (id === needle) rank = 0;
         else if (id.startsWith(needle)) rank = 1;
         else if (id.includes(needle)) rank = 2;
-        if (rank < 0 && n.title && n.title.toLowerCase().includes(needle)) rank = 3;
+        // Index = id ∪ aliases ∪ listing. `title` is deliberately NOT indexed: the server drops
+        // every CJK title, so indexing it would make search behave differently for the 15 nodes
+        // whose title was Japanese than for the rest — a silent asymmetry.
+        let tickerHit: string | null = null;
         if (rank < 0) for (const a of n.aliases || []) {
             if (a.toLowerCase().includes(needle)) { rank = 3; break; }
         }
         if (rank < 0) for (const t of n.listing || []) {
             const low = t.toLowerCase(), sym = low.split(':')[1] || '';
-            if (low === needle || sym === needle || low.includes(needle)) { rank = 2; break; }
+            if (low === needle || sym === needle || low.includes(needle)) { rank = 2; tickerHit = t; break; }
         }
-        if (rank >= 0) scored.push({ n, rank });
+        if (rank >= 0) scored.push({ n, rank, tickerHit });
     }
     scored.sort((a, b) => a.rank - b.rank || a.n.id.localeCompare(b.n.id));
-    return scored.slice(0, 8).map((x) => x.n);
+    return scored.slice(0, 8);
 }
 
 function nodeCardHtml(n: RNode): string {
@@ -100,7 +109,7 @@ function nodeCardHtml(n: RNode): string {
     const dom = (n.domain || []).join(' · ');
     const meta = [n.type, dom, n.country].filter(Boolean).map((x) => esc(String(x))).join(' · ');
     return `<div class="rv-card">
-        <div class="rv-card-title">${esc(n.title || n.id)}</div>
+        <div class="rv-card-title">${esc(humanize(n.id))}</div>
         <div class="rv-card-meta">${meta}</div>
         ${n.role ? `<div class="rv-card-role">${esc(n.role)}</div>` : ''}
         ${chips ? `<div class="rv-chips">${chips}</div>` : ''}
@@ -112,7 +121,7 @@ function rowHtml(e: REdge, other: string, dir: '→' | '←'): string {
     // Three weight states, kept apart exactly as the export keeps them: key absent = the edge
     // type carries no weight by design; explicit null = magnitude never measured; number = a value.
     let w = '';
-    if (hasW && e.weight === null) w = `<span class="rv-unmeasured">未測定</span>`;
+    if (hasW && e.weight === null) w = `<span class="rv-unmeasured">not measured</span>`;
     else if (hasW && e.weight != null) {
         const unit = e.unit ? ` <span class="pm-co-unit">${esc(e.unit)}</span>` : '';
         w = `${e.weight}${unit}`;
@@ -130,7 +139,7 @@ function rowHtml(e: REdge, other: string, dir: '→' | '←'): string {
     const src = e.source ? ` <a class="rv-src" href="${esc(e.source)}" target="_blank" rel="noopener" title="${esc(e.source)}">↗</a>` : '';
     const tip = e.basis_short ? ` title="${esc(e.basis_short)}"` : '';
     return `<div class="pm-co-nb"${tip}>
-        <span class="pm-co-nb-t"><span class="rv-dir">${dir}</span> <a class="rv-link" data-goto="${esc(other)}">${esc(other)}</a></span>
+        <span class="pm-co-nb-t"><span class="rv-dir">${dir}</span> <a class="rv-link" data-goto="${esc(other)}">${esc(humanize(other))}</a></span>
         <span class="pm-co-nb-rel">${esc(e.type)}${role}${prov}${vs}${src}</span>
         <span class="pm-co-nb-w">${w}</span>
     </div>`;
@@ -174,8 +183,8 @@ function twoHopHtml(id: string): string {
     }
     if (!seen.size) return '';
     const rows = [...seen.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([n, via]) =>
-        `<div class="pm-co-nb"><span class="pm-co-nb-t"><a class="rv-link" data-goto="${esc(n)}">${esc(n)}</a></span>
-         <span class="pm-co-nb-rel">via ${esc(via)}</span><span class="pm-co-nb-w"></span></div>`).join('');
+        `<div class="pm-co-nb"><span class="pm-co-nb-t"><a class="rv-link" data-goto="${esc(n)}">${esc(humanize(n))}</a></span>
+         <span class="pm-co-nb-rel">via ${esc(humanize(via))}</span><span class="pm-co-nb-w"></span></div>`).join('');
     return `<details class="rv-2hop"><summary>2 hops <span class="pm-co-count">${seen.size}</span>${seen.size >= 40 ? ' (capped)' : ''}</summary>
         <div class="pm-co-nb-list">${rows}</div></details>`;
 }
@@ -219,7 +228,7 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     container.innerHTML = `
       <div class="rv-root">
         <div class="rv-head">
-          <input class="rv-search" type="search" placeholder="Search an entity — name, 別名, or ticker (TSMC / 台湾積体電路製造 / 2330)" autocomplete="off" />
+          <input class="rv-search" type="search" placeholder="Search a company, country, or resource — name or ticker (TSMC / TSM / 2330)" autocomplete="off" />
           <div class="rv-meta">${g.nodes.length} entities · ${g.edges.length} relationships · ${IS_PRO ? 'full provenance' : 'structure only'}</div>
           <div class="rv-results"></div>
         </div>
@@ -276,10 +285,10 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
         if (!q.trim()) { results.innerHTML = ''; return; }
         const hits = search(q);
         if (!hits.length) { results.innerHTML = `<div class="rv-empty">no match</div>`; return; }
-        results.innerHTML = hits.map((n) =>
+        results.innerHTML = hits.map(({ n, tickerHit }) =>
             `<button class="rv-hit" data-goto="${esc(n.id)}">
-                <span class="rv-hit-id">${esc(n.title || n.id)}</span>
-                <span class="rv-hit-meta">${esc(n.type || '')}${n.country ? ' · ' + esc(n.country) : ''}</span>
+                <span class="rv-hit-id">${esc(humanize(n.id))}</span>
+                <span class="rv-hit-meta">${esc(n.type || '')}${n.country ? ' · ' + esc(n.country) : ''}${tickerHit ? ' · ' + esc(tickerHit) : ''}</span>
              </button>`).join('');
     };
     input.addEventListener('input', doSearch);

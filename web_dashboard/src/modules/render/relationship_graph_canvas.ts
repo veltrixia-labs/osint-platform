@@ -148,7 +148,9 @@ export function mountGraphCanvas(
         if (twoHop) for (const a of [...ego]) for (const b of adj.get(a) || []) ego.add(b);
     };
 
-    const label = (n: GNode) => n.title || n.id;
+    // English-only surface: the server drops CJK titles, and the canvas label is derived from
+    // the id regardless so a node never renders under one name here and another in the panel.
+    const label = (n: GNode) => n.id.replace(/_/g, ' ');
     const draw = () => {
         ctx.save();
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -218,7 +220,7 @@ export function mountGraphCanvas(
         const id = n ? n.id : null;
         if (id !== hovered) { hovered = id; draw(); }
         if (n) {
-            tip.innerHTML = `<b>${(n.title || n.id).replace(/</g, '&lt;')}</b><br>${[n.type, n.country].filter(Boolean).join(' · ')}`;
+            tip.innerHTML = `<b>${n.id.replace(/_/g, ' ').replace(/</g, '&lt;')}</b><br>${[n.type, n.country].filter(Boolean).join(' · ')}`;
             tip.style.display = 'block';
             tip.style.left = `${ev.offsetX + 14}px`; tip.style.top = `${ev.offsetY + 12}px`;
         } else tip.style.display = 'none';
