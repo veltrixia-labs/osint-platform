@@ -254,12 +254,22 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     };
 
     // The canvas owns positions; the panel owns provenance. A click in either drives the other.
-    handle = mountGraphCanvas(
-        cHost,
-        g.nodes.map((n) => ({ id: n.id, type: n.type, country: n.country, title: n.title })),
-        g.edges.map((e) => ({ s: e.s, t: e.t, type: e.type, weight: e.weight })),
-        (id) => show(id, true),
-    );
+    // ★ Guarded: a throw inside the canvas used to leave an empty <canvas> of the correct size
+    //   with a working panel beside it — indistinguishable from "the layout produced nothing".
+    //   Now it says so, and the list still works without the picture.
+    try {
+        handle = mountGraphCanvas(
+            cHost,
+            g.nodes.map((n) => ({ id: n.id, type: n.type, country: n.country, title: n.title })),
+            g.edges.map((e) => ({ s: e.s, t: e.t, type: e.type, weight: e.weight })),
+            (id) => show(id, true),
+        );
+    } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[relationship_view] graph canvas failed to mount; list still usable', err);
+        cHost.innerHTML = `<div class="rv-empty">Graph canvas failed to mount — see console.<br>
+            <span class="rv-hint">Search and the relationship list still work.</span></div>`;
+    }
     const doSearch = () => {
         const q = input.value;
         detail.innerHTML = '';

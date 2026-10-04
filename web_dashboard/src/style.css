@@ -12431,7 +12431,10 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-hint { color: #475569; font-size: 0.62rem; }
 
 /* ── Relationship view: canvas + panel layout ─────────────────────────────── */
-#pro-map-container .rv-body { flex: 1; display: grid; grid-template-columns: minmax(0,1fr) 380px; gap: 12px; min-height: 0; }
+#pro-map-container .rv-body { flex: 1; display: grid; grid-template-columns: minmax(0,1fr) 380px; gap: 12px;
+    min-height: 70vh; }   /* 70vh floor: a grid row sized only by min-height:0 can resolve to 0 before layout,
+                             which is how the canvas got a zero-height host and drew nothing. */
+#pro-map-container .rv-canvas { width: 100%; height: 100%; display: block; }
 #pro-map-container .rv-canvas-host { position: relative; min-height: 0; border-radius: 10px; overflow: hidden;
     background: radial-gradient(ellipse at 50% 40%, rgba(15,23,42,0.9), rgba(2,6,16,0.96)); border: 1px solid rgba(56,189,248,0.14); }
 #pro-map-container .rv-canvas { display: block; cursor: grab; }

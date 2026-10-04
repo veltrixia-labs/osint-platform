@@ -109,12 +109,21 @@ export function mountGraphCanvas(
         if (!adj.has(e.t)) adj.set(e.t, new Set());
         adj.get(e.s)!.add(e.t); adj.get(e.t)!.add(e.s);
         e.weighted = e.weight != null;
+        // ★ forceLink reads link.source / link.target, NOT our s / t. Without these it calls
+        //   id(undefined) and throws `node not found: undefined` during force setup — after the
+        //   canvas element is appended and before any draw, which presents as an empty canvas of
+        //   the correct size with the panel beside it working fine.
+        e.source = e.s; e.target = e.t;
     }
+    // One unresolvable endpoint must not cost the whole canvas: forceLink throws on the first.
+    const known = new Set(nodes.map((n) => n.id));
+    const linkable = edges.filter((e) => known.has(e.s) && known.has(e.t));
+    const dropped = edges.length - linkable.length;
 
     const t0 = performance.now();
     let ticks = 0;
     const sim: Simulation<GNode, undefined> = forceSimulation(nodes)
-        .force('link', forceLink<GNode, any>(edges).id((d: any) => d.id)
+        .force('link', forceLink<GNode, any>(linkable).id((d: any) => d.id)
             .distance((l: any) => linkDistance(l.type)).strength(0.35))
         .force('charge', forceManyBody().strength(-130).distanceMax(420))
         .force('center', forceCenter(W / 2, H / 2))
@@ -274,27 +283,49 @@ export function mountGraphCanvas(
     /** ★ Fit the whole graph on load. The simulation's extent is wider than the viewport
      *  (measured 303/1535: x [123,1964], y [-83,927] against ~1200x800), so without this the
      *  default state would silently crop the graph the brief asks to show whole. */
-    const fit = () => {
-        const xs = nodes.map((n) => n.x!), ys = nodes.map((n) => n.y!);
+    let logged = false;
+    const logMount = (k: number, tx: number, ty: number) => {
+        if (logged) return; logged = true;
+        const firstMs = performance.now() - t0;
+        /* eslint-disable no-console */
+        console.log(`[relationship_canvas] size host ${W}x${H} · backing ${canvas.width}x${canvas.height} · dpr ${dpr}`);
+        console.log(`[relationship_canvas] transform k=${k.toFixed(3)} x=${tx.toFixed(1)} y=${ty.toFixed(1)} · nodes ${nodes.length} · edges ${edges.length} linkable ${linkable.length} dropped ${dropped}`);
+        console.log(`[relationship_canvas] layout ${layoutMs.toFixed(0)}ms (${ticks} ticks, ${(ticks / Math.max(1, layoutMs / 1000)).toFixed(0)} ticks/s) · first render ${firstMs.toFixed(0)}ms`);
+        /* eslint-enable no-console */
+    };
+
+    let fitted = false;
+    const fit = (): boolean => {
+        // ★ NEVER fit at zero size. A hidden or not-yet-laid-out tab container reports
+        //   clientWidth/Height 0; the extent division then yields Infinity/NaN and a NaN
+        //   transform draws nothing whatever. Defer to the ResizeObserver's first non-zero call.
+        if (!(W > 0 && H > 0)) return false;
+        const xs = nodes.map((n) => n.x!).filter(Number.isFinite);
+        const ys = nodes.map((n) => n.y!).filter(Number.isFinite);
+        if (!xs.length || !ys.length) return false;
         const x0 = Math.min(...xs), x1 = Math.max(...xs);
         const y0 = Math.min(...ys), y1 = Math.max(...ys);
         const pad = 28;
-        const k = Math.max(0.15, Math.min(8,
-            Math.min((W - pad * 2) / Math.max(1, x1 - x0), (H - pad * 2) / Math.max(1, y1 - y0))));
-        const tr = zoomIdentity
-            .translate(W / 2 - ((x0 + x1) / 2) * k, H / 2 - ((y0 + y1) / 2) * k)
-            .scale(k);
-        select(canvas as any).call(zb.transform as any, tr);   // sets d3-zoom state, then draws
+        let k = Math.min((W - pad * 2) / Math.max(1, x1 - x0), (H - pad * 2) / Math.max(1, y1 - y0));
+        if (!Number.isFinite(k)) k = 1;
+        k = Math.max(0.05, Math.min(8, k));
+        const tx = W / 2 - ((x0 + x1) / 2) * k, ty = H / 2 - ((y0 + y1) / 2) * k;
+        const tr = Number.isFinite(tx) && Number.isFinite(ty)
+            ? zoomIdentity.translate(tx, ty).scale(k)
+            : zoomIdentity;
+        select(canvas as any).call(zb.transform as any, tr);
+        logMount(tr.k, tr.x, tr.y);
+        return true;
     };
 
-    const ro = new ResizeObserver(() => { sizeCanvas(); draw(); });
+    const ro = new ResizeObserver(() => {
+        sizeCanvas();
+        if (!fitted) fitted = fit();          // first non-zero size wins
+        else draw();
+    });
     ro.observe(host);
 
-    fit();
-    const firstMs = performance.now() - t0;
-    // Dev-only timing. Not gated on a flag: it is three numbers once per mount, and the first
-    // question about a force layout is always "how long did it take".
-    // eslint-disable-next-line no-console
-    console.log(`[relationship_canvas] ${nodes.length} nodes / ${edges.length} edges · layout ${layoutMs.toFixed(0)}ms (${ticks} ticks, ${(ticks / (layoutMs / 1000)).toFixed(0)} ticks/s) · first render ${firstMs.toFixed(0)}ms`);
+    draw();                                   // at least one draw after the 300 ticks
+    fitted = fit();                           // and one after the fit
     return api;
 }
