@@ -1,0 +1,236 @@
+/**
+ * Relationship view — search an entity, see what the vault records about its relations.
+ *
+ * LIST-FIRST BY DESIGN. There is no canvas. The vault's graph is not geographic and a force
+ * layout would assert adjacency the data does not carry; the panel the Pro map already had
+ * (buildNeighbourhoodHtml) was always the part that answered the question. This promotes it
+ * from a drawer to the primary view and puts a search box in front of it.
+ *
+ * REUSED VERBATIM from pro_interactive_map.ts's neighbourhood panel, so the styling comes for
+ * free (style.css scopes these to #pro-map-container, which is where this mounts):
+ *   .pm-co-sec / .pm-co-sec-h / .pm-co-count / .pm-co-nb-list / .pm-co-nb
+ *   .pm-co-nb-t / .pm-co-nb-rel / .pm-co-nb-w / .pm-co-unit
+ *   .pm-co-src / .pm-co-src--obs / .pm-co-src--est / .pm-co-src--unk
+ * and the provenance ternary itself: a null weight_source on a WEIGHTED edge reads 'unlabelled'
+ * (a gap in the record); on an unweighted edge it reads nothing at all (provenance was never
+ * applicable, which is a different fact from a missing one).
+ *
+ * TIER. The free payload OMITS the provenance fields. This view renders what is present and
+ * nothing else — on free the provenance columns are simply absent, never greyed placeholders,
+ * because a greyed cell says "this edge has no source" and the truth is "your tier is not served
+ * that field".
+ */
+import { apiClient } from '../api';
+
+type RNode = {
+    id: string; type?: string | null; domain?: string[]; country?: string | null;
+    title?: string | null; role?: string | null; aliases?: string[]; listing?: string[];
+    layer?: string | null;
+};
+type REdge = {
+    s: string; t: string; type: string; flow?: string | null; role?: string | null;
+    weight?: number | null; unit?: string | null; weight_source?: string | null;
+    verify_status?: string | null; materiality?: string | null; as_of?: string | null;
+    retrieved?: string | null; source?: string | null; desc?: string | null;
+    basis_short?: string | null;
+};
+type RGraph = { meta: any; nodes: RNode[]; edges: REdge[] };
+
+const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+let GRAPH: RGraph | null = null;
+let BY_ID = new Map<string, RNode>();
+let OUT = new Map<string, REdge[]>();
+let IN = new Map<string, REdge[]>();
+let IS_PRO = false;
+
+/** Edges where the node is EITHER endpoint. The vault authors `competitor` single-sided and
+ *  alphabetically (00_SCHEMA.md:46), so an out-edge-only view makes the alphabetically-later
+ *  company look unconnected — BYD out 23 / in 2 against Volkswagen out 7 / in 18. Bidirectional
+ *  is not a nicety here; one-directional is simply wrong. */
+function neighbours(id: string): Array<{ e: REdge; other: string; dir: '→' | '←' }> {
+    const out = (OUT.get(id) || []).map((e) => ({ e, other: e.t, dir: '→' as const }));
+    const inc = (IN.get(id) || []).map((e) => ({ e, other: e.s, dir: '←' as const }));
+    return [...out, ...inc];
+}
+
+function index(g: RGraph) {
+    GRAPH = g; BY_ID = new Map(); OUT = new Map(); IN = new Map();
+    for (const n of g.nodes) BY_ID.set(n.id, n);
+    for (const e of g.edges) {
+        if (!OUT.has(e.s)) OUT.set(e.s, []);
+        OUT.get(e.s)!.push(e);
+        if (!IN.has(e.t)) IN.set(e.t, []);
+        IN.get(e.t)!.push(e);
+    }
+    IS_PRO = (g.meta && g.meta.tier) === 'pro';
+}
+
+/** Search id ∪ aliases ∪ title ∪ listing. Case-insensitive substring; CJK needs no folding
+ *  (toLowerCase is a no-op on it and substring works directly). A ticker matches on the bare
+ *  symbol or the full EXCHANGE:SYMBOL. */
+function search(q: string): RNode[] {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return [];
+    const scored: Array<{ n: RNode; rank: number }> = [];
+    for (const n of BY_ID.values()) {
+        const id = n.id.toLowerCase();
+        let rank = -1;
+        if (id === needle) rank = 0;
+        else if (id.startsWith(needle)) rank = 1;
+        else if (id.includes(needle)) rank = 2;
+        if (rank < 0 && n.title && n.title.toLowerCase().includes(needle)) rank = 3;
+        if (rank < 0) for (const a of n.aliases || []) {
+            if (a.toLowerCase().includes(needle)) { rank = 3; break; }
+        }
+        if (rank < 0) for (const t of n.listing || []) {
+            const low = t.toLowerCase(), sym = low.split(':')[1] || '';
+            if (low === needle || sym === needle || low.includes(needle)) { rank = 2; break; }
+        }
+        if (rank >= 0) scored.push({ n, rank });
+    }
+    scored.sort((a, b) => a.rank - b.rank || a.n.id.localeCompare(b.n.id));
+    return scored.slice(0, 8).map((x) => x.n);
+}
+
+function nodeCardHtml(n: RNode): string {
+    const chips = (n.listing || []).map((t) => `<span class="rv-chip">${esc(t)}</span>`).join('');
+    const dom = (n.domain || []).join(' · ');
+    const meta = [n.type, dom, n.country].filter(Boolean).map((x) => esc(String(x))).join(' · ');
+    return `<div class="rv-card">
+        <div class="rv-card-title">${esc(n.title || n.id)}</div>
+        <div class="rv-card-meta">${meta}</div>
+        ${n.role ? `<div class="rv-card-role">${esc(n.role)}</div>` : ''}
+        ${chips ? `<div class="rv-chips">${chips}</div>` : ''}
+    </div>`;
+}
+
+function rowHtml(e: REdge, other: string, dir: '→' | '←'): string {
+    const hasW = Object.prototype.hasOwnProperty.call(e, 'weight');
+    // Three weight states, kept apart exactly as the export keeps them: key absent = the edge
+    // type carries no weight by design; explicit null = magnitude never measured; number = a value.
+    let w = '';
+    if (hasW && e.weight === null) w = `<span class="rv-unmeasured">未測定</span>`;
+    else if (hasW && e.weight != null) {
+        const unit = e.unit ? ` <span class="pm-co-unit">${esc(e.unit)}</span>` : '';
+        w = `${e.weight}${unit}`;
+    }
+    const role = e.role ? ` · ${esc(e.role)}` : '';
+    // Verbatim the pro_interactive_map ternary.
+    const ws = e.weight_source == null
+        ? (hasW && e.weight != null ? 'unlabelled' : '')
+        : String(e.weight_source);
+    const wsCls = ws === 'observed' ? 'obs' : ws === 'estimated' ? 'est' : 'unk';
+    const prov = ws ? ` <span class="pm-co-src pm-co-src--${wsCls}">${esc(ws)}</span>` : '';
+    const vs = e.verify_status
+        ? ` <span class="rv-vs rv-vs--${e.verify_status === 'verified' ? 'ok' : 'no'}">${esc(e.verify_status)}</span>`
+        : '';
+    const src = e.source ? ` <a class="rv-src" href="${esc(e.source)}" target="_blank" rel="noopener" title="${esc(e.source)}">↗</a>` : '';
+    const tip = e.basis_short ? ` title="${esc(e.basis_short)}"` : '';
+    return `<div class="pm-co-nb"${tip}>
+        <span class="pm-co-nb-t"><span class="rv-dir">${dir}</span> <a class="rv-link" data-goto="${esc(other)}">${esc(other)}</a></span>
+        <span class="pm-co-nb-rel">${esc(e.type)}${role}${prov}${vs}${src}</span>
+        <span class="pm-co-nb-w">${w}</span>
+    </div>`;
+}
+
+function neighbourHtml(id: string): string {
+    const all = neighbours(id);
+    if (!all.length) return `<div class="rv-empty">no recorded relationships</div>`;
+    const groups = new Map<string, typeof all>();
+    for (const x of all) {
+        if (!groups.has(x.e.type)) groups.set(x.e.type, []);
+        groups.get(x.e.type)!.push(x);
+    }
+    const order = [...groups.keys()].sort((a, b) => groups.get(b)!.length - groups.get(a)!.length || a.localeCompare(b));
+    const secs = order.map((t) => {
+        const rows = groups.get(t)!.slice().sort((a, b) => {
+            const aw = a.e.weight != null ? 0 : 1, bw = b.e.weight != null ? 0 : 1;   // weighted first
+            return aw - bw || a.other.localeCompare(b.other);
+        });
+        return `<section class="pm-co-sec">
+            <div class="pm-co-sec-h">${esc(t)} <span class="pm-co-count">${rows.length}</span></div>
+            <div class="pm-co-nb-list">${rows.map((x) => rowHtml(x.e, x.other, x.dir)).join('')}</div>
+        </section>`;
+    }).join('');
+    return `<div class="rv-nb-total">${all.length} relationships</div>${secs}`;
+}
+
+/** Second hop, Pro only, capped at 40. Collapsed by default: it is context, not an assertion —
+ *  a 2-hop path is not a relationship the vault authored, it is two that happen to share a node. */
+function twoHopHtml(id: string): string {
+    if (!IS_PRO) return '';
+    const first = new Set(neighbours(id).map((x) => x.other));
+    const seen = new Map<string, string>();
+    for (const a of first) {
+        for (const x of neighbours(a)) {
+            if (x.other === id || first.has(x.other) || seen.has(x.other)) continue;
+            seen.set(x.other, a);
+            if (seen.size >= 40) break;
+        }
+        if (seen.size >= 40) break;
+    }
+    if (!seen.size) return '';
+    const rows = [...seen.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([n, via]) =>
+        `<div class="pm-co-nb"><span class="pm-co-nb-t"><a class="rv-link" data-goto="${esc(n)}">${esc(n)}</a></span>
+         <span class="pm-co-nb-rel">via ${esc(via)}</span><span class="pm-co-nb-w"></span></div>`).join('');
+    return `<details class="rv-2hop"><summary>2 hops <span class="pm-co-count">${seen.size}</span>${seen.size >= 40 ? ' (capped)' : ''}</summary>
+        <div class="pm-co-nb-list">${rows}</div></details>`;
+}
+
+export function resetRelationshipView() { GRAPH = null; }
+
+export async function renderRelationshipView(container: HTMLElement): Promise<void> {
+    container.innerHTML = `<div class="rv-loading">Loading relationship graph…</div>`;
+    if (!GRAPH) {
+        try {
+            const resp = await apiClient.get('/relationships', { cache: 'no-store' });
+            if (!resp.ok) throw new Error(String(resp.status));
+            index((await resp.json()) as RGraph);
+        } catch (err) {
+            container.innerHTML = `<div class="rv-empty">Relationship graph unavailable.</div>`;
+            return;
+        }
+    }
+    const g = GRAPH!;
+    container.innerHTML = `
+      <div class="rv-root">
+        <div class="rv-head">
+          <input class="rv-search" type="search" placeholder="Search an entity — name, 別名, or ticker (TSMC / 台湾積体電路製造 / 2330)" autocomplete="off" />
+          <div class="rv-meta">${g.nodes.length} entities · ${g.edges.length} relationships · ${IS_PRO ? 'full provenance' : 'structure only'}</div>
+        </div>
+        <div class="rv-results"></div>
+        <div class="rv-detail"></div>
+      </div>`;
+    const input = container.querySelector('.rv-search') as HTMLInputElement;
+    const results = container.querySelector('.rv-results') as HTMLElement;
+    const detail = container.querySelector('.rv-detail') as HTMLElement;
+
+    const show = (id: string) => {
+        const n = BY_ID.get(id);
+        if (!n) return;
+        results.innerHTML = '';
+        detail.innerHTML = nodeCardHtml(n) + neighbourHtml(id) + twoHopHtml(id);
+        detail.scrollTop = 0;
+    };
+    const doSearch = () => {
+        const q = input.value;
+        detail.innerHTML = '';
+        if (!q.trim()) { results.innerHTML = ''; return; }
+        const hits = search(q);
+        if (!hits.length) { results.innerHTML = `<div class="rv-empty">no match</div>`; return; }
+        results.innerHTML = hits.map((n) =>
+            `<button class="rv-hit" data-goto="${esc(n.id)}">
+                <span class="rv-hit-id">${esc(n.title || n.id)}</span>
+                <span class="rv-hit-meta">${esc(n.type || '')}${n.country ? ' · ' + esc(n.country) : ''}</span>
+             </button>`).join('');
+    };
+    input.addEventListener('input', doSearch);
+    container.addEventListener('click', (ev) => {
+        const el = (ev.target as HTMLElement).closest('[data-goto]') as HTMLElement | null;
+        if (!el) return;
+        ev.preventDefault();
+        show(el.dataset.goto!);
+    });
+}

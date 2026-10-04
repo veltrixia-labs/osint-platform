@@ -12383,3 +12383,48 @@ body.syslogic-open { overflow: hidden; }
 /* landing offset + sticky header so the label stays visible after scrolling down */
 .domain-items { scroll-margin-top: 0.75rem; }
 .domain-items-head { position: sticky; top: 0; z-index: 2; background: var(--card-bg); padding-bottom: 0.35rem; }
+
+/* ── Relationship view ────────────────────────────────────────────────────────
+   Only what the reused .pm-co-* vocabulary does not already provide. The rows,
+   section headers, counts, units and provenance badges come from the Pro map's
+   neighbourhood panel above, scoped to #pro-map-container, which is where this
+   view mounts. */
+#pro-map-container .rv-root { display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 14px 16px; gap: 10px; }
+#pro-map-container .rv-head { display: flex; flex-direction: column; gap: 6px; }
+#pro-map-container .rv-search {
+    width: 100%; padding: 10px 12px; border-radius: 8px; font-size: 0.82rem;
+    background: rgba(8,13,28,0.82); border: 1px solid rgba(56,189,248,0.22); color: #e2e8f0;
+}
+#pro-map-container .rv-search::placeholder { color: #64748b; }
+#pro-map-container .rv-meta { color: #64748b; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em; }
+#pro-map-container .rv-results { display: flex; flex-direction: column; gap: 2px; }
+#pro-map-container .rv-hit {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    padding: 7px 10px; border-radius: 6px; cursor: pointer; text-align: left;
+    background: rgba(15,23,42,0.6); border: 1px solid rgba(56,189,248,0.12); color: #e2e8f0;
+}
+#pro-map-container .rv-hit:hover { border-color: rgba(56,189,248,0.4); }
+#pro-map-container .rv-hit-id { font-size: 0.76rem; }
+#pro-map-container .rv-hit-meta { color: #64748b; font-size: 0.6rem; text-transform: uppercase; }
+#pro-map-container .rv-detail { flex: 1; overflow-y: auto; }
+#pro-map-container .rv-card { padding: 10px 0 12px; border-bottom: 1px solid rgba(56,189,248,0.14); margin-bottom: 8px; }
+#pro-map-container .rv-card-title { color: #f1f5f9; font-size: 1.02rem; }
+#pro-map-container .rv-card-meta { color: #64748b; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 3px; }
+#pro-map-container .rv-card-role { color: #cbd5e1; font-size: 0.72rem; margin-top: 7px; line-height: 1.45; }
+#pro-map-container .rv-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+#pro-map-container .rv-chip { font-size: 0.58rem; padding: 2px 6px; border-radius: 4px; background: rgba(56,189,248,0.1); color: #7dd3fc; }
+#pro-map-container .rv-nb-total { color: #64748b; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em; margin: 4px 0 8px; }
+#pro-map-container .rv-dir { color: #64748b; }
+#pro-map-container .rv-link { color: #7dd3fc; cursor: pointer; text-decoration: none; }
+#pro-map-container .rv-link:hover { text-decoration: underline; }
+/* 未測定 — an authored `weight: null`: the magnitude was never measured. NOT zero, and NOT the
+   same as an absent weight key, which renders as nothing at all because the edge type carries
+   no weight by design. */
+#pro-map-container .rv-unmeasured { color: #64748b; font-size: 0.58rem; }
+#pro-map-container .rv-vs { font-size: 0.54rem; text-transform: uppercase; letter-spacing: 0.03em; }
+#pro-map-container .rv-vs--ok { color: #34d399; }
+#pro-map-container .rv-vs--no { color: #94a3b8; }
+#pro-map-container .rv-src { color: #7dd3fc; text-decoration: none; font-size: 0.68rem; }
+#pro-map-container .rv-2hop { margin-top: 14px; border-top: 1px solid rgba(56,189,248,0.14); padding-top: 10px; }
+#pro-map-container .rv-2hop summary { color: #94a3b8; font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
+#pro-map-container .rv-empty, #pro-map-container .rv-loading { color: #64748b; font-size: 0.74rem; padding: 18px 2px; }
