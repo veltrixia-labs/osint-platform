@@ -21,6 +21,7 @@
  * that field".
  */
 import { apiClient } from '../api';
+import { mountGraphCanvas, PALETTE, type CanvasHandle } from './relationship_graph_canvas';
 
 type RNode = {
     id: string; type?: string | null; domain?: string[]; country?: string | null;
@@ -213,26 +214,52 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
         }
     }
     const g = GRAPH!;
+    const legend = Object.entries(PALETTE)
+        .map(([t, c]) => `<span class="rv-leg"><i style="background:${c}"></i>${esc(t)}</span>`).join('');
     container.innerHTML = `
       <div class="rv-root">
         <div class="rv-head">
           <input class="rv-search" type="search" placeholder="Search an entity — name, 別名, or ticker (TSMC / 台湾積体電路製造 / 2330)" autocomplete="off" />
           <div class="rv-meta">${g.nodes.length} entities · ${g.edges.length} relationships · ${IS_PRO ? 'full provenance' : 'structure only'}</div>
+          <div class="rv-results"></div>
         </div>
-        <div class="rv-results"></div>
-        <div class="rv-detail"></div>
+        <div class="rv-body">
+          <div class="rv-canvas-host"></div>
+          <aside class="rv-panel">
+            ${IS_PRO ? '' : '<div class="rv-freeline">FREE — relationships only; upgrade for weights &amp; sources</div>'}
+            <div class="rv-detail"></div>
+          </aside>
+        </div>
+        <div class="rv-legend">${legend}<span class="rv-leg rv-leg--ring"><i></i>country = ring</span></div>
       </div>`;
     const input = container.querySelector('.rv-search') as HTMLInputElement;
     const results = container.querySelector('.rv-results') as HTMLElement;
     const detail = container.querySelector('.rv-detail') as HTMLElement;
+    const cHost = container.querySelector('.rv-canvas-host') as HTMLElement;
 
-    const show = (id: string) => {
+    const idle = () =>
+        `<div class="rv-idle">${g.nodes.length} entities · ${g.edges.length} relationships<br>
+         <span class="rv-hint">Click a node, or search, to see what the vault records about it.</span></div>`;
+    detail.innerHTML = idle();
+
+    let handle: CanvasHandle | null = null;
+    const show = (id: string | null, fromCanvas = false) => {
+        if (!id) { detail.innerHTML = idle(); if (!fromCanvas) handle?.select(null); return; }
         const n = BY_ID.get(id);
         if (!n) return;
         results.innerHTML = '';
         detail.innerHTML = nodeCardHtml(n) + neighbourHtml(id) + twoHopHtml(id);
         detail.scrollTop = 0;
+        if (!fromCanvas) handle?.focus(id); else handle?.select(id);
     };
+
+    // The canvas owns positions; the panel owns provenance. A click in either drives the other.
+    handle = mountGraphCanvas(
+        cHost,
+        g.nodes.map((n) => ({ id: n.id, type: n.type, country: n.country, title: n.title })),
+        g.edges.map((e) => ({ s: e.s, t: e.t, type: e.type, weight: e.weight })),
+        (id) => show(id, true),
+    );
     const doSearch = () => {
         const q = input.value;
         detail.innerHTML = '';
@@ -248,8 +275,8 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     input.addEventListener('input', doSearch);
     container.addEventListener('click', (ev) => {
         const el = (ev.target as HTMLElement).closest('[data-goto]') as HTMLElement | null;
-        if (!el) return;
-        ev.preventDefault();
-        show(el.dataset.goto!);
+        if (el) { ev.preventDefault(); show(el.dataset.goto!); return; }
+        const det = (ev.target as HTMLElement).closest('.rv-2hop') as HTMLDetailsElement | null;
+        if (det) setTimeout(() => handle?.setTwoHop(det.open), 0);   // after <details> flips
     });
 }

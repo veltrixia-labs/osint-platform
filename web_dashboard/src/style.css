@@ -12429,3 +12429,21 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-2hop summary { color: #94a3b8; font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
 #pro-map-container .rv-empty, #pro-map-container .rv-loading { color: #64748b; font-size: 0.74rem; padding: 18px 2px; }
 #pro-map-container .rv-hint { color: #475569; font-size: 0.62rem; }
+
+/* ── Relationship view: canvas + panel layout ─────────────────────────────── */
+#pro-map-container .rv-body { flex: 1; display: grid; grid-template-columns: minmax(0,1fr) 380px; gap: 12px; min-height: 0; }
+#pro-map-container .rv-canvas-host { position: relative; min-height: 0; border-radius: 10px; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 40%, rgba(15,23,42,0.9), rgba(2,6,16,0.96)); border: 1px solid rgba(56,189,248,0.14); }
+#pro-map-container .rv-canvas { display: block; cursor: grab; }
+#pro-map-container .rv-canvas:active { cursor: grabbing; }
+#pro-map-container .rv-panel { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+#pro-map-container .rv-panel .rv-detail { flex: 1; overflow-y: auto; padding-right: 4px; }
+#pro-map-container .rv-freeline { font-size: 0.6rem; color: #fbbf24; background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.22); border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; }
+#pro-map-container .rv-idle { color: #64748b; font-size: 0.74rem; padding: 10px 2px; line-height: 1.7; }
+#pro-map-container .rv-tip { position: absolute; pointer-events: none; z-index: 5; font-size: 0.64rem; line-height: 1.4;
+    background: rgba(2,6,16,0.94); border: 1px solid rgba(56,189,248,0.3); border-radius: 5px; padding: 5px 7px; color: #e2e8f0; }
+#pro-map-container .rv-legend { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 8px; }
+#pro-map-container .rv-leg { display: inline-flex; align-items: center; gap: 4px; color: #64748b; font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.03em; }
+#pro-map-container .rv-leg i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+#pro-map-container .rv-leg--ring i { background: transparent; border: 1.5px solid #f59e0b; }
