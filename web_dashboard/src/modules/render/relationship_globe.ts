@@ -91,21 +91,30 @@ export function mountGlobe(
     };
     host.appendChild(dock);
 
-    // Initial view comes from the DATA's extent, not a hardcoded centre: a fixed [20,25]/z1.2
-    // happened to look reasonable for this node set and would stop being true the moment the
-    // vault gains a node outside it.
+    /** Finite, in-range coordinates only. One bad entry would otherwise poison the whole bounds. */
+    const finiteCoords = (ids: string[]) => ids.filter((id) => {
+        const c = coords[id];
+        return c && Number.isFinite(c.lat) && Number.isFinite(c.lng)
+            && c.lat >= -90 && c.lat <= 90 && c.lng >= -180 && c.lng <= 180;
+    });
+    const placeable = finiteCoords(geo.map((n) => n.id));
     const geoBounds = () => {
         const b = new maplibregl.LngLatBounds();
-        for (const n of geo) b.extend([coords[n.id].lng, coords[n.id].lat]);
+        for (const id of placeable) b.extend([coords[id].lng, coords[id].lat]);
         return b;
     };
+
+    // ★ The constructor gets a PLAIN center/zoom and no `bounds`. The previous version passed
+    //   `bounds: …, center: undefined, zoom: undefined`, and an explicitly-present `undefined`
+    //   is not the same as an absent key: option-merging copies it over the default. The initial
+    //   framing now happens in `once('load')` via fitBounds, where the map definitely exists and
+    //   a failure is recoverable instead of fatal to the mount.
     const map = new maplibregl.Map({
-        container: mapEl, style: BASEMAP,
-        bounds: geo.length ? geoBounds() : undefined,
-        fitBoundsOptions: { padding: { top: 48, bottom: 110, left: 48, right: 48 }, maxZoom: 4 },
-        center: geo.length ? undefined : [20, 25], zoom: geo.length ? undefined : 1.2,
+        container: mapEl, style: BASEMAP, center: [20, 25], zoom: 1.2,
         attributionControl: false, dragRotate: false,
     });
+    const dead = () => !map || (map as any)._removed === true;
+    const safeResize = () => { if (!dead()) map.resize(); };
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     let selected: string | null = null;
@@ -150,6 +159,7 @@ export function mountGlobe(
     };
 
     const refresh = () => {
+        if (dead()) return;
         (map.getSource('rv-nodes') as any)?.setData(pointFC());
         (map.getSource('rv-lines') as any)?.setData(lineFC());
         for (const el of Array.from(dock.querySelectorAll('.rv-chip-n'))) {
@@ -208,9 +218,21 @@ export function mountGlobe(
             if (!hit.length && selected) { selected = null; refresh(); onSelect(null); }
         });
         renderDock();
+        // ★ Initial framing here, not in the constructor. Fewer than two placeable nodes gives a
+        //   degenerate bounds, so keep the fixed view in that case rather than fitting to a point.
+        if (placeable.length >= 2 && !dead()) {
+            try {
+                map.fitBounds(geoBounds(), {
+                    padding: { top: 48, bottom: 110, left: 48, right: 48 }, maxZoom: 4, duration: 0,
+                });
+            } catch (err) {
+                // eslint-disable-next-line no-console
+                console.warn('[relationship_globe] initial fitBounds failed; keeping the default view', err);
+            }
+        }
         mountedMs = performance.now() - t0;
         /* eslint-disable no-console */
-        console.log(`[relationship_globe] ${geo.length} geo nodes · ${nongeo.length} dock chips · ${edges.length} edges · mount ${mountedMs.toFixed(0)}ms`);
+        console.log(`[relationship_globe] ${geo.length} geo nodes (${placeable.length} placeable) · ${nongeo.length} dock chips · ${edges.length} edges · mount ${mountedMs.toFixed(0)}ms`);
         /* eslint-enable no-console */
         refresh();
     });
@@ -224,8 +246,9 @@ export function mountGlobe(
     });
 
     const fitEgo = (id: string) => {
-        const ids = [id, ...(adj.get(id) || [])].filter((x) => coords[x]);
-        if (!ids.length) return;                     // dock-only entity: nothing geographic to fit
+        if (dead()) return;
+        const ids = finiteCoords([id, ...(adj.get(id) || [])]);
+        if (ids.length < 1) return;                  // dock-only entity: nothing geographic to fit
         const b = new maplibregl.LngLatBounds();
         for (const x of ids) b.extend([coords[x].lng, coords[x].lat]);
         map.fitBounds(b, { padding: { top: 60, bottom: 90, left: 60, right: 420 }, maxZoom: 5, duration: 500 });
@@ -235,14 +258,14 @@ export function mountGlobe(
     //   may not have resolved yet, and the overlay drawer changes the visible area without
     //   changing the container, so resize() is called after mount, from a ResizeObserver, and by
     //   the view whenever the drawer opens or closes.
-    const ro = new ResizeObserver(() => map.resize());
+    const ro = new ResizeObserver(() => safeResize());
     ro.observe(host);
-    requestAnimationFrame(() => map.resize());
+    requestAnimationFrame(() => safeResize());
 
     return {
         select(id) { selected = id; refresh(); },
         focus(id) { selected = id; refresh(); fitEgo(id); },
-        resize() { map.resize(); },
-        destroy() { ro.disconnect(); map.remove(); mapEl.remove(); dock.remove(); },
+        resize() { safeResize(); },
+        destroy() { ro.disconnect(); if (!dead()) map.remove(); mapEl.remove(); dock.remove(); },
     };
 }

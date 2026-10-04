@@ -310,9 +310,13 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
                 (id) => { selectedId = id; show(id, true); },
             );
         } catch (err) {
+            // ★ Show the message. "see console" cost a whole diagnosis sitting: the failure is
+            //   readable from a screenshot only if the text is on screen.
+            const msg = err instanceof Error ? (err.message || err.name) : String(err);
             // eslint-disable-next-line no-console
             console.error('[relationship_view] globe failed to mount', err);
-            cHost.innerHTML = `<div class="rv-empty">Globe unavailable — see console.</div>`;
+            cHost.innerHTML = `<div class="rv-empty">Globe unavailable.<br>
+                <span class="rv-hint">${esc(msg)}</span></div>`;
         }
     };
 
