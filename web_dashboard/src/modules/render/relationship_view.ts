@@ -256,7 +256,7 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     const PANEL_W = 380;
 
     let handle: CanvasHandle | null = null;
-    const closePanel = () => { panel.dataset.open = '0'; handle?.setPanelOffset(0); };
+    const closePanel = () => { panel.dataset.open = '0'; handle?.setPanelOffset(0); globe?.resize(); };
     // declared before use by show(); assigned once the modes exist
     const show = (id: string | null, fromCanvas = false) => {
         if (!id) { closePanel(); if (!fromCanvas) handle?.select(null); return; }
@@ -269,6 +269,7 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
         // ★ The drawer overlays the canvas rather than reflowing it, so the selected node would
         //   sit under it without this: shift the zoom target left by half the drawer width.
         handle?.setPanelOffset(PANEL_W);
+        globe?.resize();   // drawer changes the visible area, not the container
         if (!fromCanvas) { handle?.focus(id); globe?.focus(id); } else { handle?.select(id); globe?.select(id); }
     };
     panel.querySelector('.rv-close')!.addEventListener('click', () => { show(null); handle?.select(null); });

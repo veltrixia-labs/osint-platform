@@ -74,15 +74,36 @@ export function mountGlobe(
     // (node_coordinates.json's no_coords_by_design list). They are not missing data and must not
     // be dropped from the view — they are where most of the vault's hub structure lives.
     const dock = document.createElement('div');
-    dock.className = 'rv-dock';
-    dock.innerHTML = `<span class="rv-dock-l">Non-geographic</span>` + nongeo
-        .sort((a, b) => (deg.get(b.id) || 0) - (deg.get(a.id) || 0))
-        .map((n) => `<button class="rv-chip-n" data-goto="${n.id}" style="--c:${PALETTE[n.type || ''] || DEFAULT_COLOR}">${humanize(n.id)}</button>`)
-        .join('');
+    dock.className = 'rv-dock'; dock.dataset.expanded = '0';
+    const ranked = nongeo.slice().sort((a, b) => (deg.get(b.id) || 0) - (deg.get(a.id) || 0));
+    const CHIPS_COLLAPSED = 24;        // ~3 rows at the dock's width; the rest behind "+N more"
+    const chip = (n: GlobeNode) =>
+        `<button class="rv-chip-n" data-goto="${n.id}" style="--c:${PALETTE[n.type || ''] || DEFAULT_COLOR}">${humanize(n.id)}</button>`;
+    const renderDock = () => {
+        const expanded = dock.dataset.expanded === '1';
+        const shown = expanded ? ranked : ranked.slice(0, CHIPS_COLLAPSED);
+        const rest = ranked.length - shown.length;
+        dock.innerHTML = `<span class="rv-dock-l">Non-geographic</span>`
+            + shown.map(chip).join('')
+            + (rest > 0 ? `<button class="rv-dock-more" data-more="1">+${rest} more</button>` : '')
+            + (expanded ? `<button class="rv-dock-more" data-more="0">show less</button>` : '');
+        refresh();
+    };
     host.appendChild(dock);
 
+    // Initial view comes from the DATA's extent, not a hardcoded centre: a fixed [20,25]/z1.2
+    // happened to look reasonable for this node set and would stop being true the moment the
+    // vault gains a node outside it.
+    const geoBounds = () => {
+        const b = new maplibregl.LngLatBounds();
+        for (const n of geo) b.extend([coords[n.id].lng, coords[n.id].lat]);
+        return b;
+    };
     const map = new maplibregl.Map({
-        container: mapEl, style: BASEMAP, center: [20, 25], zoom: 1.2,
+        container: mapEl, style: BASEMAP,
+        bounds: geo.length ? geoBounds() : undefined,
+        fitBoundsOptions: { padding: { top: 48, bottom: 110, left: 48, right: 48 }, maxZoom: 4 },
+        center: geo.length ? undefined : [20, 25], zoom: geo.length ? undefined : 1.2,
         attributionControl: false, dragRotate: false,
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
@@ -186,6 +207,7 @@ export function mountGlobe(
             const hit = map.queryRenderedFeatures(ev.point, { layers: ['rv-nodes'] });
             if (!hit.length && selected) { selected = null; refresh(); onSelect(null); }
         });
+        renderDock();
         mountedMs = performance.now() - t0;
         /* eslint-disable no-console */
         console.log(`[relationship_globe] ${geo.length} geo nodes · ${nongeo.length} dock chips · ${edges.length} edges · mount ${mountedMs.toFixed(0)}ms`);
@@ -194,6 +216,8 @@ export function mountGlobe(
     });
 
     dock.addEventListener('click', (ev) => {
+        const more = (ev.target as HTMLElement).closest('[data-more]') as HTMLElement | null;
+        if (more) { dock.dataset.expanded = more.dataset.more!; renderDock(); return; }
         const el = (ev.target as HTMLElement).closest('[data-goto]') as HTMLElement | null;
         if (!el) return;
         selected = el.dataset.goto!; refresh(); onSelect(selected);
@@ -207,10 +231,18 @@ export function mountGlobe(
         map.fitBounds(b, { padding: { top: 60, bottom: 90, left: 60, right: 420 }, maxZoom: 5, duration: 500 });
     };
 
+    // ★ MapLibre sizes itself from the container at construction. The host is a grid cell that
+    //   may not have resolved yet, and the overlay drawer changes the visible area without
+    //   changing the container, so resize() is called after mount, from a ResizeObserver, and by
+    //   the view whenever the drawer opens or closes.
+    const ro = new ResizeObserver(() => map.resize());
+    ro.observe(host);
+    requestAnimationFrame(() => map.resize());
+
     return {
         select(id) { selected = id; refresh(); },
         focus(id) { selected = id; refresh(); fitEgo(id); },
         resize() { map.resize(); },
-        destroy() { map.remove(); mapEl.remove(); dock.remove(); },
+        destroy() { ro.disconnect(); map.remove(); mapEl.remove(); dock.remove(); },
     };
 }

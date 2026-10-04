@@ -46,10 +46,12 @@ const DEFAULT_COLOR = '#64748b';
 
 /** Link distance by EDGE TYPE. Containment is tight, rivalry is middling, exposure is loose. */
 function linkDistance(t: string): number {
-    if (t === 'located_in' || t === 'hosts' || t === 'owns' || t === 'subsidizes') return 26;
-    if (t === 'competitor' || t === 'complementary' || t === 'joint_venture') return 62;
-    if (t === 'context_link') return 110;
-    return 80;
+    // ★ x1.6 over the first pass (26/62/110/80): at the original distances the 1535 edges pulled
+    //   the graph into a hairball in which nothing could be read.
+    if (t === 'located_in' || t === 'hosts' || t === 'owns' || t === 'subsidizes') return 42;
+    if (t === 'competitor' || t === 'complementary' || t === 'joint_venture') return 99;
+    if (t === 'context_link') return 176;
+    return 128;
 }
 
 /** FNV-1a over the id -> a stable start position. Same graph, same picture, every reload. */
@@ -70,6 +72,7 @@ export type CanvasHandle = {
     setTwoHop: (on: boolean) => void;
     /** Width of the overlay drawer, so focus() can keep the selected node clear of it. */
     setPanelOffset: (px: number) => void;
+    labelStats: () => { kept: number; considered: number; k: number };
     destroy: () => void;
 };
 
@@ -127,9 +130,9 @@ export function mountGraphCanvas(
     const sim: Simulation<GNode, undefined> = forceSimulation(nodes)
         .force('link', forceLink<GNode, any>(linkable).id((d: any) => d.id)
             .distance((l: any) => linkDistance(l.type)).strength(0.35))
-        .force('charge', forceManyBody().strength(-130).distanceMax(420))
+        .force('charge', forceManyBody().strength(-260).distanceMax(560))   // x2 repulsion (was -130)
         .force('center', forceCenter(W / 2, H / 2))
-        .force('collide', forceCollide<GNode>().radius((d) => (d.r || 4) + 2.5))
+        .force('collide', forceCollide<GNode>().radius((d) => (d.r || 4) + 6))      // +6 (was +2.5)
         .stop();
     for (let i = 0; i < 300; i++) { sim.tick(); ticks++; }
     sim.alphaTarget(0);
@@ -142,6 +145,7 @@ export function mountGraphCanvas(
     let ego: Set<string> = new Set();
     let tween: number | null = null;
     let panelOffset = 0;
+    let labelsKept = 0, labelsConsidered = 0;
 
     const computeEgo = () => {
         ego = new Set();
@@ -189,14 +193,51 @@ export function mountGraphCanvas(
             }
         }
 
-        const showLabel = (n: GNode) =>
-            n.id === hovered || n.id === selected || (selected ? ego.has(n.id) : ((n.deg || 0) >= 12 || n.type === 'country'));
-        ctx.fillStyle = '#cbd5e1';
-        ctx.font = `${Math.max(9, 10 / transform.k)}px ui-sans-serif, system-ui, sans-serif`;
+        ctx.restore();
+
+        // ─── Labels: a SEPARATE pass in SCREEN space ──────────────────────────────────────
+        // Drawn with the identity transform and positions projected by hand, so measureText
+        // returns real pixels and the collision test is in the space the eye actually sees.
+        // Labels are therefore screen-size constant: zooming in frees space and more appear.
+        ctx.save();
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+        const k = transform.k;
+        const sx = (n: GNode) => n.x! * k + transform.x;
+        const sy = (n: GNode) => n.y! * k + transform.y;
+        const PAD = 2;
+
+        type Cand = { n: GNode; txt: string; x: number; y: number; w: number; h: number; forced: boolean };
+        const cands: Cand[] = [];
         for (const n of nodes) {
-            if (n.x == null || !showLabel(n)) continue;
-            ctx.globalAlpha = (!selected || ego.has(n.id)) ? 0.92 : dim;
-            ctx.fillText(label(n), n.x + n.r! + 3, n.y! + 3);
+            if (n.x == null) continue;
+            const forced = n.id === hovered || n.id === selected || (!!selected && ego.has(n.id));
+            // At k >= 2.5 every node is a candidate regardless of degree — there is room by then.
+            const eligible = forced || (selected ? false : (k >= 2.5 || (n.deg || 0) >= 12 || n.type === 'country'));
+            if (!eligible) continue;
+            const X = sx(n), Y = sy(n);
+            if (X < -120 || Y < -20 || X > W + 120 || Y > H + 20) continue;   // offscreen
+            const txt = label(n);
+            cands.push({ n, txt, x: X + n.r! * k + 3, y: Y, w: ctx.measureText(txt).width, h: 11, forced });
+        }
+        // Greedy: forced first (selected + 1-hop, so they can never be crowded out), then
+        // degree-desc. A candidate is dropped if its rect meets one already kept.
+        cands.sort((a, b) => (b.forced ? 1 : 0) - (a.forced ? 1 : 0) || (b.n.deg || 0) - (a.n.deg || 0));
+        const kept: Cand[] = [];
+        const hits = (a: Cand, b: Cand) =>
+            a.x - PAD < b.x + b.w + PAD && a.x + a.w + PAD > b.x - PAD &&
+            a.y - a.h / 2 - PAD < b.y + b.h / 2 + PAD && a.y + a.h / 2 + PAD > b.y - b.h / 2 - PAD;
+        for (const c of cands) {
+            if (kept.some((o) => hits(c, o))) continue;
+            kept.push(c);
+        }
+        labelsKept = kept.length; labelsConsidered = cands.length;
+        // non-forced first, forced last = selected + 1-hop end up on top
+        for (const c of [...kept.filter((c) => !c.forced), ...kept.filter((c) => c.forced)]) {
+            ctx.globalAlpha = (!selected || ego.has(c.n.id)) ? 0.94 : dim;
+            ctx.fillStyle = c.forced && selected ? '#f1f5f9' : '#cbd5e1';
+            ctx.fillText(c.txt, c.x, c.y);
         }
         ctx.restore();
     };
@@ -258,6 +299,7 @@ export function mountGraphCanvas(
         },
         setTwoHop(on) { twoHop = on; computeEgo(); draw(); },
         setPanelOffset(px) { panelOffset = px; },
+        labelStats() { return { kept: labelsKept, considered: labelsConsidered, k: transform.k }; },
         destroy() { if (tween !== null) cancelAnimationFrame(tween); ro.disconnect(); canvas.remove(); tip.remove(); },
     };
 
