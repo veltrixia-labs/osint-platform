@@ -12431,15 +12431,24 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-hint { color: #475569; font-size: 0.62rem; }
 
 /* ── Relationship view: canvas + panel layout ─────────────────────────────── */
-#pro-map-container .rv-body { flex: 1; display: grid; grid-template-columns: minmax(0,1fr) 380px; gap: 12px;
-    min-height: 70vh; }   /* 70vh floor: a grid row sized only by min-height:0 can resolve to 0 before layout,
+#pro-map-container .rv-body { flex: 1; display: grid; grid-template-columns: minmax(0,1fr); gap: 12px;
+    min-height: 70vh; position: relative; }   /* panel is an OVERLAY drawer — one column, canvas full width */   /* 70vh floor: a grid row sized only by min-height:0 can resolve to 0 before layout,
                              which is how the canvas got a zero-height host and drew nothing. */
 #pro-map-container .rv-canvas { width: 100%; height: 100%; display: block; }
 #pro-map-container .rv-canvas-host { position: relative; min-height: 0; border-radius: 10px; overflow: hidden;
     background: radial-gradient(ellipse at 50% 40%, rgba(15,23,42,0.9), rgba(2,6,16,0.96)); border: 1px solid rgba(56,189,248,0.14); }
 #pro-map-container .rv-canvas { display: block; cursor: grab; }
 #pro-map-container .rv-canvas:active { cursor: grabbing; }
-#pro-map-container .rv-panel { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+#pro-map-container .rv-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 380px; z-index: 4;
+    display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 12px 12px 12px 14px;
+    background: rgba(2,6,16,0.94); backdrop-filter: blur(14px) saturate(160%);
+    border-left: 1px solid rgba(56,189,248,0.22); border-radius: 0 10px 10px 0;
+    transform: translateX(100%); transition: transform 220ms cubic-bezier(.4,0,.2,1);
+    pointer-events: none; }
+#pro-map-container .rv-panel[data-open="1"] { transform: translateX(0); pointer-events: auto; }
+#pro-map-container .rv-close { position: absolute; top: 8px; right: 10px; z-index: 1; background: none; border: 0;
+    color: #64748b; font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 2px 6px; }
+#pro-map-container .rv-close:hover { color: #e2e8f0; }
 #pro-map-container .rv-panel .rv-detail { flex: 1; overflow-y: auto; padding-right: 4px; }
 #pro-map-container .rv-freeline { font-size: 0.6rem; color: #fbbf24; background: rgba(251,191,36,0.08);
     border: 1px solid rgba(251,191,36,0.22); border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; }
@@ -12450,3 +12459,18 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-leg { display: inline-flex; align-items: center; gap: 4px; color: #64748b; font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.03em; }
 #pro-map-container .rv-leg i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 #pro-map-container .rv-leg--ring i { background: transparent; border: 1.5px solid #f59e0b; }
+#pro-map-container .rv-modes { display: inline-flex; gap: 0; border: 1px solid rgba(56,189,248,0.22); border-radius: 7px; overflow: hidden; align-self: flex-start; }
+#pro-map-container .rv-mode { background: transparent; border: 0; color: #64748b; font-size: 0.62rem; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 5px 14px; cursor: pointer; }
+#pro-map-container .rv-mode[aria-selected="true"] { background: rgba(56,189,248,0.16); color: #7dd3fc; }
+#pro-map-container .rv-globe-map { position: absolute; inset: 0; }
+#pro-map-container .rv-dock { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-wrap: wrap; gap: 5px;
+    align-items: center; padding: 7px 10px; max-height: 92px; overflow-y: auto;
+    background: linear-gradient(to top, rgba(2,6,16,0.96), rgba(2,6,16,0.72)); border-top: 1px solid rgba(56,189,248,0.18); }
+#pro-map-container .rv-dock-l { color: #475569; font-size: 0.54rem; text-transform: uppercase; letter-spacing: 0.06em; margin-right: 4px; }
+#pro-map-container .rv-chip-n { background: rgba(15,23,42,0.8); border: 1px solid var(--c); color: var(--c);
+    font-size: 0.56rem; padding: 2px 7px; border-radius: 10px; cursor: pointer; opacity: 0.45; }
+#pro-map-container .rv-chip-n[data-lit="1"] { opacity: 1; }
+#pro-map-container .rv-globe-pop .maplibregl-popup-content { background: rgba(2,6,16,0.94); color: #e2e8f0;
+    border: 1px solid rgba(56,189,248,0.3); font-size: 0.64rem; padding: 5px 8px; }
+#pro-map-container .rv-globe-pop .maplibregl-popup-tip { display: none; }

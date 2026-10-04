@@ -22,6 +22,7 @@
  */
 import { apiClient } from '../api';
 import { mountGraphCanvas, PALETTE, type CanvasHandle } from './relationship_graph_canvas';
+import { mountGlobe, type GlobeHandle } from './relationship_globe';
 
 type RNode = {
     id: string; type?: string | null; domain?: string[]; country?: string | null;
@@ -229,12 +230,17 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
       <div class="rv-root">
         <div class="rv-head">
           <input class="rv-search" type="search" placeholder="Search a company, country, or resource — name or ticker (TSMC / TSM / 2330)" autocomplete="off" />
-          <div class="rv-meta">${g.nodes.length} entities · ${g.edges.length} relationships · ${IS_PRO ? 'full provenance' : 'structure only'}</div>
+          <div class="rv-meta">${g.nodes.length} entities · ${g.edges.length} relationships · ${IS_PRO ? 'full provenance' : 'structure only'} — click a node, or search, to see what the vault records about it.</div>
           <div class="rv-results"></div>
+          <div class="rv-modes" role="tablist">
+            <button class="rv-mode" data-mode="graph" aria-selected="true">Graph</button>
+            <button class="rv-mode" data-mode="globe" aria-selected="false">Globe</button>
+          </div>
         </div>
         <div class="rv-body">
           <div class="rv-canvas-host"></div>
-          <aside class="rv-panel">
+          <aside class="rv-panel" data-open="0">
+            <button class="rv-close" type="button" aria-label="Close">&times;</button>
             ${IS_PRO ? '' : '<div class="rv-freeline">FREE — relationships only; upgrade for weights &amp; sources</div>'}
             <div class="rv-detail"></div>
           </aside>
@@ -246,39 +252,90 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     const detail = container.querySelector('.rv-detail') as HTMLElement;
     const cHost = container.querySelector('.rv-canvas-host') as HTMLElement;
 
-    const idle = () =>
-        `<div class="rv-idle">${g.nodes.length} entities · ${g.edges.length} relationships<br>
-         <span class="rv-hint">Click a node, or search, to see what the vault records about it.</span></div>`;
-    detail.innerHTML = idle();
+    const panel = container.querySelector('.rv-panel') as HTMLElement;
+    const PANEL_W = 380;
 
     let handle: CanvasHandle | null = null;
+    const closePanel = () => { panel.dataset.open = '0'; handle?.setPanelOffset(0); };
+    // declared before use by show(); assigned once the modes exist
     const show = (id: string | null, fromCanvas = false) => {
-        if (!id) { detail.innerHTML = idle(); if (!fromCanvas) handle?.select(null); return; }
+        if (!id) { closePanel(); if (!fromCanvas) handle?.select(null); return; }
         const n = BY_ID.get(id);
         if (!n) return;
         results.innerHTML = '';
         detail.innerHTML = nodeCardHtml(n) + neighbourHtml(id) + twoHopHtml(id);
         detail.scrollTop = 0;
-        if (!fromCanvas) handle?.focus(id); else handle?.select(id);
+        panel.dataset.open = '1';
+        // ★ The drawer overlays the canvas rather than reflowing it, so the selected node would
+        //   sit under it without this: shift the zoom target left by half the drawer width.
+        handle?.setPanelOffset(PANEL_W);
+        if (!fromCanvas) { handle?.focus(id); globe?.focus(id); } else { handle?.select(id); globe?.select(id); }
     };
+    panel.querySelector('.rv-close')!.addEventListener('click', () => { show(null); handle?.select(null); });
 
     // The canvas owns positions; the panel owns provenance. A click in either drives the other.
     // ★ Guarded: a throw inside the canvas used to leave an empty <canvas> of the correct size
     //   with a working panel beside it — indistinguishable from "the layout produced nothing".
     //   Now it says so, and the list still works without the picture.
-    try {
-        handle = mountGraphCanvas(
-            cHost,
-            g.nodes.map((n) => ({ id: n.id, type: n.type, country: n.country, title: n.title })),
-            g.edges.map((e) => ({ s: e.s, t: e.t, type: e.type, weight: e.weight })),
-            (id) => show(id, true),
-        );
-    } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('[relationship_view] graph canvas failed to mount; list still usable', err);
-        cHost.innerHTML = `<div class="rv-empty">Graph canvas failed to mount — see console.<br>
-            <span class="rv-hint">Search and the relationship list still work.</span></div>`;
-    }
+    let globe: GlobeHandle | null = null;
+    let mode: 'graph' | 'globe' = 'graph';
+    let selectedId: string | null = null;
+
+    const mountGraph = () => {
+        try {
+            handle = mountGraphCanvas(
+                cHost,
+                g.nodes.map((n) => ({ id: n.id, type: n.type, country: n.country, title: n.title })),
+                g.edges.map((e) => ({ s: e.s, t: e.t, type: e.type, weight: e.weight })),
+                (id) => { selectedId = id; show(id, true); },
+            );
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('[relationship_view] graph canvas failed to mount; list still usable', err);
+            cHost.innerHTML = `<div class="rv-empty">Graph canvas failed to mount — see console.<br>
+                <span class="rv-hint">Search and the relationship list still work.</span></div>`;
+        }
+    };
+    const mountGlobeMode = async () => {
+        try {
+            const r = await apiClient.get('/relationships/coordinates', { cache: 'no-store' });
+            if (!r.ok) throw new Error(`coordinates ${r.status}`);
+            const coords = ((await r.json()) as any).nodes as Record<string, any>;
+            globe = mountGlobe(
+                cHost,
+                g.nodes.map((n) => ({ id: n.id, type: n.type, country: n.country })),
+                g.edges.map((e) => ({ s: e.s, t: e.t, type: e.type, weight: e.weight })),
+                coords,
+                (id) => { selectedId = id; show(id, true); },
+            );
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('[relationship_view] globe failed to mount', err);
+            cHost.innerHTML = `<div class="rv-empty">Globe unavailable — see console.</div>`;
+        }
+    };
+
+    // Both modes share one selection, one search and one drawer. Switching re-mounts the canvas
+    // host and re-applies the current selection, so the view never loses its place.
+    const setMode = async (m: 'graph' | 'globe') => {
+        if (m === mode) return;
+        mode = m;
+        handle?.destroy(); handle = null;
+        globe?.destroy(); globe = null;
+        cHost.innerHTML = '';
+        for (const b of Array.from(container.querySelectorAll('.rv-mode'))) {
+            (b as HTMLElement).setAttribute('aria-selected', String((b as HTMLElement).dataset.mode === m));
+        }
+        if (m === 'graph') mountGraph(); else await mountGlobeMode();
+        // TS narrows `handle`/`globe` to null from the assignments above and does not reset
+        // that across the mount calls that reassign them, so read them back explicitly.
+        const h = handle as CanvasHandle | null, gl = globe as GlobeHandle | null;
+        if (selectedId) { h?.focus(selectedId); gl?.focus(selectedId); }
+    };
+    container.querySelectorAll('.rv-mode').forEach((b) =>
+        b.addEventListener('click', () => void setMode((b as HTMLElement).dataset.mode as any)));
+
+    mountGraph();
     const doSearch = () => {
         const q = input.value;
         detail.innerHTML = '';

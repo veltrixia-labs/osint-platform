@@ -68,6 +68,8 @@ export type CanvasHandle = {
     select: (id: string | null) => void;
     focus: (id: string) => void;
     setTwoHop: (on: boolean) => void;
+    /** Width of the overlay drawer, so focus() can keep the selected node clear of it. */
+    setPanelOffset: (px: number) => void;
     destroy: () => void;
 };
 
@@ -139,6 +141,7 @@ export function mountGraphCanvas(
     let twoHop = false;
     let ego: Set<string> = new Set();
     let tween: number | null = null;
+    let panelOffset = 0;
 
     const computeEgo = () => {
         ego = new Set();
@@ -233,7 +236,9 @@ export function mountGraphCanvas(
             const n = byId.get(id); if (!n || n.x == null) return;
             selected = id; computeEgo();
             const k = 1.8;
-            const to = zoomIdentity.translate(W / 2 - n.x * k, H / 2 - n.y! * k).scale(k);
+            // Centre on the VISIBLE half when the drawer is open, not on the canvas centre.
+            const cx = (W - panelOffset) / 2;
+            const to = zoomIdentity.translate(cx - n.x * k, H / 2 - n.y! * k).scale(k);
             // ★ Hand-rolled 400ms tween rather than d3-transition: adding a fifth d3 package for
             //   one eased interpolation is not worth the bundle. cubic ease-in-out over
             //   (x, y, k), pushed through zb.transform so d3-zoom's own state stays authoritative
@@ -252,6 +257,7 @@ export function mountGraphCanvas(
             tween = requestAnimationFrame(step);
         },
         setTwoHop(on) { twoHop = on; computeEgo(); draw(); },
+        setPanelOffset(px) { panelOffset = px; },
         destroy() { if (tween !== null) cancelAnimationFrame(tween); ro.disconnect(); canvas.remove(); tip.remove(); },
     };
 
