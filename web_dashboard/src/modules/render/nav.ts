@@ -32,7 +32,6 @@ const NAV_ITEMS: NavItem[] = [
     // Core – available to all
     { id: 'feed',         label: 'Alert Stream',        icon: '📡', minTier: 'free',    group: 'core' },
     { id: 'trend-flow',   label: 'Monthly Trend Flow',   icon: '🌊', minTier: 'free',    group: 'core' },
-    { id: 'map',          label: 'Global Map',           icon: '🌐', minTier: 'free',    group: 'core' },
     // Premium – gated (quantitative pulse → qualitative briefs → spatial map)
     { id: 'market-pulse', label: 'Market Pulse',         icon: 'trending_up', minTier: 'pro', group: 'premium' },
     { id: 'pro-insights', label: 'Pro Insight',          icon: '💎', minTier: 'pro',     group: 'premium' },

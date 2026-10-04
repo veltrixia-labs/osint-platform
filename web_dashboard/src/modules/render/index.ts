@@ -8,7 +8,6 @@ export * from './reports';
 export * from './analysts';
 export * from './impact_panel';
 
-export { renderMap, resetMapEngine } from './map';
 export { renderNavigation, updateNavActiveState } from './nav';
 export { renderProInsights, renderExpertIntel, disposeProInsightsView } from './insights';
 export { renderMarketPulse, disposeMarketPulseView } from './market_pulse';

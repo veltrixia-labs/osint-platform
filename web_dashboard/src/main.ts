@@ -9,7 +9,7 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderImpactRoster, renderTopicFilterBar, renderDomainItems, renderDomainItemsHint, clearDomainItems, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
+import { renderAlerts, renderReportDetail, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderImpactRoster, renderTopicFilterBar, renderDomainItems, renderDomainItemsHint, clearDomainItems, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
 import { STRATEGIC_TOPIC_FILTERS, type StrategicTopicCode } from './modules/topics'
 import { formatIntelTime } from './modules/render/utils'
 // (Pro reports now handled within Pro Insights hub)
@@ -639,7 +639,6 @@ async function initDashboard() {
     let currentTab: TabId = 'feed';
 
     const renderBaseUI = () => {
-        resetMapEngine()
         const graceBanner = user ? renderGracePeriodBanner(user) : '';
         app.innerHTML = `
       <header class="mobile-header">
@@ -856,13 +855,6 @@ async function initDashboard() {
             else if (tab === 'trend-flow') void renderTrendFlow(alertsContainer, user!.tier);
             else if (tab === 'plans') renderSubscriptionTab(user!, alertsContainer, () => handleTabSwitch('plans'));
             else if (tab === 'reports') renderReports();
-            else if (tab === 'map') {
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        void renderMap(mapContainer!, user!.tier, focusAlertId);
-                    });
-                });
-            }
             else if (tab === 'market-pulse') {
                 if (isAuthSessionPending()) return;
                 if (!isProOrAbove(user!.tier) && !DEV_MODE_AUDIT) { renderPremiumShroud(alertsContainer, 'market-pulse', user!, () => handleTabSwitch('plans')); if (mainContent) mainContent.style.opacity = '1'; return; }
