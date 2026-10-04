@@ -31,9 +31,19 @@ import maplibregl from 'maplibre-gl';
 //   isolation contract, and bundling from the package is better anyway: no CDN, no version skew.
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { PALETTE } from './relationship_graph_canvas';
-// Pure geometry + easing, no imports of its own. See its header for exactly what was ported
-// from the legacy deck.gl arcs and what had to be re-derived.
-import { arc, arcProgress, easeOutCubic, ARC_POINTS } from './relationship_arcs';
+// Pure math, no imports of its own. greatCircleAt is the legacy particle-position function;
+// easeOutCubic drives the opacity fade and the pulse.
+import { greatCircleAt, easeOutCubic } from './relationship_arcs';
+// ★ deck.gl is a LIBRARY, not the legacy module. These are the same packages the legacy map
+//   loads (pro_interactive_map.ts:970-972, :987) and they carry none of its code: no scenario
+//   payload and none of the derived per-node fields the contract block above names. The legacy
+//   MODULES stay forbidden, and the isolation check now rejects dynamic import() too, so this
+//   allowlist cannot be walked around with `await import(...)` the way the legacy map loads deck.
+//   (Written without those field names on purpose — the check scans this file for them, and it
+//   caught this very comment when it did name one. The exemption covers the contract block only,
+//   which is the right size for it.)
+import { ArcLayer, ScatterplotLayer } from '@deck.gl/layers';
+import { MapboxOverlay } from '@deck.gl/mapbox';
 
 export type GlobeNode = { id: string; type?: string | null; country?: string | null };
 export type GlobeEdge = { s: string; t: string; type: string; weight?: number | null };
@@ -44,7 +54,8 @@ export const BASEMAP = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/st
 
 const DEFAULT_COLOR = '#64748b';
 
-/** Spread animation. The arcs draw outward from the selected node over ARC_MS, ease-out. */
+/** Arcs fade in over ARC_MS. The GEOMETRY is deck.gl's (greatCircle in a shader); only the
+ *  layer opacity is tweened, so nothing is ever drawn half-built. */
 const ARC_MS = 600;
 const PULSE_MS = 420;
 /** Hard cap on arcs per selection. China has ~190 edges; drawing them all is unreadable as well
@@ -100,11 +111,33 @@ export function mountGlobe(
     const CHIPS_COLLAPSED = 24;        // ~3 rows at the dock's width; the rest behind "+N more"
     const chip = (n: GlobeNode) =>
         `<button class="rv-chip-n" data-goto="${n.id}" style="--c:${PALETTE[n.type || ''] || DEFAULT_COLOR}">${humanize(n.id)}</button>`;
+    /**
+     * The dock's own headline for the current selection. NO line is ever drawn to these
+     * counterparts — they have no coordinate by design, and a line to an invented point is the
+     * fabrication the isolation contract exists to stop. The chip IS the edge.
+     *
+     * ★ "N relationships" is EDGES, and edges do not match chips. Measured on the committed
+     *   graph: 29 ordered pairs are joined by more than one edge, and for 16 nodes the
+     *   non-geographic edge count differs from the number of distinct counterparts — Kuwait has
+     *   2 non-geographic relationships but only 1 chip to light, TSMC 10 across 8. Printing the
+     *   edge count alone next to a smaller number of lit chips would look like a bug, so when the
+     *   two differ the text says both.
+     */
+    const dockNote = (): string => {
+        const n = dockEdgeCount, k = dockHits.length;
+        if (!n) return '';
+        if (n === k) return `${n} non-geographic relationship${n === 1 ? '' : 's'} — highlighted below`;
+        return `${n} non-geographic relationships across ${k} entit${k === 1 ? 'y' : 'ies'}`
+            + ' — highlighted below';
+    };
+
     const renderDock = () => {
         const expanded = dock.dataset.expanded === '1';
         const shown = expanded ? ranked : ranked.slice(0, CHIPS_COLLAPSED);
         const rest = ranked.length - shown.length;
-        dock.innerHTML = `<span class="rv-dock-l">Non-geographic</span>`
+        const head = dockNote();
+        dock.innerHTML = (head ? `<span class="rv-dock-note">${head}</span>` : '')
+            + `<span class="rv-dock-l">Non-geographic</span>`
             + shown.map(chip).join('')
             + (rest > 0 ? `<button class="rv-dock-more" data-more="1">+${rest} more</button>` : '')
             + (expanded ? `<button class="rv-dock-more" data-more="0">show less</button>` : '');
@@ -142,11 +175,35 @@ export function mountGlobe(
     //   a failure is recoverable instead of fatal to the mount.
     const map = new maplibregl.Map({
         container: mapEl, style: BASEMAP, center: [20, 25], zoom: 1.2,
-        attributionControl: false, dragRotate: false,
+        attributionControl: false,
+        // ★ `dragRotate: false` used to sit here, and it was the whole reason right-drag and
+        //   ctrl-drag did nothing: DragRotateHandler owns rotate, and pitchWithRotate rides on
+        //   the same handler, so one false killed BOTH rotate and pitch.
+        //
+        //   The legacy map sets NONE of these options — grep finds no dragPan, dragRotate,
+        //   pitchWithRotate, touchZoomRotate, keyboard or maxPitch in pro_interactive_map.ts. It
+        //   takes MapLibre's defaults, so "match the legacy maxPitch" means 60, the 4.7.1 default
+        //   (one `maxPitch:60` literal in the dist bundle). Everything here except dragRotate was
+        //   therefore already on by default; they are written out explicitly so the next person
+        //   does not have to prove that by grepping a minified bundle.
+        dragPan: true,
+        dragRotate: true,
+        pitchWithRotate: true,
+        touchZoomRotate: true,
+        touchPitch: true,
+        keyboard: true,
+        scrollZoom: true,
+        doubleClickZoom: true,
+        maxPitch: 60,
+        // ★ Required for deck.gl's interleaved mode — it fixes the WebGL2 context attributes the
+        //   overlay needs. The legacy map sets it for the same reason (:1034).
+        antialias: true,
     });
     const dead = () => !map || (map as any)._removed === true;
     const safeResize = () => { if (!dead()) map.resize(); };
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    // showCompass is on now that rotation works: without it there is no way back to north
+    // after a ctrl-drag, and pitch makes a lost bearing easy to acquire.
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
 
     let selected: string | null = null;
     let mountedMs = 0;
@@ -172,17 +229,29 @@ export function mountGlobe(
     });
 
     // ──────────────────────────────────────────────────────────────────────────────────────────
-    // Arc spread
+    // Arcs — deck.gl ArcLayer on this MapLibre map, via MapboxOverlay(interleaved:true)
+    //
+    // Replaces a hand-rolled GeoJSON polyline + progressive point-count draw. That version had
+    // to re-derive a bow (deck.gl's getHeight is a 3-D lift with no 2-D equivalent) and to
+    // unwrap longitudes by hand across the antimeridian. Both problems belong to the shader, and
+    // handing them back to it deletes the code that solved them.
     // ──────────────────────────────────────────────────────────────────────────────────────────
-    type Arc = {
-        pts: [number, number][];
-        etype: string;
-        color: string;
-        dim: 0 | 1;      // competitor — drawn thinner and fainter
-        w: 0 | 1;        // 0 = the vault authored no weight for this edge
+    type ArcEdge = {
+        slon: number; slat: number; tlon: number; tlat: number;
+        src: [number, number, number, number];
+        tgt: [number, number, number, number];
+        width: number;
         other: string;
     };
     const EMPTY = { type: 'FeatureCollection' as const, features: [] as any[] };
+
+    /** '#38bdf8' -> [56,189,248,a]. deck.gl wants RGBA arrays; PALETTE holds CSS hex. */
+    const rgba = (hex: string, a: number): [number, number, number, number] => {
+        const h = hex.replace('#', '');
+        const v = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+        const i = parseInt(v, 16);
+        return Number.isFinite(i) ? [(i >> 16) & 255, (i >> 8) & 255, i & 255, a] : [100, 116, 139, a];
+    };
 
     /** Which arcs survive MAX_ARCS. Lower sorts first, i.e. is kept.
      *  ★ A weighted non-competitor edge outranks an unweighted one, but the WEIGHT ITSELF is not
@@ -194,16 +263,20 @@ export function mountGlobe(
     const arcPriority = (e: GlobeEdge, other: string): [number, number, string] =>
         [DIM_TYPES.has(e.type) ? 1 : 0, e.weight == null ? 1 : 0, other];
 
-    /** Every edge of `selected`, split into arcs that land on a coordinate and arcs that land in
-     *  the non-geographic dock. Geometry is built ONCE per selection, never per frame. */
-    /** Every edge touching `selected`, drawn or not — the denominator for the truncation note.
-     *  Counted from `edges`, not from `adj`, because adj is a SET of neighbours and would
-     *  under-count a pair joined by more than one edge type. */
+    let arcEdges: ArcEdge[] = [];
+    /** Non-geographic counterparts of the current selection. NO line is drawn to these — see
+     *  renderDock(). They have no coordinate by design and inventing one is the fabrication the
+     *  isolation contract exists to stop. */
+    let dockHits: string[] = [];
+    let dockEdgeCount = 0;
     let totalEdges = 0;
 
-    const buildArcs = (): { geo: Arc[]; dockArcs: Arc[] } => {
-        if (!selected) return { geo: [], dockArcs: [] };
+    const buildArcs = () => {
+        arcEdges = []; dockHits = []; dockEdgeCount = 0; totalEdges = 0;
+        if (!selected) return;
         const a = coords[selected];
+        const selColor = PALETTE[byId.get(selected)?.type || ''] || DEFAULT_COLOR;
+
         const cand: Array<{ e: GlobeEdge; other: string; key: [number, number, string] }> = [];
         for (const e of edges) {
             // Annotated, not inferred: without it tsc reports TS7022 (circular inference)
@@ -216,92 +289,146 @@ export function mountGlobe(
         cand.sort((x, y) =>
             x.key[0] - y.key[0] || x.key[1] - y.key[1] || (x.key[2] < y.key[2] ? -1 : x.key[2] > y.key[2] ? 1 : 0));
 
-        const geo: Arc[] = [];
-        const dockArcs: Arc[] = [];
+        const seenDock = new Set<string>();
         for (const { e, other } of cand) {
-            if (geo.length + dockArcs.length >= MAX_ARCS) break;
-            const base: Omit<Arc, 'pts'> = {
-                etype: e.type,
-                color: PALETTE[byId.get(other)?.type || ''] || DEFAULT_COLOR,
-                dim: DIM_TYPES.has(e.type) ? 1 : 0,
-                w: e.weight == null ? 0 : 1,
-                other,
-            };
             const b = coords[other];
-            if (a && b) {
-                const pts = arc([a.lng, a.lat], [b.lng, b.lat]);
-                if (pts.length) geo.push({ ...base, pts });
-            } else if (a && !b && nongeo.some((n) => n.id === other)) {
-                const pts = dockArcPts(a.lng, a.lat, other);
-                if (pts.length) dockArcs.push({ ...base, pts });
+            if (!b || !a) {
+                // Non-geographic (or an endpoint we cannot place): chip only, never a line.
+                if (byId.has(other)) {
+                    dockEdgeCount++;
+                    if (!seenDock.has(other)) { seenDock.add(other); dockHits.push(other); }
+                }
+                continue;
             }
+            if (arcEdges.length >= MAX_ARCS) continue;
+            const dim = DIM_TYPES.has(e.type);
+            arcEdges.push({
+                slon: a.lng, slat: a.lat, tlon: b.lng, tlat: b.lat,
+                src: rgba(selColor, dim ? 70 : 200),
+                tgt: rgba(PALETTE[byId.get(other)?.type || ''] || DEFAULT_COLOR, dim ? 70 : 160),
+                width: e.weight == null ? 1.5 : 3,
+                other,
+            });
         }
-        return { geo, dockArcs };
     };
+
+    // ── deck.gl overlay ────────────────────────────────────────────────────────────────────
+    // ★ interleaved:true makes deck.gl share MapLibre's WebGL2 context: _onAddInterleaved()
+    //   reads map.painter.context.gl and registers each deck layer as a MapLibre CustomLayer.
+    //   That requires map.painter to exist, so the overlay is added in 'load' — and it requires
+    //   `antialias: true` on the Map constructor for the right context attributes, which is why
+    //   the legacy map sets it at :1034 and why this one now does too.
+    const overlay: any = new MapboxOverlay({ interleaved: true, layers: [] });
+    let overlayAdded = false;
+
+    let arcOpacity = 0;      // 0..1, tweened over ARC_MS
+    let cometPhase = 0;      // 0..1, one lap every 4s — the legacy's animationPhase
+    let raf: number | null = null;
+    let lastFrame = 0;
+    let fadeStart = 0;
 
     /**
-     * ★ A dock counterpart has NO coordinate, by design — OPEC, US_Treasuries and the rest are
-     *   not places. An arc cannot reach the chip, because the chip is DOM and the arc is drawn in
-     *   the GL canvas, and inventing a lng/lat for it is exactly the fabrication the isolation
-     *   contract exists to prevent.
+     * ★ COMET PARTICLES — ported, and the port has a known flaw that the legacy shares.
      *
-     *   What is drawn instead: the chip's own screen x is read from the live DOM, a point on the
-     *   canvas's BOTTOM EDGE at that x is turned back into a lng/lat with map.unproject(), and the
-     *   arc runs to there and fades out (line-gradient, see the rv-arcs-dock layer). So the arc
-     *   points AT the chip and stops at the map's edge instead of pretending to land somewhere.
-     *   The chip is lit at the same time, which is what actually identifies the counterpart.
+     *   The arithmetic is copied from pro_interactive_map.ts:3068-3087 (pushStaticTracers):
+     *   per-edge phase offset (i*0.17)%1 from :1638, TAIL=7, TAIL_SPAN=0.16, alpha 235*f*f,
+     *   radius 1200+2800*f, and an arrival bloom over the last BLOOM_W=0.14 of the loop at
+     *   radius 16000+30000*p, alpha 200*(1-p). Positions come from greatCircleAt, which is
+     *   itself the legacy function. Nothing is imported from the legacy module: every value here
+     *   is a literal and the only call is to our own pure copy.
      *
-     *   Because this endpoint is screen-derived it is INVALID the moment the camera moves, so it
-     *   is recomputed on 'move' (cheap — only dock arcs, and only while something is selected).
-     *   A chip hidden behind "+N more" has no box; the dock's horizontal centre is used instead.
+     *   ★ THE FLAW: greatCircleAt returns GROUND-LEVEL lng/lat, while the ArcLayer above draws
+     *   with getHeight 0.45 — a 3-D lift. The comets therefore ride the ground TRACK, not the
+     *   lifted arc, and at the pitch:50 this view now fits to, they visibly run below their own
+     *   arc. This is not a porting mistake: the legacy map has exactly the same offset, because
+     *   its ScatterplotLayer particles are unelevated too and its own comment ("ride exactly on
+     *   top of the rendered arc geometry") is only true in plan view. Closing it needs an
+     *   elevation model deck.gl does not expose from ArcLayer, so it is left as-is and recorded
+     *   here rather than silently inherited.
      */
-    const dockArcPts = (lng: number, lat: number, other: string): [number, number][] => {
-        if (dead()) return [];
-        const cv = map.getCanvas();
-        const cb = cv.getBoundingClientRect();
-        if (!cb.width || !cb.height) return [];
-        const el = dock.querySelector(`[data-goto="${CSS.escape(other)}"]`) as HTMLElement | null;
-        const r = el?.getBoundingClientRect();
-        const x = r && r.width
-            ? Math.max(2, Math.min(cb.width - 2, r.left + r.width / 2 - cb.left))
-            : cb.width / 2;
-        let end: [number, number];
-        try {
-            const ll = map.unproject([x, cb.height - 2]);
-            if (!Number.isFinite(ll.lng) || !Number.isFinite(ll.lat)) return [];
-            end = [ll.lng, ll.lat];
-        } catch { return []; }
-        // Gentler bow than a geographic arc: this one is a pointer, not a route.
-        return arc([lng, lat], end, 0.05, Math.round(ARC_POINTS / 2));
+    const TAIL = 7;
+    const TAIL_SPAN = 0.16;
+    const BLOOM_W = 0.14;
+    const comets = () => {
+        const dots: Array<{ p: [number, number]; head: number; alpha: number; size: number }> = [];
+        const blooms: Array<{ p: [number, number]; radius: number; alpha: number }> = [];
+        for (let i = 0; i < arcEdges.length; i++) {
+            const e = arcEdges[i];
+            const head = (cometPhase + ((i * 0.17) % 1)) % 1;
+            for (let k = 0; k < TAIL; k++) {
+                const t = head - (k / (TAIL - 1)) * TAIL_SPAN;
+                if (t < 0) continue;
+                const f = 1 - k / TAIL;
+                dots.push({
+                    p: greatCircleAt(e.slon, e.slat, e.tlon, e.tlat, t),
+                    head: k === 0 ? 1 : 0,
+                    alpha: Math.round(235 * f * f),
+                    size: 1_200 + 2_800 * f,
+                });
+            }
+            if (head >= 1 - BLOOM_W) {
+                const q = (head - (1 - BLOOM_W)) / BLOOM_W;
+                blooms.push({ p: [e.tlon, e.tlat], radius: 16_000 + 30_000 * q, alpha: Math.round(200 * (1 - q)) });
+            }
+        }
+        return { dots, blooms };
     };
 
-    const arcFC = (list: Arc[], frac: number) => ({
-        type: 'FeatureCollection' as const,
-        features: list.flatMap((a) => {
-            const pts = arcProgress(a.pts, frac);
-            if (pts.length < 2) return [];
-            return [{
-                type: 'Feature' as const,
-                geometry: { type: 'LineString' as const, coordinates: pts },
-                properties: { etype: a.etype, color: a.color, dim: a.dim, w: a.w },
-            }];
-        }),
-    });
-
-    let arcs: { geo: Arc[]; dockArcs: Arc[] } = { geo: [], dockArcs: [] };
-    let raf: number | null = null;
-
-    const setArcData = (frac: number) => {
-        (map.getSource('rv-arcs') as any)?.setData(arcFC(arcs.geo, frac));
-        (map.getSource('rv-arcs-dock') as any)?.setData(arcFC(arcs.dockArcs, frac));
+    const deckLayers = (): any[] => {
+        if (!arcEdges.length || arcOpacity <= 0) return [];
+        const { dots, blooms } = comets();
+        return [
+            new ArcLayer({
+                id: 'rv-arc',
+                data: arcEdges,
+                pickable: false,
+                getSourcePosition: (d: ArcEdge) => [d.slon, d.slat],
+                getTargetPosition: (d: ArcEdge) => [d.tlon, d.tlat],
+                getSourceColor: (d: ArcEdge) => d.src,
+                getTargetColor: (d: ArcEdge) => d.tgt,
+                getWidth: (d: ArcEdge) => d.width,
+                widthMinPixels: 1,
+                widthMaxPixels: 6,
+                greatCircle: true,
+                getHeight: 0.45,
+                numSegments: 64,
+                opacity: arcOpacity,
+            }),
+            new ScatterplotLayer({
+                id: 'rv-arc-comet',
+                data: dots,
+                pickable: false, stroked: false, filled: true,
+                radiusUnits: 'meters', radiusMinPixels: 0.8, radiusMaxPixels: 2.5,
+                getPosition: (d: any) => d.p,
+                getRadius: (d: any) => d.size,
+                getFillColor: (d: any) => (d.head ? [190, 250, 255, 255] : [0, 210, 255, d.alpha]),
+                parameters: { depthTest: false },
+                opacity: arcOpacity,
+                updateTriggers: { getPosition: cometPhase, getFillColor: cometPhase, getRadius: cometPhase },
+            }),
+            new ScatterplotLayer({
+                id: 'rv-arc-bloom',
+                data: blooms,
+                pickable: false, stroked: true, filled: false,
+                radiusUnits: 'meters',
+                getPosition: (d: any) => d.p,
+                getRadius: (d: any) => d.radius,
+                getLineColor: (d: any) => [190, 250, 255, d.alpha],
+                lineWidthMinPixels: 1,
+                parameters: { depthTest: false },
+                opacity: arcOpacity,
+                updateTriggers: { getRadius: cometPhase, getLineColor: cometPhase },
+            }),
+        ];
     };
 
+    const pushDeck = () => { if (!dead() && overlayAdded) overlay.setProps({ layers: deckLayers() }); };
     const stopAnim = () => { if (raf !== null) cancelAnimationFrame(raf); raf = null; };
 
-    /** Ego-node pulse: one expanding ring, PULSE_MS, fired when the arcs land. */
+    /** Ego-node pulse: one expanding ring, PULSE_MS, fired when the fade-in completes. */
     const pulseFC = () => ({
         type: 'FeatureCollection' as const,
-        features: !selected ? [] : [selected, ...arcs.geo.map((a) => a.other)]
+        features: !selected ? [] : [selected, ...arcEdges.map((a) => a.other)]
             .filter((id, i, xs) => coords[id] && xs.indexOf(id) === i)
             .map((id) => ({
                 type: 'Feature' as const,
@@ -310,61 +437,77 @@ export function mountGlobe(
             })),
     });
 
+    /**
+     * One rAF loop for both animations. The opacity tween runs once over ARC_MS; the comet phase
+     * keeps advancing at the legacy's rate (dt*0.25, i.e. one lap every 4s) for as long as a
+     * selection has arcs. With nothing selected the loop stops entirely — the legacy's runs
+     * unconditionally, which is wasted work on a view where arcs only exist during a selection.
+     */
+    const frame = () => {
+        if (dead()) { raf = null; return; }
+        const now = performance.now();
+        const dt = lastFrame ? Math.max(0, now - lastFrame) / 1000 : 0;
+        lastFrame = now;
+        cometPhase = (cometPhase + dt * 0.25) % 1;
+
+        if (arcOpacity < 1) {
+            const q = Math.min(1, (now - fadeStart) / ARC_MS);
+            arcOpacity = easeOutCubic(q);
+            if (q >= 1) { arcOpacity = 1; runPulse(); }
+        }
+        pushDeck();
+        raf = arcEdges.length ? requestAnimationFrame(frame) : null;
+    };
+
+    /** Arrival pulse — a MapLibre circle layer, deliberately not a deck layer: it is tied to the
+     *  node positions the basemap already carries, and keeping it off the overlay means it
+     *  survives any deck failure. */
     const runPulse = () => {
         if (dead()) return;
         (map.getSource('rv-pulse') as any)?.setData(pulseFC());
         const t0p = performance.now();
         const step = () => {
-            if (dead()) { raf = null; return; }
+            if (dead()) return;
             const q = Math.min(1, (performance.now() - t0p) / PULSE_MS);
             const e = easeOutCubic(q);
             try {
                 map.setPaintProperty('rv-pulse', 'circle-radius', 3 + 22 * e);
                 map.setPaintProperty('rv-pulse', 'circle-stroke-opacity', 0.6 * (1 - e));
             } catch { /* layer gone — nothing to pulse */ }
-            if (q < 1) { raf = requestAnimationFrame(step); return; }
-            raf = null;
+            if (q < 1) { requestAnimationFrame(step); return; }
             (map.getSource('rv-pulse') as any)?.setData(EMPTY);   // one pulse, then gone
         };
-        raf = requestAnimationFrame(step);
+        requestAnimationFrame(step);
     };
 
-    /** Draw the selection's arcs outward over ARC_MS. fitEgo() has already run, so the spread
-     *  happens inside the final viewport rather than under a camera that is still moving. */
+    /** Build this selection's arcs and fade them in. fitEgo() has already moved the camera. */
     const spread = () => {
         stopAnim();
         if (dead()) return;
         (map.getSource('rv-pulse') as any)?.setData(EMPTY);
-        arcs = buildArcs();
-        const drawn = arcs.geo.length + arcs.dockArcs.length;
-        if (selected && totalEdges > drawn) {
-            note.textContent = `${drawn} of ${totalEdges} connections drawn — see the list for all of them`;
+        buildArcs();
+        const drawn = arcEdges.length;
+        if (selected && totalEdges > drawn + dockEdgeCount) {
+            note.textContent = `${drawn} of ${totalEdges - dockEdgeCount} geographic connections drawn`
+                + ' — see the list for all of them';
             note.hidden = false;
         } else {
             note.hidden = true;
         }
-        if (!drawn) { setArcData(1); return; }
-        const t0a = performance.now();
-        const step = () => {
-            if (dead()) { raf = null; return; }
-            const q = Math.min(1, (performance.now() - t0a) / ARC_MS);
-            setArcData(easeOutCubic(q));
-            if (q < 1) { raf = requestAnimationFrame(step); return; }
-            raf = null;
-            runPulse();
-        };
-        raf = requestAnimationFrame(step);
+        arcOpacity = 0;
+        if (!drawn) { pushDeck(); return; }
+        fadeStart = performance.now();
+        lastFrame = 0;
+        raf = requestAnimationFrame(frame);
     };
 
     /** Deselect clears immediately — no reverse animation. */
     const clearArcs = () => {
         stopAnim();
-        arcs = { geo: [], dockArcs: [] };
-        totalEdges = 0;
+        arcEdges = []; dockHits = []; dockEdgeCount = 0; totalEdges = 0; arcOpacity = 0;
         note.hidden = true;
         if (dead()) return;
-        (map.getSource('rv-arcs') as any)?.setData(EMPTY);
-        (map.getSource('rv-arcs-dock') as any)?.setData(EMPTY);
+        pushDeck();
         (map.getSource('rv-pulse') as any)?.setData(EMPTY);
     };
 
@@ -372,7 +515,7 @@ export function mountGlobe(
     const refresh = () => {
         if (dead()) return;
         (map.getSource('rv-nodes') as any)?.setData(pointFC());
-        const drawn = new Set(arcs.dockArcs.map((a) => a.other));
+        const drawn = new Set(dockHits);
         for (const el of Array.from(dock.querySelectorAll('.rv-chip-n'))) {
             const id = (el as HTMLElement).dataset.goto!;
             const lit = !selected || id === selected || (adj.get(selected)?.has(id) ?? false);
@@ -392,67 +535,26 @@ export function mountGlobe(
      */
     const applySelection = (id: string | null, fit: boolean) => {
         selected = id;
-        if (!id) { clearArcs(); refresh(); return; }
+        if (!id) { clearArcs(); renderDock(); return; }
         if (fit) fitEgo(id);
         spread();
-        refresh();          // after spread(), so data-arc reflects the arcs just built
+        // renderDock(), not refresh(): the dock's headline is part of the selection now, and
+        // renderDock() calls refresh() itself to re-apply data-lit / data-arc to the new chips.
+        renderDock();
     };
 
     map.on('load', () => {
-        // ── Arcs: ONE source, TWO layers (glow under core) ────────────────────────────────
-        // Colour is the COUNTERPART's type colour, so a fan of arcs reads as "what kinds of thing
-        // is this connected to" at a glance. `dim` thins and fades competitor edges. `w` is the
-        // vault's three-weight-state distinction collapsed to present/absent: an edge the vault
-        // left unweighted is drawn hairline, never as a weak-but-measured one — the same refusal
-        // the legacy map makes with its separate grey unquantified arc layer
-        // (pro_interactive_map.ts:497-519).
-        map.addSource('rv-arcs', { type: 'geojson', data: EMPTY });
-        map.addLayer({
-            id: 'rv-arcs-glow', type: 'line', source: 'rv-arcs',
-            layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: {
-                'line-color': ['get', 'color'],
-                'line-width': ['case', ['==', ['get', 'dim'], 1], 4.0, 6.5],
-                'line-opacity': ['case', ['==', ['get', 'dim'], 1], 0.07, 0.16],
-                'line-blur': 3.5,
-            },
-        });
-
-        // ── Dock arcs: their own source, because a fade NEEDS line-gradient ───────────────
-        // ★ line-gradient is the only paint property that can read ['line-progress'], and it is
-        //   NOT data-driven — no ['get','color'] inside it — so it has to be one colour for the
-        //   whole layer, hence a separate source and a neutral slate. The counterpart's colour is
-        //   carried by the lit chip instead. lineMetrics:true is what makes line-progress exist;
-        //   without it the gradient is silently ignored and the arc draws at flat opacity.
-        map.addSource('rv-arcs-dock', { type: 'geojson', data: EMPTY, lineMetrics: true });
-        map.addLayer({
-            id: 'rv-arcs-dock', type: 'line', source: 'rv-arcs-dock',
-            layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: {
-                'line-width': 1.4,
-                'line-gradient': [
-                    'interpolate', ['linear'], ['line-progress'],
-                    0, 'rgba(148,163,184,0.75)',
-                    0.55, 'rgba(148,163,184,0.38)',
-                    1, 'rgba(148,163,184,0)',
-                ],
-            },
-        });
-
-        map.addLayer({
-            id: 'rv-arcs-core', type: 'line', source: 'rv-arcs',
-            layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: {
-                'line-color': ['get', 'color'],
-                'line-width': [
-                    'case',
-                    ['==', ['get', 'w'], 0], 0.8,
-                    ['==', ['get', 'dim'], 1], 1.1,
-                    1.5,
-                ],
-                'line-opacity': ['case', ['==', ['get', 'dim'], 1], 0.34, 0.85],
-            },
-        });
+        // ── deck.gl overlay ──────────────────────────────────────────────────────────────
+        // addControl -> overlay.onAdd(map) -> _onAddInterleaved(map), which needs map.painter,
+        // hence 'load' and not the constructor. Guarded: a deck failure must cost the arcs, not
+        // the whole globe — the nodes, labels, dock and pulse are all plain MapLibre below.
+        try {
+            map.addControl(overlay);
+            overlayAdded = true;
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('[relationship_globe] deck.gl overlay failed; nodes still render', err);
+        }
 
         // Arrival pulse. Radius and stroke opacity are driven per frame by setPaintProperty from
         // runPulse(); the values here are only the resting state before the first pulse.
@@ -465,6 +567,7 @@ export function mountGlobe(
                 'circle-stroke-opacity': 0,
             },
         });
+
         map.addSource('rv-nodes', { type: 'geojson', data: pointFC() });
         map.addLayer({
             id: 'rv-nodes', type: 'circle', source: 'rv-nodes',
@@ -542,13 +645,22 @@ export function mountGlobe(
         if (ids.length < 1) return;                  // dock-only entity: nothing geographic to fit
         const b = new maplibregl.LngLatBounds();
         for (const x of ids) b.extend([coords[x].lng, coords[x].lat]);
-        // ★ duration 0, not 500. Step 4 requires the ego set to be FRAMED BEFORE the arcs
-        //   animate; a 500ms camera ease overlapping a 600ms spread draws most of the fan
-        //   off-screen and then slides it in, which looks like a bug. The alternative —
-        //   keep the ease and start the spread on 'moveend' — needs a timeout fallback because
-        //   moveend does not fire if the camera was already at the target. A snap to the
-        //   neighbourhood followed by the spread is both simpler and clearer about cause.
-        map.fitBounds(b, { padding: { top: 60, bottom: 90, left: 60, right: 420 }, maxZoom: 5, duration: 0 });
+        // ★ The legacy static-cascade fit, verbatim from pro_interactive_map.ts:1181-1183:
+        //   pitch 50, bearing 0, duration 900. Its comment explains the tilt — "the static
+        //   cascade opens tilted so the raised arcs read as curves over the surface" — which is
+        //   exactly why it matters here: ArcLayer's getHeight 0.45 lift is INVISIBLE in plan
+        //   view, so a flat camera would render these arcs as straight chords and throw away the
+        //   whole point of using it.
+        //
+        //   duration 900 overlaps the 600 ms arc fade on purpose. The previous version snapped
+        //   (duration 0) because a geometric draw-outward would have been half off-screen under a
+        //   moving camera; an OPACITY fade has no such problem — nothing is drawn in the wrong
+        //   place, it is only drawn faintly — so the camera ease and the fade can run together
+        //   and read as one event.
+        map.fitBounds(b, {
+            padding: { top: 60, bottom: 90, left: 60, right: 420 },
+            maxZoom: 5, pitch: 50, bearing: 0, duration: 900,
+        });
     };
 
     // ★ MapLibre sizes itself from the container at construction. The host is a grid cell that
@@ -559,19 +671,10 @@ export function mountGlobe(
     ro.observe(host);
     requestAnimationFrame(() => safeResize());
 
-    /** A dock arc's far end is a SCREEN position turned into a lng/lat, so panning or zooming
-     *  invalidates it — left alone it drifts away from the chip it is supposed to point at.
-     *  Recomputed on every camera move, but skipped while the spread is mid-flight so the two
-     *  do not write the same source in the same frame. Geographic arcs need none of this. */
-    map.on('move', () => {
-        if (dead() || raf !== null || !selected || !arcs.dockArcs.length) return;
-        const a = coords[selected];
-        if (!a) return;
-        arcs.dockArcs = arcs.dockArcs
-            .map((d) => ({ ...d, pts: dockArcPts(a.lng, a.lat, d.other) }))
-            .filter((d) => d.pts.length >= 2);
-        (map.getSource('rv-arcs-dock') as any)?.setData(arcFC(arcs.dockArcs, 1));
-    });
+    // ★ The 'move' handler that used to live here is gone with the dock arcs. It recomputed a
+    //   screen-derived endpoint and called setData on EVERY move event, i.e. once per frame of a
+    //   pan — real jank on a gesture that is now supposed to feel free. Geographic arcs need
+    //   nothing of the kind: deck.gl re-projects them from lng/lat itself.
 
     const refit = () => {
         if (dead() || placeable.length < 2) return;
@@ -589,7 +692,10 @@ export function mountGlobe(
         /** Re-frame after the host has actually been laid out at its final width. */
         refit() { safeResize(); refit(); },
         destroy() {
-            stopAnim(); note.remove();        // a live rAF outliving the map would call setPaintProperty on a
+            stopAnim(); note.remove();
+            // The overlay holds a GL context reference; map.remove() tears it down, but dropping
+            // the layers first stops any in-flight deck render from touching a dying context.
+            try { if (overlayAdded) overlay.setProps({ layers: [] }); } catch { /* already gone */ }        // a live rAF outliving the map would call setPaintProperty on a
                                // removed layer every frame; dead() guards it, but not leaking the
                                // frame loop at all is the actual fix.
             ro.disconnect(); if (!dead()) map.remove(); mapEl.remove(); dock.remove();

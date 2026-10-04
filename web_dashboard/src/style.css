@@ -12480,16 +12480,27 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-globe .maplibregl-map,
 #pro-map-container .rv-globe .maplibregl-canvas-container,
 #pro-map-container .rv-globe .maplibregl-canvas { width: 100% !important; height: 100% !important; max-width: none !important; }
+/* ★ pointer-events:none on the WRAPPER, auto on the things you can actually click. This box is
+   left:0;right:0 across the bottom of the map — 76px collapsed, up to 42vh expanded — and
+   without this it swallowed every mousedown that landed in the gaps BETWEEN chips, so a drag
+   started near the bottom of the globe went nowhere. Only the chips and the more/less buttons
+   need to be hit-testable. */
 #pro-map-container .rv-dock { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-wrap: wrap; gap: 5px;
     align-items: center; padding: 7px 10px; max-height: 76px; overflow: hidden;   /* 3 rows; the rest behind +N more */
-    background: linear-gradient(to top, rgba(2,6,16,0.96), rgba(2,6,16,0.72)); border-top: 1px solid rgba(56,189,248,0.18); }
+    background: linear-gradient(to top, rgba(2,6,16,0.96), rgba(2,6,16,0.72)); border-top: 1px solid rgba(56,189,248,0.18);
+    pointer-events: none; }
+#pro-map-container .rv-dock .rv-chip-n,
+#pro-map-container .rv-dock .rv-dock-more { pointer-events: auto; }
+/* One line of its own at the top of the dock, above the chips. */
+#pro-map-container .rv-dock-note { flex: 0 0 100%; color: #7dd3fc; font-size: 0.58rem; letter-spacing: 0.03em;
+    padding: 0 0 2px; }
 #pro-map-container .rv-dock-l { color: #475569; font-size: 0.54rem; text-transform: uppercase; letter-spacing: 0.06em; margin-right: 4px; }
 #pro-map-container .rv-chip-n { background: rgba(15,23,42,0.8); border: 1px solid var(--c); color: var(--c);
     font-size: 0.56rem; padding: 2px 7px; border-radius: 10px; cursor: pointer; opacity: 0.45; }
 #pro-map-container .rv-chip-n[data-lit="1"] { opacity: 1; }
-/* data-arc is the smaller set: lit = adjacent, arc = an arc on the canvas actually points
-   at this chip (it survived MAX_ARCS). The glow is what connects the faded arc end on the
-   map edge to the chip it is aimed at, since the arc cannot reach into the DOM. */
+/* data-lit = adjacent to the selection. data-arc = a counterpart of the CURRENT selection that
+   has no coordinate, so the chip is the only place this relationship can be shown — no line is
+   drawn to it. The glow is what carries that edge, which is why it is stronger than data-lit. */
 #pro-map-container .rv-chip-n[data-arc="1"] { opacity: 1; border-color: var(--c);
     box-shadow: 0 0 0 1px var(--c), 0 0 10px -1px var(--c); background: rgba(15,23,42,0.95); }
 #pro-map-container .rv-globe-pop .maplibregl-popup-content { background: rgba(2,6,16,0.94); color: #e2e8f0;

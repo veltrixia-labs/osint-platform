@@ -300,7 +300,11 @@ export function mountGraphCanvas(
         setTwoHop(on) { twoHop = on; computeEgo(); draw(); },
         setPanelOffset(px) { panelOffset = px; },
         labelStats() { return { kept: labelsKept, considered: labelsConsidered, k: transform.k }; },
-        destroy() { if (tween !== null) cancelAnimationFrame(tween); ro.disconnect(); canvas.remove(); tip.remove(); },
+        destroy() {
+            if (tween !== null) cancelAnimationFrame(tween);
+            window.removeEventListener('keydown', onKeyDown);
+            ro.disconnect(); canvas.remove(); tip.remove();
+        },
     };
 
     const zb = zoom<HTMLCanvasElement, unknown>().scaleExtent([0.15, 8])
@@ -326,9 +330,18 @@ export function mountGraphCanvas(
         computeEgo(); draw();
         onSelect(selected);
     });
-    window.addEventListener('keydown', (ev) => {
+    // ★ This is the ONLY listener in this module that is not on the canvas element, and it used
+    //   to leak: destroy() removed the canvas but not this, so after switching to Globe mode a
+    //   dead graph kept handling Escape — calling draw() on a detached canvas and, worse,
+    //   onSelect(null), clearing the GLOBE's selection from a view that no longer existed.
+    //   It does NOT call preventDefault or stopPropagation, so it was never what blocked dragging
+    //   on the globe; it is a lifetime bug, not an input-interception one. Named and removed in
+    //   destroy() now. Everything else here is bound to `canvas`, including d3-zoom and d3-drag
+    //   (via select(canvas).call(...)), and goes with the element.
+    const onKeyDown = (ev: KeyboardEvent) => {
         if (ev.key === 'Escape' && selected) { selected = null; computeEgo(); draw(); onSelect(null); }
-    });
+    };
+    window.addEventListener('keydown', onKeyDown);
 
     /** ★ Fit the whole graph on load. The simulation's extent is wider than the viewport
      *  (measured 303/1535: x [123,1964], y [-83,927] against ~1200x800), so without this the

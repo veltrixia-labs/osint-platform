@@ -15,15 +15,27 @@ const src = readFileSync(FILE, 'utf8');
 const BANNED_IMPORTS = ['pro_interactive_map', 'pro_trigger_map', 'pro_map', 'spatial', 'impact_roster', 'contagion', 'scenarios/'];
 const BANNED_FIELDS = ['impact_score', 'raw_impact', 'viscosity_coefficient', 'entropy_index', 'is_epicenter', 'order_level', 'no_map', 'credit_gaps', 'honest_gaps'];
 const ALLOWED = ['maplibre-gl', 'maplibre-gl/dist/maplibre-gl.css', './relationship_graph_canvas',
-                 // Pure arc geometry + easing. Imports NOTHING itself, which is what keeps it
-                 // allowlistable: it cannot become a back door to the scenario apparatus.
-                 './relationship_arcs'];
+                 // Pure math (great-circle slerp + easing). Imports NOTHING itself, which is what
+                 // keeps it allowlistable: it cannot become a back door to the scenario apparatus.
+                 './relationship_arcs',
+                 // deck.gl is a LIBRARY. The same three packages the legacy map loads
+                 // (pro_interactive_map.ts:970-972, :987), carrying none of its code. Allowing the
+                 // renderer is not allowing the model: the legacy MODULES stay in BANNED_IMPORTS
+                 // and the banned-field scan below is what actually enforces the boundary.
+                 '@deck.gl/core', '@deck.gl/layers', '@deck.gl/mapbox'];
 
-// Both forms: `import X from 'y'` AND bare side-effect `import 'y'` (the CSS import).
-const imports = [
-  ...[...src.matchAll(/^import[^;]*?from\s+'([^']+)'/gm)].map((m) => m[1]),
-  ...[...src.matchAll(/^import\s+'([^']+)'/gm)].map((m) => m[1]),
+// ★ THREE forms, and the third one matters. `import X from 'y'`, bare `import 'y'`, AND
+//   dynamic `import('y')`. Without the dynamic form the allowlist is decorative: the legacy map
+//   itself reaches deck.gl through `await import('@deck.gl/layers')` (:970-972), so anyone
+//   copying that idiom here would sail straight past a static-only check. The `m` flag plus ^ on
+//   the first two is deliberate — a top-level static import only — while the dynamic form is
+//   matched anywhere, because that is where it is legal to appear.
+const extractImports = (text) => [
+  ...[...text.matchAll(/^import[^;]*?from\s+'([^']+)'/gm)].map((m) => m[1]),
+  ...[...text.matchAll(/^import\s+'([^']+)'/gm)].map((m) => m[1]),
+  ...[...text.matchAll(/\bimport\s*\(\s*'([^']+)'\s*\)/g)].map((m) => m[1]),
 ];
+const imports = extractImports(src);
 const fail = [];
 for (const i of imports) if (!ALLOWED.includes(i)) fail.push(`disallowed import: ${i}`);
 for (const b of BANNED_IMPORTS) if (imports.some((i) => i.includes(b))) fail.push(`banned import substring: ${b}`);
@@ -35,10 +47,7 @@ for (const f of BANNED_FIELDS) if (body.includes(f)) fail.push(`banned field ref
 //   relationship_arcs.ts could import pro_interactive_map tomorrow and this check would pass.
 const ARCS = 'src/modules/render/relationship_arcs.ts';
 const arcSrc = readFileSync(ARCS, 'utf8');
-const arcImports = [
-  ...[...arcSrc.matchAll(/^import[^;]*?from\s+'([^']+)'/gm)].map((m) => m[1]),
-  ...[...arcSrc.matchAll(/^import\s+'([^']+)'/gm)].map((m) => m[1]),
-];
+const arcImports = extractImports(arcSrc);
 if (arcImports.length) fail.push(`relationship_arcs.ts must import nothing, found: ${arcImports.join(', ')}`);
 for (const f of BANNED_FIELDS) {
   if (arcSrc.replace(/\/\*\*[\s\S]*?\*\//, '').includes(f)) fail.push(`banned field in relationship_arcs.ts: ${f}`);
