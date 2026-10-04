@@ -1,0 +1,1939 @@
+{
+ "schema_version": "bridge_coords_v1",
+ "generated_at": "2026-07-13",
+ "note": "Presentation layer only. Coordinates are NOT graph structure and never enter canonical .md. concept/market/fund/org/bloc nodes carry NO coordinates by design (they have no location) -- they surface in Pro Insight / Market Pulse instead, not on the map.",
+ "coverage": {
+  "in_scope": 248,
+  "resolved": 248,
+  "missing": 0
+ },
+ "nodes": {
+  "ADM": {
+   "lat": 41.878,
+   "lng": -87.63,
+   "type": "company",
+   "city": "Chicago,US",
+   "source": "manual"
+  },
+  "AIA": {
+   "lat": 22.302,
+   "lng": 114.177,
+   "type": "company",
+   "city": "HongKong,HK",
+   "source": "manual"
+  },
+  "AMD": {
+   "lat": 37.3951,
+   "lng": -121.9633,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:AMD"
+  },
+  "ASML": {
+   "lat": 51.4183,
+   "lng": 5.406,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:ASML"
+  },
+  "ASN": {
+   "lat": 50.964,
+   "lng": 1.936,
+   "type": "company",
+   "city": "Calais,FR",
+   "source": "manual"
+  },
+  "AXA": {
+   "lat": 48.857,
+   "lng": 2.352,
+   "type": "company",
+   "city": "Paris,FR",
+   "source": "manual"
+  },
+  "Airbus": {
+   "lat": 43.6047,
+   "lng": 1.4442,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:AIR"
+  },
+  "Albemarle": {
+   "lat": 35.227,
+   "lng": -80.843,
+   "type": "company",
+   "city": "Charlotte,US",
+   "source": "manual"
+  },
+  "Allianz": {
+   "lat": 48.137,
+   "lng": 11.576,
+   "type": "company",
+   "city": "Munich,DE",
+   "source": "manual"
+  },
+  "Amazon": {
+   "lat": 47.6062,
+   "lng": -122.3321,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:AMZN"
+  },
+  "Anthropic": {
+   "lat": 37.7898,
+   "lng": -122.396,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "name:Anthropic PBC"
+  },
+  "Apple": {
+   "lat": 37.3349,
+   "lng": -122.009,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:AAPL"
+  },
+  "Applied_Materials": {
+   "lat": 37.3688,
+   "lng": -121.9635,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:AMAT"
+  },
+  "Argentina": {
+   "lat": -38.42,
+   "lng": -63.62,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:AR"
+  },
+  "Arm": {
+   "lat": 52.2053,
+   "lng": 0.1218,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:ARM"
+  },
+  "Australia": {
+   "lat": -25.27,
+   "lng": 133.78,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:AU"
+  },
+  "BAE_Systems": {
+   "lat": 51.2753,
+   "lng": -0.753,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:BA."
+  },
+  "BMW": {
+   "lat": 48.177,
+   "lng": 11.556,
+   "type": "company",
+   "city": "Munich,DE",
+   "source": "manual"
+  },
+  "BNP_Paribas": {
+   "lat": 48.8715,
+   "lng": 2.3361,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:BNP"
+  },
+  "BP": {
+   "lat": 51.5099,
+   "lng": -0.1327,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:BP"
+  },
+  "BYD": {
+   "lat": 22.543,
+   "lng": 114.058,
+   "type": "company",
+   "city": "Shenzhen,CN",
+   "source": "manual"
+  },
+  "Bab_el-Mandeb": {
+   "lat": 12.5833,
+   "lng": 43.3333,
+   "type": "route",
+   "city": null,
+   "source": "system_geo",
+   "via": "build_geo_db:Bab el-Mandeb"
+  },
+  "Banco_do_Brasil": {
+   "lat": -15.794,
+   "lng": -47.883,
+   "type": "company",
+   "city": "Brasilia,BR",
+   "source": "manual"
+  },
+  "Bank_of_America": {
+   "lat": 35.2271,
+   "lng": -80.8431,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:BAC"
+  },
+  "Belarus": {
+   "lat": 53.71,
+   "lng": 27.95,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:BY"
+  },
+  "Belaruskali": {
+   "lat": 52.788,
+   "lng": 27.542,
+   "type": "company",
+   "city": "Soligorsk,BY",
+   "source": "manual"
+  },
+  "Belgium": {
+   "lat": 50.5,
+   "lng": 4.47,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:BE"
+  },
+  "BlackRock": {
+   "lat": 40.713,
+   "lng": -74.006,
+   "type": "company",
+   "city": "NewYork,US",
+   "source": "manual"
+  },
+  "Boeing": {
+   "lat": 38.8809,
+   "lng": -77.1103,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:BA"
+  },
+  "Boeing_Defense": {
+   "lat": 38.881,
+   "lng": -77.104,
+   "type": "company",
+   "city": "Arlington,US",
+   "source": "manual"
+  },
+  "Bosphorus": {
+   "lat": 41.119,
+   "lng": 29.075,
+   "type": "route",
+   "city": "Istanbul,TR",
+   "source": "manual"
+  },
+  "Brazil": {
+   "lat": -14.24,
+   "lng": -51.93,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:BR"
+  },
+  "Broadcom": {
+   "lat": 37.4419,
+   "lng": -122.143,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:AVGO"
+  },
+  "Bunge": {
+   "lat": 38.663,
+   "lng": -90.577,
+   "type": "company",
+   "city": "Chesterfield,US",
+   "source": "manual"
+  },
+  "CATL": {
+   "lat": 26.665,
+   "lng": 119.548,
+   "type": "company",
+   "city": "Ningde,CN",
+   "source": "manual"
+  },
+  "CETC": {
+   "lat": 39.904,
+   "lng": 116.407,
+   "type": "company",
+   "city": "Beijing,CN",
+   "source": "manual"
+  },
+  "CF_Industries": {
+   "lat": 42.171,
+   "lng": -87.845,
+   "type": "company",
+   "city": "Deerfield,US",
+   "source": "manual"
+  },
+  "CGN": {
+   "lat": 22.543,
+   "lng": 114.058,
+   "type": "company",
+   "city": "Shenzhen,CN",
+   "source": "manual"
+  },
+  "CMA_CGM": {
+   "lat": 43.296,
+   "lng": 5.37,
+   "type": "company",
+   "city": "Marseille,FR",
+   "source": "manual"
+  },
+  "CMB.TECH": {
+   "lat": 51.219,
+   "lng": 4.402,
+   "type": "company",
+   "city": "Antwerp,BE",
+   "source": "manual"
+  },
+  "CME_Group": {
+   "lat": 41.878,
+   "lng": -87.63,
+   "type": "company",
+   "city": "Chicago,US",
+   "source": "manual"
+  },
+  "CMOC": {
+   "lat": 34.618,
+   "lng": 112.454,
+   "type": "company",
+   "city": "Luoyang,CN",
+   "source": "manual"
+  },
+  "CNNC": {
+   "lat": 39.904,
+   "lng": 116.407,
+   "type": "company",
+   "city": "Beijing,CN",
+   "source": "manual"
+  },
+  "CNOOC": {
+   "lat": 39.921,
+   "lng": 116.42,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:0883"
+  },
+  "CNPC": {
+   "lat": 39.904,
+   "lng": 116.407,
+   "type": "company",
+   "city": "Beijing,CN",
+   "source": "manual"
+  },
+  "COSCO": {
+   "lat": 31.2304,
+   "lng": 121.4737,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:1919"
+  },
+  "CSSC": {
+   "lat": 39.904,
+   "lng": 116.407,
+   "type": "company",
+   "city": "Beijing,CN",
+   "source": "manual"
+  },
+  "CXMT": {
+   "lat": 31.821,
+   "lng": 117.227,
+   "type": "company",
+   "city": "Hefei,CN",
+   "source": "manual"
+  },
+  "Cadence": {
+   "lat": 37.3349,
+   "lng": -121.8881,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:CDNS"
+  },
+  "Canada": {
+   "lat": 56.13,
+   "lng": -106.35,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:CA"
+  },
+  "Canon": {
+   "lat": 35.6895,
+   "lng": 139.6917,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:7751"
+  },
+  "Cargill": {
+   "lat": 44.978,
+   "lng": -93.265,
+   "type": "company",
+   "city": "Minneapolis,US",
+   "source": "manual"
+  },
+  "Cerebras": {
+   "lat": 37.369,
+   "lng": -122.036,
+   "type": "company",
+   "city": "Sunnyvale,US",
+   "source": "manual"
+  },
+  "Chevron": {
+   "lat": 37.7799,
+   "lng": -121.978,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:CVX"
+  },
+  "Chile": {
+   "lat": -35.68,
+   "lng": -71.54,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:CL"
+  },
+  "China": {
+   "lat": 35.8617,
+   "lng": 104.1954,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "static_locations:China"
+  },
+  "Circle": {
+   "lat": 40.7115,
+   "lng": -74.0134,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:CRCL"
+  },
+  "Cisco": {
+   "lat": 37.3875,
+   "lng": -121.963,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:CSCO"
+  },
+  "Citigroup": {
+   "lat": 40.721,
+   "lng": -74.0107,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:C"
+  },
+  "Coinbase": {
+   "lat": 37.7903,
+   "lng": -122.4001,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:COIN"
+  },
+  "Constellation": {
+   "lat": 39.29,
+   "lng": -76.612,
+   "type": "company",
+   "city": "Baltimore,US",
+   "source": "manual"
+  },
+  "CoreWeave": {
+   "lat": 40.7959,
+   "lng": -74.3149,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:CRWV"
+  },
+  "Corning": {
+   "lat": 42.143,
+   "lng": -77.055,
+   "type": "company",
+   "city": "Corning,US",
+   "source": "manual"
+  },
+  "DRC": {
+   "lat": -4.04,
+   "lng": 21.76,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:CD"
+  },
+  "Denmark": {
+   "lat": 56.26,
+   "lng": 9.5,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:DK"
+  },
+  "Deutsche_Bank": {
+   "lat": 50.1149,
+   "lng": 8.6694,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:DBK"
+  },
+  "Egypt": {
+   "lat": 26.82,
+   "lng": 30.8,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:EG"
+  },
+  "Equinor": {
+   "lat": 58.969,
+   "lng": 5.7331,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:EQNR"
+  },
+  "Ericsson": {
+   "lat": 59.329,
+   "lng": 18.069,
+   "type": "company",
+   "city": "Stockholm,SE",
+   "source": "manual"
+  },
+  "Evergreen": {
+   "lat": 25.033,
+   "lng": 121.5654,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:2603"
+  },
+  "ExxonMobil": {
+   "lat": 30.1635,
+   "lng": -95.461,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:XOM"
+  },
+  "Ford": {
+   "lat": 42.322,
+   "lng": -83.176,
+   "type": "company",
+   "city": "Dearborn,US",
+   "source": "manual"
+  },
+  "France": {
+   "lat": 46.23,
+   "lng": 2.21,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:FR"
+  },
+  "Frontline": {
+   "lat": 34.707,
+   "lng": 33.022,
+   "type": "company",
+   "city": "Limassol,CY",
+   "source": "manual"
+  },
+  "Fujitsu": {
+   "lat": 35.69,
+   "lng": 139.7,
+   "type": "company",
+   "city": "Tokyo,JP",
+   "source": "manual"
+  },
+  "GM": {
+   "lat": 42.331,
+   "lng": -83.045,
+   "type": "company",
+   "city": "Detroit,US",
+   "source": "manual"
+  },
+  "Gazprom": {
+   "lat": 59.987,
+   "lng": 30.177,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "name:Gazprom"
+  },
+  "General_Dynamics": {
+   "lat": 38.9586,
+   "lng": -77.357,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:GD"
+  },
+  "Germany": {
+   "lat": 51.1657,
+   "lng": 10.4515,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "static_locations:Germany"
+  },
+  "Glencore": {
+   "lat": 47.195,
+   "lng": 8.516,
+   "type": "company",
+   "city": "Baar,CH",
+   "source": "manual"
+  },
+  "GlobalFoundries": {
+   "lat": 42.9897,
+   "lng": -73.7929,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:GFS"
+  },
+  "GlobalWafers": {
+   "lat": 24.8138,
+   "lng": 120.9675,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:6488"
+  },
+  "Goldman_Sachs": {
+   "lat": 40.7144,
+   "lng": -74.0134,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:GS"
+  },
+  "Google": {
+   "lat": 37.422,
+   "lng": -122.0841,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:GOOGL"
+  },
+  "Gunvor": {
+   "lat": 46.204,
+   "lng": 6.143,
+   "type": "company",
+   "city": "Geneva,CH",
+   "source": "manual"
+  },
+  "HDFC_Bank": {
+   "lat": 19.076,
+   "lng": 72.878,
+   "type": "company",
+   "city": "Mumbai,IN",
+   "source": "manual"
+  },
+  "HKEX": {
+   "lat": 22.302,
+   "lng": 114.177,
+   "type": "company",
+   "city": "HongKong,HK",
+   "source": "manual"
+  },
+  "HMN_Tech": {
+   "lat": 39.084,
+   "lng": 117.201,
+   "type": "company",
+   "city": "Tianjin,CN",
+   "source": "manual"
+  },
+  "HSBC": {
+   "lat": 51.5054,
+   "lng": -0.0235,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:HSBA"
+  },
+  "Hapag-Lloyd": {
+   "lat": 53.5511,
+   "lng": 9.9937,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:HLAG"
+  },
+  "Honda": {
+   "lat": 35.69,
+   "lng": 139.7,
+   "type": "company",
+   "city": "Tokyo,JP",
+   "source": "manual"
+  },
+  "Hong_Kong": {
+   "lat": 22.32,
+   "lng": 114.17,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:HK"
+  },
+  "Huawei": {
+   "lat": 22.543,
+   "lng": 114.058,
+   "type": "company",
+   "city": "Shenzhen,CN",
+   "source": "manual"
+  },
+  "Hyundai": {
+   "lat": 37.566,
+   "lng": 126.978,
+   "type": "company",
+   "city": "Seoul,KR",
+   "source": "manual"
+  },
+  "ICBC": {
+   "lat": 39.9156,
+   "lng": 116.4077,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:1398"
+  },
+  "ICE": {
+   "lat": 33.749,
+   "lng": -84.388,
+   "type": "company",
+   "city": "Atlanta,US",
+   "source": "manual"
+  },
+  "ICL": {
+   "lat": 32.085,
+   "lng": 34.781,
+   "type": "company",
+   "city": "TelAviv,IL",
+   "source": "manual"
+  },
+  "India": {
+   "lat": 20.59,
+   "lng": 78.96,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:IN"
+  },
+  "Indonesia": {
+   "lat": -0.79,
+   "lng": 113.92,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:ID"
+  },
+  "Intel": {
+   "lat": 37.3875,
+   "lng": -121.963,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:INTC"
+  },
+  "Iran": {
+   "lat": 32.4279,
+   "lng": 53.688,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "static_locations:Iran"
+  },
+  "Iraq": {
+   "lat": 33.22,
+   "lng": 43.68,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:IQ"
+  },
+  "Israel": {
+   "lat": 31.0461,
+   "lng": 34.8516,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "static_locations:Israel"
+  },
+  "Italy": {
+   "lat": 41.87,
+   "lng": 12.57,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:IT"
+  },
+  "Itau_Unibanco": {
+   "lat": -23.551,
+   "lng": -46.633,
+   "type": "company",
+   "city": "SaoPaulo,BR",
+   "source": "manual"
+  },
+  "JPMorgan": {
+   "lat": 40.7566,
+   "lng": -73.9752,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:JPM"
+  },
+  "JSR": {
+   "lat": 35.6895,
+   "lng": 139.6917,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "name:JSR Corporation"
+  },
+  "Japan": {
+   "lat": 36.2048,
+   "lng": 138.2529,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "static_locations:Japan"
+  },
+  "Kawasaki_Heavy_Industries": {
+   "lat": 35.6895,
+   "lng": 139.6917,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:7012"
+  },
+  "Kazakhstan": {
+   "lat": 48.02,
+   "lng": 66.92,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:KZ"
+  },
+  "Kioxia": {
+   "lat": 35.69,
+   "lng": 139.7,
+   "type": "company",
+   "city": "Tokyo,JP",
+   "source": "manual"
+  },
+  "Kuwait": {
+   "lat": 29.31,
+   "lng": 47.48,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:KW"
+  },
+  "LG_Energy_Solution": {
+   "lat": 37.566,
+   "lng": 126.978,
+   "type": "company",
+   "city": "Seoul,KR",
+   "source": "manual"
+  },
+  "LSEG": {
+   "lat": 51.507,
+   "lng": -0.128,
+   "type": "company",
+   "city": "London,GB",
+   "source": "manual"
+  },
+  "Leonardo": {
+   "lat": 41.9028,
+   "lng": 12.4964,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:LDO"
+  },
+  "Lockheed_Martin": {
+   "lat": 38.9807,
+   "lng": -77.0942,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:LMT"
+  },
+  "Louis_Dreyfus": {
+   "lat": 51.924,
+   "lng": 4.478,
+   "type": "company",
+   "city": "Rotterdam,NL",
+   "source": "manual"
+  },
+  "Lukoil": {
+   "lat": 55.756,
+   "lng": 37.617,
+   "type": "company",
+   "city": "Moscow,RU",
+   "source": "manual"
+  },
+  "Lynas": {
+   "lat": -31.953,
+   "lng": 115.857,
+   "type": "company",
+   "city": "Perth,AU",
+   "source": "manual"
+  },
+  "MARA": {
+   "lat": 26.1224,
+   "lng": -80.1373,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:MARA"
+  },
+  "MP_Materials": {
+   "lat": 36.17,
+   "lng": -115.14,
+   "type": "company",
+   "city": "LasVegas,US",
+   "source": "manual"
+  },
+  "MSC": {
+   "lat": 46.204,
+   "lng": 6.143,
+   "type": "company",
+   "city": "Geneva,CH",
+   "source": "manual"
+  },
+  "MUFG": {
+   "lat": 35.6828,
+   "lng": 139.7669,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:8306"
+  },
+  "Maaden": {
+   "lat": 24.713,
+   "lng": 46.675,
+   "type": "company",
+   "city": "Riyadh,SA",
+   "source": "manual"
+  },
+  "Maersk": {
+   "lat": 55.677,
+   "lng": 12.568,
+   "type": "company",
+   "city": "Copenhagen,DK",
+   "source": "manual"
+  },
+  "Mastercard": {
+   "lat": 41.043,
+   "lng": -73.714,
+   "type": "company",
+   "city": "Purchase,US",
+   "source": "manual"
+  },
+  "MediaTek": {
+   "lat": 24.783,
+   "lng": 121.005,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:2454"
+  },
+  "Mercedes_Benz": {
+   "lat": 48.783,
+   "lng": 9.182,
+   "type": "company",
+   "city": "Stuttgart,DE",
+   "source": "manual"
+  },
+  "Mercuria": {
+   "lat": 46.204,
+   "lng": 6.143,
+   "type": "company",
+   "city": "Geneva,CH",
+   "source": "manual"
+  },
+  "Meta": {
+   "lat": 37.4847,
+   "lng": -122.1484,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:META"
+  },
+  "Mexico": {
+   "lat": 23.63,
+   "lng": -102.55,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:MX"
+  },
+  "MicroStrategy": {
+   "lat": 38.918,
+   "lng": -77.222,
+   "type": "company",
+   "city": "Tysons,US",
+   "source": "manual"
+  },
+  "Micron": {
+   "lat": 43.615,
+   "lng": -116.2023,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:MU"
+  },
+  "Microsoft": {
+   "lat": 47.6396,
+   "lng": -122.128,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:MSFT"
+  },
+  "Mitsubishi_Electric": {
+   "lat": 35.69,
+   "lng": 139.7,
+   "type": "company",
+   "city": "Tokyo,JP",
+   "source": "manual"
+  },
+  "Mitsubishi_Heavy_Industries": {
+   "lat": 35.6895,
+   "lng": 139.6917,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:7011"
+  },
+  "Mitsui_OSK": {
+   "lat": 35.69,
+   "lng": 139.7,
+   "type": "company",
+   "city": "Tokyo,JP",
+   "source": "manual"
+  },
+  "Morgan_Stanley": {
+   "lat": 40.7589,
+   "lng": -73.9851,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:MS"
+  },
+  "Morocco": {
+   "lat": 31.79,
+   "lng": -7.09,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:MA"
+  },
+  "Mosaic": {
+   "lat": 27.951,
+   "lng": -82.457,
+   "type": "company",
+   "city": "Tampa,US",
+   "source": "manual"
+  },
+  "NEC": {
+   "lat": 35.69,
+   "lng": 139.7,
+   "type": "company",
+   "city": "Tokyo,JP",
+   "source": "manual"
+  },
+  "NVIDIA": {
+   "lat": 37.3706,
+   "lng": -121.9621,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:NVDA"
+  },
+  "NYK": {
+   "lat": 35.69,
+   "lng": 139.7,
+   "type": "company",
+   "city": "Tokyo,JP",
+   "source": "manual"
+  },
+  "Netherlands": {
+   "lat": 52.13,
+   "lng": 5.29,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:NL"
+  },
+  "NextEra": {
+   "lat": 26.8798,
+   "lng": -80.0559,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:NEE"
+  },
+  "Nigeria": {
+   "lat": 9.08,
+   "lng": 8.68,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:NG"
+  },
+  "Nikon": {
+   "lat": 35.6895,
+   "lng": 139.6917,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:7731"
+  },
+  "Nio": {
+   "lat": 31.23,
+   "lng": 121.474,
+   "type": "company",
+   "city": "Shanghai,CN",
+   "source": "manual"
+  },
+  "Nissan": {
+   "lat": 35.455,
+   "lng": 139.632,
+   "type": "company",
+   "city": "Yokohama,JP",
+   "source": "manual"
+  },
+  "Nokia": {
+   "lat": 60.205,
+   "lng": 24.656,
+   "type": "company",
+   "city": "Espoo,FI",
+   "source": "manual"
+  },
+  "Nord_Stream": {
+   "lat": 54.138,
+   "lng": 13.677,
+   "type": "route",
+   "city": "Lubmin-landfall,DE",
+   "source": "manual"
+  },
+  "Northrop_Grumman": {
+   "lat": 38.885,
+   "lng": -77.1711,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:NOC"
+  },
+  "Norway": {
+   "lat": 60.47,
+   "lng": 8.47,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:NO"
+  },
+  "Novatek": {
+   "lat": 55.756,
+   "lng": 37.617,
+   "type": "company",
+   "city": "Moscow,RU",
+   "source": "manual"
+  },
+  "Nutrien": {
+   "lat": 52.134,
+   "lng": -106.647,
+   "type": "company",
+   "city": "Saskatoon,CA",
+   "source": "manual"
+  },
+  "OCP": {
+   "lat": 33.573,
+   "lng": -7.59,
+   "type": "company",
+   "city": "Casablanca,MA",
+   "source": "manual"
+  },
+  "OOCL": {
+   "lat": 22.302,
+   "lng": 114.177,
+   "type": "company",
+   "city": "HongKong,HK",
+   "source": "manual"
+  },
+  "OOIL": {
+   "lat": 22.2783,
+   "lng": 114.1747,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:0316"
+  },
+  "OpenAI": {
+   "lat": 37.775,
+   "lng": -122.419,
+   "type": "company",
+   "city": "SanFrancisco,US",
+   "source": "manual"
+  },
+  "Oracle": {
+   "lat": 30.2672,
+   "lng": -97.7431,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:ORCL"
+  },
+  "Orano": {
+   "lat": 48.805,
+   "lng": 2.293,
+   "type": "company",
+   "city": "Chatillon,FR",
+   "source": "manual"
+  },
+  "PDVSA": {
+   "lat": 10.481,
+   "lng": -66.904,
+   "type": "company",
+   "city": "Caracas,VE",
+   "source": "manual"
+  },
+  "PTP": {
+   "lat": 1.363,
+   "lng": 103.548,
+   "type": "port",
+   "city": "TanjungPelepas,MY",
+   "source": "manual"
+  },
+  "Panama_Canal": {
+   "lat": 9.08,
+   "lng": -79.68,
+   "type": "route",
+   "city": null,
+   "source": "system_geo",
+   "via": "build_geo_db:Panama Canal"
+  },
+  "Panasonic": {
+   "lat": 34.737,
+   "lng": 135.586,
+   "type": "company",
+   "city": "Kadoma,JP",
+   "source": "manual"
+  },
+  "Paraguay": {
+   "lat": -23.44,
+   "lng": -58.44,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:PY"
+  },
+  "Peru": {
+   "lat": -9.19,
+   "lng": -75.02,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:PE"
+  },
+  "PetroChina": {
+   "lat": 39.9042,
+   "lng": 116.4074,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:0857"
+  },
+  "Ping_An": {
+   "lat": 22.543,
+   "lng": 114.058,
+   "type": "company",
+   "city": "Shenzhen,CN",
+   "source": "manual"
+  },
+  "Poland": {
+   "lat": 51.92,
+   "lng": 19.15,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:PL"
+  },
+  "Port_of_Rotterdam": {
+   "lat": 51.949,
+   "lng": 4.14,
+   "type": "port",
+   "city": "Maasvlakte,NL",
+   "source": "manual"
+  },
+  "Port_of_Shanghai": {
+   "lat": 31.339,
+   "lng": 121.653,
+   "type": "port",
+   "city": "Waigaoqiao,CN",
+   "source": "manual"
+  },
+  "Port_of_Singapore": {
+   "lat": 1.2644,
+   "lng": 103.82,
+   "type": "port",
+   "city": null,
+   "source": "system_geo",
+   "via": "backbone:Port of Singapore"
+  },
+  "Power_of_Siberia": {
+   "lat": 50.255,
+   "lng": 127.54,
+   "type": "route",
+   "city": "Amur-crossing,RU-CN",
+   "source": "manual"
+  },
+  "Qatar": {
+   "lat": 25.35,
+   "lng": 51.18,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:QA"
+  },
+  "QatarEnergy": {
+   "lat": 25.2854,
+   "lng": 51.531,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "name:QatarEnergy"
+  },
+  "Qualcomm": {
+   "lat": 32.895,
+   "lng": -117.202,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:QCOM"
+  },
+  "RTX": {
+   "lat": 38.8816,
+   "lng": -77.0866,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:RTX"
+  },
+  "Rapidus": {
+   "lat": 35.6906,
+   "lng": 139.7536,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "name:Rapidus Corporation"
+  },
+  "Renault": {
+   "lat": 48.836,
+   "lng": 2.24,
+   "type": "company",
+   "city": "Boulogne-Billancourt,FR",
+   "source": "manual"
+  },
+  "Rheinmetall": {
+   "lat": 51.2277,
+   "lng": 6.7735,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:RHM"
+  },
+  "Riot_Platforms": {
+   "lat": 30.6558,
+   "lng": -97.0011,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:RIOT"
+  },
+  "Rosatom": {
+   "lat": 55.756,
+   "lng": 37.617,
+   "type": "company",
+   "city": "Moscow,RU",
+   "source": "manual"
+  },
+  "Rosneft": {
+   "lat": 55.7558,
+   "lng": 37.6173,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "name:Rosneft Oil Company"
+  },
+  "Russia": {
+   "lat": 61.524,
+   "lng": 105.3188,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "static_locations:Russia"
+  },
+  "SK_On": {
+   "lat": 37.566,
+   "lng": 126.978,
+   "type": "company",
+   "city": "Seoul,KR",
+   "source": "manual"
+  },
+  "SK_hynix": {
+   "lat": 37.2795,
+   "lng": 127.4427,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:000660"
+  },
+  "SMIC": {
+   "lat": 31.2036,
+   "lng": 121.5977,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:0981"
+  },
+  "SOMO": {
+   "lat": 33.315,
+   "lng": 44.366,
+   "type": "company",
+   "city": "Baghdad,IQ",
+   "source": "manual"
+  },
+  "SQM": {
+   "lat": -33.449,
+   "lng": -70.669,
+   "type": "company",
+   "city": "Santiago,CL",
+   "source": "manual"
+  },
+  "SUMCO": {
+   "lat": 35.6895,
+   "lng": 139.6917,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:3436"
+  },
+  "Samsung": {
+   "lat": 37.2636,
+   "lng": 127.0286,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:005930"
+  },
+  "Samsung_SDI": {
+   "lat": 37.241,
+   "lng": 127.178,
+   "type": "company",
+   "city": "Yongin,KR",
+   "source": "manual"
+  },
+  "SanDisk": {
+   "lat": 37.428,
+   "lng": -121.907,
+   "type": "company",
+   "city": "Milpitas,US",
+   "source": "manual"
+  },
+  "Saudi_Arabia": {
+   "lat": 23.89,
+   "lng": 45.08,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:SA"
+  },
+  "Saudi_Aramco": {
+   "lat": 26.236111,
+   "lng": 50.039722,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:2222"
+  },
+  "Shell": {
+   "lat": 51.5073,
+   "lng": -0.1277,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:SHEL"
+  },
+  "Shenghe": {
+   "lat": 30.573,
+   "lng": 104.066,
+   "type": "company",
+   "city": "Chengdu,CN",
+   "source": "manual"
+  },
+  "Shin-Etsu_Chemical": {
+   "lat": 35.6895,
+   "lng": 139.6917,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:4063"
+  },
+  "Siemens_EDA": {
+   "lat": 45.309,
+   "lng": -122.774,
+   "type": "company",
+   "city": "Wilsonville,US",
+   "source": "manual"
+  },
+  "Siltronic": {
+   "lat": 48.1351,
+   "lng": 11.582,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:WAF"
+  },
+  "Singapore": {
+   "lat": 1.35,
+   "lng": 103.82,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:SG"
+  },
+  "Sinopec": {
+   "lat": 39.917,
+   "lng": 116.418,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:0386"
+  },
+  "SoftBank": {
+   "lat": 35.69,
+   "lng": 139.7,
+   "type": "company",
+   "city": "Tokyo,JP",
+   "source": "manual"
+  },
+  "South_China_Sea": {
+   "lat": 13.5,
+   "lng": 114.5,
+   "type": "route",
+   "city": null,
+   "source": "system_geo",
+   "via": "GEO_REGISTRY:South China Sea"
+  },
+  "South_Korea": {
+   "lat": 35.91,
+   "lng": 127.77,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:KR"
+  },
+  "Spain": {
+   "lat": 40.46,
+   "lng": -3.75,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:ES"
+  },
+  "Standard_Chartered": {
+   "lat": 51.5149,
+   "lng": -0.0808,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:STAN"
+  },
+  "State_Bank_of_India": {
+   "lat": 19.076,
+   "lng": 72.878,
+   "type": "company",
+   "city": "Mumbai,IN",
+   "source": "manual"
+  },
+  "State_Street": {
+   "lat": 42.36,
+   "lng": -71.058,
+   "type": "company",
+   "city": "Boston,US",
+   "source": "manual"
+  },
+  "Stellantis": {
+   "lat": 52.37,
+   "lng": 4.895,
+   "type": "company",
+   "city": "Amsterdam,NL",
+   "source": "manual"
+  },
+  "Strait_of_Hormuz": {
+   "lat": 26.5667,
+   "lng": 56.25,
+   "type": "route",
+   "city": null,
+   "source": "system_geo",
+   "via": "build_geo_db:Strait of Hormuz"
+  },
+  "Strait_of_Malacca": {
+   "lat": 4.0,
+   "lng": 100.0,
+   "type": "route",
+   "city": null,
+   "source": "system_geo",
+   "via": "build_geo_db:Strait of Malacca"
+  },
+  "SubCom": {
+   "lat": 40.518,
+   "lng": -74.412,
+   "type": "company",
+   "city": "Edison,US",
+   "source": "manual"
+  },
+  "Suez_Canal": {
+   "lat": 30.705,
+   "lng": 32.3481,
+   "type": "route",
+   "city": null,
+   "source": "system_geo",
+   "via": "build_geo_db:Suez Canal"
+  },
+  "Switzerland": {
+   "lat": 46.82,
+   "lng": 8.23,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:CH"
+  },
+  "Synopsys": {
+   "lat": 37.3688,
+   "lng": -122.0363,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:SNPS"
+  },
+  "TSMC": {
+   "lat": 24.7828,
+   "lng": 121.005,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:TSM"
+  },
+  "Taiwan": {
+   "lat": 24.1,
+   "lng": 121.0,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "GEO_REGISTRY:Taiwan"
+  },
+  "Taiwan_Strait": {
+   "lat": 24.8,
+   "lng": 119.9,
+   "type": "route",
+   "city": null,
+   "source": "system_geo",
+   "via": "build_geo_db:Taiwan Strait"
+  },
+  "Tesla": {
+   "lat": 30.267,
+   "lng": -97.743,
+   "type": "company",
+   "city": "Austin,US",
+   "source": "manual"
+  },
+  "Tether": {
+   "lat": 13.692,
+   "lng": -89.218,
+   "type": "company",
+   "city": "SanSalvador,SV",
+   "source": "manual"
+  },
+  "Thales": {
+   "lat": 48.8918,
+   "lng": 2.2381,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:HO"
+  },
+  "Tokyo_Electron": {
+   "lat": 35.6895,
+   "lng": 139.6917,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:8035"
+  },
+  "Tokyo_Ohka": {
+   "lat": 35.531,
+   "lng": 139.703,
+   "type": "company",
+   "city": "Kawasaki,JP",
+   "source": "manual"
+  },
+  "TotalEnergies": {
+   "lat": 48.8956,
+   "lng": 2.25,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:TTE"
+  },
+  "Toyota": {
+   "lat": 35.083,
+   "lng": 137.156,
+   "type": "company",
+   "city": "Toyota-shi,JP",
+   "source": "manual"
+  },
+  "Trafigura": {
+   "lat": 1.352,
+   "lng": 103.82,
+   "type": "company",
+   "city": "Singapore,SG",
+   "source": "manual"
+  },
+  "Transneft": {
+   "lat": 55.7512,
+   "lng": 37.6184,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "name:Transneft"
+  },
+  "Tsingshan": {
+   "lat": 27.994,
+   "lng": 120.699,
+   "type": "company",
+   "city": "Wenzhou,CN",
+   "source": "manual"
+  },
+  "Turkey": {
+   "lat": 38.96,
+   "lng": 35.24,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:TR"
+  },
+  "UAE": {
+   "lat": 23.42,
+   "lng": 53.85,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:AE"
+  },
+  "Ukraine": {
+   "lat": 48.3794,
+   "lng": 31.1656,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "static_locations:Ukraine"
+  },
+  "United_Kingdom": {
+   "lat": 55.3781,
+   "lng": -3.436,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "static_locations:United Kingdom"
+  },
+  "United_States": {
+   "lat": 37.09,
+   "lng": -95.71,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:US"
+  },
+  "Urenco": {
+   "lat": 51.545,
+   "lng": -0.59,
+   "type": "company",
+   "city": "StokePoges,GB",
+   "source": "manual"
+  },
+  "Vanguard": {
+   "lat": 40.036,
+   "lng": -75.514,
+   "type": "company",
+   "city": "Malvern,US",
+   "source": "manual"
+  },
+  "Venezuela": {
+   "lat": 6.42,
+   "lng": -66.59,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:VE"
+  },
+  "Vietnam": {
+   "lat": 14.06,
+   "lng": 108.28,
+   "type": "country",
+   "city": null,
+   "source": "system_geo",
+   "via": "iso2_centroid:VN"
+  },
+  "Visa": {
+   "lat": 37.775,
+   "lng": -122.419,
+   "type": "company",
+   "city": "SanFrancisco,US",
+   "source": "manual"
+  },
+  "Vitol": {
+   "lat": 51.924,
+   "lng": 4.478,
+   "type": "company",
+   "city": "Rotterdam,NL",
+   "source": "manual"
+  },
+  "Volkswagen": {
+   "lat": 52.422,
+   "lng": 10.786,
+   "type": "company",
+   "city": "Wolfsburg,DE",
+   "source": "manual"
+  },
+  "Wells_Fargo": {
+   "lat": 37.7937,
+   "lng": -122.3962,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:WFC"
+  },
+  "Western_Digital": {
+   "lat": 37.3874,
+   "lng": -121.972,
+   "type": "company",
+   "city": null,
+   "source": "backbone_hq",
+   "via": "ticker:WDC"
+  },
+  "YMTC": {
+   "lat": 30.593,
+   "lng": 114.306,
+   "type": "company",
+   "city": "Wuhan,CN",
+   "source": "manual"
+  },
+  "Yara": {
+   "lat": 59.914,
+   "lng": 10.752,
+   "type": "company",
+   "city": "Oslo,NO",
+   "source": "manual"
+  },
+  "ZTE": {
+   "lat": 22.543,
+   "lng": 114.058,
+   "type": "company",
+   "city": "Shenzhen,CN",
+   "source": "manual"
+  },
+  "Zeiss": {
+   "lat": 48.783,
+   "lng": 10.099,
+   "type": "company",
+   "city": "Oberkochen,DE",
+   "source": "manual"
+  }
+ },
+ "no_coords_by_design": [
+  "ADIA",
+  "AI_Data_Center_Demand",
+  "Bitcoin",
+  "Brent",
+  "CIC",
+  "CoWoS",
+  "Cobalt",
+  "Copper",
+  "Critical_Minerals",
+  "Crude_Oil",
+  "Crypto_Mining",
+  "DUV_Lithography",
+  "EDA_Tools",
+  "EUV_Lithography",
+  "EV_Battery",
+  "Ethereum",
+  "European_Union",
+  "Export_Controls",
+  "GIC",
+  "GPFG",
+  "Grain",
+  "HBM",
+  "KIA",
+  "LNG",
+  "Lithium",
+  "Memory_Price",
+  "Mubadala",
+  "Natural_Gas",
+  "Nickel",
+  "Nitrogen",
+  "Nuclear_Power",
+  "OPEC",
+  "PIF",
+  "Phosphate",
+  "Potash",
+  "Power_Demand",
+  "QIA",
+  "Rare_Earths",
+  "Renewable_Energy",
+  "SIPRI",
+  "SOX_Index",
+  "Semiconductor_Materials",
+  "Silver",
+  "Soybean",
+  "Stablecoin",
+  "Subsea_Cables",
+  "Sulfur",
+  "Temasek",
+  "US_Financial_Regulation",
+  "US_Treasuries",
+  "Uranium_Enrichment",
+  "Zinc"
+ ]
+}

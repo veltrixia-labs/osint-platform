@@ -34,6 +34,7 @@ router = APIRouter(tags=["Relationships"])
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 GRAPH_PATH = BASE_DIR / "data" / "scenarios" / "relationship_graph.json"
+COORDS_PATH = BASE_DIR / "data" / "scenarios" / "node_coordinates.json"
 
 _FULL_TIERS = {TIER_PRO, TIER_EXPERTS, TIER_ENTERPRISE}
 _NO_STORE_HEADERS = {
@@ -161,3 +162,19 @@ async def get_relationship_graph(tier: str = Depends(_get_current_tier)):
         media_type="application/json",
         headers=_NO_STORE_HEADERS,
     )
+
+
+@router.get("/relationships/coordinates")
+async def get_relationship_coordinates():
+    """Display-only lat/lng for the globe view. Open to all tiers — a coordinate is not provenance.
+
+    ★ This is the vault's `_bridge/node_coordinates.json`, whose own note reads: "Presentation
+      layer only. Coordinates are NOT graph structure and never enter canonical .md." It carries
+      lat/lng/type/city and nothing else — no impact, no weight, no scenario membership.
+    """
+    if not COORDS_PATH.exists():
+        raise HTTPException(status_code=503, detail="Coordinates not available.")
+    with open(COORDS_PATH, "r", encoding="utf-8") as f:
+        payload = json.load(f)
+    return Response(content=json.dumps(payload, ensure_ascii=False),
+                    media_type="application/json", headers=_NO_STORE_HEADERS)
