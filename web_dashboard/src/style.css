@@ -12428,3 +12428,4 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-2hop { margin-top: 14px; border-top: 1px solid rgba(56,189,248,0.14); padding-top: 10px; }
 #pro-map-container .rv-2hop summary { color: #94a3b8; font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
 #pro-map-container .rv-empty, #pro-map-container .rv-loading { color: #64748b; font-size: 0.74rem; padding: 18px 2px; }
+#pro-map-container .rv-hint { color: #475569; font-size: 0.62rem; }

@@ -184,12 +184,31 @@ export function resetRelationshipView() { GRAPH = null; }
 export async function renderRelationshipView(container: HTMLElement): Promise<void> {
     container.innerHTML = `<div class="rv-loading">Loading relationship graph…</div>`;
     if (!GRAPH) {
+        // ★ Report WHAT failed. The first version rendered a bare "unavailable" and swallowed the
+        //   status, which cost a diagnosis session: the backend was a process started 69 days
+        //   before the route existed and without --reload, so /api/relationships was a
+        //   router-level 404 while every older route still answered 200. A 404 here means the
+        //   route is not registered in the RUNNING app (stale process, or not deployed); a 503
+        //   means the app is up but relationship_graph.json is missing from data/scenarios/.
+        const url = '/relationships';
         try {
-            const resp = await apiClient.get('/relationships', { cache: 'no-store' });
-            if (!resp.ok) throw new Error(String(resp.status));
+            const resp = await apiClient.get(url, { cache: 'no-store' });
+            if (!resp.ok) {
+                let body = '';
+                try { body = (await resp.text()).slice(0, 200); } catch { /* body already consumed */ }
+                console.error(`[relationship_view] GET ${url} -> ${resp.status} ${resp.statusText}`, body);
+                const hint = resp.status === 404
+                    ? 'route not registered in the running backend — restart it, or it is not deployed'
+                    : resp.status === 503
+                        ? 'backend is up but data/scenarios/relationship_graph.json is missing'
+                        : 'see console for the response body';
+                container.innerHTML = `<div class="rv-empty">Relationship graph unavailable — HTTP ${resp.status}.<br><span class="rv-hint">${esc(hint)}</span></div>`;
+                return;
+            }
             index((await resp.json()) as RGraph);
         } catch (err) {
-            container.innerHTML = `<div class="rv-empty">Relationship graph unavailable.</div>`;
+            console.error(`[relationship_view] GET ${url} failed before a response`, err);
+            container.innerHTML = `<div class="rv-empty">Relationship graph unavailable — no response.<br><span class="rv-hint">network/proxy error; see console</span></div>`;
             return;
         }
     }
