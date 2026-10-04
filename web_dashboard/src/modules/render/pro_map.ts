@@ -1,27 +1,23 @@
-import { renderTriggerMap } from './pro_trigger_map';
+import { renderRelationshipView } from './relationship_view';
 
 /**
- * Pro Interactive Map route — two-stage, news-triggered.
+ * Pro Interactive Map route — now the RELATIONSHIP VIEW.
  *
- *   Stage 1: WHERE is something happening (one node per FIRING scenario).
- *   Stage 2: WHAT it affects (the full cascade, on click).
+ * Search an entity, see what the vault records about its relations: edge type, direction, role,
+ * weight with its unit, the provenance of that weight, and a link to the source document.
  *
- * Replaces the previous entry state, which opened straight into a global
- * multi-domain aggregate built by the legacy spatial engine. That view answered a
- * question nobody had asked, and it asserted an "epicenter" whether or not anything
- * was actually happening. The backend routes and the legacy engine are untouched —
- * other consumers still read those tables — but the map no longer opens on them.
+ * Replaces the news-triggered chokepoint entry (renderTriggerMap). pro_trigger_map.ts and
+ * pro_interactive_map.ts stay in the tree and are unreferenced from nav — the chokepoint surface
+ * is still the right view for Pro Insight, and removing it is a separate decision. The
+ * relationship view deliberately carries none of its apparatus: no impact_score, no order-3
+ * country×DECAY expansion, no coordinate gate. Those answer "what would a shock do"; this
+ * answers "what is recorded here", and joining them would let the second inherit the first's
+ * derived numbers. See the vault's CLAUDE.md §5.
  */
 export function renderProMap() {
     const container = document.getElementById('pro-map-container');
     if (!container) return;
-
-    if (container.dataset.triggerMapMounted === '1') {
-        requestAnimationFrame(() => {
-            window.dispatchEvent(new Event('resize'));
-        });
-        return;
-    }
-    container.dataset.triggerMapMounted = '1';
-    renderTriggerMap(container);
+    if (container.dataset.relViewMounted === '1') return;
+    container.dataset.relViewMounted = '1';
+    void renderRelationshipView(container);
 }
