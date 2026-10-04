@@ -256,7 +256,8 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     const PANEL_W = 380;
 
     let handle: CanvasHandle | null = null;
-    const closePanel = () => { panel.dataset.open = '0'; handle?.setPanelOffset(0); globe?.resize(); };
+    const closePanel = () => { panel.dataset.open = '0'; handle?.setPanelOffset(0);
+        requestAnimationFrame(() => globe?.resize()); };   // after the drawer transition starts
     // declared before use by show(); assigned once the modes exist
     const show = (id: string | null, fromCanvas = false) => {
         if (!id) { closePanel(); if (!fromCanvas) handle?.select(null); return; }
@@ -331,7 +332,13 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
         for (const b of Array.from(container.querySelectorAll('.rv-mode'))) {
             (b as HTMLElement).setAttribute('aria-selected', String((b as HTMLElement).dataset.mode === m));
         }
-        if (m === 'graph') mountGraph(); else await mountGlobeMode();
+        if (m === 'graph') mountGraph();
+        else {
+            await mountGlobeMode();
+            // ★ The map was constructed while the host was still the previous mode's size.
+            //   Resize and re-frame once the browser has laid the host out at its final width.
+            requestAnimationFrame(() => requestAnimationFrame(() => globe?.refit()));
+        }
         // TS narrows `handle`/`globe` to null from the assignments above and does not reset
         // that across the mount calls that reassign them, so read them back explicitly.
         const h = handle as CanvasHandle | null, gl = globe as GlobeHandle | null;

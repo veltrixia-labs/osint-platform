@@ -24,6 +24,12 @@
  *   Coordinates are NOT graph structure and never enter canonical .md."
  */
 import maplibregl from 'maplibre-gl';
+// ★ MapLibre's OWN stylesheet. Without it .maplibregl-map / -canvas-container / -canvas carry no
+//   position or size rules, so the GL canvas does not fill its container — the globe rendered
+//   ~1030px wide inside a ~1900px host. The existing maps get this from injectMaplibreCss()
+//   (pro_interactive_map.ts:568), a <link> to unpkg; that module is off-limits here under the
+//   isolation contract, and bundling from the package is better anyway: no CDN, no version skew.
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { PALETTE } from './relationship_graph_canvas';
 
 export type GlobeNode = { id: string; type?: string | null; country?: string | null };
@@ -40,6 +46,7 @@ export type GlobeHandle = {
     select: (id: string | null) => void;
     focus: (id: string) => void;
     resize: () => void;
+    refit: () => void;
     destroy: () => void;
 };
 
@@ -67,7 +74,7 @@ export function mountGlobe(
     const nongeo = nodes.filter((n) => !coords[n.id]);
 
     const mapEl = document.createElement('div');
-    mapEl.className = 'rv-globe-map';
+    mapEl.className = 'rv-globe';
     host.appendChild(mapEl);
 
     // Non-geographic dock: concepts, markets, funds, blocs and orgs have no coordinate BY DESIGN
@@ -262,10 +269,21 @@ export function mountGlobe(
     ro.observe(host);
     requestAnimationFrame(() => safeResize());
 
+    const refit = () => {
+        if (dead() || placeable.length < 2) return;
+        try {
+            map.fitBounds(geoBounds(), {
+                padding: { top: 48, bottom: 110, left: 48, right: 48 }, maxZoom: 4, duration: 0,
+            });
+        } catch { /* keep the current view */ }
+    };
+
     return {
         select(id) { selected = id; refresh(); },
         focus(id) { selected = id; refresh(); fitEgo(id); },
         resize() { safeResize(); },
+        /** Re-frame after the host has actually been laid out at its final width. */
+        refit() { safeResize(); refit(); },
         destroy() { ro.disconnect(); if (!dead()) map.remove(); mapEl.remove(); dock.remove(); },
     };
 }

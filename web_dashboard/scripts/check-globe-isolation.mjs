@@ -14,9 +14,13 @@ const src = readFileSync(FILE, 'utf8');
 
 const BANNED_IMPORTS = ['pro_interactive_map', 'pro_trigger_map', 'pro_map', 'spatial', 'impact_roster', 'contagion', 'scenarios/'];
 const BANNED_FIELDS = ['impact_score', 'raw_impact', 'viscosity_coefficient', 'entropy_index', 'is_epicenter', 'order_level', 'no_map', 'credit_gaps', 'honest_gaps'];
-const ALLOWED = ['maplibre-gl', './relationship_graph_canvas'];
+const ALLOWED = ['maplibre-gl', 'maplibre-gl/dist/maplibre-gl.css', './relationship_graph_canvas'];
 
-const imports = [...src.matchAll(/^import[^;]*?from\s+'([^']+)'/gm)].map((m) => m[1]);
+// Both forms: `import X from 'y'` AND bare side-effect `import 'y'` (the CSS import).
+const imports = [
+  ...[...src.matchAll(/^import[^;]*?from\s+'([^']+)'/gm)].map((m) => m[1]),
+  ...[...src.matchAll(/^import\s+'([^']+)'/gm)].map((m) => m[1]),
+];
 const fail = [];
 for (const i of imports) if (!ALLOWED.includes(i)) fail.push(`disallowed import: ${i}`);
 for (const b of BANNED_IMPORTS) if (imports.some((i) => i.includes(b))) fail.push(`banned import substring: ${b}`);

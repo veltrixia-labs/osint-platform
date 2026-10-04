@@ -12431,11 +12431,13 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-hint { color: #475569; font-size: 0.62rem; }
 
 /* ── Relationship view: canvas + panel layout ─────────────────────────────── */
-#pro-map-container .rv-body { flex: 1; display: grid; grid-template-columns: minmax(0,1fr); gap: 12px;
-    min-height: 70vh; position: relative; }   /* panel is an OVERLAY drawer — one column, canvas full width */   /* 70vh floor: a grid row sized only by min-height:0 can resolve to 0 before layout,
+/* ONE host for both modes. display:block rather than grid: a grid row/column can resolve to a
+   width the child then inherits, and the drawer is an absolute overlay so no column is needed. */
+#pro-map-container .rv-body { flex: 1; display: block; width: 100%; min-height: 70vh; position: relative; }   /* 70vh floor: a grid row sized only by min-height:0 can resolve to 0 before layout,
                              which is how the canvas got a zero-height host and drew nothing. */
 #pro-map-container .rv-canvas { width: 100%; height: 100%; display: block; }
-#pro-map-container .rv-canvas-host { position: relative; min-height: 0; border-radius: 10px; overflow: hidden;
+#pro-map-container .rv-canvas-host { position: relative; width: 100%; height: 100%; min-height: 70vh;
+    border-radius: 10px; overflow: hidden;
     background: radial-gradient(ellipse at 50% 40%, rgba(15,23,42,0.9), rgba(2,6,16,0.96)); border: 1px solid rgba(56,189,248,0.14); }
 #pro-map-container .rv-canvas { display: block; cursor: grab; }
 #pro-map-container .rv-canvas:active { cursor: grabbing; }
@@ -12463,7 +12465,12 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-mode { background: transparent; border: 0; color: #64748b; font-size: 0.62rem; text-transform: uppercase;
     letter-spacing: 0.05em; padding: 5px 14px; cursor: pointer; }
 #pro-map-container .rv-mode[aria-selected="true"] { background: rgba(56,189,248,0.16); color: #7dd3fc; }
-#pro-map-container .rv-globe-map { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 70vh; }
+#pro-map-container .rv-globe { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 70vh; }
+/* MapLibre's own elements must inherit the full host. Belt-and-braces alongside the imported
+   maplibre-gl.css: nothing in our cascade may hand them a max-width. */
+#pro-map-container .rv-globe .maplibregl-map,
+#pro-map-container .rv-globe .maplibregl-canvas-container,
+#pro-map-container .rv-globe .maplibregl-canvas { width: 100% !important; height: 100% !important; max-width: none !important; }
 #pro-map-container .rv-dock { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-wrap: wrap; gap: 5px;
     align-items: center; padding: 7px 10px; max-height: 76px; overflow: hidden;   /* 3 rows; the rest behind +N more */
     background: linear-gradient(to top, rgba(2,6,16,0.96), rgba(2,6,16,0.72)); border-top: 1px solid rgba(56,189,248,0.18); }
