@@ -12389,7 +12389,14 @@ body.syslogic-open { overflow: hidden; }
    section headers, counts, units and provenance badges come from the Pro map's
    neighbourhood panel above, scoped to #pro-map-container, which is where this
    view mounts. */
-#pro-map-container .rv-root { display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 14px 16px; gap: 10px; }
+/* ★ #pro-map-container is `display:flex; flex-direction:row` (style.css:8808). A row flex item
+   with the default `flex: 0 1 auto` is sized by its CONTENT — which is why the search box, the
+   graph host and the globe host were all ~1030px (the natural width of the head + legend) inside
+   a ~1900px container. `flex: 1 1 auto` + `width: 100%` makes the view take the row; `min-width: 0`
+   is its necessary companion, since a flex item's default `min-width:auto` refuses to shrink
+   below content and would let a wide child overflow instead of fitting. */
+#pro-map-container .rv-root { flex: 1 1 auto; width: 100%; min-width: 0;
+    display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 14px 16px; gap: 10px; }
 #pro-map-container .rv-head { display: flex; flex-direction: column; gap: 6px; }
 #pro-map-container .rv-search {
     width: 100%; padding: 10px 12px; border-radius: 8px; font-size: 0.82rem;
@@ -12433,7 +12440,9 @@ body.syslogic-open { overflow: hidden; }
 /* ── Relationship view: canvas + panel layout ─────────────────────────────── */
 /* ONE host for both modes. display:block rather than grid: a grid row/column can resolve to a
    width the child then inherits, and the drawer is an absolute overlay so no column is needed. */
-#pro-map-container .rv-body { flex: 1; display: block; width: 100%; min-height: 70vh; position: relative; }   /* 70vh floor: a grid row sized only by min-height:0 can resolve to 0 before layout,
+#pro-map-container .rv-body { flex: 1 1 auto; display: block; width: 100%; min-width: 0; min-height: 70vh;
+    position: relative; overflow: hidden; }   /* overflow:hidden clips the CLOSED drawer (translateX(100%)),
+                                                 which otherwise sits just outside the body painting a sliver */   /* 70vh floor: a grid row sized only by min-height:0 can resolve to 0 before layout,
                              which is how the canvas got a zero-height host and drew nothing. */
 #pro-map-container .rv-canvas { width: 100%; height: 100%; display: block; }
 #pro-map-container .rv-canvas-host { position: relative; width: 100%; height: 100%; min-height: 70vh;
