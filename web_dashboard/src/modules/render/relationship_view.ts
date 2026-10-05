@@ -311,7 +311,21 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
         globe?.setPanelOffset(panelOffset());
     };
 
+    // ★ ALL MUTABLE VIEW STATE IS DECLARED HERE, IN ONE BLOCK, AND THAT IS THE FIX FOR A REAL
+    //   CRASH — not a tidy-up. `let globe` used to be declared ~140 lines further down, next to
+    //   mountGlobeMode(). applyOffset() above reads BOTH handles, and paintCollapse() calls it
+    //   eagerly during setup, which landed in `globe`'s temporal dead zone and threw
+    //   "ReferenceError: Cannot access 'globe' before initialization" — killing the rest of
+    //   renderRelationshipView(), including the mountGraph() call at the very end. The chrome
+    //   still rendered because container.innerHTML had already run, so the view looked laid out
+    //   and simply had no graph in it.
+    //   A `typeof globe` guard would have silenced the throw and left the drawer offset
+    //   silently wrong on first paint. Declaring the state before its readers removes the
+    //   window instead of surviving it.
     let handle: CanvasHandle | null = null;
+    let globe: GlobeHandle | null = null;
+    let mode: 'graph' | 'globe' = 'graph';
+    let selectedId: string | null = null;
     // ★ NO globe.resize() HERE ANY MORE, in either direction. The drawer is position:absolute
     //   inside .rv-body, so opening it changes nothing about the map container's box — the
     //   resize was a no-op that cost a full MapLibre re-layout on every selection, and on the
@@ -450,9 +464,6 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     // ★ Guarded: a throw inside the canvas used to leave an empty <canvas> of the correct size
     //   with a working panel beside it — indistinguishable from "the layout produced nothing".
     //   Now it says so, and the list still works without the picture.
-    let globe: GlobeHandle | null = null;
-    let mode: 'graph' | 'globe' = 'graph';
-    let selectedId: string | null = null;
 
     const mountGraph = () => {
         try {
