@@ -12548,6 +12548,9 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-legend { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 8px; }
 #pro-map-container .rv-leg { display: inline-flex; align-items: center; gap: 4px; color: #64748b; font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.03em; }
 #pro-map-container .rv-leg i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+/* Only meaningful in Globe mode; the view hides it in Graph mode via the body class below. */
+#pro-map-container .rv-hint-globe { color: #475569; font-style: italic; margin-left: auto; }
+#pro-map-container .rv-root[data-mode="graph"] .rv-hint-globe { display: none; }
 #pro-map-container .rv-leg--ring i { background: transparent; border: 1.5px solid #f59e0b; }
 #pro-map-container .rv-modes { display: inline-flex; gap: 0; border: 1px solid rgba(56,189,248,0.22); border-radius: 7px; overflow: hidden; }
 #pro-map-container .rv-mode { background: transparent; border: 0; color: #64748b; font-size: 0.62rem; text-transform: uppercase;

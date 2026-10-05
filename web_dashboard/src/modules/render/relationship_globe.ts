@@ -236,8 +236,10 @@ export function mountGlobe(
         //
         //   The legacy map sets NONE of these options — grep finds no dragPan, dragRotate,
         //   pitchWithRotate, touchZoomRotate, keyboard or maxPitch in pro_interactive_map.ts. It
-        //   takes MapLibre's defaults, so "match the legacy maxPitch" means 60, the 4.7.1 default
-        //   (one `maxPitch:60` literal in the dist bundle). Everything here except dragRotate was
+        //   takes MapLibre's defaults, which for maxPitch is 60 (one `maxPitch:60` literal in the
+        //   4.7.1 dist bundle). This view now deliberately EXCEEDS that — see the maxPitch note
+        //   below — so it is the one navigation option that no longer matches the legacy map.
+        //   Everything here except dragRotate and maxPitch was
         //   therefore already on by default; they are written out explicitly so the next person
         //   does not have to prove that by grepping a minified bundle.
         dragPan: true,
@@ -248,7 +250,20 @@ export function mountGlobe(
         keyboard: true,
         scrollZoom: true,
         doubleClickZoom: true,
-        maxPitch: 60,
+        // ★ 60 (MapLibre's default) -> 75, CHOSEN BY READING SCREENSHOTS AT 50/60/70/75/80/85
+        //   with an ego selected and the zoom held constant so pitch was the only variable:
+        //     70  excellent — arcs strongly three-dimensional, every label legible, markers
+        //         distinct across the whole plane including the Europe and East Asia clusters
+        //     75  the limit that still holds — the far band (Russia/Kazakhstan/Mongolia)
+        //         compresses but labels stay individually readable and markers stay separable
+        //     80  markers in the far band MERGE into a smear, which breaks the one thing the
+        //         zoom-scaled radius was added to fix, and ~25% of the viewport is empty
+        //         foreground
+        //     85  the northern hemisphere is crushed into a strip a few pixels deep,
+        //         GREENLAND/ICELAND/UNITED KINGDOM/NORWAY collide on one line, and ~40% of the
+        //         viewport is empty foreground
+        //   75 is therefore the highest angle that is still readable, NOT the maximum available.
+        maxPitch: 75,
         renderWorldCopies: false,
         // ★ Required for deck.gl's interleaved mode — it fixes the WebGL2 context attributes the
         //   overlay needs. The legacy map sets it for the same reason (:1034).
@@ -778,7 +793,13 @@ export function mountGlobe(
         //   place, it is only drawn faintly — so the camera ease and the fade can run together
         //   and read as one event.
         map.fitBounds(b, {
-            padding: egoPadding(), maxZoom: 5, pitch: 50, bearing: 0, duration: 900,
+            // ★ 50 -> 65. More oblique, so the ArcLayer getHeight 0.45 lift actually reads as
+            //   lift, while leaving 10 degrees of headroom under the 75 ceiling for the user to
+            //   tilt further by drag. Padding is UNCHANGED and was re-verified at the new angle:
+            //   a pitched camera sees MORE ground than a flat one at the same zoom, and
+            //   fitBounds computes its fit top-down, so it errs toward showing too much rather
+            //   than too little. The ego and its counterparts stay on screen.
+            padding: egoPadding(), maxZoom: 5, pitch: 65, bearing: 0, duration: 900,
         });
     };
 

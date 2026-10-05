@@ -276,7 +276,11 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
             <div class="rv-detail"></div>
           </aside>
         </div>
-        <div class="rv-legend">${legend}<span class="rv-leg rv-leg--ring"><i></i>country = ring</span></div>
+        <div class="rv-legend">${legend}<span class="rv-leg rv-leg--ring"><i></i>country = ring</span>
+          <!-- ★ Tilt was reachable by right-drag / ctrl-drag and two-finger drag before this and
+               NOTHING in the UI said so. The NavigationControl's compass visualises pitch once
+               you are tilted, which tells you where you ARE, not that you can get there. -->
+          <span class="rv-leg rv-hint-globe">globe: drag to pan · scroll to zoom · right-drag or ctrl-drag to tilt</span></div>
       </div>`;
     const input = container.querySelector('.rv-search') as HTMLInputElement;
     const results = container.querySelector('.rv-results') as HTMLElement;
@@ -325,6 +329,7 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     let handle: CanvasHandle | null = null;
     let globe: GlobeHandle | null = null;
     let mode: 'graph' | 'globe' = 'graph';
+    root.dataset.mode = mode;      // initial state; setMode() keeps it in step
     let selectedId: string | null = null;
     // ★ NO globe.resize() HERE ANY MORE, in either direction. The drawer is position:absolute
     //   inside .rv-body, so opening it changes nothing about the map container's box — the
@@ -509,6 +514,9 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     const setMode = async (m: 'graph' | 'globe') => {
         if (m === mode) return;
         mode = m;
+        // Lets CSS target the active mode — the globe-only interaction hint in the legend uses
+        // it, so the hint does not advertise tilt while the force-directed canvas is showing.
+        root.dataset.mode = m;
         handle?.destroy(); handle = null;
         globe?.destroy(); globe = null;
         cHost.innerHTML = '';
