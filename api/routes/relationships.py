@@ -160,7 +160,12 @@ def _require_pro(tier: str, detail: str) -> None:
 
 @router.get("/relationships")
 async def get_relationship_graph(tier: str = Depends(_get_current_tier)):
-    """303 node objects + 1535 edges. Full provenance on Pro; structure only on free.
+    """Node objects + edges from the vault relationship graph. Full provenance on Pro; structure only on free.
+
+    ★ NO COUNTS IN THIS DOCSTRING. It said "303 node objects + 1535 edges" until 2026-10-05,
+      by which point the vault was at 307/1578 — the node figure was one batch stale and the edge
+      figure three. Counts live in the payload's `meta` and are read from it; a hand-maintained
+      number next to a computed one always loses (same lesson as main.ts PAGE_META at 8665dc3).
 
     ★ GATED AT THE ROUTE FROM 2026-10-05. It was open to every caller, including anonymous
       ones, which served 172,174 bytes of the vault's graph TOPOLOGY — all 303 node ids and all
