@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generated_at": "2026-10-05T00:07:10+00:00",
-  "vault_head": "fc6983b07ebf60a6e542725e4505876c8125e5de",
+  "generated_at": "2026-10-05T00:50:11+00:00",
+  "vault_head": "ec6c387d73eb50ee964911db16002b3b68beb7df",
   "node_count": 303,
   "edge_count": 1535,
   "edge_types": [
@@ -10262,9 +10262,9 @@
    "source": "https://www.iseas.edu.sg/wp-content/uploads/2025/02/ISEAS_Perspective_2025_21.pdf",
    "desc": "★ 海底ケーブルシステムの主要保有/共同保有者＝ [[Subsea_Cables]] の商業 backbone owner（hyperscaler・commercial reliance）。★ 市場/所有の事実のみ（§6: 物理経路/座標/脆弱性/security framing なし）",
    "basis_short": "[HONEST-NULL][OWNERSHIP] Amazon = 新規 subsea 容量の主要 owner/co-owner（hyperscaler・commercial backbone reliance）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "CoreWeave",
@@ -10577,9 +10577,9 @@
    "source": "https://www.iseas.edu.sg/wp-content/uploads/2025/02/ISEAS_Perspective_2025_21.pdf",
    "desc": "★ 海底ケーブルシステムの主要保有/共同保有者＝ [[Subsea_Cables]] の商業 backbone owner（hyperscaler・commercial reliance）。★ 市場/所有の事実のみ（§6: 物理経路/座標/脆弱性/security framing なし）",
    "basis_short": "[HONEST-NULL][OWNERSHIP] Google = 新規 subsea 容量の主要 owner/co-owner（hyperscaler・commercial backbone reliance）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "Meta",
@@ -10707,9 +10707,9 @@
    "source": "https://www.iseas.edu.sg/wp-content/uploads/2025/02/ISEAS_Perspective_2025_21.pdf",
    "desc": "★ 海底ケーブルシステムの主要保有/共同保有者＝ [[Subsea_Cables]] の商業 backbone owner（hyperscaler・commercial reliance）。★ 市場/所有の事実のみ（§6: 物理経路/座標/脆弱性/security framing なし）",
    "basis_short": "[HONEST-NULL][OWNERSHIP] Meta = 新規 subsea 容量の主要 owner/co-owner（hyperscaler・commercial backbone reliance）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "Microsoft",
@@ -10872,9 +10872,9 @@
    "source": "https://www.iseas.edu.sg/wp-content/uploads/2025/02/ISEAS_Perspective_2025_21.pdf",
    "desc": "★ 海底ケーブルシステムの主要保有/共同保有者＝ [[Subsea_Cables]] の商業 backbone owner（hyperscaler・commercial reliance）。★ 市場/所有の事実のみ（§6: 物理経路/座標/脆弱性/security framing なし）",
    "basis_short": "[HONEST-NULL][OWNERSHIP] Microsoft = 新規 subsea 容量の主要 owner/co-owner（hyperscaler・commercial backbone reliance）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "Oracle",
@@ -12747,9 +12747,9 @@
    "source": "https://www.iseas.edu.sg/wp-content/uploads/2025/02/ISEAS_Perspective_2025_21.pdf",
    "desc": "★ 海底ケーブルの製造/敷設（NEC Submarine Network Division/OCC・top-tier）＝ [[Subsea_Cables]] の産業能力の供給者。role:supply（production flow・flow≠exposure＝centrality 注記・非発火 construct）。★ 商業 subsea 供給の意味のみ（防衛 framing なし）。capacity は同一基準%未分離ゆえ honest-null。市場構造の事実のみ",
    "basis_short": "[HONEST-NULL][CAPACITY] NEC = top-tier 海底ケーブル製造者（ASN+NEC+SubCom >60% wet-plant rev 2024）だが ISEAS の同一基準 per-firm % に NEC が分離されず → null（捏造しない）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "Northrop_Grumman",
@@ -13492,9 +13492,9 @@
    "source": "https://interfax.com/",
    "desc": "露 Gazprom とのガス協力〔PoS-1 は 2024-12 に 38 bcm/yr 到達・2025 商業合意で PoS-1 38→44 bcm/yr ＆ Far-East route 10→12 bcm/yr に拡大・決済 50% RUB/50% CNY・2022 契約が origin〕。商業/通商の事実のみ（§6）",
    "basis_short": "[OBSERVED] CNPC–Gazprom gas cooperation: China-side offtaker.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "CNPC",
@@ -13532,9 +13532,9 @@
    "source": "https://www.eia.gov/international/analysis/country/VEN",
    "desc": "ベネズエラ [[PDVSA]] との JV〔Sinovensa〕＝重質原油の上流協業。★ これが PDVSA の deferred joint_venture→CNPC を DISCHARGE（subject-side on CNPC）。商業の事実のみ",
    "basis_short": "[OBSERVED] CNPC–PDVSA Sinovensa JV (Orinoco heavy crude).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "CNPC",
@@ -13607,9 +13607,9 @@
    "source": "http://static.cninfo.com.cn/finalpage/2026-03-30/1225049376.PDF",
    "desc": "CNPC が LISTED 子会社 [[PetroChina]] の ~82% を保有〔parent→listed-sub の資本持分〕。★ PetroChina node 新設（2026-07-01）で deferred child gap-flag を DISCHARGE。★ CNPC 本体は mc-null（PetroChina の mc は borrow しない）＝別 entity。資本/所有の事実のみ",
    "basis_short": "[EQUITY] CNPC owns ~82% of PetroChina (listed subsidiary; HK/SSE/NYSE).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "Canada",
@@ -13932,9 +13932,9 @@
    "source": "https://www.equinor.com/investors",
    "desc": "NCS 生産の ~80% を operate し SDFI ガスを market＝ノルウェー gas 供給の中核オペレータ。市場/供給の事実のみ",
    "basis_short": "[OPERATOR] Equinor operates ~80% of NCS production and markets SDFI gas on the state's behalf.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "operated_share",
+   "weight_kind_label": "Share of the hub's production operated by the source",
+   "weight_scope": "hub"
   },
   {
    "s": "Equinor",
@@ -14257,9 +14257,9 @@
    "source": "https://www.nokia.com/newsroom/nokia-completes-its-sale-of-leading-submarine-networks-business-asn-alcatel-submarine-networks-to-the-french-state/",
    "desc": "★ French State/APE が [[ASN]]（Alcatel Submarine Networks・海底ケーブル world #1）の ~80% を取得〔Nokia からの売却完了 2024-12-31・EV €350M〕。★ capital/ownership fact のみ（§6: 物理/脆弱性/security framing なし）",
    "basis_short": "[OBSERVED][EQUITY] French State/APE が ASN の ~80% を保有（Nokia 売却完了 2024-12-31・EV €350M・Nokia 残 ~20%）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "Gazprom",
@@ -14737,9 +14737,9 @@
    "source": "https://www.eia.gov/international/analysis/country/IRQ",
    "desc": "イラク国家が [[SOMO]] を保有（国営マーケティング機関・INOC 内の state organ）＝原油輸出マーケティングの所有主体。資本/所有の事実のみ（§6）",
    "basis_short": "[EQUITY] Iraq wholly state-owned SOMO = 1.0 (state organ within INOC).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "Israel",
@@ -15162,9 +15162,9 @@
    "source": "https://www.norskpetroleum.no/en/economy/the-governments-revenues/",
    "desc": "国家が SWF [[GPFG]]（Oljefondet・NBIM 運用・~$1.9T）を完全所有＝石油収入（税+SDFI+Equinor 配当）を fund へ。★ GPFG deferred owner-edge を DISCHARGE。資本/所有の事実のみ",
    "basis_short": "[EQUITY] Norway wholly owns GPFG = 1.0. owner=Norway state (via Finance Ministry / Norges Bank NBIM).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "Norway",
@@ -15182,9 +15182,9 @@
    "source": "https://www.equinor.com/about-us/shareholders",
    "desc": "国家が [[Equinor]]（旧 Statoil・上場 state-major）の 67% を保有〔直接持分〕。★ Equinor は LISTED ゆえ mc あり（Merton-computable）＝ 非上場 SOE と対照。資本/所有の事実のみ",
    "basis_short": "[EQUITY] Norway state 67% of Equinor ASA (direct stake; listed OSE/NYSE 2001).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "Norway",
@@ -15202,9 +15202,9 @@
    "source": "https://www.yara.com/investor-relations/",
    "desc": "国家が [[Yara]]（窒素/アンモニア肥料大手・OSE:YAR）の ~36% を保有〔★ 省庁 direct であって [[GPFG]] ではない〕。★ Yara deferred located_in/owner を DISCHARGE。資本/所有の事実のみ",
    "basis_short": "[EQUITY] Norway state ~36% of Yara (largest shareholder, via ministry DIRECT — NOT GPFG; GPFG offshore mandate holds no Norwegian equity).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "Norway",
@@ -15537,9 +15537,9 @@
    "source": "https://www.cfr.org/",
    "desc": "Chevron との JV〔Petropiar / Petroboscan 等〕＝Chevron は VE 産出の ~25% に関与〔US ライセンス下〕。資本/操業の事実のみ",
    "basis_short": "[OBSERVED] PDVSA–Chevron JVs (Petropiar/Petroboscan); Chevron ~25% of VE output under US license.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "PDVSA",
@@ -15557,9 +15557,9 @@
    "source": "https://www.cnbc.com/",
    "desc": "米 Gulf Coast 製油所が VE 重質原油の主要仕向け先〔Chevron-licensed sales・post-2026〕＝販売先〔OCP→customer→India 先例〕。商業/通商の事実のみ",
    "basis_short": "[OBSERVED] US Gulf Coast refiners = destination for VE heavy crude via Chevron-licensed sales (post-2026).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "PDVSA",
@@ -17322,9 +17322,9 @@
    "source": "https://www.eia.gov/international/analysis/country/VEN",
    "desc": "ベネズエラ国家が [[PDVSA]] を完全国有（state-owned）＝国営石油生産者の所有主体。資本/所有の事実のみ（§6 Israel-discipline）",
    "basis_short": "[EQUITY] Venezuela wholly state-owned PDVSA = 1.0 (SOE).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "ADM",
@@ -17342,9 +17342,9 @@
    "source": "https://stockanalysis.com/stocks/adm/",
    "desc": "★ 主要な穀物トレーダー/ハンドラー＝ [[Grain]] の origination→merchandising を担う仲介（producer ではない）。role:trade（仲介・生産/取引グラフ）＝exposure pool の外ゆえ grain shock を byte-identical に保つ（Option 1）。取扱シェアは単一一次で per-firm 基準統一不能ゆえ honest-null（\"controls X%\" と書かない）",
    "basis_short": "[HONEST-NULL][TRADE] ADM = ABCD 穀物・油糧種子トレーダー/ハンドラー。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "ADM",
@@ -17362,9 +17362,9 @@
    "source": "https://stockanalysis.com/stocks/adm/",
    "desc": "★ 大手 油糧種子（大豆）クラッシャー/トレーダー＝ [[Soybean]] の origination→crush→merchandising を担う仲介。role:trade（生産/取引グラフ・exposure pool 外）。取扱シェア honest-null",
    "basis_short": "[HONEST-NULL][TRADE] ADM 大豆/油糧種子トレード・クラッシュ。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "ADM",
@@ -17457,9 +17457,9 @@
    "source": "https://www.osw.waw.pl/en/publikacje/osw-commentary/2024-11-20/tough-business-tough-times-belarusian-exports-potash",
    "desc": "国家が [[Belaruskali]]（国営カリ生産者・完全国営）を所有＝state monopoly。★ Belaruskali deferred owner を DISCHARGE。資本/所有の事実のみ",
    "basis_short": "[EQUITY] Belarus state wholly owns Belaruskali = 1.0 (state monopoly, unlisted SOE).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "Belarus",
@@ -17497,9 +17497,9 @@
    "source": "https://www.osw.waw.pl/en/publikacje/osw-commentary/2024-11-20/tough-business-tough-times-belarusian-exports-potash",
    "desc": "最大の買い手＝ベラルーシ カリ輸出の ~3/4 が中国向け（買い手集中）。市場/通商の事実のみ",
    "basis_short": "[OBSERVED][EXPORT-buyer] China ~3/4 of Belarus potash exports (largest buyer).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Belaruskali",
@@ -17627,9 +17627,9 @@
    "source": "https://stockanalysis.com/stocks/bg/",
    "desc": "★ 主要な穀物トレーダー/ハンドラー＝ [[Grain]] の origination→merchandising 仲介（Viterra 統合で穀物取扱/物流を拡大）。role:trade（仲介・生産/取引グラフ・exposure pool 外）＝grain shock byte-identical（Option 1）。取扱シェア honest-null（\"controls X%\" 不記載）",
    "basis_short": "[HONEST-NULL][TRADE] Bunge = ABCD 穀物・油糧種子トレーダー/ハンドラー（post-Viterra で穀物 origination/物流拡大）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Bunge",
@@ -17647,9 +17647,9 @@
    "source": "https://stockanalysis.com/stocks/bg/",
    "desc": "★ 世界最大級の 油糧種子（大豆）クラッシャー（post-Viterra）＝ [[Soybean]] の crush→merchandising 仲介。role:trade（生産/取引グラフ・exposure pool 外）。取扱シェア honest-null",
    "basis_short": "[HONEST-NULL][TRADE] Bunge = 世界最大級の大豆クラッシャー。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Bunge",
@@ -17702,8 +17702,8 @@
    "source": "https://www.sec.gov/Archives/edgar/data/1324404/000132440426000007/cf-20251231.htm",
    "desc": "アンモニア feedstock の天然ガス依存〔北米低コストガス立地が CF の構造的優位〕",
    "basis_short": "[OBSERVED][feedstock] CF→Natural_Gas: natural gas = ~34% of CF's total production costs in 2025 (28% in 2024), per CF Industries FY2025 Form 10-K (Item 1 and MD&A: 'Natural gas is the principal raw material and primary fuel source… approxim",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
+   "weight_kind": "input_cost_share",
+   "weight_kind_label": "Share of production cost (see the basis for whose)",
    "weight_scope": null
   },
   {
@@ -17737,9 +17737,9 @@
    "source": "https://www.startribune.com/cargill-fiscal-2025-annual-revenue-down-154-billion-minnetonka-mn-agribusiness/601453847",
    "desc": "★ 主要な穀物トレーダー/ハンドラー（ABCD 最大級）＝ [[Grain]] の origination→処理→distribution 仲介。role:trade（仲介・生産/取引グラフ・exposure pool 外）＝grain shock byte-identical（Option 1）。取扱シェア honest-null（\"controls X%\" 不記載）",
    "basis_short": "[HONEST-NULL][TRADE] Cargill = ABCD 穀物・油糧種子トレーダー/ハンドラー（最大級 private）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Cargill",
@@ -17757,9 +17757,9 @@
    "source": "https://www.startribune.com/cargill-fiscal-2025-annual-revenue-down-154-billion-minnetonka-mn-agribusiness/601453847",
    "desc": "★ 大手 油糧種子（大豆）トレーダー/プロセッサー＝ [[Soybean]] の origination→crush→merchandising 仲介。role:trade（生産/取引グラフ・exposure pool 外）。取扱シェア honest-null",
    "basis_short": "[HONEST-NULL][TRADE] Cargill 大豆/油糧種子トレード・処理。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Cargill",
@@ -17922,9 +17922,9 @@
    "source": "https://www.ldc.com/press-releases/louis-dreyfus-company-reports-resilient-2025-results/",
    "desc": "★ 主要な穀物マーチャント/ハンドラー（ABCD）＝ [[Grain]] の origination→merchandising 仲介。role:trade（仲介・生産/取引グラフ・exposure pool 外）＝grain shock byte-identical（Option 1）。取扱シェア honest-null（\"controls X%\" 不記載）",
    "basis_short": "[HONEST-NULL][TRADE] LDC = ABCD 穀物・油糧種子マーチャント/ハンドラー（蘭仏）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Louis_Dreyfus",
@@ -17942,9 +17942,9 @@
    "source": "https://www.ldc.com/press-releases/louis-dreyfus-company-reports-resilient-2025-results/",
    "desc": "★ 大手 油糧種子（大豆）マーチャント＝ [[Soybean]] の origination→merchandising 仲介。role:trade（生産/取引グラフ・exposure pool 外）。取扱シェア honest-null",
    "basis_short": "[HONEST-NULL][TRADE] LDC 大豆/油糧種子トレード。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Louis_Dreyfus",
@@ -18072,9 +18072,9 @@
    "source": "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-phosphate.pdf",
    "desc": "★ 世界のリン酸 ROCK reserves の ~70%〔[MINED-reserves]・50 billion mt〕を保有＝国 reserves anchor〔firm OCP の processed 26% とは別 stage〕",
    "basis_short": "[OBSERVED][MINED-reserves] Morocco 50,000,000 thousand t of 74,000,000 thousand t world phosphate rock reserves = 0.676 (USGS MCS 2025, phosphate rock: Reserves column, Morocco 50,000,000 / World total (rounded) 74,000,000; ratio computed,",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "reserves_share",
+   "weight_kind_label": "Share of world reserves",
+   "weight_scope": "world"
   },
   {
    "s": "Mosaic",
@@ -18167,8 +18167,8 @@
    "source": "https://www.aga.org/news/news-releases/new-report-natural-gas-critical-to-agriculture-sector/",
    "desc": "Haber-Bosch アンモニア合成の feedstock＝天然ガスが窒素肥料生産コストの 70-90%〔SMR 由来 H2〕＝energy↔food の中核 seam",
    "basis_short": "[ESTIMATED][feedstock] Nitrogen→Natural_Gas: gas = 70-90% of ammonia/N-fertilizer production cost (Haber-Bosch/SMR; AGA/Thunder Said Energy).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
+   "weight_kind": "input_cost_share",
+   "weight_kind_label": "Share of production cost (see the basis for whose)",
    "weight_scope": null
   },
   {
@@ -18292,8 +18292,8 @@
    "source": "https://www.nutrien.com/investors",
    "desc": "アンモニア feedstock の天然ガス依存〔Nutrien の N 事業＝Haber-Bosch・ガスがアンモニアコストの 60-80%〕。★ CF/Yara と同じ N-producer feedstock seam（Nutrien で欠落していた）",
    "basis_short": "[ESTIMATED][feedstock] Nutrien→Natural_Gas: ammonia gas-feedstock dependence (Haber-Bosch; gas 60-80% of ammonia cost).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
+   "weight_kind": "input_cost_share",
+   "weight_kind_label": "Share of production cost (see the basis for whose)",
    "weight_scope": null
   },
   {
@@ -18497,9 +18497,9 @@
    "source": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-potash.pdf",
    "desc": "世界最大のカリ生産国〔Canada 2025 産出 15Mt・Saskatchewan〕＝PRODUCTION ~34% [MINED-production] / EXPORT ~39%〔stage を label・collapse しない〕",
    "basis_short": "[OBSERVED][MINED-production] Canada = largest potash producer, 15 Mt 2025 (USGS MCS 2026; 15,000 thousand t of 49,000 thousand t world mine production, 2025e = 0.306 (World total (rounded) 49,000 — mcs2026)).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "world_mined_share",
+   "weight_kind_label": "Share of the hub's mined pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Potash",
@@ -18517,9 +18517,9 @@
    "source": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-potash.pdf",
    "desc": "カリ生産 #2〔Russia 2025 産出 ~10Mt〕＝PRODUCTION ~23% [MINED-production]・供給集中の第2軸・商業/通商の事実のみ",
    "basis_short": "[OBSERVED][MINED-production] Russia = #2 potash producer, ~10 Mt 2025 (USGS MCS 2026; 10,000 thousand t of 49,000 thousand t world mine production, 2025e = 0.204 (World total (rounded) 49,000 — mcs2026)).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "world_mined_share",
+   "weight_kind_label": "Share of the hub's mined pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Potash",
@@ -18537,9 +18537,9 @@
    "source": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-potash.pdf",
    "desc": "カリ生産 #3〔Belarus 2025 産出 ~6Mt〕＝PRODUCTION ~15% [MINED-production]・供給集中の第3軸（Canada>Russia>Belarus）・商業/通商の事実のみ",
    "basis_short": "[OBSERVED][MINED-production] Belarus = #3 potash producer, ~6 Mt 2025 (USGS MCS 2026; 6,000 thousand t of 49,000 thousand t world mine production, 2025e = 0.122 (World total (rounded) 49,000 — mcs2026); 2024 ~15%; pre-sanction peak ~20%).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "world_mined_share",
+   "weight_kind_label": "Share of the hub's mined pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Potash",
@@ -18577,8 +18577,8 @@
    "source": "https://www.sunsirs.com/commodity-news/petail-32040.html",
    "desc": "硫酸はリン酸肥料生産の中核原料＝硫黄価格がリン酸コストの 30-40% を占める cost-push〔stage:input-cost〕",
    "basis_short": "[ESTIMATED][INPUT-cost] Sulfur→Phosphate cost-push: sulphur/sulphuric-acid ~30-40% of phosphate production cost (IFA/SunSirs).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
+   "weight_kind": "input_cost_share",
+   "weight_kind_label": "Share of production cost (see the basis for whose)",
    "weight_scope": null
   },
   {
@@ -18597,9 +18597,9 @@
    "source": "https://pubs.usgs.gov/periodicals/mcs2025/mcs2025-sulfur.pdf",
    "desc": "硫黄の ~30-35% は石油/ガス精製の脱硫 byproduct〔co-product 起源・stage:byproduct〕",
    "basis_short": "[ESTIMATED][byproduct] Crude_Oil→Sulfur co-product: ~30-35% of global sulphur from petroleum/gas desulphurization (USGS MCS 2025).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "byproduct_share",
+   "weight_kind_label": "Share of the hub's output arising as a by-product",
+   "weight_scope": "hub"
   },
   {
    "s": "Yara",
@@ -18637,8 +18637,8 @@
    "source": "https://www.yara.com/investor-relations/",
    "desc": "アンモニア feedstock として天然ガスに大口依存〔欧州ガス価格に高感応・Yara は欧州最大級のガス需要家の一つ〕",
    "basis_short": "[ESTIMATED][feedstock] Yara→Natural_Gas: ammonia gas-feedstock dependence (Haber-Bosch; gas 70-90% of N-cost).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
+   "weight_kind": "input_cost_share",
+   "weight_kind_label": "Share of production cost (see the basis for whose)",
    "weight_scope": null
   },
   {
@@ -20003,9 +20003,9 @@
    "source": "https://www.agbi.com/finance/2026/05/mubadala-raises-2bn-from-globalfoundries-share-sale/",
    "desc": "★ [[GlobalFoundries]]（NASDAQ:GFS・foundry）の支配的所有者（~77%・SEC 13G/A 2026-03・block-sale で declining）＝ownership fact（GF は既存 node・同 batch）。市場/所有の事実のみ（capability/military framing なし）",
    "basis_short": "[OBSERVED][EQUITY] Mubadala ~77% of [[GlobalFoundries]] (SEC 13G/A 2026-03; declining via block sales — was 82% at IPO, ~73% mid-2026).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "Mubadala",
@@ -20202,9 +20202,9 @@
    "source": "https://investors.arm.com/static-files/219a3b28-f209-4d74-8bc6-f9e026d55a95",
    "desc": "SoftBank Group が Arm Holdings の ~90%（87-90%・exact 未確認）を支配＝~$158B 相当（SBG 資産の ~30%・OpenAI 持分と並ぶ中核）。Arm は CPU アーキテクチャ IP ライセンサー（モバイル/AI compute の基盤）",
    "basis_short": "[EQUITY] SoftBank owns ~87-88% of Arm post-IPO.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "SoftBank",
@@ -21105,9 +21105,9 @@
    "source": "https://www.iseas.edu.sg/wp-content/uploads/2025/02/ISEAS_Perspective_2025_21.pdf",
    "desc": "★ 世界 #1 の海底ケーブル製造/敷設（~34% of new systems 2020-24・cable-ship 7隻）＝ [[Subsea_Cables]] の産業能力の支配的供給者。role:supply（production flow・flow≠exposure＝centrality 注記・非発火 construct）。capacity は estimated topology 注記（pool weight でない）。市場構造の事実のみ",
    "basis_short": "[ESTIMATED][CAPACITY] ASN ~0.34 of new subsea cable systems built 2020-24 (world #1; ISEAS 2025・single-source).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "ASN",
@@ -22045,9 +22045,9 @@
    "source": "https://www.mordorintelligence.com/industry-reports/semiconductor-lithography-equipment-market",
    "desc": "★ DUV（KrF/ArF）露光＋nanoimprint（NIL）の供給者〔~3.4%〔★ 2026-09-12 照合: 引用文書に不在・要出典〕〔基準: 金額ベースと解釈・台数では ~39%〔Canon 227 台〔2026 proj.〕÷ Nikon 開示の市場規模 580 台〕・両社の開示からの導出〕 litho share・rising〕＝ [[DUV_Lithography]] チョークポイントへの supply（ASML-dominant pool の de-residualize）。role:supply・[DUV] 軸。市場ポジション（share）の事実のみ",
    "basis_short": "[ESTIMATED][DUV] Canon ~3.4% of litho-equipment (2024・Mordor・rising via nanoimprint).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "segment_market_share",
+   "weight_kind_label": "Share of one product segment within the hub (segments are not comparable)",
+   "weight_scope": "hub"
   },
   {
    "s": "Canon",
@@ -22320,9 +22320,9 @@
    "source": "https://www.opensanctions.org/entities/NK-YADPL6jAxn9RNFsYtRrHCi/",
    "desc": "CETC を完全国有（SASAC 直轄・親非上場）＝防衛×半導体装置 SOE の所有主体（owns・資本水準のみ・規制本体は Export_Controls）",
    "basis_short": "[EQUITY] China wholly state-owned (完全国有/SASAC) = 1.0",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "China",
@@ -22360,9 +22360,9 @@
    "source": "https://world-nuclear.org/information-library/country-profiles/countries-a-f/china-nuclear-power.aspx",
    "desc": "CNNC（中核集団）を完全国有（SASAC 中央 SOE・完全国有）＝核燃料サイクル/建設/中国唯一の NPP 輸出者の所有主体（owns・資本水準のみ）",
    "basis_short": "[EQUITY] China wholly state-owned (完全国有/SASAC) = 1.0",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "China",
@@ -22380,9 +22380,9 @@
    "source": "https://world-nuclear.org/information-library/country-profiles/countries-a-f/china-nuclear-power.aspx",
    "desc": "CGN（中広核集団/CGNPC）を完全国有（SASAC 完全国有のグループ）＝中国最大の原子力発電事業者・世界最大の原子力建設会社の所有主体。**owns（group が完全国有）であり shareholder ではない**——~58.9% は group→上場子会社 CGN Power(HKEX 1816) の内部持分であり、中国の group に対する持分ではない（owns・資本水準のみ）",
    "basis_short": "[EQUITY] China wholly state-owned (完全国有/SASAC) = 1.0.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "China",
@@ -22400,9 +22400,9 @@
    "source": "https://global.chinadaily.com.cn/a/202508/19/WS68a3d231a310b236346f250b.html",
    "desc": "CSSC（中国船舶集団）を完全国有（SASAC 親グループ・非上場）＝世界最大の造船グループの所有主体。合併後の上場子会社 中国船舶（China CSSC Holdings, SSE 600150）を ~49% 保有（owns・資本水準のみ・商用造船/規制の事実のみ・軍艦実体は扱わない）",
    "basis_short": "[EQUITY] China wholly state-owned (完全国有/SASAC) = 1.0.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "China",
@@ -22480,9 +22480,9 @@
    "source": "https://www.z2data.com/insights/5-critical-minerals-vulnerable-due-to-chinas-production-control",
    "desc": "Ga 94%/Ge 83%/Sb 56% 等の支配的サプライヤ〔~80-94%・輸出規制の通商テコ〕。China→Rare_Earths と同型の鉱物支配",
    "basis_short": "[ESTIMATED][basket] Critical_Minerals supply-side: dominant critical-minerals refiner (~60% basket AGGREGATE — coarse).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "basket_aggregate_share",
+   "weight_kind_label": "Coarse aggregate share across a basket, not one commodity",
+   "weight_scope": "hub"
   },
   {
    "s": "China",
@@ -22700,9 +22700,9 @@
    "source": "https://www.eia.gov/international/analysis/country/CHN",
    "desc": "CNPC〔中国石油天然気集団〕を完全国有（SASAC 中央 SOE）＝中国最大の国営石油・ガス PARENT の所有主体（owns・資本水準のみ）。上場アーム PetroChina は別 entity。商業/所有の事実のみ（§6）",
    "basis_short": "[EQUITY] China wholly state-owned CNPC (完全国有/SASAC) = 1.0. owner=China.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "China",
@@ -23060,9 +23060,9 @@
    "source": "https://stockanalysis.com/stocks/glw/",
    "desc": "★ Gorilla Glass（cover glass）を [[Apple]]（iPhone）へ供給＝Corning sells to Apple（customer・A→B）。production flow。取扱 revenue share 単一一次なし → null。商業の事実のみ",
    "basis_short": "[HONEST-NULL] Corning → Gorilla Glass supply → [[Apple]]（customer・A→B）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Corning",
@@ -23080,9 +23080,9 @@
    "source": "https://stockanalysis.com/stocks/glw/",
    "desc": "★ display 基板ガラス＋cover glass を [[Samsung]] へ供給＝Corning sells to Samsung（customer）。production flow。取扱 revenue share 単一一次なし → null。商業の事実のみ",
    "basis_short": "[HONEST-NULL] Corning → display glass + cover glass → [[Samsung]]（customer）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "DUV_Lithography",
@@ -23295,9 +23295,9 @@
    "source": "https://companiesmarketcap.com/globalwafers/marketcap/",
    "desc": "★ 世界 #3 のシリコンウェハ供給者〔~17% share〕＝ [[Semiconductor_Materials]] チョークポイントへの供給（role:supply・[WAFER] 軸）。ASML/Shin-Etsu/SUMCO と additive の de-residualize。市場ポジション（share）の事実のみ",
    "basis_short": "[ESTIMATED][WAFER] GlobalWafers ~17% of silicon-wafer supply (#3, 2025).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "segment_market_share",
+   "weight_kind_label": "Share of one product segment within the hub (segments are not comparable)",
+   "weight_scope": "hub"
   },
   {
    "s": "GlobalWafers",
@@ -23485,9 +23485,9 @@
    "source": "https://www.iseas.edu.sg/wp-content/uploads/2025/02/ISEAS_Perspective_2025_21.pdf",
    "desc": "★ 海底ケーブルを製造/敷設（~10% of new systems 2010-23・2026 計画で ~4%）＝ [[Subsea_Cables]] の産業能力の供給者。role:supply（production flow・flow≠exposure＝centrality 注記・非発火 construct）。capacity は estimated topology 注記（pool weight でない）。市場構造の事実のみ",
    "basis_short": "[ESTIMATED][CAPACITY] HMN_Tech ~0.10 of new subsea systems (2010-23; ~0.04 planned through 2026 — ISEAS 2025・single-source).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "HMN_Tech",
@@ -23915,9 +23915,9 @@
    "source": "https://www.trendforce.com/news/2025/11/06/news-japan-ramps-up-photoresist-investment-for-2nm-chips-tokyo-ohka-kogyo-jsr-lead-the-charge/",
    "desc": "EUV/先端フォトレジストを [[TSMC]] に供給＝EUV 化学の商用展開で協業（JSR が fab に SELL＝売り手主語）",
    "basis_short": "[HONEST-NULL] TSMC's share of JSR's resist revenue is not disclosed: JSR is private since the 2024 JIC buyout and files no customer disclosure; the cited article names no JSR customer.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "JSR",
@@ -24005,9 +24005,9 @@
    "source": "https://nkbp.jp/nim12728a",
    "desc": "フォトレジスト〔世界 #2・19.0%〔日経業界地図 2027 p.19・QY 売上高ベース〕〕の供給元＝Semiconductor_Materials チョークポイントへの供給（role:supply・[RESIST] 軸）",
    "basis_short": "[ESTIMATED][RESIST] JSR 19.0% of the world photoresist market by revenue, 2025 (2位), per 日経業界地図 2027年版 p.19「世界シェア67品目」フォトレジスト chart — 出所 QYリサーチ, 売上高 33億ドル; full chart: TOK 22.6 / JSR 19.0 / 信越 18.9 / Qnity 10.4 / 住友化学 7.6 / その他 21.5. Read b",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "segment_market_share",
+   "weight_kind_label": "Share of one product segment within the hub (segments are not comparable)",
+   "weight_scope": "hub"
   },
   {
    "s": "Japan",
@@ -24715,9 +24715,9 @@
    "source": "https://www.sec.gov/Archives/edgar/data/707549/000070754926000037/lrcx-20260628.htm",
    "desc": "deposition/etch/clean の WFE を [[TSMC]] に供給（Lam が fab に SELL＝売り手主語・AMAT→customer→TSMC mirror）",
    "basis_short": "[HONEST-NULL] Lam→TSMC の按分は本 10-K からは決まらない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Lam_Research",
@@ -24735,9 +24735,9 @@
    "source": "https://www.sec.gov/Archives/edgar/data/707549/000070754926000037/lrcx-20260628.htm",
    "desc": "WFE を [[Samsung]] に供給（売り手主語）",
    "basis_short": "[HONEST-NULL] Lam→Samsung の按分は本 10-K からは決まらない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Lam_Research",
@@ -24755,9 +24755,9 @@
    "source": "https://www.sec.gov/Archives/edgar/data/707549/000070754926000037/lrcx-20260628.htm",
    "desc": "WFE を [[SK_hynix]] に供給（売り手主語）",
    "basis_short": "[HONEST-NULL] Lam→SK_hynix の按分は本 10-K からは決まらない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Lam_Research",
@@ -24775,9 +24775,9 @@
    "source": "https://www.sec.gov/Archives/edgar/data/707549/000070754926000037/lrcx-20260628.htm",
    "desc": "WFE を [[Micron]] に供給（売り手主語）",
    "basis_short": "[HONEST-NULL] Lam→Micron の按分は本 10-K からは決まらない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Lam_Research",
@@ -25785,9 +25785,9 @@
    "source": "https://www.mordorintelligence.com/industry-reports/semiconductor-lithography-equipment-market",
    "desc": "★ DUV（ArF/KrF）露光装置の供給者〔~2.5% litho share・mature/legacy/MEMS〕＝ [[DUV_Lithography]] チョークポイントへの supply（ASML-dominant pool の de-residualize）。role:supply・[DUV] 軸。市場ポジション（share）の事実のみ",
    "basis_short": "[ESTIMATED][DUV] Nikon ~2.5% of litho-equipment (2024・Mordor).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "segment_market_share",
+   "weight_kind_label": "Share of one product segment within the hub (segments are not comparable)",
+   "weight_scope": "hub"
   },
   {
    "s": "Nikon",
@@ -26600,9 +26600,9 @@
    "source": "https://www.sumcosi.com/english/ir/financial/",
    "desc": "300mm シリコンウェハを [[TSMC]] に供給（SUMCO が fab に SELL＝売り手主語・Shin-Etsu→customer→TSMC mirror）",
    "basis_short": "[HONEST-NULL] TSMC's share of SUMCO's wafer revenue is not disclosed: SUMCO's 有報 第27期 names 住友商事株式会社 as its sole major customer (27.0% FY2025) and no fab; no source names TSMC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "SUMCO",
@@ -26620,9 +26620,9 @@
    "source": "https://www.sumcosi.com/english/ir/financial/",
    "desc": "シリコンウェハを [[Samsung]] に供給（売り手主語）",
    "basis_short": "[HONEST-NULL] Samsung's share of SUMCO's wafer revenue is not disclosed: SUMCO's 有報 第27期 names 住友商事株式会社 as its sole major customer (27.0% FY2025) and no fab; no source names Samsung.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "SUMCO",
@@ -26640,9 +26640,9 @@
    "source": "https://www.sumcosi.com/english/ir/financial/",
    "desc": "シリコンウェハを [[Intel]] のfab に供給（売り手主語・実在 fab 顧客）",
    "basis_short": "[HONEST-NULL] Intel's share of SUMCO's wafer revenue is not disclosed: SUMCO's 有報 第27期 names 住友商事株式会社 as its sole major customer (27.0% FY2025) and no fab; no source names Intel.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "SUMCO",
@@ -26660,9 +26660,9 @@
    "source": "https://nkbp.jp/nim12728a",
    "desc": "300mm シリコンウェハの供給元〔世界 #2・17.8%〔日経業界地図 2027 p.10/p.53・日経シェア調査 2025〕〕＝Semiconductor_Materials チョークポイントへの供給（role:supply・[WAFER] 軸）",
    "basis_short": "[ESTIMATED][WAFER] SUMCO 17.8% of the world silicon-wafer market, 2025 (2位, +1.8pt YoY), per 日経業界地図 2027年版 p.10「世界シェア67品目」— 日本経済新聞社 主要商品・サービスシェア調査 2025年 (p.19 chart: 出所 QYリサーチ, 売上高 155億ドル — a REVENUE-basis share of the world silicon-wafer m",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "segment_market_share",
+   "weight_kind_label": "Share of one product segment within the hub (segments are not comparable)",
+   "weight_scope": "hub"
   },
   {
    "s": "SUMCO",
@@ -27345,9 +27345,9 @@
    "source": "https://www.shinetsu.co.jp/en/ir/",
    "desc": "シリコンウェハ/フォトレジスト等の素材供給先（全 fab 操業の必須素材）",
    "basis_short": "[HONEST-NULL] TSMC's share of Shin-Etsu's sales is not disclosed, and the issuer's own disclosure excludes the prior value: 有価証券報告書 第149期 states 「外部顧客への売上高のうち、連結損益計算書の売上高の10％以上を占める相手先がないため、記載していません。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Shin-Etsu_Chemical",
@@ -27365,9 +27365,9 @@
    "source": "https://www.shinetsu.co.jp/en/ir/",
    "desc": "シリコンウェハ/フォトレジスト等の素材供給先（メモリ/ファウンドリ先端）",
    "basis_short": "[HONEST-NULL] Samsung's share of Shin-Etsu's sales is not disclosed, and the issuer's own disclosure excludes the prior value: 有価証券報告書 第149期 states 「外部顧客への売上高のうち、連結損益計算書の売上高の10％以上を占める相手先がないため、記載していません。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Shin-Etsu_Chemical",
@@ -27450,9 +27450,9 @@
    "source": "https://nkbp.jp/nim12728a",
    "desc": "300mm シリコンウェハの供給元〔世界 #1・~28%〔★ 2026-09-12 照合: Mordor 頁・有報ともに個社シェアなし・要出典（SEMI）〕〕＝Semiconductor_Materials チョークポイントへの供給（role:supply・[WAFER] 軸）",
    "basis_short": "[ESTIMATED][WAFER] Shin-Etsu 26.3% of the world silicon-wafer market, 2025 (1位, +1.0pt YoY), per 日経業界地図 2027年版 p.10「世界シェア67品目」— 日本経済新聞社 主要商品・サービスシェア調査 2025年 (p.19 chart: 出所 QYリサーチ, 売上高 155億ドル — a REVENUE-basis share of the world silicon-waf",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "segment_market_share",
+   "weight_kind_label": "Share of one product segment within the hub (segments are not comparable)",
+   "weight_scope": "hub"
   },
   {
    "s": "Siemens_EDA",
@@ -27555,9 +27555,9 @@
    "source": "https://companiesmarketcap.com/siltronic/marketcap/",
    "desc": "★ 世界 #4 のシリコンウェハ供給者〔~12% share〕＝ [[Semiconductor_Materials]] チョークポイントへの供給（role:supply・[WAFER] 軸）。additive de-residualize。市場ポジション（share）の事実のみ",
    "basis_short": "[ESTIMATED][WAFER] Siltronic ~12% of silicon-wafer supply (#4, 2025).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "segment_market_share",
+   "weight_kind_label": "Share of one product segment within the hub (segments are not comparable)",
+   "weight_scope": "hub"
   },
   {
    "s": "Siltronic",
@@ -27790,9 +27790,9 @@
    "source": "https://www.iseas.edu.sg/wp-content/uploads/2025/02/ISEAS_Perspective_2025_21.pdf",
    "desc": "★ 海底ケーブルシステムを製造/敷設（wet-plant＋cable-ship）＝ [[Subsea_Cables]] の産業能力の供給者（~19% of new systems 2020-24）。role:supply（production flow・flow≠exposure＝centrality 注記・非発火 construct）。capacity は estimated topology 注記（pool weight でない）。市場構造の事実のみ",
    "basis_short": "[ESTIMATED][CAPACITY] SubCom ~0.19 of new subsea cable systems built 2020-24 (ISEAS 2025・single-source).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "SubCom",
@@ -28670,9 +28670,9 @@
    "source": "https://www.trendforce.com/news/2025/11/06/news-japan-ramps-up-photoresist-investment-for-2nm-chips-tokyo-ohka-kogyo-jsr-lead-the-charge/",
    "desc": "EUV/先端フォトレジストを [[Samsung]] に供給（EUV 化学協業・売り手主語）",
    "basis_short": "[HONEST-NULL] Samsung's share of TOK's sales is not disclosed.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Tokyo_Ohka",
@@ -28725,9 +28725,9 @@
    "source": "https://nkbp.jp/nim12728a",
    "desc": "フォトレジスト〔世界トップ級・EUV CAR 先頭〕の供給元＝Semiconductor_Materials チョークポイントへの供給（role:supply・[RESIST] 軸）",
    "basis_short": "[ESTIMATED][RESIST] Tokyo Ohka 22.6% of the world photoresist market by revenue, 2025 (1位), per 日経業界地図 2027年版 p.19「世界シェア67品目」フォトレジスト chart — 出所 QYリサーチ, 売上高 33億ドル; full chart: TOK 22.6 / JSR 19.0 / 信越 18.9 / Qnity 10.4 / 住友化学 7.6 / その他 21.5.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "segment_market_share",
+   "weight_kind_label": "Share of one product segment within the hub (segments are not comparable)",
+   "weight_scope": "hub"
   },
   {
    "s": "United_States",
@@ -30000,9 +30000,9 @@
    "source": "https://nkbp.jp/nim12728a",
    "desc": "世界船腹シェア 12.5%〔日経業界地図 2027 p.18〕＝Container_Shipping ハブへの供給（role:supply・[FLEET] 軸）",
    "basis_short": "[ESTIMATED][FLEET] CMA_CGM 12.5% of world container-ship capacity (TEU), 2025, per 日経業界地図 2027年版 p.18 chart — 出所 S&P Global より日本郵船作成, 運航船腹量 3,283万 TEU; capacity basis, not lane share.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "CMB.TECH",
@@ -30315,9 +30315,9 @@
    "source": "https://static.cninfo.com.cn/finalpage/2026-03-20/1225019947.PDF",
    "desc": "★ [[OOIL]]（Orient Overseas International/OOCL・コンテナ海運）の支配的所有者（71.07%〔2025-12-31・間接〕・2018 買収時 ~75%）＝ownership fact（OOIL は既存 node・同 batch）。市場/所有の事実のみ",
    "basis_short": "[OBSERVED][EQUITY] COSCO 71.07% (indirect) of [[OOIL]]/OOCL at 2025-12-31 per 中远海运控股股份有限公司2025年年度报告 企业集团的构成 (2018 acquisition ~75%, since diluted; controlling owner).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "COSCO",
@@ -30335,9 +30335,9 @@
    "source": "https://nkbp.jp/nim12728a",
    "desc": "世界船腹シェア 10.6%〔日経業界地図 2027 p.18〕＝Container_Shipping ハブへの供給（role:supply・[FLEET] 軸）",
    "basis_short": "[ESTIMATED][FLEET] COSCO 10.6% of world container-ship capacity (TEU), 2025, per 日経業界地図 2027年版 p.18 chart — 出所 S&P Global より日本郵船作成, 運航船腹量 3,283万 TEU; capacity basis, not lane share.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "Chile",
@@ -30790,9 +30790,9 @@
    "source": "https://gunvorgroup.com/financial/gunvor-group-results-2025/",
    "desc": "★ 天然ガス/エネルギーの大手トレーダー（最強セグメント）＝生産者↔市場の [[Natural_Gas]] フロー仲介。role:trade（仲介・生産/取引グラフ・exposure pool 外＝shock byte-identical）。取扱量は market/trade の事実・pool weight でない",
    "basis_short": "[HONEST-NULL][TRADE] Gunvor エネルギー（gas/LNG/power）が最強セグメント。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Gunvor",
@@ -30810,9 +30810,9 @@
    "source": "https://gunvorgroup.com/financial/gunvor-group-results-2025/",
    "desc": "★ LNG の大手トレーダー＝ [[LNG]] フロー仲介。role:trade（生産/取引グラフ・exposure pool 外）。取扱量は position 注記",
    "basis_short": "[HONEST-NULL][TRADE] Gunvor LNG トレード。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Gunvor",
@@ -30830,9 +30830,9 @@
    "source": "https://gunvorgroup.com/financial/gunvor-group-results-2025/",
    "desc": "★ 原油/石油製品の大手トレーダー＝ [[Crude_Oil]] フロー仲介。role:trade（生産/取引グラフ・exposure pool 外）。取扱量は position 注記",
    "basis_short": "[HONEST-NULL][TRADE] Gunvor 原油/製品 トレード。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Gunvor",
@@ -30965,9 +30965,9 @@
    "source": "https://nkbp.jp/nim12728a",
    "desc": "世界船腹シェア 7.2%〔日経業界地図 2027 p.18〕＝Container_Shipping ハブへの供給（role:supply・[FLEET] 軸）",
    "basis_short": "[ESTIMATED][FLEET] Hapag-Lloyd 7.2% of world container-ship capacity (TEU), 2025, per 日経業界地図 2027年版 p.18 chart — 出所 S&P Global より日本郵船作成, 運航船腹量 3,283万 TEU; capacity basis, not lane share.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "Hong_Kong",
@@ -31350,9 +31350,9 @@
    "source": "https://nkbp.jp/nim12728a",
    "desc": "世界船腹シェア 21.5%〔日経業界地図 2027 p.18〕＝Container_Shipping ハブへの供給（role:supply・[FLEET] 軸）",
    "basis_short": "[ESTIMATED][FLEET] MSC 21.5% of world container-ship capacity (TEU), 2025, per 日経業界地図 2027年版 p.18 chart — 出所 S&P Global より日本郵船作成, 運航船腹量 3,283万 TEU; capacity basis, not lane share.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "Maaden",
@@ -31600,9 +31600,9 @@
    "source": "https://nkbp.jp/nim12728a",
    "desc": "世界船腹シェア 13.8%〔日経業界地図 2027 p.18〕＝Container_Shipping ハブへの供給（role:supply・[FLEET] 軸）",
    "basis_short": "[ESTIMATED][FLEET] Maersk 13.8% of world container-ship capacity (TEU), 2025, per 日経業界地図 2027年版 p.18 chart — 出所 S&P Global より日本郵船作成, 運航船腹量 3,283万 TEU; capacity basis, not lane share.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "capacity_share",
+   "weight_kind_label": "Share of the hub's capacity",
+   "weight_scope": "hub"
   },
   {
    "s": "Mercuria",
@@ -31620,9 +31620,9 @@
    "source": "https://mercuria.com/media-room/our-performance/",
    "desc": "★ 原油/石油製品の大手トレーダー＝生産者↔市場の [[Crude_Oil]] フロー仲介。role:trade（仲介・生産/取引グラフ・exposure pool 外＝shock byte-identical）。取扱量は market/trade の事実・pool weight でない",
    "basis_short": "[HONEST-NULL][TRADE] Mercuria = top-5 独立系エネルギートレーダー（原油/製品）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Mercuria",
@@ -31640,9 +31640,9 @@
    "source": "https://mercuria.com/media-room/our-performance/",
    "desc": "★ LNG の大手トレーダー（グローバル spot cargo ~22% 2025＝position 注記）＝ [[LNG]] フロー仲介。role:trade（生産/取引グラフ・exposure pool 外）。★ ~22% は市場 position の事実であって pool weight でない",
    "basis_short": "[HONEST-NULL][TRADE] Mercuria LNG ~22% of global spot cargo（2025・position 注記）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Mercuria",
@@ -31660,9 +31660,9 @@
    "source": "https://mercuria.com/media-room/our-performance/",
    "desc": "★ 天然ガスの大手トレーダー＝ [[Natural_Gas]] フロー仲介。role:trade（生産/取引グラフ・exposure pool 外）。取扱量は position 注記",
    "basis_short": "[HONEST-NULL][TRADE] Mercuria 天然ガス トレード。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Mercuria",
@@ -32230,9 +32230,9 @@
    "source": "https://www.temasek.com.sg/en/about-us/our-institution",
    "desc": "国家が SWF [[Temasek]] を完全所有（state-owned investment company）＝Temasek の deferred owner-edge を DISCHARGE。資本/所有の事実のみ",
    "basis_short": "[EQUITY] Singapore wholly state-owned Temasek = 1.0. owner=Singapore.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "ownership_stake",
+   "weight_kind_label": "Ownership stake",
+   "weight_scope": "counterpart"
   },
   {
    "s": "Singapore",
@@ -32610,9 +32610,9 @@
    "source": "https://www.vitol.com/vitol-2025-volumes-and-review/",
    "desc": "★ 原油/石油製品の大手物流トレーダー＝生産者↔市場の [[Crude_Oil]] フロー仲介（~8 mbpd）。role:trade（仲介・生産/取引グラフ・exposure pool 外＝shock byte-identical）。取扱量は market/trade の事実・pool weight でない",
    "basis_short": "[HONEST-NULL][TRADE] Vitol = 世界最大の独立系エネルギートレーダー（原油/製品 ~8 mbpd）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Vitol",
@@ -32630,9 +32630,9 @@
    "source": "https://www.vitol.com/vitol-2025-volumes-and-review/",
    "desc": "★ LNG の大手トレーダー（~23 mMT 2025）＝ [[LNG]] フロー仲介。role:trade（生産/取引グラフ・exposure pool 外）。取扱量は position 注記・pool weight でない",
    "basis_short": "[HONEST-NULL][TRADE] Vitol LNG ~23 mMT（2025）。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Vitol",
@@ -32650,9 +32650,9 @@
    "source": "https://www.vitol.com/vitol-2025-volumes-and-review/",
    "desc": "★ 天然ガスの大手トレーダー＝ [[Natural_Gas]] フロー仲介。role:trade（生産/取引グラフ・exposure pool 外）。取扱量は position 注記",
    "basis_short": "[HONEST-NULL][TRADE] Vitol 天然ガス トレード。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "weight_kind": "output_allocation",
+   "weight_kind_label": "Share of the source's output going to the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Vitol",
