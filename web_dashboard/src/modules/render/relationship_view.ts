@@ -35,6 +35,8 @@ type REdge = {
     verify_status?: string | null; materiality?: string | null; as_of?: string | null;
     retrieved?: string | null; source?: string | null; desc?: string | null;
     basis_short?: string | null;
+    // Derived in the vault export, not authored: see export_relationships.py weight_kind().
+    weight_kind?: string | null; weight_kind_label?: string | null; weight_scope?: string | null;
 };
 type RGraph = { meta: any; nodes: RNode[]; edges: REdge[] };
 
@@ -124,16 +126,32 @@ function rowHtml(e: REdge, other: string, dir: '→' | '←'): string {
     let w = '';
     if (hasW && e.weight === null) w = `<span class="rv-unmeasured">not measured</span>`;
     else if (hasW && e.weight != null) {
-        const unit = e.unit ? ` <span class="pm-co-unit">${esc(e.unit)}</span>` : '';
-        w = `${e.weight}${unit}`;
+        // ★ THE NUMBER IS PRINTED VERBATIM, never reformatted. A share of 0.527
+        //   (Germany→Nord_Stream) is a different authored value from 0.55 (Germany→Russia), and
+        //   the vault holds those two in separate fields precisely because they are not the same
+        //   quantity. Rounding to a fixed 2dp on the way to a product surface would silently
+        //   merge them, so the illustrative "0.50" in the brief is NOT implemented as toFixed(2).
+        const kind = e.weight_kind || '';
+        const label = kind && kind !== 'unclassified'
+            ? e.weight_kind_label || ''
+            // An unclassified kind means the vault has not tagged this edge's basis yet. Say
+            // that, rather than borrowing a neighbouring edge's meaning for it.
+            : `${e.unit || 'share'} (basis unspecified)`;
+        const lab = label ? ` <span class="rv-wkind">· ${esc(label)}</span>` : '';
+        w = `${e.weight}${lab}`;
     }
     const role = e.role ? ` · ${esc(e.role)}` : '';
     // Verbatim the pro_interactive_map ternary.
+    // ★ 'unlabelled' read as a judgement about the edge. It is a judgement about the RECORD:
+    //   36 numeric-weight edges carry no weight_source field at all, and they include
+    //   load-bearing pins (Germany→Russia 0.55, the Tether bridge). "source not recorded" says
+    //   what is actually true — nobody wrote it down — without implying the weight is suspect.
     const ws = e.weight_source == null
-        ? (hasW && e.weight != null ? 'unlabelled' : '')
+        ? (hasW && e.weight != null ? 'source not recorded' : '')
         : String(e.weight_source);
     const wsCls = ws === 'observed' ? 'obs' : ws === 'estimated' ? 'est' : 'unk';
-    const prov = ws ? ` <span class="pm-co-src pm-co-src--${wsCls}">${esc(ws)}</span>` : '';
+    const wsExtra = ws === 'source not recorded' ? ' rv-src-none' : '';
+    const prov = ws ? ` <span class="pm-co-src pm-co-src--${wsCls}${wsExtra}">${esc(ws)}</span>` : '';
     const vs = e.verify_status
         ? ` <span class="rv-vs rv-vs--${e.verify_status === 'verified' ? 'ok' : 'no'}">${esc(e.verify_status)}</span>`
         : '';
@@ -245,12 +263,17 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
             <div class="rv-detail"></div>
           </aside>
         </div>
+        <!-- Globe only. The dock USED to be an absolutely-positioned overlay inside the map,
+             covering the bottom 76px of it (and up to 42vh expanded) and clipping the southern
+             hemisphere. It is a sibling strip now, so the map's bottom edge is clear. -->
+        <div class="rv-dockstrip" hidden></div>
         <div class="rv-legend">${legend}<span class="rv-leg rv-leg--ring"><i></i>country = ring</span></div>
       </div>`;
     const input = container.querySelector('.rv-search') as HTMLInputElement;
     const results = container.querySelector('.rv-results') as HTMLElement;
     const detail = container.querySelector('.rv-detail') as HTMLElement;
     const cHost = container.querySelector('.rv-canvas-host') as HTMLElement;
+    const dockStrip = container.querySelector('.rv-dockstrip') as HTMLElement;
 
     const panel = container.querySelector('.rv-panel') as HTMLElement;
     const PANEL_W = 380;
@@ -305,6 +328,7 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
             const coords = ((await r.json()) as any).nodes as Record<string, any>;
             globe = mountGlobe(
                 cHost,
+                dockStrip,
                 g.nodes.map((n) => ({ id: n.id, type: n.type, country: n.country })),
                 g.edges.map((e) => ({ s: e.s, t: e.t, type: e.type, weight: e.weight })),
                 coords,
@@ -329,6 +353,7 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
         handle?.destroy(); handle = null;
         globe?.destroy(); globe = null;
         cHost.innerHTML = '';
+        dockStrip.hidden = true; dockStrip.innerHTML = '';
         for (const b of Array.from(container.querySelectorAll('.rv-mode'))) {
             (b as HTMLElement).setAttribute('aria-selected', String((b as HTMLElement).dataset.mode === m));
         }

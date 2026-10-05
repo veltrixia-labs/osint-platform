@@ -77,6 +77,8 @@ export type GlobeHandle = {
 
 export function mountGlobe(
     host: HTMLElement,
+    /** The dock's own strip BELOW the map — not inside it. See renderDock(). */
+    dockHost: HTMLElement,
     nodes: GlobeNode[],
     edges: GlobeEdge[],
     coords: Record<string, Coord>,
@@ -105,6 +107,13 @@ export function mountGlobe(
     // Non-geographic dock: concepts, markets, funds, blocs and orgs have no coordinate BY DESIGN
     // (node_coordinates.json's no_coords_by_design list). They are not missing data and must not
     // be dropped from the view — they are where most of the vault's hub structure lives.
+    //
+    // ★ It lives in its OWN STRIP BELOW THE MAP, not as an overlay on it. As an overlay it was
+    //   absolutely positioned across the full width of the bottom edge — 76px collapsed, 42vh
+    //   expanded — which cost two things at once: it hid the southern hemisphere behind a
+    //   gradient, and its wrapper box swallowed any mousedown landing between chips, so drags
+    //   begun low on the globe went nowhere. Out of the map, both problems are structural
+    //   non-issues rather than things held off by a pointer-events rule.
     const dock = document.createElement('div');
     dock.className = 'rv-dock'; dock.dataset.expanded = '0';
     const ranked = nongeo.slice().sort((a, b) => (deg.get(b.id) || 0) - (deg.get(a.id) || 0));
@@ -143,7 +152,8 @@ export function mountGlobe(
             + (expanded ? `<button class="rv-dock-more" data-more="0">show less</button>` : '');
         refresh();
     };
-    host.appendChild(dock);
+    dockHost.hidden = false;
+    dockHost.appendChild(dock);
 
     // ★ MAX_ARCS truncation is announced, never silent. Measured on the committed graph, the cap
     //   bites on exactly 2 of 248 placeable nodes — but on one of them it is severe:
@@ -613,7 +623,7 @@ export function mountGlobe(
         if (placeable.length >= 2 && !dead()) {
             try {
                 map.fitBounds(geoBounds(), {
-                    padding: { top: 48, bottom: 110, left: 48, right: 48 }, maxZoom: 4, duration: 0,
+                    padding: { top: 48, bottom: 48, left: 48, right: 48 }, maxZoom: 4, duration: 0,
                 });
             } catch (err) {
                 // eslint-disable-next-line no-console
@@ -658,7 +668,7 @@ export function mountGlobe(
         //   place, it is only drawn faintly — so the camera ease and the fade can run together
         //   and read as one event.
         map.fitBounds(b, {
-            padding: { top: 60, bottom: 90, left: 60, right: 420 },
+            padding: { top: 60, bottom: 48, left: 60, right: 420 },
             maxZoom: 5, pitch: 50, bearing: 0, duration: 900,
         });
     };
@@ -680,7 +690,7 @@ export function mountGlobe(
         if (dead() || placeable.length < 2) return;
         try {
             map.fitBounds(geoBounds(), {
-                padding: { top: 48, bottom: 110, left: 48, right: 48 }, maxZoom: 4, duration: 0,
+                padding: { top: 48, bottom: 48, left: 48, right: 48 }, maxZoom: 4, duration: 0,
             });
         } catch { /* keep the current view */ }
     };
@@ -698,7 +708,8 @@ export function mountGlobe(
             try { if (overlayAdded) overlay.setProps({ layers: [] }); } catch { /* already gone */ }        // a live rAF outliving the map would call setPaintProperty on a
                                // removed layer every frame; dead() guards it, but not leaking the
                                // frame loop at all is the actual fix.
-            ro.disconnect(); if (!dead()) map.remove(); mapEl.remove(); dock.remove();
+            ro.disconnect(); if (!dead()) map.remove(); mapEl.remove();
+            dock.remove(); dockHost.hidden = true;
         },
     };
 }
