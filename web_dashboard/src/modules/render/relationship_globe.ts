@@ -373,7 +373,13 @@ export function mountGlobe(
         type: 'FeatureCollection' as const,
         features: geo.map((n) => {
             const c = coords[n.id];
-            const inEgo = !selected || n.id === selected || (adj.get(selected)?.has(n.id) ?? false);
+            // ★ Same guard as the graph canvas: a selection with no neighbours would dim every
+            //   geo node to alpha 0.15 and leave a basemap with nothing on it. An ego of one
+            //   disables the filter instead. (The node itself may not even be on the map — a
+            //   zero-degree node with no coordinate lives in the dock.)
+            const nbrs = selected === null ? undefined : adj.get(selected);
+            const egoActive = (nbrs?.size ?? 0) > 0;
+            const inEgo = !egoActive || n.id === selected || (nbrs?.has(n.id) ?? false);
             return {
                 type: 'Feature' as const,
                 geometry: { type: 'Point' as const, coordinates: [c.lng, c.lat] },

@@ -12542,6 +12542,17 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-panel .rv-detail { flex: 1; overflow-y: auto; padding-right: 4px; }
 #pro-map-container .rv-freeline { font-size: 0.6rem; color: #fbbf24; background: rgba(251,191,36,0.08);
     border: 1px solid rgba(251,191,36,0.22); border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; }
+/* Shown when a selected entity has zero recorded relationships. Deliberately NOT styled as an
+   error or a warning — nothing is broken; the vault holds entities that take part in no
+   relationship, and the explorer should say so calmly. */
+#pro-map-container .rv-unlinked { border: 1px solid var(--border); border-radius: 8px;
+    background: rgba(148,163,184,0.05); padding: 10px 12px; margin-top: 8px; }
+#pro-map-container .rv-unlinked-h { color: #cbd5e1; font-size: 0.68rem; letter-spacing: 0.04em;
+    text-transform: uppercase; margin-bottom: 6px; }
+#pro-map-container .rv-unlinked p { margin: 0; color: var(--text-secondary); font-size: 0.68rem; line-height: 1.6; }
+#pro-map-container .rv-unlinked strong { color: #cbd5e1; font-variant-numeric: tabular-nums; }
+/* Tells the user before they click, so the thin panel is never a surprise. */
+#pro-map-container .rv-hit-unlinked { color: #64748b; font-style: italic; }
 #pro-map-container .rv-idle { color: #64748b; font-size: 0.74rem; padding: 10px 2px; line-height: 1.7; }
 #pro-map-container .rv-tip { position: absolute; pointer-events: none; z-index: 5; font-size: 0.64rem; line-height: 1.4;
     background: rgba(2,6,16,0.94); border: 1px solid rgba(56,189,248,0.3); border-radius: 5px; padding: 5px 7px; color: #e2e8f0; }

@@ -65,6 +65,16 @@ function neighbours(id: string): Array<{ e: REdge; other: string; dir: '→' | '
     return [...out, ...inc];
 }
 
+/**
+ * ★ A node with ZERO recorded relationships. Keyed on DEGREE, deliberately not on id and not on
+ *   `layer`. Not on id because 00_SCHEMA.md now names PURE CONVERGENCE RECEIVER as a sanctioned
+ *   convention that may gain members, so a SIPRI special case would silently rot. Not on `layer`
+ *   because measurement kills it: 9 nodes carry `layer: index` and 8 of them have edges.
+ *   Measured on the served payload: exactly one node qualifies today (SIPRI); the next most
+ *   fragile is Memory_Price at degree 1, which is NOT a dead end because it has a neighbour.
+ */
+const isUnlinked = (id: string): boolean => neighbours(id).length === 0;
+
 function index(g: RGraph) {
     GRAPH = g; BY_ID = new Map(); OUT = new Map(); IN = new Map();
     for (const n of g.nodes) BY_ID.set(n.id, n);
@@ -166,7 +176,21 @@ function rowHtml(e: REdge, other: string, dir: '→' | '←'): string {
 
 function neighbourHtml(id: string): string {
     const all = neighbours(id);
-    if (!all.length) return `<div class="rv-empty">no recorded relationships</div>`;
+    if (!all.length) {
+        // ★ THE BUG THIS REPLACES: three words under an empty canvas, on a surface whose whole
+        //   job is "if this moves, what else moves". It stated a fact and explained nothing.
+        //   What this says instead is only what the payload actually supports — 0 of N
+        //   relationships — and it does NOT claim the node is a citation source, because the
+        //   served payload carries no field saying so. The vault knows; this surface does not.
+        //   See the commit message for the vault-side proposal that would let it say more.
+        const total = GRAPH?.edges.length ?? 0;
+        return `<div class="rv-unlinked">
+            <div class="rv-unlinked-h">No relationships recorded</div>
+            <p>This entity is held in the vault in its own right, but it takes part in
+               <strong>0 of ${total.toLocaleString()}</strong> recorded relationships. The explorer draws
+               relationships, so there is nothing to draw for it — its own attributes are above.</p>
+        </div>`;
+    }
     const groups = new Map<string, typeof all>();
     for (const x of all) {
         if (!groups.has(x.e.type)) groups.set(x.e.type, []);
@@ -549,7 +573,7 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
         results.innerHTML = hits.map(({ n, tickerHit }) =>
             `<button class="rv-hit" data-goto="${esc(n.id)}">
                 <span class="rv-hit-id">${esc(humanize(n.id))}</span>
-                <span class="rv-hit-meta">${esc(n.type || '')}${n.country ? ' · ' + esc(n.country) : ''}${tickerHit ? ' · ' + esc(tickerHit) : ''}</span>
+                <span class="rv-hit-meta">${esc(n.type || '')}${n.country ? ' · ' + esc(n.country) : ''}${tickerHit ? ' · ' + esc(tickerHit) : ''}${isUnlinked(n.id) ? '<em class="rv-hit-unlinked"> · no relationships</em>' : ''}</span>
              </button>`).join('');
     };
     input.addEventListener('input', doSearch);

@@ -147,16 +147,29 @@ export function mountGraphCanvas(
     let hovered: string | null = null;
     let twoHop = false;
     let ego: Set<string> = new Set();
+    let egoActive = false;          // false when the selection has no neighbours — see computeEgo
     let tween: number | null = null;
     let panelOffset = 0;
     let labelsKept = 0, labelsConsidered = 0;
 
+    /**
+     * ★ egoActive, not `selected`, is what gates the dimming — and that distinction IS the fix.
+     *   Selecting a node with no neighbours produced ego = {itself}, so all 302 other nodes and
+     *   every edge dimmed out and the canvas rendered ONE DOT in a 1572x748 void. The user was
+     *   left with an empty picture and a three-line panel, on a surface that exists to answer
+     *   "if this moves, what else moves".
+     *   Now an ego of one disables the filter: the full graph stays drawn and the node is simply
+     *   highlighted in place, which at least shows WHERE it sits. Keyed on neighbour count, so
+     *   it holds for any future node of this shape, not just the one that has it today.
+     */
     const computeEgo = () => {
         ego = new Set();
+        egoActive = false;
         if (!selected) return;
         ego.add(selected);
         for (const a of adj.get(selected) || []) ego.add(a);
         if (twoHop) for (const a of [...ego]) for (const b of adj.get(a) || []) ego.add(b);
+        egoActive = ego.size > 1;
     };
 
     // English-only surface: the server drops CJK titles, and the canvas label is derived from
@@ -172,7 +185,7 @@ export function mountGraphCanvas(
         for (const e of edges) {
             const s = e.source as GNode, t = e.target as GNode;
             if (!s || !t || s.x == null || t.x == null) continue;
-            const inEgo = !selected || (ego.has(s.id) && ego.has(t.id));
+            const inEgo = !egoActive || (ego.has(s.id) && ego.has(t.id));
             // competitor is UNWEIGHTED BY DESIGN (00_SCHEMA.md:85) — drawn lighter so the eye
             // does not read a rivalry edge as a measured dependency.
             const base = e.type === 'competitor' ? 0.1 : 0.2;
@@ -184,7 +197,7 @@ export function mountGraphCanvas(
 
         for (const n of nodes) {
             if (n.x == null) continue;
-            const inEgo = !selected || ego.has(n.id);
+            const inEgo = !egoActive || ego.has(n.id);
             ctx.globalAlpha = inEgo ? 1 : dim;
             const col = PALETTE[n.type || ''] || DEFAULT_COLOR;
             ctx.beginPath(); ctx.arc(n.x, n.y!, n.r!, 0, Math.PI * 2);
@@ -216,7 +229,7 @@ export function mountGraphCanvas(
         const cands: Cand[] = [];
         for (const n of nodes) {
             if (n.x == null) continue;
-            const forced = n.id === hovered || n.id === selected || (!!selected && ego.has(n.id));
+            const forced = n.id === hovered || n.id === selected || (egoActive && ego.has(n.id));
             // At k >= 2.5 every node is a candidate regardless of degree — there is room by then.
             const eligible = forced || (selected ? false : (k >= 2.5 || (n.deg || 0) >= 12 || n.type === 'country'));
             if (!eligible) continue;
@@ -239,7 +252,7 @@ export function mountGraphCanvas(
         labelsKept = kept.length; labelsConsidered = cands.length;
         // non-forced first, forced last = selected + 1-hop end up on top
         for (const c of [...kept.filter((c) => !c.forced), ...kept.filter((c) => c.forced)]) {
-            ctx.globalAlpha = (!selected || ego.has(c.n.id)) ? 0.94 : dim;
+            ctx.globalAlpha = (!egoActive || ego.has(c.n.id)) ? 0.94 : dim;
             ctx.fillStyle = c.forced && selected ? '#f1f5f9' : '#cbd5e1';
             ctx.fillText(c.txt, c.x, c.y);
         }
@@ -280,10 +293,19 @@ export function mountGraphCanvas(
         focus(id) {
             const n = byId.get(id); if (!n || n.x == null) return;
             selected = id; computeEgo();
+            // ★ A node with no neighbours must NOT be zoomed to. The k=1.8 node-centred frame
+            //   below is right for an ego with counterparts, but for an isolated node the force
+            //   layout has pushed it far from the cluster (nothing pulls it in), so flying to it
+            //   at 1.8x parks the camera on empty space. Disabling the ego DIMMING alone did not
+            //   fix this — measured 0.04% of the canvas painted, against 12.57% unselected. The
+            //   camera was the second half of the bug. Frame the whole graph instead, so the
+            //   highlighted node is shown IN CONTEXT rather than alone.
             const k = 1.8;
             // Centre on the VISIBLE half when the drawer is open, not on the canvas centre.
             const cx = (W - panelOffset) / 2;
-            const to = zoomIdentity.translate(cx - n.x * k, H / 2 - n.y! * k).scale(k);
+            const to = egoActive
+                ? zoomIdentity.translate(cx - n.x * k, H / 2 - n.y! * k).scale(k)
+                : (wholeGraphTransform() ?? transform);
             // ★ Hand-rolled 400ms tween rather than d3-transition: adding a fifth d3 package for
             //   one eased interpolation is not worth the bundle. cubic ease-in-out over
             //   (x, y, k), pushed through zb.transform so d3-zoom's own state stays authoritative
@@ -360,6 +382,23 @@ export function mountGraphCanvas(
         console.log(`[relationship_canvas] transform k=${k.toFixed(3)} x=${tx.toFixed(1)} y=${ty.toFixed(1)} · nodes ${nodes.length} · edges ${edges.length} linkable ${linkable.length} dropped ${dropped}`);
         console.log(`[relationship_canvas] layout ${layoutMs.toFixed(0)}ms (${ticks} ticks, ${(ticks / Math.max(1, layoutMs / 1000)).toFixed(0)} ticks/s) · first render ${firstMs.toFixed(0)}ms`);
         /* eslint-enable no-console */
+    };
+
+    /** The transform that frames the WHOLE graph. Extracted so focus() can fall back to it. */
+    const wholeGraphTransform = () => {
+        if (!(W > 0 && H > 0)) return null;
+        const xs = nodes.map((n) => n.x!).filter(Number.isFinite);
+        const ys = nodes.map((n) => n.y!).filter(Number.isFinite);
+        if (!xs.length || !ys.length) return null;
+        const x0 = Math.min(...xs), x1 = Math.max(...xs);
+        const y0 = Math.min(...ys), y1 = Math.max(...ys);
+        const pad = 28;
+        let k = Math.min((W - pad * 2) / Math.max(1, x1 - x0), (H - pad * 2) / Math.max(1, y1 - y0));
+        if (!Number.isFinite(k)) k = 1;
+        k = Math.max(0.05, Math.min(8, k));
+        const tx = W / 2 - ((x0 + x1) / 2) * k, ty = H / 2 - ((y0 + y1) / 2) * k;
+        return Number.isFinite(tx) && Number.isFinite(ty)
+            ? zoomIdentity.translate(tx, ty).scale(k) : null;
     };
 
     let fitted = false;
