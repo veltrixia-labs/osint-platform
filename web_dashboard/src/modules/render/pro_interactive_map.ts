@@ -1742,7 +1742,7 @@ class SurveillanceMapController {
             </div>
             <div class="pm-c2-legend">
                 <div class="pm-c2-leg-row"><span class="pm-c2-sw pm-c2-sw--epi"></span>Epicenter</div>
-                <div class="pm-c2-leg-row"><span class="pm-c2-sw pm-c2-sw--aff"></span>Affected · measured</div>
+                <div class="pm-c2-leg-row"><span class="pm-c2-sw pm-c2-sw--aff"></span>Affected · direct edge</div>
                 <div class="pm-c2-leg-row"><span class="pm-c2-sw pm-c2-sw--unq"></span>Exposed · magnitude unknown</div>
             </div>
             <div class="pm-c2-static">Static cascade · no time series</div>
@@ -2092,7 +2092,21 @@ class SurveillanceMapController {
     private buildNodeCardHtml(node: any): string {
         const isExposed = node.type === 'exposed_unquantified' || node.impact_score == null;
         const roleLabel = node.type === 'epicenter' ? 'Epicenter'
-            : node.type === 'affected' ? 'Affected · measured'
+            // ★ 2026-10-05: was 'Affected · measured'. Two reasons it had to stop saying that.
+            //   (1) Until the vault demoted order-3, EVERY derived row carried type 'affected'
+            //       and got this label: 78 of 125 published node rows, 76 of them with no edge
+            //       to the hub, each scored parent_weight x 0.7. That motivation is now gone --
+            //       the demotion removed the tier, and all 35 remaining 'affected' nodes hold
+            //       their own authored edge (measured: 35/35 positive raw_impact, 0 negative).
+            //   (2) The residual, which the demotion does NOT fix: 'measured' still claims
+            //       observation for a weight that may be weight_source: estimated. On Hormuz,
+            //       5 of the 9 surviving affected parents are estimated (Iraq/Qatar/SOMO/Japan/
+            //       South_Korea) against 4 observed (Iran/Saudi_Arabia/China/India). The UI
+            //       cannot condition on that -- weight_source is not served for nodes and
+            //       SpatialNode has no column for it -- so the honest move is to state the
+            //       STRUCTURAL fact (this node has its own edge into the hub) and claim no
+            //       observation. 'direct edge' is true of all 35 regardless of provenance.
+            : node.type === 'affected' ? 'Affected · direct edge'
             : 'Exposed · magnitude unknown';
         const impact = isExposed || node.impact_score == null ? '--' : impactBand(node.impact_score);
         const rows: string[] = [
