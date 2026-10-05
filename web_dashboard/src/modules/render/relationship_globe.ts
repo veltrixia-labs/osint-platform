@@ -111,6 +111,50 @@ export type GlobeHandle = {
     destroy: () => void;
 };
 
+/**
+ * Reset-view button, as a MapLibre IControl so it joins the existing control group rather than
+ * floating somewhere new — same surface, same border, same hit target as the zoom buttons.
+ *
+ * ★ WHAT "RESET" MEANS HERE: IT RE-FRAMES, IT NEVER CLEARS. With a node selected it re-runs
+ *   fitEgo for that same node; with nothing selected it returns to the default world view. The
+ *   selection, the drawer and the collapse state all survive untouched.
+ *
+ *   The alternative — reset also drops the selection and goes back to the world — was rejected
+ *   as the more surprising of the two. A camera control that silently discards your selection
+ *   makes you redo a search to get back, and the drawer already has an explicit × for exactly
+ *   that. Keeping it to the camera also makes the label honest: "Reset view" is true of both
+ *   branches, whereas anything implying "clear" would be a lie in the selected case.
+ *
+ * ★ ALWAYS ENABLED, deliberately. Disabling it at the reset state would mean comparing live
+ *   centre/zoom/pitch/bearing against a target that is itself recomputed from the current
+ *   coordinates every time, with tolerances on four axes. A stale disabled state is a dead
+ *   control the user cannot diagnose; a reset that is momentarily a no-op costs nothing.
+ */
+class ResetViewControl {
+    private _c!: HTMLDivElement;
+    onAdd(_m: any) {
+        this._c = document.createElement('div');
+        this._c.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+        const b = document.createElement('button');
+        b.type = 'button';
+        // ★ NOT maplibregl-ctrl-icon. That class carries our `filter: invert(1)`, which exists
+        //   to flip MapLibre's black SVGs light on a dark surface — and it inverted this icon's
+        //   cyan --accent into red. Computed style said rgb(0,209,255) while the pixels said
+        //   orange, which is the same class of trap as the emoji glyph this icon replaced.
+        //   Our own icon needs none of MapLibre's icon styling; the group button rule already
+        //   gives it size, border and hover.
+        b.className = 'rv-ctrl-reset';
+        b.title = 'Reset view';
+        b.setAttribute('aria-label', 'Reset view');
+        b.addEventListener('click', () => this.onReset?.());
+        this._c.appendChild(b);
+        return this._c;
+    }
+    onRemove() { this._c.parentNode?.removeChild(this._c); }
+    /** Assigned by mountGlobe once resetView exists. */
+    onReset?: () => void;
+}
+
 export function mountGlobe(
     host: HTMLElement,
     /** The dock's own strip BELOW the map — not inside it. See renderDock(). */
@@ -297,7 +341,23 @@ export function mountGlobe(
     const safeResize = () => { if (!dead()) { map.resize(); applyMinZoom(); } };
     // showCompass is on now that rotation works: without it there is no way back to north
     // after a ctrl-drag, and pitch makes a lost bearing easy to acquire.
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
+    // ★ TOP-LEFT, NOT TOP-RIGHT, AND THAT IS A FIX NOT A PREFERENCE. The drawer is 320px of
+    //   absolutely-positioned overlay pinned top:0/bottom:0 on the RIGHT, so at >=1200px it
+    //   covers the entire right edge of the map. The zoom buttons sat under it whenever a node
+    //   was selected — I hit that myself during an earlier verification run, where repeated
+    //   clicks on .maplibregl-ctrl-zoom-out silently did nothing because they were landing on
+    //   the drawer. The left edge is the only region the drawer never reaches.
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-left');
+    const resetCtl = new ResetViewControl();
+    map.addControl(resetCtl, 'top-left');
+    // ★ ATTRIBUTION WAS MISSING ENTIRELY. The constructor sets attributionControl:false and
+    //   nothing added one back, so this view shipped a CARTO dark-matter basemap with no
+    //   credit — while style.css:9109 in this same repo calls it "the required CARTO/OSM
+    //   attribution" and pro_interactive_map.ts:1037 adds AttributionControl({compact:true}).
+    //   Restored on that existing convention. Bottom-LEFT rather than the legacy bottom-right
+    //   for the same reason as above: the drawer owns the right edge, and attribution that is
+    //   hidden behind a panel is not attribution.
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
 
     let selected: string | null = null;
     let mountedMs = 0;
@@ -815,6 +875,25 @@ export function mountGlobe(
     //   screen-derived endpoint and called setData on EVERY move event, i.e. once per frame of a
     //   pan — real jank on a gesture that is now supposed to feel free. Geographic arcs need
     //   nothing of the kind: deck.gl re-projects them from lng/lat itself.
+
+    /**
+     * Re-frame to whatever framing this view would have produced on its own: the current ego if
+     * one is selected, otherwise the default world fit. Animated at 900ms to match the fitBounds
+     * the selection path already uses, so reset feels like the same gesture rather than a jump.
+     * Selection, drawer and collapse state are untouched by design — see ResetViewControl.
+     */
+    const resetView = () => {
+        if (dead()) return;
+        if (selected && coords[selected]) { fitEgo(selected); return; }
+        if (placeable.length < 2) return;
+        try {
+            map.fitBounds(geoBounds(), {
+                padding: { top: 48, bottom: 48, left: 48, right: 48 },
+                maxZoom: 4, pitch: 0, bearing: 0, duration: 900,
+            });
+        } catch { /* keep the current view */ }
+    };
+    resetCtl.onReset = resetView;
 
     const refit = () => {
         if (dead() || placeable.length < 2) return;

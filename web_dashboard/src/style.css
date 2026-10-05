@@ -12601,7 +12601,77 @@ body.syslogic-open { overflow: hidden; }
    so there is nothing stopping the map collapsing to a sliver. The cap plus the existing
    internal scroll keeps every chip reachable while leaving the map the majority of the box. */
 #pro-map-container .rv-dock[data-expanded="1"] { max-height: 30vh; overflow-y: auto; }
-#pro-map-container .rv-arcnote { position: absolute; left: 10px; top: 10px; z-index: 3;
+/* ★ MAP CONTROL SKIN. MapLibre ships white buttons with a hard shadow, which read as a bright
+   block against this interface — clearly visible as a white slab at the top-right in every
+   screenshot taken before this. Every colour below comes from theme.css, none is invented:
+   --bg-elevated (the panel surface), --border and --border-active (the thin hairlines the rest
+   of .rv-root uses), --accent and --accent-soft (the same cyan as the mode toggle), and
+   --text-secondary for the attribution text.
+   The icons are MapLibre's own SVGs drawn in black, so they are inverted rather than replaced —
+   replacing them would mean shipping and maintaining copies of the +, -, compass and info
+   glyphs, and the compass must keep working because visualizePitch rotates it and it is the
+   only thing that shows the user their tilt. */
+#pro-map-container .rv-globe .maplibregl-ctrl-group {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: none;
+    overflow: hidden;
+}
+#pro-map-container .rv-globe .maplibregl-ctrl-group button {
+    /* 30px, above the 28px floor the brief sets and above MapLibre's own 29px default. */
+    width: 30px; height: 30px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+}
+#pro-map-container .rv-globe .maplibregl-ctrl-group button + button { border-top: 0; }
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:last-child { border-bottom: 0; }
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:hover { background: var(--accent-soft); }
+/* Focus must stay obvious for keyboard users — inset so the ring is not clipped by overflow. */
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: -2px; background: var(--accent-soft);
+}
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:disabled { opacity: 0.25; }
+#pro-map-container .rv-globe .maplibregl-ctrl-icon { filter: invert(1); opacity: 0.6; }
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:hover .maplibregl-ctrl-icon,
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:focus-visible .maplibregl-ctrl-icon { opacity: 0.95; }
+/* ★ The reset icon is a MASKED SVG, not a text glyph, and that is the second attempt. The first
+   used content:'\2316' (POSITION INDICATOR) and it rendered AMBER however the colour was set:
+   computed style said rgb(0,209,255) while the pixels said orange, because Arial has no U+2316
+   so the browser fell back to a colour-emoji font, and emoji presentation ignores `color`
+   entirely. A mask keeps the shape in SVG and takes the colour from the variable, so --accent
+   is still the single source and nothing is hard-coded. */
+/* ★ `button.rv-ctrl-reset`, not `.rv-ctrl-reset`. The generic rule above is
+   `#id .rv-globe .maplibregl-ctrl-group button` = specificity (1,2,1) and sets the `background`
+   SHORTHAND, which resets background-color to transparent. A plain `.rv-ctrl-reset` selector is
+   (1,2,0) and loses, so the mask applied but had no colour to show and the button rendered
+   blank. Adding the element qualifier takes it to (1,3,1). */
+#pro-map-container .rv-globe .maplibregl-ctrl-group button.rv-ctrl-reset {
+    background-image: none;
+    background-color: var(--accent);
+    opacity: 0.72;
+    -webkit-mask: var(--rv-reset-icon) center / 17px 17px no-repeat;
+    mask: var(--rv-reset-icon) center / 17px 17px no-repeat;
+}
+#pro-map-container .rv-globe {
+    --rv-reset-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='5.5'/><path d='M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4'/></svg>");
+}
+#pro-map-container .rv-globe .maplibregl-ctrl-group button.rv-ctrl-reset:hover,
+#pro-map-container .rv-globe .maplibregl-ctrl-group button.rv-ctrl-reset:focus-visible {
+    opacity: 1; background-color: var(--accent);
+}
+/* Attribution: present and legible, not a white tab. */
+#pro-map-container .rv-globe .maplibregl-ctrl-attrib {
+    background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px;
+}
+#pro-map-container .rv-globe .maplibregl-ctrl-attrib,
+#pro-map-container .rv-globe .maplibregl-ctrl-attrib a { color: var(--text-secondary); font-size: 0.58rem; }
+#pro-map-container .rv-globe .maplibregl-ctrl-attrib a:hover { color: var(--accent); }
+
+/* ★ left:52px, not 10px: the control group now lives at top-left with MapLibre's 10px margin and
+   is 30px wide, so a note at left:10px would sit underneath it. */
+#pro-map-container .rv-arcnote { position: absolute; left: 52px; top: 10px; z-index: 3;
     background: rgba(2,6,16,0.86); border: 1px solid rgba(251,146,60,0.45); color: #fdba74;
     font-size: 0.6rem; letter-spacing: 0.03em; padding: 4px 8px; border-radius: 4px;
     pointer-events: none; max-width: 42ch; }
