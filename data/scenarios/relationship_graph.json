@@ -1,9 +1,9 @@
 {
  "meta": {
-  "generated_at": "2026-10-05T01:09:52+00:00",
-  "vault_head": "860e7f077f7e8f41253ddf237629e28186229588",
+  "generated_at": "2026-10-05T06:32:41+00:00",
+  "vault_head": "7595fb5bf679fb5a788d092df06445bfa2881c58",
   "node_count": 303,
-  "edge_count": 1535,
+  "edge_count": 1543,
   "edge_types": [
    "competitor",
    "complementary",
@@ -27,18 +27,18 @@
    "supplier"
   ],
   "weight_source_counts": {
-   "None": 1022,
+   "None": 1030,
    "estimated": 433,
    "observed": 80
   },
   "verify_status_counts": {
-   "verified": 1261,
+   "verified": 1269,
    "unverified": 274
   },
   "weight_states": {
    "numeric": 546,
    "explicit_null": 218,
-   "key_absent": 771
+   "key_absent": 779
   },
   "note": "Within-hub relative only; weights are orderable only among edges sharing a target. weight_source: estimated is informed judgement, not observation. weight omitted = not applicable to this edge type; weight null = magnitude never measured. impact_score / order-3 / coordinates are NOT in this file and must not be joined to it."
  },
@@ -898,7 +898,9 @@
    "title": null,
    "role": "CME Group — world's largest derivatives/futures exchange & clearing house (rates, equity-index, energy, FX, ag futures); NASDAQ:CME",
    "aliases": [],
-   "listing": [],
+   "listing": [
+    "NASDAQ:CME"
+   ],
    "layer": "company"
   },
   {
@@ -2151,7 +2153,9 @@
    "title": null,
    "role": "Hong Kong Exchanges and Clearing — HK's monopoly securities/derivatives exchange & clearing house (China-access gateway, Stock/Bond Connect); HKEX:0388",
    "aliases": [],
-   "listing": [],
+   "listing": [
+    "HKEX:0388"
+   ],
    "layer": "company"
   },
   {
@@ -2322,7 +2326,9 @@
    "title": null,
    "role": "Intercontinental Exchange — global exchange/clearing + data operator (NYSE parent, energy/fixed-income venues, ICE Data, mortgage tech); NYSE:ICE",
    "aliases": [],
-   "listing": [],
+   "listing": [
+    "NYSE:ICE"
+   ],
    "layer": "company"
   },
   {
@@ -2727,7 +2733,9 @@
    "title": null,
    "role": "London Stock Exchange Group — exchange + data/analytics (Refinitiv, FTSE Russell, ~70% recurring data revenue), majority owner of Tradeweb; LSE:LSEG",
    "aliases": [],
-   "listing": [],
+   "listing": [
+    "LSE:LSEG"
+   ],
    "layer": "company"
   },
   {
@@ -17192,6 +17200,21 @@
    "weight_scope": "counterpart"
   },
   {
+   "s": "United_Kingdom",
+   "t": "LSEG",
+   "type": "hosts",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026",
+   "retrieved": "2026-07-02",
+   "source": "https://www.lseg.com/content/dam/lseg/en_us/documents/investor-relations/financial-results/preliminary-results/rns/lseg-2025-preliminary-results-rns-26feb2026.pdf",
+   "desc": "英国が [[LSEG]]（取引所＋市場データ）を擁する＝located_in→United_Kingdom の reciprocal。地理の事実のみ・no weight（00_SCHEMA.md:83「located_in/hosts には付けない」）"
+  },
+  {
    "s": "Urenco",
    "t": "Uranium_Enrichment",
    "type": "context_link",
@@ -19209,6 +19232,21 @@
    "desc": "市場競合（公開事実）: 取引所/清算ピア。single-sided ABC（COMPETITOR_POLICY 準拠）"
   },
   {
+   "s": "CME_Group",
+   "t": "United_States",
+   "type": "located_in",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026",
+   "retrieved": "2026-07-02",
+   "source": "https://www.sec.gov/Archives/edgar/data/0001156375/000115637526000009/cme-20251231.htm",
+   "desc": "★ CME Group の本拠は Chicago, Illinois＝ [[United_States]]（10-K の principal executive offices）。node 自身の country: US を edge として materialize したもの・地理の事実のみ・no weight（00_SCHEMA.md:83「located_in/hosts には付けない」）"
+  },
+  {
    "s": "Citigroup",
    "t": "United_States",
    "type": "located_in",
@@ -19608,6 +19646,21 @@
    "desc": "市場競合（公開事実）: 取引所/清算ピア。single-sided ABC（COMPETITOR_POLICY 準拠）"
   },
   {
+   "s": "HKEX",
+   "t": "Hong_Kong",
+   "type": "located_in",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026",
+   "retrieved": "2026-07-02",
+   "source": "https://www.hkex.com.hk/-/media/HKEX-Market/News/News-Release/2026/2602262news/2602262news_eng.pdf",
+   "desc": "★ Hong Kong Exchanges and Clearing の本拠は [[Hong_Kong]]（HKEX news release・HK 法人）。node 自身の country: HK を edge として materialize したもの・地理の事実のみ・no weight（00_SCHEMA.md:83「located_in/hosts には付けない」）"
+  },
+  {
    "s": "HSBC",
    "t": "United_Kingdom",
    "type": "located_in",
@@ -19681,6 +19734,21 @@
    "retrieved": "2026-07-03",
    "source": "https://companiesmarketcap.com/",
    "desc": "市場競合（公開事実）: 取引所/清算ピア。single-sided ABC（COMPETITOR_POLICY 準拠）"
+  },
+  {
+   "s": "ICE",
+   "t": "United_States",
+   "type": "located_in",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026",
+   "retrieved": "2026-07-02",
+   "source": "https://www.sec.gov/Archives/edgar/data/0001571949/000157194926000004/ice-20251231.htm",
+   "desc": "★ Intercontinental Exchange の本拠は Atlanta, Georgia＝ [[United_States]]（10-K の principal executive offices）。node 自身の country: US を edge として materialize したもの・地理の事実のみ・no weight（00_SCHEMA.md:83「located_in/hosts には付けない」）"
   },
   {
    "s": "Itau_Unibanco",
@@ -19821,6 +19889,21 @@
    "retrieved": "2026-07-08",
    "source": "https://globalswf.com/fund/KIA",
    "desc": "★ peer sovereign investor（Gulf SWF peer group・グローバル資産で co-invest/競合）＝ [[QIA]]（single-sided ABC: KIA<QIA）。市場/機関の事実のみ（leverage framing なし）"
+  },
+  {
+   "s": "LSEG",
+   "t": "United_Kingdom",
+   "type": "located_in",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026",
+   "retrieved": "2026-07-02",
+   "source": "https://www.lseg.com/content/dam/lseg/en_us/documents/investor-relations/financial-results/preliminary-results/rns/lseg-2025-preliminary-results-rns-26feb2026.pdf",
+   "desc": "★ London Stock Exchange Group の本拠は London＝ [[United_Kingdom]]（England & Wales 登記・FY2025 preliminary results RNS）。node 自身の country: GB を edge として materialize したもの・地理の事実のみ・no weight（00_SCHEMA.md:83「located_in/hosts には付けない」）"
   },
   {
    "s": "MUFG",
@@ -29450,6 +29533,36 @@
    "weight_scope": "hub"
   },
   {
+   "s": "United_States",
+   "t": "CME_Group",
+   "type": "hosts",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026",
+   "retrieved": "2026-07-02",
+   "source": "https://www.sec.gov/Archives/edgar/data/0001156375/000115637526000009/cme-20251231.htm",
+   "desc": "米国が [[CME_Group]]（デリバティブ取引所/清算）を擁する＝located_in→United_States の reciprocal。地理の事実のみ・no weight（00_SCHEMA.md:83「located_in/hosts には付けない」）"
+  },
+  {
+   "s": "United_States",
+   "t": "ICE",
+   "type": "hosts",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026",
+   "retrieved": "2026-07-02",
+   "source": "https://www.sec.gov/Archives/edgar/data/0001571949/000157194926000004/ice-20251231.htm",
+   "desc": "米国が [[ICE]]（取引所/清算・データ）を擁する＝located_in→United_States の reciprocal。地理の事実のみ・no weight（00_SCHEMA.md:83「located_in/hosts には付けない」）"
+  },
+  {
    "s": "Western_Digital",
    "t": "SanDisk",
    "type": "spun_off",
@@ -30983,6 +31096,21 @@
    "retrieved": "2026-07-08",
    "source": "https://www.ooilgroup.com/",
    "desc": "★ 香港が [[OOIL]]（Orient Overseas/OOCL・コンテナ海運）を擁する＝located_in→Hong_Kong の reciprocal。地理/通商の事実のみ"
+  },
+  {
+   "s": "Hong_Kong",
+   "t": "HKEX",
+   "type": "hosts",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026",
+   "retrieved": "2026-07-02",
+   "source": "https://www.hkex.com.hk/-/media/HKEX-Market/News/News-Release/2026/2602262news/2602262news_eng.pdf",
+   "desc": "香港が [[HKEX]]（証券/デリバティブ取引所・清算）を擁する＝located_in→Hong_Kong の reciprocal。地理の事実のみ・no weight（00_SCHEMA.md:83「located_in/hosts には付けない」）"
   },
   {
    "s": "Indonesia",

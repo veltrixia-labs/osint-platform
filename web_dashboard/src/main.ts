@@ -404,7 +404,11 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
     // patched here only to be deleted.
     'pro-map': {
         title: 'Pro Interactive Map',
-        subtitle: 'The vault relationship graph — 303 entities and 1,535 relationships, each with its own source and verification status.',
+        // ★ NO COUNTS HERE. This static string said "1,535 relationships" while the live
+        //   .rv-meta line directly beneath it said 1543 — both on screen at once, caught in a
+        //   screenshot. A hand-maintained number sitting next to a computed one will always
+        //   lose. The counts live in .rv-meta, which reads them from the payload.
+        subtitle: 'The vault relationship graph — every relationship carries its own source and verification status.',
     },
     'impact-roster': { title: 'Impact Roster' },
     'market-pulse': {

@@ -32,16 +32,22 @@ const FEATURE_META: Record<ShroudFeature, FeatureMeta> = {
     // ★ Rewritten 2026-10-05. The previous copy sold the DELETED chokepoint map — "geolocated
     //   signal clusters, maritime choke-point flow, collateral contagion networks" — which is
     //   not what Pro receives any more. Every number below is measured against the shipped
-    //   payload (data/scenarios/relationship_graph.json): 303 nodes, 1535 edges, retrieved and
-    //   verify_status 100% filled, source on 1519, verified on 1261. Nothing here promises
-    //   real-time, live tracking or motion, because the view does none of those.
+    //   payload (data/scenarios/relationship_graph.json): 303 nodes, retrieved and
+    //   verify_status 100% filled. Nothing here promises real-time, live tracking or motion,
+    //   because the view does none of those.
+    // ★ EDGE COUNTS AND VERIFIED COUNTS WERE REMOVED 2026-10-05, not updated. This is a STATIC
+    //   string that cannot read the payload, and the edge count is UNGATED — CLAUDE.md §1:
+    //   "Edges are not gated at all" — so it drifts every time the vault is wired. It went
+    //   1535 -> 1543 within a day and the blurb was already wrong. The NODE count stays because
+    //   it has a hard gate in two places (cascade_engine.py:118, model_slice_v29.py:70) and
+    //   cannot move silently. Quote the gated number, never the ungated one.
     'pro-map': {
         icon: '🗺️',
         title: 'Pro Interactive Map',
-        blurb: 'A relationship explorer over a hand-authored vault: 303 entities and 1,535 recorded relationships, each one carrying the date it was retrieved and whether it has been verified.',
+        blurb: 'A relationship explorer over a hand-authored vault of 303 entities, where every recorded relationship carries the date it was retrieved and whether it has been verified.',
         bullets: [
-            '303 entities · 1,535 relationships',
-            'Every relationship dated and status-marked — 1,261 verified, and the rest say so',
+            '303 entities, every relationship individually sourced',
+            'Each one dated and marked verified or not — the unverified ones say so',
             'Force-directed graph and geographic globe over the same data',
         ],
     },
