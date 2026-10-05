@@ -73,6 +73,10 @@ export type CanvasHandle = {
     /** Width of the overlay drawer, so focus() can keep the selected node clear of it. */
     setPanelOffset: (px: number) => void;
     labelStats: () => { kept: number; considered: number; k: number };
+    /** Force an immediate re-size + redraw. The ResizeObserver already catches host changes, but
+     *  it fires asynchronously, so a fullscreen transition shows one stretched frame without
+     *  this. Belt to the observer's braces, not a replacement for it. */
+    resize: () => void;
     destroy: () => void;
 };
 
@@ -300,6 +304,7 @@ export function mountGraphCanvas(
         setTwoHop(on) { twoHop = on; computeEgo(); draw(); },
         setPanelOffset(px) { panelOffset = px; },
         labelStats() { return { kept: labelsKept, considered: labelsConsidered, k: transform.k }; },
+        resize() { sizeCanvas(); draw(); },
         destroy() {
             if (tween !== null) cancelAnimationFrame(tween);
             window.removeEventListener('keydown', onKeyDown);

@@ -68,6 +68,10 @@ const DIM_TYPES = new Set(['competitor']);
 const humanize = (id: string) => id.replace(/_/g, ' ');
 
 export type GlobeHandle = {
+    /** Width (side drawer) or height (bottom sheet) the overlay drawer currently occupies, so
+     *  fitEgo can keep the ego set clear of it. The VIEW owns the number and the breakpoint;
+     *  this module only reads which edge it applies to. */
+    setPanelOffset: (px: number) => void;
     select: (id: string | null) => void;
     focus: (id: string) => void;
     resize: () => void;
@@ -225,6 +229,13 @@ export function mountGlobe(
 
     let selected: string | null = null;
     let mountedMs = 0;
+    let panelPx = 0;
+    /** Below this the drawer is a BOTTOM SHEET, so it eats height, not width. Must match the
+     *  media query in style.css (#pro-map-container .rv-panel). */
+    const SHEET_BP = 1200;
+    const egoPadding = () => (window.innerWidth < SHEET_BP
+        ? { top: 60, bottom: 48 + panelPx, left: 60, right: 60 }
+        : { top: 60, bottom: 48, left: 60, right: 60 + panelPx });
 
     const pointFC = () => ({
         type: 'FeatureCollection' as const,
@@ -676,8 +687,7 @@ export function mountGlobe(
         //   place, it is only drawn faintly — so the camera ease and the fade can run together
         //   and read as one event.
         map.fitBounds(b, {
-            padding: { top: 60, bottom: 48, left: 60, right: 420 },
-            maxZoom: 5, pitch: 50, bearing: 0, duration: 900,
+            padding: egoPadding(), maxZoom: 5, pitch: 50, bearing: 0, duration: 900,
         });
     };
 
@@ -704,6 +714,7 @@ export function mountGlobe(
     };
 
     return {
+        setPanelOffset(px) { panelPx = Math.max(0, px | 0); },
         select(id) { applySelection(id, false); },
         focus(id) { applySelection(id, true); },
         resize() { safeResize(); },

@@ -245,14 +245,17 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     const legend = Object.entries(PALETTE)
         .map(([t, c]) => `<span class="rv-leg"><i style="background:${c}"></i>${esc(t)}</span>`).join('');
     container.innerHTML = `
-      <div class="rv-root">
+      <div class="rv-root" tabindex="-1">
         <div class="rv-head">
           <input class="rv-search" type="search" placeholder="Search a company, country, or resource — name or ticker (TSMC / TSM / 2330)" autocomplete="off" />
           <div class="rv-meta">${g.nodes.length} entities · ${g.edges.length} relationships · ${IS_PRO ? 'full provenance' : 'structure only'} — click a node, or search, to see what the vault records about it.</div>
           <div class="rv-results"></div>
-          <div class="rv-modes" role="tablist">
-            <button class="rv-mode" data-mode="graph" aria-selected="true">Graph</button>
-            <button class="rv-mode" data-mode="globe" aria-selected="false">Globe</button>
+          <div class="rv-toolbar">
+            <div class="rv-modes" role="tablist">
+              <button class="rv-mode" data-mode="graph" aria-selected="true">Graph</button>
+              <button class="rv-mode" data-mode="globe" aria-selected="false">Globe</button>
+            </div>
+            <button class="rv-fs" type="button" aria-pressed="false" title="Full screen (F)">⤢ Expand</button>
           </div>
         </div>
         <!-- ★ .rv-body is a COLUMN FLEX BOX and the dock strip lives INSIDE it, not as a
@@ -266,7 +269,8 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
           <!-- Globe only. Previously an absolutely-positioned overlay ON the map, covering its
                bottom 76px (42vh expanded) and hiding the southern hemisphere. -->
           <div class="rv-dockstrip" hidden></div>
-          <aside class="rv-panel" data-open="0">
+          <aside class="rv-panel" data-open="0" data-collapsed="0">
+            <button class="rv-collapse" type="button" aria-label="Collapse panel" title="Collapse"></button>
             <button class="rv-close" type="button" aria-label="Close">&times;</button>
             ${IS_PRO ? '' : '<div class="rv-freeline">FREE — relationships only; upgrade for weights &amp; sources</div>'}
             <div class="rv-detail"></div>
@@ -281,11 +285,39 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
     const dockStrip = container.querySelector('.rv-dockstrip') as HTMLElement;
 
     const panel = container.querySelector('.rv-panel') as HTMLElement;
-    const PANEL_W = 380;
+    const root = container.querySelector('.rv-root') as HTMLElement;
+    const fsBtn = container.querySelector('.rv-fs') as HTMLButtonElement;
+    const collapseBtn = container.querySelector('.rv-collapse') as HTMLButtonElement;
+
+    /** ★ 380 -> 320. These three MUST move together with the media query and the .rv-panel
+     *  width in style.css; nothing links them, so they are named here and cited there. */
+    const PANEL_W = 320;
+    const PANEL_TAB = 24;          // what stays on screen when collapsed
+    const SHEET_BP = 1200;         // below this the drawer is a bottom sheet, not a side panel
+
+    /** In-memory for the session, deliberately NOT localStorage — the brief asked for session
+     *  state, and a remembered-collapsed drawer would make the next visit look like the panel
+     *  is broken. */
+    let panelCollapsed = false;
+
+    /** How much of the viewport the drawer is actually covering right now. Zero when closed or
+     *  collapsed to its tab — a collapsed drawer should not push the fit target around. */
+    const panelOffset = () =>
+        (panel.dataset.open === '1' ? (panelCollapsed ? PANEL_TAB : PANEL_W) : 0);
+    const applyOffset = () => {
+        // The canvas only ever needs the horizontal offset; as a bottom sheet it covers nothing
+        // the canvas pans into, so it reports 0 there.
+        handle?.setPanelOffset(window.innerWidth < SHEET_BP ? 0 : panelOffset());
+        globe?.setPanelOffset(panelOffset());
+    };
 
     let handle: CanvasHandle | null = null;
-    const closePanel = () => { panel.dataset.open = '0'; handle?.setPanelOffset(0);
-        requestAnimationFrame(() => globe?.resize()); };   // after the drawer transition starts
+    // ★ NO globe.resize() HERE ANY MORE, in either direction. The drawer is position:absolute
+    //   inside .rv-body, so opening it changes nothing about the map container's box — the
+    //   resize was a no-op that cost a full MapLibre re-layout on every selection, and on the
+    //   close path it was deferred into a rAF for a transition that never moved the container.
+    //   The drawer's effect on framing is carried entirely by setPanelOffset -> fitEgo padding.
+    const closePanel = () => { panel.dataset.open = '0'; applyOffset(); };
     // declared before use by show(); assigned once the modes exist
     const show = (id: string | null, fromCanvas = false) => {
         if (!id) { closePanel(); if (!fromCanvas) handle?.select(null); return; }
@@ -296,12 +328,123 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
         detail.scrollTop = 0;
         panel.dataset.open = '1';
         // ★ The drawer overlays the canvas rather than reflowing it, so the selected node would
-        //   sit under it without this: shift the zoom target left by half the drawer width.
-        handle?.setPanelOffset(PANEL_W);
-        globe?.resize();   // drawer changes the visible area, not the container
+        //   sit under it without this: shift the zoom target clear of the drawer.
+        applyOffset();
         if (!fromCanvas) { handle?.focus(id); globe?.focus(id); } else { handle?.select(id); globe?.select(id); }
     };
     panel.querySelector('.rv-close')!.addEventListener('click', () => { show(null); handle?.select(null); });
+
+    // ── collapse / expand ─────────────────────────────────────────────────────────────────
+    const paintCollapse = () => {
+        panel.dataset.collapsed = panelCollapsed ? '1' : '0';
+        collapseBtn.setAttribute('aria-label', panelCollapsed ? 'Expand panel' : 'Collapse panel');
+        collapseBtn.title = panelCollapsed ? 'Expand' : 'Collapse';
+        applyOffset();
+    };
+    collapseBtn.addEventListener('click', () => { panelCollapsed = !panelCollapsed; paintCollapse(); });
+    paintCollapse();
+
+    // ── full screen ───────────────────────────────────────────────────────────────────────
+    //
+    // ★ WHAT IS GUARDED, AND WHY EACH ONE IS REAL:
+    //   • Safari / older WebKit expose webkitRequestFullscreen / webkitExitFullscreen /
+    //     webkitFullscreenElement and fire `webkitfullscreenchange`, not the unprefixed names.
+    //   • iOS Safari has NO element fullscreen at all — only <video> — so `requestFullscreen`
+    //     is simply absent on HTMLElement there. That is the main reason a fallback exists
+    //     rather than a feature-detect-and-disable.
+    //   • requestFullscreen() returns a PROMISE THAT CAN REJECT even where it exists: without a
+    //     user activation, or when a Permissions-Policy / iframe `allow` omits `fullscreen`.
+    //     An unhandled rejection there would leave the button dead with no explanation, so the
+    //     catch falls through to the CSS path instead of logging and giving up.
+    //   Not guarded: ms-prefixed IE11, which this bundle does not support at all.
+    const fsEl = (): Element | null =>
+        document.fullscreenElement ?? (document as any).webkitFullscreenElement ?? null;
+    const canNativeFs = typeof (root as any).requestFullscreen === 'function'
+        || typeof (root as any).webkitRequestFullscreen === 'function';
+    let pseudo = false;                       // the CSS fallback is active
+    const isFs = () => fsEl() === root || pseudo;
+
+    const paintFs = () => {
+        const on = isFs();
+        fsBtn.textContent = on ? '⤡ Exit' : '⤢ Expand';
+        fsBtn.setAttribute('aria-pressed', String(on));
+        fsBtn.title = on ? 'Exit full screen (F or Esc)' : 'Full screen (F)';
+        root.classList.toggle('rv-pseudo-fs', pseudo);
+    };
+
+    /** ★ Re-measure AFTER the transition settles, not on the same frame. Entering fullscreen
+     *  resizes the element asynchronously; measuring immediately gives the OLD box. Double rAF
+     *  is the floor, and `fullscreenchange` (which calls this) has already fired by then. The
+     *  canvas has a ResizeObserver that would eventually catch up on its own — this exists so
+     *  there is no stretched frame in between. */
+    const afterResize = () => requestAnimationFrame(() => requestAnimationFrame(() => {
+        handle?.resize();
+        globe?.resize();
+        globe?.refit();
+    }));
+
+    const enterFs = async () => {
+        if (canNativeFs) {
+            try {
+                const r: any = (root as any).requestFullscreen
+                    ? (root as any).requestFullscreen()
+                    : (root as any).webkitRequestFullscreen();
+                if (r && typeof r.then === 'function') await r;
+                return;                        // fullscreenchange paints and resizes
+            } catch {
+                /* rejected — fall through to the CSS path below */
+            }
+        }
+        pseudo = true; paintFs(); afterResize();
+    };
+    const exitFs = async () => {
+        if (fsEl() === root) {
+            try {
+                const r: any = document.exitFullscreen
+                    ? document.exitFullscreen()
+                    : (document as any).webkitExitFullscreen();
+                if (r && typeof r.then === 'function') await r;
+                return;
+            } catch { /* fall through and clear the CSS path too */ }
+        }
+        pseudo = false; paintFs(); afterResize();
+    };
+    const toggleFs = () => { void (isFs() ? exitFs() : enterFs()); };
+    fsBtn.addEventListener('click', toggleFs);
+
+    const onFsChange = () => { if (fsEl() !== root) pseudo = false; paintFs(); afterResize(); };
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange as EventListener);
+
+    // Clicking anywhere in the view focuses its root, so "F when the view has focus" has a
+    // definite meaning instead of depending on whether the last click landed on a button.
+    root.addEventListener('mousedown', () => {
+        if (!root.contains(document.activeElement)) root.focus({ preventScroll: true });
+    });
+
+    const onKey = (ev: KeyboardEvent) => {
+        // ★ SELF-REMOVING. renderRelationshipView() replaces container.innerHTML on every mount
+        //   and there is no view-level teardown to hook, so a document listener from a previous
+        //   mount would otherwise live for the life of the page and drive a detached root.
+        if (!document.body.contains(root)) {
+            document.removeEventListener('keydown', onKey);
+            document.removeEventListener('fullscreenchange', onFsChange);
+            document.removeEventListener('webkitfullscreenchange', onFsChange as EventListener);
+            return;
+        }
+        const t = ev.target as HTMLElement | null;
+        const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+        if (typing) return;
+        if (ev.key === 'Escape' && pseudo) { ev.preventDefault(); void exitFs(); return; }
+        // F only acts when the view actually has focus, OR when it is already fullscreen (so the
+        // key that got you in can get you out). Anything looser steals F from the whole app.
+        if ((ev.key === 'f' || ev.key === 'F') && !ev.metaKey && !ev.ctrlKey && !ev.altKey
+            && (root.contains(document.activeElement) || isFs())) {
+            ev.preventDefault(); toggleFs();
+        }
+    };
+    document.addEventListener('keydown', onKey);
+    paintFs();
 
     // The canvas owns positions; the panel owns provenance. A click in either drives the other.
     // ★ Guarded: a throw inside the canvas used to leave an empty <canvas> of the correct size

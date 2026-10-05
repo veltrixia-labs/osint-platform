@@ -12461,13 +12461,81 @@ body.syslogic-open { overflow: hidden; }
     background: radial-gradient(ellipse at 50% 40%, rgba(15,23,42,0.9), rgba(2,6,16,0.96)); border: 1px solid rgba(56,189,248,0.14); }
 #pro-map-container .rv-canvas { display: block; cursor: grab; }
 #pro-map-container .rv-canvas:active { cursor: grabbing; }
-#pro-map-container .rv-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 380px; z-index: 4;
-    display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 12px 12px 12px 14px;
+/* ★ 380px -> 320px. This width, PANEL_W in relationship_view.ts and the 1200px breakpoint below
+   MUST move together — nothing links them, so each cites the others.
+   position:absolute inside .rv-body means it OVERLAYS: it has never shrunk .rv-canvas-host, and
+   the globe.resize() calls that used to fire on open/close were no-ops that cost a full MapLibre
+   re-layout per selection. Removed; the drawer's effect on framing is carried entirely by
+   setPanelOffset -> fitEgo padding. Padding reduced ~20% (12/14 -> 10/11) to fit more rows. */
+#pro-map-container .rv-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 320px; z-index: 4;
+    display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 10px 10px 10px 11px;
     background: rgba(2,6,16,0.94); backdrop-filter: blur(14px) saturate(160%);
     border-left: 1px solid rgba(56,189,248,0.22); border-radius: 0 10px 10px 0;
     transform: translateX(100%); transition: transform 220ms cubic-bezier(.4,0,.2,1);
     pointer-events: none; }
 #pro-map-container .rv-panel[data-open="1"] { transform: translateX(0); pointer-events: auto; }
+/* Collapsed: slide off leaving a 24px tab. Higher specificity than [data-open="1"] on purpose —
+   it has to win against the open transform, not merely follow it. */
+#pro-map-container .rv-panel[data-open="1"][data-collapsed="1"] { transform: translateX(calc(100% - 24px)); }
+/* The chevron tab. 24px wide, pinned to the drawer's own left edge, so it is exactly what stays
+   visible when collapsed. ::before is the chevron and flips with the state. */
+#pro-map-container .rv-collapse { position: absolute; left: 0; top: 0; bottom: 0; width: 24px; z-index: 2;
+    background: rgba(56,189,248,0.07); border: 0; border-right: 1px solid rgba(56,189,248,0.18);
+    color: #7dd3fc; cursor: pointer; padding: 0; font-size: 0.7rem; line-height: 1; }
+#pro-map-container .rv-collapse:hover { background: rgba(56,189,248,0.16); }
+#pro-map-container .rv-collapse::before { content: '\203A'; }                 /* > collapse */
+#pro-map-container .rv-panel[data-collapsed="1"] .rv-collapse::before { content: '\2039'; }   /* < expand */
+#pro-map-container .rv-panel[data-open="1"] > *:not(.rv-collapse) { margin-left: 24px; }
+
+/* ★ BOTTOM SHEET below 1200px. A 320px side panel on a 1100px screen leaves the map under 70%
+   of its width; as a sheet it costs height instead, which the map has more of. Must match
+   SHEET_BP in relationship_view.ts AND in relationship_globe.ts — the globe switches which
+   fitBounds edge it pads on the same number. */
+@media (max-width: 1199px) {
+    #pro-map-container .rv-panel { top: auto; left: 0; right: 0; bottom: 0; width: auto;
+        max-height: 45vh; padding: 10px 12px;
+        border-left: 0; border-top: 1px solid rgba(56,189,248,0.22); border-radius: 10px 10px 0 0;
+        transform: translateY(100%); }
+    #pro-map-container .rv-panel[data-open="1"] { transform: translateY(0); }
+    #pro-map-container .rv-panel[data-open="1"][data-collapsed="1"] { transform: translateY(calc(100% - 24px)); }
+    #pro-map-container .rv-collapse { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 24px;
+        border-right: 0; border-bottom: 1px solid rgba(56,189,248,0.18); }
+    #pro-map-container .rv-collapse::before { content: '\2304'; }              /* v collapse */
+    #pro-map-container .rv-panel[data-collapsed="1"] .rv-collapse::before { content: '\2303'; }  /* ^ expand */
+    #pro-map-container .rv-panel[data-open="1"] > *:not(.rv-collapse) { margin-left: 0; margin-top: 24px; }
+    #pro-map-container .rv-close { top: 26px; }
+}
+
+/* ★ Row metrics scoped to .rv-panel ONLY. .pm-co-nb is REUSED VERBATIM by the legacy map's
+   neighbourhood panel (pro_interactive_map.ts) — changing it unscoped would silently restyle a
+   surface this task never touched. Padding 0.35rem -> 0.28rem is the ~20% asked for. */
+#pro-map-container .rv-panel .pm-co-nb { padding: 0.28rem 0; gap: 0 8px; }
+#pro-map-container .rv-panel .pm-co-sec { margin-bottom: 8px; }
+/* One line, ellipsised. min-width:0 is required: a grid item defaults to min-width:auto and
+   refuses to shrink below its content, so text-overflow would never engage without it. */
+#pro-map-container .rv-panel .pm-co-nb-t { min-width: 0; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+
+/* ★ FULL SCREEN. Two paths, identical result.
+   :fullscreen is the native one — the UA already sizes the element to the screen, so all this
+   adds is the background (the UA default is black) and the padding the normal layout had.
+   .rv-pseudo-fs is the CSS fallback for iOS Safari, which has no element fullscreen at all, and
+   for a requestFullscreen() that rejects (no user activation, or a Permissions-Policy without
+   `fullscreen`). z-index clears the app chrome. */
+#pro-map-container .rv-root:fullscreen,
+#pro-map-container .rv-root.rv-pseudo-fs {
+    background: #020610; padding: 14px 16px; border-radius: 0;
+    /* explicit, not inherited: the normal rule is height:100% of #pro-map-container's
+       calc(100vh - 80px), and in fullscreen the element is out of that flow entirely. */
+    width: 100%; height: 100%; max-height: 100%; }
+#pro-map-container .rv-root.rv-pseudo-fs {
+    position: fixed; inset: 0; z-index: 9999; width: 100vw; height: 100vh; max-height: 100vh; }
+#pro-map-container .rv-root:focus { outline: none; }
+#pro-map-container .rv-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#pro-map-container .rv-fs { background: rgba(56,189,248,0.10); border: 1px solid rgba(56,189,248,0.22);
+    color: #7dd3fc; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+#pro-map-container .rv-fs:hover { background: rgba(56,189,248,0.2); }
 #pro-map-container .rv-close { position: absolute; top: 8px; right: 10px; z-index: 1; background: none; border: 0;
     color: #64748b; font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 2px 6px; }
 #pro-map-container .rv-close:hover { color: #e2e8f0; }
@@ -12481,7 +12549,7 @@ body.syslogic-open { overflow: hidden; }
 #pro-map-container .rv-leg { display: inline-flex; align-items: center; gap: 4px; color: #64748b; font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.03em; }
 #pro-map-container .rv-leg i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 #pro-map-container .rv-leg--ring i { background: transparent; border: 1.5px solid #f59e0b; }
-#pro-map-container .rv-modes { display: inline-flex; gap: 0; border: 1px solid rgba(56,189,248,0.22); border-radius: 7px; overflow: hidden; align-self: flex-start; }
+#pro-map-container .rv-modes { display: inline-flex; gap: 0; border: 1px solid rgba(56,189,248,0.22); border-radius: 7px; overflow: hidden; }
 #pro-map-container .rv-mode { background: transparent; border: 0; color: #64748b; font-size: 0.62rem; text-transform: uppercase;
     letter-spacing: 0.05em; padding: 5px 14px; cursor: pointer; }
 #pro-map-container .rv-mode[aria-selected="true"] { background: rgba(56,189,248,0.16); color: #7dd3fc; }
