@@ -247,13 +247,18 @@ export async function renderSignup() {
     });
 }
 
-type TabId = 'feed' | 'trend-flow' | 'plans' | 'reports' | 'map' | 'legal' | 'market-pulse' | 'pro-insights' | 'pro-map' | 'impact-roster' | 'expert-intel'
+type TabId = 'feed' | 'trend-flow' | 'plans' | 'reports' | 'legal' | 'market-pulse' | 'pro-insights' | 'pro-map' | 'impact-roster' | 'expert-intel'
 
-const BOOT_TABS: TabId[] = ['feed', 'trend-flow', 'map', 'plans', 'legal', 'market-pulse', 'pro-insights', 'pro-map', 'impact-roster', 'expert-intel']
+const BOOT_TABS: TabId[] = ['feed', 'trend-flow', 'plans', 'legal', 'market-pulse', 'pro-insights', 'pro-map', 'impact-roster', 'expert-intel']
 
 /** Legacy hash aliases (e.g. bookmarks, old LP links). */
 const HASH_TAB_ALIASES: Record<string, TabId> = {
     'free-feed': 'feed',
+    // ★ The Global Map was removed at ec17a12 (it served synthetic data) and is not coming
+    //   back. A bookmarked #map therefore resolves to the default tab and the URL is rewritten
+    //   below, so the stale bookmark heals itself on first use. See the commit message for why
+    //   this rather than a 404 or a tombstone page.
+    'map': 'feed',
 }
 
 type HashRoute = { tab: TabId; alertId?: string }
@@ -346,7 +351,7 @@ async function syncRouteFromHash(): Promise<void> {
             if (!route) return
 
             const rawBase = window.location.hash.slice(1).split('?')[0]
-            if (rawBase === 'reports' || rawBase === 'free-feed') {
+            if (rawBase === 'reports' || rawBase === 'free-feed' || rawBase === 'map') {
                 history.replaceState(null, '', `#${route.tab}`)
             }
             switchTab(route.tab, route.alertId, true)
@@ -392,15 +397,6 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
         icon: '🌊',
         title: 'Monthly Trend Flow',
         subtitle: 'Each month’s high-impact signals, archived by day and sector — browse how global pressure built up.',
-    },
-    map: {
-        icon: '🌐',
-        title: 'Global Map',
-        subtitle: 'Strategic entity mapping — visualizing structural relationships and geopolitical actors.',
-        proCta: {
-            label: 'Unlock Pro / Expert for real-time motion and live entity tracking',
-            href: '/subscription',
-        },
     },
     // Subtitle added 2026-10-05: this is the route that actually renders, and it had no
     // description at all. PAGE_META.map above still carries the deleted Global Map's title and
@@ -688,7 +684,6 @@ async function initDashboard() {
             <div id="alerts-list"></div>
             <div id="domain-items"></div>
           </div>
-          <div id="map-page-container" style="display:none;"></div>
           <div id="pro-map-container" style="display:none;"></div>
           <div id="impact-roster-container" style="display:none;"></div>
         </main>
@@ -740,11 +735,11 @@ async function initDashboard() {
         }
 
         const showSubtitle = Boolean(meta?.subtitle)
-        const showProCta = Boolean(
-            meta?.proCta
-            && tab === 'map'
-            && !isProOrAbove(user?.tier)
-        )
+        // Generic per-page Pro CTA. It was gated on tab === 'map'; that tab is gone and was
+        // the only PAGE_META entry carrying a proCta, so the condition is now just "this page
+        // declares one and the user is not Pro". No entry declares one today, which keeps
+        // #page-pro-cta hidden — the machinery is left for the next page that wants it.
+        const showProCta = Boolean(meta?.proCta && !isProOrAbove(user?.tier))
         const showExpertUpsell = Boolean(meta?.showExpertUpsell && tab === 'pro-insights')
 
         if (pageSubtitle) {
@@ -827,11 +822,9 @@ async function initDashboard() {
 
         const mainContent = document.querySelector<HTMLElement>('.main-content');
         const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
-        const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
         const proMapContainer = document.querySelector<HTMLElement>('#pro-map-container');
         const impactRosterContainer = document.querySelector<HTMLElement>('#impact-roster-container');
         applyPageHeader(tab);
-        mainContent?.classList.toggle('main-content--global-map', tab === 'map');
 
         if (topicFilterBar) {
             topicFilterBar.style.display = tab === 'feed' ? 'flex' : 'none';
@@ -854,7 +847,6 @@ async function initDashboard() {
         setTimeout(() => {
             const isFeedLike = ['feed', 'trend-flow', 'plans', 'reports', 'legal', 'market-pulse', 'pro-insights', 'expert-intel'].includes(tab);
             if (feedContainer) feedContainer.style.display = isFeedLike ? 'block' : 'none';
-            if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
             if (proMapContainer) proMapContainer.style.display = (tab === 'pro-map') ? 'flex' : 'none';
             if (impactRosterContainer) impactRosterContainer.style.display = (tab === 'impact-roster') ? 'flex' : 'none';
 
@@ -1018,19 +1010,6 @@ async function initDashboard() {
         renderReportDetail(report, user!.tier, alertsContainer, () => handleTabSwitch(origin));
     };
 
-    // [v8.4] Strategic Tracking Integration (Revised for Silent Sync)
-    window.addEventListener('map-track-alert' as any, (e: CustomEvent) => {
-        const id = e.detail.id;
-        const silent = e.detail.silent || false;
-        if (silent) {
-            const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
-            if (mapContainer && mapContainer.style.display !== 'none') {
-                window.dispatchEvent(new CustomEvent('focus-map', { detail: { alertId: id } }));
-            }
-        } else {
-            handleTabSwitch('map', id);
-        }
-    });
 
     window.addEventListener('trigger-tab' as any, (e: CustomEvent) => {
         if (e.detail.tab) handleTabSwitch(e.detail.tab);
