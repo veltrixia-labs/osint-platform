@@ -16,8 +16,8 @@
   ]
  },
  "graph": {
-  "nodes": 303,
-  "edges": 1535,
+  "nodes": 310,
+  "edges": 1587,
   "gate": "PASS"
  },
  "scaling": {
@@ -3598,6 +3598,24 @@
   }
  ],
  "no_map": [
+  {
+   "id": "Cosmo_Energy",
+   "type": "company",
+   "raw_impact": -0.49,
+   "reason": "no coordinates"
+  },
+  {
+   "id": "ENEOS",
+   "type": "company",
+   "raw_impact": -0.49,
+   "reason": "no coordinates"
+  },
+  {
+   "id": "Idemitsu",
+   "type": "company",
+   "raw_impact": -0.49,
+   "reason": "no coordinates"
+  },
   {
    "id": "Natural_Gas",
    "type": "market",

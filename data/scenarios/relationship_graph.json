@@ -1,9 +1,9 @@
 {
  "meta": {
-  "generated_at": "2026-10-05T07:25:05+00:00",
-  "vault_head": "326ca4772cdd54fa382a0a16cd2fbfd43bdfe037",
-  "node_count": 307,
-  "edge_count": 1578,
+  "generated_at": "2026-10-05T08:32:10+00:00",
+  "vault_head": "a8de2f9677efff49d02036d2a7c30b69b87ba36b",
+  "node_count": 310,
+  "edge_count": 1587,
   "edge_types": [
    "competitor",
    "complementary",
@@ -27,18 +27,18 @@
    "supplier"
   ],
   "weight_source_counts": {
-   "None": 1050,
+   "None": 1059,
    "estimated": 433,
    "observed": 95
   },
   "verify_status_counts": {
-   "verified": 1303,
-   "unverified": 275
+   "verified": 1310,
+   "unverified": 277
   },
   "weight_states": {
    "numeric": 561,
-   "explicit_null": 224,
-   "key_absent": 793
+   "explicit_null": 227,
+   "key_absent": 799
   },
   "note": "Within-hub relative only; weights are orderable only among edges sharing a target. weight_source: estimated is informed judgement, not observation. weight omitted = not applicable to this edge type; weight null = magnitude never measured. impact_score / order-3 / coordinates are NOT in this file and must not be joined to it."
  },
@@ -1427,6 +1427,27 @@
    "layer": "materials"
   },
   {
+   "id": "Cosmo_Energy",
+   "type": "company",
+   "domain": [
+    "energy"
+   ],
+   "country": "JP",
+   "title": null,
+   "role": "Japan's #3 oil refiner/marketer — refining capacity ~0.40M b/d (Nikkei 2027, p.169)",
+   "aliases": [
+    "Cosmo",
+    "Cosmo Energy",
+    "Cosmo Oil",
+    "コスモエネルギー",
+    "コスモ石油"
+   ],
+   "listing": [
+    "TSE:5021"
+   ],
+   "layer": "refining"
+  },
+  {
    "id": "Critical_Minerals",
    "type": "concept",
    "domain": [
@@ -1605,6 +1626,27 @@
    ],
    "listing": [],
    "layer": "chokepoint"
+  },
+  {
+   "id": "ENEOS",
+   "type": "company",
+   "domain": [
+    "energy"
+   ],
+   "country": "JP",
+   "title": null,
+   "role": "Japan's largest oil refiner/marketer — refining capacity ~1.641M b/d (Nikkei 2027, p.169)",
+   "aliases": [
+    "ENEOS",
+    "ENEOS Holdings",
+    "JXTG",
+    "新日本石油",
+    "エネオス"
+   ],
+   "listing": [
+    "TSE:5020"
+   ],
+   "layer": "refining"
   },
   {
    "id": "EUV_Lithography",
@@ -2390,6 +2432,27 @@
     "TASE:ICL"
    ],
    "layer": "producer"
+  },
+  {
+   "id": "Idemitsu",
+   "type": "company",
+   "domain": [
+    "energy"
+   ],
+   "country": "JP",
+   "title": null,
+   "role": "Japan's #2 oil refiner/marketer — refining capacity ~0.931M b/d (Nikkei 2027, p.169)",
+   "aliases": [
+    "Idemitsu",
+    "Idemitsu Kosan",
+    "出光興産",
+    "出光",
+    "昭和シェル"
+   ],
+   "listing": [
+    "TSE:5019"
+   ],
+   "layer": "refining"
   },
   {
    "id": "India",
@@ -13985,6 +14048,76 @@
    "desc": "電力/発電で競合〔市場競合・公開事実〕。C<N で Constellation が ABC順先頭＝single-sided 主語"
   },
   {
+   "s": "Cosmo_Energy",
+   "t": "Japan",
+   "type": "located_in",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "high",
+   "as_of": null,
+   "retrieved": "2026-10-03",
+   "source": "https://www.cosmo-energy.co.jp/content/dam/corp/jp/ja/ir/financial/valuable/2025/pdf/fy2025_all.pdf",
+   "desc": "日本（東京都中央区京橋一丁目７番１号）本店〔地理の事実のみ・no weight（00_SCHEMA.md:83）〕"
+  },
+  {
+   "s": "Cosmo_Energy",
+   "t": "Strait_of_Hormuz",
+   "type": "context_link",
+   "flow": "exposure",
+   "role": "demand",
+   "weight": null,
+   "unit": "share",
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "high",
+   "as_of": "2026-FY",
+   "retrieved": "2026-10-04",
+   "source": "https://www.cosmo-energy.co.jp/content/dam/corp/jp/ja/ir/financial/valuable/2025/pdf/fy2025_all.pdf",
+   "desc": "原油調達はホルムズ経由の中東産に依存〔企業別シェアは未確認＝honest-null〕",
+   "basis_short": "[HONEST-NULL][DEMAND] — 原油調達がホルムズ経由であること自体は構造的だが、Cosmo_Energy 固有の通過シェアを state する一次資料を 2026-10-04 時点で取得できていない（IR ライブラリ・ANRE 統計いずれも JS shell / 404）。",
+   "weight_kind": "transit_share",
+   "weight_kind_label": "Share routed through the chokepoint",
+   "weight_scope": "source"
+  },
+  {
+   "s": "ENEOS",
+   "t": "Japan",
+   "type": "located_in",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "high",
+   "as_of": null,
+   "retrieved": "2026-10-03",
+   "source": "http://www.hd.eneos.co.jp/about/corporate_profile.html",
+   "desc": "日本（東京都千代田区大手町一丁目1番2号）本店〔地理の事実のみ・no weight（00_SCHEMA.md:83）〕"
+  },
+  {
+   "s": "ENEOS",
+   "t": "Strait_of_Hormuz",
+   "type": "context_link",
+   "flow": "exposure",
+   "role": "demand",
+   "weight": null,
+   "unit": "share",
+   "weight_source": null,
+   "verify_status": "unverified",
+   "materiality": "high",
+   "as_of": "2024",
+   "retrieved": "2026-10-04",
+   "source": "https://www.enecho.meti.go.jp/en/category/brochures/pdf/japan_energy_2024.pdf",
+   "desc": "原油調達はホルムズ経由の中東産に依存〔企業別シェアは未確認＝honest-null〕",
+   "basis_short": "[ESTIMATED][DEMAND] HONEST-NULL — 原油調達がホルムズ経由であること自体は構造的だが、ENEOS 固有の通過シェアを state する一次資料を 2026-10-04 時点で取得できていない（IR ライブラリ・ANRE 統計いずれも JS shell / 404）。",
+   "weight_kind": "transit_share",
+   "weight_kind_label": "Share routed through the chokepoint",
+   "weight_scope": "source"
+  },
+  {
    "s": "Equinor",
    "t": "Crude_Oil",
    "type": "context_link",
@@ -14505,6 +14638,41 @@
    "source": "https://www.congress.gov/crs-product/IF12748",
    "desc": "★ 対露ガスの主動脈〔Nord Stream・55 bcm〕に依存していたが 2022 以降オフライン＝対露ガス依存が SEVERED〔realized supply-shock・市場事実〕",
    "basis_short": "",
+   "weight_kind": "transit_share",
+   "weight_kind_label": "Share routed through the chokepoint",
+   "weight_scope": "source"
+  },
+  {
+   "s": "Idemitsu",
+   "t": "Japan",
+   "type": "located_in",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "high",
+   "as_of": null,
+   "retrieved": "2026-10-03",
+   "source": "https://www.idemitsu.com/jp/company/profile/index.html",
+   "desc": "日本（〒100-8321 東京都千代田区大手町一丁目2番1号）本店〔地理の事実のみ・no weight（00_SCHEMA.md:83）〕"
+  },
+  {
+   "s": "Idemitsu",
+   "t": "Strait_of_Hormuz",
+   "type": "context_link",
+   "flow": "exposure",
+   "role": "demand",
+   "weight": null,
+   "unit": "share",
+   "weight_source": null,
+   "verify_status": "unverified",
+   "materiality": "high",
+   "as_of": "2024",
+   "retrieved": "2026-10-04",
+   "source": "https://www.idemitsu.com/jp/news/2026/260512_1.pdf",
+   "desc": "原油調達はホルムズ経由の中東産に依存〔企業別シェアは未確認＝honest-null〕",
+   "basis_short": "[ESTIMATED][DEMAND] HONEST-NULL — 原油調達がホルムズ経由であること自体は構造的だが、Idemitsu 固有の通過シェアを state する一次資料を 2026-10-04 時点で取得できていない（IR ライブラリ・ANRE 統計いずれも JS shell / 404）。",
    "weight_kind": "transit_share",
    "weight_kind_label": "Share routed through the chokepoint",
    "weight_scope": "source"
@@ -24586,6 +24754,51 @@
    "retrieved": "2026-10-05",
    "source": "https://www.disco.co.jp/jp/ir/library/doc/fs/fs87.pdf",
    "desc": "日本に本拠を置くダイシング/グラインディング装置メーカー（東京都大田区）。[[DISCO]]→located_in→Japan の reciprocal〔de-leaf・地理の事実のみ・no weight（00_SCHEMA.md:83）〕"
+  },
+  {
+   "s": "Japan",
+   "t": "ENEOS",
+   "type": "hosts",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026-FY",
+   "retrieved": "2026-10-05",
+   "source": "http://www.hd.eneos.co.jp/about/corporate_profile.html",
+   "desc": "日本に本拠を置く石油元売り（東京都千代田区大手町一丁目1番2号）。[[ENEOS]]→located_in→Japan の reciprocal〔de-leaf・地理の事実のみ・no weight（00_SCHEMA.md:83）〕"
+  },
+  {
+   "s": "Japan",
+   "t": "Idemitsu",
+   "type": "hosts",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026-FY",
+   "retrieved": "2026-10-05",
+   "source": "https://www.idemitsu.com/jp/company/profile/index.html",
+   "desc": "日本に本拠を置く石油元売り（〒100-8321 東京都千代田区大手町一丁目2番1号）。[[Idemitsu]]→located_in→Japan の reciprocal〔de-leaf・地理の事実のみ・no weight（00_SCHEMA.md:83）〕"
+  },
+  {
+   "s": "Japan",
+   "t": "Cosmo_Energy",
+   "type": "hosts",
+   "flow": "structural",
+   "role": null,
+   "unit": null,
+   "weight_source": null,
+   "verify_status": "verified",
+   "materiality": "medium",
+   "as_of": "2026-FY",
+   "retrieved": "2026-10-05",
+   "source": "https://www.cosmo-energy.co.jp/content/dam/corp/jp/ja/ir/financial/valuable/2025/pdf/fy2025_all.pdf",
+   "desc": "日本に本拠を置く石油元売り（東京都中央区京橋一丁目７番１号）。[[Cosmo_Energy]]→located_in→Japan の reciprocal〔de-leaf・地理の事実のみ・no weight（00_SCHEMA.md:83）〕"
   },
   {
    "s": "Japan",

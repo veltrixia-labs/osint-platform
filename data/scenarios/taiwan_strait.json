@@ -13,8 +13,8 @@
   ]
  },
  "graph": {
-  "nodes": 303,
-  "edges": 1535,
+  "nodes": 310,
+  "edges": 1587,
   "gate": "PASS"
  },
  "scaling": {
@@ -190,6 +190,30 @@
     },
     {
      "target": "KLA",
+     "type": "supplier",
+     "role": null,
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "SCREEN_Holdings",
+     "type": "supplier",
+     "role": null,
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "Advantest",
+     "type": "supplier",
+     "role": null,
+     "weight": null,
+     "unit": "share",
+     "weight_source": null
+    },
+    {
+     "target": "DISCO",
      "type": "supplier",
      "role": null,
      "weight": null,

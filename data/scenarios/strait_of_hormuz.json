@@ -14,8 +14,8 @@
   ]
  },
  "graph": {
-  "nodes": 303,
-  "edges": 1535,
+  "nodes": 310,
+  "edges": 1587,
   "gate": "PASS"
  },
  "scaling": {
@@ -3531,6 +3531,27 @@
    "reason": "exposed but weight:null; no coordinates"
   },
   {
+   "id": "Cosmo_Energy",
+   "type": "company",
+   "raw_impact": -0.63,
+   "reason": "no coordinates; order-3 derived via Japan (demand), AND holds a DIRECT edge to Strait_of_Hormuz whose weight is unmeasured (null) -- true exposure may be higher",
+   "has_unquantified_direct_edge": true
+  },
+  {
+   "id": "ENEOS",
+   "type": "company",
+   "raw_impact": -0.63,
+   "reason": "no coordinates; order-3 derived via Japan (demand), AND holds a DIRECT edge to Strait_of_Hormuz whose weight is unmeasured (null) -- true exposure may be higher",
+   "has_unquantified_direct_edge": true
+  },
+  {
+   "id": "Idemitsu",
+   "type": "company",
+   "raw_impact": -0.63,
+   "reason": "no coordinates; order-3 derived via Japan (demand), AND holds a DIRECT edge to Strait_of_Hormuz whose weight is unmeasured (null) -- true exposure may be higher",
+   "has_unquantified_direct_edge": true
+  },
+  {
    "id": "Natural_Gas",
    "type": "market",
    "raw_impact": 0.2,
@@ -3552,6 +3573,18 @@
    {
     "id": "Russia",
     "role": "supply"
+   },
+   {
+    "id": "Cosmo_Energy",
+    "role": "demand"
+   },
+   {
+    "id": "ENEOS",
+    "role": "demand"
+   },
+   {
+    "id": "Idemitsu",
+    "role": "demand"
    }
   ],
   "node_gaps": [
