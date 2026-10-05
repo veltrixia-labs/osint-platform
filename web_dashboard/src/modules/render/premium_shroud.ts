@@ -29,11 +29,21 @@ const FEATURE_META: Record<ShroudFeature, FeatureMeta> = {
         blurb: 'In-depth structural intelligence briefs — qualitative transmission analysis, exposure matrices, and domain-filtered long-form reports.',
         bullets: ['Risk-contagion lead-lag tracker', 'Sector drill-down dossiers', 'Exposure & entity heat matrices'],
     },
+    // ★ Rewritten 2026-10-05. The previous copy sold the DELETED chokepoint map — "geolocated
+    //   signal clusters, maritime choke-point flow, collateral contagion networks" — which is
+    //   not what Pro receives any more. Every number below is measured against the shipped
+    //   payload (data/scenarios/relationship_graph.json): 303 nodes, 1535 edges, retrieved and
+    //   verify_status 100% filled, source on 1519, verified on 1261. Nothing here promises
+    //   real-time, live tracking or motion, because the view does none of those.
     'pro-map': {
         icon: '🗺️',
         title: 'Pro Interactive Map',
-        blurb: 'Global spatial surveillance — geolocated signal clusters, maritime choke-point flow, and collateral contagion networks.',
-        bullets: ['Geospatial signal clustering', 'Maritime choke-point flow', 'Sanctions contagion graph'],
+        blurb: 'A relationship explorer over a hand-authored vault: 303 entities and 1,535 recorded relationships, each one carrying the date it was retrieved and whether it has been verified.',
+        bullets: [
+            '303 entities · 1,535 relationships',
+            'Every relationship dated and status-marked — 1,261 verified, and the rest say so',
+            'Force-directed graph and geographic globe over the same data',
+        ],
     },
     'impact-roster': {
         icon: '🎯',

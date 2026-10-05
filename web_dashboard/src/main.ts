@@ -402,7 +402,14 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
             href: '/subscription',
         },
     },
-    'pro-map': { title: 'Pro Interactive Map' },
+    // Subtitle added 2026-10-05: this is the route that actually renders, and it had no
+    // description at all. PAGE_META.map above still carries the deleted Global Map's title and
+    // upsell; that whole entry goes with the dead route in the next commit, so it is not
+    // patched here only to be deleted.
+    'pro-map': {
+        title: 'Pro Interactive Map',
+        subtitle: 'The vault relationship graph — 303 entities and 1,535 relationships, each with its own source and verification status.',
+    },
     'impact-roster': { title: 'Impact Roster' },
     'market-pulse': {
         icon: '📈',
