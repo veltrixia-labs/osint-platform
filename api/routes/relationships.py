@@ -152,9 +152,28 @@ async def _get_current_tier(
     return await get_effective_tier(user)
 
 
+def _require_pro(tier: str, detail: str) -> None:
+    """Mirrors impact_roster.py:64-66 exactly — same 403, same shape, same sibling module."""
+    if tier not in _FULL_TIERS:
+        raise HTTPException(status_code=403, detail=detail)
+
+
 @router.get("/relationships")
 async def get_relationship_graph(tier: str = Depends(_get_current_tier)):
-    """303 node objects + 1535 edges. Full provenance on Pro; structure only on free."""
+    """303 node objects + 1535 edges. Full provenance on Pro; structure only on free.
+
+    ★ GATED AT THE ROUTE FROM 2026-10-05. It was open to every caller, including anonymous
+      ones, which served 172,174 bytes of the vault's graph TOPOLOGY — all 303 node ids and all
+      1535 edges — to anybody who knew the URL. The mask was doing its job (no weights, no
+      weight_source, no verify_status, no source, no desc), so this was never a provenance leak;
+      what changed is that the decision of 2026-10-05 gives Free no map, so nothing below Pro
+      consumes it and the exposure no longer buys anything.
+
+    ★ THE FREE BRANCH BELOW IS DELIBERATELY LEFT IN PLACE AND UNREACHED. The masking logic is
+      not touched: when the Free surface is designed, the gate is what moves, not the mask. An
+      unreachable-but-correct mask is a far better starting point than a deleted one.
+    """
+    _require_pro(tier, "Pro subscription required for the relationship graph.")
     cache = _load()
     payload = cache["full"] if tier in _FULL_TIERS else cache["free"]
     return Response(
