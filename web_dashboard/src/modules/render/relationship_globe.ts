@@ -54,6 +54,38 @@ export const BASEMAP = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/st
 
 const DEFAULT_COLOR = '#64748b';
 
+/**
+ * ★ MARKER SIZE = DEGREE x ZOOM. Before this, `circle-radius` was
+ *   `['*', ['get','radius'], 1.1]` over a per-feature `radius = 3 + log1p(degree) * 1.9` —
+ *   degree-driven and completely ZOOM-INDEPENDENT, so a node was the same number of screen
+ *   pixels at world view and street view. Europe, the US east coast and East Asia fused into
+ *   blobs zoomed out, and markers stayed tiny relative to the map zoomed in.
+ *
+ *   MULTIPLIED, not added, so the degree ordering holds at EVERY zoom: a degree-132 node is
+ *   12.29/3.00 = 4.1x a degree-0 node at world view and still 4.1x at street view. An additive
+ *   zoom term would compress that ratio away as zoom rose.
+ *
+ * ★ ZOOM MUST BE THE TOP-LEVEL INPUT. Writing
+ *     ['*', ['get','radius'], ['interpolate', ['linear'], ['zoom'], ...]]
+ *   makes MapLibre REJECT THE WHOLE LAYER — 'circle-radius: "zoom" expression may only be used
+ *   as input to a top-level "step" or "interpolate" expression' — addLayer throws and the rest
+ *   of the load handler never runs. A zoom-and-property expression puts `interpolate` on `zoom`
+ *   on the OUTSIDE and does the per-feature arithmetic INSIDE each stop, which is what this
+ *   builder emits. Declarative so MapLibre evaluates it per frame on the GPU: no JS on move.
+ */
+const byZoom = (base: any, stops: Array<[number, number]>): any =>
+    ['interpolate', ['linear'], ['zoom'],
+        ...stops.flatMap(([z, f]) => [z, ['*', base, f]])];
+
+const RADIUS_STOPS: Array<[number, number]> = [
+    [0, 0.40],   // world view — a degree-0 node is 1.2px, dense clusters stay separable
+    [2, 0.70],
+    [4, 1.10],   // ~ the old fixed 1.1, so regional view is unchanged from before
+    [6, 1.70],
+    [9, 2.60],   // a degree-132 node is a 32px-radius click target
+];
+const STROKE_STOPS: Array<[number, number]> = [[0, 0.7], [4, 1.0], [9, 1.8]];
+
 /** Arcs fade in over ARC_MS. The GEOMETRY is deck.gl's (greatCircle in a shader); only the
  *  layer opacity is tweened, so nothing is ever drawn half-built. */
 const ARC_MS = 600;
@@ -217,12 +249,37 @@ export function mountGlobe(
         scrollZoom: true,
         doubleClickZoom: true,
         maxPitch: 60,
+        renderWorldCopies: false,
         // ★ Required for deck.gl's interleaved mode — it fixes the WebGL2 context attributes the
         //   overlay needs. The legacy map sets it for the same reason (:1034).
         antialias: true,
     });
     const dead = () => !map || (map as any)._removed === true;
-    const safeResize = () => { if (!dead()) map.resize(); };
+    /**
+     * ★ THE ZOOM FLOOR IS DERIVED FROM THE CONTAINER, NOT HARD-CODED. The world is
+     *   512·2^z CSS px wide (MapLibre's tile size is 512), so the zoom at which it exactly
+     *   covers the viewport depends on the viewport. A literal that is right at 2400px leaves
+     *   grey gutters at 1400px and blocks legitimate zoom-out in fullscreen.
+     *
+     *   max(w, h), not w: the floor has to stop grey appearing on EITHER axis. For a landscape
+     *   container the two agree because w > h; they differ only in portrait, where w alone
+     *   would leave grey above and below.
+     *
+     *   Recomputed on mount, on every ResizeObserver callback, and after the view's resize()
+     *   (which is what fullscreen enter/exit calls), so entering fullscreen raises the floor and
+     *   leaving lowers it again. MapLibre clamps the current zoom itself when the floor rises.
+     */
+    const TILE_PX = 512;
+    const applyMinZoom = () => {
+        if (dead()) return;
+        const b = mapEl.getBoundingClientRect();
+        const side = Math.max(b.width || 0, b.height || 0);
+        if (!(side > 0)) return;                        // not laid out yet; the RO will retry
+        const z = Math.log2(side / TILE_PX);
+        if (!Number.isFinite(z)) return;
+        try { map.setMinZoom(Math.max(-2, z)); } catch { /* style not ready */ }
+    };
+    const safeResize = () => { if (!dead()) { map.resize(); applyMinZoom(); } };
     // showCompass is on now that rotation works: without it there is no way back to north
     // after a ctrl-drag, and pitch makes a lost bearing easy to acquire.
     map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
@@ -601,11 +658,16 @@ export function mountGlobe(
         map.addLayer({
             id: 'rv-nodes', type: 'circle', source: 'rv-nodes',
             paint: {
-                'circle-radius': ['*', ['get', 'radius'], 1.1],
+                'circle-radius': byZoom(['get', 'radius'], RADIUS_STOPS),
                 // countries render as rings: a different kind of thing, not a bigger one
                 'circle-color': ['case', ['==', ['get', 'ring'], 1], 'rgba(0,0,0,0)', ['get', 'color']],
                 'circle-opacity': ['get', 'alpha'],
-                'circle-stroke-width': ['case', ['==', ['get', 'sel'], 1], 2.4, ['==', ['get', 'ring'], 1], 1.6, 0],
+                // The ring IS the country marker, so its stroke grows with the circle or a
+                // country reads as a hairline at high zoom. Capped below the radius scale so it
+                // never closes into a disc.
+                'circle-stroke-width': byZoom(
+                    ['case', ['==', ['get', 'sel'], 1], 2.4, ['==', ['get', 'ring'], 1], 1.6, 0],
+                    STROKE_STOPS),
                 'circle-stroke-color': ['case', ['==', ['get', 'sel'], 1], '#f1f5f9', ['get', 'color']],
                 'circle-stroke-opacity': ['get', 'alpha'],
             },
@@ -613,7 +675,16 @@ export function mountGlobe(
         map.addLayer({
             id: 'rv-labels', type: 'symbol', source: 'rv-nodes',
             layout: {
-                'text-field': ['get', 'label'], 'text-size': 10, 'text-offset': [0, 1.1],
+                'text-field': ['get', 'label'],
+                // ★ SIZE deliberately NOT scaled: 10px is readable at every zoom and growing it
+                //   crowds the map exactly where zooming in is meant to make room. The OFFSET
+                //   must move though — it is in ems of the text size, so a fixed 1.1em stays
+                //   ~11px while the circle under it grows 6.5x and the label ends up inside its
+                //   own marker. Symbol collision is between symbols, not against the circle
+                //   layer, so decluttering is unaffected by either.
+                'text-size': 10,
+                'text-offset': ['interpolate', ['linear'], ['zoom'], 0, ['literal', [0, 1.1]],
+                                4, ['literal', [0, 1.8]], 9, ['literal', [0, 3.6]]],
                 'text-anchor': 'top', 'text-allow-overlap': false,
             },
             paint: { 'text-color': '#cbd5e1', 'text-opacity': ['get', 'alpha'], 'text-halo-color': '#020610', 'text-halo-width': 1.2 },
@@ -637,6 +708,26 @@ export function mountGlobe(
             if (!hit.length && selected) { applySelection(null, false); onSelect(null); }
         });
         renderDock();
+        // The floor must exist before the first fitBounds, or the initial frame can land below
+        // it and be clamped a moment later, which reads as the map jumping on load.
+        applyMinZoom();
+        // ★ NO setMaxBounds, AND THAT IS A MEASURED DECISION, NOT AN OMISSION.
+        //   Traced getMinZoom()/getZoom() around each call at 2400px (container 1972x596):
+        //     after setMinZoom(1.945)   minZoom 1.945   zoom 1.945
+        //     after setMaxBounds        minZoom 1.945   zoom 22      <- slammed to the maximum
+        //     setZoom(-5) afterwards    minZoom 1.945   zoom 22      <- stuck, unrecoverable
+        //   So maxBounds does NOT overwrite the floor, which was the obvious guess and was
+        //   wrong. It makes the camera unsatisfiable: full-Mercator bounds demand "show all
+        //   latitude +/-85" AND "show no more than +/-180 longitude" at once, which cannot hold
+        //   in a 3.3:1 viewport, and MapLibre resolves the contradiction by pinning zoom to its
+        //   maximum. That is what rendered as an untiled grey slab.
+        //
+        //   Tightening latitude (say +/-60) would make the bounds satisfiable, but this graph
+        //   contains Nord Stream, Power of Siberia and Arctic shipping context — cropping the
+        //   subject to buy a panning nicety is the wrong trade. The explicit floor already
+        //   delivers the thing that was asked for: you cannot zoom out past one world. What is
+        //   given up is that the single world can be panned partly off-screen, showing grey at
+        //   the edge. That is cosmetic, and strictly smaller than a map that cannot zoom at all.
         // ★ Initial framing here, not in the constructor. Fewer than two placeable nodes gives a
         //   degenerate bounds, so keep the fixed view in that case rather than fitting to a point.
         if (placeable.length >= 2 && !dead()) {
