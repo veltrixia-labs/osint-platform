@@ -1,7 +1,7 @@
 {
  "meta": {
-  "generated_at": "2026-10-05T00:50:11+00:00",
-  "vault_head": "ec6c387d73eb50ee964911db16002b3b68beb7df",
+  "generated_at": "2026-10-05T01:09:52+00:00",
+  "vault_head": "860e7f077f7e8f41253ddf237629e28186229588",
   "node_count": 303,
   "edge_count": 1535,
   "edge_types": [
@@ -5856,10 +5856,10 @@
    "retrieved": "2026-06-24",
    "source": "https://ccaf.io/cbnsi/cbeci",
    "desc": "Bitcoin マイニング＝産業的な大口電力需要（CBECI ~138 TWh/yr・世界電力の約0.5%）＝電力需要マクロの一断面",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: mining power draw.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: mining power draw.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Crypto_Mining",
@@ -5876,10 +5876,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.spark.money/research/bitcoin-mining-energy-mix-2026",
    "desc": "マイニング vs AI 計算が電力・サイトを奪い合う同一 seam（特に ERCOT flexible load）。一部マイナーは電力潤沢サイトを AI/HPC データセンターへ転用（mining→AI ピボット）＝需要競合かつ転用の seam（AI 側は AI_Data_Center_Demand に住所）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: mining→AI-DC compute pivot.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: mining→AI-DC compute pivot.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Crypto_Mining",
@@ -5896,10 +5896,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.spark.money/research/bitcoin-mining-energy-mix-2026",
    "desc": "マイニング電源の一部は flared/stranded gas・ガス火力に依存（Texas 等）＝ガス需要との接点（ガス本体は Natural_Gas に住所）",
-   "basis_short": "[ESTIMATED] Natural_Gas reliance: flared/stranded gas for mining power — peripheral.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Natural_Gas reliance: flared/stranded gas for mining power — peripheral.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Crypto_Mining",
@@ -5946,10 +5946,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "並行する重要鉱物チョークポイント——EV は電池材料（リチウム/コバルト/ニッケル/黒鉛）とモーター磁石（NdFeB＝Rare_Earths）の双方を使う。中国支配の構造が共通。材料クラスは別だが隣接の seam",
-   "basis_short": "[ESTIMATED] RE-magnet dependence:",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence:",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "EV_Battery",
@@ -5996,10 +5996,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/commentaries/global-battery-markets-are-growing-strongly-and-so-are-the-supply-risks",
    "desc": "電池の主要鉱物入力〔Li＝全 li-ion 化学の必須元素・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence: lithium is in EVERY Li-ion chemistry (NMC AND LFP) — central.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence: lithium is in EVERY Li-ion chemistry (NMC AND LFP) — central.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "EV_Battery",
@@ -6016,10 +6016,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/commentaries/global-battery-markets-are-growing-strongly-and-so-are-the-supply-risks",
    "desc": "電池の主要鉱物入力〔Co＝NMC 系の正極・LFP では不使用・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence: NMC cathode metal — central to battery materials.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence: NMC cathode metal — central to battery materials.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "EV_Battery",
@@ -6036,10 +6036,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/commentaries/global-battery-markets-are-growing-strongly-and-so-are-the-supply-risks",
    "desc": "電池の主要鉱物入力〔Ni＝NMC 正極の高エネルギー密度・LFP では不使用・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence: dominant high-energy cathode metal.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence: dominant high-energy cathode metal.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Rare_Earths",
@@ -6211,10 +6211,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.anthropic.com/news/anthropic-amazon-compute",
    "desc": "Anthropic の巨大計算需要（4クラウド・複数 GW 規模）＝AI データセンター需要の主要な需要 SOURCE（AWS/Google/Azure/NVIDIA を経由し間接的に TSMC まで波及）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: pure AI-lab compute demand.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: pure AI-lab compute demand.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Anthropic",
@@ -6306,10 +6306,10 @@
    "retrieved": "2026-06-24",
    "source": "https://openai.com/index/announcing-the-stargate-project/",
    "desc": "OpenAI の巨大計算需要（Azure $250B・AWS・NVIDIA 10GW＋・Stargate $500B/4年）＝AI データセンター需要の主要な需要 SOURCE（Azure/AWS/Oracle/NVIDIA を経由し間接的に TSMC まで波及）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: pure AI-lab — archetypal AI-DC compute demand.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: pure AI-lab — archetypal AI-DC compute demand.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "OpenAI",
@@ -6575,10 +6575,10 @@
    "retrieved": "2026-06-25",
    "source": "https://carboncredits.com/byd-overtakes-tesla-as-worlds-biggest-ev-seller-in-2025/",
    "desc": "★ 電池垂直統合の最強 tie＝自社 Blade 電池（LFP）で自社 EV/PHEV を駆動。電池出力 150 GWh〔2025・+40%〕・3M 台でゼロ発火・2世代 Blade〔2026-08・190Wh/kg・>1000km〕。EV_Battery materials ハブの中核",
-   "basis_short": "[ESTIMATED] EV_Battery demand-side: pure EV/PHEV + battery maker — high.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EV_Battery demand-side: pure EV/PHEV + battery maker — high.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "BYD",
@@ -6615,10 +6615,10 @@
    "retrieved": "2026-06-25",
    "source": "https://carboncredits.com/byd-overtakes-tesla-as-worlds-biggest-ev-seller-in-2025/",
    "desc": "EV/PHEV 充電需要＋系統蓄電（BESS）事業＝電力需要への連結",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: EV charging.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: EV charging.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "BYD",
@@ -6635,10 +6635,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV トラクションモーターの希土類磁石（NdFeB）依存＝Rare_Earths 重要鉱物ハブに連結",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: EV/PHEV NdFeB traction motors — moderate (auto, RE-free substitutable).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: EV/PHEV NdFeB traction motors — moderate (auto, RE-free substitutable).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "BYD",
@@ -6730,10 +6730,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "リチウムのバッテリー材料に依存〔EV/電池サプライチェーン・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence:",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence:",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "BYD",
@@ -6750,10 +6750,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "コバルトのバッテリー材料に依存〔EV/電池・BYD は LFP 主体で Co 依存は相対的に低い・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence:",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence:",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "BYD",
@@ -6770,10 +6770,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "ニッケルのバッテリー材料に依存〔NMC 正極の Ni・BYD は LFP 主体で Ni 依存は相対的に低い・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence:",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence:",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "BYD",
@@ -6790,10 +6790,10 @@
    "retrieved": "2026-06-27",
    "source": "https://carboncredits.com/copper-demand-set-to-hit-37m-tonnes-by-2050-can-supply-keep-up/",
    "desc": "EV モーター巻線/配線/充電インフラの銅に依存〔EV は内燃車の ~3-4倍の銅使用〕＝Copper 需要側（②依存度は body）",
-   "basis_short": "[ESTIMATED] Copper dependence: pure EV/PHEV — high copper.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Copper dependence: pure EV/PHEV — high copper.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "BYD",
@@ -7070,10 +7070,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "リチウムのバッテリー材料に依存〔世界首位の電池メーカー・Li 調達が中核・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence: world's largest battery maker — huge Li consumer.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence: world's largest battery maker — huge Li consumer.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "CATL",
@@ -7090,10 +7090,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "コバルトのバッテリー材料に依存〔NMC 系で Co・LFP では Co フリー・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence: makes both NMC + LFP — moderate Co.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence: makes both NMC + LFP — moderate Co.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "CATL",
@@ -7110,10 +7110,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "ニッケルのバッテリー材料に依存〔NMC 正極の Ni・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence: NMC + LFP.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence: NMC + LFP.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "CATL",
@@ -7300,10 +7300,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV 移行の電池サプライチェーンに依存＝EV_Battery materials ハブに連結（②依存度は body）",
-   "basis_short": "[ESTIMATED] EV_Battery demand-side: EV ramp, ICE-heavy.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EV_Battery demand-side: EV ramp, ICE-heavy.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Ford",
@@ -7320,10 +7320,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "リチウムのバッテリー材料に依存〔EV・電池サプライチェーン・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence: Li-ion EV.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence: Li-ion EV.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Ford",
@@ -7340,10 +7340,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "コバルトのバッテリー材料に依存〔EV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence: NMC-leaning OEM cathode.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence: NMC-leaning OEM cathode.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Ford",
@@ -7360,10 +7360,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "ニッケルのバッテリー材料に依存〔NMC 正極・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence: high-nickel NMC OEM.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence: high-nickel NMC OEM.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Ford",
@@ -7380,10 +7380,10 @@
    "retrieved": "2026-06-27",
    "source": "https://carboncredits.com/copper-demand-set-to-hit-37m-tonnes-by-2050-can-supply-keep-up/",
    "desc": "EV モーター/配線の銅に依存〔EV は内燃車の ~3-4倍の銅使用・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Copper dependence: EV pullback, ICE-heavy.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Copper dependence: EV pullback, ICE-heavy.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Ford",
@@ -7400,10 +7400,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV/モーターの希土類磁石（NdFeB）依存＝Rare_Earths ハブに連結",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: EV pullback (84k BEV), lower mix — moderate-low.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: EV pullback (84k BEV), lower mix — moderate-low.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Ford",
@@ -7600,10 +7600,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV 拡大の電池サプライチェーンに依存〔Ultium プラットフォーム〕＝EV_Battery ハブに連結（②依存度は body）",
-   "basis_short": "[ESTIMATED] EV_Battery demand-side: EV ramp.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EV_Battery demand-side: EV ramp.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "GM",
@@ -7620,10 +7620,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "リチウムのバッテリー材料に依存〔EV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence: Li-ion EV.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence: Li-ion EV.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "GM",
@@ -7640,10 +7640,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "コバルトのバッテリー材料に依存〔EV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence: NMC-leaning OEM cathode.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence: NMC-leaning OEM cathode.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "GM",
@@ -7660,10 +7660,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "ニッケルのバッテリー材料に依存〔NMC/Ultium・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence: high-nickel NMC OEM.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence: high-nickel NMC OEM.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "GM",
@@ -7680,10 +7680,10 @@
    "retrieved": "2026-06-27",
    "source": "https://carboncredits.com/copper-demand-set-to-hit-37m-tonnes-by-2050-can-supply-keep-up/",
    "desc": "EV モーター/配線の銅に依存〔②依存度は body〕",
-   "basis_short": "[ESTIMATED] Copper dependence: EV ramp, ICE-heavy.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Copper dependence: EV ramp, ICE-heavy.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "GM",
@@ -7700,10 +7700,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV モーターの希土類磁石（NdFeB）依存＝Rare_Earths ハブに連結",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: EV ramp, lower current EV mix — moderate-low.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: EV ramp, lower current EV mix — moderate-low.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "GM",
@@ -8024,10 +8024,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV/電動化の電池サプライチェーンに依存＝EV_Battery ハブに連結（②依存度は body）",
-   "basis_short": "[ESTIMATED] EV_Battery demand-side: EV growth.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EV_Battery demand-side: EV growth.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Hyundai",
@@ -8044,10 +8044,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "リチウムのバッテリー材料に依存〔EV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence: Li-ion EV.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence: Li-ion EV.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Hyundai",
@@ -8064,10 +8064,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "コバルトのバッテリー材料に依存〔EV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence: NMC-leaning OEM cathode.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence: NMC-leaning OEM cathode.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Hyundai",
@@ -8084,10 +8084,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "ニッケルのバッテリー材料に依存〔NMC 正極・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence: high-nickel NMC OEM.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence: high-nickel NMC OEM.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Hyundai",
@@ -8104,10 +8104,10 @@
    "retrieved": "2026-06-27",
    "source": "https://carboncredits.com/copper-demand-set-to-hit-37m-tonnes-by-2050-can-supply-keep-up/",
    "desc": "EV モーター/配線の銅に依存〔②依存度は body〕",
-   "basis_short": "[ESTIMATED] Copper dependence: EV growth + ICE mix.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Copper dependence: EV growth + ICE mix.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Hyundai",
@@ -8124,10 +8124,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV モーターの希土類磁石（NdFeB）依存＝Rare_Earths ハブに連結",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: EV growth NdFeB motors — moderate.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: EV growth NdFeB motors — moderate.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Hyundai",
@@ -8644,10 +8644,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "BaaS（バッテリー交換）含む EV 電池サプライチェーンに依存＝EV_Battery ハブに連結（②依存度は body）",
-   "basis_short": "[ESTIMATED] EV_Battery demand-side: pure BEV — high.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EV_Battery demand-side: pure BEV — high.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Nio",
@@ -8664,10 +8664,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "リチウムのバッテリー材料に依存〔EV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence: Li-ion EV.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence: Li-ion EV.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Nio",
@@ -8684,10 +8684,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "コバルトのバッテリー材料に依存〔EV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence: NMC-leaning OEM cathode.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence: NMC-leaning OEM cathode.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Nio",
@@ -8704,10 +8704,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "ニッケルのバッテリー材料に依存〔NMC 正極・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence: high-nickel NMC OEM.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence: high-nickel NMC OEM.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Nio",
@@ -8724,10 +8724,10 @@
    "retrieved": "2026-06-27",
    "source": "https://carboncredits.com/copper-demand-set-to-hit-37m-tonnes-by-2050-can-supply-keep-up/",
    "desc": "EV モーター/配線の銅に依存〔②依存度は body〕",
-   "basis_short": "[ESTIMATED] Copper dependence: pure BEV — high copper.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Copper dependence: pure BEV — high copper.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Nio",
@@ -8744,10 +8744,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV モーターの希土類磁石（NdFeB）依存＝Rare_Earths ハブに連結",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: BEV NdFeB motors — moderate.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: BEV NdFeB motors — moderate.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Nio",
@@ -9461,10 +9461,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV 移行の電池サプライチェーンに依存〔ACC セル JV〕＝EV_Battery ハブに連結（②依存度は body）",
-   "basis_short": "[ESTIMATED] EV_Battery demand-side: EV transition.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EV_Battery demand-side: EV transition.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Stellantis",
@@ -9481,10 +9481,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "リチウムのバッテリー材料に依存〔EV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence: Li-ion EV.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence: Li-ion EV.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Stellantis",
@@ -9501,10 +9501,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "コバルトのバッテリー材料に依存〔EV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence: NMC-leaning OEM cathode.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence: NMC-leaning OEM cathode.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Stellantis",
@@ -9521,10 +9521,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "ニッケルのバッテリー材料に依存〔NMC 正極・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence: high-nickel NMC OEM.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence: high-nickel NMC OEM.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Stellantis",
@@ -9541,10 +9541,10 @@
    "retrieved": "2026-06-27",
    "source": "https://carboncredits.com/copper-demand-set-to-hit-37m-tonnes-by-2050-can-supply-keep-up/",
    "desc": "EV モーター/配線の銅に依存〔②依存度は body〕",
-   "basis_short": "[ESTIMATED] Copper dependence: ICE-heavy, EV transition.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Copper dependence: ICE-heavy, EV transition.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Stellantis",
@@ -9561,10 +9561,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV モーターの希土類磁石（NdFeB）依存＝Rare_Earths ハブに連結",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: EV transition, lower mix — moderate-low.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: EV transition, lower mix — moderate-low.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Stellantis",
@@ -9641,10 +9641,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.sec.gov/Archives/edgar/data/0001318605/000162828026026551/exhibit991.htm",
    "desc": "EV 電池サプライチェーンに依存（4680 セル内製＋LG/Panasonic/CATL 調達）＝EV_Battery materials ハブに連結",
-   "basis_short": "[ESTIMATED] EV_Battery demand-side: pure EV — entire vehicle battery-dependent.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EV_Battery demand-side: pure EV — entire vehicle battery-dependent.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Tesla",
@@ -9661,10 +9661,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.sec.gov/Archives/edgar/data/0001318605/000162828026026551/exhibit991.htm",
    "desc": "★ エネルギー貯蔵事業（Megapack/Powerwall）＝FY2025 で 46.7 GWh 配備〔+49%〕・売上 $12.7B〔+27%〕＋EV 充電需要＝電力需要への双方向リンク",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: EV charging + factories.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: EV charging + factories.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Tesla",
@@ -9681,10 +9681,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV トラクションモーターの希土類磁石（NdFeB）依存（一部モデルは希土類フリー化を公表）＝Rare_Earths 重要鉱物ハブに連結",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: actively moving to RE-free motors (next-gen announced) — REDUCING dependence.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: actively moving to RE-free motors (next-gen announced) — REDUCING dependence.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Tesla",
@@ -9701,10 +9701,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.sec.gov/Archives/edgar/data/0001318605/000162828026026551/exhibit991.htm",
    "desc": "★ Dojo/ロボタクシー/FSD の AI 計算需要＝Auto↔AI bridge（2026 に Dallas/Houston で無監督 Robotaxi 配備・Cybercab 生産開始＝deployment レベルの市場事実のみ）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: Dojo/in-house AI compute — smaller scale.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: Dojo/in-house AI compute — smaller scale.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Tesla",
@@ -9751,10 +9751,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "リチウムのバッテリー材料に依存〔EV/電池サプライチェーン・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence: Li-ion EV — all chemistries use Li.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence: Li-ion EV — all chemistries use Li.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Tesla",
@@ -9771,10 +9771,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "コバルトのバッテリー材料に依存〔EV/電池・LFP 移行で Co 依存低減中・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence: partial LFP (standard-range) — reduced Co.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence: partial LFP (standard-range) — reduced Co.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Tesla",
@@ -9791,10 +9791,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "ニッケルのバッテリー材料に依存〔NMC 正極の Ni・高ニッケル正極・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence: high-nickel NMC long-range + partial LFP.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence: high-nickel NMC long-range + partial LFP.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Tesla",
@@ -9811,10 +9811,10 @@
    "retrieved": "2026-06-27",
    "source": "https://carboncredits.com/copper-demand-set-to-hit-37m-tonnes-by-2050-can-supply-keep-up/",
    "desc": "EV モーター巻線/配線/充電インフラの銅に依存〔EV は内燃車の ~3-4倍の銅使用〕＝Copper 需要側（②依存度は body）",
-   "basis_short": "[ESTIMATED] Copper dependence: pure EV — ~3-4x ICE copper/vehicle.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Copper dependence: pure EV — ~3-4x ICE copper/vehicle.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Toyota",
@@ -9846,10 +9846,10 @@
    "retrieved": "2026-06-25",
    "source": "https://global.toyota/pages/global_toyota/ir/financial-results/2025_4q_summary_en.pdf",
    "desc": "電動化（HEV/PHEV/BEV）の電池サプライチェーンに依存＋全固体電池 R&D を推進＝EV_Battery materials ハブに連結",
-   "basis_short": "[ESTIMATED] EV_Battery demand-side:",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EV_Battery demand-side:",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Toyota",
@@ -9866,10 +9866,10 @@
    "retrieved": "2026-06-25",
    "source": "https://global.toyota/pages/global_toyota/ir/financial-results/2025_4q_summary_en.pdf",
    "desc": "EV/PHEV 充電需要＋電動化拡大＝電力需要への連結（ただしハイブリッド主軸で BEV 比率は低め）",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: EV/industrial.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: EV/industrial.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Toyota",
@@ -9886,10 +9886,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "HEV/EV モーターの希土類磁石（NdFeB）依存＝Rare_Earths 重要鉱物ハブに連結",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: HEV/EV NdFeB motors, high volume — moderate.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: HEV/EV NdFeB motors, high volume — moderate.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Toyota",
@@ -9921,10 +9921,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "リチウムのバッテリー材料に依存〔EV/HEV・電池サプライチェーン・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence: Li-ion EV/HEV.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence: Li-ion EV/HEV.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Toyota",
@@ -9941,10 +9941,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "コバルトのバッテリー材料に依存〔EV/HEV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence: NMC + partial LFP, hybrid-heavy.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence: NMC + partial LFP, hybrid-heavy.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Toyota",
@@ -9961,10 +9961,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "ニッケルのバッテリー材料に依存〔NMC 正極の Ni・EV/HEV・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence: NMC + partial LFP.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence: NMC + partial LFP.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Volkswagen",
@@ -9996,10 +9996,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.volkswagen-group.com/en/annual-report-and-full-year-results-2025-20174",
    "desc": "BEV 移行の電池サプライチェーンに依存（PowerCo セル工場＋外部調達）＝EV_Battery materials ハブに連結",
-   "basis_short": "[ESTIMATED] EV_Battery demand-side: EV transition (large volume).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EV_Battery demand-side: EV transition (large volume).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Volkswagen",
@@ -10016,10 +10016,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.volkswagen-group.com/en/annual-report-and-full-year-results-2025-20174",
    "desc": "BEV 充電需要＝電力需要への連結（BEV 983k 台〔+32%〕・電動比率 10.9%）",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: EV charging.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: EV charging.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Volkswagen",
@@ -10036,10 +10036,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "EV モーターの希土類磁石（NdFeB）依存＝Rare_Earths 重要鉱物ハブに連結",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: EV transition NdFeB motors — moderate.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: EV transition NdFeB motors — moderate.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Volkswagen",
@@ -10056,10 +10056,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "リチウムのバッテリー材料に依存〔EV/電池サプライチェーン・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Lithium dependence: Li-ion EV.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Lithium dependence: Li-ion EV.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Volkswagen",
@@ -10076,10 +10076,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "コバルトのバッテリー材料に依存〔EV/電池・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Cobalt dependence: NMC-leaning OEM cathode.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Cobalt dependence: NMC-leaning OEM cathode.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Volkswagen",
@@ -10096,10 +10096,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "ニッケルのバッテリー材料に依存〔NMC 正極の Ni・②依存度は body〕",
-   "basis_short": "[ESTIMATED] Nickel dependence: high-nickel NMC OEM.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nickel dependence: high-nickel NMC OEM.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Amazon",
@@ -10131,10 +10131,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.datacenterdynamics.com/en/news/amazon-capex-to-hit-200bn-in-2026-will-mostly-fund-aws-data-centers/",
    "desc": "AWS の AI/DC capex（2026 ~$200B・predominantly AWS）＝AI 計算需要の主要ドライバー（NVIDIA GPU 調達・Trainium 増強）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: AWS — largest cloud AI-DC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: AWS — largest cloud AI-DC.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Amazon",
@@ -10151,10 +10151,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.datacenterdynamics.com/en/news/amazon-capex-to-hit-200bn-in-2026-will-mostly-fund-aws-data-centers/",
    "desc": "ハイパースケール DC（AWS）の大口電力消費者＝AI 能力増強が電力需要を牽引。電力本体は Power_Demand に住所",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: AWS data-center power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: AWS data-center power.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Amazon",
@@ -10171,10 +10171,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.aboutamazon.com/news/sustainability/amazon-nuclear-small-modular-reactor-net-carbon-zero",
    "desc": "AWS DC 向けに開示済の原子力電源——Talen Energy の PPA（最大 1,920 MW・Susquehanna 隣接）＋ X-energy（SMR・Xe-100）への出資/Energy Northwest との 4基 SMR（初期 320 MW）。原子力本体は Nuclear_Power に住所（個別条件の細目は 未確認）",
-   "basis_short": "[ESTIMATED] Nuclear_Power demand-side: nuclear PPA for AI-DC (the nuclear-for-datacenters seam).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nuclear_Power demand-side: nuclear PPA for AI-DC (the nuclear-for-datacenters seam).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Amazon",
@@ -10396,10 +10396,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.sec.gov/Archives/edgar/data/0001769628/000176962826000220/coreweave1q26earningspress.htm",
    "desc": "GPU-cloud の大規模 DC buildout＝AI データセンター需要の純粋プレイ。RPO ~$99.4B（+284% YoY）が需要を可視化",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: pure AI-DC neocloud — entire business is AI-DC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: pure AI-DC neocloud — entire business is AI-DC.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "CoreWeave",
@@ -10416,10 +10416,10 @@
    "retrieved": "2026-06-25",
    "source": "https://futurumgroup.com/insights/coreweave-q1-fy-2026-capacity-constraints-amid-accelerating-ai-demand/",
    "desc": "GPU データセンターの大規模電力 draw（契約電力を GW 級に拡大中・capacity constrained）＝AI 電力需要の消費端",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: pure AI-DC power draw.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: pure AI-DC power draw.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "CoreWeave",
@@ -10466,10 +10466,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.cnbc.com/2026/04/29/alphabet-googl-q1-2026-earnings.html",
    "desc": "AI/DC capex（2026 ~$180–190B・うち ~60% サーバ）＝AI 計算需要の主要ドライバー（NVIDIA GPU 調達・TPU 増強）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: GCP+DeepMind+TPU.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: GCP+DeepMind+TPU.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Google",
@@ -10486,10 +10486,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.cnbc.com/2026/04/29/alphabet-googl-q1-2026-earnings.html",
    "desc": "ハイパースケール DC（Google Cloud）の大口電力消費者＝AI 能力増強が電力需要を牽引。電力本体は Power_Demand に住所",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: GCP data-center power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: GCP data-center power.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Google",
@@ -10506,10 +10506,10 @@
    "retrieved": "2026-06-24",
    "source": "https://blog.google/company-news/outreach-and-initiatives/sustainability/google-kairos-power-nuclear-energy-agreement/",
    "desc": "DC 向けに開示済の原子力電源——Kairos Power と Master Plant Development Agreement（molten-salt SMR・500 MW フリート〔2035〕・初号機 2030・PPA）。原子力本体は Nuclear_Power に住所（個別条件の細目は 未確認）",
-   "basis_short": "[ESTIMATED] Nuclear_Power demand-side: nuclear/SMR PPA for AI-DC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nuclear_Power demand-side: nuclear/SMR PPA for AI-DC.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Google",
@@ -10611,10 +10611,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.datacenterdynamics.com/en/news/meta-estimates-2026-capex-to-be-between-115-135bn/",
    "desc": "AI/DC capex（2026 $125–145B・Meta Superintelligence Labs＋中核事業）＝AI 計算需要の主要ドライバー（NVIDIA/AMD GPU 調達・Google TPU・自社 MTIA の multipronged）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: massive AI capex (Llama/MTIA).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: massive AI capex (Llama/MTIA).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Meta",
@@ -10631,10 +10631,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.datacenterdynamics.com/en/news/meta-estimates-2026-capex-to-be-between-115-135bn/",
    "desc": "ハイパースケール DC の大口電力消費者＝AI 能力増強が電力需要を牽引（$600B 規模の DC 投資が報道）。電力本体は Power_Demand に住所",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: AI data-center power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: AI data-center power.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Meta",
@@ -10651,10 +10651,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.constellationenergy.com/news/2025/constellation-meta-sign-20-year-deal-for-clean-reliable-nuclear-energy-in-illinois.html",
    "desc": "DC 向けに開示済の原子力電源——Constellation の Clinton Clean Energy Center と20年 PPA（1,121 MW 無排出原子力・2025-06-03 締結・2027-06 開始＝relicensing 支援）。原子力本体は Nuclear_Power に住所（個別条件の細目は 未確認）",
-   "basis_short": "[ESTIMATED] Nuclear_Power demand-side: nuclear PPA for AI-DC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Nuclear_Power demand-side: nuclear PPA for AI-DC.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Meta",
@@ -10741,10 +10741,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.theregister.com/2026/04/30/microsoft_q3_2026/",
    "desc": "ハイパースケーラの AI/DC capex（FY2026 ~$190B 規模・+61% YoY）＝AI 計算需要の主要ドライバー（NVIDIA GPU 調達・Azure 増強）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: largest AI-DC capex (Azure+OpenAI).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: largest AI-DC capex (Azure+OpenAI).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Microsoft",
@@ -10761,10 +10761,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.theregister.com/2026/04/30/microsoft_q3_2026/",
    "desc": "ハイパースケール DC の大口電力消費者（FY2026 で AI 能力 +80%/DC フットプリント ~倍増計画）。電力本体は Power_Demand に住所",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: Azure data-center power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: Azure data-center power.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Microsoft",
@@ -10911,10 +10911,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.oracle.com/news/announcement/q4fy26-earnings-release-2026-06-10/",
    "desc": "OCI の大規模 DC buildout（Stargate Abilene TX ~1GW・$3–4B 等）＝AI データセンター需要の主要ドライバ。RPO $638B の大半が大規模 AI 契約",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: OCI — fast-growing AI-DC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: OCI — fast-growing AI-DC.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Oracle",
@@ -10931,10 +10931,10 @@
    "retrieved": "2026-06-25",
    "source": "https://openai.com/index/five-new-stargate-sites/",
    "desc": "Stargate の GW 級 DC（Abilene ~1GW＋5新サイトで計 ~7GW 計画）＝大規模な電力需要 draw。AI 電力需要連鎖の消費端",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: OCI power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: OCI power.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Oracle",
@@ -10996,10 +10996,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.circle.com/usdc",
    "desc": "Circle は USDC（stablecoin）の発行体（issuer・EURC も発行）。※issuer→token は context_link を採用——vault の manufactures は物理財の受託製造（例: TSMC のチップ）に予約されており、金融トークンの発行には不適ゆえ（issuer 特定性は本 desc が担う・stablecoin 本体は Stablecoin に住所）",
-   "basis_short": "[ESTIMATED][GLUE] Stablecoin supply-side: USDC = #2 stablecoin issuer (~25%).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][GLUE][PRODUCTION] Stablecoin supply-side: USDC = #2 stablecoin issuer (~25%).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Circle",
@@ -11241,10 +11241,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.spark.money/research/bitcoin-mining-economics-2026",
    "desc": "産業規模の大口電力消費者（72.2 EH/s 級の稼働・~1.9 GW・Texas/Ohio 等の電力フットプリント）＝電力需要マクロの一断面（AI/DC とサイト/電力で競合かつ転用）",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: bitcoin mining power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: bitcoin mining power.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "MARA",
@@ -11261,10 +11261,10 @@
    "retrieved": "2026-06-24",
    "source": "https://finance.yahoo.com/markets/stocks/articles/mara-holdings-seeks-steadier-ai-120405985.html",
    "desc": "検証済の AI ピボット＝既存マイニングサイト（電力潤沢）を AI/HPC データセンターへ転換（Starwood Digital Ventures JV ~1GW・>2.5GW ロードマップ／Exaion 64%〔EDF 子会社・欧州 HPC〕／Long Ridge〔Ohio・PJM〕）＝mining→AI 転用の seam（AI 本体は AI_Data_Center_Demand に住所）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: bitcoin miner pivoting to AI-DC hosting.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: bitcoin miner pivoting to AI-DC hosting.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "MARA",
@@ -11476,10 +11476,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.coindesk.com/business/2026/01/30/tether-s-gold-holdings-top-usd17-billion-as-net-profits-surpassed-usd10-billion-for-2025",
    "desc": "世界最大のステーブルコイン（USDT）＝Stablecoin カテゴリの中核〔市場/規模の事実〕",
-   "basis_short": "[ESTIMATED][GLUE] Stablecoin supply-side: USDT = dominant stablecoin issuer (~70% of market).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][GLUE][PRODUCTION] Stablecoin supply-side: USDT = dominant stablecoin issuer (~70% of market).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Tether",
@@ -11551,10 +11551,10 @@
    "retrieved": "2026-06-23",
    "source": "https://www.sipri.org/publications/2025/sipri-fact-sheets/sipri-top-100-arms-producing-and-military-services-companies-2024",
    "desc": "航空宇宙インテグレータとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] Rare_Earths demand-side: aerospace RE-magnets (actuators/avionics).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Rare_Earths demand-side: aerospace RE-magnets (actuators/avionics).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Airbus",
@@ -11641,10 +11641,10 @@
    "retrieved": "2026-06-23",
    "source": "https://www.sipri.org/publications/2025/sipri-fact-sheets/sipri-top-100-arms-producing-and-military-services-companies-2024",
    "desc": "完成システムのプライムとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: combat electronics/systems RE-magnet — significant.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: combat electronics/systems RE-magnet — significant.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "BAE_Systems",
@@ -11741,10 +11741,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/executive-summary",
    "desc": "航空宇宙/防衛部材の希土類磁石/合金に依存＝Rare_Earths ハブに連結〔Lockheed/RTX mirror〕",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: defense+aerospace actuators/avionics RE-magnet — significant (more diversified than missile primes).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: defense+aerospace actuators/avionics RE-magnet — significant (more diversified than missile primes).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Boeing",
@@ -11921,10 +11921,10 @@
    "retrieved": "2026-06-23",
    "source": "https://world-nuclear.org/information-library/country-profiles/countries-a-f/china-nuclear-power",
    "desc": "中国の商業原子力（発電・反応炉建設/運転）の中核事業者＝[[Nuclear_Power]] 市場への参画（商業水準のみ・反応炉物理は扱わない）",
-   "basis_short": "[ESTIMATED] Nuclear_Power supply-side: China nuclear builder/operator — civil power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Nuclear_Power supply-side: China nuclear builder/operator — civil power.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "CNNC",
@@ -11941,10 +11941,10 @@
    "retrieved": "2026-06-23",
    "source": "https://en.wikipedia.org/wiki/China_National_Nuclear_Corporation",
    "desc": "核燃料サイクル事業（ウラン採掘/転換/濃縮/燃料加工/再処理＝事業区分の EXISTENCE のみ・technicals/兵器経路は扱わない）",
-   "basis_short": "[ESTIMATED] Uranium_Enrichment supply-side: China enrichment — civil fuel-cycle.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Uranium_Enrichment supply-side: China enrichment — civil fuel-cycle.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "CNNC",
@@ -12196,10 +12196,10 @@
    "retrieved": "2026-06-22",
    "source": "https://www.sipri.org/media/press-release/2025/sipri-top-100-arms-producers-see-combined-revenues-surge-states-rush-modernize-and-expand-arsenals",
    "desc": "完成システムのプライムとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: subs/land systems — less magnet-intensive than aircraft/missiles.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: subs/land systems — less magnet-intensive than aircraft/missiles.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "General_Dynamics",
@@ -12296,10 +12296,10 @@
    "retrieved": "2026-06-23",
    "source": "https://www.sipri.org/publications/2025/sipri-fact-sheets/sipri-top-100-arms-producing-and-military-services-companies-2024",
    "desc": "重工インテグレータとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: diversified heavy-industry+defense — moderate.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: diversified heavy-industry+defense — moderate.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Leonardo",
@@ -12371,10 +12371,10 @@
    "retrieved": "2026-06-23",
    "source": "https://www.sipri.org/publications/2025/sipri-fact-sheets/sipri-top-100-arms-producing-and-military-services-companies-2024",
    "desc": "完成システムのプライムとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: helicopters/defense electronics RE-magnet — significant.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: helicopters/defense electronics RE-magnet — significant.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Leonardo",
@@ -12441,10 +12441,10 @@
    "retrieved": "2026-06-19",
    "source": "https://www.sipri.org/sites/default/files/2025-11/fs_2512_top_100_2024.pdf",
    "desc": "完成システムのプライムとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: fighter (F-35 ~417kg RE) + precision-munition NdFeB/SmCo magnets — deepest, mil-spec non-substitutable.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: fighter (F-35 ~417kg RE) + precision-munition NdFeB/SmCo magnets — deepest, mil-spec non-substitutable.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Lockheed_Martin",
@@ -12491,10 +12491,10 @@
    "retrieved": "2026-06-27",
    "source": "https://orfamerica.org/newresearch/chinas-critical-mineral-export-controls",
    "desc": "Ga/Ge レーダ/光学等の入力に依存〔防衛電子・依存水準のみ・用途/配合は書かない・Rare_Earths→defense mirror〕",
-   "basis_short": "[ESTIMATED] Critical_Minerals demand-side: defense critical-minerals dependence.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Critical_Minerals demand-side: defense critical-minerals dependence.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Mitsubishi_Electric",
@@ -12616,10 +12616,10 @@
    "retrieved": "2026-06-22",
    "source": "https://www.mhi.com/news/25050901.html",
    "desc": "民生の原子力発電/発電事業を擁する（[[Nuclear_Power]] 市場への参画・商業/規制水準のみ・原子力の上流の機微には触れない）",
-   "basis_short": "[ESTIMATED] Nuclear_Power supply-side: reactor components/builder — civil.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Nuclear_Power supply-side: reactor components/builder — civil.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Mitsubishi_Heavy_Industries",
@@ -12651,10 +12651,10 @@
    "retrieved": "2026-06-22",
    "source": "https://www.sipri.org/publications/2025/sipri-fact-sheets/sipri-top-100-arms-producing-and-military-services-companies-2024",
    "desc": "重工インテグレータとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: diversified heavy-industry+defense — moderate.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: diversified heavy-industry+defense — moderate.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Mitsubishi_Heavy_Industries",
@@ -12726,10 +12726,10 @@
    "retrieved": "2026-06-23",
    "source": "https://www.sipri.org/publications/2025/sipri-fact-sheets/sipri-top-100-arms-producing-and-military-services-companies-2024",
    "desc": "電子/IT インテグレータとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: defense IT/electronics — moderate magnet use.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: defense IT/electronics — moderate magnet use.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "NEC",
@@ -12801,10 +12801,10 @@
    "retrieved": "2026-06-22",
    "source": "https://www.sipri.org/media/press-release/2025/sipri-top-100-arms-producers-see-combined-revenues-surge-states-rush-modernize-and-expand-arsenals",
    "desc": "完成システムのプライムとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: B-21/radar/missiles RE-magnet — deep, non-substitutable.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: B-21/radar/missiles RE-magnet — deep, non-substitutable.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Northrop_Grumman",
@@ -12836,10 +12836,10 @@
    "retrieved": "2026-06-27",
    "source": "https://orfamerica.org/newresearch/chinas-critical-mineral-export-controls",
    "desc": "Ga/Ge レーダ/光学等の入力に依存〔防衛電子・依存水準のみ・用途/配合は書かない〕",
-   "basis_short": "[ESTIMATED] Critical_Minerals demand-side: defense critical-minerals dependence.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Critical_Minerals demand-side: defense critical-minerals dependence.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "RTX",
@@ -12891,10 +12891,10 @@
    "retrieved": "2026-06-22",
    "source": "https://www.sipri.org/media/press-release/2025/sipri-top-100-arms-producers-see-combined-revenues-surge-states-rush-modernize-and-expand-arsenals",
    "desc": "完成システムのプライムとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: missiles/radar (Patriot etc.) RE-magnet — deep, non-substitutable.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: missiles/radar (Patriot etc.) RE-magnet — deep, non-substitutable.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "RTX",
@@ -12911,10 +12911,10 @@
    "retrieved": "2026-06-27",
    "source": "https://orfamerica.org/newresearch/chinas-critical-mineral-export-controls",
    "desc": "Ga/Ge レーダ/光学等の入力に依存〔防衛電子・依存水準のみ・用途/配合は書かない〕",
-   "basis_short": "[ESTIMATED] Critical_Minerals demand-side: defense critical-minerals dependence.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Critical_Minerals demand-side: defense critical-minerals dependence.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Rheinmetall",
@@ -12986,10 +12986,10 @@
    "retrieved": "2026-06-19",
    "source": "https://www.rheinmetall.com/en/media/news-watch/news/2026/03/2026-03-11-rheinmetall-presents-annual-report-for-2025",
    "desc": "陸上システム/弾薬のインテグレータとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: ammunition/land — propellant/steel-heavy, lower RE-magnet share.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: ammunition/land — propellant/steel-heavy, lower RE-magnet share.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Thales",
@@ -13061,10 +13061,10 @@
    "retrieved": "2026-06-23",
    "source": "https://www.sipri.org/publications/2025/sipri-fact-sheets/sipri-top-100-arms-producing-and-military-services-companies-2024",
    "desc": "防衛エレクトロニクスのプライムとして特殊材料に調達依存（依存水準のみ・用途/配合は書かない）",
-   "basis_short": "[ESTIMATED] RE-magnet dependence: radar/sensors/electronics RE-magnet — significant.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] RE-magnet dependence: radar/sensors/electronics RE-magnet — significant.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Australia",
@@ -13101,10 +13101,10 @@
    "retrieved": "2026-06-18",
    "source": "https://world-nuclear.org/information-library/country-profiles/countries-a-f/australia",
    "desc": "天然ウランの上流フィード（既知資源1/3超・生産 ~9%・濃縮ではなく上流供給・商業水準）",
-   "basis_short": "[ESTIMATED] Uranium_Enrichment supply-side: uranium mining feed — civil.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Uranium_Enrichment supply-side: uranium mining feed — civil.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Australia",
@@ -13321,10 +13321,10 @@
    "retrieved": "2026-06-23",
    "source": "https://world-nuclear.org/information-library/country-profiles/countries-a-f/china-nuclear-power",
    "desc": "中国最大の原子力発電者（28基〔CGN Power 2025年度業績公告・HKEX 2026-03-25・28 units / 31,838 MW 在運・確認 2026-09-12〕・31.838 GW・国内の約55%〔★ 2026-09-12 照合: 業績公告に国内シェアの記述なし・要出典〕）＝[[Nuclear_Power]] 市場の bulk power 供給（商業発電水準のみ・反応炉物理は扱わない）",
-   "basis_short": "[ESTIMATED] Nuclear_Power supply-side: China largest nuclear operator — civil power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Nuclear_Power supply-side: China largest nuclear operator — civil power.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "CGN",
@@ -13646,10 +13646,10 @@
    "retrieved": "2026-06-18",
    "source": "https://world-nuclear.org/information-library/country-profiles/countries-a-f/canada-uranium",
    "desc": "脱露ウランの上流フィード（世界2位 ~13-15%・非ロシア天然ウラン・濃縮ではなく採掘/転換・商業水準）",
-   "basis_short": "[ESTIMATED] Uranium_Enrichment supply-side: uranium mining feed (Cameco U3O8) — civil.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Uranium_Enrichment supply-side: uranium mining feed (Cameco U3O8) — civil.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Canada",
@@ -13716,10 +13716,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.chevron.com/newsroom/2026/q2/chevron-signs-20-year-power-agreement-with-microsoft-for-west-texas-data-center",
    "desc": "★ Microsoft と Project Kilby（西テキサス・**~$7B のガス火力 ~2,500MW〔最大5GW〕**・Permian ガス・Engine No.1 と協業・★ **Microsoft と EXCLUSIVE 交渉中で FID 接近＝署名済の20年契約ではない・未確認**）＝AI データセンター給電の disclosed プロジェクト＝AI 電力需要への直接の供給リンク",
-   "basis_short": "[ESTIMATED] Power_Demand supply-side: oil major → gas/power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Power_Demand supply-side: oil major → gas/power.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Chevron",
@@ -13796,10 +13796,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.utilitydive.com/news/constellation-acquires-calpine-in-164b-mega-deal/737012/",
    "desc": "米最大の原子力フリート〔32.4GW・無炭素ベースロード〕＝原子力の中核プレイ",
-   "basis_short": "[ESTIMATED] Nuclear_Power supply-side: largest US nuclear fleet operator (DISTINCT from its Power_Demand supply edge).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Nuclear_Power supply-side: largest US nuclear fleet operator (DISTINCT from its Power_Demand supply edge).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Constellation",
@@ -13816,10 +13816,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.utilitydive.com/news/constellation-acquires-calpine-in-164b-mega-deal/737012/",
    "desc": "電力需要の構造的拡大に対する発電供給側のエクスポージャ（Calpine 買収で 60GW プラットフォーム＝米最大の発電事業者）",
-   "basis_short": "[ESTIMATED] Power_Demand supply-side: largest US nuclear IPP.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Power_Demand supply-side: largest US nuclear IPP.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Constellation",
@@ -13836,10 +13836,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.utilitydive.com/news/constellation-three-mile-island-nuclear-power-plant-microsoft-data-center-ppa/727652/",
    "desc": "★ AI データセンターの電力需要に原発電力で供給＝電力供給側から AI 需要への bridge（Three Mile Island 再稼働の文脈）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: nuclear power for AI-DC (the power bottleneck).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: nuclear power for AI-DC (the power bottleneck).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Constellation",
@@ -14001,10 +14001,10 @@
    "retrieved": "2026-06-18",
    "source": "https://single-market-economy.ec.europa.eu/sectors/raw-materials/areas-specific-interest/critical-raw-materials_en",
    "desc": "重希土類 100% 対中依存と CRMA 規制応答（輸入依存/規制の市場参加者・貿易 exposure MAGNITUDE・本体は China/Rare_Earths）",
-   "basis_short": "[ESTIMATED] Rare_Earths demand-side: RE-dependent industry seeking supply diversification.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Rare_Earths demand-side: RE-dependent industry seeking supply diversification.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "European_Union",
@@ -14023,7 +14023,7 @@
    "desc": "★ 大豆をほぼ全量輸入（~13Mt・域内生産わずか）＝ [[Soybean]] hub の demand-side buyer。role:demand。★ 依存度は高いが絶対量は China 桁違い＝数値順≠脆弱性順（読み方注記）。import-dependence MAGNITUDE のみ・貿易 exposure の大きさであって脆弱性ではない・leverage/food-weapon framing なし",
    "basis_short": "[ESTIMATED][DEMAND] EU soybean import-dependence ~0.90 (imports ~13Mt beans ÷ apparent consumption; 域内生産わずか ~2.5Mt — USDA FAS PSD MY2024/25).",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -14091,10 +14091,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.cnbc.com/2025/10/31/exxon-ai-data-center-natural-gas-carbon-capture.html",
    "desc": "★ 1.5GW+ の behind-the-meter ガス火力＋CCS（>90% 回収・Permian ガス・~2028 稼働・off-grid）で AI データセンターに給電する計画（NextEra と GW 級 DC も協業）＝AI 電力需要への直接の供給リンク",
-   "basis_short": "[ESTIMATED] Power_Demand supply-side: oil major → gas/power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Power_Demand supply-side: oil major → gas/power.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "ExxonMobil",
@@ -14156,10 +14156,10 @@
    "retrieved": "2026-06-18",
    "source": "https://world-nuclear.org/information-library/nuclear-fuel-cycle/conversion-enrichment-and-fabrication/uranium-enrichment",
    "desc": "西側の濃縮アンカー（Orano ~12%）＝対 Rosatom 置換（商業/容量水準のみ・本体は Uranium_Enrichment）",
-   "basis_short": "[ESTIMATED] Uranium_Enrichment supply-side: Orano enrichment — Western civil capacity.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Uranium_Enrichment supply-side: Orano enrichment — Western civil capacity.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "France",
@@ -14176,10 +14176,10 @@
    "retrieved": "2026-06-18",
    "source": "https://world-nuclear.org/information-library/country-profiles/countries-a-f/france",
    "desc": "世界最大の原子力電源比率（電力 ~65%・57基・民生発電＝Germany の撤退と対照）",
-   "basis_short": "[ESTIMATED] Nuclear_Power supply-side: ~70% electricity nuclear — top nuclear state (EDF civil fleet).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Nuclear_Power supply-side: ~70% electricity nuclear — top nuclear state (EDF civil fleet).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "France",
@@ -14376,10 +14376,10 @@
    "retrieved": "2026-06-18",
    "source": "https://www.spglobal.com/commodityinsights/en/market-insights/latest-news/electric-power/050322-germany-sees-russian-gas-share-falling-to-10-by-mid-2024-amid-floating-lng-rush",
    "desc": "対露パイプラインガス依存（2021 ガス輸入 55%）の遮断＝最大被害者（二国間の歴史的依存・Nord Stream 喪失で LNG 転換）",
-   "basis_short": "Germany Russian-gas import dependence 55% in 2021 (pre-war; severed to 26% 2022) — the realized-shock calibration number (in-node desc)",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[DEMAND] Germany Russian-gas import dependence 55% in 2021 (pre-war; severed to 26% 2022) — the realized-shock calibration number (in-node desc)",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Germany",
@@ -14518,7 +14518,7 @@
    "desc": "★ カリ需要の ~100% を輸入＝ [[Potash]] hub の DEMAND-side buyer（世界大手 importer・~40 LMT MOP/yr）。role:demand（importer＝[[Egypt]]→Grain / [[Sinopec]]→Crude_Oil demand と同 discipline）。貿易 exposure magnitude のみ・食料安全保障 framing なし",
    "basis_short": "[ESTIMATED][DEMAND] India potash import-dependence ~1.00 (imports ÷ apparent consumption; ~100% import — India Govt/PIB).",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -14976,10 +14976,10 @@
    "retrieved": "2026-06-16",
    "source": "https://www.iea.org/reports/energy-and-ai/executive-summary",
    "desc": "ガス火力の燃料＝Power_Demand の主要燃料の一つ（→ AI_Data_Center_Demand → 半導体へ連鎖）",
-   "basis_short": "[ESTIMATED] Power_Demand supply-side: gas-fired power fuel.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Power_Demand supply-side: gas-fired power fuel.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Natural_Gas",
@@ -14996,10 +14996,10 @@
    "retrieved": "2026-06-16",
    "source": "https://www.iea.org/reports/energy-and-ai/executive-summary",
    "desc": "電源ミックスで DC 電力を分担（co-fuel・同じ Power_Demand を競合かつ補完）",
-   "basis_short": "[ESTIMATED] Nuclear_Power supply-side: co-power-source / substitution coupling (gas backs up nuclear for Power_Demand).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Nuclear_Power supply-side: co-power-source / substitution coupling (gas backs up nuclear for Power_Demand).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Natural_Gas",
@@ -15061,10 +15061,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.investor.nexteraenergy.com/~/media/Files/N/NEE-IR/reports-and-fillings/quarterly-earnings/2025/Q3%202025/2025-1028%20NEEQ32025News%20Release%20vFinal.pdf",
    "desc": "電力需要の構造的拡大に対する発電供給側のエクスポージャ（FPL 規制公益＋再エネ）",
-   "basis_short": "[ESTIMATED] Power_Demand supply-side: largest US renewables/power producer.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Power_Demand supply-side: largest US renewables/power producer.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "NextEra",
@@ -15081,10 +15081,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.investor.nexteraenergy.com/~/media/Files/N/NEE-IR/reports-and-fillings/quarterly-earnings/2025/Q3%202025/2025-1028%20NEEQ32025News%20Release%20vFinal.pdf",
    "desc": "★ AI データセンターの電力需要に再エネ/蓄電で供給＝電力供給側から AI 需要への初の bridge（既存 context_link→AI-DC は全て需要側〔hyperscaler/chip〕）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: renewables/power for AI-DC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: renewables/power for AI-DC.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Nigeria",
@@ -15356,10 +15356,10 @@
    "retrieved": "2026-06-16",
    "source": "https://www.iea.org/reports/energy-and-ai/executive-summary",
    "desc": "24/7 ファーム電源として Power_Demand へ供給（DC 向け長期 PPA で直結）",
-   "basis_short": "[ESTIMATED] Power_Demand supply-side: nuclear baseload.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Power_Demand supply-side: nuclear baseload.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Nuclear_Power",
@@ -15376,10 +15376,10 @@
    "retrieved": "2026-06-16",
    "source": "https://euratom-supply.ec.europa.eu/",
    "desc": "核燃料サイクルの濃縮役務に依存（商業/規制水準のみ・本体は Uranium_Enrichment）",
-   "basis_short": "[ESTIMATED] Uranium_Enrichment demand-side: enriched U fuels reactors — primary civil demand (hub coupling).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Uranium_Enrichment demand-side: enriched U fuels reactors — primary civil demand (hub coupling).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "OPEC",
@@ -15716,10 +15716,10 @@
    "retrieved": "2026-06-16",
    "source": "https://www.iea.org/reports/energy-and-ai/executive-summary",
    "desc": "電力（電源・系統確保）が DC 負荷の律速＝AI 能力増設の binding constraint（→ NVIDIA/TSMC 半導体側へ）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side:",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side:",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Power_Demand",
@@ -15736,10 +15736,10 @@
    "retrieved": "2026-06-27",
    "source": "https://carboncredits.com/copper-demand-set-to-hit-37m-tonnes-by-2050-can-supply-keep-up/",
    "desc": "送電網/電化インフラの基幹材料として銅に依存〔grid buildout の materials input・燃料/電源ではなく資材ゆえ需要端点方針の例外〕＝Copper 需要側",
-   "basis_short": "[ESTIMATED] Copper dependence: grid/electrification buildout — largest copper demand driver.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Copper dependence: grid/electrification buildout — largest copper demand driver.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Power_of_Siberia",
@@ -15901,10 +15901,10 @@
    "retrieved": "2026-06-16",
    "source": "https://www.iea.org/reports/energy-and-ai/executive-summary",
    "desc": "DC 電力増の最大寄与電源（IEA: 約半分・+450 TWh を供給）",
-   "basis_short": "[ESTIMATED] Power_Demand supply-side: renewables supply.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Power_Demand supply-side: renewables supply.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Renewable_Energy",
@@ -15951,10 +15951,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.worldnuclearreport.org/Explainer-Why-Russia-s-nuclear-industry-has-escaped-major-sanctions",
    "desc": "世界最大の原子炉輸出国〔民生核・~38% 市場シェア〕＝民生原子力の中核プレイ（CGN/CNNC→context_link→Nuclear_Power mirror）",
-   "basis_short": "[ESTIMATED] Nuclear_Power supply-side: dominant global reactor exporter/builder — civil power (market/civil-capacity only).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Nuclear_Power supply-side: dominant global reactor exporter/builder — civil power (market/civil-capacity only).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Rosatom",
@@ -15971,10 +15971,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.worldnuclearreport.org/Explainer-Why-Russia-s-nuclear-industry-has-escaped-major-sanctions",
    "desc": "世界最大のウラン濃縮役務〔~40–46% の世界濃縮能力〕＝核燃料サイクルの中核（民生商業/通商の事実）",
-   "basis_short": "[ESTIMATED] Uranium_Enrichment supply-side: dominant global enrichment capacity — civil fuel-cycle ONLY (Israel-discipline, no weapons).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Uranium_Enrichment supply-side: dominant global enrichment capacity — civil fuel-cycle ONLY (Israel-discipline, no weapons).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Rosatom",
@@ -16121,10 +16121,10 @@
    "retrieved": "2026-06-18",
    "source": "https://euromaidanpress.com/2026/06/01/next-five-years-rosatoms-strategic-window-to-lock-in-european-dependence/",
    "desc": "Rosatom 濃縮役務 ~44% の世界寡占（核燃料サイクルの構造的市場ポジション・商業市場シェア／中のレアアース精製集中と対応）",
-   "basis_short": "[ESTIMATED] Uranium_Enrichment supply-side: state-level civil fuel-cycle position (operating entity = Rosatom).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Uranium_Enrichment supply-side: state-level civil fuel-cycle position (operating entity = Rosatom).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Russia",
@@ -16486,10 +16486,10 @@
    "retrieved": "2026-06-16",
    "source": "https://www.eia.gov/international/content/analysis/countries_long/Saudi_Arabia/pdf/Saudi-Arabia.pdf",
    "desc": "原油価格→燃料コスト→電力需要の波及（oil→power の下流マクロ縦鎖）",
-   "basis_short": "[ESTIMATED] Power_Demand supply-side: energy producer.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Power_Demand supply-side: energy producer.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Saudi_Arabia",
@@ -16621,10 +16621,10 @@
    "retrieved": "2026-06-25",
    "source": "https://datacentremagazine.com/news/explained-shells-scenarios-for-data-centre-energy-futures",
    "desc": "Shell Energy が Google の UK Carbon-Free Energy 供給マネージャに選定＝AI/データセンター向け電力供給リンク（gas-for-power より軽い・renewable supply）。AI 電力需要への供給リンク",
-   "basis_short": "[ESTIMATED] Power_Demand supply-side: energy major → power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Power_Demand supply-side: energy major → power.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Shell",
@@ -16906,10 +16906,10 @@
    "retrieved": "2026-06-25",
    "source": "https://carboncredits.com/totalenergies-and-googles-1-gw-solar-deal-signals-a-new-phase-in-the-data-center-energy-race/",
    "desc": "★ AI/データセンターへ電力販売（Google と複数 PPA: Ohio 1.5 TWh・Texas 1GW 太陽光・Malaysia 21年・Data4 Spain 610GWh）＝Integrated Power で AI 電力需要への直接の供給リンク",
-   "basis_short": "[ESTIMATED] Power_Demand supply-side: energy major → power/renewables.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Power_Demand supply-side: energy major → power/renewables.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Transneft",
@@ -17046,10 +17046,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.consilium.europa.eu/en/infographics/ukrainian-grain-exports-explained/",
    "desc": "エネルギー通過のマクロ文脈＝欧州のガス調達が LNG へシフト（ウクライナは歴史的な通過回廊）。ガス市場本体は [[Natural_Gas]] に住所。macro/market の事実のみ",
-   "basis_short": "[ESTIMATED] Natural_Gas reliance: European LNG-sourcing shift (transit-corridor macro) — moderate.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Natural_Gas reliance: European LNG-sourcing shift (transit-corridor macro) — moderate.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Ukraine",
@@ -17066,10 +17066,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.iaea.org/topics/response/nuclear-safety-security-and-safeguards-in-ukraine",
    "desc": "Zaporizhzhia（欧州最大の原子力発電所）＝現在オフライン/非発電の施設ステータス（マクロ施設事実のみ・運転/技術の substance は扱わない・原子力本体は [[Nuclear_Power]] に住所）",
-   "basis_short": "[ESTIMATED] Nuclear_Power supply-side: large civil nuclear fleet (power generation).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Nuclear_Power supply-side: large civil nuclear fleet (power generation).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Ukraine",
@@ -17568,7 +17568,7 @@
    "desc": "★ 世界最大のカリ輸入国（世界需要の ~22%・肥料消費の 85%超を輸入）＝ [[Potash]] hub の DEMAND-side anchor。role:demand（importer＝[[Egypt]]→Grain / [[Sinopec]]→Crude_Oil demand と同 discipline）。★ Belarus+Russia 偏重（露+中で肥料輸入 60%超）＝MARKET/規制 fact。貿易 exposure magnitude のみ・食料安全保障 framing なし",
    "basis_short": "[ESTIMATED][DEMAND] Brazil potash import-dependence ~0.96 (net imports ÷ apparent consumption; #1 importer・国内生産 <15% — Brazil Potash / market ≈USGS net-import basis).",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -17588,7 +17588,7 @@
    "desc": "★ Brazil は N/P/K 全てで輸入依存＝カリ同様リン酸肥料も大幅輸入（DAP/MAP importer）ゆえ [[Phosphate]] hub にも DEMAND-side 曝露。role:demand（de-leaf edge＝Brazil が born-compliant に ≥2 edges を持つ）。貿易 exposure magnitude のみ",
    "basis_short": "[ESTIMATED][DEMAND] Brazil phosphate import-dependence ~0.55 (imports ÷ apparent consumption; coarse bucket — 国内 phosphate rock 生産あるが finished P 肥料は過半輸入).",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -17793,7 +17793,7 @@
    "desc": "★ 世界最大級の小麦輸入国＝ [[Grain]] hub の DEMAND-side buyer〔bread-basket 依存・年 ~11-12Mt 輸入〕。role:demand（importer＝Sinopec→Crude_Oil demand と同 discipline）。市場/食料安全保障の事実のみ",
    "basis_short": "[ESTIMATED][DEMAND] Egypt = world's top wheat importer (~11-12 Mt/yr) → largest single demand-side draw on the Grain hub.",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -17866,10 +17866,10 @@
    "retrieved": "2026-07-06",
    "source": "https://investors.icl-group.com/reports-news-and-events/press-releases/press-releases-details/2025/ICL-Reports-Fourth-Quarter-and-Full-Year-2024-Results/default.aspx",
    "desc": "Dead Sea（Sodom, Israel・蒸発法）＋Spain（Iberpotash・地下採掘）でカリ生産＝Potash chokepoint への FIRM 供給。市場ポジションの事実のみ",
-   "basis_short": "[HONEST-NULL] ICL potash ~3.7 Mt/yr PRODUCT (Dead Sea+Spain・ICL FY2024 primary).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][MINED-production] ICL potash ~3.7 Mt/yr PRODUCT (Dead Sea+Spain・ICL FY2024 primary).",
+   "weight_kind": "world_mined_share",
+   "weight_kind_label": "Share of the hub's mined pool",
+   "weight_scope": "hub"
   },
   {
    "s": "ICL",
@@ -17978,7 +17978,7 @@
    "desc": "★ 大豆をほぼ全量輸入（~6Mt・国内生産わずか）＝ [[Soybean]] hub の demand-side buyer（主に米国調達）。role:demand。★ 依存度は高いが絶対量は China 桁違い＝数値順≠脆弱性順（読み方注記）。import-dependence MAGNITUDE のみ・貿易 exposure の大きさであって脆弱性ではない",
    "basis_short": "[ESTIMATED][DEMAND] Mexico soybean import-dependence ~0.95 (imports ~6Mt ÷ apparent consumption; 国内生産わずか — USDA FAS PSD MY2024/25).",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -18995,10 +18995,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.blackrock.com/cash/en-us/products/329365/circle-reserve-fund",
    "desc": "巨大な債券運用＝米国債の主要保有/運用者（含 Circle Reserve Fund の T-bills）。安全資産アンカーへ収斂",
-   "basis_short": "[ESTIMATED][HOLDINGS] US_Treasuries demand-side: largest asset manager — massive Treasury holdings (funds/ETFs).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][HOLDINGS][DEMAND] US_Treasuries demand-side: largest asset manager — massive Treasury holdings (funds/ETFs).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "BlackRock",
@@ -19045,10 +19045,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.cryptotimes.io/2026/05/23/blackrock-tokenized-treasury-filings-2026-the-rwa-boom-goes-institutional/",
    "desc": "★ トークン化（BUIDL トークン化ファンド ~$2.85B）＋USDC 準備運用＝stablecoin/トークン化マネー基盤への strategic tie。iShares ETF franchise〔$4T+〕の blockchain 化を企図",
-   "basis_short": "[ESTIMATED][HOLDINGS] Stablecoin demand-side: tokenized fund (BUIDL) — stablecoin-adjacent exposure.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][HOLDINGS][DEMAND] Stablecoin demand-side: tokenized fund (BUIDL) — stablecoin-adjacent exposure.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "BlackRock",
@@ -19493,10 +19493,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.goldmansachs.com/pressroom/press-releases/2026/2026-04-13-q1-results",
    "desc": "米国債のプライマリーディーラー/主要トレーダー＝安全資産アンカーへ収斂（near-pure-receiver の US_Treasuries に相手側として wire INTO）",
-   "basis_short": "[ESTIMATED][HOLDINGS] US_Treasuries demand-side: Treasury holdings/trading.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][HOLDINGS][DEMAND] US_Treasuries demand-side: Treasury holdings/trading.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Goldman_Sachs",
@@ -19757,10 +19757,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.sec.gov/Archives/edgar/data/19617/000162828026023927/annualreport-2025.pdf",
    "desc": "米国債の主要 dealer/保有者＝安全資産アンカーへ収斂（プライマリーディーラー・バランスシート保有）。near-pure-receiver の US_Treasuries に相手側として wire INTO",
-   "basis_short": "[ESTIMATED][HOLDINGS] US_Treasuries demand-side: largest US bank — large Treasury book.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][HOLDINGS][DEMAND] US_Treasuries demand-side: largest US bank — large Treasury book.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "JPMorgan",
@@ -19902,10 +19902,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.sec.gov/Archives/edgar/data/0001141391/000114139125000003/ma12312024-exx991xearnings.htm",
    "desc": "決済セトルメント/財務運用での米国債保有＝安全資産アンカーへ収斂（短期運用・materiality 低）",
-   "basis_short": "[ESTIMATED][HOLDINGS] US_Treasuries demand-side: settlement reserves — minor.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][HOLDINGS][DEMAND] US_Treasuries demand-side: settlement reserves — minor.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Mastercard",
@@ -19922,10 +19922,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.mastercard.com/global/en/news-and-trends/press/2026/june/mastercard-expands-settlement-capabilities-to-include-stablecoin.html",
    "desc": "★ multi-stablecoin settlement＝2025-04 以降 USDC settlement、2026-06 に USDC/PYUSD/USDG/RLUSD 等へ拡大（Arbitrum/Base/Ethereum/Polygon/Solana/XRPL 等）＝stablecoin を中核決済へ。payment-rails↔crypto bridge",
-   "basis_short": "[ESTIMATED][GLUE] Stablecoin demand-side: stablecoin settlement pilots.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][GLUE][DEMAND] Stablecoin demand-side: stablecoin settlement pilots.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Mastercard",
@@ -20166,10 +20166,10 @@
    "retrieved": "2026-06-24",
    "source": "https://openai.com/index/announcing-the-stargate-project/",
    "desc": "Stargate Project（$500B/4年・米国 AI インフラ）の lead——Masayoshi Son が会長・SBG が financial responsibility（OpenAI が operational）＝AI データセンター需要の主要ドライバー。OpenAI/Oracle/MGX が co-funder",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand demand-side: Stargate/AI investment vehicle.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] AI_Data_Center_Demand demand-side: Stargate/AI investment vehicle.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "SoftBank",
@@ -20499,10 +20499,10 @@
    "retrieved": "2026-06-25",
    "source": "https://www.sec.gov/Archives/edgar/data/0001403161/000140316125000077/q42025earningsrelease.htm",
    "desc": "決済セトルメント/財務運用での米国債保有＝安全資産アンカーへ収斂（短期運用・settlement 担保）",
-   "basis_short": "[ESTIMATED][HOLDINGS] US_Treasuries demand-side: settlement reserves — minor Treasury exposure.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][HOLDINGS][DEMAND] US_Treasuries demand-side: settlement reserves — minor Treasury exposure.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Visa",
@@ -20519,10 +20519,10 @@
    "retrieved": "2026-06-25",
    "source": "https://corporate.visa.com/en/sites/visa-perspectives/newsroom/visa-launches-stablecoin-settlement-in-the-united-states.html",
    "desc": "★ USDC settlement を米国で開始（2025-12-16・Solana 上・$3.5B 年率ラン）＝stablecoin を中核 institutional 決済へ。payment-rails↔crypto bridge",
-   "basis_short": "[ESTIMATED][GLUE] Stablecoin demand-side: stablecoin settlement pilots — payments adoption.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][GLUE][DEMAND] Stablecoin demand-side: stablecoin settlement pilots — payments adoption.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Visa",
@@ -20749,10 +20749,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.amd.com/en/newsroom/press-releases/2026-2-3-amd-reports-fourth-quarter-and-full-year-2025-fina.html",
    "desc": "Instinct MI シリーズ（Data Center GPU）＋EPYC サーバ CPU が AI データセンターの主要供給＝Data Center 売上 $16.6B（FY2025・全社の 48%）・Q1 2026 $5.8B（+57%）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: MI-series accelerators — #2. WITHIN-HUB relative (not cross-hub comparable).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: MI-series accelerators — #2. WITHIN-HUB relative (not cross-hub comparable).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "AMD",
@@ -21019,10 +21019,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.sec.gov/Archives/edgar/data/0000937966/000162828026003701/pressreleasefinancialresul.htm",
    "desc": "EUV 露光装置を EUV_Lithography チョークポイントへ供給（role:supply）。ASML→context_link→EUV_Lithography。★ 2026-09-08 訂正: 旧 desc が述べていた供給シェアと独占的表現は、引用元がいずれも裏付けないため削除した。原文の主張は同日付の weight_basis エントリ (iii) に引用の形で保存されており、経緯は 70bc8dc が記録する。weight 1.0 は変更していない——数値の状態は weight_source: estimated と verify_status: unverified が記録する。",
-   "basis_short": "[ESTIMATED] ASML ~100% of EUV lithography supply (sole supplier; ASML FY2025 6-K).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] ASML ~100% of EUV lithography supply (sole supplier; ASML FY2025 6-K).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "ASML",
@@ -21039,10 +21039,10 @@
    "retrieved": "2026-07-06",
    "source": "https://www.sec.gov/Archives/edgar/data/0000937966/000162828026003701/pressreleasefinancialresul.htm",
    "desc": "DUV-immersion 露光装置の寡占供給者〔~85-90%〕＝DUV_Lithography チョークポイントへの供給（role:supply）。EUV(100%) と異なり Nikon/Canon が残余。ASML→context_link→DUV_Lithography",
-   "basis_short": "[ESTIMATED] ASML ~85-90% of DUV-immersion supply — multi-secondary CONVERGENT (NOT observed like EUV 1.0).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] ASML ~85-90% of DUV-immersion supply — multi-secondary CONVERGENT (NOT observed like EUV 1.0).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "ASML",
@@ -21539,10 +21539,10 @@
    "retrieved": "2026-06-24",
    "source": "https://futurumgroup.com/insights/arm-q2-fy-2026-earnings-highlight-ai-driven-royalty-momentum/",
    "desc": "data-center royalty が前年比で倍増＝Arm 系が hyperscaler CPU compute の ~50%（Computex 2026）＝AI データセンター需要の主要 enabler（電力効率優位）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: CPU IP in AI-DC (Grace/Neoverse).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: CPU IP in AI-DC (Grace/Neoverse).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Arm",
@@ -21739,10 +21739,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.prnewswire.com/news-releases/broadcom-inc-announces-second-quarter-fiscal-year-2026-financial-results-and-quarterly-dividend-302790698.html",
    "desc": "custom AI アクセラレータ（XPU）＋AI ネットワーキング（Ethernet スイッチ silicon）が AI データセンターの主要 enabler＝AI 半導体売上 Q2 FY2026 $10.8B（+143%）・FY2026 ガイド $56B",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: custom AI ASICs + DC networking.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: custom AI ASICs + DC networking.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Broadcom",
@@ -21864,10 +21864,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.cnbc.com/2025/07/03/us-lifts-chip-software-curbs-on-china-amid-trade-truce-synopsys-says-.html",
    "desc": "設計ソフト〔EDA Big-3〕への依存＝EDA_Tools チョークポイントの需要側（role:demand）。★ 対中 EDA は 2025-05 発動→2025-07 撤回で現 ACTIVE 供給。市場アクセスの事実のみ（SMIC/CATL framing）",
-   "basis_short": "[ESTIMATED] EDA_Tools demand-side: near-total EDA dependence, no domestic substitute.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EDA_Tools demand-side: near-total EDA dependence, no domestic substitute.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "CXMT",
@@ -21884,10 +21884,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.trendforce.com/news/2025/12/03/news-japan-rumored-to-curb-photoresist-exports-as-china-targets-40-self-sufficiency-by-2026/",
    "desc": "シリコンウェハ/フォトレジスト〔日本材料〕への依存＝Semiconductor_Materials チョークポイントの需要側（role:demand）。日 METI 2025-11 で一部制限＝市場アクセスの事実のみ",
-   "basis_short": "[ESTIMATED] Semiconductor_Materials demand-side: high dependence on Japanese wafer/resist (self-sufficiency ~10%).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Semiconductor_Materials demand-side: high dependence on Japanese wafer/resist (self-sufficiency ~10%).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "CXMT",
@@ -21904,10 +21904,10 @@
    "retrieved": "2026-07-06",
    "source": "https://www.tomshardware.com/tech-industry/netherlands-tightens-export-controls-on-sanctioned-semiconductor-equipment-move-made-in-line-with-u-s-limitations-asml-will-apply-for-licenses-from-the-dutch-government",
    "desc": "DUV 露光ツールへの市場アクセス依存〔ACTIVE-under-license: NL が DUV を許可制で規制・中国 fab は現に調達〕。EUV(severed) と異なり現に効く依存。share は一次不明ゆえ weight:null（honest-null・捏造しない）。市場アクセス/通商の事実のみ",
-   "basis_short": "[ACTIVE-under-license][DUV] China fab DUV tool market-access dependence (NL license regime 2024-09/2025-04 — NOT severed, unlike EUV).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ACTIVE-under-license][DUV][DEMAND] China fab DUV tool market-access dependence (NL license regime 2024-09/2025-04 — NOT severed, unlike EUV).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "CXMT",
@@ -21924,10 +21924,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.tomshardware.com/tech-industry/netherlands-tightens-export-controls-on-sanctioned-semiconductor-equipment-move-made-in-line-with-u-s-limitations-asml-will-apply-for-licenses-from-the-dutch-government",
    "desc": "★ SEVERED: EUV 露光へのアクセス無し〔NL が 2019〜対中 EUV 出荷を許可せず〕＝denial 既発効。ACTIVE な依存ではなく cut-off の記録（[[Huawei]]→[[TSMC]] severed 先例）。市場アクセス/通商の事実のみ",
-   "basis_short": "[SEVERED] EUV_Lithography demand-side: China chipmakers have NO EUV access (NL export-control, denial in force since 2019).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[SEVERED][DEMAND] EUV_Lithography demand-side: China chipmakers have NO EUV access (NL export-control, denial in force since 2019).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Cadence",
@@ -21944,10 +21944,10 @@
    "retrieved": "2026-07-04",
    "source": "https://newsletter.semianalysis.com/p/eda-market-primer",
    "desc": "EDA 設計ソフトの供給元〔世界 #2・~30% share〕＝EDA_Tools チョークポイントへの供給（role:supply）",
-   "basis_short": "[ESTIMATED] Cadence ~30% of global EDA revenue (2024; SemiAnalysis/TrendForce).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Cadence ~30% of global EDA revenue (2024; SemiAnalysis/TrendForce).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Cadence",
@@ -22144,10 +22144,10 @@
    "retrieved": "2026-06-26",
    "source": "https://techcrunch.com/2026/05/14/cerebras-raises-5-5b-kicking-off-2026s-ipo-season-with-a-bang/",
    "desc": "AI 推論 compute の供給者＝AI データセンター需要の純粋プレイ（OpenAI 向け 750MW 等）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: wafer-scale AI compute.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: wafer-scale AI compute.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Cerebras",
@@ -22721,7 +22721,7 @@
    "desc": "★ 世界第2位のカリ輸入国だが大 domestic 生産（6.3Mt）ゆえ net-import は消費の ~半分＝ [[Potash]] hub の DEMAND-side buyer。★ two-sided: supply pool では captive ゆえ除外・demand では net-importer ゆえ曝露（一貫）。role:demand。貿易 exposure magnitude のみ",
    "basis_short": "[ESTIMATED][DEMAND] China potash import-dependence ~0.45 (net imports ÷ apparent consumption; 大 domestic 6.3Mt production ゆえ消費の約半分を輸入 — USGS/China GACC 近似).",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -22741,7 +22741,7 @@
    "desc": "★ 世界最大の大豆輸入国（世界取引大豆の ~60%・輸入~105Mt）＝ [[Soybean]] hub の demand-side systemic buyer。role:demand。★ 依存INTENSITY ~0.85 だが絶対量が桁違い＝真の systemic node（数値順≠脆弱性順）。import-dependence MAGNITUDE のみ・貿易 exposure の大きさであって「突く脆弱性」ではない・leverage/food-weapon/trade-war framing なし",
    "basis_short": "[ESTIMATED][DEMAND] China soybean import-dependence ~0.85 (imports ~105Mt ÷ apparent consumption ~124Mt; 国内生産 ~20Mt — USDA FAS PSD MY2024/25).",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -23839,10 +23839,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.usitc.gov/publications/332/executive_briefings/ebot_germanium_and_gallium.pdf",
    "desc": "GaN/GaAs/Ge 等のチップ入力に依存〔半導体材料・中国 Ga/Ge 輸出規制のエクスポージャ〕",
-   "basis_short": "[ESTIMATED] Critical_Minerals demand-side: semiconductor critical-minerals dependence.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Critical_Minerals demand-side: semiconductor critical-minerals dependence.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Intel",
@@ -23859,10 +23859,10 @@
    "retrieved": "2026-07-04",
    "source": "https://newsletter.semianalysis.com/p/eda-market-primer",
    "desc": "設計ソフト〔EDA Big-3〕への依存＝EDA_Tools チョークポイントの需要側（role:demand・ACTIVE）",
-   "basis_short": "[ESTIMATED] EDA_Tools demand-side: near-total EDA dependence (leading-edge design + foundry).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EDA_Tools demand-side: near-total EDA dependence (leading-edge design + foundry).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Intel",
@@ -23879,10 +23879,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.sec.gov/Archives/edgar/data/0000937966/000162828026003701/pressreleasefinancialresul.htm",
    "desc": "EUV 露光への依存〔先端ノード〔18A/後継〕量産の必須〕＝EUV_Lithography チョークポイントの需要側（role:demand・ACTIVE）",
-   "basis_short": "[ESTIMATED] EUV_Lithography demand-side: leading-edge EUV-existential (IDM/foundry).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EUV_Lithography demand-side: leading-edge EUV-existential (IDM/foundry).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "JSR",
@@ -24244,10 +24244,10 @@
    "retrieved": "2026-06-18",
    "source": "https://www.enecho.meti.go.jp/en/category/brochures/pdf/japan_energy_2024.pdf",
    "desc": "輸入燃料エクスポージャの構造的緩和（再稼働15基/~33GW・2040 発電 約20%目標）",
-   "basis_short": "[ESTIMATED] Nuclear_Power supply-side: nuclear restart fleet — civil power.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Nuclear_Power supply-side: nuclear restart fleet — civil power.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Japan",
@@ -24634,10 +24634,10 @@
    "retrieved": "2026-06-19",
    "source": "https://www.trendforce.com/presscenter/news/20251203-12813.html",
    "desc": "AI サーバ向け高性能 NAND/SSD で需要は取り込むが、HBM 非保有で AI メモリ本流からは外れる",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: NAND storage for AI-DC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: NAND storage for AI-DC.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Kioxia",
@@ -25044,10 +25044,10 @@
    "retrieved": "2026-09-02",
    "source": "https://www.sec.gov/Archives/edgar/data/707549/000070754926000037/lrcx-20260628.htm",
    "desc": "半導体製造装置〔成膜/エッチ/洗浄〕の調達元〔Lam が Micron に供給＝Micron→supplier→Lam・de-leaf reciprocal〕",
-   "basis_short": "[HONEST-NULL] Micron の装置調達に占める [[Lam_Research]] の割合は、いかなる出典も述べていない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][INPUT a_ij] Micron の装置調達に占める [[Lam_Research]] の割合は、いかなる出典も述べていない。",
+   "weight_kind": "input_share",
+   "weight_kind_label": "Share of the hub's inputs",
+   "weight_scope": "hub"
   },
   {
    "s": "Micron",
@@ -25364,10 +25364,10 @@
    "retrieved": "2026-06-19",
    "source": "https://siliconanalysts.com/analysis/nvidia-ai-accelerator-market-share-2024-2026",
    "desc": "AI 計算の需要中心（縦鎖の設計端としてチェーンを閉じる）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: THE dominant AI accelerator — highest exposure to AI-DC demand.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: THE dominant AI accelerator — highest exposure to AI-DC demand.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "NVIDIA",
@@ -25384,10 +25384,10 @@
    "retrieved": "2026-06-24",
    "source": "https://www.sec.gov/Archives/edgar/data/0001045810/000104581026000051/q1fy27pr.htm",
    "desc": "AI データセンターの加速計算＝電力需要の主要ドライバー（GPU/アクセラレータの大規模配備）。電力本体は Power_Demand に住所",
-   "basis_short": "[ESTIMATED] Power_Demand demand-side: accelerators drive DC power intensity.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Power_Demand demand-side: accelerators drive DC power intensity.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "NVIDIA",
@@ -26049,10 +26049,10 @@
    "retrieved": "2026-06-26",
    "source": "https://futurumgroup.com/insights/qualcomm-q4-fy-2025-record-qct-auto-iot-growth-solid-outlook/",
    "desc": "★ AI データセンターに参入＝DC 売上目標 $5B〔FY27〕/$15B〔FY29〕・[[Microsoft]]/[[Meta]] と提携（CPU/AI アクセラレータ）。AI 需要への新規リンク",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: edge-AI — minor in DC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: edge-AI — minor in DC.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Rapidus",
@@ -26129,10 +26129,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.theregister.com/2026/02/27/rapidus_funding/",
    "desc": "2nm GAA ロジックを AI/HPC 向けに狙う＝AI 半導体需要への戦略的リンク（pre-revenue・R&D フェーズ）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: future AI-chip foundry (2027 2nm).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: future AI-chip foundry (2027 2nm).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "SK_hynix",
@@ -26239,10 +26239,10 @@
    "retrieved": "2026-09-02",
    "source": "https://www.sec.gov/Archives/edgar/data/707549/000070754926000037/lrcx-20260628.htm",
    "desc": "半導体製造装置〔成膜/エッチ/洗浄〕の調達元〔Lam が SK_hynix に供給＝SK_hynix→supplier→Lam・de-leaf reciprocal〕",
-   "basis_short": "[HONEST-NULL] SK_hynix の装置調達に占める [[Lam_Research]] の割合は、いかなる出典も述べていない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][INPUT a_ij] SK_hynix の装置調達に占める [[Lam_Research]] の割合は、いかなる出典も述べていない。",
+   "weight_kind": "input_share",
+   "weight_kind_label": "Share of the hub's inputs",
+   "weight_scope": "hub"
   },
   {
    "s": "SK_hynix",
@@ -26484,10 +26484,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.usitc.gov/publications/332/executive_briefings/ebot_germanium_and_gallium.pdf",
    "desc": "GaN/GaAs/Ge 等のチップ入力に依存〔半導体材料・中国 Ga/Ge は国内調達だが規制レジームの当事者〕",
-   "basis_short": "[ESTIMATED] Critical_Minerals demand-side: semiconductor critical-minerals dependence.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Critical_Minerals demand-side: semiconductor critical-minerals dependence.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "SMIC",
@@ -26504,10 +26504,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.cnbc.com/2025/07/03/us-lifts-chip-software-curbs-on-china-amid-trade-truce-synopsys-says-.html",
    "desc": "設計ソフト〔EDA Big-3〕への依存＝EDA_Tools チョークポイントの需要側（role:demand）。★ 対中 EDA は 2025-05 発動→2025-07 撤回で現 ACTIVE 供給。市場アクセスの事実のみ（SMIC/CATL framing）",
-   "basis_short": "[ESTIMATED] EDA_Tools demand-side: near-total EDA dependence, no domestic substitute.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EDA_Tools demand-side: near-total EDA dependence, no domestic substitute.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "SMIC",
@@ -26524,10 +26524,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.trendforce.com/news/2025/12/03/news-japan-rumored-to-curb-photoresist-exports-as-china-targets-40-self-sufficiency-by-2026/",
    "desc": "シリコンウェハ/フォトレジスト〔日本材料〕への依存＝Semiconductor_Materials チョークポイントの需要側（role:demand）。日 METI 2025-11 で一部制限＝市場アクセスの事実のみ",
-   "basis_short": "[ESTIMATED] Semiconductor_Materials demand-side: high dependence on Japanese wafer/resist (self-sufficiency ~10%).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Semiconductor_Materials demand-side: high dependence on Japanese wafer/resist (self-sufficiency ~10%).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "SMIC",
@@ -26544,10 +26544,10 @@
    "retrieved": "2026-07-06",
    "source": "https://www.tomshardware.com/tech-industry/netherlands-tightens-export-controls-on-sanctioned-semiconductor-equipment-move-made-in-line-with-u-s-limitations-asml-will-apply-for-licenses-from-the-dutch-government",
    "desc": "DUV 露光ツールへの市場アクセス依存〔ACTIVE-under-license: NL が DUV を許可制で規制・中国 fab は現に調達〕。EUV(severed) と異なり現に効く依存。share は一次不明ゆえ weight:null（honest-null・捏造しない）。市場アクセス/通商の事実のみ",
-   "basis_short": "[ACTIVE-under-license][DUV] China fab DUV tool market-access dependence (NL license regime 2024-09/2025-04 — NOT severed, unlike EUV).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ACTIVE-under-license][DUV][DEMAND] China fab DUV tool market-access dependence (NL license regime 2024-09/2025-04 — NOT severed, unlike EUV).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "SMIC",
@@ -26564,10 +26564,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.tomshardware.com/tech-industry/netherlands-tightens-export-controls-on-sanctioned-semiconductor-equipment-move-made-in-line-with-u-s-limitations-asml-will-apply-for-licenses-from-the-dutch-government",
    "desc": "★ SEVERED: EUV 露光へのアクセス無し〔NL が 2019〜対中 EUV 出荷を許可せず〕＝denial 既発効。ACTIVE な依存ではなく cut-off の記録（[[Huawei]]→[[TSMC]] severed 先例）。市場アクセス/通商の事実のみ",
-   "basis_short": "[SEVERED] EUV_Lithography demand-side: China chipmakers have NO EUV access (NL export-control, denial in force since 2019).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[SEVERED][DEMAND] EUV_Lithography demand-side: China chipmakers have NO EUV access (NL export-control, denial in force since 2019).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "SUMCO",
@@ -26969,10 +26969,10 @@
    "retrieved": "2026-09-02",
    "source": "https://www.sec.gov/Archives/edgar/data/707549/000070754926000037/lrcx-20260628.htm",
    "desc": "半導体製造装置〔成膜/エッチ/洗浄〕を [[Lam_Research]] から調達〔Lam が Samsung に供給＝Samsung→supplier→Lam・de-leaf reciprocal〕",
-   "basis_short": "[HONEST-NULL] Samsung の装置調達に占める [[Lam_Research]] の割合は、いかなる出典も述べていない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][INPUT a_ij] Samsung の装置調達に占める [[Lam_Research]] の割合は、いかなる出典も述べていない。",
+   "weight_kind": "input_share",
+   "weight_kind_label": "Share of the hub's inputs",
+   "weight_scope": "hub"
   },
   {
    "s": "Samsung",
@@ -27069,10 +27069,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.usitc.gov/publications/332/executive_briefings/ebot_germanium_and_gallium.pdf",
    "desc": "GaN/GaAs/Ge 等のチップ入力に依存〔半導体材料・中国 Ga/Ge 輸出規制のエクスポージャ〕",
-   "basis_short": "[ESTIMATED] Critical_Minerals demand-side: semiconductor critical-minerals dependence.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Critical_Minerals demand-side: semiconductor critical-minerals dependence.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Samsung",
@@ -27089,10 +27089,10 @@
    "retrieved": "2026-07-04",
    "source": "https://newsletter.semianalysis.com/p/eda-market-primer",
    "desc": "設計ソフト〔EDA Big-3〕への依存＝EDA_Tools チョークポイントの需要側（role:demand・ACTIVE）",
-   "basis_short": "[ESTIMATED] EDA_Tools demand-side: near-total EDA dependence (leading-edge logic/memory design).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EDA_Tools demand-side: near-total EDA dependence (leading-edge logic/memory design).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Samsung",
@@ -27109,10 +27109,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.mordorintelligence.com/industry-reports/semiconductor-silicon-wafer-market",
    "desc": "シリコンウェハ/フォトレジスト〔日本材料〕への依存＝Semiconductor_Materials チョークポイントの需要側（role:demand・ACTIVE）",
-   "basis_short": "[ESTIMATED] Semiconductor_Materials demand-side: high but diversified dependence on Japanese wafer/resist.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Semiconductor_Materials demand-side: high but diversified dependence on Japanese wafer/resist.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Samsung",
@@ -27129,10 +27129,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.sec.gov/Archives/edgar/data/0000937966/000162828026003701/pressreleasefinancialresul.htm",
    "desc": "EUV 露光への依存〔先端ロジック/DRAM 量産の必須〕＝EUV_Lithography チョークポイントの需要側（role:demand・ACTIVE）",
-   "basis_short": "[ESTIMATED] EUV_Lithography demand-side: leading-edge EUV-existential.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EUV_Lithography demand-side: leading-edge EUV-existential.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Samsung",
@@ -27309,10 +27309,10 @@
    "retrieved": "2026-06-19",
    "source": "https://www.trendforce.com/presscenter/news/20251203-12813.html",
    "desc": "AI 向けエンタープライズ SSD 需要は取り込むが、HBM 非保有で AI メモリ本流からは外れる",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: storage for AI-DC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: storage for AI-DC.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Semiconductor_Materials",
@@ -27399,10 +27399,10 @@
    "retrieved": "2026-09-05",
    "source": "https://www.shinetsu.co.jp/wp-content/uploads/2025/11/yuho_149.pdf",
    "desc": "希土類（NdFeB）永久磁石を製造＝Rare_Earths の feedstock に依存（需要側）。非中国の磁石供給源でもあるが、本 edge が記録するのは供給ではなく依存。市場/供給の事実のみ",
-   "basis_short": "[HONEST-NULL] Rare_Earths demand-side: 依存は実在し一次で裏づけられる——有価証券報告書 第149期【事業の内容】は当社グループを「半導体シリコン、希土類磁石、フォトレジスト、マスクブランクス、合成石英製品等の製造・販売を主体とする電子材料事業」と記述し、希土類磁石は同セグメントの5製品ラインの一つとして名指しされている。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][DEMAND] Rare_Earths demand-side: 依存は実在し一次で裏づけられる——有価証券報告書 第149期【事業の内容】は当社グループを「半導体シリコン、希土類磁石、フォトレジスト、マスクブランクス、合成石英製品等の製造・販売を主体とする電子材料事業」と記述し、希土類磁石は同セグメントの5製品ラインの一つとして名指しされている。",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Shin-Etsu_Chemical",
@@ -27469,10 +27469,10 @@
    "retrieved": "2026-07-04",
    "source": "https://newsletter.semianalysis.com/p/eda-market-primer",
    "desc": "EDA 設計ソフトの供給元〔世界 #3・~13% share〕＝EDA_Tools チョークポイントへの供給（role:supply）",
-   "basis_short": "[ESTIMATED] Siemens EDA ~13% of global EDA revenue (2024; SemiAnalysis/TrendForce).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Siemens EDA ~13% of global EDA revenue (2024; SemiAnalysis/TrendForce).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Siemens_EDA",
@@ -27824,10 +27824,10 @@
    "retrieved": "2026-07-04",
    "source": "https://newsletter.semianalysis.com/p/eda-market-primer",
    "desc": "EDA 設計ソフトの供給元〔世界 #1・~31% share〕＝EDA_Tools チョークポイントへの供給（role:supply）",
-   "basis_short": "[ESTIMATED] Synopsys ~31% of global EDA revenue (2024; SemiAnalysis/TrendForce).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Synopsys ~31% of global EDA revenue (2024; SemiAnalysis/TrendForce).",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "Synopsys",
@@ -27989,10 +27989,10 @@
    "retrieved": "2026-09-08",
    "source": "https://www.sec.gov/Archives/edgar/data/937966/000162828026011378/asml-20251231.htm",
    "desc": "露光装置（EUV/DUV）の調達元（蘭・EUV 独占で供給律速）",
-   "basis_short": "[HONEST-NULL] TSMC の装置調達に占める [[ASML]] の割合は、いかなる出典も述べていない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][INPUT a_ij] TSMC の装置調達に占める [[ASML]] の割合は、いかなる出典も述べていない。",
+   "weight_kind": "input_share",
+   "weight_kind_label": "Share of the hub's inputs",
+   "weight_scope": "hub"
   },
   {
    "s": "TSMC",
@@ -28009,10 +28009,10 @@
    "retrieved": "2026-09-09",
    "source": "https://www.tel.co.jp/ir/library/fs/arfnn500000000ni-att/yuho63q4.pdf",
    "desc": "前工程装置の調達元（日）",
-   "basis_short": "[HONEST-NULL] TSMC の装置調達に占める [[Tokyo_Electron]] の割合は、いかなる出典も述べていない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][INPUT a_ij] TSMC の装置調達に占める [[Tokyo_Electron]] の割合は、いかなる出典も述べていない。",
+   "weight_kind": "input_share",
+   "weight_kind_label": "Share of the hub's inputs",
+   "weight_scope": "hub"
   },
   {
    "s": "TSMC",
@@ -28029,10 +28029,10 @@
    "retrieved": "2026-09-09",
    "source": "https://www.shinetsu.co.jp/wp-content/uploads/2025/11/yuho_149.pdf",
    "desc": "シリコンウェハ/レジスト等の素材調達元（日）",
-   "basis_short": "[HONEST-NULL] TSMC のシリコンウェハ／素材調達に占める [[Shin-Etsu_Chemical]] の割合は、いかなる出典も述べていない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][INPUT a_ij] TSMC のシリコンウェハ／素材調達に占める [[Shin-Etsu_Chemical]] の割合は、いかなる出典も述べていない。",
+   "weight_kind": "input_share",
+   "weight_kind_label": "Share of the hub's inputs",
+   "weight_scope": "hub"
   },
   {
    "s": "TSMC",
@@ -28064,10 +28064,10 @@
    "retrieved": "2026-06-26",
    "source": "https://www.sumcosi.com/english/ir/financial/",
    "desc": "シリコンウェハを SUMCO から調達〔SUMCO が TSMC に供給＝TSMC→supplier→SUMCO・SUMCO→customer→TSMC の reciprocal ペア〕",
-   "basis_short": "[HONEST-NULL] SUMCO's share of TSMC's wafer procurement is not disclosed by either party: SUMCO's 有報 names only a trading house, TSMC's filings name no supplier.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][INPUT a_ij] SUMCO's share of TSMC's wafer procurement is not disclosed by either party: SUMCO's 有報 names only a trading house, TSMC's filings name no supplier.",
+   "weight_kind": "input_share",
+   "weight_kind_label": "Share of the hub's inputs",
+   "weight_scope": "hub"
   },
   {
    "s": "TSMC",
@@ -28104,10 +28104,10 @@
    "retrieved": "2026-09-12",
    "source": "https://www.tok.co.jp/application/files/9717/7432/8945/securities_2512.pdf",
    "desc": "EUV/先端フォトレジストを 東京応化〔TOK〕から調達〔TOK が TSMC に供給＝TSMC→supplier→Tokyo_Ohka〕",
-   "basis_short": "[HONEST-NULL] TOK's share of TSMC's photoresist procurement is not disclosed by either party.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][INPUT a_ij] TOK's share of TSMC's photoresist procurement is not disclosed by either party.",
+   "weight_kind": "input_share",
+   "weight_kind_label": "Share of the hub's inputs",
+   "weight_scope": "hub"
   },
   {
    "s": "TSMC",
@@ -28144,10 +28144,10 @@
    "retrieved": "2026-09-02",
    "source": "https://www.sec.gov/Archives/edgar/data/707549/000070754926000037/lrcx-20260628.htm",
    "desc": "半導体製造装置〔成膜/エッチ/洗浄〕を [[Lam_Research]] から調達〔Lam が TSMC に供給＝TSMC→supplier→Lam・de-leaf reciprocal〕",
-   "basis_short": "[HONEST-NULL] TSMC の装置調達に占める [[Lam_Research]] の割合は、いかなる出典も述べていない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][INPUT a_ij] TSMC の装置調達に占める [[Lam_Research]] の割合は、いかなる出典も述べていない。",
+   "weight_kind": "input_share",
+   "weight_kind_label": "Share of the hub's inputs",
+   "weight_scope": "hub"
   },
   {
    "s": "TSMC",
@@ -28164,10 +28164,10 @@
    "retrieved": "2026-09-02",
    "source": "https://www.sec.gov/Archives/edgar/data/319201/000031920126000027/klac-20260630.htm",
    "desc": "プロセス制御/検査/計測装置を [[KLA]] から調達〔KLA が TSMC に供給＝TSMC→supplier→KLA・de-leaf reciprocal〕",
-   "basis_short": "[HONEST-NULL] TSMC の装置調達に占める [[KLA]] の割合は、いかなる出典も述べていない。",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[HONEST-NULL][INPUT a_ij] TSMC の装置調達に占める [[KLA]] の割合は、いかなる出典も述べていない。",
+   "weight_kind": "input_share",
+   "weight_kind_label": "Share of the hub's inputs",
+   "weight_scope": "hub"
   },
   {
    "s": "TSMC",
@@ -28259,10 +28259,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.usitc.gov/publications/332/executive_briefings/ebot_germanium_and_gallium.pdf",
    "desc": "GaN/GaAs/Ge 等のチップ入力に依存〔半導体材料・中国 Ga/Ge 輸出規制のエクスポージャ〕",
-   "basis_short": "[ESTIMATED] Critical_Minerals demand-side: semiconductor critical-minerals dependence.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Critical_Minerals demand-side: semiconductor critical-minerals dependence.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "TSMC",
@@ -28299,10 +28299,10 @@
    "retrieved": "2026-07-04",
    "source": "https://newsletter.semianalysis.com/p/eda-market-primer",
    "desc": "設計ソフト〔EDA Big-3〕への依存＝EDA_Tools チョークポイントの需要側（role:demand・ACTIVE）",
-   "basis_short": "[ESTIMATED] EDA_Tools demand-side: near-total EDA dependence (leading-edge design).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EDA_Tools demand-side: near-total EDA dependence (leading-edge design).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "TSMC",
@@ -28319,10 +28319,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.mordorintelligence.com/industry-reports/semiconductor-silicon-wafer-market",
    "desc": "シリコンウェハ/フォトレジスト〔日本材料〕への依存＝Semiconductor_Materials チョークポイントの需要側（role:demand・ACTIVE）",
-   "basis_short": "[ESTIMATED] Semiconductor_Materials demand-side: high but diversified dependence on Japanese wafer/resist.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Semiconductor_Materials demand-side: high but diversified dependence on Japanese wafer/resist.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "TSMC",
@@ -28339,10 +28339,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.sec.gov/Archives/edgar/data/0000937966/000162828026003701/pressreleasefinancialresul.htm",
    "desc": "EUV 露光への依存〔先端ノード量産の必須〕＝EUV_Lithography チョークポイントの需要側（role:demand・ACTIVE・ASML 最大顧客級）",
-   "basis_short": "[ESTIMATED] EUV_Lithography demand-side: leading-edge EUV-existential.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EUV_Lithography demand-side: leading-edge EUV-existential.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Taiwan",
@@ -29114,10 +29114,10 @@
    "retrieved": "2026-06-18",
    "source": "https://www.atlanticcouncil.org/blogs/securing-energy-independence-the-us-path-to-resilient-enriched-uranium-supply-chain/",
    "desc": "国内濃縮の再建（DOE $2.72B/4社・対露依存脱却＝核燃料安全保障・defense⇄energy 縫い目）",
-   "basis_short": "[ESTIMATED] Uranium_Enrichment supply-side: US enrichment (Centrus restart) — Western civil capacity.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] Uranium_Enrichment supply-side: US enrichment (Centrus restart) — Western civil capacity.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "United_States",
@@ -29239,10 +29239,10 @@
    "retrieved": "2026-06-27",
    "source": "https://www.usitc.gov/publications/332/executive_briefings/ebot_germanium_and_gallium.pdf",
    "desc": "Ga/Ge/Sb の輸入依存〔対中脆弱性・2024-12 対米禁輸の標的・多様化を推進〕。US→Rare_Earths と同型",
-   "basis_short": "[ESTIMATED] Critical_Minerals demand-side: strategic critical-minerals dependence (state).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Critical_Minerals demand-side: strategic critical-minerals dependence (state).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "United_States",
@@ -29381,7 +29381,7 @@
    "desc": "★ カリの net-import reliance ~91%（2023・国内生産少・カナダから ~79%）＝ [[Potash]] hub の DEMAND-side buyer。role:demand（[[Grain]] role:supply マクロと同じく country-macro 例外で edge 化）。貿易 exposure magnitude のみ",
    "basis_short": "[OBSERVED][DEMAND] United_States potash net-import reliance 0.91, 2023 — STATED (USGS MCS 2024, potash, Salient Statistics: 'Net import reliance as a percentage of apparent consumption  91  92  93  92  91', 2023 column = 91; also derivable",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -29494,10 +29494,10 @@
    "retrieved": "2026-06-19",
    "source": "https://www.mordorintelligence.com/industry-reports/hard-disk-drive-market",
    "desc": "ニアライン大容量 HDD の AI 長期保存需要（2026 通年完売と報じられる追い風）",
-   "basis_short": "[ESTIMATED] AI_Data_Center_Demand supply-side: HDD/storage for AI-DC.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][PRODUCTION] AI_Data_Center_Demand supply-side: HDD/storage for AI-DC.",
+   "weight_kind": "world_production_share",
+   "weight_kind_label": "Share of the hub's production/usage pool",
+   "weight_scope": "hub"
   },
   {
    "s": "YMTC",
@@ -29604,10 +29604,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.cnbc.com/2025/07/03/us-lifts-chip-software-curbs-on-china-amid-trade-truce-synopsys-says-.html",
    "desc": "設計ソフト〔EDA Big-3〕への依存＝EDA_Tools チョークポイントの需要側（role:demand）。★ 対中 EDA は 2025-05 発動→2025-07 撤回で現 ACTIVE 供給。市場アクセスの事実のみ（SMIC/CATL framing）",
-   "basis_short": "[ESTIMATED] EDA_Tools demand-side: near-total EDA dependence, no domestic substitute.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] EDA_Tools demand-side: near-total EDA dependence, no domestic substitute.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "YMTC",
@@ -29624,10 +29624,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.trendforce.com/news/2025/12/03/news-japan-rumored-to-curb-photoresist-exports-as-china-targets-40-self-sufficiency-by-2026/",
    "desc": "シリコンウェハ/フォトレジスト〔日本材料〕への依存＝Semiconductor_Materials チョークポイントの需要側（role:demand）。日 METI 2025-11 で一部制限＝市場アクセスの事実のみ",
-   "basis_short": "[ESTIMATED] Semiconductor_Materials demand-side: high dependence on Japanese wafer/resist (self-sufficiency ~10%).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Semiconductor_Materials demand-side: high dependence on Japanese wafer/resist (self-sufficiency ~10%).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "YMTC",
@@ -29644,10 +29644,10 @@
    "retrieved": "2026-07-06",
    "source": "https://www.tomshardware.com/tech-industry/netherlands-tightens-export-controls-on-sanctioned-semiconductor-equipment-move-made-in-line-with-u-s-limitations-asml-will-apply-for-licenses-from-the-dutch-government",
    "desc": "DUV 露光ツールへの市場アクセス依存〔ACTIVE-under-license: NL が DUV を許可制で規制・中国 fab は現に調達〕。EUV(severed) と異なり現に効く依存。share は一次不明ゆえ weight:null（honest-null・捏造しない）。市場アクセス/通商の事実のみ",
-   "basis_short": "[ACTIVE-under-license][DUV] China fab DUV tool market-access dependence (NL license regime 2024-09/2025-04 — NOT severed, unlike EUV).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ACTIVE-under-license][DUV][DEMAND] China fab DUV tool market-access dependence (NL license regime 2024-09/2025-04 — NOT severed, unlike EUV).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "YMTC",
@@ -29664,10 +29664,10 @@
    "retrieved": "2026-07-04",
    "source": "https://www.tomshardware.com/tech-industry/netherlands-tightens-export-controls-on-sanctioned-semiconductor-equipment-move-made-in-line-with-u-s-limitations-asml-will-apply-for-licenses-from-the-dutch-government",
    "desc": "★ SEVERED: EUV 露光へのアクセス無し〔NL が 2019〜対中 EUV 出荷を許可せず〕＝denial 既発効。ACTIVE な依存ではなく cut-off の記録（[[Huawei]]→[[TSMC]] severed 先例）。市場アクセス/通商の事実のみ",
-   "basis_short": "[SEVERED] EUV_Lithography demand-side: China chipmakers have NO EUV access (NL export-control, denial in force since 2019).",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[SEVERED][DEMAND] EUV_Lithography demand-side: China chipmakers have NO EUV access (NL export-control, denial in force since 2019).",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "ZTE",
@@ -31056,7 +31056,7 @@
    "desc": "世界最大級の小麦輸入国の一つ〔豪州産小麦を主に調達・製パン/即席麺需要〕＝ [[Grain]] hub の DEMAND-side buyer。role:demand（importer＝Egypt/Sinopec-demand と同 discipline）。市場/食料安全保障の事実のみ",
    "basis_short": "[ESTIMATED][DEMAND] Indonesia = a top wheat importer (Australia-sourced) → 2nd demand-side draw on Grain (smaller than Egypt 0.15).",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -31076,7 +31076,7 @@
    "desc": "★ 国内カリ生産なし＝MOP をほぼ全量輸入＝ [[Potash]] hub の DEMAND-side buyer（油ヤシ肥料中心・Canpotex top-5 顧客）。role:demand（importer discipline）。★ cross-cluster: Indonesia は [[Grain]] demand-side でもある。貿易 exposure magnitude のみ",
    "basis_short": "[ESTIMATED][DEMAND] Indonesia potash import-dependence ~0.98 (imports ÷ apparent consumption; 国内 potash 生産なし → MOP ほぼ全量輸入 — OECD 2024 fertiliser-resilience).",
    "weight_kind": "import_dependence",
-   "weight_kind_label": "Share of its consumption imported via/from the counterpart",
+   "weight_kind_label": "Share of its demand met by the counterpart",
    "weight_scope": "source"
   },
   {
@@ -32069,10 +32069,10 @@
    "retrieved": "2026-06-18",
    "source": "https://www.portofrotterdam.com/en/news-and-press-releases/gate-terminal-starts-construction-of-4th-lng-tank-at-the-port-of-rotterdam",
    "desc": "欧州の LNG 輸入ゲートウェイ（Gate ターミナル・2025 +15.1%/13.0M t・再ガス化 →20 BCM/年・脱ロシア後の供給再編の要）",
-   "basis_short": "[ESTIMATED] Natural_Gas reliance: Europe's LNG import gateway — high gas-throughput reliance.",
-   "weight_kind": "unclassified",
-   "weight_kind_label": null,
-   "weight_scope": null
+   "basis_short": "[ESTIMATED][DEMAND] Natural_Gas reliance: Europe's LNG import gateway — high gas-throughput reliance.",
+   "weight_kind": "import_dependence",
+   "weight_kind_label": "Share of its demand met by the counterpart",
+   "weight_scope": "source"
   },
   {
    "s": "Port_of_Shanghai",
