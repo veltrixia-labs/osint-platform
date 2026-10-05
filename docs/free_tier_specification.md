@@ -11,8 +11,12 @@
 ### 1.2 FREE 層の提供物
 - **Alert Stream** — importance 順の厳選アラート(All タブ)+ 分野タブの二段表示(厳選 + 全件フィード)
 - **Monthly Trend Flow(MTF)** — 月次アーカイブ。high-impact signal を日別・セクター別に振り返る
-- **Global Map** — 地理表示(本書のスコープ外)
 - ロック面: Market Pulse / Pro Insight / Pro Interactive Map(Pro 層、本書のスコープ外)
+
+> ★ **2026-10-05 決定 — FREE に地図面は無い。** 旧 Global Map は `ec17a12` で削除された(合成データを
+> 配信していたため)。復活させない。Pro Interactive Map(vault 由来の関係グラフ)は Pro 限定のまま
+> 据え置き、**FREE/Pro の切り分けは有料機能が揃った後に設計する**。それまで FREE の提供物は
+> Alert Stream と Monthly Trend Flow の2面のみ。
 
 ### 1.3 二軸の設計思想(最重要)
 - **importance(0-100)** = 「世界への影響の広さ」。LLM が見出し+evidence から採点。表示順・閾値の主軸。

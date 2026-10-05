@@ -39,10 +39,42 @@ container given `height: auto` whose child requires a definite height. `grep` co
 `src/modules/render/pro_map.ts:18` mounts into it on this branch.
 
 ★ **`#map-page-container` is the counter-example, and it matters.** The free Global Map page was
-given exactly the treatment `#pro-map-container` was not — a definite
-`height: calc(100dvh - 7.5rem - env(safe-area-inset-bottom, 0px))`, a `min-height: 65vh` floor,
-**and** `.map-instance-host { flex: 1 1 auto; min-height: 65vh; height: 100% }`. Somebody solved
-this problem once, for one container, and the fix was never generalised.
+given exactly the treatment `#pro-map-container` was not. Somebody solved this problem once, for
+one container, and the fix was never generalised.
+
+> **Quoted in full, 2026-10-05, because the element it styles no longer exists.** The `#map`
+> route and `#map-page-container` were removed at `392564b`; these rules in
+> `src/mobile-responsive.css:220` and `:246` are now orphaned and will be deleted in a
+> follow-up. They are reproduced here so the working pattern survives that deletion — it is the
+> template for giving `#pro-map-container` a definite height whenever the mobile layout is
+> designed.
+>
+> ```css
+> @media (max-width: 768px) {
+>   #map-page-container {
+>     width: 100%;
+>     max-width: 100vw;
+>     min-height: 65vh;
+>     height: calc(100dvh - 7.5rem - env(safe-area-inset-bottom, 0px));
+>     max-height: calc(100dvh - 5rem);
+>     padding: 0; margin: 0; border-radius: 0;
+>     border-left: none; border-right: none;
+>     box-sizing: border-box;
+>   }
+>   #map-page-container .map-instance-host {
+>     flex: 1 1 auto;
+>     width: 100%;
+>     min-height: 65vh;
+>     height: 100%;
+>     order: 1;
+>   }
+> }
+> ```
+>
+> Three things in it are the point: **`100dvh` not `100vh`** (dynamic viewport, so the iOS URL
+> bar collapsing does not change the box), **`env(safe-area-inset-bottom)`** for the home
+> indicator, and a **`min-height` floor on both the container and the inner host** so the flex
+> chain always has something to divide.
 
 ★ **On `main`, `#pro-map-container` hosts the legacy map, and that module defends itself in
 JS.** `pro_map.ts` on `main` mounts `renderTriggerMap`, which delegates to the cascade renderer;

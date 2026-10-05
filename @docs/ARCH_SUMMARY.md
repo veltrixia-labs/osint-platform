@@ -16,7 +16,6 @@ VELTRIXIA LABS
 Free:
 - Alert Stream
 - Context Briefs
-- Global Map
 
 Pro:
 - Pro Insights
@@ -194,7 +193,6 @@ Freeユーザー向け：
 ```text
 - Alert Stream
 - Context Briefs
-- Global Map
 ```
 
 Proユーザー向け：
@@ -365,7 +363,6 @@ if (data.alerts) {
 Alert Stream: 表示
 Context Briefs: 非表示
 Pro Insights: 非表示
-Global Map: 非表示
 Subscription Plans: 非表示
 ```
 
@@ -881,7 +878,10 @@ CSSは `web_dashboard/src/style.css` に `.intel-*` 系を追加。
 
 ---
 
-# 17. Global Map / Location
+# 17. Location（旧 Global Map）
+
+> ★ 2026-10-05: Global Map は削除された（`ec17a12`、合成データを配信していたため）。復活しない。
+> 本節のうち地図 UI に関する記述は履歴であり、現行は座標フィールドと地理抽出処理のみが残る。
 
 `db/models.py` には `AlertLog` や `Report` に以下がある。
 
@@ -891,7 +891,7 @@ location_lng
 ```
 
 `processor/location_resolver.py` に地理抽出処理がある。  
-Leafletは `web_dashboard/src/modules/render/map.ts` で使用済み。
+Leaflet は旧 `web_dashboard/src/modules/render/map.ts` で使用されていた。**同ファイルは `ec17a12` で削除済み**（Leaflet 自体は `pro_reports.ts` が今も import している）。
 
 Pro Brief詳細画面でMini Mapを出す構想があり、`structured_payload.signal.location_lat/lng` が存在する場合のみ表示する方針。  
 ただし、現状多くのレポートでは座標がなく、`Geo Confidence: Inferred` と地域チップ表示が中心。
@@ -1179,7 +1179,7 @@ UIをいい感じに高級感あるようにして
 - 全6ドメイン dry-run対象
 - 自動生成はまだ dry-run
 - Pro Insights内にStructural Briefを統合済み
-- FreeナビはAlert / Context / Map中心
+- FreeナビはAlert Stream / Monthly Trend Flow の2面（2026-10-05 決定: Free に地図は無い）
 - Subscription価格設計決定
 - Subscription Plans UIは横並び修正中/修正済み
 - Pulse barはAlert Streamのみ表示に修正済み
@@ -1210,7 +1210,6 @@ web_dashboard/src/modules/render/nav.ts
 web_dashboard/src/modules/render/insights.ts
 web_dashboard/src/modules/render/pro_reports.ts
 web_dashboard/src/modules/render/utils.ts
-web_dashboard/src/modules/render/map.ts
 web_dashboard/src/style.css
 web_dashboard/vite.config.ts
 
