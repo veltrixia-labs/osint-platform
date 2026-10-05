@@ -151,6 +151,14 @@ export function mountGlobe(
             + (rest > 0 ? `<button class="rv-dock-more" data-more="1">+${rest} more</button>` : '')
             + (expanded ? `<button class="rv-dock-more" data-more="0">show less</button>` : '');
         refresh();
+        // ★ The strip is now INSIDE the flex column that also holds the map, so anything that
+        //   changes the dock's height — "+N more", "show less", the selection headline
+        //   appearing or disappearing — takes that height straight out of the map's. rAF so the
+        //   new layout has resolved before MapLibre re-reads the container.
+        //   The ResizeObserver on `host` should also catch this, since host IS the box that
+        //   shrinks; this is the explicit call, not a replacement for it, because the RO fires
+        //   asynchronously and a visibly stretched canvas for a frame is the failure it leaves.
+        requestAnimationFrame(() => safeResize());
     };
     dockHost.hidden = false;
     dockHost.appendChild(dock);

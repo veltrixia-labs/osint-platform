@@ -136,7 +136,7 @@ function rowHtml(e: REdge, other: string, dir: '→' | '←'): string {
             ? e.weight_kind_label || ''
             // An unclassified kind means the vault has not tagged this edge's basis yet. Say
             // that, rather than borrowing a neighbouring edge's meaning for it.
-            : `${e.unit || 'share'} (basis unspecified)`;
+            : `${e.unit || 'share'} · basis not tagged`;
         const lab = label ? ` <span class="rv-wkind">· ${esc(label)}</span>` : '';
         w = `${e.weight}${lab}`;
     }
@@ -255,18 +255,23 @@ export async function renderRelationshipView(container: HTMLElement): Promise<vo
             <button class="rv-mode" data-mode="globe" aria-selected="false">Globe</button>
           </div>
         </div>
+        <!-- ★ .rv-body is a COLUMN FLEX BOX and the dock strip lives INSIDE it, not as a
+             sibling. As a sibling of .rv-body the strip was simply never visible: .rv-body
+             carried min-height:70vh, a flex item cannot shrink below its own min-height, so
+             head + 70vh + strip + legend overflowed #pro-map-container's
+             height:calc(100vh - 80px) and .rv-root{overflow:hidden} clipped the strip off the
+             bottom — with nothing to scroll, because the clip is on an ancestor. -->
         <div class="rv-body">
           <div class="rv-canvas-host"></div>
+          <!-- Globe only. Previously an absolutely-positioned overlay ON the map, covering its
+               bottom 76px (42vh expanded) and hiding the southern hemisphere. -->
+          <div class="rv-dockstrip" hidden></div>
           <aside class="rv-panel" data-open="0">
             <button class="rv-close" type="button" aria-label="Close">&times;</button>
             ${IS_PRO ? '' : '<div class="rv-freeline">FREE — relationships only; upgrade for weights &amp; sources</div>'}
             <div class="rv-detail"></div>
           </aside>
         </div>
-        <!-- Globe only. The dock USED to be an absolutely-positioned overlay inside the map,
-             covering the bottom 76px of it (and up to 42vh expanded) and clipping the southern
-             hemisphere. It is a sibling strip now, so the map's bottom edge is clear. -->
-        <div class="rv-dockstrip" hidden></div>
         <div class="rv-legend">${legend}<span class="rv-leg rv-leg--ring"><i></i>country = ring</span></div>
       </div>`;
     const input = container.querySelector('.rv-search') as HTMLInputElement;
