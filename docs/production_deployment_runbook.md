@@ -89,7 +89,7 @@ sudo systemctl enable --now veltrixia-api veltrixia-jobs
 
 ### Option C: Render (osint-platform + osint-web)
 
-**Critical:** `https://osint-platform.onrender.com` must run the **Python API** (`uvicorn api.main:app`), not a static site. If the service shows `x-render-routing: no-server` or `/api/status` returns 404, the dashboard cannot load alerts.
+**Critical:** the live API host is **`https://osint-platform-xs7p.onrender.com`**, and it must run the **Python API** (`uvicorn api.main:app`), not a static site. ★ **Do not try to "fix" `https://osint-platform.onrender.com`.** That bare host is **retired and correctly dead**: it answers 404 with `x-render-routing: no-server` (measured 2026-10-06). Until 2026-10-06 this line named it as the host that must work, which would send someone to repair a service that should not exist. If the service shows `x-render-routing: no-server` or `/api/status` returns 404, the dashboard cannot load alerts.
 
 - **osint-platform**: Python web service. Its actual build and start commands are recorded in `docs/render_deployment.md`, a dated reading of the Render dashboard, which is authoritative. (This line used to point at `render.yaml`. Render does not read that file; see `docs/render_deployment.md`.)
 - **osint-web** (veltrixia.net): Static `web_dashboard/dist`. Configure a **rewrite** so `/api/*` proxies to the live `osint-platform` URL, **or** set `<meta name="veltrixia-api-base">` to the running API host.
