@@ -189,13 +189,29 @@ async def get_relationship_graph(tier: str = Depends(_get_current_tier)):
 
 
 @router.get("/relationships/coordinates")
-async def get_relationship_coordinates():
-    """Display-only lat/lng for the globe view. Open to all tiers — a coordinate is not provenance.
+async def get_relationship_coordinates(tier: str = Depends(_get_current_tier)):
+    """Display-only lat/lng for the globe view. Pro only, gated exactly like /relationships.
+
+    ★ GATED AT THE ROUTE FROM 2026-10-06. From 7751612 until then it was open to every caller,
+      on the docstring's reasoning that "a coordinate is not provenance". That is true, but it
+      was the wrong test. The payload names 300 of the graph's 310 node ids (248 dict keys plus
+      52 in `no_coords_by_design`) to anonymous callers. That is the same exposure
+      get_relationship_graph's docstring above records as the reason for ITS gate ("all 303
+      node ids ... to anybody who knew the URL"). One product made opposite decisions on two
+      adjacent routes. The decision is consistency with the graph's gate, not the size of this
+      payload: it carries no edges, weights or scores. The client only fetches this route from
+      the Globe button, after the gated graph has returned 200, so no Pro path changes.
 
     ★ This is the vault's `_bridge/node_coordinates.json`, whose own note reads: "Presentation
-      layer only. Coordinates are NOT graph structure and never enter canonical .md." It carries
-      lat/lng/type/city and nothing else — no impact, no weight, no scenario membership.
+      layer only. Coordinates are NOT graph structure and never enter canonical .md."
+      It is served verbatim. Per entry: lat, lng, type, city, source, and on 137 entries via,
+      which carries exchange tickers, some legal names and internal geocoder provenance
+      (backbone_hq, GEO_REGISTRY, build_geo_db). The docstring said "lat/lng/type/city and
+      nothing else" until 2026-10-06, which was false. Top level: schema_version,
+      generated_at (a literal in the file), note, coverage, nodes, no_coords_by_design.
+      There is no impact, weight or scenario membership.
     """
+    _require_pro(tier, "Pro subscription required for the relationship globe.")
     if not COORDS_PATH.exists():
         raise HTTPException(status_code=503, detail="Coordinates not available.")
     with open(COORDS_PATH, "r", encoding="utf-8") as f:

@@ -41,12 +41,17 @@ const FEATURE_META: Record<ShroudFeature, FeatureMeta> = {
     //   1535 -> 1543 within a day and the blurb was already wrong. The NODE count stays because
     //   it has a hard gate in two places (cascade_engine.py:118, model_slice_v29.py:70) and
     //   cannot move silently. Quote the gated number, never the ungated one.
+    // ★ 303 -> 310 on 2026-10-06, and the paragraph above was half wrong. The vault's gate stops
+    //   the COUNT moving silently in the vault. It does not stop THIS STRING going stale, because
+    //   nothing compares the two. The count moved 303 -> 307 -> 310 in one day (2026-10-05) and
+    //   this copy stayed at 303 until a manual check found it. The gated number is still the
+    //   right one to quote, but it must be re-checked here by hand at every gate bump.
     'pro-map': {
         icon: '🗺️',
         title: 'Pro Interactive Map',
-        blurb: 'A relationship explorer over a hand-authored vault of 303 entities, where every recorded relationship carries the date it was retrieved and whether it has been verified.',
+        blurb: 'A relationship explorer over a hand-authored vault of 310 entities, where every recorded relationship carries the date it was retrieved and whether it has been verified.',
         bullets: [
-            '303 entities, every relationship individually sourced',
+            '310 entities, every relationship individually sourced',
             'Each one dated and marked verified or not — the unverified ones say so',
             'Force-directed graph and geographic globe over the same data',
         ],
