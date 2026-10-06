@@ -156,18 +156,10 @@ const FEATURE_COMPARISON: ComparisonItem[] = [
     { type: 'section', label: 'SIGNAL', subtitle: 'What is happening' },
     // vals[0] was '5'; PLAN_LIMITS[FREE]["alerts_per_day"] is 3 (gating.py:42), same as guest.
     { type: 'row', feat: 'Alerts per day', vals: ['3', '100', 'Unlimited', 'Unlimited'] },
-    { type: 'row', feat: 'Daily reports', vals: [
-        ENTITLEMENT_MATRIX.free.reports.includes('daily') ? '✓' : '✗',
-        ENTITLEMENT_MATRIX.pro.reports.includes('daily') ? '✓' : '✗',
-        ENTITLEMENT_MATRIX.experts.reports.includes('daily') ? '✓' : '✗',
-        ENTITLEMENT_MATRIX.enterprise.reports.includes('daily') ? '✓' : '✗'
-    ]},
-    { type: 'row', feat: 'Weekly reports', vals: [
-        ENTITLEMENT_MATRIX.free.reports.includes('weekly') ? '✓' : '✗',
-        ENTITLEMENT_MATRIX.pro.reports.includes('weekly') ? '✓' : '✗',
-        ENTITLEMENT_MATRIX.experts.reports.includes('weekly') ? '✓' : '✗',
-        ENTITLEMENT_MATRIX.enterprise.reports.includes('weekly') ? '✓' : '✗'
-    ]},
+    // 'Daily reports' and 'Weekly reports' rows removed 2026-10-06. Weekly reports were retired
+    // (Pro Insight supersedes them). Daily was ALREADY false before that: daily generation
+    // returns immediately (report_orchestrator.py:64-66), so the ✓ advertised a report nobody
+    // received. Neither row was ever backed by a surface a subscriber could open.
     // vals[0] was '3'; PLAN_LIMITS[FREE]["watchlist_keywords"] is 0 (gating.py:43) and is
     // enforced — analysts.py:68 rejects the first keyword with a 403 whose own text reads
     // "allows 0 keywords". A numeral, not a ✗, so the table shows the number the error quotes.
