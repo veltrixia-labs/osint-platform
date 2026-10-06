@@ -2,10 +2,16 @@
 /**
  * Enforces the isolation contract at the top of relationship_globe.ts.
  *
- * The globe may carry coordinates and nothing else from the chokepoint-scenario side. order-3
- * (export_scenarios.py:456-475) assigns a firm impact = country x DECAY(0.7) with NO edge
- * predicate, and the coordinate gate is the only thing keeping such a node off a map — a globe
- * is precisely where a coordinate turns a derived number into a published one. See the vault's
+ * The globe may carry coordinates and nothing else from the chokepoint-scenario side, because a
+ * globe is precisely where a coordinate turns a derived number into a published one.
+ *
+ * (Comment corrected 2026-10-06.) This comment used to justify the check with order-3 as a live
+ * mechanism and cited export_scenarios.py:456-475. That is stale: order-3 (a firm impact derived
+ * as country x DECAY 0.7 with NO edge predicate) was removed from the vault's payloads on
+ * 2026-10-05 (vault f2795b0), and the line range no longer holds it. The check is still correct
+ * and still needed. The scenario surface still carries derived, hub-relative numbers
+ * (impact_score, raw_impact, credit_gaps, ...) that must not reach the globe, and this script is
+ * what stops any of them, or a re-introduced order-3, from being joined to it. See the vault's
  * CLAUDE.md §5.
  */
 import { readFileSync } from 'fs';

@@ -25,6 +25,14 @@
 #
 # osint-scheduler (Background Worker) is not described in this file at all — its start
 # command and entire environment are dashboard-only and invisible from disk.
+#
+# ★ The dashboard settings of all four services (branch, root dir, build/start commands,
+# Auto-Deploy) were read and recorded in docs/render_deployment.md on 2026-10-06. Read that
+# file, not this one. Measured there: this file contradicts the dashboard on every
+# comparable field except the API start command (:37). For example, osint-web actually runs
+# `npm install && npm run build` from root dir web_dashboard, not :64's `npm ci`. Render does
+# not apply this file to the existing services (see DEV_MODE above). Treat it as decorative.
+# The dashboard is authoritative, and that doc is a dated reading of it.
 
 services:
   - type: web
