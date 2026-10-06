@@ -8,8 +8,7 @@ class PlanTier(str, Enum):
 
 class ReportType(str, Enum):
     DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
+    # WEEKLY / MONTHLY removed 2026-10-06: retired, see RETIRED_REPORT_TYPES below.
     SYSTEM_DIAGNOSTIC = "system_diagnostic"
 
 # ★ Retired 2026-10-06 (operator decision: Pro Insight supersedes them). Weekly and monthly

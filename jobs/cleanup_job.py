@@ -21,7 +21,7 @@ from db.models import (
     AnalysisCache, TrendSignal, SignalRanking
 )
 from config.settings import settings
-from db.enums import ReportType
+from db.enums import RETIRED_REPORT_TYPES
 
 # --- Setup Logging ---
 logging.basicConfig(
@@ -371,32 +371,40 @@ async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None) -
 
     try:
         # 1. Report Cleanup (excludes pro_structural — see run_pro_structural_retention_cleanup)
-        # ★ Fixed 2026-10-06. This list read ["weekly_global", "monthly_global", "pro_structural"].
-        #   4a2367d (2026-03-26) renamed the report types the generator WRITES to "weekly" /
-        #   "monthly" (db/enums.py ReportType; report_generator.py report_type=current_type) and did
-        #   not update this reader. 38d1356 (2026-03-31, "restore missing cleanup functions") then
-        #   put the old names back. From then on no report matched, so the weekly (Pro) and monthly
-        #   (Experts) reports were deleted at report_retention_days (30), with CASCADE to
-        #   article_outputs / pdf_jobs / external_posts. Production on 2026-10-06 held weekly only
-        #   from 2026-09-07 and monthly only from 2026-10-01.
-        #   The names now come from the enum the writer uses, so a future rename moves both together.
-        #   "pro_structural" is written as a literal (pro_report_generator.py) and has its own
-        #   90-day retention job.
-        PERSISTENT_TYPES = [ReportType.WEEKLY.value, ReportType.MONTHLY.value, "pro_structural"]
+        # ★ PERSISTENT_TYPES history:
+        #   - It read ["weekly_global", "monthly_global", "pro_structural"] until 2026-10-06: stale
+        #     names (4a2367d renamed the writers; 38d1356 restored the old names here), so weekly
+        #     and monthly reports were deleted at 30 days.
+        #   - It was fixed to ["weekly", "monthly", "pro_structural"] that evening (39d4929).
+        #   - Hours later weekly/monthly were retired outright (db/enums.py RETIRED_REPORT_TYPES)
+        #     and are deleted below regardless of age, so only pro_structural remains. It also has
+        #     its own 90-day retention job.
+        PERSISTENT_TYPES = ["pro_structural"]
         report_stmt = delete(Report).where(
             Report.created_at < threshold,
             Report.report_type.notin_(PERSISTENT_TYPES),
             ~Report.title.ilike("Structural Impact Brief%"),
         )
+        # 1b. Retired report types (2026-10-06): deleted REGARDLESS OF AGE, not left to the 30-day
+        #     rule. Waiting would keep the last row (weekly, 2026-10-05) until 2026-11-04, and any
+        #     row written by a scheduler that has not yet been redeployed would sit another 30 days.
+        #     Measured before this change: 0 rows in any table reference these reports, so the
+        #     CASCADE (article_outputs, pdf_jobs, external_posts) and SET NULL (alert_logs,
+        #     report_trigger_logs, analytics_events) paths remove or clear nothing.
+        retired_stmt = delete(Report).where(Report.report_type.in_(RETIRED_REPORT_TYPES))
         if dry_run:
             counts["reports"] = await _count(select(func.count(Report.id)).where(
                 Report.created_at < threshold,
                 Report.report_type.notin_(PERSISTENT_TYPES),
+                Report.report_type.notin_(RETIRED_REPORT_TYPES),
                 ~Report.title.ilike("Structural Impact Brief%")))
+            counts["reports_retired_types"] = await _count(select(func.count(Report.id)).where(
+                Report.report_type.in_(RETIRED_REPORT_TYPES)))
         else:
             report_res = await db.execute(report_stmt)
             counts["reports"] = report_res.rowcount
-            logger.info(f"Purged {report_res.rowcount} reports")
+            counts["reports_retired_types"] = (await db.execute(retired_stmt)).rowcount
+            logger.info(f"Purged {report_res.rowcount} reports (age) + {counts['reports_retired_types']} retired-type reports")
 
         # 2. Logs/Analytics
         analytics_stmt = delete(AnalyticsEvent).where(AnalyticsEvent.created_at < threshold)
@@ -564,19 +572,28 @@ async def run_retention_audit(db: AsyncSession):
         if stale_alerts > 0:
             await send_webhook_notification(f"Audit Failure: Found {stale_alerts} stale alerts.", level="warning")
             
-        # ★ Fixed 2026-10-06. This counted report_type == "monthly_global", a type nothing has
-        #   written since 4a2367d (2026-03-26), so it logged "No monthly summaries found!" on every
-        #   run: an alarm that fired correctly and that nobody read. It now asks the question the
-        #   alarm exists for, namely whether this month's monthly report was generated. The generator
-        #   runs on the 1st, hence 32 days.
-        month_thresh = now - timedelta(days=32)
+        # ★ History of this check:
+        #   - Until 2026-10-06 it counted report_type == "monthly_global", which nothing had written
+        #     since March. It logged "No monthly summaries found!" every day: an alarm that fired
+        #     correctly and that nobody read.
+        #   - It was then pointed at "monthly", and hours later monthly was retired.
+        #   - It now watches the product that superseded them, Pro Insight (pro_structural).
+        # COLUMN: created_at. pro_report_generator overwrites created_at on update-in-place
+        #   (existing.created_at = analysis_ts), so it records the latest regeneration. Measured
+        #   2026-10-06: equal to structured_payload.analysis_generated_at on all 6 rows.
+        # WINDOW: 48h. Measured: all 6 rows regenerated together at 09:29Z and again at 10:16Z,
+        #   both around scheduler starts, and pro automation is scheduled every 30 min. Only the
+        #   latest row per domain is kept, so the long-run interval could NOT be measured. When the
+        #   compile anchor is unchanged a run SKIPS and created_at does not move, so a quiet news
+        #   period longer than 48h would trip this. That is a known false-positive mode.
+        recent_thresh = now - timedelta(hours=48)
         stmt_sum = select(func.count(Report.id)).where(
-            Report.report_type == ReportType.MONTHLY.value, Report.created_at >= month_thresh)
-        summaries = (await db.execute(stmt_sum)).scalar() or 0
-        if summaries == 0:
-            logger.error("Audit Failure: no monthly report generated in the last 32 days")
+            Report.report_type == "pro_structural", Report.created_at >= recent_thresh)
+        recent_briefs = (await db.execute(stmt_sum)).scalar() or 0
+        if recent_briefs == 0:
+            logger.error("Audit Failure: no Pro Insight (pro_structural) brief generated in the last 48h")
             await send_webhook_notification(
-                "Audit Failure: no monthly report generated in the last 32 days", level="error")
+                "Audit Failure: no Pro Insight (pro_structural) brief generated in the last 48h", level="error")
             
         logger.info("Retention audit completed.")
     except Exception as e:
