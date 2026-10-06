@@ -54,7 +54,6 @@ from api.routes.insights import router as insights_router
 from api.routes.monthly_trends import router as monthly_trends_router
 from api.routes.pro_reports import router as pro_reports_router
 from api.routes.pro_spatial import router as pro_spatial_router
-from api.routes.impact_roster import router as impact_roster_router
 from api.routes.relationships import router as relationships_router
 from api.routes.dev_tools import router as dev_tools_router
 from api.routes.admin import router as admin_router
@@ -282,7 +281,6 @@ app.include_router(analytics_router, prefix="/api")
 app.include_router(insights_router, prefix="/api")
 app.include_router(monthly_trends_router, prefix="/api")
 app.include_router(pro_spatial_router, prefix="/api")
-app.include_router(impact_roster_router, prefix="/api")
 app.include_router(relationships_router, prefix="/api")
 app.include_router(pro_reports_router, prefix="/api")
 app.include_router(dev_tools_router, prefix="/api")

@@ -12,7 +12,7 @@
  */
 import type { UserMe } from '../api';
 
-export type ShroudFeature = 'market-pulse' | 'pro-insights' | 'pro-map' | 'impact-roster';
+export type ShroudFeature = 'market-pulse' | 'pro-insights' | 'pro-map';
 
 type FeatureMeta = { icon: string; title: string; blurb: string; bullets: string[] };
 
@@ -55,12 +55,6 @@ const FEATURE_META: Record<ShroudFeature, FeatureMeta> = {
             'Each one dated and marked verified or not — the unverified ones say so',
             'Force-directed graph and geographic globe over the same data',
         ],
-    },
-    'impact-roster': {
-        icon: '🎯',
-        title: 'Impact Roster',
-        blurb: 'Scenario-based exposure rosters — for each supply-shock scenario, the firms it affects ranked by impact against Merton credit fragility.',
-        bullets: ['Per-scenario firm exposure rosters', 'Impact × credit-fragility ranking', 'Country and choke-point impact tables'],
     },
 };
 
