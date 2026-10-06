@@ -14,8 +14,10 @@ from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urljoin
 from dotenv import load_dotenv
 
-# Ensure environment variables are loaded
-load_dotenv(override=True)
+# Ensure environment variables are loaded. Do NOT override the environment
+# (see config/settings.py): this module is imported by the API and the jobs, so
+# override=True here would re-clobber DATABASE_URL even with settings.py fixed.
+load_dotenv(override=False)
 
 logger = logging.getLogger(__name__)
 

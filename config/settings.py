@@ -3,8 +3,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 from dotenv import load_dotenv
 
-# Force-load .env at the very beginning
-load_dotenv(override=True)
+# Load .env WITHOUT overriding variables already set in the environment.
+# This was override=True until 2026-10-06. The local .env holds exactly one key,
+# DATABASE_URL, which is the PRODUCTION database, so override=True silently
+# replaced an explicitly exported DATABASE_URL with production. A
+# `DATABASE_URL=<dummy> pytest` run therefore reached production twice on
+# 2026-10-06. Nothing depended on .env beating the environment: .env is not
+# deployed (.dockerignore), and no other key was in it.
+load_dotenv(override=False)
 
 class Settings(BaseSettings):
     database_url: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///osint_platform.db")
