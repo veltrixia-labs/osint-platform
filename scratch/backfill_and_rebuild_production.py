@@ -12,7 +12,7 @@ Production backfill + Pro V2 rebuild (uses DATABASE_URL from environment).
 
   # Hit remote API instead of local DB job code
   py scratch/backfill_and_rebuild_production.py --remote \\
-    --api-base https://osint-platform.onrender.com \\
+    --api-base https://osint-platform-xs7p.onrender.com \\
     --secret YOUR_PRO_BRIEF_REGEN_SECRET
 """
 
@@ -73,7 +73,11 @@ async def main() -> None:
         help="Destructive, opt-in: delete existing pro_structural briefs before regenerating",
     )
     parser.add_argument("--remote", action="store_true", help="POST to production API")
-    parser.add_argument("--api-base", default="https://osint-platform.onrender.com")
+    # No default, on purpose. The old default was the retired no-server host, which made an
+    # accidental --remote run a harmless 404. Defaulting to the live host would let a run with
+    # --purge (which deletes pro_structural briefs) act on production with no host named at all.
+    # Required whenever --remote is given, so a remote run can never happen by accident.
+    parser.add_argument("--api-base", default=None, help="API origin for --remote (required with --remote)")
     parser.add_argument(
         "--secret",
         default=os.environ.get("PRO_BRIEF_REGEN_SECRET", "").strip(),
@@ -82,6 +86,8 @@ async def main() -> None:
     args = parser.parse_args()
 
     if args.remote:
+        if not args.api_base:
+            raise SystemExit("--api-base is required with --remote (no default; see the comment above).")
         if not args.secret:
             raise SystemExit("Set --secret or PRO_BRIEF_REGEN_SECRET for remote calls.")
         result = run_remote(

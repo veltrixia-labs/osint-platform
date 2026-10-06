@@ -182,7 +182,7 @@ async def backfill_and_rebuild(
     One-shot production pipeline: backfill external data → purge → Pro V2 regeneration.
 
     Example:
-      curl -X POST "https://osint-platform.onrender.com/api/dev/backfill-and-rebuild?purge=true" \\
+      curl -X POST "https://osint-platform-xs7p.onrender.com/api/dev/backfill-and-rebuild?purge=true" \\
         -H "X-Pro-Regen-Secret: $PRO_BRIEF_REGEN_SECRET"
     """
     _require_ops_auth(x_pro_regen_secret)

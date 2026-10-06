@@ -100,6 +100,11 @@ All three services build from the same repository, `veltrixia-labs/osint-platfor
 
 ## Open items
 
-- ★ **`web_dashboard/env.production.example` still recommends the retired host** `https://osint-platform.onrender.com` (no-server), for both the `veltrixia-api-base` meta tag and `VITE_API_BASE_URL`. The live API is `osint-platform-xs7p.onrender.com` (`web_dashboard/src/modules/api.ts:15`). Recorded on 2026-10-06 and deliberately not fixed in the commit that emptied `render.yaml`, for two reasons:
-  - the file is under `web_dashboard/`, so changing it rebuilds the web for a documentation change;
-  - it needs its own check of whether anything else still points at that host.
+- ~~`web_dashboard/env.production.example` still recommends the retired host~~ **Closed 2026-10-06.** The retired no-server host `https://osint-platform.onrender.com` was named in five tracked places, all corrected in one commit:
+  - `web_dashboard/env.production.example` (the example meta tag and `VITE_API_BASE_URL`);
+  - `api/routes/dev_tools.py` (a curl example in a docstring, **published in the live `/openapi.json`** description of `POST /api/dev/backfill-and-rebuild`);
+  - `docs/production_deployment_runbook.md` (which named it as the host that *must* run the API);
+  - `scratch/backfill_and_rebuild_production.py` (the `--api-base` **default**, now removed: `--api-base` is required with `--remote`);
+  - this note.
+  
+  **Nothing shipped to users ever pointed at it.** `api.ts` `DEFAULT_REMOTE_API_ORIGIN` and the `veltrixia-api-base` meta tags in `app.html`, `index.html` and `login.html` all name `osint-platform-xs7p.onrender.com`. The vault names neither host.
