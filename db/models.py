@@ -861,6 +861,24 @@ class MonthlyTrendReport(Base):
     alerts_spiked = Column(Integer, default=0)
 
 
+# ── Impact Roster: ORPHANED TABLES, RETAINED AS HISTORY (cut 2026-10-06) ──────
+# The feature was removed: its route (api/routes/impact_roster.py), loader
+# (jobs/load_impact_roster.py) and view (render/impact_roster.ts) are deleted.
+# Nothing writes these two tables and nothing reads them. They hold the only
+# record of every roster load ever run (ids, input shas), so they are KEPT.
+# Dropping them is a separate decision that has not been taken.
+#
+# The classes stay ON PURPOSE. alembic/env.py uses Base.metadata with no
+# include_object filter, so deleting them would make the next
+# `alembic revision --autogenerate` emit DROP TABLE for both. Do not delete them
+# unless you also intend the drop.
+#
+# Why it was cut: it ranked firms by impact × pd, a product of two quantities
+# computed at request time that exists in neither vault artifact. `impact` meant
+# a different quantity in each scenario but sat in one column. /entities ranked
+# one firm across hubs, although vault values are within-hub relative only. And
+# toFixed(4) rendered half of china_re's computed PDs as "0.0000".
+# Fixing that would be a rebuild, which is out of scope for the release.
 class ImpactRosterRow(Base):
     """
     One (scenario, entity) impact row from the vault's cascade output, joined to

@@ -37,13 +37,12 @@ const NAV_ITEMS: NavItem[] = [
     { id: 'market-pulse', label: 'Market Pulse',         icon: 'trending_up', minTier: 'pro', group: 'premium' },
     { id: 'pro-insights', label: 'Pro Insight',          icon: '💎', minTier: 'pro',     group: 'premium' },
     { id: 'pro-map',      label: 'Pro Interactive Map', icon: 'travel_explore', minTier: 'pro', group: 'premium' },
-    { id: 'impact-roster', label: 'Impact Roster',       icon: '🎯', minTier: 'pro',     group: 'premium' },
     { id: 'expert-intel', label: 'Expert Intelligence',  icon: '🔬', minTier: 'experts', group: 'premium' },
     // Account
     { id: 'plans',        label: 'Subscription Plans',   icon: '⭐', minTier: 'free',    group: 'account' },
 ];
 
-const FREE_LOCKED_TABS = new Set(['market-pulse', 'pro-insights', 'pro-map', 'impact-roster']);
+const FREE_LOCKED_TABS = new Set(['market-pulse', 'pro-insights', 'pro-map']);
 
 const TIER_ORDER = ['free', 'pro', 'experts', 'enterprise'];
 
