@@ -36,6 +36,55 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 
+# ── Test database isolation (added 2026-10-06) ─────────────────────────────────
+# Tests must NEVER reach the database named in .env, which is production. This
+# block runs before anything imports config.settings:
+#   * DATABASE_URL is forced to TEST_DATABASE_URL if set, otherwise to an
+#     unroutable sentinel. An inherited DATABASE_URL is never trusted.
+#   * The run aborts if that URL equals .env's DATABASE_URL or names a Render
+#     host.
+#   * DB-dependent tests request the `db_client` fixture. Without
+#     TEST_DATABASE_URL they are SKIPPED with a stated reason (pytest.ini sets
+#     -rs, so the reason is printed). They are never run against production.
+_UNCONFIGURED_DB = "postgresql://test-db-not-configured@127.0.0.1:1/none"
+_TEST_DB = os.environ.get("TEST_DATABASE_URL", "").strip()
+
+
+def _refuse_production(url: str) -> None:
+    """Raise if `url` is, or looks like, the production database."""
+    from urllib.parse import urlparse
+    from dotenv import dotenv_values
+
+    env_file_url = (dotenv_values(_PROJECT_ROOT / ".env").get("DATABASE_URL") or "").strip()
+    host = (urlparse(url).hostname or "").lower()
+    if env_file_url and url.strip() == env_file_url:
+        raise RuntimeError("test DATABASE_URL equals .env's DATABASE_URL (production); refusing to run")
+    if host.endswith("render.com"):
+        raise RuntimeError(f"test DATABASE_URL points at a Render host ({host}); refusing to run")
+
+
+os.environ["DATABASE_URL"] = _TEST_DB or _UNCONFIGURED_DB
+_refuse_production(os.environ["DATABASE_URL"])
+
+# Prove the setting took. If anything re-loads .env with override=True, settings
+# would silently diverge from the URL set above; stop rather than run.
+from config.settings import settings as _settings  # noqa: E402
+
+if _settings.database_url != os.environ["DATABASE_URL"]:
+    raise RuntimeError(
+        "config.settings.database_url differs from the test DATABASE_URL; "
+        "something is overriding the environment from .env. Refusing to run."
+    )
+
+
+def pytest_report_header(config):
+    if _TEST_DB:
+        from urllib.parse import urlparse
+        return f"test database: TEST_DATABASE_URL (host={urlparse(_TEST_DB).hostname})"
+    return ("test database: NOT CONFIGURED. DB-dependent tests will be SKIPPED "
+            "(set TEST_DATABASE_URL to a non-production database to run them)")
+
+
 # Ensure the dev tier override fires for tests that hit gated routes.
 os.environ.setdefault("ENV", "development")
 os.environ.setdefault("ALLOW_DEV_TIER_OVERRIDE", "true")
@@ -102,3 +151,16 @@ async def client(_test_engine) -> AsyncIterator["object"]:
         base_url="http://test",
     ) as ac:
         yield ac
+
+
+@pytest_asyncio.fixture(scope="session")
+async def db_client(client) -> AsyncIterator["object"]:
+    """`client` for tests that need a real database. Skipped, loudly, without one."""
+    import pytest
+
+    if not _TEST_DB:
+        pytest.skip(
+            "needs a database: TEST_DATABASE_URL is not set. Skipped rather than "
+            "run against .env's DATABASE_URL, which is production."
+        )
+    yield client

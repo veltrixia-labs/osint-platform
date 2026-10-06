@@ -18,8 +18,8 @@ import pytest
 pytestmark = pytest.mark.asyncio
 
 
-async def test_global_spatial_contagion_returns_well_formed_json(client):
-    resp = await client.get("/api/pro/domains/global/spatial-contagion")
+async def test_global_spatial_contagion_returns_well_formed_json(db_client):
+    resp = await db_client.get("/api/pro/domains/global/spatial-contagion")
     assert resp.status_code == 200, resp.text
 
     body = resp.json()
@@ -32,10 +32,10 @@ async def test_global_spatial_contagion_returns_well_formed_json(client):
     assert body["schema_version"].startswith("spatial_engine")
 
 
-async def test_global_spatial_contagion_node_shape_when_populated(client):
+async def test_global_spatial_contagion_node_shape_when_populated(db_client):
     """When the seed has run, every node carries the fields the frontend
     reads to drive the criticality filter + critical-label TextLayer."""
-    resp = await client.get("/api/pro/domains/global/spatial-contagion")
+    resp = await db_client.get("/api/pro/domains/global/spatial-contagion")
     assert resp.status_code == 200
     body = resp.json()
     for node in body["nodes"]:
@@ -48,8 +48,8 @@ async def test_global_spatial_contagion_node_shape_when_populated(client):
         assert edge["target_order"] in {1, 2, 3}
 
 
-async def test_fragility_history_envelope(client):
-    resp = await client.get("/api/pro/domains/energy/fragility-history?days=1")
+async def test_fragility_history_envelope(db_client):
+    resp = await db_client.get("/api/pro/domains/energy/fragility-history?days=1")
     assert resp.status_code == 200, resp.text
     body = resp.json()
     assert body["domain_id"] == "energy"
@@ -69,10 +69,10 @@ async def test_fragility_history_rejects_bad_days(client):
     assert resp.status_code in (400, 422)
 
 
-async def test_consecutive_polling_does_not_leak_loop(client):
+async def test_consecutive_polling_does_not_leak_loop(db_client):
     """The original bug: 'Event loop is closed' on the 2nd or 3rd call.
     Hit the endpoint several times in a tight loop. If the session-scoped
     loop fixture works, all of these succeed; if not, this test fails."""
     for _ in range(6):
-        resp = await client.get("/api/pro/domains/global/spatial-contagion")
+        resp = await db_client.get("/api/pro/domains/global/spatial-contagion")
         assert resp.status_code == 200
