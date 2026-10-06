@@ -21,6 +21,7 @@ from db.models import (
     AnalysisCache, TrendSignal
 )
 from config.settings import settings
+from db.enums import ReportType
 
 # --- Setup Logging ---
 logging.basicConfig(
@@ -354,7 +355,18 @@ async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None):
     
     try:
         # 1. Report Cleanup (excludes pro_structural — see run_pro_structural_retention_cleanup)
-        PERSISTENT_TYPES = ["weekly_global", "monthly_global", "pro_structural"]
+        # ★ Fixed 2026-10-06. This list read ["weekly_global", "monthly_global", "pro_structural"].
+        #   4a2367d (2026-03-26) renamed the report types the generator WRITES to "weekly" /
+        #   "monthly" (db/enums.py ReportType; report_generator.py report_type=current_type) and did
+        #   not update this reader. 38d1356 (2026-03-31, "restore missing cleanup functions") then
+        #   put the old names back. From then on no report matched, so the weekly (Pro) and monthly
+        #   (Experts) reports were deleted at report_retention_days (30), with CASCADE to
+        #   article_outputs / pdf_jobs / external_posts. Production on 2026-10-06 held weekly only
+        #   from 2026-09-07 and monthly only from 2026-10-01.
+        #   The names now come from the enum the writer uses, so a future rename moves both together.
+        #   "pro_structural" is written as a literal (pro_report_generator.py) and has its own
+        #   90-day retention job.
+        PERSISTENT_TYPES = [ReportType.WEEKLY.value, ReportType.MONTHLY.value, "pro_structural"]
         report_stmt = delete(Report).where(
             Report.created_at < threshold,
             Report.report_type.notin_(PERSISTENT_TYPES),
