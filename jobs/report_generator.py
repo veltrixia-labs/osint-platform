@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from db.database import AsyncSessionLocal
 from db.models import SignalRanking, Item, Report, EventCluster, TrendSignal, ExternalPost, ItemTopic, Stakeholder, Dependency
-from db.enums import PlanTier, ReportType
+from db.enums import PlanTier, ReportType, RETIRED_REPORT_TYPES
 from llm.prompts import SYSTEM_PROMPT, NEUTRAL_ANALYSIS_PROMPT, LLM_POLISH_PROMPT
 from llm.client import generate_analysis, get_metrics_summary
 
@@ -29,42 +29,8 @@ from analysis.free_company_matcher import match_news_to_companies
 # Tiered Analysis Prompts
 # ──────────────────────────────────────────────────────────────────────────────
 
-WEEKLY_ANALYSIS_PROMPT = """
-Analyze the following OSINT findings for a WEEKLY summary.
-Focus on identifying major themes and shifts over the past 7 days.
-Provide a lightweight analysis that connects major developments without deep forecasting.
-Maintain a professional, intelligence-grade tone.
-"""
-
-MONTHLY_EXPERTS_PROMPT = """
-You are a Senior Intelligence Analyst performing a MONTHLY decision-support analysis.
-Analyze the trends and developments provided to generate a comprehensive strategic report.
-
-REQUIRED STRUCTURE:
-# Monthly Intelligence Report
-
-## 1. Macro Overview
-(Summary of the overall landscape and major trends)
-
-## 2. Key Structural Shifts
-(Deep dive into major changes in the status quo)
-
-## 3. Scenario Analysis
-- **Best Case**: [Optimistic projection]
-- **Base Case**: [Most likely projection]
-- **Worst Case**: [Pessimistic projection]
-
-## 4. Risk Forecast
-(Quantitative and qualitative risk assessment)
-
-## 5. Cross-Domain Impact
-(How developments in this field affect other sectors like geopolitics, economy, or technology)
-
-## 6. Forward Outlook (30–60 days)
-(Concrete expectations for the next 2 months)
-
-TONE: Objective, analytical, and forward-looking.
-"""
+# WEEKLY_ANALYSIS_PROMPT / MONTHLY_EXPERTS_PROMPT removed 2026-10-06 with the retired weekly/monthly
+# report types (db/enums.py RETIRED_REPORT_TYPES).
 
 # Deliberately does NOT import analysis.visual_engine: this module is eagerly imported by
 # the scheduler, and that import loaded matplotlib + pyplot into a 512MB worker for two
@@ -321,8 +287,8 @@ async def _should_generate_report_for_system(db: AsyncSession, report_type: str)
 
 async def run_report_generation(
     db: AsyncSession,
-    report_type: str = "weekly",
-    period_days: int = 7,
+    report_type: str,
+    period_days: int = 1,
     topic: str | None = None,
     auto_post_threads: bool = False
 ) -> Tuple[str, str, str]: # returns (teaser_md, status, reason)
@@ -332,7 +298,13 @@ async def run_report_generation(
     """
     logger.info(f"Generating report: {report_type} | topic={topic}")
     
-    current_type = (report_type or "weekly").lower()
+    current_type = report_type.lower()
+    # ★ Refuse retired types BEFORE any work. Without this, a call that still passes "weekly" or
+    #   "monthly" (an old process, __main__, a script) would fall through to the generic else-branch
+    #   below and write a report row of the retired type.
+    if current_type in RETIRED_REPORT_TYPES or current_type in ("weekly_global", "monthly_global"):
+        logger.info(f"Report type {current_type!r} is retired (2026-10-06). Skipping generation.")
+        return "", "skipped", f"Report type {current_type} retired; Pro Insight supersedes it."
     if current_type == ReportType.DAILY.value or current_type == "daily_global":
         logger.info("Free daily reports are deprecated. Skipping generation.")
         return "", "skipped", "Free daily reports deprecated. Use Free Alert Feed."
@@ -454,8 +426,8 @@ async def run_report_generation(
     final_content = ""
     skeleton_content = ""
 
-    # Generate Forecasts & Scenarios for Weekly/Monthly/Event-Driven
-    if current_type in [ReportType.WEEKLY.value, ReportType.MONTHLY.value] or current_type.startswith("event_driven"):
+    # Generate Forecasts & Scenarios for Event-Driven reports (weekly/monthly arms removed 2026-10-06)
+    if current_type.startswith("event_driven"):
         forecasts = generate_forecasts(
             [effective_topic] if effective_topic else ["global"],
             " ".join(themes),
@@ -476,19 +448,7 @@ async def run_report_generation(
             domain=effective_topic,
         )
 
-    if current_type == ReportType.WEEKLY.value:
-        plan_required = PlanTier.PRO.value
-        analysis_input = f"SKELETON DATA:\n{skeleton_content}\n\nCONTEXT:\n{cluster_context_str}"
-        polished = await generate_analysis(WEEKLY_ANALYSIS_PROMPT, analysis_input)
-        final_content = polished if polished and polished != "__DEGRADED_MODE__" else skeleton_content
-
-    elif current_type == ReportType.MONTHLY.value:
-        plan_required = PlanTier.EXPERTS.value
-        analysis_input = f"MONTHLY DATA:\n{skeleton_content}\n\nBROADER CONTEXT:\n{trend_context_str}"
-        expert_analysis = await generate_analysis(MONTHLY_EXPERTS_PROMPT, analysis_input)
-        final_content = expert_analysis if expert_analysis and expert_analysis != "__DEGRADED_MODE__" else skeleton_content
-
-    elif current_type.startswith("event_driven"):
+    if current_type.startswith("event_driven"):
         plan_required = PlanTier.PRO.value
         final_content = skeleton_content
         logger.info(f"Event-driven report generated for type: {current_type}")
@@ -554,7 +514,7 @@ if __name__ == "__main__":
     from jobs.report_utils import purge_report_history
 
     parser = argparse.ArgumentParser(description="OSINT Report Generation Job")
-    parser.add_argument("--type", type=str, default="weekly", choices=["daily", "weekly", "monthly", "specialized"], help="Report type to generate")
+    parser.add_argument("--type", type=str, required=True, choices=["daily", "specialized"], help="Report type to generate (weekly/monthly retired 2026-10-06)")
     parser.add_argument("--purge", action="store_true", help="Perform Hard Cleanup (purge all history) before starting")
     parser.add_argument("--threads", action="store_true", help="Enable Threads auto-posting")
 

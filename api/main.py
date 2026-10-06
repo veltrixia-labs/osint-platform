@@ -477,7 +477,7 @@ async def get_me(current_user_data: tuple = Depends(get_current_user_from_access
     from api.gating import ALL_TOPIC_CODES
     allowed_topics = [t for t in ALL_TOPIC_CODES if is_topic_allowed(tier, t)]
     
-    all_reports = ["daily", "weekly", "monthly", "system_diagnostic"]
+    all_reports = ["daily", "system_diagnostic"]  # weekly/monthly retired 2026-10-06
     allowed_reports = [r for r in all_reports if can_access_report_type(tier, r)]
 
     return {
