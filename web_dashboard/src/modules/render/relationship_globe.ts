@@ -583,6 +583,10 @@ export function mountGlobe(
                 widthMinPixels: 1,
                 widthMaxPixels: 6,
                 greatCircle: true,
+                // ★ At fitEgo's pitch 65 this lift makes long arcs (e.g. ASML->Canon) leave the TOP
+                //   of the frame and re-enter from the upper corner. That reads like a dateline
+                //   break and is not one; see docs/globe_antimeridian_2026-10-06/README.md. Open
+                //   there too: zero-length arcs (shared coordinates) evaluate atan(0,0) here.
                 getHeight: 0.45,
                 numSegments: 64,
                 opacity: arcOpacity,
