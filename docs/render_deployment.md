@@ -43,7 +43,14 @@ All three services build from the same repository, `veltrixia-labs/osint-platfor
     - a merge changes `jobs/`, `analysis/`, `config/`, `data_sources/` or non-comment `db/` code
     - a migration lands that the old code would conflict with
     - a Secret File named `.env` is added to the scheduler (none exists as of 2026-10-06)
-  - When deploying it by hand, make sure only one instance runs. `render.yaml:35-36` records a past incident in which two schedulers contended for a database lock.
+  - When deploying it by hand, make sure only one instance runs. **Past incident (fixed by 2026-06-05):**
+    - The osint-platform web service's start command ran `uvicorn run_api:app` and **also launched a second scheduler in the background**, alongside the dedicated osint-scheduler Background Worker.
+    - The two schedulers contended for a database lock, and the API returned 404s.
+    - The fix: the web service runs only the FastAPI app, which is today's start command, `uvicorn api.main:app` (table above). It launches no scheduler. Never add a scheduler back to the web service's start command.
+    - **Where this is recorded:**
+      - `2783549`'s message (2026-06-05) states both the cause and the symptoms. That commit deleted the `run_api.py` wrapper. The wrapper only re-exported `api.main.app`, so the background scheduler came from the start command itself, not from the wrapper.
+      - `c6bdefb` (the same day) changed `render.yaml` only. Render does not read that file (see below), so the start command that took effect was changed in the dashboard. When that happened is not recorded.
+      - Until 2026-10-06 this line cited the incident only as "`render.yaml:35-36`". That line number had gone stale (the comment had moved to `:42-44`), and the comment was removed when `render.yaml` was emptied. The incident is now stated here so that it depends on no other file.
 - ★ **API and web deploy independently, and their order is not controlled.** Measured 2026-10-06:
   - Merge `4d39420`: the web asset switched at 16:19:42 JST, and the API reached its new route count at 16:20:45. For about a minute the **new frontend ran against the old API**.
   - Merge `fd7aaf3` had the same shape: web 16:24:21, API 16:25:23.
@@ -65,21 +72,34 @@ All three services build from the same repository, `veltrixia-labs/osint-platfor
   - Production's schema is not fully reproducible from migrations: three live tables (`system_metrics`, `stripe_events`, `analytics_events`) exist outside every migration. A migration that touches them must be written knowing they already exist (vault audit §12.53).
 - **osint-web runs `npm install`, not `npm ci`.** On 2026-10-06 the merged tree was build-checked with `npm ci && npm run build`, taken from `render.yaml`. That check was **stricter than what Render actually runs, by accident, not by design**. It passed, and `npm ci` passing implies `npm install` passes, so the conclusion holds. But `npm install` can resolve versions the lockfile does not pin, and may rewrite the lockfile during the build. A local `npm ci` therefore does not reproduce Render's install exactly.
 
-## `render.yaml` is not read by Render for these services
+## `render.yaml` is not read by Render, and was emptied on 2026-10-06
 
-As far as can be determined, **`render.yaml` is decorative: Render does not apply it to the existing services, and its contents are wrong.**
-- **It does not take effect:** `f275cb2` added `DEV_MODE` to it and was deployed, but the variable never reached the service. It had to be set by hand in the dashboard (measured 2026-08-21; recorded in the file's own header).
-- **It contradicts the dashboard** on every point where they can be compared, except the API start command:
+**`render.yaml` is decorative: Render does not read it, and the service definitions it held were wrong.** On 2026-10-06 every service definition and env var was removed from it. It now holds only a header saying what it is and why it is known to be decorative. The last full version is `git show 0484232:render.yaml`. The table below compares that version with the dashboard. Line numbers refer to `0484232:render.yaml`, because the current file has no such lines.
+- ★ **Blueprints is empty: confirmed by the operator from the Render dashboard on 2026-10-06.** No Blueprint is linked to this repository, so Render never reads the file. This was an open question here until 2026-10-06. It is now a dashboard reading, not an inference.
+- **It never took effect:** `f275cb2` added `DEV_MODE` to it and was deployed, but the variable never reached the service. It had to be set by hand in the dashboard (measured 2026-08-21; also recorded in the emptied file's header).
+- **It was never connected.** The file was created on 2026-05-21 (`00bb58c`), but the app was already on Render by 2026-03-20 (`30eaf1c`). Blueprint env vars apply only when a service is created from the file, and these services already existed.
+- **Nothing in the repository parses it** (measured 2026-10-06): no CI, no `docker-compose.yml` or `Dockerfile` reference, no script, no test.
+- **It contradicted the dashboard** on every point where they can be compared, except the API start command:
 
-| field | `render.yaml` | dashboard (2026-10-06) |
+| field | `0484232:render.yaml` | dashboard (2026-10-06) |
 |---|---|---|
-| `osint-platform` build | `… && alembic upgrade head` (`:33`) | no `alembic upgrade head` |
-| `osint-web` build | `cd web_dashboard && npm ci && npm run build` (`:64`) | `npm install && npm run build`, with root dir `web_dashboard` |
+| `osint-platform` build | `… && alembic upgrade head` (`:41`) | no `alembic upgrade head` |
+| `osint-web` build | `cd web_dashboard && npm ci && npm run build` (`:72`) | `npm install && npm run build`, with root dir `web_dashboard` |
 | `osint-web` root dir | not set (uses `cd`) | `web_dashboard` |
 | `osint-scheduler` | absent | exists, Auto-Deploy OFF |
 | branch / Auto-Deploy | not declared for any service | `main`, On Commit (scheduler OFF) |
 | envVars | declared | not applied (see `DEV_MODE`) |
-| `osint-platform` start | `:37` | identical |
+| `osint-platform` start | `:45` | identical (recorded in the Services table above) |
 
-- **Not determinable from the repository:** whether a Render Blueprint is linked to this file at all, for example for recreating services. Check the dashboard's Blueprints page. If one is linked, recreating a service from it would apply the wrong values above.
-- **Do not edit `render.yaml` to change production.** Change the dashboard, then update this file with the new date.
+- ★ **Why it was emptied, not left in place: its citations had already rotted.** Measured 2026-10-06, every line citation into the file was stale:
+  - this table cited `:33`, `:64` and `:37` (actually `:41`, `:72` and `:45`);
+  - the incident note above cited `:35-36` (actually `:42-44`);
+  - the file's own header cited `:33`, `:37` and `:64` for itself.
+  The pointers had decayed while the false service definitions beside them stayed in place.
+- **Do not rebuild it as a Blueprint.** That would create a second authority on the configuration next to the dashboard, and nothing would read it. To change production, change the dashboard, then update this file with the new date.
+
+## Open items
+
+- ★ **`web_dashboard/env.production.example` still recommends the retired host** `https://osint-platform.onrender.com` (no-server), for both the `veltrixia-api-base` meta tag and `VITE_API_BASE_URL`. The live API is `osint-platform-xs7p.onrender.com` (`web_dashboard/src/modules/api.ts:15`). Recorded on 2026-10-06 and deliberately not fixed in the commit that emptied `render.yaml`, for two reasons:
+  - the file is under `web_dashboard/`, so changing it rebuilds the web for a documentation change;
+  - it needs its own check of whether anything else still points at that host.
