@@ -18,7 +18,7 @@ from db.database import AsyncSessionLocal, get_db_size_mb
 from db.models import (
     AlertLog, AlertDelivery, Report, RawItem, Item, ItemTopic, 
     AnalyticsEvent, SecurityLog, SystemMetric, EventCluster, 
-    AnalysisCache, TrendSignal
+    AnalysisCache, TrendSignal, SignalRanking
 )
 from config.settings import settings
 from db.enums import ReportType
@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 # --- Constants ---
 DEFAULT_RETENTION_DAYS = 14
+# Rows per committed batch in run_retention_cleanup's raw-data phase (see the comment there).
+RETENTION_BATCH_SIZE = 5000
 SAFETY_WINDOW_DAYS = 7
 MAX_DELETE_PER_RUN = 50
 
@@ -343,8 +345,13 @@ async def run_trend_cleanup(db: AsyncSession):
         logger.error(f"Trend signals cleanup failed: {e}")
         await send_webhook_notification(f"Trend signals cleanup failed: {e}", level="error")
 
-async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None):
-    """High-level data retention cleanup (Reports, Analytics, Raw Data)."""
+async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None) -> dict:
+    """High-level data retention cleanup (Reports, Analytics, Raw Data).
+
+    Returns {target: rows}. In dry-run mode the rows are COUNTED with the same WHERE clauses the
+    real run deletes with, including the rows the FK cascades would remove, and nothing is
+    written. (Until 2026-10-06 a dry run only logged "started/completed" and counted nothing.)
+    """
     if dry_run is None: dry_run = settings.retention_dry_run
     mode = "[DRY RUN] " if dry_run else ""
     
@@ -352,7 +359,16 @@ async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None):
     start_time = time.time()
     now = datetime.now(timezone.utc)
     threshold = now - timedelta(days=settings.report_retention_days)
-    
+    # ★ RAW_RETENTION_DAYS was defined (config/settings.py) and read by nothing until 2026-10-06;
+    #   raw data used report_retention_days. It now governs the raw tables. Default 30, so the
+    #   cutoff is unchanged. Clusters keep their original one-day lag (31 at the default).
+    raw_threshold = now - timedelta(days=settings.raw_retention_days)
+    cluster_threshold = now - timedelta(days=settings.raw_retention_days + 1)
+    counts: dict = {}
+
+    async def _count(stmt_sel) -> int:
+        return int((await db.execute(stmt_sel)).scalar() or 0)
+
     try:
         # 1. Report Cleanup (excludes pro_structural — see run_pro_structural_retention_cleanup)
         # ★ Fixed 2026-10-06. This list read ["weekly_global", "monthly_global", "pro_structural"].
@@ -372,8 +388,14 @@ async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None):
             Report.report_type.notin_(PERSISTENT_TYPES),
             ~Report.title.ilike("Structural Impact Brief%"),
         )
-        if not dry_run:
+        if dry_run:
+            counts["reports"] = await _count(select(func.count(Report.id)).where(
+                Report.created_at < threshold,
+                Report.report_type.notin_(PERSISTENT_TYPES),
+                ~Report.title.ilike("Structural Impact Brief%")))
+        else:
             report_res = await db.execute(report_stmt)
+            counts["reports"] = report_res.rowcount
             logger.info(f"Purged {report_res.rowcount} reports")
 
         # 2. Logs/Analytics
@@ -383,38 +405,134 @@ async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None):
             await db.execute(analytics_stmt)
             await db.execute(security_stmt)
 
-        # 3. Raw Data (Dependency Aware)
-        if await _is_monthly_summary_ready(db):
-            cluster_threshold = now - timedelta(days=31)
-            cluster_sub = select(EventCluster.id).where(EventCluster.created_at < cluster_threshold)
-            
-            null_stmt = update(Item).where(Item.cluster_id.in_(cluster_sub)).values(cluster_id=None)
-            cache_stmt = delete(AnalysisCache).where(AnalysisCache.created_at < threshold)
-            it_stmt = delete(ItemTopic).where(ItemTopic.created_at < threshold)
-            item_stmt = delete(Item).where(Item.created_at < threshold)
-            raw_stmt = delete(RawItem).where(RawItem.created_at < threshold)
-            
-            if not dry_run:
-                await db.execute(null_stmt)
-                await db.execute(cache_stmt)
-                await db.execute(it_stmt)
-                await db.execute(item_stmt)
-                await db.execute(raw_stmt)
-                
-                cluster_del_stmt = delete(EventCluster).where(EventCluster.id.in_(cluster_sub))
-                await db.execute(cluster_del_stmt)
+        # 3. Raw Data
+        # ★ The gate that stood here was removed 2026-10-06: `if await _is_monthly_summary_ready(db):`,
+        #   which required a report with report_type == "monthly_global" in the last 30 days. The
+        #   generator has written "monthly" since 4a2367d (2026-03-26), and 38d1356 restored the old
+        #   name here, so the gate never opened. items / raw_items / event_clusters /
+        #   analysis_cache / item_topics were NEVER pruned (production 2026-10-06: items back to
+        #   2026-03-23). It was removed rather than corrected, because it protects nothing the cutoff
+        #   below does not: the monthly report reads signal_rankings (24h), event_clusters (1h/24h),
+        #   trend_signals (24h) and items only by ranked id or a published_at >= 30-day fallback, and
+        #   never reads raw_items, analysis_cache or item_topics. A corrected string would leave a
+        #   dependency that silently stops ALL raw deletion whenever one monthly generation fails.
+        cluster_sub = select(EventCluster.id).where(EventCluster.created_at < cluster_threshold)
+        old_item_ids = select(Item.id).where(Item.created_at < raw_threshold)
 
-        if not dry_run:
-            await db.commit()
-            await update_system_metric(db, "last_retention_cleanup_at", datetime.now(timezone.utc).isoformat())
-            
-        elapsed = time.time() - start_time
-        logger.info(f"{mode}Retention cleanup completed (Time: {elapsed:.2f}s)")
-        
+        if dry_run:
+            # Counted exactly as the batched run below deletes: the dependants of old items PLUS
+            # dependants old in their own right.
+            counts["analysis_cache"] = await _count(select(func.count()).select_from(AnalysisCache).where(
+                (AnalysisCache.created_at < raw_threshold) | AnalysisCache.item_id.in_(old_item_ids)))
+            counts["item_topics"] = await _count(select(func.count()).select_from(ItemTopic).where(
+                (ItemTopic.created_at < raw_threshold) | ItemTopic.item_id.in_(old_item_ids)))
+            counts["signal_rankings_cascade"] = await _count(select(func.count()).select_from(SignalRanking).where(
+                SignalRanking.item_id.in_(old_item_ids)))
+            counts["items"] = await _count(select(func.count()).select_from(Item).where(Item.created_at < raw_threshold))
+            counts["raw_items"] = await _count(select(func.count()).select_from(RawItem).where(RawItem.created_at < raw_threshold))
+            counts["items_cluster_nulled"] = await _count(select(func.count()).select_from(Item).where(
+                Item.created_at >= raw_threshold, Item.cluster_id.in_(cluster_sub)))
+            counts["event_clusters"] = await _count(select(func.count()).select_from(EventCluster).where(
+                EventCluster.created_at < cluster_threshold))
+            elapsed = time.time() - start_time
+            logger.info(f"{mode}Retention cleanup completed (Time: {elapsed:.2f}s) would delete: {counts}")
+            return counts
+
+        # Reports / analytics / security logs are small. Commit them first, as one unit.
+        await db.commit()
     except Exception as e:
         await db.rollback()
-        logger.error(f"Retention cleanup failed: {e}")
+        logger.error(f"Retention cleanup failed before raw-data phase: {e}")
         raise
+
+    # ── Raw data: BATCHED (2026-10-06) ─────────────────────────────────────────────────────
+    # The first run after the gate's removal deletes ~217k rows (~138MB of row data). In ONE
+    # transaction that writes a WAL spike we cannot bound, because the WAL area is not readable with
+    # the production role, against a disk at ~539MB of 1GB. Filling it would stop all writes. So
+    # each batch of RETENTION_BATCH_SIZE rows commits on its own.
+    #
+    # ORDER: children before parents, explicitly, so no batch depends on ON DELETE CASCADE / SET
+    # NULL to sort it out. The run spans minutes and new rows arrive while it runs.
+    #   1. items, per batch of ids: first their dependants analysis_cache, item_topics,
+    #      signal_rankings (all FK -> items), then the items themselves.
+    #   2. analysis_cache / item_topics rows old in their own right (their item is newer).
+    #   3. raw_items (no FKs either way).
+    #   4. event_clusters, per batch of ids: first null items.cluster_id on surviving items that
+    #      point at them (FK items.cluster_id -> event_clusters), then the clusters.
+    #
+    # TERMINATION. Each phase stops when a batch selects 0 rows. The cutoffs were computed once at
+    #   the top, so rows that age past them during the run are not chased, and the matching set
+    #   only shrinks. As a hard stop, each phase may run at most ceil(initial_count / batch) + 2
+    #   batches. Hitting that cap with rows left marks the run INCOMPLETE, never successful.
+    # FAILURE. Committed batches stay deleted. The failing batch is rolled back, the progress so far
+    #   is logged and written to system_metrics.retention_last_result with status "failed", and
+    #   the exception is re-raised. last_retention_cleanup_at is only stamped on full success.
+    BATCH = RETENTION_BATCH_SIZE
+    progress = {k: 0 for k in ("items", "analysis_cache", "item_topics", "signal_rankings",
+                               "raw_items", "items_cluster_nulled", "event_clusters")}
+    status, incomplete = "running", []
+
+    async def _phase(name, select_ids, delete_batch):
+        initial = await _count(select(func.count()).select_from(select_ids.subquery()))
+        cap = -(-initial // BATCH) + 2
+        for _ in range(cap):
+            ids = [r[0] for r in (await db.execute(select_ids.limit(BATCH))).all()]
+            if not ids:
+                return
+            await delete_batch(ids)
+            await db.commit()
+        if (await db.execute(select_ids.limit(1))).first() is not None:
+            incomplete.append(name)
+
+    async def _items_batch(ids):
+        progress["analysis_cache"] += (await db.execute(delete(AnalysisCache).where(AnalysisCache.item_id.in_(ids)))).rowcount
+        progress["item_topics"] += (await db.execute(delete(ItemTopic).where(ItemTopic.item_id.in_(ids)))).rowcount
+        progress["signal_rankings"] += (await db.execute(delete(SignalRanking).where(SignalRanking.item_id.in_(ids)))).rowcount
+        progress["items"] += (await db.execute(delete(Item).where(Item.id.in_(ids)))).rowcount
+
+    async def _cache_batch(ids):
+        progress["analysis_cache"] += (await db.execute(delete(AnalysisCache).where(AnalysisCache.id.in_(ids)))).rowcount
+
+    async def _topics_batch(ids):
+        progress["item_topics"] += (await db.execute(delete(ItemTopic).where(ItemTopic.id.in_(ids)))).rowcount
+
+    async def _raw_batch(ids):
+        progress["raw_items"] += (await db.execute(delete(RawItem).where(RawItem.id.in_(ids)))).rowcount
+
+    async def _cluster_batch(ids):
+        progress["items_cluster_nulled"] += (await db.execute(
+            update(Item).where(Item.cluster_id.in_(ids)).values(cluster_id=None))).rowcount
+        progress["event_clusters"] += (await db.execute(delete(EventCluster).where(EventCluster.id.in_(ids)))).rowcount
+
+    try:
+        await _phase("items", select(Item.id).where(Item.created_at < raw_threshold), _items_batch)
+        await _phase("analysis_cache", select(AnalysisCache.id).where(AnalysisCache.created_at < raw_threshold), _cache_batch)
+        await _phase("item_topics", select(ItemTopic.id).where(ItemTopic.created_at < raw_threshold), _topics_batch)
+        await _phase("raw_items", select(RawItem.id).where(RawItem.created_at < raw_threshold), _raw_batch)
+        await _phase("event_clusters", select(EventCluster.id).where(EventCluster.created_at < cluster_threshold), _cluster_batch)
+        status = "incomplete" if incomplete else "success"
+    except Exception as e:
+        await db.rollback()
+        status = "failed"
+        counts.update(progress)
+        logger.error(f"Retention cleanup FAILED in raw-data phase after committing {progress}: {e}")
+        try:
+            await update_system_metric(db, "retention_last_result", json.dumps(
+                {"status": status, "at": datetime.now(timezone.utc).isoformat(), "deleted": progress, "error": str(e)[:300]}))
+        except Exception:
+            logger.error("Could not record retention_last_result after failure")
+        raise
+
+    counts.update(progress)
+    await update_system_metric(db, "retention_last_result", json.dumps(
+        {"status": status, "at": datetime.now(timezone.utc).isoformat(), "deleted": progress, "incomplete": incomplete}))
+    elapsed = time.time() - start_time
+    if status == "success":
+        await update_system_metric(db, "last_retention_cleanup_at", datetime.now(timezone.utc).isoformat())
+        logger.info(f"Retention cleanup completed (Time: {elapsed:.2f}s) deleted: {counts}")
+    else:
+        logger.error(f"Retention cleanup INCOMPLETE (Time: {elapsed:.2f}s): phases {incomplete} hit their batch cap; deleted so far: {counts}")
+    return counts
 
 async def run_db_size_check(db: AsyncSession):
     """Monitor database file size and log occupancy status."""
@@ -446,10 +564,19 @@ async def run_retention_audit(db: AsyncSession):
         if stale_alerts > 0:
             await send_webhook_notification(f"Audit Failure: Found {stale_alerts} stale alerts.", level="warning")
             
-        stmt_sum = select(func.count(Report.id)).where(Report.report_type == "monthly_global")
+        # ★ Fixed 2026-10-06. This counted report_type == "monthly_global", a type nothing has
+        #   written since 4a2367d (2026-03-26), so it logged "No monthly summaries found!" on every
+        #   run: an alarm that fired correctly and that nobody read. It now asks the question the
+        #   alarm exists for, namely whether this month's monthly report was generated. The generator
+        #   runs on the 1st, hence 32 days.
+        month_thresh = now - timedelta(days=32)
+        stmt_sum = select(func.count(Report.id)).where(
+            Report.report_type == ReportType.MONTHLY.value, Report.created_at >= month_thresh)
         summaries = (await db.execute(stmt_sum)).scalar() or 0
         if summaries == 0:
-            logger.error("Audit Failure: No monthly summaries found!")
+            logger.error("Audit Failure: no monthly report generated in the last 32 days")
+            await send_webhook_notification(
+                "Audit Failure: no monthly report generated in the last 32 days", level="error")
             
         logger.info("Retention audit completed.")
     except Exception as e:
@@ -483,12 +610,6 @@ async def audit_metadata_sizes(db: AsyncSession):
                     logger.warning(f"Record {a.id} approaching metadata limit: {size} chars")
     except Exception as e:
         logger.error(f"Metadata audit failed: {e}")
-
-async def _is_monthly_summary_ready(db: AsyncSession) -> bool:
-    threshold = datetime.now(timezone.utc) - timedelta(days=30)
-    stmt = select(Report).where(Report.report_type == "monthly_global", Report.created_at >= threshold)
-    result = await db.execute(stmt)
-    return result.scalars().first() is not None
 
 
 async def run_pro_structural_retention_wrapper():
