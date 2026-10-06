@@ -1,82 +1,27 @@
-# Render Blueprint — API + static dashboard
-# Dashboard static site (osint-web): build web_dashboard, publish dist/
-# API service (osint-platform): MUST use the start command below (not a static site).
+# render.yaml — NOT READ BY RENDER. This file configures nothing.
 #
-# THE envVars IN THIS FILE ARE NOT LIVE. The Render dashboard is authoritative for
-# environment. Render syncs a blueprint's envVars when a service is CREATED from it,
-# not on subsequent deploys of an existing service — so this file is a snapshot taken
-# at creation, not a control surface.
+# It defines no services on purpose. Do not rebuild it as a Blueprint: that would create a
+# second authority on the configuration next to the Render dashboard, and nothing would
+# read it either.
 #
-# Measured 2026-08-21: f275cb2 added DEV_MODE below and was deployed. The variable
-# never appeared in the dashboard and tier gating did not take effect. Adding
-# DEV_MODE=false by hand in the dashboard took effect immediately — confirmed against
-# the live endpoint: is_partial true on every row, description null, and a 4-item
-# evidence_list truncated to 3.
+# Where the real configuration lives:
+#   - the Render dashboard is authoritative for every service (build/start commands, root
+#     dir, branch, Auto-Deploy, environment);
+#   - docs/render_deployment.md is a dated reading of the dashboard. Read that, not this.
 #
-# Do not read the envVars below as production values, and never cite one as evidence
-# of what production is set to. They are kept because they record declared intent and
-# would apply if these services were ever recreated from this file.
+# Why this file is known to be decorative:
+#   - Blueprints is empty. The operator confirmed from the dashboard on 2026-10-06 that no
+#     Blueprint is linked to this repository, so Render never reads this file.
+#   - DEV_MODE proof (measured 2026-08-21): f275cb2 added `DEV_MODE: "false"` here and was
+#     deployed. The variable never appeared in the dashboard, and tier gating did not take
+#     effect. Setting DEV_MODE=false by hand in the dashboard took effect immediately,
+#     confirmed against the live endpoint: is_partial true on every row, description null,
+#     and a 4-item evidence_list truncated to 3.
+#   - The file post-dates the services. It was created on 2026-05-21 (00bb58c), but the app
+#     was already deployed on Render by 2026-03-20 (30eaf1c). The services were never created
+#     from it, so its envVars could never have applied.
+#   - Measured 2026-10-06, the service definitions it held contradicted the dashboard on every
+#     comparable field except the API start command, which docs/render_deployment.md records.
 #
-# The divergence is not limited to envVars. Read from the dashboard on 2026-08-21, the
-# Build Command for osint-platform is `pip install -r requirements.txt && pip install
-# -e . --no-deps` — it does NOT contain the `alembic upgrade head` that :33 declares.
-# Only the Start Command was verified identical to this file (:37), and ENV is present
-# in the dashboard. Treat :33 as a declaration, not a description of production.
-#
-# osint-scheduler (Background Worker) is not described in this file at all — its start
-# command and entire environment are dashboard-only and invisible from disk.
-#
-# ★ The dashboard settings of all four services (branch, root dir, build/start commands,
-# Auto-Deploy) were read and recorded in docs/render_deployment.md on 2026-10-06. Read that
-# file, not this one. Measured there: this file contradicts the dashboard on every
-# comparable field except the API start command (:37). For example, osint-web actually runs
-# `npm install && npm run build` from root dir web_dashboard, not :64's `npm ci`. Render does
-# not apply this file to the existing services (see DEV_MODE above). Treat it as decorative.
-# The dashboard is authoritative, and that doc is a dated reading of it.
-
-services:
-  - type: web
-    name: osint-platform
-    runtime: python
-    buildCommand: pip install -r requirements.txt && pip install -e . --no-deps && alembic upgrade head
-    # Web service: serve the REAL FastAPI app (api/main.py — CORS + all routers).
-    # Do NOT run the scheduler here; the dedicated osint-scheduler Background Worker
-    # owns it (running it here too caused double-scheduler DB-lock contention).
-    startCommand: alembic upgrade head && uvicorn api.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /api/status
-    envVars:
-      - key: ENV
-        value: production
-      - key: PYTHON_VERSION
-        value: "3.11.9"
-      # DEV_MODE gates tier payload shaping (api/gating.py:294 defaults it to "true",
-      # which returns the FULL payload to every caller regardless of tier). THIS
-      # DECLARATION DID NOT TAKE EFFECT: added in f275cb2 and deployed, it never
-      # reached the service. The value that actually gates production was set by hand
-      # in the Render dashboard on 2026-08-21. Declared intent only — see the header.
-      - key: DEV_MODE
-        value: "false"
-      # Pro Structural automation (off by default; enable after data pipelines verified)
-      - key: ENABLE_PRO_AUTOMATION
-        value: "false"
-      - key: PRO_AUTOMATION_DRY_RUN
-        value: "true"
-      - key: PRO_AUTOMATION_ENABLED_DOMAINS
-        value: "energy_resource_risk,global_market_intelligence,ai_semiconductor_intelligence,supply_chain_intelligence,crypto_geopolitics,defense_technology"
-      # Set in Render dashboard (secret): PRO_BRIEF_REGEN_SECRET
-      # POST /api/dev/sync-external-data?rebuild=true&purge=true  OR  /api/dev/backfill-and-rebuild?purge=true
-
-  - type: web
-    name: osint-web
-    runtime: static
-    buildCommand: cd web_dashboard && npm ci && npm run build
-    staticPublishPath: web_dashboard/dist
-    envVars:
-      # Build-time API origin for the static dashboard (Vite inlines this).
-      # Must match the LIVE API host; bare osint-platform.onrender.com is retired (no-server).
-      - key: VITE_API_BASE_URL
-        value: https://osint-platform-xs7p.onrender.com/api
-    routes:
-      - type: rewrite
-        source: /api/*
-        destination: https://osint-platform-xs7p.onrender.com/api/*
+# The last version with service definitions, kept for history only (none of its values are
+# evidence of what production runs): `git show 0484232:render.yaml`.
