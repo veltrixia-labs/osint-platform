@@ -72,6 +72,62 @@ def load_payload(path: str) -> Dict[str, Any]:
         return json.load(fh)
 
 
+# ---------------------------------------------------------------------------
+# ★ 2026-10-05 — INPUT GUARD. Added because this loader could not start.
+#
+# `run()` globs `data/scenarios/*.json`, and that directory had grown two files
+# that are NOT scenario cascades: `node_coordinates.json` (product 7751612,
+# 2026-10-04) and `relationship_graph.json` (product 5d5a5c4, 2026-10-05, put
+# there by _ARTIFACT_MANIFEST.md §9's own "copy to the product as a static file"
+# rule). `node_coordinates.json` sorts second, so `build_rows` hit
+# `payload["scenario"]["hub"]` on it and raised KeyError: 'scenario'. The loader
+# therefore could not run at all.
+#
+# It failed SAFE -- the single session.commit() is after the loop, so the crash
+# rolled the transaction back and nothing was written -- but it stayed invisible
+# for a month because the batches in between all correctly recorded
+# "load_scenarios NOT owed". A loader nothing calls is indistinguishable from a
+# working one.
+#
+# ★ WHY A SHAPE CHECK AND NOT A FILENAME WHITELIST. Measured, three candidates:
+#   (a) require payload['scenario']['hub']  -- CHOSEN.
+#         new 6th scenario  -> loads automatically (it has the key)
+#         new static file   -> skipped, with a logged reason
+#   (b) whitelist the five basenames.
+#         new 6th scenario  -> SILENTLY IGNORED, and the loader reports success.
+#         It also creates a SECOND authority on which scenarios exist, which can
+#         drift from the vault's own SCENARIOS tuple in _bridge/export_scenarios.py.
+#         Reproducing invisible omission in a new place is the one thing this fix
+#         must not do.
+#   (c) require schema_version == 'vault_cascade_v1'.
+#         separates the current seven files perfectly, but a legitimate schema bump
+#         to v2 would make the loader silently skip ALL FIVE. Its silent-failure
+#         mode is total, so it is worse than (b), not better.
+#
+# The test below is build_rows()'s OWN hard precondition and nothing broader:
+# build_rows dereferences payload["scenario"]["hub"] and reaches every other field
+# through .get(). So the guard admits exactly what build_rows can process -- it
+# does not invent a schema opinion of its own.
+#
+# ★ A malformed REAL scenario (one that lost its `scenario` key) would now be
+#   skipped rather than crash -- quieter than before. That is why skipping is a
+#   WARNING, why every skip is reprinted in the summary banner, and why `run()`
+#   raises when NOTHING loaded. "Loaded zero scenarios, exit 0" must not exist.
+# ---------------------------------------------------------------------------
+def scenario_rejection(payload: Dict[str, Any]) -> Optional[str]:
+    """None if this payload is a scenario cascade; else a human reason why not."""
+    if not isinstance(payload, dict):
+        return "top level is %s, not an object" % type(payload).__name__
+    sc = payload.get("scenario")
+    if sc is None:
+        return "no top-level 'scenario' key (top-level keys: %s)" % ", ".join(sorted(payload)[:8])
+    if not isinstance(sc, dict):
+        return "'scenario' is %s, not an object" % type(sc).__name__
+    if "hub" not in sc:
+        return "'scenario' carries no 'hub' (keys: %s)" % ", ".join(sorted(sc))
+    return None
+
+
 def build_rows(
     payload: Dict[str, Any],
 ) -> Tuple[str, List[SpatialNode], List[SpatialEdge], List[Dict], List[Dict]]:
@@ -247,11 +303,40 @@ async def load_scenario(
     return summary
 
 
-async def run(dry_run: bool = False) -> List[Dict[str, Any]]:
-    paths = sorted(glob.glob(os.path.join(SCENARIO_DIR, "*.json")))
+async def run(dry_run: bool = False) -> Tuple[List[Dict[str, Any]], List[Tuple[str, str]]]:
+    candidates = sorted(glob.glob(os.path.join(SCENARIO_DIR, "*.json")))
+    if not candidates:
+        logger.warning("No .json files found in %s", SCENARIO_DIR)
+        return [], []
+
+    # ★ Triage before touching the DB. See scenario_rejection() for why this is a
+    #   shape check. The double read of each file is deliberate: keeping the guard
+    #   out of load_scenario() leaves that function's signature and behaviour alone.
+    paths: List[str] = []
+    skipped: List[Tuple[str, str]] = []
+    for p in candidates:
+        base = os.path.basename(p)
+        try:
+            payload = load_payload(p)
+        except Exception as exc:                       # unreadable / not JSON
+            skipped.append((base, "unreadable: %s" % exc))
+            logger.warning("SKIP %s - unreadable: %s", base, exc)
+            continue
+        why = scenario_rejection(payload)
+        if why is not None:
+            skipped.append((base, why))
+            logger.warning("SKIP %s - not a scenario cascade: %s", base, why)
+            continue
+        paths.append(p)
+
     if not paths:
-        logger.warning("No scenarios found in %s", SCENARIO_DIR)
-        return []
+        raise SystemExit(
+            "REFUSING TO PROCEED: %d .json file(s) in %s and NONE is a scenario cascade.\n"
+            "Skipped: %s\n"
+            "A loader that writes nothing and exits 0 is the failure mode this guard exists to "
+            "prevent." % (len(candidates), SCENARIO_DIR,
+                          "; ".join("%s (%s)" % (b, w) for b, w in skipped) or "none")
+        )
 
     summaries: List[Dict[str, Any]] = []
 
@@ -265,7 +350,7 @@ async def run(dry_run: bool = False) -> List[Dict[str, Any]]:
                 for p in paths:
                     summaries.append(await load_scenario(s, p, dry_run=True))
                 await s.rollback()
-            return summaries
+            return summaries, skipped
         except Exception as exc:  # noqa: BLE001 — any DB/driver failure is fine here
             logger.warning("dry-run: no database (%s) — DELETE counts unknown", exc)
             summaries = []
@@ -277,12 +362,20 @@ async def run(dry_run: bool = False) -> List[Dict[str, Any]]:
         for p in paths:
             summaries.append(await load_scenario(session, p, dry_run=False))
         await session.commit()
-    return summaries
+    return summaries, skipped
 
 
-def _print(summaries: List[Dict[str, Any]], dry_run: bool) -> None:
+def _print(summaries: List[Dict[str, Any]], dry_run: bool,
+           skipped: Optional[List[Tuple[str, str]]] = None) -> None:
     banner = "DRY RUN — nothing written" if dry_run else "LOADED"
     print(f"\n=== scenario loader: {banner} ===")
+    # ★ Print the skips FIRST and always, including the zero case. The defect this
+    #   guard fixes hid because nothing reported on the files it never processed;
+    #   a skip that only reaches a log is the same property one notch quieter.
+    sk = skipped or []
+    print(f"   scenarios loaded: {len(summaries)}   files skipped: {len(sk)}")
+    for base, why in sk:
+        print(f"   SKIP    {base}  <- {why}")
     for s in summaries:
         dn = s["delete_nodes"]
         de = s["delete_edges"]
@@ -309,8 +402,8 @@ def main() -> None:
     ap.add_argument("--dry-run", action="store_true", help="print what would be written; touch nothing")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO)
-    summaries = asyncio.run(run(dry_run=args.dry_run))
-    _print(summaries, args.dry_run)
+    summaries, skipped = asyncio.run(run(dry_run=args.dry_run))
+    _print(summaries, args.dry_run, skipped)
 
 
 if __name__ == "__main__":

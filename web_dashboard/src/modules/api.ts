@@ -815,35 +815,6 @@ export async function submitFeedback(alertId: string, score: number) {
     return await apiClient.post(`/alerts/${alertId}/feedback`, { score });
 }
 
-export type BackboneDependency = {
-    target: string;
-    type: string;
-    weight: number;
-};
-
-export type BackboneNode = {
-    name: string;
-    ticker?: string | null;
-    sector: string;
-    country: string;
-    location: {
-        lat: number;
-        lng: number;
-    };
-    description: string;
-    top_dependencies: BackboneDependency[];
-};
-
-export async function fetchBackbone(sector: string): Promise<BackboneNode[]> {
-    const resp = await apiClient.get(`/backbone/${sector}`);
-
-    if (!resp.ok) {
-        throw new Error(`Failed to fetch backbone sector: ${sector}`);
-    }
-
-    return await resp.json();
-}
-
 export async function fetchProStructuralReports(): Promise<ProStructuralReportList> {
     const resp = await apiClient.get('/pro/reports', {
         cache: 'no-store',

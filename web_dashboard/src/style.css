@@ -12383,3 +12383,308 @@ body.syslogic-open { overflow: hidden; }
 /* landing offset + sticky header so the label stays visible after scrolling down */
 .domain-items { scroll-margin-top: 0.75rem; }
 .domain-items-head { position: sticky; top: 0; z-index: 2; background: var(--card-bg); padding-bottom: 0.35rem; }
+
+/* ── Relationship view ────────────────────────────────────────────────────────
+   Only what the reused .pm-co-* vocabulary does not already provide. The rows,
+   section headers, counts, units and provenance badges come from the Pro map's
+   neighbourhood panel above, scoped to #pro-map-container, which is where this
+   view mounts. */
+/* ★ #pro-map-container is `display:flex; flex-direction:row` (style.css:8808). A row flex item
+   with the default `flex: 0 1 auto` is sized by its CONTENT — which is why the search box, the
+   graph host and the globe host were all ~1030px (the natural width of the head + legend) inside
+   a ~1900px container. `flex: 1 1 auto` + `width: 100%` makes the view take the row; `min-width: 0`
+   is its necessary companion, since a flex item's default `min-width:auto` refuses to shrink
+   below content and would let a wide child overflow instead of fitting. */
+#pro-map-container .rv-root { flex: 1 1 auto; width: 100%; min-width: 0;
+    display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 14px 16px; gap: 10px; }
+#pro-map-container .rv-head { display: flex; flex-direction: column; gap: 6px; }
+#pro-map-container .rv-search {
+    width: 100%; padding: 10px 12px; border-radius: 8px; font-size: 0.82rem;
+    background: rgba(8,13,28,0.82); border: 1px solid rgba(56,189,248,0.22); color: #e2e8f0;
+}
+#pro-map-container .rv-search::placeholder { color: #64748b; }
+#pro-map-container .rv-meta { color: #64748b; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em; }
+#pro-map-container .rv-results { display: flex; flex-direction: column; gap: 2px; }
+#pro-map-container .rv-hit {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    padding: 7px 10px; border-radius: 6px; cursor: pointer; text-align: left;
+    background: rgba(15,23,42,0.6); border: 1px solid rgba(56,189,248,0.12); color: #e2e8f0;
+}
+#pro-map-container .rv-hit:hover { border-color: rgba(56,189,248,0.4); }
+#pro-map-container .rv-hit-id { font-size: 0.76rem; }
+#pro-map-container .rv-hit-meta { color: #64748b; font-size: 0.6rem; text-transform: uppercase; }
+#pro-map-container .rv-detail { flex: 1; overflow-y: auto; }
+#pro-map-container .rv-card { padding: 10px 0 12px; border-bottom: 1px solid rgba(56,189,248,0.14); margin-bottom: 8px; }
+#pro-map-container .rv-card-title { color: #f1f5f9; font-size: 1.02rem; }
+#pro-map-container .rv-card-meta { color: #64748b; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 3px; }
+#pro-map-container .rv-card-role { color: #cbd5e1; font-size: 0.72rem; margin-top: 7px; line-height: 1.45; }
+#pro-map-container .rv-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+#pro-map-container .rv-chip { font-size: 0.58rem; padding: 2px 6px; border-radius: 4px; background: rgba(56,189,248,0.1); color: #7dd3fc; }
+#pro-map-container .rv-nb-total { color: #64748b; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em; margin: 4px 0 8px; }
+#pro-map-container .rv-dir { color: #64748b; }
+#pro-map-container .rv-link { color: #7dd3fc; cursor: pointer; text-decoration: none; }
+#pro-map-container .rv-link:hover { text-decoration: underline; }
+/* 未測定 — an authored `weight: null`: the magnitude was never measured. NOT zero, and NOT the
+   same as an absent weight key, which renders as nothing at all because the edge type carries
+   no weight by design. */
+#pro-map-container .rv-unmeasured { color: #64748b; font-size: 0.58rem; }
+#pro-map-container .rv-vs { font-size: 0.54rem; text-transform: uppercase; letter-spacing: 0.03em; }
+#pro-map-container .rv-vs--ok { color: #34d399; }
+#pro-map-container .rv-vs--no { color: #94a3b8; }
+#pro-map-container .rv-src { color: #7dd3fc; text-decoration: none; font-size: 0.68rem; }
+#pro-map-container .rv-2hop { margin-top: 14px; border-top: 1px solid rgba(56,189,248,0.14); padding-top: 10px; }
+#pro-map-container .rv-2hop summary { color: #94a3b8; font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
+#pro-map-container .rv-empty, #pro-map-container .rv-loading { color: #64748b; font-size: 0.74rem; padding: 18px 2px; }
+#pro-map-container .rv-hint { color: #475569; font-size: 0.62rem; }
+
+/* ── Relationship view: canvas + panel layout ─────────────────────────────── */
+/* ONE host for both modes. display:block rather than grid: a grid row/column can resolve to a
+   width the child then inherits, and the drawer is an absolute overlay so no column is needed. */
+/* Column flex: the map host takes what is left, the dock strip takes its natural height.
+   overflow:hidden still clips the CLOSED drawer (translateX(100%)), which would otherwise paint
+   a sliver just outside the body.
+   ★ THE min-height:70vh FLOOR IS GONE, and the comment that justified it no longer applies. It
+     was added when .rv-body was a GRID, where a row sized only by min-height:0 could resolve to
+     0 before layout and the canvas got a zero-height host. .rv-body is now a flex item of
+     .rv-root, which has height:100% against #pro-map-container's definite
+     height:calc(100vh - 80px), so the free space is a real number at layout time and there is
+     nothing to floor. Keeping the floor is what clipped the dock strip. */
+#pro-map-container .rv-body { flex: 1 1 auto; min-height: 0; width: 100%; min-width: 0;
+    display: flex; flex-direction: column; gap: 10px;
+    position: relative; overflow: hidden; }
+#pro-map-container .rv-canvas { width: 100%; height: 100%; display: block; }
+/* flex:1 1 auto + min-height:0 — NOT height:100%. In a column flex parent, height:100% on an
+   item resolves against the parent's full height and ignores its siblings, so the map would
+   still have pushed the dock strip out. min-height:0 is the companion that lets it shrink. */
+#pro-map-container .rv-canvas-host { position: relative; width: 100%; flex: 1 1 auto; min-height: 0;
+    border-radius: 10px; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 40%, rgba(15,23,42,0.9), rgba(2,6,16,0.96)); border: 1px solid rgba(56,189,248,0.14); }
+#pro-map-container .rv-canvas { display: block; cursor: grab; }
+#pro-map-container .rv-canvas:active { cursor: grabbing; }
+/* ★ 380px -> 320px. This width, PANEL_W in relationship_view.ts and the 1200px breakpoint below
+   MUST move together — nothing links them, so each cites the others.
+   position:absolute inside .rv-body means it OVERLAYS: it has never shrunk .rv-canvas-host, and
+   the globe.resize() calls that used to fire on open/close were no-ops that cost a full MapLibre
+   re-layout per selection. Removed; the drawer's effect on framing is carried entirely by
+   setPanelOffset -> fitEgo padding. Padding reduced ~20% (12/14 -> 10/11) to fit more rows. */
+#pro-map-container .rv-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 320px; z-index: 4;
+    display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 10px 10px 10px 11px;
+    background: rgba(2,6,16,0.94); backdrop-filter: blur(14px) saturate(160%);
+    border-left: 1px solid rgba(56,189,248,0.22); border-radius: 0 10px 10px 0;
+    transform: translateX(100%); transition: transform 220ms cubic-bezier(.4,0,.2,1);
+    pointer-events: none; }
+#pro-map-container .rv-panel[data-open="1"] { transform: translateX(0); pointer-events: auto; }
+/* Collapsed: slide off leaving a 24px tab. Higher specificity than [data-open="1"] on purpose —
+   it has to win against the open transform, not merely follow it. */
+#pro-map-container .rv-panel[data-open="1"][data-collapsed="1"] { transform: translateX(calc(100% - 24px)); }
+/* The chevron tab. 24px wide, pinned to the drawer's own left edge, so it is exactly what stays
+   visible when collapsed. ::before is the chevron and flips with the state. */
+#pro-map-container .rv-collapse { position: absolute; left: 0; top: 0; bottom: 0; width: 24px; z-index: 2;
+    background: rgba(56,189,248,0.07); border: 0; border-right: 1px solid rgba(56,189,248,0.18);
+    color: #7dd3fc; cursor: pointer; padding: 0; font-size: 0.7rem; line-height: 1; }
+#pro-map-container .rv-collapse:hover { background: rgba(56,189,248,0.16); }
+#pro-map-container .rv-collapse::before { content: '\203A'; }                 /* > collapse */
+#pro-map-container .rv-panel[data-collapsed="1"] .rv-collapse::before { content: '\2039'; }   /* < expand */
+#pro-map-container .rv-panel[data-open="1"] > *:not(.rv-collapse) { margin-left: 24px; }
+
+/* ★ BOTTOM SHEET below 1200px. A 320px side panel on a 1100px screen leaves the map under 70%
+   of its width; as a sheet it costs height instead, which the map has more of. Must match
+   SHEET_BP in relationship_view.ts AND in relationship_globe.ts — the globe switches which
+   fitBounds edge it pads on the same number. */
+@media (max-width: 1199px) {
+    #pro-map-container .rv-panel { top: auto; left: 0; right: 0; bottom: 0; width: auto;
+        max-height: 45vh; padding: 10px 12px;
+        border-left: 0; border-top: 1px solid rgba(56,189,248,0.22); border-radius: 10px 10px 0 0;
+        transform: translateY(100%); }
+    #pro-map-container .rv-panel[data-open="1"] { transform: translateY(0); }
+    #pro-map-container .rv-panel[data-open="1"][data-collapsed="1"] { transform: translateY(calc(100% - 24px)); }
+    #pro-map-container .rv-collapse { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 24px;
+        border-right: 0; border-bottom: 1px solid rgba(56,189,248,0.18); }
+    #pro-map-container .rv-collapse::before { content: '\2304'; }              /* v collapse */
+    #pro-map-container .rv-panel[data-collapsed="1"] .rv-collapse::before { content: '\2303'; }  /* ^ expand */
+    #pro-map-container .rv-panel[data-open="1"] > *:not(.rv-collapse) { margin-left: 0; margin-top: 24px; }
+    #pro-map-container .rv-close { top: 26px; }
+}
+
+/* ★ Row metrics scoped to .rv-panel ONLY. .pm-co-nb is REUSED VERBATIM by the legacy map's
+   neighbourhood panel (pro_interactive_map.ts) — changing it unscoped would silently restyle a
+   surface this task never touched. Padding 0.35rem -> 0.28rem is the ~20% asked for. */
+#pro-map-container .rv-panel .pm-co-nb { padding: 0.28rem 0; gap: 0 8px; }
+#pro-map-container .rv-panel .pm-co-sec { margin-bottom: 8px; }
+/* One line, ellipsised. min-width:0 is required: a grid item defaults to min-width:auto and
+   refuses to shrink below its content, so text-overflow would never engage without it. */
+#pro-map-container .rv-panel .pm-co-nb-t { min-width: 0; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; }
+
+/* ★ FULL SCREEN. Two paths, identical result.
+   :fullscreen is the native one — the UA already sizes the element to the screen, so all this
+   adds is the background (the UA default is black) and the padding the normal layout had.
+   .rv-pseudo-fs is the CSS fallback for iOS Safari, which has no element fullscreen at all, and
+   for a requestFullscreen() that rejects (no user activation, or a Permissions-Policy without
+   `fullscreen`). z-index clears the app chrome. */
+#pro-map-container .rv-root:fullscreen,
+#pro-map-container .rv-root.rv-pseudo-fs {
+    background: #020610; padding: 14px 16px; border-radius: 0;
+    /* explicit, not inherited: the normal rule is height:100% of #pro-map-container's
+       calc(100vh - 80px), and in fullscreen the element is out of that flow entirely. */
+    width: 100%; height: 100%; max-height: 100%; }
+#pro-map-container .rv-root.rv-pseudo-fs {
+    position: fixed; inset: 0; z-index: 9999; width: 100vw; height: 100vh; max-height: 100vh; }
+#pro-map-container .rv-root:focus { outline: none; }
+#pro-map-container .rv-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#pro-map-container .rv-fs { background: rgba(56,189,248,0.10); border: 1px solid rgba(56,189,248,0.22);
+    color: #7dd3fc; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+#pro-map-container .rv-fs:hover { background: rgba(56,189,248,0.2); }
+#pro-map-container .rv-close { position: absolute; top: 8px; right: 10px; z-index: 1; background: none; border: 0;
+    color: #64748b; font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 2px 6px; }
+#pro-map-container .rv-close:hover { color: #e2e8f0; }
+#pro-map-container .rv-panel .rv-detail { flex: 1; overflow-y: auto; padding-right: 4px; }
+#pro-map-container .rv-freeline { font-size: 0.6rem; color: #fbbf24; background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.22); border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; }
+/* Shown when a selected entity has zero recorded relationships. Deliberately NOT styled as an
+   error or a warning — nothing is broken; the vault holds entities that take part in no
+   relationship, and the explorer should say so calmly. */
+#pro-map-container .rv-unlinked { border: 1px solid var(--border); border-radius: 8px;
+    background: rgba(148,163,184,0.05); padding: 10px 12px; margin-top: 8px; }
+#pro-map-container .rv-unlinked-h { color: #cbd5e1; font-size: 0.68rem; letter-spacing: 0.04em;
+    text-transform: uppercase; margin-bottom: 6px; }
+#pro-map-container .rv-unlinked p { margin: 0; color: var(--text-secondary); font-size: 0.68rem; line-height: 1.6; }
+#pro-map-container .rv-unlinked strong { color: #cbd5e1; font-variant-numeric: tabular-nums; }
+/* Tells the user before they click, so the thin panel is never a surprise. */
+#pro-map-container .rv-hit-unlinked { color: #64748b; font-style: italic; }
+#pro-map-container .rv-idle { color: #64748b; font-size: 0.74rem; padding: 10px 2px; line-height: 1.7; }
+#pro-map-container .rv-tip { position: absolute; pointer-events: none; z-index: 5; font-size: 0.64rem; line-height: 1.4;
+    background: rgba(2,6,16,0.94); border: 1px solid rgba(56,189,248,0.3); border-radius: 5px; padding: 5px 7px; color: #e2e8f0; }
+#pro-map-container .rv-legend { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 8px; }
+#pro-map-container .rv-leg { display: inline-flex; align-items: center; gap: 4px; color: #64748b; font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.03em; }
+#pro-map-container .rv-leg i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+/* Only meaningful in Globe mode; the view hides it in Graph mode via the body class below. */
+#pro-map-container .rv-hint-globe { color: #475569; font-style: italic; margin-left: auto; }
+#pro-map-container .rv-root[data-mode="graph"] .rv-hint-globe { display: none; }
+#pro-map-container .rv-leg--ring i { background: transparent; border: 1.5px solid #f59e0b; }
+#pro-map-container .rv-modes { display: inline-flex; gap: 0; border: 1px solid rgba(56,189,248,0.22); border-radius: 7px; overflow: hidden; }
+#pro-map-container .rv-mode { background: transparent; border: 0; color: #64748b; font-size: 0.62rem; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 5px 14px; cursor: pointer; }
+#pro-map-container .rv-mode[aria-selected="true"] { background: rgba(56,189,248,0.16); color: #7dd3fc; }
+/* inset:0 against .rv-canvas-host, which now sizes itself. A 70vh floor here would re-impose
+   exactly the height the host is trying to give up to the dock strip. */
+#pro-map-container .rv-globe { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* MapLibre's own elements must inherit the full host. Belt-and-braces alongside the imported
+   maplibre-gl.css: nothing in our cascade may hand them a max-width. */
+#pro-map-container .rv-globe .maplibregl-map,
+#pro-map-container .rv-globe .maplibregl-canvas-container,
+#pro-map-container .rv-globe .maplibregl-canvas { width: 100% !important; height: 100% !important; max-width: none !important; }
+/* ★ The dock is NO LONGER AN OVERLAY. It was position:absolute across the bottom edge of the
+   map, which hid the southern hemisphere behind a gradient AND — having no pointer-events rule —
+   swallowed every mousedown landing in the gaps between chips, so drags begun low on the globe
+   went nowhere. It now sits in .rv-dockstrip, its own full-width strip below the map, where
+   neither problem can recur by construction. */
+/* The derived kind label beside a weight. Muted: the NUMBER is the datum, the label only says
+   what the number is a share OF — which is the thing CLAUDE.md §3 says must never be inferred
+   from a neighbouring column. */
+#pro-map-container .rv-wkind { color: #94a3b8; font-size: 0.56rem; font-weight: 400;
+    text-transform: none; letter-spacing: 0; }
+/* "source not recorded" is a statement about the record, not a warning about the weight — so it
+   is smaller and quieter than observed/estimated, not louder. */
+#pro-map-container .pm-co-src.rv-src-none { font-size: 0.5rem; opacity: 0.6; letter-spacing: 0.02em; }
+#pro-map-container .rv-dockstrip { flex: 0 0 auto; width: 100%; padding: 12px; box-sizing: border-box;
+    background: rgba(2,6,16,0.6); border: 1px solid rgba(56,189,248,0.14); border-radius: 10px; }
+#pro-map-container .rv-dock { position: static; display: flex; flex-wrap: wrap; gap: 5px;
+    align-items: center; max-height: 76px; overflow: hidden;   /* 3 rows; the rest behind +N more */ }
+/* One line of its own at the top of the dock, above the chips. */
+#pro-map-container .rv-dock-note { flex: 0 0 100%; color: #7dd3fc; font-size: 0.58rem; letter-spacing: 0.03em;
+    padding: 0 0 2px; }
+#pro-map-container .rv-dock-l { color: #475569; font-size: 0.54rem; text-transform: uppercase; letter-spacing: 0.06em; margin-right: 4px; }
+#pro-map-container .rv-chip-n { background: rgba(15,23,42,0.8); border: 1px solid var(--c); color: var(--c);
+    font-size: 0.56rem; padding: 2px 7px; border-radius: 10px; cursor: pointer; opacity: 0.45; }
+#pro-map-container .rv-chip-n[data-lit="1"] { opacity: 1; }
+/* data-lit = adjacent to the selection. data-arc = a counterpart of the CURRENT selection that
+   has no coordinate, so the chip is the only place this relationship can be shown — no line is
+   drawn to it. The glow is what carries that edge, which is why it is stronger than data-lit. */
+#pro-map-container .rv-chip-n[data-arc="1"] { opacity: 1; border-color: var(--c);
+    box-shadow: 0 0 0 1px var(--c), 0 0 10px -1px var(--c); background: rgba(15,23,42,0.95); }
+#pro-map-container .rv-globe-pop .maplibregl-popup-content { background: rgba(2,6,16,0.94); color: #e2e8f0;
+    border: 1px solid rgba(56,189,248,0.3); font-size: 0.64rem; padding: 5px 8px; }
+#pro-map-container .rv-globe-pop .maplibregl-popup-tip { display: none; }
+/* ★ 42vh -> 30vh. As an OVERLAY the expanded dock cost the map nothing but visibility; in the
+   flex column it takes that height out of the map's share, and .rv-canvas-host has min-height:0
+   so there is nothing stopping the map collapsing to a sliver. The cap plus the existing
+   internal scroll keeps every chip reachable while leaving the map the majority of the box. */
+#pro-map-container .rv-dock[data-expanded="1"] { max-height: 30vh; overflow-y: auto; }
+/* ★ MAP CONTROL SKIN. MapLibre ships white buttons with a hard shadow, which read as a bright
+   block against this interface — clearly visible as a white slab at the top-right in every
+   screenshot taken before this. Every colour below comes from theme.css, none is invented:
+   --bg-elevated (the panel surface), --border and --border-active (the thin hairlines the rest
+   of .rv-root uses), --accent and --accent-soft (the same cyan as the mode toggle), and
+   --text-secondary for the attribution text.
+   The icons are MapLibre's own SVGs drawn in black, so they are inverted rather than replaced —
+   replacing them would mean shipping and maintaining copies of the +, -, compass and info
+   glyphs, and the compass must keep working because visualizePitch rotates it and it is the
+   only thing that shows the user their tilt. */
+#pro-map-container .rv-globe .maplibregl-ctrl-group {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: none;
+    overflow: hidden;
+}
+#pro-map-container .rv-globe .maplibregl-ctrl-group button {
+    /* 30px, above the 28px floor the brief sets and above MapLibre's own 29px default. */
+    width: 30px; height: 30px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+}
+#pro-map-container .rv-globe .maplibregl-ctrl-group button + button { border-top: 0; }
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:last-child { border-bottom: 0; }
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:hover { background: var(--accent-soft); }
+/* Focus must stay obvious for keyboard users — inset so the ring is not clipped by overflow. */
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: -2px; background: var(--accent-soft);
+}
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:disabled { opacity: 0.25; }
+#pro-map-container .rv-globe .maplibregl-ctrl-icon { filter: invert(1); opacity: 0.6; }
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:hover .maplibregl-ctrl-icon,
+#pro-map-container .rv-globe .maplibregl-ctrl-group button:focus-visible .maplibregl-ctrl-icon { opacity: 0.95; }
+/* ★ The reset icon is a MASKED SVG, not a text glyph, and that is the second attempt. The first
+   used content:'\2316' (POSITION INDICATOR) and it rendered AMBER however the colour was set:
+   computed style said rgb(0,209,255) while the pixels said orange, because Arial has no U+2316
+   so the browser fell back to a colour-emoji font, and emoji presentation ignores `color`
+   entirely. A mask keeps the shape in SVG and takes the colour from the variable, so --accent
+   is still the single source and nothing is hard-coded. */
+/* ★ `button.rv-ctrl-reset`, not `.rv-ctrl-reset`. The generic rule above is
+   `#id .rv-globe .maplibregl-ctrl-group button` = specificity (1,2,1) and sets the `background`
+   SHORTHAND, which resets background-color to transparent. A plain `.rv-ctrl-reset` selector is
+   (1,2,0) and loses, so the mask applied but had no colour to show and the button rendered
+   blank. Adding the element qualifier takes it to (1,3,1). */
+#pro-map-container .rv-globe .maplibregl-ctrl-group button.rv-ctrl-reset {
+    background-image: none;
+    background-color: var(--accent);
+    opacity: 0.72;
+    -webkit-mask: var(--rv-reset-icon) center / 17px 17px no-repeat;
+    mask: var(--rv-reset-icon) center / 17px 17px no-repeat;
+}
+#pro-map-container .rv-globe {
+    --rv-reset-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='5.5'/><path d='M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4'/></svg>");
+}
+#pro-map-container .rv-globe .maplibregl-ctrl-group button.rv-ctrl-reset:hover,
+#pro-map-container .rv-globe .maplibregl-ctrl-group button.rv-ctrl-reset:focus-visible {
+    opacity: 1; background-color: var(--accent);
+}
+/* Attribution: present and legible, not a white tab. */
+#pro-map-container .rv-globe .maplibregl-ctrl-attrib {
+    background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px;
+}
+#pro-map-container .rv-globe .maplibregl-ctrl-attrib,
+#pro-map-container .rv-globe .maplibregl-ctrl-attrib a { color: var(--text-secondary); font-size: 0.58rem; }
+#pro-map-container .rv-globe .maplibregl-ctrl-attrib a:hover { color: var(--accent); }
+
+/* ★ left:52px, not 10px: the control group now lives at top-left with MapLibre's 10px margin and
+   is 30px wide, so a note at left:10px would sit underneath it. */
+#pro-map-container .rv-arcnote { position: absolute; left: 52px; top: 10px; z-index: 3;
+    background: rgba(2,6,16,0.86); border: 1px solid rgba(251,146,60,0.45); color: #fdba74;
+    font-size: 0.6rem; letter-spacing: 0.03em; padding: 4px 8px; border-radius: 4px;
+    pointer-events: none; max-width: 42ch; }
+#pro-map-container .rv-dock-more { background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.3);
+    color: #7dd3fc; font-size: 0.54rem; padding: 2px 8px; border-radius: 10px; cursor: pointer; }

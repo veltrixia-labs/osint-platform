@@ -29,11 +29,32 @@ const FEATURE_META: Record<ShroudFeature, FeatureMeta> = {
         blurb: 'In-depth structural intelligence briefs — qualitative transmission analysis, exposure matrices, and domain-filtered long-form reports.',
         bullets: ['Risk-contagion lead-lag tracker', 'Sector drill-down dossiers', 'Exposure & entity heat matrices'],
     },
+    // ★ Rewritten 2026-10-05. The previous copy sold the DELETED chokepoint map — "geolocated
+    //   signal clusters, maritime choke-point flow, collateral contagion networks" — which is
+    //   not what Pro receives any more. Every number below is measured against the shipped
+    //   payload (data/scenarios/relationship_graph.json): 303 nodes, retrieved and
+    //   verify_status 100% filled. Nothing here promises real-time, live tracking or motion,
+    //   because the view does none of those.
+    // ★ EDGE COUNTS AND VERIFIED COUNTS WERE REMOVED 2026-10-05, not updated. This is a STATIC
+    //   string that cannot read the payload, and the edge count is UNGATED — CLAUDE.md §1:
+    //   "Edges are not gated at all" — so it drifts every time the vault is wired. It went
+    //   1535 -> 1543 within a day and the blurb was already wrong. The NODE count stays because
+    //   it has a hard gate in two places (cascade_engine.py:118, model_slice_v29.py:70) and
+    //   cannot move silently. Quote the gated number, never the ungated one.
+    // ★ 303 -> 310 on 2026-10-06, and the paragraph above was half wrong. The vault's gate stops
+    //   the COUNT moving silently in the vault. It does not stop THIS STRING going stale, because
+    //   nothing compares the two. The count moved 303 -> 307 -> 310 in one day (2026-10-05) and
+    //   this copy stayed at 303 until a manual check found it. The gated number is still the
+    //   right one to quote, but it must be re-checked here by hand at every gate bump.
     'pro-map': {
         icon: '🗺️',
         title: 'Pro Interactive Map',
-        blurb: 'Global spatial surveillance — geolocated signal clusters, maritime choke-point flow, and collateral contagion networks.',
-        bullets: ['Geospatial signal clustering', 'Maritime choke-point flow', 'Sanctions contagion graph'],
+        blurb: 'A relationship explorer over a hand-authored vault of 310 entities, where every recorded relationship carries the date it was retrieved and whether it has been verified.',
+        bullets: [
+            '310 entities, every relationship individually sourced',
+            'Each one dated and marked verified or not — the unverified ones say so',
+            'Force-directed graph and geographic globe over the same data',
+        ],
     },
     'impact-roster': {
         icon: '🎯',

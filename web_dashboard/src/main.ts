@@ -9,7 +9,7 @@ console.log(`[Antigravity] Build Version: v11.1.2-AURORA-SYNC`);
 console.log(`[Antigravity] Deploy Signature: AURORA-SYNC-${Date.now()}`);
 console.log(`[Antigravity] Build Timestamp: ${new Date().toLocaleString()}`);
 import { DashboardState } from './modules/poll'
-import { renderAlerts, renderReportDetail, renderMap, resetMapEngine, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderImpactRoster, renderTopicFilterBar, renderDomainItems, renderDomainItemsHint, clearDomainItems, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
+import { renderAlerts, renderReportDetail, renderNavigation, updateNavActiveState, renderMarketPulse, disposeMarketPulseView, disposeProInsightsView, renderProInsights as renderPro, renderExpertIntel as renderExpert, renderProMap, renderImpactRoster, renderTopicFilterBar, renderDomainItems, renderDomainItemsHint, clearDomainItems, renderTrendFlow, disposeTrendFlow, renderPremiumShroud } from './modules/render/index'
 import { STRATEGIC_TOPIC_FILTERS, type StrategicTopicCode } from './modules/topics'
 import { formatIntelTime } from './modules/render/utils'
 // (Pro reports now handled within Pro Insights hub)
@@ -247,13 +247,18 @@ export async function renderSignup() {
     });
 }
 
-type TabId = 'feed' | 'trend-flow' | 'plans' | 'reports' | 'map' | 'legal' | 'market-pulse' | 'pro-insights' | 'pro-map' | 'impact-roster' | 'expert-intel'
+type TabId = 'feed' | 'trend-flow' | 'plans' | 'reports' | 'legal' | 'market-pulse' | 'pro-insights' | 'pro-map' | 'impact-roster' | 'expert-intel'
 
-const BOOT_TABS: TabId[] = ['feed', 'trend-flow', 'map', 'plans', 'legal', 'market-pulse', 'pro-insights', 'pro-map', 'impact-roster', 'expert-intel']
+const BOOT_TABS: TabId[] = ['feed', 'trend-flow', 'plans', 'legal', 'market-pulse', 'pro-insights', 'pro-map', 'impact-roster', 'expert-intel']
 
 /** Legacy hash aliases (e.g. bookmarks, old LP links). */
 const HASH_TAB_ALIASES: Record<string, TabId> = {
     'free-feed': 'feed',
+    // ★ The Global Map was removed at ec17a12 (it served synthetic data) and is not coming
+    //   back. A bookmarked #map therefore resolves to the default tab and the URL is rewritten
+    //   below, so the stale bookmark heals itself on first use. See the commit message for why
+    //   this rather than a 404 or a tombstone page.
+    'map': 'feed',
 }
 
 type HashRoute = { tab: TabId; alertId?: string }
@@ -346,7 +351,7 @@ async function syncRouteFromHash(): Promise<void> {
             if (!route) return
 
             const rawBase = window.location.hash.slice(1).split('?')[0]
-            if (rawBase === 'reports' || rawBase === 'free-feed') {
+            if (rawBase === 'reports' || rawBase === 'free-feed' || rawBase === 'map') {
                 history.replaceState(null, '', `#${route.tab}`)
             }
             switchTab(route.tab, route.alertId, true)
@@ -393,16 +398,18 @@ const PAGE_HEADER_META: Partial<Record<TabId, PageHeaderMeta>> = {
         title: 'Monthly Trend Flow',
         subtitle: 'Each month’s high-impact signals, archived by day and sector — browse how global pressure built up.',
     },
-    map: {
-        icon: '🌐',
-        title: 'Global Map',
-        subtitle: 'Strategic entity mapping — visualizing structural relationships and geopolitical actors.',
-        proCta: {
-            label: 'Unlock Pro / Expert for real-time motion and live entity tracking',
-            href: '/subscription',
-        },
+    // Subtitle added 2026-10-05: this is the route that actually renders, and it had no
+    // description at all. PAGE_META.map above still carries the deleted Global Map's title and
+    // upsell; that whole entry goes with the dead route in the next commit, so it is not
+    // patched here only to be deleted.
+    'pro-map': {
+        title: 'Pro Interactive Map',
+        // ★ NO COUNTS HERE. This static string said "1,535 relationships" while the live
+        //   .rv-meta line directly beneath it said 1543 — both on screen at once, caught in a
+        //   screenshot. A hand-maintained number sitting next to a computed one will always
+        //   lose. The counts live in .rv-meta, which reads them from the payload.
+        subtitle: 'The vault relationship graph — every relationship carries its own source and verification status.',
     },
-    'pro-map': { title: 'Pro Interactive Map' },
     'impact-roster': { title: 'Impact Roster' },
     'market-pulse': {
         icon: '📈',
@@ -639,7 +646,6 @@ async function initDashboard() {
     let currentTab: TabId = 'feed';
 
     const renderBaseUI = () => {
-        resetMapEngine()
         const graceBanner = user ? renderGracePeriodBanner(user) : '';
         app.innerHTML = `
       <header class="mobile-header">
@@ -682,7 +688,6 @@ async function initDashboard() {
             <div id="alerts-list"></div>
             <div id="domain-items"></div>
           </div>
-          <div id="map-page-container" style="display:none;"></div>
           <div id="pro-map-container" style="display:none;"></div>
           <div id="impact-roster-container" style="display:none;"></div>
         </main>
@@ -734,11 +739,11 @@ async function initDashboard() {
         }
 
         const showSubtitle = Boolean(meta?.subtitle)
-        const showProCta = Boolean(
-            meta?.proCta
-            && tab === 'map'
-            && !isProOrAbove(user?.tier)
-        )
+        // Generic per-page Pro CTA. It was gated on tab === 'map'; that tab is gone and was
+        // the only PAGE_META entry carrying a proCta, so the condition is now just "this page
+        // declares one and the user is not Pro". No entry declares one today, which keeps
+        // #page-pro-cta hidden — the machinery is left for the next page that wants it.
+        const showProCta = Boolean(meta?.proCta && !isProOrAbove(user?.tier))
         const showExpertUpsell = Boolean(meta?.showExpertUpsell && tab === 'pro-insights')
 
         if (pageSubtitle) {
@@ -821,11 +826,9 @@ async function initDashboard() {
 
         const mainContent = document.querySelector<HTMLElement>('.main-content');
         const feedContainer = document.querySelector<HTMLElement>('#alerts-container');
-        const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
         const proMapContainer = document.querySelector<HTMLElement>('#pro-map-container');
         const impactRosterContainer = document.querySelector<HTMLElement>('#impact-roster-container');
         applyPageHeader(tab);
-        mainContent?.classList.toggle('main-content--global-map', tab === 'map');
 
         if (topicFilterBar) {
             topicFilterBar.style.display = tab === 'feed' ? 'flex' : 'none';
@@ -848,7 +851,6 @@ async function initDashboard() {
         setTimeout(() => {
             const isFeedLike = ['feed', 'trend-flow', 'plans', 'reports', 'legal', 'market-pulse', 'pro-insights', 'expert-intel'].includes(tab);
             if (feedContainer) feedContainer.style.display = isFeedLike ? 'block' : 'none';
-            if (mapContainer) mapContainer.style.display = (tab === 'map') ? 'block' : 'none';
             if (proMapContainer) proMapContainer.style.display = (tab === 'pro-map') ? 'flex' : 'none';
             if (impactRosterContainer) impactRosterContainer.style.display = (tab === 'impact-roster') ? 'flex' : 'none';
 
@@ -856,13 +858,6 @@ async function initDashboard() {
             else if (tab === 'trend-flow') void renderTrendFlow(alertsContainer, user!.tier);
             else if (tab === 'plans') renderSubscriptionTab(user!, alertsContainer, () => handleTabSwitch('plans'));
             else if (tab === 'reports') renderReports();
-            else if (tab === 'map') {
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        void renderMap(mapContainer!, user!.tier, focusAlertId);
-                    });
-                });
-            }
             else if (tab === 'market-pulse') {
                 if (isAuthSessionPending()) return;
                 if (!isProOrAbove(user!.tier) && !DEV_MODE_AUDIT) { renderPremiumShroud(alertsContainer, 'market-pulse', user!, () => handleTabSwitch('plans')); if (mainContent) mainContent.style.opacity = '1'; return; }
@@ -1019,19 +1014,6 @@ async function initDashboard() {
         renderReportDetail(report, user!.tier, alertsContainer, () => handleTabSwitch(origin));
     };
 
-    // [v8.4] Strategic Tracking Integration (Revised for Silent Sync)
-    window.addEventListener('map-track-alert' as any, (e: CustomEvent) => {
-        const id = e.detail.id;
-        const silent = e.detail.silent || false;
-        if (silent) {
-            const mapContainer = document.querySelector<HTMLElement>('#map-page-container');
-            if (mapContainer && mapContainer.style.display !== 'none') {
-                window.dispatchEvent(new CustomEvent('focus-map', { detail: { alertId: id } }));
-            }
-        } else {
-            handleTabSwitch('map', id);
-        }
-    });
 
     window.addEventListener('trigger-tab' as any, (e: CustomEvent) => {
         if (e.detail.tab) handleTabSwitch(e.detail.tab);

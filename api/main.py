@@ -51,11 +51,11 @@ from api.routes.analysts import router as analysts_router
 from api.routes.system import router as system_router
 from api.routes.analytics import router as analytics_router
 from api.routes.insights import router as insights_router
-from api.routes.backbone import router as backbone_router
 from api.routes.monthly_trends import router as monthly_trends_router
 from api.routes.pro_reports import router as pro_reports_router
 from api.routes.pro_spatial import router as pro_spatial_router
 from api.routes.impact_roster import router as impact_roster_router
+from api.routes.relationships import router as relationships_router
 from api.routes.dev_tools import router as dev_tools_router
 from api.routes.admin import router as admin_router
 from api.routes.state import router as state_router
@@ -280,10 +280,10 @@ app.include_router(analysts_router, prefix="/api")
 app.include_router(system_router, prefix="/api")
 app.include_router(analytics_router, prefix="/api")
 app.include_router(insights_router, prefix="/api")
-app.include_router(backbone_router, prefix="/api")
 app.include_router(monthly_trends_router, prefix="/api")
 app.include_router(pro_spatial_router, prefix="/api")
 app.include_router(impact_roster_router, prefix="/api")
+app.include_router(relationships_router, prefix="/api")
 app.include_router(pro_reports_router, prefix="/api")
 app.include_router(dev_tools_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
