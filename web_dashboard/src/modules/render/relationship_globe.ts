@@ -312,7 +312,21 @@ export function mountGlobe(
         //         viewport is empty foreground
         //   75 is therefore the highest angle that is still readable, NOT the maximum available.
         maxPitch: 75,
-        renderWorldCopies: false,
+        // ★ true AGAIN FROM 2026-10-06, and correctness is the reason. It was set false at 1e8d223
+        //   as a visual preference ("zooming out stops at one world"), not to fix any fault.
+        //   But with ONE world, deck.gl's ArcLayer (greatCircle: true) has no second copy to
+        //   continue into. It cuts every arc that crosses the antimeridian into two mid-air
+        //   stubs, one at +180 and one at -180 (arc-layer-vertex.glsl: segments that jump >180 are
+        //   discarded). @deck.gl/mapbox renders one pass per world copy only when
+        //   getRenderWorldCopies() is true.
+        //   That is not an edge case here. 133 of the 932 drawable edges span >180 deg of
+        //   longitude (TSMC 18, Samsung 16, United_States 13, Micron 13). The semiconductor
+        //   supply chain crosses the Pacific.
+        //   The alternative of drawing them the long way round inside one world would draw all
+        //   133 geographically false (NVIDIA->TSMC across the Atlantic and Eurasia). That would
+        //   make the display assert a route the data does not contain. The one-world floor is
+        //   kept by the minZoom below; only the hard edge goes.
+        renderWorldCopies: true,
         // ★ Required for deck.gl's interleaved mode — it fixes the WebGL2 context attributes the
         //   overlay needs. The legacy map sets it for the same reason (:1034).
         antialias: true,
@@ -327,6 +341,14 @@ export function mountGlobe(
      *   max(w, h), not w: the floor has to stop grey appearing on EITHER axis. For a landscape
      *   container the two agree because w > h; they differ only in portrait, where w alone
      *   would leave grey above and below.
+     *
+     *   ★ Re-checked 2026-10-06 when renderWorldCopies went back to true. With world copies,
+     *   horizontal grey can no longer appear (the copies fill it), so the WIDTH term no longer
+     *   guards against grey. It still does the other job it was introduced for in 1e8d223:
+     *   zoomed fully out, exactly one world's width is visible, so the default view shows
+     *   no repetition. The copies appear only when the user pans across the antimeridian,
+     *   which is where they are needed. The HEIGHT term still prevents vertical grey.
+     *   Formula unchanged.
      *
      *   Recomputed on mount, on every ResizeObserver callback, and after the view's resize()
      *   (which is what fullscreen enter/exit calls), so entering fullscreen raises the floor and
@@ -848,8 +870,24 @@ export function mountGlobe(
         if (dead()) return;
         const ids = finiteCoords([id, ...(adj.get(id) || [])]);
         if (ids.length < 1) return;                  // dock-only entity: nothing geographic to fit
+        // ★ CONTINUOUS LONGITUDES, RELATIVE TO THE EGO (2026-10-06). LngLatBounds.extend is a
+        //   plain min/max of longitude. For an ego whose arcs cross the antimeridian
+        //   (NVIDIA->TSMC, TSMC->Apple, ...) that framed the long Atlantic-centred span, so the
+        //   Pacific arcs ran off both sides and joined off-screen. Each counterpart is therefore
+        //   shifted by whole turns to lie within 180 deg of the ego: the same side the great-circle
+        //   arc actually goes (|dlng| > 180 <=> the shortest path crosses +/-180). The bounds may
+        //   extend past +/-180, which renderWorldCopies: true renders as the adjacent copy.
+        //   The ego's own longitude is never moved, so the frame stays on the copy the user is in.
+        const egoLng = coords[id] && Number.isFinite(coords[id].lng) ? coords[id].lng : null;
+        const near = (lng: number) => {
+            if (egoLng === null) return lng;
+            let x = lng;
+            while (x - egoLng > 180) x -= 360;
+            while (x - egoLng < -180) x += 360;
+            return x;
+        };
         const b = new maplibregl.LngLatBounds();
-        for (const x of ids) b.extend([coords[x].lng, coords[x].lat]);
+        for (const x of ids) b.extend([near(coords[x].lng), coords[x].lat]);
         // ★ The legacy static-cascade fit, verbatim from pro_interactive_map.ts:1181-1183:
         //   pitch 50, bearing 0, duration 900. Its comment explains the tilt — "the static
         //   cascade opens tilted so the raised arcs read as curves over the surface" — which is
