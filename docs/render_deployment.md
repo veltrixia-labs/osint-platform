@@ -1,6 +1,6 @@
 # Render deployment — what is actually configured
 
-**Confirmed on 2026-10-06** from the Render dashboard (screenshots supplied by the operator).
+**Confirmed on 2026-10-06** from the Render dashboard (screenshots supplied by the operator), and by the three releases deployed that afternoon (see "What this means for merging").
 **The dashboard is authoritative.** If this file and the dashboard disagree, the dashboard is right and this file is stale.
 Re-read the dashboard before relying on any value here, and record the new date when you do.
 This file is a record of one reading. It is not a specification, and nothing reads it.
@@ -18,11 +18,24 @@ All three services build from the same repository, `veltrixia-labs/osint-platfor
 
 ## What this means for merging to `main`
 
-- **Merging to `main` deploys the API and the web dashboard immediately.** Both auto-deploy on commit from `main`, and there is no staging environment. A merge is a release.
+- **Every commit to `main` deploys the API immediately. The web dashboard deploys only when the commit changes something under `web_dashboard/`.** There is no staging environment, so a merge is a release.
+  - ★ **Corrected 2026-10-06.** This line used to say that a merge deploys both. That was wrong: osint-web's Root Directory is `web_dashboard`, and Render auto-deploys a service only on changes inside its Root Directory.
+  - Measured: merge `3f87572` (fix/test-env-isolation, nothing under `web_dashboard/`) redeployed the API (dashboard: Live, 1m50s), while osint-web stayed on `9278aec` and the live asset stayed `main-CLDPSrle.js`.
+  - Merges `4d39420` and `fd7aaf3` both changed `web_dashboard/`, and both rebuilt the web (`main-BYxvfQTw.js`, then `main-YcsGd-zy.js`).
+  - API and web deploys are therefore decoupled. A web-only fix still redeploys the API (whose Root Directory is unset), but an API-only change leaves the web untouched.
 - ★ **The scheduler does not auto-deploy.** After a merge it keeps running the **previously deployed commit** against the **same shared database**. The API and web can therefore be on one version while the scheduler is on another.
   - A change to scheduler code (`jobs/`), or to anything the scheduler imports (`db/models.py`, `config/`, `data_sources/`), does not reach production until someone deploys `osint-scheduler` by hand.
-  - The merges pending on 2026-10-06 (`fix/test-env-isolation`, `feat/relationship-map`, `feat/cut-impact-roster`) do not change scheduler code.
-  - `fix/test-env-isolation` does change `config/settings.py` and `data_sources/base_client.py` (`load_dotenv` override), which the scheduler imports. Deploy the scheduler deliberately rather than letting it drift.
+  - The three merges of 2026-10-06 (`3f87572`, `4d39420`, `fd7aaf3`) are deployed to the API and web. **The scheduler was not redeployed and still runs its previously deployed commit, which the repository cannot identify.**
+  - Measured across `5cf6e8e..fd7aaf3`:
+    - `config/settings.py` and `data_sources/base_client.py`: `load_dotenv` override `True` → `False` only.
+    - `db/models.py`: comments only.
+    - `jobs/load_impact_roster.py` (deleted) and `jobs/load_scenarios.py` (guard): the scheduler references neither.
+    - No migration.
+  - **No manual scheduler deploy is needed for these merges.** The only behavioural change it would pick up is `.env` precedence, which matters only if a `.env` file exists in its runtime directory. `.env` is gitignored, and Render builds from git. **Check the dashboard for a Secret File named `.env`.** If one exists, the old scheduler lets it override env vars and the new code would not.
+  - **A manual scheduler deploy becomes necessary when:**
+    - a merge changes `jobs/`, `analysis/`, `config/`, `data_sources/` or non-comment `db/` code
+    - a migration lands that the old code would conflict with
+    - such a Secret File exists
   - When deploying it by hand, make sure only one instance runs. `render.yaml:35-36` records a past incident in which two schedulers contended for a database lock.
 - **Every API deploy runs a migration against production.** The start command begins with `alembic upgrade head`. API startup also calls `run_migrations()` (`api/main.py`), and so does scheduler startup (`jobs/main_scheduler.py`). On 2026-10-06 this was verified to be a **no-op** for the pending merges: production's `alembic_version` is `b4e1c7a2f9d3`, which equals the repository head, and no pending branch touches `alembic/`.
   - Any future migration runs on the very next merge to `main`.
