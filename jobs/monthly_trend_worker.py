@@ -5,9 +5,10 @@ Builds and persists one calendar month's flow snapshot into
 ``monthly_trend_reports``. Idempotent: a month that already has a row is skipped
 unless ``force=True``.
 
-Scheduling: ``main_scheduler`` fires this daily but it only runs on day-of-month
-== 1, snapshotting the *just-completed* previous month (mirrors the existing
-monthly_reports_wrapper pattern).
+Scheduling: ``main_scheduler`` runs this hourly at :30 (``monthly_trend_wrapper``) and once
+at startup. (Corrected 2026-10-06: this said it ran only on day 1, mirroring
+monthly_reports_wrapper. That wrapper has since been removed with the retired monthly
+reports; this worker never shared code, schedule or tables with it.)
 
 Run manually / backfill:
 

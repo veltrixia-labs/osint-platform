@@ -8,9 +8,15 @@ class PlanTier(str, Enum):
 
 class ReportType(str, Enum):
     DAILY = "daily"
-    WEEKLY = "weekly"
-    MONTHLY = "monthly"
+    # WEEKLY / MONTHLY removed 2026-10-06: retired, see RETIRED_REPORT_TYPES below.
     SYSTEM_DIAGNOSTIC = "system_diagnostic"
+
+# ★ Retired 2026-10-06 (operator decision: Pro Insight supersedes them). Weekly and monthly
+#   reports were generated but shown on no reachable surface: the only UI path was the dead
+#   'reports' tab, and Pro Insight serves pro_structural only. Generation is refused for these
+#   types (jobs/report_generator.py) and the retention job deletes any existing rows regardless
+#   of age (jobs/cleanup_job.py).
+RETIRED_REPORT_TYPES = ("weekly", "monthly")
 
 # Tier Hierarchy for simple comparison
 TIER_ORDER = [PlanTier.FREE, PlanTier.PRO, PlanTier.EXPERTS, PlanTier.ENTERPRISE]

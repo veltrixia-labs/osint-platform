@@ -82,8 +82,7 @@ async def get_usage(
         },
         "reports": {
             "daily": True,
-            "monthly": can_access_report_type(tier, "monthly"),
-        },
+        },  # "monthly" removed 2026-10-06: the type is retired (db/enums.py RETIRED_REPORT_TYPES)
     }
 
 

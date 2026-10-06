@@ -193,12 +193,10 @@ def get_restricted_topics(tier: str) -> List[str]:
 
 
 def can_access_report_type(tier: str, report_type: str) -> bool:
-    """Gate report access: Daily (Free), Weekly (Pro), Monthly (Expert)."""
+    """Gate report access by type. Weekly/monthly were retired 2026-10-06 (db/enums.py)."""
     # System mapping for report types
     REPORT_TYPE_MIN_TIER = {
         ReportType.DAILY.value: PlanTier.FREE.value,
-        ReportType.WEEKLY.value: PlanTier.PRO.value,
-        ReportType.MONTHLY.value: PlanTier.EXPERTS.value,
         ReportType.SYSTEM_DIAGNOSTIC.value: PlanTier.ENTERPRISE.value,
     }
     

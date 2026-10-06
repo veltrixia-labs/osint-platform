@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from db.database import AsyncSessionLocal, run_migrations
-from jobs.main_scheduler import pipeline_full_processing, daily_reports_wrapper, weekly_reports_wrapper
+from jobs.main_scheduler import pipeline_full_processing, daily_reports_wrapper
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,9 +34,10 @@ async def run_sync():
         await pipeline_full_processing()
         
         # 2. Report Generation Sync
-        logger.info("[SYNC] Phase 2: Generating Daily & Weekly Reports (Analysis Integration)")
+        # Weekly reports were retired 2026-10-06; daily generation is itself a no-op
+        # (report_orchestrator.py), kept here only as the scheduler still registers it.
+        logger.info("[SYNC] Phase 2: Daily report wrapper")
         await daily_reports_wrapper()
-        await weekly_reports_wrapper()
         
         logger.info("SUCCESS: Manual Sync Completed. Dashboard should now reflect fresh intelligence.")
         

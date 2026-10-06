@@ -146,19 +146,8 @@ async def daily_reports_wrapper():
             await run_all_reports(session, "daily", 1, auto_post_threads=True)
     gc.collect()
 
-async def weekly_reports_wrapper():
-    async with _heavy_db_lock:
-        async with AsyncSessionLocal() as session:
-            await run_all_reports(session, "weekly", 7, auto_post_threads=True)
-    gc.collect()
-
-async def monthly_reports_wrapper():
-    if datetime.now(timezone.utc).day != 1:
-        return
-    async with _heavy_db_lock:
-        async with AsyncSessionLocal() as session:
-            await run_all_reports(session, "monthly", 30, auto_post_threads=True)
-    gc.collect()
+# weekly_reports_wrapper / monthly_reports_wrapper were removed 2026-10-06: weekly and monthly
+# reports are retired (db/enums.py RETIRED_REPORT_TYPES). Their schedule entries went with them.
 
 async def monthly_trend_wrapper():
     # Spatial subsystem is live (quarantine lifted): the monthly-trend builder
@@ -363,8 +352,6 @@ def register_jobs():
 
     # Scheduled Reports
     schedule.every().day.at("07:00").do(schedule_async, "daily_report", daily_reports_wrapper)
-    schedule.every().monday.at("08:00").do(schedule_async, "weekly_report", weekly_reports_wrapper)
-    schedule.every().day.at("09:00").do(schedule_async, "monthly_report", monthly_reports_wrapper)
     # Hourly (at :30, off the top-of-hour cleanup) so the dashboard reflects "today"
     # intraday. The builder is streamed + idempotent (force-rebuild current month),
     # and runs under _heavy_db_lock so it never stacks with cleanup on 512MB.
