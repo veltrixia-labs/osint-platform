@@ -153,7 +153,11 @@ async def _get_current_tier(
 
 
 def _require_pro(tier: str, detail: str) -> None:
-    """Mirrors impact_roster.py:64-66 exactly — same 403, same shape, same sibling module."""
+    """403 unless the tier is pro/experts/enterprise.
+
+    Originally a copy of the Impact Roster's gate (impact_roster.py:64-66). That module was
+    removed from the product on 2026-10-06 (merge fd7aaf3), so this is now the only copy.
+    """
     if tier not in _FULL_TIERS:
         raise HTTPException(status_code=403, detail=detail)
 

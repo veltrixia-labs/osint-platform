@@ -6,19 +6,23 @@
  *   This module may import ONLY: maplibre-gl, and types from relationship_graph_canvas.
  *   It must NEVER import from, or read, any of the chokepoint-scenario apparatus:
  *     • the five scenario payloads (strait_of_hormuz.json &c.) or /pro/domains/* routes
- *     • the impact roster (impact_roster_rows / impact_roster_loads, /pro/impact-roster)
+ *     • the impact_roster_rows / impact_roster_loads tables (the Impact Roster feature and its
+ *       /pro/impact-roster routes were removed 2026-10-06, fd7aaf3; the tables remain, orphaned)
  *     • the spatial_nodes / spatial_edges / contagion_history tables
  *     • pro_interactive_map.ts, pro_trigger_map.ts
  *     • any node field named impact_score, raw_impact, order, confidence, intensity,
  *       viscosity_coefficient, entropy_index, is_epicenter
  *
- *   The reason is the vault's CLAUDE.md §5. order-3 in export_scenarios.py is a country×domain
- *   cross-product with NO edge predicate: it assigns a firm impact = country × DECAY(0.7)
- *   whether or not that firm has any edge to the hub — INPEX sits at −0.63 with no Hormuz edge
- *   at all — and the coordinate gate is the only thing that keeps such a node off a map. A globe
- *   is exactly the surface where a coordinate turns a derived number into a published one. This
- *   view therefore carries coordinates and NOTHING else from that side: position is presentation,
- *   and every edge drawn here is one the vault authored.
+ *   The reason is the vault's CLAUDE.md §5. A globe is exactly the surface where a coordinate
+ *   turns a derived number into a published one. This view therefore carries coordinates and
+ *   NOTHING else from the scenario side: position is presentation, and every edge drawn here is
+ *   one the vault authored.
+ *   (Comment corrected 2026-10-06.) This paragraph used to justify the contract with order-3 as
+ *   live, an edge-less country×domain impact (country × DECAY 0.7) that put INPEX at −0.63 with
+ *   no Hormuz edge. Both are stale. order-3 was removed from the payloads on 2026-10-05 (vault
+ *   f2795b0), and INPEX was never promoted into the graph (it is HELD). The contract still stands:
+ *   the scenario surface still carries derived, hub-relative numbers that must not reach a globe,
+ *   and scripts/check-globe-isolation.mjs enforces it.
  *
  *   node_coordinates.json's own header says the same thing: "Presentation layer only.
  *   Coordinates are NOT graph structure and never enter canonical .md."
