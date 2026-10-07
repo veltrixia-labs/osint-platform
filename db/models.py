@@ -42,6 +42,27 @@ class Item(Base):
     lang = Column(String)            # "ja" / "en" / NULL (legacy rows)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+class IngestRejection(Base):
+    """One row per feed entry that normalize refused to create as a new item.
+
+    Written by processor/normalize.py (the stale-on-arrival filter), one row per entry,
+    keyed on the item's would-be dedup_key: normalize re-reads raw rows every cycle, so a
+    rejected entry is seen again and only last_rejected_at moves. A gap between first and last
+    rejection shows a feed re-serving the entry. Deleted after INGEST_REJECTION_RETENTION_DAYS
+    by the retention job. Created by migration c7d2e4f1a9b3; read it with SQL, it is not
+    served by any API route (GET /api/metrics, by contrast, is public)."""
+    __tablename__ = "ingest_rejections"
+    dedup_key = Column(String, primary_key=True)
+    source_id = Column(String)
+    source_url = Column(String)
+    title = Column(String)
+    published_at = Column(DateTime(timezone=True))
+    reason = Column(String, nullable=False)
+    threshold_days = Column(Integer)
+    first_rejected_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_rejected_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+
 class Topic(Base):
     __tablename__ = "topics"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

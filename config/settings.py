@@ -54,6 +54,17 @@ class Settings(BaseSettings):
     # Data Retention Policy (Hours/Days)
     alert_retention_hours: int = int(os.getenv("ALERT_RETENTION_HOURS", 24))
     raw_retention_days: int = int(os.getenv("RAW_RETENTION_DAYS", 30))
+    # ★ INVARIANT: STALE_ON_ARRIVAL_DAYS must stay BELOW RAW_RETENTION_DAYS.
+    #   normalize rejects a new item whose published_at is older than this many days
+    #   (processor/normalize.py). Retention deletes raw rows, and with them the dedup memory,
+    #   after RAW_RETENTION_DAYS; a feed still serving an entry then re-ingests it with a lag
+    #   of at least RAW_RETENTION_DAYS. A threshold below the retention catches every such
+    #   re-ingest by construction. At or above it, re-ingested entries pass as "today's news"
+    #   (the 2026-10-07 incident, vault audit §12.66-§12.67). normalize REFUSES to apply the
+    #   filter, and records that refusal in ingest_rejections, if this invariant is broken.
+    #   Lowering RAW_RETENTION_DAYS means lowering this first.
+    stale_on_arrival_days: int = int(os.getenv("STALE_ON_ARRIVAL_DAYS", 14))
+    ingest_rejection_retention_days: int = int(os.getenv("INGEST_REJECTION_RETENTION_DAYS", 90))
     report_retention_days: int = int(os.getenv("REPORT_RETENTION_DAYS", 30))
     pro_structural_retention_days: int = int(os.getenv("PRO_STRUCTURAL_RETENTION_DAYS", 90))
     retention_dry_run: bool = os.getenv("RETENTION_DRY_RUN", "false").lower() == "true"

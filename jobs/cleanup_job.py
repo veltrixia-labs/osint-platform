@@ -18,7 +18,7 @@ from db.database import AsyncSessionLocal, get_db_size_mb
 from db.models import (
     AlertLog, AlertDelivery, Report, RawItem, Item, ItemTopic, 
     AnalyticsEvent, SecurityLog, SystemMetric, EventCluster, 
-    AnalysisCache, TrendSignal, SignalRanking
+    AnalysisCache, TrendSignal, SignalRanking, IngestRejection
 )
 from config.settings import settings
 from db.enums import RETIRED_REPORT_TYPES
@@ -412,6 +412,17 @@ async def run_retention_cleanup(db: AsyncSession, dry_run: bool | None = None) -
         if not dry_run:
             await db.execute(analytics_stmt)
             await db.execute(security_stmt)
+
+        # 2b. ingest_rejections (2026-10-07): the stale-on-arrival filter's record, one row per
+        #     entry. Kept INGEST_REJECTION_RETENTION_DAYS (90) after the entry was LAST seen, so a
+        #     feed that keeps re-serving an entry keeps its row.
+        rej_threshold = now - timedelta(days=settings.ingest_rejection_retention_days)
+        if dry_run:
+            counts["ingest_rejections"] = await _count(select(func.count()).select_from(IngestRejection).where(
+                IngestRejection.last_rejected_at < rej_threshold))
+        else:
+            counts["ingest_rejections"] = (await db.execute(delete(IngestRejection).where(
+                IngestRejection.last_rejected_at < rej_threshold))).rowcount
 
         # 3. Raw Data
         # ★ The gate that stood here was removed 2026-10-06: `if await _is_monthly_summary_ready(db):`,
