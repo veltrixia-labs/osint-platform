@@ -5,11 +5,12 @@ import re
 from datetime import datetime, timezone, timedelta
 
 from dateutil import parser as dt_parser
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import Item, RawItem
+from config.settings import settings
+from db.models import IngestRejection, Item, RawItem
 from processor.lightweight_topic import infer_topic_from_text
 from processor.classify import llm_classify_fallback  # (C-1) keyword-miss rescue
 from processor.classify import detect_ja, llm_translate_to_en  # (C-4) JA translate-at-ingest
@@ -52,6 +53,28 @@ async def insert_items_ignore_duplicates(db: AsyncSession, rows: list[dict]) -> 
     return inserted
 
 
+async def _record_rejections(db: AsyncSession, rows: list[dict]) -> None:
+    """Upsert into ingest_rejections: one row per entry; a repeat only moves last_rejected_at.
+
+    normalize re-reads every raw row in its lookback each cycle, so a rejected entry is seen
+    again every few minutes. Counting each sighting would inflate by ~144x per entry over the
+    12h lookback; one row per dedup_key keeps the count meaningful."""
+    if not rows:
+        return
+    cols = ("dedup_key", "source_id", "source_url", "title", "published_at", "reason", "threshold_days")
+    by_key = {}
+    for r in rows:  # same keys in every row (multi-VALUES requires it); one row per dedup_key
+        by_key[r["dedup_key"]] = {k: r.get(k) for k in cols}
+    stmt = pg_insert(IngestRejection).values(list(by_key.values()))
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["dedup_key"],
+        set_={"last_rejected_at": func.now(), "reason": stmt.excluded.reason,
+              "threshold_days": stmt.excluded.threshold_days},
+    )
+    await db.execute(stmt)
+    await db.commit()
+
+
 async def run_normalize(db: AsyncSession):
     """
     High-Efficiency Normalize Job migrated from jobs/normalize_job.py.
@@ -69,7 +92,30 @@ async def run_normalize(db: AsyncSession):
     result = await db.execute(stmt)
     raw_items = result.scalars().all()
 
-    metrics = {"normalized": 0, "noise_filtered": 0, "deduped": 0, "unclassified": 0}
+    metrics = {"normalized": 0, "noise_filtered": 0, "deduped": 0, "unclassified": 0, "stale_rejected": 0}
+
+    # ★ STALE-ON-ARRIVAL FILTER (2026-10-07). A new item whose published_at is more than
+    #   STALE_ON_ARRIVAL_DAYS old is not created; it is recorded in ingest_rejections instead.
+    #   Why: retention deletes raw rows, and with them the dedup memory, after RAW_RETENTION_DAYS.
+    #   A feed still serving an old entry then re-ingests it as a NEW item, and the feed shows it
+    #   as today's news (2026-10-07: 29 items, published 2025-12 .. 2026-09; vault audit
+    #   §12.66-§12.67). Measured before choosing 14: over 30 days, no item outside that burst
+    #   arrived more than 7 days after publication.
+    #   ★ INVARIANT: the threshold must be BELOW RAW_RETENTION_DAYS. A re-ingested entry arrives
+    #   with a lag of at least the retention, so a lower threshold catches every re-ingest by
+    #   construction; an equal or higher one lets them through. If the invariant is broken, the
+    #   filter is NOT applied, and that refusal is recorded (below) rather than logged and lost.
+    #   Anyone lowering RAW_RETENTION_DAYS must lower STALE_ON_ARRIVAL_DAYS first.
+    _stale_days = settings.stale_on_arrival_days
+    _stale_filter_on = 0 < _stale_days < settings.raw_retention_days
+    _stale_cutoff = datetime.now(timezone.utc) - timedelta(days=_stale_days)
+    rejections: list[dict] = []
+    if not _stale_filter_on:
+        _why = (f"stale-on-arrival filter NOT applied: STALE_ON_ARRIVAL_DAYS={_stale_days} must be "
+                f"> 0 and < RAW_RETENTION_DAYS={settings.raw_retention_days}")
+        logger.error("[NORMALIZE] %s", _why)
+        rejections.append({"dedup_key": "config:stale_on_arrival_invariant", "reason": _why,
+                           "threshold_days": _stale_days})
     candidates: list[dict] = []
     pending_llm: list[dict] = []  # (C-1) keyword-miss, awaiting LLM rescue
     _enable_llm_topic = os.getenv("ENABLE_LLM_TOPIC", "false").lower() == "true"
@@ -217,6 +263,7 @@ async def run_normalize(db: AsyncSession):
                 metrics["unclassified"] += 1
 
     if not candidates:
+        await _record_rejections(db, rejections)
         logger.info("Processor Normalize finished. Metrics: %s", metrics)
         return
 
@@ -243,6 +290,15 @@ async def run_normalize(db: AsyncSession):
         seen_url.add(url_hash)
         seen_title.add(title_hash)
         raw = c["raw"]
+        # After dedup on purpose: only an entry that would otherwise become a NEW item is
+        # rejected. Entries a feed keeps serving past the threshold, whose item still exists,
+        # are ordinary duplicates and are not recorded.
+        if _stale_filter_on and c["pub_date"] < _stale_cutoff:
+            metrics["stale_rejected"] += 1
+            rejections.append({"dedup_key": url_hash, "source_id": raw.source_id, "source_url": c["url"],
+                               "title": c["title"], "published_at": c["pub_date"],
+                               "reason": "stale_on_arrival", "threshold_days": _stale_days})
+            continue
         new_rows.append(
             {
                 "type": "article",
@@ -266,6 +322,7 @@ async def run_normalize(db: AsyncSession):
 
     if new_rows:
         metrics["normalized"] = await insert_items_ignore_duplicates(db, new_rows)
+    await _record_rejections(db, rejections)
 
     await db.commit()
     db.expire_all()
