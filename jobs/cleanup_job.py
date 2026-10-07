@@ -636,6 +636,161 @@ async def run_pro_structural_retention_wrapper():
     async with AsyncSessionLocal() as session:
         await run_pro_structural_retention_cleanup(session, dry_run=settings.retention_dry_run)
 
+
+# --- One-off: purge specific item rows (2026-10-07) ---
+#
+# Why this exists. The first batched retention run (2026-10-07 00:00Z) deleted six months of
+# raw_items/items, and with them the dedup memory (raw_items.payload_hash, items.dedup_key). Feeds
+# that still served old entries were re-ingested as NEW items, published 2025-12 .. 2026-09 but
+# with today's created_at. GET /api/items orders by created_at and the feed list displays it, so
+# they were shown to users as today's news (vault audit §12.66, §12.67).
+#
+# Why a targeted delete and not the retention job. Retention selects by created_at, and these
+# rows were created today, so it cannot reach them for 30 days. Adding a "stale on arrival" phase
+# to it would adopt a design (filter on published_at) that has not been decided.
+#
+# Why raw_items is never touched. The raw row's payload_hash is ingest's dedup memory; deleting
+# it lets a feed that still serves the entry re-ingest it within one cycle.
+#
+# Why the normalize-lookback guard. run_normalize re-reads every raw row inside its lookback and
+# dedups only against items.dedup_key. Deleting an item whose raw row is still inside that window
+# re-creates the item on the next 5-minute cycle. The lookback is read from normalize.py's own
+# source (it is an inline literal, not an importable constant), so this guard cannot drift from
+# the code it protects; if that code changes shape, the guard refuses instead of guessing.
+
+_NORMALIZE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "processor", "normalize.py")
+
+
+def normalize_lookback_hours(path: str = _NORMALIZE_PATH) -> float:
+    """The `hours=` of run_normalize's `lookback = … - timedelta(hours=N)`, read by AST (no import).
+
+    Raises RuntimeError unless exactly one such assignment with a numeric literal is found."""
+    import ast
+    with open(path, encoding="utf-8") as fh:
+        tree = ast.parse(fh.read())
+    fns = [n for n in tree.body if isinstance(n, ast.AsyncFunctionDef) and n.name == "run_normalize"]
+    if len(fns) != 1:
+        raise RuntimeError(f"normalize lookback: expected one run_normalize in {path}, found {len(fns)}")
+    found = []
+    for node in ast.walk(fns[0]):
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "lookback" for t in node.targets):
+            for call in ast.walk(node.value):
+                if isinstance(call, ast.Call) and getattr(call.func, "id", None) == "timedelta":
+                    for kw in call.keywords:
+                        if kw.arg == "hours" and isinstance(kw.value, ast.Constant) and isinstance(kw.value.value, (int, float)):
+                            found.append(kw.value.value)
+    if len(found) != 1:
+        raise RuntimeError(f"normalize lookback: expected one `lookback = … timedelta(hours=<number>)` in run_normalize, found {found}")
+    return float(found[0])
+
+
+async def purge_items_by_id(db: AsyncSession, ids: List[str], *, expected_count: int,
+                            dry_run: bool = True, stale_days: int = 30) -> Dict[str, Any]:
+    """Delete exactly these `items` rows, or nothing. Dry run by default.
+
+    Refuses (deletes nothing) unless ALL hold:
+      (a) exactly `expected_count` distinct ids, all present in items;
+      (b) every row is stale on arrival: published_at < created_at - stale_days;
+      (c) nothing references them: 0 rows in analysis_cache / item_topics / signal_rankings, and
+          cluster_id is NULL (so the delete cascades to nothing);
+      (d) every row has >= 1 backing raw_items row, and EVERY backing raw row is older than
+          normalize's lookback (read from processor/normalize.py), so normalize cannot re-create it;
+      (e) raw_items is never touched.
+    A dry run pins its transaction READ ONLY and verifies it. An executed run deletes in one
+    transaction, asserts rowcount == expected_count or rolls back, and records the outcome in
+    system_metrics.oneoff_item_purge_result (also on refusal)."""
+    ids = sorted({str(i).strip() for i in ids if str(i).strip()})
+    result: Dict[str, Any] = {"dry_run": dry_run, "requested": len(ids), "expected_count": expected_count,
+                              "problems": [], "deleted": 0}
+    if dry_run:
+        await db.execute(text("SET TRANSACTION READ ONLY"))
+        ro = (await db.execute(text("SHOW transaction_read_only"))).scalar()
+        if ro != "on":
+            raise RuntimeError(f"dry run: transaction_read_only is {ro!r}, refusing")
+        result["transaction_read_only"] = ro
+
+    problems = result["problems"]
+    lookback_h = normalize_lookback_hours()
+    db_now = (await db.execute(text("SELECT now()"))).scalar()
+    result.update({"normalize_lookback_hours": lookback_h, "db_now": db_now.isoformat()})
+
+    # (a)
+    if len(ids) != expected_count:
+        problems.append(f"(a) {len(ids)} distinct ids, expected {expected_count}")
+    stmt = select(Item.id, Item.published_at, Item.created_at, Item.cluster_id,
+                  Item.source_id, Item.source_url).where(Item.id.in_(ids))
+    if not dry_run:
+        stmt = stmt.with_for_update()
+    rows = (await db.execute(stmt)).all()
+    found = {str(r.id) for r in rows}
+    if len(rows) != len(ids):
+        problems.append(f"(a) {len(rows)} of {len(ids)} ids present; missing {sorted(set(ids) - found)}")
+
+    # (b) and the cluster half of (c)
+    for r in rows:
+        if r.published_at is None or r.published_at >= r.created_at - timedelta(days=stale_days):
+            problems.append(f"(b) {r.id} not stale on arrival (published {r.published_at}, created {r.created_at})")
+        if r.cluster_id is not None:
+            problems.append(f"(c) {r.id} has cluster_id {r.cluster_id}")
+
+    # (c) FK children (each CASCADEs from items)
+    refs = {}
+    for name, model in (("analysis_cache", AnalysisCache), ("item_topics", ItemTopic), ("signal_rankings", SignalRanking)):
+        n = (await db.execute(select(func.count()).select_from(model).where(model.item_id.in_(ids)))).scalar() or 0
+        refs[name] = n
+        if n:
+            problems.append(f"(c) {n} {name} rows reference these items")
+    result["references"] = refs
+
+    # (d) backing raw rows, matched by source_id + the item's URL inside payload_json
+    cutoff = db_now - timedelta(hours=lookback_h)
+    raw_rows, newest = 0, None
+    for r in rows:
+        if not r.source_url:
+            problems.append(f"(d) {r.id} has no source_url; cannot locate its raw row")
+            continue
+        raws = (await db.execute(select(RawItem.created_at).where(
+            RawItem.source_id == r.source_id,
+            func.strpos(cast(RawItem.payload_json, Text), r.source_url) > 0))).scalars().all()
+        if not raws:
+            problems.append(f"(d) {r.id} has no backing raw_items row (ingest would not dedup it)")
+        for ca in raws:
+            raw_rows += 1
+            newest = ca if newest is None or ca > newest else newest
+            if ca >= cutoff:
+                problems.append(f"(d) {r.id} raw row created {ca.isoformat()} is inside normalize's {lookback_h}h lookback (until {(ca + timedelta(hours=lookback_h)).isoformat()})")
+    result.update({"backing_raw_rows": raw_rows, "newest_raw_created_at": newest.isoformat() if newest else None,
+                   "raw_items_deleted": 0})
+
+    if problems or dry_run:
+        result["status"] = "refused" if problems else "dry_run_ok"
+        await db.rollback()
+        if problems and not dry_run:
+            await update_system_metric(db, "oneoff_item_purge_result", json.dumps(result, default=str))
+        return result
+
+    res = await db.execute(delete(Item).where(Item.id.in_(ids)))
+    if res.rowcount != expected_count:
+        await db.rollback()
+        result.update({"status": "rolled_back", "problems": [f"rowcount {res.rowcount} != {expected_count}"]})
+        await update_system_metric(db, "oneoff_item_purge_result", json.dumps(result, default=str))
+        return result
+    await db.commit()
+    result.update({"status": "deleted", "deleted": res.rowcount, "ids": ids,
+                   "at": datetime.now(timezone.utc).isoformat()})
+    await update_system_metric(db, "oneoff_item_purge_result", json.dumps(result, default=str))
+    return result
+
+
+async def _purge_items_cli(path: str, expected_count: int, execute: bool) -> int:
+    with open(path, encoding="utf-8") as fh:
+        ids = [ln.split("#", 1)[0].strip() for ln in fh]
+    async with AsyncSessionLocal() as session:
+        result = await purge_items_by_id(session, [i for i in ids if i], expected_count=expected_count,
+                                         dry_run=not execute)
+    print(json.dumps(result, indent=1, default=str))
+    return 0 if result["status"] in ("dry_run_ok", "deleted") else 1
+
 # --- CLI Implementation ---
 
 async def main():
@@ -644,12 +799,22 @@ async def main():
     parser.add_argument("--archive-only", action="store_true", help="Archive instead of delete (Visuals only).")
     parser.add_argument("--retention", type=int, default=DEFAULT_RETENTION_DAYS, help="Retention days (Visuals).")
     parser.add_argument("--verbose", action="store_true", help="Enable debug logging.")
-    
+    parser.add_argument("--purge-items-file", help="One-off: file of item ids to purge (dry run unless --execute).")
+    parser.add_argument("--expected-count", type=int, help="Required with --purge-items-file: exact number of ids.")
+    parser.add_argument("--execute", action="store_true", help="With --purge-items-file: actually delete.")
+
     args = parser.parse_args()
-    
+
     if args.verbose:
         logger.setLevel(logging.DEBUG)
-    
+
+    if args.purge_items_file:
+        if args.expected_count is None:
+            parser.error("--expected-count is required with --purge-items-file")
+        raise SystemExit(await _purge_items_cli(args.purge_items_file, args.expected_count, args.execute))
+    if args.execute or args.expected_count is not None:
+        parser.error("--execute / --expected-count are only valid with --purge-items-file")
+
     # Defaults to running Visual Cleanup when called via CLI
     audit = VisualAudit(dry_run=args.dry_run, archive_only=args.archive_only, retention_days=args.retention)
     await audit.build_reference_map()
