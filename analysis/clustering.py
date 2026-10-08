@@ -279,50 +279,112 @@ CATEGORY_THRESHOLDS = {
     "default": 0.40
 }
 
-async def cluster_items(db: Session, items: List[Item], base_threshold: float = 0.40) -> Dict:
-    """
-    Groups items with Phase 16 Intelligence Evolution logic.
-    - Agreement Bonus logic
-    - Category-specific thresholds
-    - Refined split detection
-    """
-    if not items:
-        return {"clusters_created": 0}
+# Items carry the strategic category codes written by processor/normalize.py, but the
+# keys above are the old category names, so every lookup used to fall back to 0.40.
+# Map the codes that have a counterpart. Measured 2026-10-08 as an exact no-op on
+# grouping (every mapped value is 0.40; no code maps to "cyber"): it fixes the key
+# mismatch, not a behaviour.
+CATEGORY_THRESHOLD_KEYS = {
+    "supply_chain_intelligence": "supply_chain",
+    "defense_technology": "defense",
+    "global_market_intelligence": "economy",
+}
 
-    # 1. Clustering logic
+# ── Specificity gate (replayed 2026-10-08 against 7 days of production items) ────────
+# Two titles may merge only if they share at least one SPECIFIC word: a token that is
+# not a stopword, not a sector/geo entity, not an event-class keyword, not a bare
+# number and not a single letter. Without it, "shipping" counted three times (lexical
+# token, sector entity, class keyword) scored ~0.47 with zero lexical overlap, so
+# "Panama Canal to limit shipping…" and "China growth straining global auto shipping…"
+# merged and shared all six evidence articles. The tokenizer turns "$100" into "100"
+# and "U.S." into "u" + "s", which is why numbers and single letters count as generic.
+# The stopwords are used by this gate ONLY; the lexical score is unchanged (removing
+# them from the score split near-duplicate titles in the replay).
+GATE_STOPWORDS = frozenset("""
+a an the of to in on at for by with from as is are was were be been being and or but if then than that this these those it its into over under
+after before about against between during without within up down out off new says said say will would could can may might not no yes
+amid per via vs more most less least first last next one two three us we you they he she his her their our your who what when where why how
+all any some such only also just still yet very much many few week weeks year years day days month months today report reports
+""".split())
+GATE_GENERIC = frozenset(
+    set(SECTOR_ENTITIES) | set(GEO_ENTITIES) | GATE_STOPWORDS
+    | {w for kws in ACTION_LEXICON.values() for kw in kws for w in kw.split()}
+)
+
+
+def _is_gate_artifact(token: str) -> bool:
+    """A bare number ("100" from "$100") or a single letter ("u", "s" from "U.S.")."""
+    return token.isdigit() or len(token) == 1
+
+
+def shares_specific_token(title_a: str, title_b: str) -> bool:
+    """True when the two titles share at least one specific (non-generic) word."""
+    shared = (tokenize(title_a) & tokenize(title_b)) - GATE_GENERIC
+    return any(not _is_gate_artifact(t) for t in shared)
+
+
+def group_items(items: List[Item], base_threshold: float = 0.40) -> List[List[Item]]:
+    """Sequential grouping. Items are processed in the order given; each joins the
+    best-scoring existing group or starts a new one.
+
+    A new item is compared against EVERY member of a group, and scores as its best
+    pairwise match. The geo/class vetoes and the specificity gate apply to each pair.
+    Until 2026-10-08 it was compared against the first member (the seed) only. That
+    separated duplicates of a non-seed member: 19 of 23 same-event splits in the
+    replay passed the gate and were split by the seed-only comparison alone. This is
+    pairwise, NOT the pre-June concatenation of every title in the group, so a group's
+    token surface does not grow as it absorbs items. The size-scaled threshold and the
+    multi-geo veto still bound growth.
+
+    KNOWN LIMIT: the result depends on processing order. In the replay, the same items
+    in a different order disagreed on ~50% of grouped pairs. An order-independent
+    grouping (connected components) removed that, but chained topics into groups of up
+    to 73, because single-word links are too weak to stand without this loop's brake.
+    """
     clusters: List[List[Item]] = []
-    
+    # Per-member facts, computed once per item rather than once per comparison.
+    facts: Dict[Any, tuple] = {}
+
+    def _facts(it: Item) -> tuple:
+        key = id(it)
+        if key not in facts:
+            facts[key] = (extract_entities(it.title)["geo"], dominant_event_class(it.title))
+        return facts[key]
+
     for item in items:
         best_match_idx = -1
         max_conf = 0.0
 
         # Determine category-specific threshold
         item_cat = (item.category or item.rough_category or "default").lower()
-        threshold = CATEGORY_THRESHOLDS.get(item_cat, base_threshold)
+        threshold = CATEGORY_THRESHOLDS.get(CATEGORY_THRESHOLD_KEYS.get(item_cat, item_cat), base_threshold)
 
-        item_geo = extract_entities(item.title)["geo"]
-        item_class = dominant_event_class(item.title)
+        item_geo, item_class = _facts(item)
 
         for idx, cluster in enumerate(clusters):
-            # (c) FROZEN FOOTPRINT: compare against the cluster SEED (first item)
-            # only — never the ever-growing concatenation of all titles. This kills
-            # the "black hole" where a big cluster's expanding token/entity surface
-            # keeps matching loosely-related news.
-            seed = cluster[0]
-            seed_geo = extract_entities(seed.title)["geo"]
+            best_member = 0.0
+            for member in cluster:
+                member_geo, member_class = _facts(member)
 
-            # Disjoint-geography ABSOLUTE VETO (different theaters never merge).
-            if item_geo and seed_geo and not (item_geo & seed_geo):
-                continue
+                # Disjoint-geography ABSOLUTE VETO (different theaters never merge).
+                if item_geo and member_geo and not (item_geo & member_geo):
+                    continue
 
-            # (a) EVENT-CLASS ABSOLUTE VETO: soft news (sports/entertainment) vs a
-            # hard/strategic event never merge, regardless of shared geo entities.
-            if _event_classes_conflict(item_class, dominant_event_class(seed.title)):
-                continue
+                # (a) EVENT-CLASS ABSOLUTE VETO: soft news (sports/entertainment) vs a
+                # hard/strategic event never merge, regardless of shared geo entities.
+                if _event_classes_conflict(item_class, member_class):
+                    continue
 
-            conf_data = calculate_merge_confidence([item], [seed])
-            if conf_data["score"] > max_conf:
-                max_conf = conf_data["score"]
+                # Specificity gate: no shared specific word, no merge.
+                if not shares_specific_token(item.title, member.title):
+                    continue
+
+                score = calculate_merge_confidence([item], [member])["score"]
+                if score > best_member:
+                    best_member = score
+
+            if best_member > max_conf:
+                max_conf = best_member
                 best_match_idx = idx
 
         # (d) SIZE-SCALED THRESHOLD: the bigger the target cluster, the higher the
@@ -338,7 +400,7 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
         if max_conf >= effective_threshold and best_match_idx >= 0:
             merged_geos: Set[str] = set()
             for it in clusters[best_match_idx]:
-                merged_geos |= extract_entities(it.title)["geo"]
+                merged_geos |= _facts(it)[0]
             merged_geos |= item_geo
             if len(merged_geos) > 2:
                 clusters.append([item])
@@ -346,7 +408,23 @@ async def cluster_items(db: Session, items: List[Item], base_threshold: float = 
                 clusters[best_match_idx].append(item)
         else:
             clusters.append([item])
-            
+
+    return clusters
+
+
+async def cluster_items(db: Session, items: List[Item], base_threshold: float = 0.40) -> Dict:
+    """
+    Groups items with Phase 16 Intelligence Evolution logic.
+    - Agreement Bonus logic
+    - Category-specific thresholds
+    - Refined split detection
+    """
+    if not items:
+        return {"clusters_created": 0}
+
+    # 1. Clustering logic (see group_items)
+    clusters: List[List[Item]] = group_items(items, base_threshold)
+
     # 2. Metrics & Quality Validation
     metrics = {
         "clusters_created": len(clusters),
