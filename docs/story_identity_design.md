@@ -1,6 +1,7 @@
 # Story identity: one story, one alert — design for review
 
 **Status:** design for review. Nothing in this document is built; no code and no schema change.
+**Revised 2026-10-08 after operator review:** continuity floor of two (§B.4), absorption record (§B.5), headline rule C.1.4, and the replay as a precondition (§G). §B.4 also records a correction to a claim made during review.
 **Date:** 2026-10-08. **Scope:** going forward only. By the operator's decision, past months are not repaired; the
 duplicated August–October counts age out of Monthly Trend Flow within three months.
 **Related:** vault audit §12.68 (the Monthly Trend Flow double count); `docs/clustering_quality_proposal.md`
@@ -121,10 +122,15 @@ setting would silently change several screens.
 ### B.1 The rule
 
 On each run, after the in-memory grouping:
-1. **Look up memberships.** Collect the stories the group's items are already assigned to.
-2. **No assigned members:** mint a new story. Assign all the group's unassigned items to it.
-3. **Members from exactly one story:** that is the story. Append the group's unassigned items.
-4. **Members from two or more stories:** see §B.3.
+1. **Look up memberships.** Collect the stories the group's items are already assigned to, and count the group's
+   members in each.
+2. **Continuity needs a floor of two.** A group maps to an existing story only if **at least two of its items already
+   belong to that story** (§B.4 gives the measurement behind this).
+3. **No story reaches the floor:** mint a new story and assign the group's **unassigned** items to it. Any members
+   already assigned elsewhere stay where they are, because membership is assign-once.
+4. **Exactly one story reaches the floor:** that is the story. Append the group's unassigned items, and record the
+   mapping (§B.5).
+5. **Two or more stories reach the floor:** merge, per §B.3.
 
 **The key is item membership, through the URL-hash item identity.** It is never title similarity across runs, and
 there is no time window on "existing", other than stories pruned by §A.4.
@@ -132,35 +138,123 @@ there is no time window on "existing", other than stories pruned by §A.4.
 ### B.2 Why this fixes the 24h break
 
 The cluster layer broke because "existing" meant "a cluster created in the last 24h, with a similar representative
-title". Under §B.1, an existing story is found **however old it is**, as long as the regrouping contains one of its
-members.
+title". Under §B.1, an existing story is found **however old it is**, as long as the regrouping contains at least two
+of its members.
 
 ### B.3 Merges and splits
 
-- **Merge (a group spans two stories):**
+- **Merge (two or more stories each reach the floor of two members in one group):**
   - The story with the earliest `first_seen_at` survives. The other gets `merged_into = survivor`.
   - `story_items` rows are **not rewritten**. Reads resolve `merged_into` one step. Chains are flattened at merge
     time, so it is never more than one hop.
   - The two `alert_state`s are combined: earliest alert, highest severity alerted. So a merge does not by itself
     trigger a new alert.
+  - Every merge is recorded (§B.5).
 - **Split (a group contains only some of a story's members):** nothing happens. The story keeps all its members;
-  the group's unassigned items join it. There is no split operation. With assign-once membership a split cannot be
-  expressed without reassigning items, which is what this design forbids.
-- **Recorded as the trade-off:** over-merged early groups produce over-broad stories. That is better than today,
-  where the same breadth is re-minted daily and alerted daily.
+  the group's unassigned items join it (if the floor is met) or start a new story (if not). There is no split
+  operation. With assign-once membership a split cannot be expressed without reassigning items, which is what this
+  design forbids.
 
-### B.4 Interaction with cluster over-merge (not solved here)
+### B.4 The guard against over-broad stories: a floor of two members, not a majority
 
-- The June proposal found groups bind topically adjacent but distinct events. With assign-once membership, **an
-  over-broad group makes an over-broad story permanently.**
-- And because §B.3 merges on any shared member, a few bridging items could chain distinct stories together.
-- **Guard, proposed for review:** a group maps to an existing story only if **at least half** of its
-  already-assigned members belong to that story. Two stories merge only if each contributes **at least two**
-  members to the group. A single bridging item otherwise cannot fuse two stories.
-- **Measure this before building it**, by replaying recent groups: how many merges each threshold produces. The
-  thresholds above are proposals, not measurements.
-- Improving the grouping itself (the June proposal) is separate work, and makes this design better without changing
-  it.
+- **The risk:** the June proposal found groups bind topically adjacent but distinct events. With assign-once
+  membership, a group that carries one stray article of an earlier story would map onto that story. A distinct event
+  would then be **absorbed**: it never gets its own story, and therefore never its own alert.
+- **Measured (2026-10-08, alert evidence lists as the membership proxy):**
+  - **253 of 1,523 distinct stories (16.6%)** in August–October had their own headline article already sitting in
+    an earlier, unrelated alert's evidence within 7 days. Those are the candidates to be absorbed.
+  - In a random sample of 14 such pairs: 5 were the same developing story (absorption is right), 5 were the same
+    theme but a different incident (debatable), and **4 were unrelated events** (absorption hides a real event).
+    That is roughly **4–6% of all stories** lost to an unrelated earlier story. This is an estimate from a 14-item
+    sample and a proxy; §G requires it to be measured.
+  - **A real example:**
+    - The 08-20 19:05 Supply Chain alert "China growth straining global auto shipping capacity: Liner CEO" carried in
+      its evidence the article that, about 24h later (08-21 18:55), headlined its own alert: "Panama Canal to limit
+      shipping ahead of extreme weather during El Nino". Today it then re-alerted daily on 08-22 and 08-23.
+    - Under assign-once, that article would already belong to the China story. The Panama Canal event would appear
+      as one evidence line for 24h and never headline.
+    - Nothing would record that it was absorbed.
+  - **★ Correction, recorded rather than overwritten.** An earlier draft of this section, and the review message
+    that preceded it, said "every one of the 253 rests on a single bridging article". **That was wrong.** The query
+    selected pairs on one shared article (the later story's headline) and never counted how many each pair shares.
+    Measured afterwards:
+
+    | evidence articles shared by the earlier alert and the later story's first alert | candidates |
+    |---|---|
+    | exactly 1 | **77 (30%)** |
+    | 2 | 67 |
+    | 3 | 54 |
+    | 4 | 32 |
+    | 5 or more | 23 |
+
+    So **176 of 253 (70%) share two or more.** The Panama Canal example shares **all six**: the two alerts' evidence
+    lists are identical. Both were leads drawn from one over-broad "shipping" group, which also contained "South
+    Korea Tests Arctic Shipping Route", a malware story about "shipping" network drivers, and a Corpus Christi
+    nuclear-shipping item. That is the June over-merge exactly.
+- **Why the floor is two members, not "a majority of the assigned members".**
+  - The first draft of this design proposed "a group maps to an existing story only if at least half of its
+    already-assigned members belong to that story". **A single bridging article satisfies that as 1 of 1**, so the
+    guard passes in exactly the case it exists to catch.
+  - That is the same shape as the vault's self-comparing assert (`staleness_sweep.py`'s guard that compared a value
+    with itself, vault audit §12.57) and its stale node-count literals: **a check that cannot fail for the case it
+    exists to catch.**
+  - A floor of two shared members cannot be satisfied by one bridging article.
+- **★ What the floor does and does not do, measured:** it closes the 1-of-1 hole, so it is **necessary**. But by the
+  evidence proxy it would block only about **30%** of absorption candidates. **It is not sufficient.**
+  - The other 70%, Panama included, arise inside one over-broad group, where any number of shared members is
+    available.
+  - **That residue is a property of the grouping (the June over-merge), not of story identity.** No membership
+    threshold can separate two events that the grouping has already put in one bag.
+  - **What does surface the Panama case is rule C.1.4:** on 08-21 the Panama article became the group's headline, a
+    never-before headline for that story, so under C.1.4 it alerts once under its own title.
+  - So the protection against silent absorption is **the floor (for single-bridge cases), plus C.1.4 (for events
+    that become the lead), plus §B.5's record (for everything else, so it is measured).**
+  - An absorbed event that never becomes its group's lead is still lost to the headline. The replay must count how
+    often that happens.
+- **What the floor costs:**
+  - A genuine continuation whose regrouping carries only one prior member will start a new story instead of
+    continuing the old one. That is a duplicate, the visible and information-preserving failure, not an absorption.
+  - **The trade is deliberate: when in doubt, prefer a visible duplicate to a silent loss.**
+  - **Whether two is the right floor is not known until the replay (§G).**
+- Improving the grouping itself (the June proposal) is separate work, and makes this guard matter less without
+  changing it.
+
+### B.5 Recording absorptions and merges, so the failure is measurable
+
+- **The model is `ingest_rejections`**, which shipped on 2026-10-07 for the same reason: a filter that drops things
+  silently hides its own failure.
+- **A new table, `story_absorptions`. One row per mapping of a group onto an existing story, and one per merge:**
+
+| column | meaning |
+|---|---|
+| `id` | row id |
+| `story_id` | the existing (or surviving) story the group was mapped onto |
+| `kind` | `continuation` (§B.1 step 4) or `merge` (§B.3) |
+| `bridging_item_ids` | the already-assigned members that carried the mapping (two or more by the floor), **named**, not counted |
+| `joined_item_ids` | the previously unassigned items that joined the story in this mapping |
+| `merged_story_id` | for `merge`: the story that was merged in |
+| `group_representative_title` | what the group was "about" when it was mapped, so a reader can see a mismatch |
+| `story_representative_title` | what the story was about before the mapping |
+| `created_at` | when |
+
+- **It is readable with SQL, not a log line.** For example, the mappings that rested on the minimum bridge, with both
+  titles side by side so a mismatch is visible:
+
+```sql
+SELECT created_at, kind,
+       story_representative_title, group_representative_title,
+       cardinality(bridging_item_ids) AS bridges,
+       cardinality(joined_item_ids)   AS joined
+FROM story_absorptions
+WHERE created_at > now() - interval '7 days'
+  AND cardinality(bridging_item_ids) = 2
+ORDER BY created_at DESC;
+```
+
+- **Retention:** as for stories (35 days after creation), pruned by the daily retention job.
+- **Exposure:** it is not served by any API route. That includes `GET /api/metrics`, which is public.
+- **What this changes:** the Panama Canal case stops being silent. Each absorption leaves a row naming the bridge
+  and both titles, so the absorption rate can be measured daily rather than estimated once.
 
 ## C. The alert rule
 
@@ -171,6 +265,18 @@ members.
   2. **Severity escalated** by at least one tier above the severity last alerted (watch → elevated → critical).
   3. **Genuinely new reporting:** the story gained **at least N members created after its last alert**, from **at
      least one source not already among its members**. N is proposed as 2; to be confirmed by replay.
+  4. **A member's first appearance as the headline:** the story's representative (headline) item changed to an item
+     that has never been the story's headline before, **even if that item already existed when the last alert
+     fired**.
+- **Why rule 4 is needed.**
+  - The benign absorption case is an escalating development whose article already existed. For example, "Saudi
+    Aramco's Jizan Refinery Hit Again as Houthi Attacks Escalate" sat in the evidence of the 09-08 alert "Oil Prices
+    Near $100 After Fresh Attacks on Saudi Energy Sites", then headlined its own alert on 09-09.
+  - Rule 3 counts only members **created** after the last alert, so it can never fire for that article. Without
+    rule 4, the design **suppresses exactly the thing it should surface**: an existing article becoming the lead of
+    an escalating story.
+  - Rule 4 is scoped to a never-before headline, so the same headline re-surfacing day after day (the 74.5% repeat
+    case) still does not re-alert.
 - **Not enough on its own:** a changed headline, or a different evidence list. Evidence lists are reshuffled
   between runs (measured below).
 - The 24h text-match path (`_find_event_cluster`) is kept only to absorb corroboration into a live alert's evidence
@@ -213,6 +319,7 @@ the proxy: evidence lists stand in for membership.
 | **clustering** (`analysis/clustering.py`) | Grouping method unchanged. **Replace reconciliation** (24h `created_at` window, title Jaccard ≥ 0.75, reassignment of `items.cluster_id`) with §B.1 against `story_items`. `event_clusters` writes stop or become a per-run log; nothing should depend on them for identity. | none directly |
 | **report generation** (`jobs/report_generator.py:370`) | Stop calling `cluster_items` itself (it re-clusters and reassigns `cluster_id` outside the pipeline). Read stories and members instead. | report trend sections reference stable stories |
 | **signal job / trend engine** | Carry `story_id` on every `TrendSignal`. Change the duplicate guard from `(trend_type, title)` for 24h to `(trend_type, story_id)`, **updating** the story's signal instead of re-inserting. Signal retention (72h) unchanged. | none directly |
+| **story mapping** (new, with clustering) | Writes `story_items` (insert-only) and `story_absorptions` (§B.5); tracks each story's headline history for rule C.1.4. | none directly; `story_absorptions` is the operator's measurement surface |
 | **alert manager** | Read `story_id` from the signal. Apply §C. Store `story_id` in the alert's metadata, so Monthly Trend Flow and others can see it. | **Alert Stream: the daily re-fires stop.** 38.3 alerts/day today. About 42% are repeats and §C.2 estimates 85–90% of those are suppressed, so roughly 24/day after (estimate) |
 | **Monthly Trend Flow** | **No change needed.** It counts alerts; once duplicates are not minted, it counts stories. Optionally key the union on `story_id` later. | counts from the cutover date forward reflect distinct stories |
 | **event-driven report triggering** (`trigger_detector_job`, `signal_rankings`) | Rankings reference `story_id`. Triggers fire on a story's first ranking, or its escalation, rather than on a re-minted cluster. | fewer repeated event-driven reports for one story (not measured; measure before and after) |
@@ -265,21 +372,63 @@ the proxy: evidence lists stand in for membership.
 
 ## F. Decisions for the operator
 
-1. **Re-alert threshold:** N new members (proposed 2) and the new-source condition, to be confirmed by replaying a
-   week of groups.
-2. **Merge guards:** the majority and two-member thresholds (§B.4), likewise by replay.
+1. **The continuity floor (§B.4):** two shared members, not a majority.
+   - A majority test is satisfied 1 of 1 by a single bridging article, so it cannot fail for the case it exists to
+     catch.
+   - ★ **But the floor is necessary, not sufficient.** The earlier claim that every absorption rests on one bridging
+     article was wrong: measured, 30% do and 70% share two or more (§B.4).
+   - Most absorption risk comes from the over-broad grouping itself. Against that, the protection is rule C.1.4 plus
+     the §B.5 record, not the floor.
+   - Whether two is right, and how much absorption survives all three, is decided by the replay (§G).
+2. **The re-alert threshold (§C.1):** N new members (proposed 2) plus the new-source condition, and rule C.1.4
+   (a never-before headline re-alerts). Likewise decided by the replay.
 3. **Cross-domain alerts:** keep one alert per `(story, domain)` (today's behaviour), or one per story.
-4. **Story retention:** 35 days after last seen.
+4. **Story and absorption-record retention:** 35 days after last seen / after creation.
 5. **`items.cluster_id` and `event_clusters`:** keep writing them as a per-run log, or stop. The decision depends on
-   who reads them; that reader list is a short measurement still to do.
+   who reads them; that reader list is a short measurement still to do (§G).
 
-## G. Measured before building (verification plan)
+## G. Measured before building — the replay is a precondition, not a validation
 
-- **Replay before shipping.** Using the 168h of items at a fixed time, run the new grouping and story mapping in a
-  copy of the database. Report: stories created, merges, members per story, and how many of the last week's alerts
-  would have been suppressed by §C. The 85–90% estimate is then measured rather than estimated.
-- **Readers.** Find every reader of `items.cluster_id`, `event_clusters.article_count`, and `TrendSignal.metrics_json
-  ["cluster_id"]` before changing their writers.
-- **After shipping:** the repeat rate in the Alert Stream and in Monthly Trend Flow, measured daily with the same
-  primary-URL proxy as §12.68. The target is the residual rate the replay predicts, not zero: escalations and
-  genuinely new reporting re-alert by design.
+**Nothing in §B or §C is built until the replay has run and its results have been reviewed.**
+- The design rests on numbers that have never been measured against real grouping: the continuity floor of two
+  (§B.4), N = 2 new members (§C.1.3), and the 4–6% absorption estimate. That estimate comes from a 14-item sample and
+  an evidence-list proxy.
+- **If the replay measures absorption at, say, 10% rather than 4–6%, or shows the floor turning most continuations
+  into duplicates, the design changes before any code exists.** A replay run after building would only describe a
+  defect already shipped.
+
+**1. The replay.**
+- **Method:** take the items from the 168h signal window at a fixed point in time. Run the existing in-memory
+  grouping, then the §B.1 mapping (with the §B.4 floor), then the §C rule, in a copy of the database. Then step
+  forward run by run over at least 7 days of real items, so continuations, merges and absorptions actually occur.
+- **It must report, explicitly:**
+  - stories created, continuations, merges, and members per story (distribution);
+  - **every absorption, not only minimum-bridge ones** (70% of candidates share 2+ members, §B.4). Each listed with
+    its bridge size and both titles side by side;
+  - in particular, **every mapping that rested on exactly the minimum bridge (two members), listed with both titles side by side:**
+    the story's representative title and the group's representative title. A reader must be able to see absorptions
+    like Panama Canal → China auto shipping directly. **The 4–6% absorption estimate is then measured, not
+    estimated;**
+  - groups that fell below the floor and started a new story despite sharing one member with an existing story,
+    i.e. the duplicates the floor deliberately creates, also with titles;
+  - **the re-alerts each rule would mint (C.1.1–C.1.4) against the same period's actual alerts:** how many of the
+    measured 1,078 repeats are suppressed. The 85–90% estimate is then measured;
+  - for rule C.1.4: how many re-alerts it adds, with titles, so the escalating-development case (Jizan "hit again")
+    and the over-broad-group case (Panama Canal) can be checked to fire, and the daily-repeat case to stay
+    suppressed;
+  - **absorbed events that never became their group's lead:** the residue that neither the floor nor C.1.4 surfaces,
+    with titles. This is the number that decides whether the design is acceptable without first fixing the grouping
+    (the June proposal).
+- **Stop conditions:** if measured absorption (unrelated events lost) exceeds the operator's tolerance, or if the
+  floor turns most continuations into duplicates, revise §B.4 or §C before building. The operator sets the
+  tolerance before the replay runs, not after seeing the number.
+
+**2. Readers.** Find every reader of `items.cluster_id`, `event_clusters.article_count`, and
+`TrendSignal.metrics_json["cluster_id"]` before changing their writers.
+
+**3. After shipping:**
+- the repeat rate in the Alert Stream and in Monthly Trend Flow, measured daily with the same primary-URL proxy as
+  §12.68. The target is the residual rate the replay predicted, not zero: escalations, genuinely new reporting and
+  new headlines re-alert by design;
+- `story_absorptions` read daily with the §B.5 query, comparing the minimum-bridge mappings against the replay's
+  rate. A rise means the grouping has drifted and the floor needs revisiting.
