@@ -1033,6 +1033,10 @@ def build_pro_structural_report_payload(context: dict) -> dict:
         "executive_summary": exec_summary,
         "key_findings": key_findings,
         "llm_narrative": context.get("llm_narrative"),
+        # Why llm_narrative is or is not present (set by llm/pro_structural_shaper.py on every exit).
+        # None means the context never passed through the shaper.
+        "llm_narrative_status": context.get("llm_narrative_status"),
+        "llm_narrative_missing": context.get("llm_narrative_missing"),
         "signal_classification": sig_class,
         "event_timeline": event_timeline,
         "structural_context": {

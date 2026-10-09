@@ -214,7 +214,13 @@ async def shape_pro_structural_context(
     ctx["event_timeline"] = timeline
     ctx = sanitize_unicode_tree(ctx)
 
+    # llm_narrative_status: why this brief has, or lacks, a narrative. Set on EVERY exit below and
+    # stored in the payload, because the renderer shows an Executive Summary panel in place of a
+    # null narrative, and without this field a stored row cannot say whether the narrative was
+    # never attempted, failed, or was rejected (vault audit §12.76, §12.82):
+    #   disabled | no_result | not_object | incomplete (+ llm_narrative_missing) | error | applied
     if not pro_structural_llm_shaping_enabled():
+        ctx["llm_narrative_status"] = "disabled"  # the path production runs since 2026-10-09
         return ctx
 
     payload = _build_llm_prompt_payload(ctx, structured_payload)
@@ -232,20 +238,28 @@ async def shape_pro_structural_context(
             logger.warning(
                 "Pro structural narrative: no result for %s (generate_analysis returned None; "
                 "the preceding [LLM] lines say why)", domain_id)
+            ctx["llm_narrative_status"] = "no_result"
             return ctx
         if not isinstance(shaped, dict):
             logger.warning(
                 "Pro structural narrative: expected an object for %s, got %s",
                 domain_id, type(shaped).__name__)
+            ctx["llm_narrative_status"] = "not_object"
             return ctx
         if not _normalize_quant_narrative(shaped):
+            missing = _missing_quant_fields(shaped)
             logger.warning(
                 "Pro structural narrative: incomplete for %s, missing or empty %s",
-                domain_id, _missing_quant_fields(shaped))
+                domain_id, missing)
+            ctx["llm_narrative_status"] = "incomplete"
+            ctx["llm_narrative_missing"] = missing
             return ctx
         logger.info("Pro structural LLM quant narrative applied for %s", domain_id)
-        return _apply_shaped_copy(ctx, shaped)
+        applied = _apply_shaped_copy(ctx, shaped)
+        applied["llm_narrative_status"] = "applied"
+        return applied
     except Exception as exc:
         logger.warning("Pro structural LLM shaping failed for %s: %s", domain_id, exc)
 
+    ctx["llm_narrative_status"] = "error"
     return ctx
