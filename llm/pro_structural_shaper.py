@@ -82,20 +82,27 @@ def _normalize_wargaming(raw: Any) -> List[Dict[str, Any]]:
     return out[:3]
 
 
+# The five required narrative fields. One tuple, so the check and the "missing" log cannot disagree.
+_QUANT_FIELDS = (
+    "executive_thesis",
+    "ground_zero_drag",
+    "smart_money_flow",
+    "contagion_timeline",
+    "market_translation",
+)
+
+
+def _missing_quant_fields(shaped: Dict[str, Any]) -> List[str]:
+    return [f for f in _QUANT_FIELDS if not (isinstance(shaped.get(f), str) and shaped.get(f).strip())]
+
+
 def _normalize_quant_narrative(shaped: Dict[str, Any]) -> Dict[str, Any]:
-    fields = (
-        "executive_thesis",
-        "ground_zero_drag",
-        "smart_money_flow",
-        "contagion_timeline",
-        "market_translation",
-    )
     out: Dict[str, Any] = {}
-    for field in fields:
+    for field in _QUANT_FIELDS:
         value = shaped.get(field)
         if isinstance(value, str) and value.strip():
             out[field] = sanitize_unicode_text(value.strip())
-    if len(out) != len(fields):
+    if len(out) != len(_QUANT_FIELDS):
         return {}
     wargaming = _normalize_wargaming(shaped.get("scenario_wargaming"))
     if wargaming:
@@ -212,14 +219,33 @@ async def shape_pro_structural_context(
 
     payload = _build_llm_prompt_payload(ctx, structured_payload)
     user_prompt = json.dumps(payload, ensure_ascii=False)
+    domain_id = ((ctx.get("domain") or {}).get("domain_id") or "unknown")
 
+    # Every exit without a narrative logs WHY. generate_analysis never raises (llm/client.py:154):
+    # a timeout, an HTTP error or a parse failure all come back as None, so the `except` below
+    # cannot see an LLM failure. Before 2026-10-09 the None, non-dict and incomplete cases fell
+    # through to `return ctx` with no log at all, and the brief was saved with a null narrative
+    # and no trace (vault audit §12.76(c)).
     try:
         shaped = await generate_analysis(PRO_STRUCTURAL_TEXT_SHAPE_PROMPT, user_prompt, is_batch=True)
-        if isinstance(shaped, dict) and _normalize_quant_narrative(shaped):
-            domain_id = ((ctx.get("domain") or {}).get("domain_id") or "unknown")
-            logger.info("Pro structural LLM quant narrative applied for %s", domain_id)
-            return _apply_shaped_copy(ctx, shaped)
+        if shaped is None:
+            logger.warning(
+                "Pro structural narrative: no result for %s (generate_analysis returned None; "
+                "the preceding [LLM] lines say why)", domain_id)
+            return ctx
+        if not isinstance(shaped, dict):
+            logger.warning(
+                "Pro structural narrative: expected an object for %s, got %s",
+                domain_id, type(shaped).__name__)
+            return ctx
+        if not _normalize_quant_narrative(shaped):
+            logger.warning(
+                "Pro structural narrative: incomplete for %s, missing or empty %s",
+                domain_id, _missing_quant_fields(shaped))
+            return ctx
+        logger.info("Pro structural LLM quant narrative applied for %s", domain_id)
+        return _apply_shaped_copy(ctx, shaped)
     except Exception as exc:
-        logger.warning("Pro structural LLM shaping failed: %s", exc)
+        logger.warning("Pro structural LLM shaping failed for %s: %s", domain_id, exc)
 
     return ctx
