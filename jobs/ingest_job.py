@@ -187,7 +187,7 @@ async def run_ingest(db: AsyncSession):
     yaml_sources = load_sources_from_yaml()
     if not yaml_sources:
         logger.error("No sources found. Aborting ingest.")
-        return
+        return {"status": "degraded", "message": "no sources found"}  # ingesting nothing is not success
 
     await sync_sources_to_db(db, yaml_sources)
 

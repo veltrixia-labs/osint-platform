@@ -36,6 +36,10 @@ logger = logging.getLogger(__name__)
 STATUSES = ("running", "success", "failed", "degraded", "skipped_overlap", "skipped_paused", "cancelled")
 RESULT_STATUSES = ("success", "degraded", "skipped_paused")
 MAX_MESSAGE_CHARS = 2000
+# Upper bound on each recording write, including waiting for a pooled connection. Without it, an
+# exhausted pool would hold the job back for the pool's own timeout (db/database.py: pool_timeout=30)
+# before the job even starts. On timeout the write is abandoned with a WARNING and the job proceeds.
+RECORD_TIMEOUT_S = 5.0
 DISK_FULL_SQLSTATE = "53100"
 
 # Secrets that can appear in an exception's text. Scrubbed before anything is stored.
@@ -78,9 +82,22 @@ def is_disk_full(exc: BaseException) -> bool:
 
 
 def result_status(ret: Any) -> Tuple[str, Optional[str]]:
-    if isinstance(ret, dict) and ret.get("status") in RESULT_STATUSES:
-        msg = ret.get("message")
-        return ret["status"], (None if msg is None else str(msg))
+    """Map a job's return value to (status, message).
+
+    * a dict with "status" in RESULT_STATUSES -> that status and its "message";
+    * a dict with "status": "failed"          -> degraded, with the job's message (a job cannot record
+                                                 'failed' by returning; only an exception does that);
+    * a dict with any other "status"          -> degraded, "unrecognized status <value>: <message>".
+                                                 An unknown word is never read as success;
+    * anything else (None, a dict without "status", other types) -> success, as before.
+    """
+    if isinstance(ret, dict) and "status" in ret:
+        status, msg = ret.get("status"), ret.get("message")
+        if status in RESULT_STATUSES:
+            return status, (None if msg is None else str(msg))
+        if status == "failed":
+            return "degraded", (str(msg) if msg is not None else "job returned status 'failed'")
+        return "degraded", f"unrecognized status {status}: {msg}"
     return "success", None
 
 
@@ -91,11 +108,15 @@ def _now() -> datetime:
 async def _insert(job_name: str, status: str, started_at: datetime,
                   finished_at: Optional[datetime] = None, message: Optional[str] = None) -> Optional[uuid.UUID]:
     run_id = uuid.uuid4()  # job_runs.id has no server default in production (§12.86(b))
-    try:
+
+    async def _write():
         async with dbm.AsyncSessionLocal() as session:
             session.add(JobRun(id=run_id, job_name=job_name, status=status, started_at=started_at,
                                finished_at=finished_at, error_message=scrub(message)))
             await session.commit()
+
+    try:
+        await asyncio.wait_for(_write(), timeout=RECORD_TIMEOUT_S)
         return run_id
     except Exception as e:  # never let recording break a job
         logger.warning("job_runs: could not record %s=%s: %s", job_name, status, scrub(f"{type(e).__name__}: {e}"))
@@ -109,7 +130,7 @@ async def _finish(run_id: Optional[uuid.UUID], job_name: str, status: str, start
         # The 'running' insert failed. Still try to leave the outcome behind.
         await _insert(job_name, status, started_at, finished_at, message)
         return
-    try:
+    async def _write():
         async with dbm.AsyncSessionLocal() as session:
             row = await session.get(JobRun, run_id)
             if row is None:
@@ -118,6 +139,9 @@ async def _finish(run_id: Optional[uuid.UUID], job_name: str, status: str, start
             row.finished_at = finished_at
             row.error_message = scrub(message)
             await session.commit()
+
+    try:
+        await asyncio.wait_for(_write(), timeout=RECORD_TIMEOUT_S)
     except Exception as e:
         logger.warning("job_runs: could not finish %s=%s: %s", job_name, status, scrub(f"{type(e).__name__}: {e}"))
 

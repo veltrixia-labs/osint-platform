@@ -237,7 +237,27 @@ async def pro_automation_wrapper():
     # and discovery scout) so the structural-brief compile can never run
     # concurrently with the 5-min pipeline and stack memory past 512MB.
     async with _heavy_work_lock:
-        return await run_continuous_pro_intelligence_stream()
+        stream = await run_continuous_pro_intelligence_stream()
+    return pro_stream_result(stream)
+
+
+def pro_stream_result(stream):
+    """Translate the Pro stream's own summary ("status": "ok" | "partial") into the job_runs
+    convention (jobs/run_recorder.py), keeping every original field. The stream's word stays
+    available as "stream_status". Without this, the recorder's rule (an unknown status is
+    degraded) would file every healthy cycle as degraded, because "ok" is not one of its words."""
+    if not isinstance(stream, dict):
+        return stream
+    original = stream.get("status")
+    if original == "ok":
+        return {**stream, "status": "success", "message": None, "stream_status": original}
+    if original == "partial":
+        errors = stream.get("errors") or []
+        failed = ", ".join(str(e.get("domain_id")) for e in errors if isinstance(e, dict))
+        return {**stream, "status": "degraded", "stream_status": original,
+                "message": f"pro stream partial: {len(errors)} of {len(stream.get('domains') or [])} "
+                           f"domain compiles failed: {failed}"}
+    return {**stream, "stream_status": original}  # unknown word: the recorder files it as degraded
 
 
 async def run_cftc_sync_wrapper():
@@ -506,7 +526,7 @@ async def run_startup_checks():
             logger.info(
                 "Startup pro compile complete: inserted=%s status=%s elapsed_sec=%.2f",
                 stream.get("inserted_count"),
-                stream.get("status"),
+                stream.get("stream_status", stream.get("status")),  # the stream's own word, as before
                 stream.get("elapsed_sec") or 0,
             )
         except Exception as e:

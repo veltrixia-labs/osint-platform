@@ -92,14 +92,35 @@ def test_is_disk_full_follows_wrapped_exceptions():
 
 @pytest.mark.parametrize("ret,expected", [
     (None, ("success", None)),
-    ({"status": "ok"}, ("success", None)),          # the Pro stream's own vocabulary: not ours
+    ({"no_status_key": 1}, ("success", None)),
+    ([1, 2], ("success", None)),
+    ({"status": "success"}, ("success", None)),
     ({"status": "degraded", "message": "x"}, ("degraded", "x")),
     ({"status": "skipped_paused", "message": "p"}, ("skipped_paused", "p")),
-    ({"status": "failed", "message": "no"}, ("success", None)),  # a job cannot declare 'failed'
-    ([1, 2], ("success", None)),
+    # a returned 'failed' is degraded with the job's message: only an exception records 'failed'
+    ({"status": "failed", "message": "no"}, ("degraded", "no")),
+    ({"status": "failed"}, ("degraded", "job returned status 'failed'")),
+    # an unknown word is never success
+    ({"status": "partial", "message": "2 failed"}, ("degraded", "unrecognized status partial: 2 failed")),
+    ({"status": "ok"}, ("degraded", "unrecognized status ok: None")),
+    ({"status": "zzz-unknown", "message": "m"}, ("degraded", "unrecognized status zzz-unknown: m")),
 ])
 def test_result_status_convention(ret, expected):
     assert rr.result_status(ret) == expected
+
+
+def test_pro_stream_result_translates_ok_and_partial():
+    ok = ms.pro_stream_result({"status": "ok", "inserted_count": 6, "errors": [], "domains": ["a"] * 6})
+    assert (ok["status"], ok["stream_status"], ok["inserted_count"]) == ("success", "ok", 6)
+    assert rr.result_status(ok) == ("success", None)
+    partial = ms.pro_stream_result({"status": "partial", "inserted_count": 4, "domains": ["a"] * 6,
+                                    "errors": [{"domain_id": "crypto_geopolitics", "error": "x"},
+                                               {"domain_id": "defense_technology", "error": "y"}]})
+    status, msg = rr.result_status(partial)
+    assert status == "degraded" and partial["stream_status"] == "partial"
+    assert msg == "pro stream partial: 2 of 6 domain compiles failed: crypto_geopolitics, defense_technology"
+    odd = ms.pro_stream_result({"status": "weird"})
+    assert rr.result_status(odd) == ("degraded", "unrecognized status weird: None")
 
 
 # --- unit: recording never breaks a job ---------------------------------------------------------
@@ -160,6 +181,45 @@ async def test_ingest_returns_degraded_with_failed_sources(monkeypatch):
     assert msg.startswith("disk_full: SQLSTATE 53100")
     assert "2 of 3 sources failed" in msg and "bad_feed (ValueError)" in msg and "full_disk_feed (_DiskFull)" in msg
     assert "total new rows=1" in msg
+
+
+async def test_ingest_with_no_sources_is_degraded(monkeypatch):
+    import jobs.ingest_job as ij
+
+    monkeypatch.setattr(ij, "load_sources_from_yaml", lambda: [])
+    assert await ij.run_ingest(object()) == {"status": "degraded", "message": "no sources found"}
+
+
+async def test_recorder_times_out_instead_of_blocking_the_job(monkeypatch, caplog):
+    """An exhausted pool: getting a session hangs. Each write gives up after RECORD_TIMEOUT_S."""
+    import asyncio
+    import time
+
+    class _Hanging:
+        async def __aenter__(self):
+            await asyncio.sleep(60)
+
+        async def __aexit__(self, *a):
+            return False
+
+    class _Pool:
+        def AsyncSessionLocal(self):
+            return _Hanging()
+
+    monkeypatch.setattr(rr, "dbm", _Pool())
+    monkeypatch.setattr(rr, "RECORD_TIMEOUT_S", 0.2)
+    ran = []
+
+    async def job():
+        ran.append(True)
+
+    t0 = time.monotonic()
+    with caplog.at_level(logging.WARNING, logger=rr.logger.name):
+        await ms.safe_run(_name("timeout"), job)
+    elapsed = time.monotonic() - t0
+    assert ran == [True]
+    assert elapsed < 2.0, f"recording held the job for {elapsed:.1f}s"
+    assert sum("TimeoutError" in r.getMessage() for r in caplog.records) >= 1
 
 
 # --- unit: feature switches are real reads ------------------------------------------------------
@@ -363,14 +423,15 @@ async def test_startup_steps_are_recorded(db_client, monkeypatch):
     async def _pipeline():
         return None
 
-    async def _pro():
-        return {"inserted_count": 0, "status": "ok", "elapsed_sec": 0}
+    async def _stream():  # the stream's own summary; the real wrapper translates "ok" -> success
+        return {"inserted_count": 0, "status": "ok", "elapsed_sec": 0, "errors": [], "domains": []}
 
     async def _noop(session):
         return None
 
     monkeypatch.setattr(ms, "pipeline_full_processing", _pipeline)
-    monkeypatch.setattr(ms, "pro_automation_wrapper", _pro)
+    import jobs.pro_realtime_stream as prs
+    monkeypatch.setattr(prs, "run_continuous_pro_intelligence_stream", _stream)
     monkeypatch.setattr(ms, "run_db_size_check", _noop)
     monkeypatch.setattr(ms, "enforce_metadata_limits", _noop)
     monkeypatch.setattr(ms, "audit_metadata_sizes", _noop)
@@ -438,4 +499,43 @@ async def test_check_job_runs_report(db_client):
     finally:
         async with dbm.AsyncSessionLocal() as s:
             await s.execute(delete(JobRun).where(JobRun.id.in_(ids)))
+            await s.commit()
+
+
+async def test_degraded_travels_ingest_to_pipeline_to_job_runs_row(db_client, monkeypatch):
+    """The real chain: safe_run -> run_recorded -> pipeline_full_processing ->
+    _pipeline_full_processing_locked -> run_ingest (real) and the real downstream steps, on the test
+    database. Fakes only at the I/O edges: the sources file and the network fetch."""
+    import jobs.ingest_job as ij
+    from db.models import SourceRegistry
+
+    name = _name("chain")
+    ok_id, bad_id = f"test_jr_src_ok_{uuid.uuid4().hex[:6]}", f"test_jr_src_bad_{uuid.uuid4().hex[:6]}"
+    sources = [
+        {"source_id": ok_id, "source_name": "ok", "source_group": "test", "rss_url": "http://example.invalid/ok",
+         "reliability_weight": 0.5},
+        {"source_id": bad_id, "source_name": "bad", "source_group": "test", "rss_url": "http://example.invalid/bad",
+         "reliability_weight": 0.5},
+    ]
+    monkeypatch.setattr(ij, "load_sources_from_yaml", lambda: sources)            # file edge
+
+    async def _fetch(src):                                                      # network edge
+        if src["source_id"] == bad_id:
+            raise ConnectionError("feed host unreachable")
+        return []
+
+    monkeypatch.setattr(ij, "fetch_feed", _fetch)
+    monkeypatch.setattr(ms, "AsyncSessionLocal", dbm.AsyncSessionLocal)        # the test database
+    monkeypatch.delenv("SCHEDULER_PAUSED", raising=False)
+    try:
+        await ms.safe_run(name, ms.pipeline_full_processing)
+        rows = await _rows(name)
+        assert [r.status for r in rows] == ["degraded"], [(r.status, r.error_message) for r in rows]
+        msg = rows[0].error_message
+        assert msg.startswith("ingest: 1 of 2 sources failed:")
+        assert f"{bad_id} (ConnectionError)" in msg and ok_id not in msg.split("failed:")[1].split(";")[0]
+    finally:
+        await _cleanup(name)
+        async with dbm.AsyncSessionLocal() as s:
+            await s.execute(delete(SourceRegistry).where(SourceRegistry.source_id.in_([ok_id, bad_id])))
             await s.commit()
