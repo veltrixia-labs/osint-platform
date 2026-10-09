@@ -70,8 +70,15 @@ class Settings(BaseSettings):
     retention_dry_run: bool = os.getenv("RETENTION_DRY_RUN", "false").lower() == "true"
 
     # DB Pressure Monitoring (MB)
-    db_size_warning_mb: int = int(os.getenv("DB_SIZE_WARNING_MB", 400)) # ~78% of 512MB
-    db_size_critical_mb: int = int(os.getenv("DB_SIZE_CRITICAL_MB", 440)) # ~86% of 512MB
+    # DB size alarms, compared with pg_database_size in MiB (db/database.py get_db_size_mb: bytes / 1024**2).
+    # Basis (vault audit §12.87(e), 2026-10-09): osint-db has a 1 GB disk with Storage Autoscaling DISABLED, so
+    # 1 GB is a hard limit. Read conservatively as 10**9 bytes = 953.7 MiB. Disk use also holds ~141 MiB that
+    # pg_database_size does not count (WAL: max_wal_size 128 MB, archive_mode on; plus the other databases).
+    # P = 953.7 * f - 140.9:  warning at ~70% of disk -> 525,  critical at ~85% of disk -> 670,  full at ~813.
+    # The old 400/440 were "~78%/~86% of 512MB", a RAM figure, not disk. WAL growth from a stalled archiver is
+    # invisible here; only the Render dashboard's disk figure shows it.
+    db_size_warning_mb: int = int(os.getenv("DB_SIZE_WARNING_MB", 525))
+    db_size_critical_mb: int = int(os.getenv("DB_SIZE_CRITICAL_MB", 670))
     
     # Metadata Safeguards
     metadata_max_size_chars: int = int(os.getenv("METADATA_MAX_SIZE_CHARS", 50000))
