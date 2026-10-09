@@ -18,7 +18,7 @@ from db.database import AsyncSessionLocal, get_db_size_mb
 from db.models import (
     AlertLog, AlertDelivery, Report, RawItem, Item, ItemTopic, 
     AnalyticsEvent, SecurityLog, SystemMetric, EventCluster, 
-    AnalysisCache, TrendSignal, SignalRanking, IngestRejection
+    AnalysisCache, TrendSignal, SignalRanking, IngestRejection, JobRun
 )
 from config.settings import settings
 from db.enums import RETIRED_REPORT_TYPES
@@ -298,6 +298,28 @@ async def run_alert_cleanup(db: AsyncSession, dry_run: bool | None = None):
         logger.error(f"Alert cleanup failed: {e}")
         await send_webhook_notification(f"Alert cleanup failed: {e}", level="error")
         raise
+
+# job_runs: one row per scheduled run (jobs/run_recorder.py), about 540 a day. Kept 30 days, enough
+# for a month of "did it run" history without the table growing past ~16k rows. A constant, not an
+# env var: a new switch would be one more value nobody checks (vault audit §12.77(c)).
+JOB_RUNS_RETENTION_DAYS = 30
+
+
+async def purge_old_job_runs(db: AsyncSession) -> int:
+    """Delete job_runs rows older than JOB_RUNS_RETENTION_DAYS. Returns the number deleted.
+    Never raises: a failed purge is logged and leaves the rows for the next hourly run."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=JOB_RUNS_RETENTION_DAYS)
+    try:
+        result = await db.execute(delete(JobRun).where(JobRun.started_at < cutoff))
+        await db.commit()
+        deleted = result.rowcount or 0
+        logger.info("job_runs retention: deleted %s rows older than %s days", deleted, JOB_RUNS_RETENTION_DAYS)
+        return deleted
+    except Exception as e:
+        await db.rollback()
+        logger.error("job_runs retention failed: %s", e)
+        return 0
+
 
 async def run_trend_cleanup(db: AsyncSession):
     """Cleanup for trend_signals (TTL + Row Cap)."""

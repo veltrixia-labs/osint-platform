@@ -23,10 +23,11 @@ from jobs.cleanup_job import (
     run_alert_cleanup, run_retention_cleanup, run_db_size_check,
     enforce_metadata_limits, audit_metadata_sizes, update_system_metric,
     run_retention_audit, run_trend_cleanup, run_visual_cleanup,
-    run_pro_structural_retention_wrapper,
+    run_pro_structural_retention_wrapper, purge_old_job_runs,
 )
 from jobs.entity_lifecycle import run_entity_lifecycle  # [v10.21]
 from jobs.external_data_sync import run_daily_external_data_sync_pipeline
+from jobs.run_recorder import is_disk_full, record_skip, run_recorded
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,15 +56,19 @@ async def safe_run(name, coro_func, *args, **kwargs):
     """
     Executes a coroutine with a concurrency guard and exception logging.
     Used as an async task target.
+
+    Every run, and every overlap skip, is recorded in job_runs (jobs/run_recorder.py). The
+    recording never raises; the logging and the swallow-and-continue behaviour are unchanged.
     """
     if name in _running_tasks:
         logger.warning(f"Task '{name}' is already running. Skipping this cycle.")
+        await record_skip(name, "skipped_overlap", "previous run of this job still in progress")
         return
-    
+
     _running_tasks.add(name)
     try:
         logger.info(f"Starting scheduled task: {name}")
-        await coro_func(*args, **kwargs)
+        await run_recorded(name, coro_func, *args, **kwargs)
         logger.info(f"Finished scheduled task: {name}")
     except Exception as e:
         logger.exception(f"FATAL: Task '{name}' failed with exception: {e}")
@@ -88,18 +93,20 @@ async def pipeline_full_processing():
     """Unified pipeline from ingest to trigger detection."""
     if os.getenv("SCHEDULER_PAUSED") == "true":
         logger.warning("SCHEDULER IS PAUSED (via SCHEDULER_PAUSED env var). Skipping pipeline.")
-        return
+        return {"status": "skipped_paused", "message": "SCHEDULER_PAUSED=true"}
 
     async with _heavy_work_lock:
-        await _pipeline_full_processing_locked()
+        return await _pipeline_full_processing_locked()
 
 
 async def _pipeline_full_processing_locked():
+    """Returns None on a clean run, or a job_runs result dict ({"status": "degraded", ...}) when a
+    step failed in a way this wrapper swallows (jobs/run_recorder.py's convention)."""
     logger.info("--- Starting Full Processing Pipeline ---")
     try:
         async with AsyncSessionLocal() as session:
             logger.info("[INGEST/NORMALIZE]")
-            await run_ingest(session)
+            ingest_result = await run_ingest(session)
             await run_normalize(session)
 
             logger.info("[SIGNAL]")
@@ -126,12 +133,22 @@ async def _pipeline_full_processing_locked():
         gc.collect()
         logger.info(f"[MEM] pipeline cycle end rss={current_rss_mb():.0f}MB peak_rss={peak_rss_mb():.0f}MB")
         logger.info("--- Pipeline Completed Successfully ---")
+        # A source that failed inside ingest is swallowed there (it continues past it); surface it.
+        if isinstance(ingest_result, dict) and ingest_result.get("status") == "degraded":
+            return {"status": "degraded", "message": f"ingest: {ingest_result.get('message')}"}
+        return None
     except Exception as e:
         err_msg = str(e)
         if "DiskFullError" in err_msg or "No space left on device" in err_msg:
+            # NOTE: "EMERGENCY PAUSE TRIGGERED" pauses nothing: no code sets SCHEDULER_PAUSED
+            # (vault audit §12.86(d)). Left exactly as it was; changing it is a separate decision.
             logger.critical(f"FATAL STORAGE ERROR during pipeline: {e}. EMERGENCY PAUSE TRIGGERED.")
+            kind = ("disk_full: SQLSTATE 53100" if is_disk_full(e)
+                    else "disk_full: matched by message text (no SQLSTATE 53100 on the exception)")
+            return {"status": "degraded", "message": f"{kind}: {type(e).__name__}: {e}"}
         elif "PendingRollbackError" in err_msg:
             logger.warning(f"Database session in pending rollback state: {e}. Skipping this cycle.")
+            return {"status": "degraded", "message": f"pending_rollback: cycle skipped: {e}"}
         else:
             logger.error(f"Error in processing pipeline: {e}")
             raise
@@ -186,6 +203,8 @@ async def run_cleanup_bundle():
             # but for now running hourly is safe and ensures space is reclaimed).
             logger.info("[CLEANUP] Metadata limit enforcement")
             await enforce_metadata_limits(session)
+            logger.info("[CLEANUP] job_runs retention")
+            await purge_old_job_runs(session)
             session.expire_all()
     gc.collect()
 
@@ -225,7 +244,7 @@ async def run_cftc_sync_wrapper():
     """Weekly Commitments of Traders ingestion (Socrata, no API key)."""
     if os.getenv("SCHEDULER_PAUSED") == "true":
         logger.warning("SCHEDULER_PAUSED — skipping CFTC sync.")
-        return
+        return {"status": "skipped_paused", "message": "SCHEDULER_PAUSED=true"}
     from jobs.cftc_sync_job import run_cftc_sync
 
     summary = await run_cftc_sync(weeks=int(os.getenv("CFTC_SYNC_WEEKS", "52")))
@@ -251,7 +270,7 @@ async def run_external_data_sync_wrapper():
     """
     if os.getenv("SCHEDULER_PAUSED") == "true":
         logger.warning("SCHEDULER_PAUSED — skipping external data sync.")
-        return
+        return {"status": "skipped_paused", "message": "SCHEDULER_PAUSED=true"}
     async with _external_data_sync_lock:
         await run_daily_external_data_sync_pipeline()
 
@@ -469,7 +488,8 @@ async def run_startup_checks():
         )
     else:
         logger.info("Triggering IMMEDIATE startup pipeline (ingest → normalize → signal)...")
-        await pipeline_full_processing()
+        # Recorded in job_runs as its own job; it runs outside safe_run (vault audit §12.86(b)).
+        await run_recorded("startup_pipeline", pipeline_full_processing)
 
     logger.info("Running startup operational audits...")
     async with AsyncSessionLocal() as session:
@@ -482,7 +502,7 @@ async def run_startup_checks():
     if pro_on_startup:
         logger.info("Triggering immediate rule-based Pro Structural Brief compile (6 domains)...")
         try:
-            stream = await pro_automation_wrapper()
+            stream = await run_recorded("startup_pro_compile", pro_automation_wrapper)
             logger.info(
                 "Startup pro compile complete: inserted=%s status=%s elapsed_sec=%.2f",
                 stream.get("inserted_count"),
@@ -492,10 +512,67 @@ async def run_startup_checks():
         except Exception as e:
             logger.error("Startup pro_automation failed: %s", e)
 
+# Feature switches this process actually reads, with the default and the comparison used at the
+# read site, so the startup line shows the value the code will act on (vault audit §12.77(c):
+# three documented switches were never read). Not secrets: names only, values are flags/modes.
+# tests/jobs/test_job_runs_v1.py checks every entry against its read site.
+#   parse: "eq_true"   -> value.lower() == "true"
+#          "in_true"   -> value.lower() in ("true", "1", "yes")
+#          "exact_true"-> value == "true"   (no lowercasing)
+#          "raw"       -> the string as read
+FEATURE_SWITCHES = (
+    ("SCHEDULER_PAUSED", None, "exact_true"),                 # jobs/main_scheduler.py
+    ("SCHEDULER_SKIP_STARTUP_PIPELINE", "", "in_true"),       # jobs/main_scheduler.py
+    ("PRO_AUTOMATION_ON_STARTUP", "true", "in_true"),         # jobs/main_scheduler.py
+    ("PRO_AUTOMATION_INTERVAL_MINUTES", "30", "raw"),         # jobs/main_scheduler.py
+    ("PRO_AUTOMATION_INTERVAL_HOURS", "1", "raw"),            # jobs/main_scheduler.py
+    ("PRO_COMPILE_DEDUP", "true", "in_true"),                 # jobs/pro_generation_policy.py, pro_structural_dedup.py
+    ("ENABLE_PRO_STRUCTURAL_LLM_SHAPING", "true", "in_true"), # llm/pro_structural_shaper.py
+    ("ENABLE_LLM_IMPORTANCE", "false", "eq_true"),            # jobs/alert_manager.py
+    ("ENABLE_LLM_TOPIC", "false", "eq_true"),                 # processor/normalize.py
+    ("ENABLE_LLM_TRANSLATE", "false", "eq_true"),             # processor/normalize.py
+    ("ENABLE_GDELT_INGEST", "false", "eq_true"),              # jobs/ingest_job.py
+    ("ENABLE_SINGLETON_RESCUE", "false", "eq_true"),          # jobs/signal_job.py, alert_manager.py
+    ("ENABLE_AI_DISCOVERY", "false", "eq_true"),              # jobs/alert_manager.py
+    ("CLEANUP_DRY_RUN", "true", "eq_true"),                   # jobs/main_scheduler.py
+    ("CLEANUP_ARCHIVE_ONLY", "true", "eq_true"),              # jobs/main_scheduler.py
+    ("RETENTION_DRY_RUN", "false", "eq_true"),                # config/settings.py
+    ("DRY_RUN_THREADS", "true", "eq_true"),                   # jobs/threads_publisher_job.py, report_generator.py
+    ("EXTERNAL_DATA_SYNC_DISABLED", "", "in_true"),           # jobs/external_data_sync.py
+    ("ENV", "development", "raw"),                            # jobs/threads_post_job.py
+)
+
+
+def feature_switch_line() -> str:
+    """One line: NAME=effective (set|unset) for every switch in FEATURE_SWITCHES."""
+    parts = []
+    for name, default, parse in FEATURE_SWITCHES:
+        raw = os.getenv(name)
+        value = raw if raw is not None else default
+        if parse == "eq_true":
+            effective = (value or "").lower() == "true"
+        elif parse == "in_true":
+            effective = (value or "").lower() in ("true", "1", "yes")
+        elif parse == "exact_true":
+            effective = value == "true"
+        else:
+            effective = value
+        parts.append(f"{name}={effective}({'set' if raw is not None else 'default'})")
+    # PRO_DISABLE_DUPLICATE_GUARDS has a default that depends on PRO_COMPILE_DEDUP; ask the code.
+    try:
+        from jobs.pro_generation_policy import pro_disable_duplicate_guards
+        parts.append(f"PRO_DISABLE_DUPLICATE_GUARDS={pro_disable_duplicate_guards()}"
+                     f"({'set' if os.getenv('PRO_DISABLE_DUPLICATE_GUARDS') is not None else 'default'})")
+    except Exception as e:  # never block startup on a log line
+        parts.append(f"PRO_DISABLE_DUPLICATE_GUARDS=<unreadable: {type(e).__name__}>")
+    return "FEATURE_SWITCHES " + " ".join(parts)
+
+
 async def main():
     logger.info("--- OSINT SCHEDULER STARTUP ---")
     logger.info("SCHEDULER_V2_ACTIVE")
-    
+    logger.info(feature_switch_line())
+
     # 1. Database Migrations & Seeding
     try:
         from db.database import run_migrations

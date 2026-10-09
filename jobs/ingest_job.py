@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import AsyncSessionLocal
 from db.models import RawItem, SourceRegistry
+from jobs.run_recorder import is_disk_full
 from reports.text_encoding import sanitize_unicode_text
 import feedparser
 import aiohttp  # (C-4) GDELT fetcher
@@ -191,6 +192,7 @@ async def run_ingest(db: AsyncSession):
     await sync_sources_to_db(db, yaml_sources)
 
     total_new = 0
+    failed: list[tuple[str, str, bool]] = []  # (source_id, error type, disk_full)
     for src in yaml_sources:
         source_id = src["source_id"]
         try:
@@ -232,9 +234,22 @@ async def run_ingest(db: AsyncSession):
         except Exception as e:
             logger.error("Error fetching from %s: %s", source_id, e)
             await db.rollback()
+            failed.append((source_id, type(e).__name__, is_disk_full(e)))
             continue
 
     logger.info("Finished ingest job (total new rows=%s)", total_new)
+    if failed:
+        # Still continues past every failed source, exactly as before; this only reports them, as a
+        # job_runs result (jobs/run_recorder.py) instead of an INFO line that reads like success.
+        disk = any(d for _, _, d in failed)
+        names = ", ".join(f"{sid} ({etype})" for sid, etype, _ in failed)
+        return {
+            "status": "degraded",
+            "message": (("disk_full: SQLSTATE 53100; " if disk else "")
+                        + f"{len(failed)} of {len(yaml_sources)} sources failed: {names}; "
+                        f"total new rows={total_new}"),
+        }
+    return None
 
 
 if __name__ == "__main__":
