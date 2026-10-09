@@ -632,6 +632,10 @@ export interface DomainItem {
     source_url: string | null;
     published_at: string | null;
     created_at: string | null;
+    /** The value GET /items is ORDERED BY: published_at, or created_at when that is missing,
+     *  never later than created_at (api/routes/items.py ORDERED_AT). Display and group by
+     *  this, so the list's order and its clock cannot disagree. Absent from an older API. */
+    ordered_at?: string | null;
     reliability_weight: number | null;
     category: string | null;
 }

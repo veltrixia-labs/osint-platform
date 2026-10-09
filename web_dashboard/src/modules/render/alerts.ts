@@ -1115,9 +1115,10 @@ const DOMAIN_LIST_GUIDE_HTML = `
     <span class="intel-guide-p"><b>Alert Stream</b> (above) is the <em>curated</em> view -
     world events ranked by importance, the same global lens as "All".</span>
     <span class="intel-guide-p"><b>Full sector feed</b> (below) is the <em>comprehensive</em>
-    view - up to the 100 most recently collected items for this sector, in the order they
-    were collected. No ranking and no impact filter, but it is capped: on a busy sector
-    older items fall outside it.</span>
+    view - up to the 100 most recent items for this sector, newest first by when each story
+    was published (or when we collected it, if the source gives no date). No ranking and no
+    impact filter, but it is capped: on a busy sector older items fall outside it. A story
+    we pick up late is placed at its publication time, not at the top.</span>
     <span class="intel-guide-p">A story can be important yet appear only in the list, or be
     routine yet still listed. That is expected - the list is breadth, the stream is selection.</span>`;
 
@@ -1137,10 +1138,12 @@ function domainItemHost(url: string, sourceName: string): string {
 }
 
 function domainItemRowHtml(it: DomainItem): string {
-    // Display the field the list is ORDERED by. api/routes/items.py:83 sorts on
-    // Item.created_at.desc().nullslast(), so showing published_at made the
-    // rendered clock non-monotonic (02:57 AM above 03:00 AM, measured).
-    const when = it.created_at ?? it.published_at ?? '';
+    // Display the field the list is ORDERED by: the server's `ordered_at`
+    // (api/routes/items.py ORDERED_AT, the publication time clamped to ingest).
+    // Showing any other field makes the clock non-monotonic. Until 2026-10-07
+    // the list was ordered by created_at, and late arrivals showed as newest.
+    // `created_at` is only a fallback for an API that predates `ordered_at`.
+    const when = it.ordered_at ?? it.created_at ?? it.published_at ?? '';
     const ts = when ? formatIntelTime(when) : '';
     const src = domainItemHost(it.source_url ?? '', it.source_name ?? '');
     const title = it.title ?? '(untitled)';
@@ -1157,12 +1160,12 @@ function domainItemRowHtml(it: DomainItem): string {
 /** Render the comprehensive item list into its own host (sibling of #alerts-list).
  *  Owned entirely by this fn - the 10s Alert Stream poll never touches it. */
 /** Local calendar-day key for an item, or null when it has no usable date.
- *  Keyed on LOCAL year/month/date, never the raw ISO string: created_at is UTC
+ *  Keyed on LOCAL year/month/date, never the raw ISO string: the timestamp is UTC
  *  and a string comparison would put the day boundary 9 hours off (handover
  *  8-4). The year is in the KEY so two Septembers can never collide, even
  *  though the visible label omits it. */
 function domainItemDayKey(it: DomainItem): string | null {
-    const raw = it.created_at ?? it.published_at ?? '';
+    const raw = it.ordered_at ?? it.created_at ?? it.published_at ?? '';
     if (!raw) return null;
     const d = new Date(raw);
     if (Number.isNaN(d.getTime())) return null;
@@ -1172,8 +1175,9 @@ function domainItemDayKey(it: DomainItem): string | null {
 /** Rows with a date separator emitted whenever the local calendar day changes,
  *  including before the first row. Unlike the curated stream — sorted by
  *  importance, where a separator would assert an order that does not exist —
- *  this list IS ordered by time (api/routes/items.py:83, created_at DESC), so
- *  the grouping states something true. An item with no usable date emits NO
+ *  this list IS ordered by time (GET /items, `ordered_at` DESC), and the key is
+ *  computed from that same field, so the grouping states something true by
+ *  construction. An item with no usable date emits NO
  *  separator and stays in whatever group is current; it never opens one. */
 function domainItemsWithDayBreaks(items: DomainItem[]): string {
     let currentKey: string | null = null;
@@ -1182,7 +1186,7 @@ function domainItemsWithDayBreaks(items: DomainItem[]): string {
         const key = domainItemDayKey(it);
         if (key !== null && key !== currentKey) {
             currentKey = key;
-            const label = formatIntelDate(it.created_at ?? it.published_at, {
+            const label = formatIntelDate(it.ordered_at ?? it.created_at ?? it.published_at, {
                 month: 'short',
                 day: 'numeric',
             });

@@ -16,6 +16,7 @@ import logging
 from typing import Optional, List, Dict, Any
 
 from fastapi import APIRouter, Query, Depends
+from sqlalchemy import func
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,7 +33,19 @@ _DEFAULT_LIMIT = 100
 _MAX_LIMIT = 300
 
 
-def _serialize_item(it: Item) -> Dict[str, Any]:
+# ★ The feed is ordered by WHEN THE NEWS WAS PUBLISHED, not when we ingested it (2026-10-07).
+#   Ordering by created_at put every late arrival at the top as "newest": a story ingested a
+#   day late sat above the day's news, and on 2026-10-07 re-ingested January videos were shown
+#   as today's (vault audit §12.66-§12.67). Measured over 7 days before the change: 0.6% of
+#   row positions move >10 places, all of them late arrivals (lag 1.8-25.7h).
+#   ORDERED_AT is published_at, falling back to created_at when published_at is NULL, and never
+#   later than created_at (a future-dated entry cannot pin itself to the top). The API returns
+#   this exact value as `ordered_at`, and the client displays and groups by it, so what the
+#   list is sorted by and what it shows cannot drift apart.
+ORDERED_AT = func.least(func.coalesce(Item.published_at, Item.created_at), Item.created_at)
+
+
+def _serialize_item(it: Item, ordered_at=None) -> Dict[str, Any]:
     """Time-ordered list payload. Deliberately omits importance / anomaly /
     lightweight_score / cluster_id (handover 15.5): this is a comprehensive raw
     feed, not a scored selection. title_original/lang are included so a future
@@ -46,6 +59,8 @@ def _serialize_item(it: Item) -> Dict[str, Any]:
         "source_url": it.source_url,
         "published_at": it.published_at.isoformat() if it.published_at else None,
         "created_at": it.created_at.isoformat() if it.created_at else None,
+        # The value this list is ordered by (see ORDERED_AT). Display and group by THIS field.
+        "ordered_at": ordered_at.isoformat() if ordered_at else None,
         "reliability_weight": it.reliability_weight,
         "category": it.category,
     }
@@ -77,12 +92,12 @@ async def get_items(
     if not category:
         return []
 
+    ordered_at = ORDERED_AT.label("ordered_at")
     stmt = (
-        select(Item)
+        select(Item, ordered_at)
         .where(Item.category == category)
-        .order_by(Item.created_at.desc().nullslast())
+        .order_by(ordered_at.desc().nullslast(), Item.id)
         .limit(limit)
     )
     result = await db.execute(stmt)
-    rows = result.scalars().all()
-    return [_serialize_item(it) for it in rows]
+    return [_serialize_item(it, oa) for it, oa in result.all()]
