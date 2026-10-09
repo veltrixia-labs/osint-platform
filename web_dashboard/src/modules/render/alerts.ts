@@ -1115,9 +1115,10 @@ const DOMAIN_LIST_GUIDE_HTML = `
     <span class="intel-guide-p"><b>Alert Stream</b> (above) is the <em>curated</em> view -
     world events ranked by importance, the same global lens as "All".</span>
     <span class="intel-guide-p"><b>Full sector feed</b> (below) is the <em>comprehensive</em>
-    view - up to the 100 most recently collected items for this sector, in the order they
-    were collected. No ranking and no impact filter, but it is capped: on a busy sector
-    older items fall outside it.</span>
+    view - up to the 100 most recent items for this sector, newest first by when each story
+    was published (or when we collected it, if the source gives no date). No ranking and no
+    impact filter, but it is capped: on a busy sector older items fall outside it. A story
+    we pick up late is placed at its publication time, not at the top.</span>
     <span class="intel-guide-p">A story can be important yet appear only in the list, or be
     routine yet still listed. That is expected - the list is breadth, the stream is selection.</span>`;
 
